@@ -1,0 +1,7 @@
+ipython
+mypy
+nblint
+pandas
+pyserum
+solana
+web3
