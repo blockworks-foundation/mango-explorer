@@ -2,6 +2,8 @@
 
 **I am not yet confident in the figures and calculations. Please don't rely on this code yet!**
 
+Run these notebooks on Binder: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gl/OpinionatedGeek%2Fmango-explorer/HEAD)
+
 This is the start of a project to explore and provide useful code for [Mango Markets](https://mango.markets/).
 
 There are some notebook pages to explore Mango account structures for your own accounts.
