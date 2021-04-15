@@ -1,5 +1,12 @@
 # Mango Explorer
 
+## ⚠ Warning
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+## Introduction
+
 **I am not yet confident in the figures and calculations. Please don't rely on this code yet!**
 
 Run these notebooks on Binder: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gl/OpinionatedGeek%2Fmango-explorer/HEAD)
@@ -8,9 +15,12 @@ This is the start of a project to explore and provide useful code for [Mango Mar
 
 There are some notebook pages to explore Mango account structures for your own accounts.
 
-The aim is also to have, at some point, a fully-functioning liquidator.
+The goal is not to be easy to use (although that would be nice!). The goal is to show you how the system works and allow you to use some simeple code to interact with it.
 
-The goal is not to be easy to use (although that would be nice!). The goal is to show you how the system works.
+
+## Running the notebooks
+
+Most notebooks are currently 'runnable' - if you open them in your browser and press the 'fast-forward' button (⏩) on the toolbar
 
 
 ## Show your Mango margin accounts
@@ -55,7 +65,6 @@ Other notebooks are more user-oriented:
 Still to come:
 * More work on margin accounts and valuation
 * Finding and showing liquidatable margin accounts
-* A command-line tool to run a full liquidator
 * Performance of code that loads all margin accounts is much too slow and needs to be improved.
 * The notebooks use [hard-coded data from the Mango Client](https://raw.githubusercontent.com/blockworks-foundation/mango-client-ts/main/src/ids.json) - it would be good if it could do without that.
 
