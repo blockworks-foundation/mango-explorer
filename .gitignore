@@ -15,3 +15,4 @@ __pycache__
 # Don't check in anything that might have credentials.
 configuration.json
 wallet.json
+id.json
