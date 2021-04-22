@@ -4,12 +4,12 @@
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+Run these notebooks on Binder: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gl/OpinionatedGeek%2Fmango-explorer/HEAD)
+
 
 ## Introduction
 
 **I am not yet confident in the figures and calculations. Please don't rely on this code yet!**
-
-Run these notebooks on Binder: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gl/OpinionatedGeek%2Fmango-explorer/HEAD)
 
 This is the start of a project to explore and provide useful code for [Mango Markets](https://mango.markets/).
 
@@ -21,6 +21,13 @@ The goal is not to be easy to use (although that would be nice!). The goal is to
 ## Running the notebooks
 
 Most notebooks are currently 'runnable' - if you open them in your browser and press the 'fast-forward' button (⏩) on the toolbar
+
+
+## Verify a user's account is properly set up for Mango Markets liquidators
+
+Mango Markets should set up your account automatically for trading, but the requirements for running a liquidator can be a bit more extensive. For instance, for trading you need token accounts for both tokens in the trade but to run a liquidator you need token accounts for all tokens in the `Group`.
+
+The [AccountScout](AccountScout.ipynb) notebook can verify any user's root account to make sure it meets the requirements of the liquidator.
 
 
 ## Show your Mango margin accounts
