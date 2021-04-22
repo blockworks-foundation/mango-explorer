@@ -28,6 +28,7 @@ RUN jq '. += {"select_keymap_local_storage": false, "stored_keymap": "sublime"}'
 
 # Copy across our magic/startup scripts.
 COPY meta/startup /home/jovyan/.ipython/profile_default/startup
+COPY meta/jupyter/custom /home/jovyan/.jupyter/custom
 
 ENV PATH="/home/jovyan/work/bin:${PATH}"
 ADD . /home/jovyan/work
