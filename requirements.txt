@@ -1,4 +1,5 @@
 ipython
+jupyter_contrib_nbextensions
 mypy
 nblint
 pandas

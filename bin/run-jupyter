@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
 CURRENT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+START_COMMAND="start.sh jupyter lab --NotebookApp.iopub_data_rate_limit=9e9"
+if [ "$1" == "notebook" ]; then
+    START_COMMAND="start-notebook.sh"
+fi
 
 docker run -it --rm \
     -e GRANT_SUDO=yes --user root \
@@ -8,4 +12,4 @@ docker run -it --rm \
     --name mango-markets \
     -v ${CURRENT_DIRECTORY}/..:/home/jovyan/work \
     mango-markets:latest \
-    start.sh jupyter lab --NotebookApp.iopub_data_rate_limit=9e9
+    $START_COMMAND
