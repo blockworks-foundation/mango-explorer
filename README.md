@@ -67,11 +67,28 @@ Other notebooks are more user-oriented:
 * [Pandas](Pandas.ipynb) to load data into a [Pandas](https://pandas.pydata.org/) `DataFrame` to allow for further manipulation and analysis.
 
 
+## References
+
+* [🥭 Mango Markets](https://mango.markets/)
+  * [Docs](https://docs.mango.markets/)
+  * [Discord](https://discord.gg/67jySBhxrg)
+  * [Twitter](https://twitter.com/mangomarkets)
+  * [Github](https://github.com/blockworks-foundation)
+  * [Email](mailto:hello@blockworks.foundation)
+  * [Mango On-Chain Rust Code](https://github.com/blockworks-foundation/mango)
+  * [Mango TypeScript Client](https://github.com/blockworks-foundation/mango-client-ts)
+  * [Mango TypeScript Liquidator](https://github.com/blockworks-foundation/liquidator)
+* [PySerum](https://github.com/serum-community/pyserum/)
+* [SolanaPy](https://github.com/michaelhly/solana-py/)
+* [Python Decimal Class](https://docs.python.org/3/library/decimal.html)
+* [Python Construct Library](https://construct.readthedocs.io/en/latest/)
+* [Flux Aggregator](https://github.com/octopus-network/solana-flux-aggregator)
+
+
 ## TODO
 
 Still to come:
 * More work on margin accounts and valuation
-* Finding and showing liquidatable margin accounts
 * Performance of code that loads all margin accounts is much too slow and needs to be improved.
 * The notebooks use [hard-coded data from the Mango Client](https://raw.githubusercontent.com/blockworks-foundation/mango-client-ts/main/src/ids.json) - it would be good if it could do without that.
 
