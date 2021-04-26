@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+
+import logging
+logging.basicConfig(level=logging.INFO)
+
+import os, sys
+
+from pathlib import Path
+
+# Get the full path to this script.
+script_path = Path(os.path.realpath(__file__))
+
+# The parent of the script is the bin directory.
+# The parent of the bin directory is the notebook directory.
+# It's this notebook directory we want.
+notebook_directory = script_path.parent.parent
+
+logging.info(f"Loading notebook files from: {notebook_directory}")
+
+# Add the notebook directory to our import path.
+sys.path.append(str(notebook_directory))
+
+startup_directory = notebook_directory / "meta" / "startup"
+logging.info(f"Loading startup files from: {startup_directory}")
+
+# Add the startup directory to our import path.
+sys.path.append(str(startup_directory))
+
+import os.path
+import projectsetup
+import traceback
+
+from AccountScout import AccountScout
+from Classes import Group
+from Context import default_context
+from Wallet import Wallet
+
+try:
+    logging.info("Liquidator started.")
+    from Context import default_context
+
+    filename = "id.json"
+
+    if not os.path.isfile(filename):
+        logging.error(f"Wallet file '{filename}' is not present.")
+    else:
+        wallet = Wallet.load(filename)
+        logging.info(f"Wallet address: {wallet.address}")
+
+        group = Group.load(default_context)
+
+        logging.info("Checking wallet accounts.")
+        scout = AccountScout()
+        report = scout.require_account_prepared_for_group(default_context, group, wallet.address)
+        logging.info("Wallet accounts OK.")
+except Exception as exception:
+    logging.critical(f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}")
+except:
+    logging.critical(f"Liquidator stopped because of uncatchable error: {traceback.format_exc()}")
+finally:
+    logging.info("Liquidator completed.")
+
+logging.info("Done.")
