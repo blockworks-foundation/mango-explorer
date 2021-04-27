@@ -31,7 +31,7 @@ import projectsetup
 import traceback
 
 from AccountScout import AccountScout
-from Classes import Group
+from BaseModel import Group
 from Context import default_context
 from Wallet import Wallet
 
