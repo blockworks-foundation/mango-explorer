@@ -26,6 +26,7 @@ logging.info(f"Loading startup files from: {startup_directory}")
 # Add the startup directory to our import path.
 sys.path.append(str(startup_directory))
 
+import argparse
 import os.path
 import projectsetup
 import traceback
@@ -36,10 +37,15 @@ from Context import default_context
 from Wallet import Wallet
 
 try:
+    parser = argparse.ArgumentParser(description='Run a liquidator for a Mango Markets group.')
+    parser.add_argument('--id-file', type=str, default="id.json",
+                        help="id file containing the JSON-formatted wallet private key")
+
     logging.info("Liquidator started.")
     from Context import default_context
 
-    filename = "id.json"
+    args = parser.parse_args()
+    filename = args.id_file
 
     if not os.path.isfile(filename):
         logging.error(f"Wallet file '{filename}' is not present.")
