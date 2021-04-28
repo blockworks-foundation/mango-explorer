@@ -25,7 +25,6 @@ sys.path.append(str(startup_directory))
 import argparse
 import os.path
 import projectsetup
-import sys
 import time
 import traceback
 
@@ -40,7 +39,7 @@ logging.info(WARNING_DISCLAIMER_TEXT)
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description='Run a liquidator for a Mango Markets group.')
+parser = argparse.ArgumentParser(description='Run a single pass of the liquidator for a Mango Markets group.')
 parser.add_argument('--cluster', type=str, default=default_cluster,
                     help="Solana RPC cluster name")
 parser.add_argument('--cluster-url', type=str, default=default_cluster_url,
@@ -55,8 +54,6 @@ parser.add_argument('--group-id', type=str, default=default_group_id,
                     help="Mango group ID/address")
 parser.add_argument('--id-file', type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
-parser.add_argument('--throttle-to-seconds', type=int, default=60,
-                    help="minimum number of seconds between each loop (including time taken processing accounts)")
 args = parser.parse_args()
 
 try:
@@ -65,8 +62,6 @@ try:
         logging.error(f"Wallet file '{id_filename}' is not present.")
         sys.exit(1)
     wallet = Wallet.load(id_filename)
-
-    throttle_to_seconds = args.throttle_to_seconds
 
     context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
                       args.group_id)
@@ -80,23 +75,8 @@ try:
     report = scout.require_account_prepared_for_group(context, group, wallet.address)
     logging.info("Wallet accounts OK.")
 
-    stop = False
     liquidator = SimpleLiquidator(context, wallet)
-    while not stop:
-        started_at = time.time()
-        try:
-            liquidator.run()
-
-            time_taken = time.time() - started_at
-            should_sleep_for = throttle_to_seconds - int(time_taken)
-            sleep_for = max(should_sleep_for, 0)
-            logging.info(f"Check of all margin accounts complete. Time taken: {time_taken:.2f} seconds, sleeping for {sleep_for} seconds...")
-            time.sleep(sleep_for)
-        except KeyboardInterrupt:
-            stop = True
-            logging.info(f"Stopping...")
-        except Exception as exception:
-            logging.critical(f"Iteration failed because of exception: {exception}")
+    liquidator.run()
 
 except Exception as exception:
     logging.critical(f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}")
