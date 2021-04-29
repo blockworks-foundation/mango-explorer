@@ -9,7 +9,7 @@ fi
 docker run -it --rm \
     -e GRANT_SUDO=yes --user root \
     -p 8888:8888 \
-    --name mango-markets \
+    --name mango-explorer \
     -v ${CURRENT_DIRECTORY}/..:/home/jovyan/work \
-    mango-markets:latest \
+    mango-explorer:latest \
     $START_COMMAND
