@@ -26,16 +26,16 @@ import projectsetup
 import time
 import traceback
 
-from AccountScout import AccountScout
-from BaseModel import Group
+from decimal import Decimal
+from solana.publickey import PublicKey
+
+from BaseModel import Group, MarginAccount, OpenOrders
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from SimpleLiquidator import SimpleLiquidator
-from Wallet import Wallet
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description='Run a single pass of the liquidator for a Mango Markets group.')
+parser = argparse.ArgumentParser(description='Liquidate a single margin account.')
 parser.add_argument("--cluster", type=str, default=default_cluster,
                     help="Solana RPC cluster name")
 parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
@@ -52,36 +52,31 @@ parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+parser.add_argument('--type', type=str,
+                    help="type of object to be fetched (can be OPEN-ORDERS or MARGIN-ACCOUNT)")
+parser.add_argument('--address', type=PublicKey,
+                    help="Solana address of the Mango Markets object to be fetched")
 args = parser.parse_args()
 
 logging.basicConfig(level=args.log_level)
 logging.warning(WARNING_DISCLAIMER_TEXT)
 
 try:
-    id_filename = args.id_file
-    if not os.path.isfile(id_filename):
-        logging.error(f"Wallet file '{id_filename}' is not present.")
-        sys.exit(1)
-    wallet = Wallet.load(id_filename)
-
     context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
                       args.group_id)
 
-    logging.info(f"Wallet address: {wallet.address}")
+    address = args.address
+    object_type = args.type.upper()
 
-    group = Group.load(context)
-
-    logging.info("Checking wallet accounts.")
-    scout = AccountScout()
-    report = scout.require_account_prepared_for_group(context, group, wallet.address)
-    logging.info("Wallet accounts OK.")
-
-    liquidator = SimpleLiquidator(context, wallet)
-    liquidator.run()
-
+    if object_type == "OPEN-ORDERS":
+        open_orders = OpenOrders.load(context, address, Decimal(6), Decimal(6))
+        print(open_orders)
+    elif object_type == "MARGIN-ACCOUNT":
+        margin_account = MarginAccount.load(context, address)
+        print(margin_account)
+    else:
+        print(f"Unknown type: {object_type}")
 except Exception as exception:
-    logging.critical(f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(f"mango-fetch stopped because of exception: {exception} - {traceback.format_exc()}")
 except:
-    logging.critical(f"Liquidator stopped because of uncatchable error: {traceback.format_exc()}")
-finally:
-    logging.info("Liquidator completed.")
+    logging.critical(f"mango-fetch stopped because of uncatchable error: {traceback.format_exc()}")
