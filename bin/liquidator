@@ -71,13 +71,18 @@ try:
     context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
                       args.group_id)
 
+    logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
 
     group = Group.load(context)
 
     logging.info("Checking wallet accounts.")
     scout = AccountScout()
-    report = scout.require_account_prepared_for_group(context, group, wallet.address)
+    report = scout.verify_account_prepared_for_group(context, group, wallet.address)
+    logging.info(f"Wallet account report: {report}")
+    if report.has_errors:
+        raise Exception(f"Account '{wallet.address}' is not prepared for group '{group.address}'.")
+
     logging.info("Wallet accounts OK.")
 
     stop = False

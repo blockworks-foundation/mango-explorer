@@ -74,18 +74,28 @@ try:
     context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
                       args.group_id)
 
-    wallet = Wallet.load(filename)
+    logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
     logging.info(f"Margin account address: {margin_account_address}")
 
+    group = Group.load(context)
+
+    logging.info("Checking wallet accounts.")
+    scout = AccountScout()
+    report = scout.verify_account_prepared_for_group(context, group, wallet.address)
+    logging.info(f"Wallet account report: {report}")
+    if report.has_errors:
+        raise Exception(f"Account '{wallet.address}' is not prepared for group '{group.address}'.")
+
+    logging.info("Wallet accounts OK.")
+
     print("Wallet Balances Before:")
     print(f"    SOL balance: {context.fetch_sol_balance(wallet.address):>18,.8f}")
-    group = Group.load(context)
     for token in group.tokens:
         print(f"{token.name:>7} balance: {context.fetch_token_balance(wallet.address, token.mint):>18,.8f}")
 
     prices = group.get_prices()
-    margin_account = MarginAccount.load(context, group, margin_account_address)
+    margin_account = MarginAccount.load(context, margin_account_address, group)
     intrinsic_balance_sheets_before = margin_account.get_intrinsic_balance_sheets(group)
     print("Margin Account Before:", intrinsic_balance_sheets_before)
     liquidator = ForceCancelOrdersAccountLiquidator(context, wallet, group)
