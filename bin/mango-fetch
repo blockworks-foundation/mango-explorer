@@ -74,6 +74,9 @@ try:
     elif object_type == "MARGIN-ACCOUNT":
         margin_account = MarginAccount.load(context, address)
         print(margin_account)
+    elif object_type == "ALL-MARGIN-ACCOUNTS":
+        margin_account = MarginAccount.load_all_for_owner(context, address)
+        print(margin_account)
     else:
         print(f"Unknown type: {object_type}")
 except Exception as exception:
