@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+
+import os, sys
+
+from pathlib import Path
+
+# Get the full path to this script.
+script_path = Path(os.path.realpath(__file__))
+
+# The parent of the script is the bin directory.
+# The parent of the bin directory is the notebook directory.
+# It's this notebook directory we want.
+notebook_directory = script_path.parent.parent
+
+# Add the notebook directory to our import path.
+sys.path.append(str(notebook_directory))
+
+# Add the startup directory to our import path.
+startup_directory = notebook_directory / "meta" / "startup"
+sys.path.append(str(startup_directory))
+
+import argparse
+import logging
+import os.path
+import projectsetup
+import time
+import traceback
+
+from decimal import Decimal
+from pyserum.enums import OrderType, Side
+from pyserum.market import Market
+
+from AccountScout import AccountScout
+from BaseModel import Group
+from Constants import WARNING_DISCLAIMER_TEXT
+from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
+from TradeExecutor import SerumImmediateTradeExecutor
+from Wallet import Wallet
+
+# We explicitly want argument parsing to be outside the main try-except block because some arguments
+# (like --help) will cause an exit, which our except: block traps.
+parser = argparse.ArgumentParser(description='Sells one of the tokens in a Mango Markets group.')
+parser.add_argument("--cluster", type=str, default=default_cluster,
+                    help="Solana RPC cluster name")
+parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
+                    help="Solana RPC cluster URL")
+parser.add_argument("--program-id", type=str, default=default_program_id,
+                    help="Mango program ID/address")
+parser.add_argument("--dex-program-id", type=str, default=default_dex_program_id,
+                    help="DEX program ID/address")
+parser.add_argument("--group-name", type=str, default=default_group_name,
+                    help="Mango group name")
+parser.add_argument("--group-id", type=str, default=default_group_id,
+                    help="Mango group ID/address")
+parser.add_argument("--id-file", type=str, default="id.json",
+                    help="file containing the JSON-formatted wallet private key")
+parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
+                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+parser.add_argument("--token-symbol", type=str, required=True, help="token symbol to buy (e.g. ETH)")
+parser.add_argument("--quantity", type=float, required=True, help="quantity of token to buy")
+args = parser.parse_args()
+
+logging.basicConfig(level=args.log_level)
+logging.warning(WARNING_DISCLAIMER_TEXT)
+
+try:
+    id_filename = args.id_file
+    if not os.path.isfile(id_filename):
+        logging.error(f"Wallet file '{id_filename}' is not present.")
+        sys.exit(1)
+    wallet = Wallet.load(id_filename)
+
+    context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
+                      args.group_id)
+
+    logging.info(f"Context: {context}")
+    logging.info(f"Wallet address: {wallet.address}")
+
+    group = Group.load(context)
+
+    symbol = args.token_symbol.upper()
+
+    trade_executor = SerumImmediateTradeExecutor(context, wallet, group, 0.05)
+    trade_executor.sell(symbol, args.quantity)
+
+    logging.info("Sell completed.")
+except Exception as exception:
+    logging.critical(f"Buy stopped because of exception: {exception} - {traceback.format_exc()}")
+except:
+    logging.critical(f"Buy stopped because of uncatchable error: {traceback.format_exc()}")

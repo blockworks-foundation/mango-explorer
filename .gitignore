@@ -16,3 +16,4 @@ __pycache__
 configuration.json
 wallet.json
 id.json
+private.py

@@ -4,5 +4,6 @@ mypy
 nblint
 pandas
 pyserum
+rx
 solana
 web3

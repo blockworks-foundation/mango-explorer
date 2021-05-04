@@ -9,6 +9,9 @@ RUN pip install --requirement /tmp/requirements.txt && \
     fix-permissions $CONDA_DIR && \
     fix-permissions /home/$NB_USER
 
+# This is a nasty hack to fix a bug in pyserum when it tries to load the event queue.
+RUN sed -i "s/Const(0, BitsInteger(4))/Padding(4)/g" /opt/conda/lib/python3.8/site-packages/pyserum/_layouts/queue.py
+
 # Create our profile directory.
 RUN ipython profile create
 
