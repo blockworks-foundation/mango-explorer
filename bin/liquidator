@@ -29,6 +29,7 @@ import traceback
 from decimal import Decimal
 
 from AccountScout import AccountScout
+from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquidator, NullAccountLiquidator
 from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
@@ -64,6 +65,8 @@ parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
                     help="fraction of total wallet value a trade must be above to be carried out")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
                     help="factor by which to adjust the SELL price (akin to maximum slippage)")
+parser.add_argument("--dry-run", type=bool,
+                    help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -97,7 +100,12 @@ try:
 
     logging.info("Wallet accounts OK.")
 
-    if (args.target is None) or (len(args.target) == 0):
+    if args.dry_run:
+        account_liquidator: AccountLiquidator = NullAccountLiquidator()
+    else:
+        account_liquidator = ForceCancelOrdersAccountLiquidator(context, wallet)
+
+    if args.dry_run or (args.target is None) or (len(args.target) == 0):
         wallet_balancer = NullWalletBalancer()
     else:
         balance_parser = TargetBalanceParser(group.tokens)
@@ -106,7 +114,7 @@ try:
         wallet_balancer = LiveWalletBalancer(context, wallet, trade_executor, action_threshold, group.tokens, targets)
 
     stop = False
-    liquidator = SimpleLiquidator(context, wallet, wallet_balancer)
+    liquidator = SimpleLiquidator(context, wallet, account_liquidator, wallet_balancer)
     while not stop:
         started_at = time.time()
         try:

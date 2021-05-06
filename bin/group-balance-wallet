@@ -30,7 +30,7 @@ from decimal import Decimal
 from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from TradeExecutor import SerumImmediateTradeExecutor
+from TradeExecutor import NullTradeExecutor, SerumImmediateTradeExecutor, TradeExecutor
 from Wallet import Wallet
 from WalletBalancer import TargetBalanceParser, WalletBalancer
 
@@ -59,6 +59,8 @@ parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
                     help="fraction of total wallet value a trade must be above to be carried out")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
                     help="factor by which to adjust the SELL price (akin to maximum slippage)")
+parser.add_argument("--dry-run", type=bool,
+                    help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -88,7 +90,10 @@ try:
     prices = group.fetch_token_prices()
     print(prices)
 
-    trade_executor = SerumImmediateTradeExecutor(context, wallet, group, adjustment_factor)
+    if args.dry_run:
+        trade_executor: TradeExecutor = NullTradeExecutor()
+    else:
+        trade_executor = SerumImmediateTradeExecutor(context, wallet, group, adjustment_factor)
 
     wallet_balancer = WalletBalancer(context, wallet, trade_executor, action_threshold, group.tokens, targets)
     wallet_balancer.balance(prices)

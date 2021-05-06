@@ -30,7 +30,7 @@ from decimal import Decimal
 from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from TradeExecutor import SerumImmediateTradeExecutor
+from TradeExecutor import NullTradeExecutor, SerumImmediateTradeExecutor, TradeExecutor
 from Wallet import Wallet
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
@@ -56,6 +56,8 @@ parser.add_argument("--token-symbol", type=str, required=True, help="token symbo
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of token to buy")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
                     help="factor by which to adjust the BUY price (akin to maximum slippage)")
+parser.add_argument("--dry-run", type=bool,
+                    help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -79,7 +81,11 @@ try:
 
     symbol = args.token_symbol.upper()
 
-    trade_executor = SerumImmediateTradeExecutor(context, wallet, group, adjustment_factor)
+    if args.dry_run:
+        trade_executor: TradeExecutor = NullTradeExecutor()
+    else:
+        trade_executor = SerumImmediateTradeExecutor(context, wallet, group, adjustment_factor)
+
     trade_executor.buy(symbol, args.quantity)
 
     logging.info("Buy completed.")

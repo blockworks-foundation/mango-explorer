@@ -28,7 +28,7 @@ import traceback
 from solana.publickey import PublicKey
 
 from AccountScout import AccountScout
-from AccountLiquidator import ForceCancelOrdersAccountLiquidator
+from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquidator, NullAccountLiquidator
 from BaseModel import Group, MarginAccount
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
@@ -55,6 +55,8 @@ parser.add_argument("--log-level", default=logging.INFO, type=lambda level: geta
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 parser.add_argument('--margin-account-address', type=PublicKey,
                     help="Solana address of the Mango Markets margin account to be liquidated")
+parser.add_argument("--dry-run", type=bool,
+                    help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -96,8 +98,13 @@ try:
     margin_account = MarginAccount.load(context, margin_account_address, group)
     intrinsic_balance_sheets_before = margin_account.get_intrinsic_balance_sheets(group)
     print("Margin Account Before:", intrinsic_balance_sheets_before)
-    liquidator = ForceCancelOrdersAccountLiquidator(context, wallet, group)
-    transaction_id = liquidator.liquidate(margin_account, prices)
+
+    if args.dry_run:
+        account_liquidator: AccountLiquidator = NullAccountLiquidator()
+    else:
+        account_liquidator = ForceCancelOrdersAccountLiquidator(context, wallet)
+
+    transaction_id = account_liquidator.liquidate(group, margin_account, prices)
     if transaction_id is None:
         print("No transaction sent.")
     else:
