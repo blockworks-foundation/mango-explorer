@@ -1,13 +1,17 @@
 FROM jupyter/scipy-notebook:latest
 
 USER root
-RUN apt-get update && apt-get -y install jq
+RUN apt-get update && apt-get -y install jq curl libxml2-dev libxslt-dev libffi-dev zlib1g-dev
+RUN curl -SL -o /var/tmp/pyston_2.2_20.04.deb https://github.com/pyston/pyston/releases/download/pyston_2.2/pyston_2.2_20.04.deb
+RUN apt-get -y install /var/tmp/pyston_2.2_20.04.deb 
+RUN rm -f /var/tmp/pyston_2.2_20.04.deb 
 USER $NB_UID
 
 COPY requirements.txt /tmp/
 RUN pip install --requirement /tmp/requirements.txt && \
     fix-permissions $CONDA_DIR && \
     fix-permissions /home/$NB_USER
+RUN pip-pyston install --user --requirement /tmp/requirements.txt
 
 # This is a nasty hack to fix a bug in pyserum when it tries to load the event queue.
 RUN sed -i "s/Const(0, BitsInteger(4))/Padding(4)/g" /opt/conda/lib/python3.8/site-packages/pyserum/_layouts/queue.py
