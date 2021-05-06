@@ -23,23 +23,20 @@ import argparse
 import logging
 import os.path
 import projectsetup
-import time
 import traceback
 
 from decimal import Decimal
-from pyserum.enums import OrderType, Side
-from pyserum.market import Market
 
-from AccountScout import AccountScout
 from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 from TradeExecutor import SerumImmediateTradeExecutor
 from Wallet import Wallet
+from WalletBalancer import TargetBalanceParser, WalletBalancer
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description='Buys one of the tokens in a Mango Markets group.')
+parser = argparse.ArgumentParser(description='Balance the value of tokens in a Mango Markets group to specific values or percentages.')
 parser.add_argument("--cluster", type=str, default=default_cluster,
                     help="Solana RPC cluster name")
 parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
@@ -56,11 +53,15 @@ parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
-parser.add_argument("--token-symbol", type=str, required=True, help="token symbol to buy (e.g. ETH)")
-parser.add_argument("--quantity", type=float, required=True, help="quantity of token to buy")
+parser.add_argument("--target", type=str, action='append', required=True,
+                    help="token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5' or 'ETH:33%')")
+parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
+                    help="fraction of total wallet value a trade must be above to be carried out")
+parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
+                    help="factor by which to adjust the SELL price (akin to maximum slippage)")
 args = parser.parse_args()
 
-logging.basicConfig(level=args.log_level)
+logging.getLogger().setLevel(args.log_level)
 logging.warning(WARNING_DISCLAIMER_TEXT)
 
 try:
@@ -69,6 +70,8 @@ try:
         logging.error(f"Wallet file '{id_filename}' is not present.")
         sys.exit(1)
     wallet = Wallet.load(id_filename)
+    action_threshold = args.action_threshold
+    adjustment_factor = args.adjustment_factor
 
     context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
                       args.group_id)
@@ -78,13 +81,20 @@ try:
 
     group = Group.load(context)
 
-    symbol = args.token_symbol.upper()
+    balance_parser = TargetBalanceParser(group.tokens)
+    targets = list(map(balance_parser.parse, args.target))
+    print(targets)
 
-    trade_executor = SerumImmediateTradeExecutor(context, wallet, group, 0.05)
-    trade_executor.buy(symbol, args.quantity)
+    prices = group.fetch_token_prices()
+    print(prices)
 
-    logging.info("Buy completed.")
+    trade_executor = SerumImmediateTradeExecutor(context, wallet, group, adjustment_factor)
+
+    wallet_balancer = WalletBalancer(context, wallet, trade_executor, action_threshold, group.tokens, targets)
+    wallet_balancer.balance(prices)
+
+    logging.info("Balancing completed.")
 except Exception as exception:
-    logging.critical(f"Buy stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(f"Balancing stopped because of exception: {exception} - {traceback.format_exc()}")
 except:
-    logging.critical(f"Buy stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(f"Balancing stopped because of uncatchable error: {traceback.format_exc()}")

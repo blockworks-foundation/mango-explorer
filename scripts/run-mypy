@@ -42,7 +42,8 @@ if args.filename:
 else:
     # We want to load every notebook just to make sure the code in it is OK.
     all_notebook_files = [f for f in os.listdir(notebook_directory) if isfile(notebook_directory / f) and f.endswith(".ipynb")]
-    all_notebook_files.sort()
+    all_notebook_files += [str(notebook_directory / "bin" / f) for f in os.listdir(notebook_directory / "bin") if isfile(notebook_directory / "bin" / f)]
+#    all_notebook_files.sort()
 
 line_pattern = re.compile('(<[a-z]+>:)\s*(\d+)\s*:\s*(.*?)\s*:\s*(.*?)$')
 def print_pattern_result(message: str):
@@ -69,7 +70,7 @@ for module_name in all_notebook_files:
     if exit_code != 0:
         print(f"MyPy exited with code {exit_code} on {module_name}")
         if warnings:
-            print("MyPy Issues:")
+            print("MyPy Warnings:")
             for warning in warnings.split("\n"):
                 print_pattern_result(warning)
         if errors:
@@ -77,6 +78,5 @@ for module_name in all_notebook_files:
             for error in errors.split("\n"):
                 print_pattern_result(error)
 
-        break
     
 print("All files checked using MyPy.")

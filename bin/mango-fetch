@@ -23,13 +23,12 @@ import argparse
 import logging
 import os.path
 import projectsetup
-import time
 import traceback
 
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-from BaseModel import Group, MarginAccount, OpenOrders
+from BaseModel import MarginAccount, OpenOrders
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 
@@ -58,7 +57,7 @@ parser.add_argument('--address', type=PublicKey,
                     help="Solana address of the Mango Markets object to be fetched")
 args = parser.parse_args()
 
-logging.basicConfig(level=args.log_level)
+logging.getLogger().setLevel(args.log_level)
 logging.warning(WARNING_DISCLAIMER_TEXT)
 
 try:
@@ -75,8 +74,8 @@ try:
         margin_account = MarginAccount.load(context, address)
         print(margin_account)
     elif object_type == "ALL-MARGIN-ACCOUNTS":
-        margin_account = MarginAccount.load_all_for_owner(context, address)
-        print(margin_account)
+        margin_accounts = MarginAccount.load_all_for_owner(context, address)
+        print(margin_accounts)
     else:
         print(f"Unknown type: {object_type}")
 except Exception as exception:

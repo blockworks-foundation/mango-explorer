@@ -26,6 +26,12 @@ try:
         print(f"Linting {notebook_name}...", flush=True)
         command = f'nblint --linter pyflakes {notebook_name} | grep -v -E "Code Cell [0-9]+ that starts with" | grep -v "may be undefined" | grep -v "projectsetup" | grep -v "unable to detect undefined names" | sed "/^[[:space:]]*$/d"'
         os.system(command)
+
+    for command_file in [f for f in os.listdir(notebook_directory / "bin") if isfile(notebook_directory / "bin" / f)]:
+        print(f"Linting {command_file}...", flush=True)
+        command = f'pyflakes bin/{command_file} | grep -v "\'projectsetup\' imported but unused"'
+        os.system(command)
+
 except Exception as ex:
     print(f"Caught exception: {ex}")
 
