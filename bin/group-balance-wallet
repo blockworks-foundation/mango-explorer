@@ -36,7 +36,7 @@ from WalletBalancer import TargetBalanceParser, WalletBalancer
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description='Balance the value of tokens in a Mango Markets group to specific values or percentages.')
+parser = argparse.ArgumentParser(description="Balance the value of tokens in a Mango Markets group to specific values or percentages.")
 parser.add_argument("--cluster", type=str, default=default_cluster,
                     help="Solana RPC cluster name")
 parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
@@ -53,13 +53,13 @@ parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
-parser.add_argument("--target", type=str, action='append', required=True,
+parser.add_argument("--target", type=str, action="append", required=True,
                     help="token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5' or 'ETH:33%')")
 parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
                     help="fraction of total wallet value a trade must be above to be carried out")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
                     help="factor by which to adjust the SELL price (akin to maximum slippage)")
-parser.add_argument("--dry-run", type=bool,
+parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 

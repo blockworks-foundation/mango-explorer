@@ -35,7 +35,7 @@ from Wallet import Wallet
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description='Buys one of the tokens in a Mango Markets group.')
+parser = argparse.ArgumentParser(description="Buys one of the tokens in a Mango Markets group.")
 parser.add_argument("--cluster", type=str, default=default_cluster,
                     help="Solana RPC cluster name")
 parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
@@ -56,7 +56,7 @@ parser.add_argument("--token-symbol", type=str, required=True, help="token symbo
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of token to buy")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
                     help="factor by which to adjust the BUY price (akin to maximum slippage)")
-parser.add_argument("--dry-run", type=bool,
+parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
