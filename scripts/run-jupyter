@@ -11,5 +11,5 @@ docker run -it --rm \
     -p 8888:8888 \
     --name mango-explorer \
     -v ${CURRENT_DIRECTORY}/..:/home/jovyan/work \
-    mango-explorer:latest \
+    opinionatedgeek/mango-explorer:latest \
     $START_COMMAND

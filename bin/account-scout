@@ -25,8 +25,9 @@ import os.path
 import projectsetup
 import traceback
 
-from decimal import Decimal
+from solana.publickey import PublicKey
 
+from AccountScout import AccountScout
 from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
@@ -34,7 +35,7 @@ from Wallet import Wallet
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description="Display the balances of all grop tokens in the current wallet.")
+parser = argparse.ArgumentParser(description="Run the Account Scout to display problems and information about an account.")
 parser.add_argument("--cluster", type=str, default=default_cluster,
                     help="Solana RPC cluster name")
 parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
@@ -49,6 +50,8 @@ parser.add_argument("--group-id", type=str, default=default_group_id,
                     help="Mango group ID/address")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
+parser.add_argument("--address", type=PublicKey,
+                    help="User's root address for the Account Scout to check (if not provided, the wallet address is used)")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 args = parser.parse_args()
@@ -57,25 +60,26 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(WARNING_DISCLAIMER_TEXT)
 
 try:
-    id_filename = args.id_file
-    if not os.path.isfile(id_filename):
-        logging.error(f"Wallet file '{id_filename}' is not present.")
-        sys.exit(1)
-    wallet = Wallet.load(id_filename)
+    address = args.address
+    if address is None:
+        id_filename = args.id_file
+        if not os.path.isfile(id_filename):
+            logging.error(f"Address parameter not specified and wallet file '{id_filename}' is not present.")
+            sys.exit(1)
+        wallet = Wallet.load(id_filename)
+        address = wallet.address
+
     context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
                       args.group_id)
 
     logging.info(f"Context: {context}")
-    logging.info(f"Wallet address: {wallet.address}")
+    logging.info(f"Address: {address}")
 
     group = Group.load(context)
-    print("Balances:")
-    print(f"    SOL balance: {context.fetch_sol_balance(wallet.address):>18,.8f}")
-    group = Group.load(context)
-    for token in group.tokens:
-        balance = context.fetch_token_balance(wallet.address, token.mint) or Decimal(0)
-        print(f"{token.name:>7} balance: {balance:>18,.8f}")
+    scout = AccountScout()
+    report = scout.verify_account_prepared_for_group(context, group, address)
+    print(report)
 except Exception as exception:
-    logging.critical(f"group-balances stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(f"account-scout stopped because of exception: {exception} - {traceback.format_exc()}")
 except:
-    logging.critical(f"group-balances stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(f"account-scout stopped because of uncatchable error: {traceback.format_exc()}")

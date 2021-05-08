@@ -26,15 +26,17 @@ import projectsetup
 import traceback
 
 from decimal import Decimal
+from solana.publickey import PublicKey
+from solana.system_program import TransferParams, transfer
+from solana.transaction import Transaction
 
-from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 from Wallet import Wallet
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description="Display the balances of all grop tokens in the current wallet.")
+parser = argparse.ArgumentParser(description="Sends SOL to a different address.")
 parser.add_argument("--cluster", type=str, default=default_cluster,
                     help="Solana RPC cluster name")
 parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
@@ -51,6 +53,11 @@ parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+parser.add_argument("--address", type=PublicKey,
+                    help="Destination address for the SPL token - can be either the actual token address or the address of the owner of the token address")
+parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of token to send")
+parser.add_argument("--dry-run", action="store_true", default=False,
+                    help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -62,20 +69,41 @@ try:
         logging.error(f"Wallet file '{id_filename}' is not present.")
         sys.exit(1)
     wallet = Wallet.load(id_filename)
+
     context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
                       args.group_id)
 
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
 
-    group = Group.load(context)
-    print("Balances:")
-    print(f"    SOL balance: {context.fetch_sol_balance(wallet.address):>18,.8f}")
-    group = Group.load(context)
-    for token in group.tokens:
-        balance = context.fetch_token_balance(wallet.address, token.mint) or Decimal(0)
-        print(f"{token.name:>7} balance: {balance:>18,.8f}")
+    sol_balance = context.fetch_sol_balance(wallet.address)
+    print(f"Balance: {sol_balance} SOL")
+
+    # "A lamport has a value of 0.000000001 SOL." from https://docs.solana.com/introduction
+    lamports = int(args.quantity * Decimal(10 ** 9))
+    source = wallet.address
+    destination = args.address
+
+    text_amount = f"{lamports} lamports (SOL @ 9 decimal places)"
+    print(f"Sending {text_amount}")
+    print(f"    From: {source}")
+    print(f"      To: {destination}")
+
+    if args.dry_run:
+        print("Skipping actual transfer - dry run.")
+    else:
+        transaction = Transaction()
+        params = TransferParams(from_pubkey=source, to_pubkey=destination, lamports=lamports)
+        transaction.add(transfer(params))
+
+        transfer_response = context.client.send_transaction(transaction, wallet.account) 
+        transaction_id = context.unwrap_transaction_id_or_raise_exception(transfer_response)
+        print(f"Waiting on transaction ID: {transaction_id}")
+        context.wait_for_confirmation(transaction_id)
+
+    updated_balance = context.fetch_sol_balance(wallet.address)
+    print(f"{text_amount} sent. Balance now: {updated_balance} SOL")
 except Exception as exception:
-    logging.critical(f"group-balances stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(f"send-sols stopped because of exception: {exception} - {traceback.format_exc()}")
 except:
-    logging.critical(f"group-balances stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(f"send-sols stopped because of uncatchable error: {traceback.format_exc()}")

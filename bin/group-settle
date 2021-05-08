@@ -30,11 +30,12 @@ from decimal import Decimal
 from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
+from TradeExecutor import NullTradeExecutor, SerumImmediateTradeExecutor, TradeExecutor
 from Wallet import Wallet
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description="Display the balances of all grop tokens in the current wallet.")
+parser = argparse.ArgumentParser(description="Settles all openorders transactions in the Group.")
 parser.add_argument("--cluster", type=str, default=default_cluster,
                     help="Solana RPC cluster name")
 parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
@@ -51,6 +52,8 @@ parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+parser.add_argument("--dry-run", action="store_true", default=False,
+                    help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -62,6 +65,7 @@ try:
         logging.error(f"Wallet file '{id_filename}' is not present.")
         sys.exit(1)
     wallet = Wallet.load(id_filename)
+
     context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
                       args.group_id)
 
@@ -69,13 +73,19 @@ try:
     logging.info(f"Wallet address: {wallet.address}")
 
     group = Group.load(context)
-    print("Balances:")
-    print(f"    SOL balance: {context.fetch_sol_balance(wallet.address):>18,.8f}")
-    group = Group.load(context)
-    for token in group.tokens:
-        balance = context.fetch_token_balance(wallet.address, token.mint) or Decimal(0)
-        print(f"{token.name:>7} balance: {balance:>18,.8f}")
+
+    if args.dry_run:
+        trade_executor: TradeExecutor = NullTradeExecutor(print)
+    else:
+        trade_executor = SerumImmediateTradeExecutor(context, wallet, group, Decimal(0), print)
+
+    for market_metadata in group.markets:
+        market = market_metadata.fetch_market(context)
+        transaction_ids = trade_executor.settle(market_metadata, market)
+        trade_executor.wait_for_settlement_completion(transaction_ids)
+
+    logging.info("Settlement completed.")
 except Exception as exception:
-    logging.critical(f"group-balances stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(f"group-settle stopped because of exception: {exception} - {traceback.format_exc()}")
 except:
-    logging.critical(f"group-balances stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(f"group-settle stopped because of uncatchable error: {traceback.format_exc()}")

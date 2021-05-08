@@ -15,6 +15,7 @@ RUN pip-pyston install --user --requirement /tmp/requirements.txt
 
 # This is a nasty hack to fix a bug in pyserum when it tries to load the event queue.
 RUN sed -i "s/Const(0, BitsInteger(4))/Padding(4)/g" /opt/conda/lib/python3.8/site-packages/pyserum/_layouts/queue.py
+RUN sed -i "s/Const(0, BitsInteger(4))/Padding(4)/g" /home/jovyan/.local/lib/pyston3.8/site-packages/pyserum/_layouts/queue.py
 
 # Create our profile directory.
 RUN ipython profile create

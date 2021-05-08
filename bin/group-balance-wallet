@@ -32,7 +32,7 @@ from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 from TradeExecutor import NullTradeExecutor, SerumImmediateTradeExecutor, TradeExecutor
 from Wallet import Wallet
-from WalletBalancer import TargetBalanceParser, WalletBalancer
+from WalletBalancer import LiveWalletBalancer, TargetBalanceParser
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
@@ -85,17 +85,17 @@ try:
 
     balance_parser = TargetBalanceParser(group.tokens)
     targets = list(map(balance_parser.parse, args.target))
-    print(targets)
+    logging.info(f"Targets: {targets}")
 
     prices = group.fetch_token_prices()
-    print(prices)
+    logging.info(f"Prices: {prices}")
 
     if args.dry_run:
-        trade_executor: TradeExecutor = NullTradeExecutor()
+        trade_executor: TradeExecutor = NullTradeExecutor(print)
     else:
-        trade_executor = SerumImmediateTradeExecutor(context, wallet, group, adjustment_factor)
+        trade_executor = SerumImmediateTradeExecutor(context, wallet, group, adjustment_factor, print)
 
-    wallet_balancer = WalletBalancer(context, wallet, trade_executor, action_threshold, group.tokens, targets)
+    wallet_balancer = LiveWalletBalancer(context, wallet, trade_executor, action_threshold, group.tokens, targets)
     wallet_balancer.balance(prices)
 
     logging.info("Balancing completed.")

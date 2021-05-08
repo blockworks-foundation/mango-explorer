@@ -23,8 +23,6 @@ import argparse
 import logging
 import projectsetup
 
-from solana.account import Account
-
 from Constants import WARNING_DISCLAIMER_TEXT
 from Wallet import Wallet
 
@@ -42,4 +40,4 @@ logging.warning(WARNING_DISCLAIMER_TEXT)
 
 new_wallet = Wallet.create()
 new_wallet.save(args.id_file, args.overwrite)
-print(f"Wallet created in file: '{args.id_file}'")
+print(f"Wallet for address {new_wallet.address} created in file: '{args.id_file}'.")
