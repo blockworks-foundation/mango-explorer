@@ -79,8 +79,8 @@ Run the following command to create your wallet:
 ```
 This will output a lot of text, like:
 ```
-2021-05-08 14:14:22,984 WARNING  root         Failed to load default wallet from file 'id.json' - exception: Expecting value: line 1 column 1 (char 0)
-2021-05-08 14:14:22,991 WARNING  root
+2021-05-08 14:14:22 ⚠ root         Failed to load default wallet from file 'id.json' - exception: Expecting value: line 1 column 1 (char 0)
+2021-05-08 14:14:22 ⚠ root
 ⚠ WARNING ⚠
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -116,7 +116,7 @@ How you transfer the SOL is up to you, and dependent on where you actually have 
 I used [sollet](https://sollet.io) to transfer 1 SOL to **48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB**, the address shown above when creating the wallet. When the transfer completes (it’s very fast!) it appears in the wallet and you can check that using the `group-balances` command:
 ```
 # mango-explorer group-balances
-2021-05-08 14:15:51,675 WARNING  root
+2021-05-08 14:15:51 ⚠ root
 ⚠ WARNING ⚠
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -147,7 +147,7 @@ Now let's examine our account with the `Account Scout`. This tool is used to ver
 If you run it without parameters it will check the current wallet address, but you can check a different address by passing the `--address` parameter.
 ```
 # mango-explorer account-scout
-2021-05-08 14:07:30,481 WARNING  root
+2021-05-08 14:07:30 ⚠ root
 ⚠ WARNING ⚠
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -186,7 +186,7 @@ Transfer some USDT to the new account. Again I'm using [sollet](https://sollet.i
 When you've transferred the USDT, a re-run of the `group-balances` should show something like:
 ```
 # mango-explorer group-balances
-2021-05-08 14:18:21,544 WARNING  root
+2021-05-08 14:18:21 ⚠ root
 ⚠ WARNING ⚠
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -221,7 +221,7 @@ For our purposes here, let's go for a third in each token.
 To set this up, we can use the `group-balance-wallet` command. We tell it we want to put 33% in BTC (using the `--target` parameter with the value "BTC:33%") and 33% in ETH (using the `--target` parameter with the value "ETH:33%"). Since this command actually performs transactions, let's run it first with the `--dry-run` parameter - this tells the command to run but not send any actual transactions to Serum.
 ```
 # mango-explorer group-balance-wallet --target "BTC:33%" --target "ETH:33%" --dry-run
-2021-05-08 14:20:04,522 WARNING  root
+2021-05-08 14:20:04 ⚠ root
 ⚠ WARNING ⚠
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -241,7 +241,7 @@ Skipping BUY trade of 0.09036219 of 'ETH'.
 Let's run it again without the `--dry-run` flag, so that it actually performs the transactions. This will place orders on the Serum orderbook to trade the tokens.
 ```
 # mango-explorer group-balance-wallet --target "BTC:33%" --target "ETH:33%"
-2021-05-08 14:28:12,940 WARNING  root
+2021-05-08 14:28:12 ⚠ root
 ⚠ WARNING ⚠
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -334,7 +334,7 @@ If you have problems at this stage, for example with Solana transactions timing 
 Now if we check the balances we can see we have roughly a third in each of the three group tokens:
 ```
 # mango-explorer group-balances
-2021-05-08 14:31:43,910 WARNING  root
+2021-05-08 14:31:43 ⚠ root
 ⚠ WARNING ⚠
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -361,7 +361,7 @@ We now have about 339 USDT, 0.0056 BTC, and 0.09 ETH. That's roughly a third eac
 Now would be a good time to run the `Account Scout` tool again, to make sure things are as we expect.
 ```
 # mango-explorer account-scout
-2021-05-08 14:34:10,009 WARNING  root
+2021-05-08 14:34:10 ⚠ root
 ⚠ WARNING ⚠
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -433,7 +433,7 @@ This is a long-running process, so we'll need to use Control-C to cancel it when
 Here goes:
 ```
 # mango-explorer liquidator --target "BTC:33%" --target "ETH:33%" --dry-run
-2021-05-08 14:36:34,200 WARNING  root
+2021-05-08 14:36:34 ⚠ root
 ⚠ WARNING ⚠
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -443,16 +443,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     💬 Discord: https://discord.gg/67jySBhxrg                                                                       🐦 Twitter: https://twitter.com/mangomarkets
     🚧 Github: https://github.com/blockworks-foundation                                                             📧 Email: mailto:hello@blockworks.foundation
 
-2021-05-08 14:36:34,206 INFO     root         Context: « Context:                                                                     Cluster: mainnet-beta
+2021-05-08 14:36:34 ⓘ root         Context: « Context:
+    Cluster: mainnet-beta
     Cluster URL: https://mango.rpcpool.com/
     Program ID: JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu
     DEX Program ID: 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin
     Group Name: BTC_ETH_USDT
     Group ID: 7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV
 »
-2021-05-08 14:36:34,209 INFO     root         Wallet address: 48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB
-2021-05-08 14:36:34,251 INFO     root         Checking wallet accounts.
-2021-05-08 14:36:37,032 INFO     root         Wallet account report: « ScoutReport [48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB]:
+2021-05-08 14:36:34 ⓘ root         Wallet address: 48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB
+2021-05-08 14:36:34 ⓘ root         Checking wallet accounts.
+2021-05-08 14:36:37 ⓘ root         Wallet account report: « ScoutReport [48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB]:
     Summary:
         No problems found
 
@@ -496,25 +497,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         »
         Account '48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB' has no Mango Markets margin accounts.
 »
-2021-05-08 14:36:37,042 INFO     root         Wallet accounts OK.
-2021-05-08 14:36:37,042 INFO     SimpleLiquidator Fetching all margin accounts...
-2021-05-08 14:36:53,162 INFO     SimpleLiquidator Fetched 15065 margin accounts to process.
-2021-05-08 14:36:53,712 INFO     SimpleLiquidator Of those 15065, 3644 have a nonzero collateral ratio.
-2021-05-08 14:36:53,718 INFO     SimpleLiquidator Of those 3644, 69 are liquidatable.
-2021-05-08 14:36:53,720 INFO     SimpleLiquidator Of those 69 liquidatable margin accounts, 3 are 'above water' margin accounts with assets greater than their liabilities.
-2021-05-08 14:36:53,721 INFO     SimpleLiquidator Of those 3 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
-2021-05-08 14:36:53,721 INFO     SimpleLiquidator No accounts to liquidate.
-2021-05-08 14:36:54,096 INFO     root         Check of all margin accounts complete. Time taken: 17.05 seconds, sleeping for 43 seconds...
-2021-05-08 14:37:37,142 INFO     SimpleLiquidator Fetching all margin accounts...
-2021-05-08 14:37:53,634 INFO     SimpleLiquidator Fetched 15065 margin accounts to process.
-2021-05-08 14:37:54,112 INFO     SimpleLiquidator Of those 15065, 3644 have a nonzero collateral ratio.
-2021-05-08 14:37:54,119 INFO     SimpleLiquidator Of those 3644, 69 are liquidatable.
-2021-05-08 14:37:54,120 INFO     SimpleLiquidator Of those 69 liquidatable margin accounts, 3 are 'above water' margin accounts with assets greater than their liabilities.
-2021-05-08 14:37:54,121 INFO     SimpleLiquidator Of those 3 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
-2021-05-08 14:37:54,121 INFO     SimpleLiquidator No accounts to liquidate.
-2021-05-08 14:37:54,513 INFO     root         Check of all margin accounts complete. Time taken: 17.37 seconds, sleeping for 43 seconds...
-^C2021-05-08 14:38:36,341 INFO     root         Stopping...
-2021-05-08 14:38:36,341 INFO     root         Liquidator completed.
+2021-05-08 14:36:37 ⓘ root         Wallet accounts OK.
+2021-05-08 14:36:37 ⓘ SimpleLiquid Fetching all margin accounts...
+2021-05-08 14:36:53 ⓘ SimpleLiquid Fetched 15065 margin accounts to process.
+2021-05-08 14:36:53 ⓘ SimpleLiquid Of those 15065, 3644 have a nonzero collateral ratio.
+2021-05-08 14:36:53 ⓘ SimpleLiquid Of those 3644, 69 are liquidatable.
+2021-05-08 14:36:53 ⓘ SimpleLiquid Of those 69 liquidatable margin accounts, 3 are 'above water' margin accounts with assets greater than their liabilities.
+2021-05-08 14:36:53 ⓘ SimpleLiquid Of those 3 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
+2021-05-08 14:36:53 ⓘ SimpleLiquid No accounts to liquidate.
+2021-05-08 14:36:54 ⓘ root         Check of all margin accounts complete. Time taken: 17.05 seconds, sleeping for 43 seconds...
+2021-05-08 14:37:37 ⓘ SimpleLiquid Fetching all margin accounts...
+2021-05-08 14:37:53 ⓘ SimpleLiquid Fetched 15065 margin accounts to process.
+2021-05-08 14:37:54 ⓘ SimpleLiquid Of those 15065, 3644 have a nonzero collateral ratio.
+2021-05-08 14:37:54 ⓘ SimpleLiquid Of those 3644, 69 are liquidatable.
+2021-05-08 14:37:54 ⓘ SimpleLiquid Of those 69 liquidatable margin accounts, 3 are 'above water' margin accounts with assets greater than their liabilities.
+2021-05-08 14:37:54 ⓘ SimpleLiquid Of those 3 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
+2021-05-08 14:37:54 ⓘ SimpleLiquid No accounts to liquidate.
+2021-05-08 14:37:54 ⓘ root         Check of all margin accounts complete. Time taken: 17.37 seconds, sleeping for 43 seconds...
+^C2021-05-08 14:38:36 ⓘ root         Stopping...
+2021-05-08 14:38:36 ⓘ root         Liquidator completed.
 
 ```
 
