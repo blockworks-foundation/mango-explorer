@@ -33,7 +33,7 @@ from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquida
 from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from SimpleLiquidator import SimpleLiquidator
+from PollingLiquidator import PollingLiquidator
 from TradeExecutor import SerumImmediateTradeExecutor
 from Wallet import Wallet
 from WalletBalancer import LiveWalletBalancer, NullWalletBalancer, TargetBalanceParser
@@ -114,7 +114,7 @@ try:
         wallet_balancer = LiveWalletBalancer(context, wallet, trade_executor, action_threshold, group.tokens, targets)
 
     stop = False
-    liquidator = SimpleLiquidator(context, wallet, account_liquidator, wallet_balancer)
+    liquidator = PollingLiquidator(context, wallet, account_liquidator, wallet_balancer)
     while not stop:
         started_at = time.time()
         try:

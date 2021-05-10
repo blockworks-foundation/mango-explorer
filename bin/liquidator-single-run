@@ -30,7 +30,7 @@ from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquida
 from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from SimpleLiquidator import SimpleLiquidator
+from PollingLiquidator import PollingLiquidator
 from Wallet import Wallet
 from WalletBalancer import NullWalletBalancer
 
@@ -90,7 +90,7 @@ try:
         account_liquidator = ForceCancelOrdersAccountLiquidator(context, wallet)
 
     wallet_balancer = NullWalletBalancer()
-    liquidator = SimpleLiquidator(context, wallet, account_liquidator, wallet_balancer)
+    liquidator = PollingLiquidator(context, wallet, account_liquidator, wallet_balancer)
     liquidator.run()
 
 except Exception as exception:
