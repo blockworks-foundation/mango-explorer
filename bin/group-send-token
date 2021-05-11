@@ -1,10 +1,11 @@
 #!/usr/bin/env pyston3
 
-import os, sys
+import os
+import sys
 
 from pathlib import Path
 
-# Get the full path to this script.
+# Get the full path to this script.
 script_path = Path(os.path.realpath(__file__))
 
 # The parent of the script is the bin directory.
@@ -22,7 +23,7 @@ sys.path.append(str(startup_directory))
 import argparse
 import logging
 import os.path
-import projectsetup
+import projectsetup  # noqa: F401
 import traceback
 
 from decimal import Decimal
@@ -30,13 +31,13 @@ from solana.publickey import PublicKey
 from spl.token.client import Token
 from spl.token.constants import TOKEN_PROGRAM_ID
 
-from BaseModel import Group, TokenAccount
+from BaseModel import BasketToken, Group, TokenAccount
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 from Wallet import Wallet
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
-# (like --help) will cause an exit, which our except: block traps.
+# (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Sends one of the Group's SPL tokens to a different address.")
 parser.add_argument("--cluster", type=str, default=default_cluster,
                     help="Solana RPC cluster name")
@@ -79,10 +80,11 @@ try:
     logging.info(f"Wallet address: {wallet.address}")
 
     group = Group.load(context)
-    group_token = group.token_by_name(args.token_symbol)
+    group_basket_token = BasketToken.find_by_name(group.basket_tokens, args.token_symbol)
+    group_token = group_basket_token.token
 
-    token = Token(context.client, group_token.mint, TOKEN_PROGRAM_ID, wallet.account)
-    source_accounts = token.get_accounts(wallet.address)
+    spl_token = Token(context.client, group_token.mint, TOKEN_PROGRAM_ID, wallet.account)
+    source_accounts = spl_token.get_accounts(wallet.address)
     source_account = source_accounts["result"]["value"][0]
     source = PublicKey(source_account["pubkey"])
 
@@ -92,7 +94,7 @@ try:
         # We successfully loaded the token account.
         destination: PublicKey = args.address
     else:
-        destination_accounts = token.get_accounts(args.address)
+        destination_accounts = spl_token.get_accounts(args.address)
         if len(destination_accounts["result"]["value"]) == 0:
             raise Exception(f"Could not find destination account using {args.address} as either owner address or token address.")
         destination_account = destination_accounts["result"]["value"][0]
@@ -110,12 +112,12 @@ try:
     if args.dry_run:
         print("Skipping actual transfer - dry run.")
     else:
-        transfer_response = token.transfer(source, destination, owner, amount)
+        transfer_response = spl_token.transfer(source, destination, owner, amount)
         transaction_id = context.unwrap_transaction_id_or_raise_exception(transfer_response)
         print(f"Waiting on transaction ID: {transaction_id}")
         context.wait_for_confirmation(transaction_id)
 
-    updated_balance = token.get_balance(source)
+    updated_balance = spl_token.get_balance(source)
     updated_balance_text = updated_balance["result"]["value"]["uiAmountString"]
     print(f"{text_amount} sent. Balance now: {updated_balance_text} {group_token.name}")
 except Exception as exception:

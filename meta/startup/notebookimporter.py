@@ -11,7 +11,6 @@ from importlib.util import spec_from_loader
 from nbformat import read
 from IPython import get_ipython
 from IPython.core.interactiveshell import InteractiveShell
-from IPython.display import display, HTML
 
 ALWAYS_IMPORT = """
 import datetime

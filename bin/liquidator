@@ -1,10 +1,11 @@
 #!/usr/bin/env pyston3
 
-import os, sys
+import os
+import sys
 
 from pathlib import Path
 
-# Get the full path to this script.
+# Get the full path to this script.
 script_path = Path(os.path.realpath(__file__))
 
 # The parent of the script is the bin directory.
@@ -22,7 +23,7 @@ sys.path.append(str(startup_directory))
 import argparse
 import logging
 import os.path
-import projectsetup
+import projectsetup  # noqa: F401
 import time
 import traceback
 
@@ -36,10 +37,10 @@ from Context import Context, default_cluster, default_cluster_url, default_progr
 from PollingLiquidator import PollingLiquidator
 from TradeExecutor import SerumImmediateTradeExecutor
 from Wallet import Wallet
-from WalletBalancer import LiveWalletBalancer, NullWalletBalancer, TargetBalanceParser
+from WalletBalancer import LiveWalletBalancer, NullWalletBalancer, TargetBalanceParser, WalletBalancer
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
-# (like --help) will cause an exit, which our except: block traps.
+# (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Run a liquidator for a Mango Markets group.")
 parser.add_argument("--cluster", type=str, default=default_cluster,
                     help="Solana RPC cluster name")
@@ -106,7 +107,7 @@ try:
         account_liquidator = ForceCancelOrdersAccountLiquidator(context, wallet)
 
     if args.dry_run or (args.target is None) or (len(args.target) == 0):
-        wallet_balancer = NullWalletBalancer()
+        wallet_balancer: WalletBalancer = NullWalletBalancer()
     else:
         balance_parser = TargetBalanceParser(group.tokens)
         targets = list(map(balance_parser.parse, args.target))

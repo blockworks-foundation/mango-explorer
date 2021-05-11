@@ -38,7 +38,7 @@ RUN jq '. += {"select_keymap_local_storage": false, "stored_keymap": "sublime"}'
 COPY meta/startup /home/jovyan/.ipython/profile_default/startup
 COPY meta/jupyter/custom /home/jovyan/.jupyter/custom
 
-ENV PATH="/home/jovyan/work/bin:${PATH}"
+ENV PATH="/home/jovyan/work/bin:${PATH}:/home/jovyan/work/scripts"
 ADD . /home/jovyan/work
 
 WORKDIR /home/jovyan/work

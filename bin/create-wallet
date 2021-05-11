@@ -1,10 +1,11 @@
 #!/usr/bin/env pyston3
 
-import os, sys
+import os
+import sys
 
 from pathlib import Path
 
-# Get the full path to this script.
+# Get the full path to this script.
 script_path = Path(os.path.realpath(__file__))
 
 # The parent of the script is the bin directory.
@@ -21,7 +22,7 @@ sys.path.append(str(startup_directory))
 
 import argparse
 import logging
-import projectsetup
+import projectsetup  # noqa: F401
 
 from Constants import WARNING_DISCLAIMER_TEXT
 from Wallet import Wallet

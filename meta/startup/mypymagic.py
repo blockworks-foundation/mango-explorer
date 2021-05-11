@@ -40,24 +40,24 @@ def mypy(line, cell):
     if result[2] != 0:
         html = ""
         if result[0]:
-            html += f"<div style='color: darkorange'>Warnings:<ul>"
+            html += "<div style='color: darkorange'>Warnings:<ul>"
             for message in result[0].split("<string>"):
                 if message:
                     html += f"<li>{message}</li>"
-            html += f"</ul></div>"
+            html += "</ul></div>"
 
         if result[1]:
-            html += f"<div style='color: red'>Errors:<ul>"
+            html += "<div style='color: red'>Errors:<ul>"
             for message in result[1].split("<string>"):
                 if message:
                     html += f"<li>{message}</li>"
-            html += f"</ul></div>"
+            html += "</ul></div>"
 
         display(HTML(html))
 
     shell = get_ipython()
     shell.run_cell(cell)
 
+
 # Delete these to avoid name conflicts.
 del mypy
-
