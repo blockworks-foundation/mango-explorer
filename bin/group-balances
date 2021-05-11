@@ -73,9 +73,9 @@ try:
     print("Balances:")
     print(f"    SOL balance: {context.fetch_sol_balance(wallet.address):>18,.8f}")
     group = Group.load(context)
-    for token in group.tokens:
-        balance = context.fetch_token_balance(wallet.address, token.mint) or Decimal(0)
-        print(f"{token.name:>7} balance: {balance:>18,.8f}")
+    for basket_token in group.basket_tokens:
+        balance = context.fetch_token_balance(wallet.address, basket_token.token.mint) or Decimal(0)
+        print(f"{basket_token.token.name:>7} balance: {balance:>18,.8f}")
 except Exception as exception:
     logging.critical(f"group-balances stopped because of exception: {exception} - {traceback.format_exc()}")
 except:

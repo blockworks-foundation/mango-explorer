@@ -83,8 +83,9 @@ try:
     logging.info(f"Wallet address: {wallet.address}")
 
     group = Group.load(context)
+    tokens = [basket_token.token for basket_token in group.basket_tokens]
 
-    balance_parser = TargetBalanceParser(group.tokens)
+    balance_parser = TargetBalanceParser(tokens)
     targets = list(map(balance_parser.parse, args.target))
     logging.info(f"Targets: {targets}")
 
@@ -96,7 +97,7 @@ try:
     else:
         trade_executor = SerumImmediateTradeExecutor(context, wallet, group, adjustment_factor, print)
 
-    wallet_balancer = LiveWalletBalancer(context, wallet, trade_executor, action_threshold, group.tokens, targets)
+    wallet_balancer = LiveWalletBalancer(context, wallet, trade_executor, action_threshold, tokens, targets)
     wallet_balancer.balance(prices)
 
     logging.info("Balancing completed.")

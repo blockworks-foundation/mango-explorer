@@ -91,6 +91,7 @@ try:
     logging.info(f"Wallet address: {wallet.address}")
 
     group = Group.load(context)
+    tokens = [basket_token.token for basket_token in group.basket_tokens]
 
     logging.info("Checking wallet accounts.")
     scout = AccountScout()
@@ -109,10 +110,10 @@ try:
     if args.dry_run or (args.target is None) or (len(args.target) == 0):
         wallet_balancer: WalletBalancer = NullWalletBalancer()
     else:
-        balance_parser = TargetBalanceParser(group.tokens)
+        balance_parser = TargetBalanceParser(tokens)
         targets = list(map(balance_parser.parse, args.target))
         trade_executor = SerumImmediateTradeExecutor(context, wallet, group, adjustment_factor)
-        wallet_balancer = LiveWalletBalancer(context, wallet, trade_executor, action_threshold, group.tokens, targets)
+        wallet_balancer = LiveWalletBalancer(context, wallet, trade_executor, action_threshold, tokens, targets)
 
     stop = False
     liquidator = PollingLiquidator(context, wallet, account_liquidator, wallet_balancer)
