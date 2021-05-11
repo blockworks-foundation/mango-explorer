@@ -3,6 +3,9 @@ import logging
 import logging.handlers
 import pandas as pd
 
+# Perform some magic around importing notebooks.
+import notebookimporter  # noqa: F401
+
 pd.options.display.float_format = '{:,.8f}'.format
 decimal.getcontext().prec = 18
 
