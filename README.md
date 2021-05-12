@@ -1,4 +1,4 @@
-# Mango Explorer
+# 🥭 Mango Explorer
 
 ## ⚠ Warning
 
@@ -15,7 +15,21 @@ This is the start of a project to explore and provide useful code for [Mango Mar
 
 There are some notebook pages to explore Mango account structures for your own accounts.
 
+There is also a functional liquidator.
+
 The goal is not to be easy to use (although that would be nice!). The goal is to show you how the system works and allow you to use some simeple code to interact with it.
+
+
+## Running the liquidator
+
+Check out the [Quickstart](Quickstart.md) documentation - it's a walkthrough of setting up and running the liquidator, from creating the account, 'balancing' the wallet across the different tokens, and running the liquidator itself.
+
+It can take around 30 minutes to run through.
+
+Requirements:
+* A server with docker installed
+* Some SOL to pay for transactions
+* Some USDT to fund the liquidation wallet
 
 
 ## Running the notebooks
@@ -32,7 +46,7 @@ The [AccountScout](AccountScout.ipynb) notebook can verify any user's root accou
 
 ## Show your Mango margin accounts
 
-To try this out, go to the [Show My Accounts](ShowMyAccounts.ipynb) page and enter your public key. (Note: I know you're running untrusted code, but it can't do much if you only give it your public key.)
+To try this out, go to the [Show Account](ShowAccount.ipynb) page and enter your public key. (Note: I know you're running untrusted code, but it can't do much if you only give it your public key.)
 
 
 ## Show all Mango margin accounts
@@ -59,10 +73,10 @@ The code is (nearly) all Python in Jupyter Notebooks.
 
 Some notebooks are more code files than useful notebooks themselves (although being able to easily run the code is still a boon):
 * The [Layouts](Layouts.ipynb) notebook contains the low-level Python data structures for interpreting raw Solana program data.
-* The [Classes](Classes.ipynb) notebook contains higher-level classes for loading and working with that data.
+* The [BaseModel](BaseModel.ipynb) notebook contains higher-level classes for loading and working with that data.
 
 Other notebooks are more user-oriented:
-* [Show My Accounts](ShowMyAccounts.ipynb) to show data pertaining to a single Mango Markets margin account.
+* [Show Account](ShowAccount.ipynb) to show data pertaining to a single Mango Markets margin account.
 * [Show All Accounts](ShowAllAccounts.ipynb) to show data for all Mango Markets margin accounts.
 * [Pandas](Pandas.ipynb) to load data into a [Pandas](https://pandas.pydata.org/) `DataFrame` to allow for further manipulation and analysis.
 
@@ -90,7 +104,6 @@ Other notebooks are more user-oriented:
 
 Still to come:
 * More work on margin accounts and valuation
-* Performance of code that loads all margin accounts is much too slow and needs to be improved.
 * The notebooks use [hard-coded data from the Mango Client](https://raw.githubusercontent.com/blockworks-foundation/mango-client-ts/main/src/ids.json) - it would be good if it could do without that.
 
 Don't hold your breath waiting for these!
