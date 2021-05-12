@@ -507,12 +507,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 2021-05-08 14:37:02 ⓘ PollingLiqui Of those 81 liquidatable margin accounts, 2 are 'above water' margin accounts with assets greater than their liabilities.
 2021-05-08 14:37:02 ⓘ PollingLiqui Of those 2 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
 2021-05-08 14:37:02 ⓘ root         Check of all ripe 🥭 accounts complete. Time taken: 0.39 seconds, sleeping for 5 seconds...
-2021-05-08 14:37:07 ⓘ PollingLiqui Update 1 of 109 ripe 🥭 accounts.
+2021-05-08 14:37:07 ⓘ PollingLiqui Update 1 of 10 - 109 ripe 🥭 accounts.
 2021-05-08 14:37:09 ⓘ PollingLiqui Of those 109, 81 are liquidatable.
 2021-05-08 14:37:09 ⓘ PollingLiqui Of those 81 liquidatable margin accounts, 2 are 'above water' margin accounts with assets greater than their liabilities.
 2021-05-08 14:37:09 ⓘ PollingLiqui Of those 2 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
 2021-05-08 14:37:09 ⓘ root         Check of all ripe 🥭 accounts complete. Time taken: 2.26 seconds, sleeping for 3 seconds...
-2021-05-08 14:37:12 ⓘ PollingLiqui Update 2 of 109 ripe 🥭 accounts.
+2021-05-08 14:37:12 ⓘ PollingLiqui Update 2 of 10 - 109 ripe 🥭 accounts.
 2021-05-08 14:37:12 ⓘ PollingLiqui Of those 109, 81 are liquidatable.
 2021-05-08 14:37:12 ⓘ PollingLiqui Of those 81 liquidatable margin accounts, 2 are 'above water' margin accounts with assets greater than their liabilities.
 2021-05-08 14:37:12 ⓘ PollingLiqui Of those 2 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
