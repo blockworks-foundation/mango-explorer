@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+CURRENT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_DIRECTORY="${CURRENT_DIRECTORY}/.."
+
+grep -i "${1}" ${PROJECT_DIRECTORY}/*.ipynb ${PROJECT_DIRECTORY}/bin/*
