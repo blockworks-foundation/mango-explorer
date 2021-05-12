@@ -91,7 +91,7 @@ try:
         account_liquidator = ForceCancelOrdersAccountLiquidator(context, wallet)
 
     wallet_balancer = NullWalletBalancer()
-    liquidator = PollingLiquidator(context, wallet, account_liquidator, wallet_balancer)
+    liquidator = PollingLiquidator(context, wallet, account_liquidator, wallet_balancer, ripe_iterations=1)
     liquidator.run()
 
 except Exception as exception:

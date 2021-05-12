@@ -498,22 +498,25 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         Account '48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB' has no Mango Markets margin accounts.
 »
 2021-05-08 14:36:37 ⓘ root         Wallet accounts OK.
-2021-05-08 14:36:37 ⓘ SimpleLiquid Fetching all margin accounts...
-2021-05-08 14:36:53 ⓘ SimpleLiquid Fetched 15065 margin accounts to process.
-2021-05-08 14:36:53 ⓘ SimpleLiquid Of those 15065, 3644 have a nonzero collateral ratio.
-2021-05-08 14:36:53 ⓘ SimpleLiquid Of those 3644, 69 are liquidatable.
-2021-05-08 14:36:53 ⓘ SimpleLiquid Of those 69 liquidatable margin accounts, 3 are 'above water' margin accounts with assets greater than their liabilities.
-2021-05-08 14:36:53 ⓘ SimpleLiquid Of those 3 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
-2021-05-08 14:36:53 ⓘ SimpleLiquid No accounts to liquidate.
-2021-05-08 14:36:54 ⓘ root         Check of all margin accounts complete. Time taken: 17.05 seconds, sleeping for 43 seconds...
-2021-05-08 14:37:37 ⓘ SimpleLiquid Fetching all margin accounts...
-2021-05-08 14:37:53 ⓘ SimpleLiquid Fetched 15065 margin accounts to process.
-2021-05-08 14:37:54 ⓘ SimpleLiquid Of those 15065, 3644 have a nonzero collateral ratio.
-2021-05-08 14:37:54 ⓘ SimpleLiquid Of those 3644, 69 are liquidatable.
-2021-05-08 14:37:54 ⓘ SimpleLiquid Of those 69 liquidatable margin accounts, 3 are 'above water' margin accounts with assets greater than their liabilities.
-2021-05-08 14:37:54 ⓘ SimpleLiquid Of those 3 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
-2021-05-08 14:37:54 ⓘ SimpleLiquid No accounts to liquidate.
-2021-05-08 14:37:54 ⓘ root         Check of all margin accounts complete. Time taken: 17.37 seconds, sleeping for 43 seconds...
+2021-05-08 14:36:37 ⓘ PollingLiqui Fetching all margin accounts...
+2021-05-08 14:37:01 ⓘ PollingLiqui Fetched 15448 margin accounts to process.
+2021-05-08 14:37:01 ⓘ PollingLiqui Of those 15448, 3694 have a nonzero collateral ratio.
+2021-05-08 14:37:01 ⓘ PollingLiqui Of those 3694, 109 are ripe 🥭.
+2021-05-08 14:37:01 ⓘ PollingLiqui Update 0 of 109 ripe 🥭 accounts.
+2021-05-08 14:37:02 ⓘ PollingLiqui Of those 109, 81 are liquidatable.
+2021-05-08 14:37:02 ⓘ PollingLiqui Of those 81 liquidatable margin accounts, 2 are 'above water' margin accounts with assets greater than their liabilities.
+2021-05-08 14:37:02 ⓘ PollingLiqui Of those 2 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
+2021-05-08 14:37:02 ⓘ root         Check of all ripe 🥭 accounts complete. Time taken: 0.39 seconds, sleeping for 5 seconds...
+2021-05-08 14:37:07 ⓘ PollingLiqui Update 1 of 109 ripe 🥭 accounts.
+2021-05-08 14:37:09 ⓘ PollingLiqui Of those 109, 81 are liquidatable.
+2021-05-08 14:37:09 ⓘ PollingLiqui Of those 81 liquidatable margin accounts, 2 are 'above water' margin accounts with assets greater than their liabilities.
+2021-05-08 14:37:09 ⓘ PollingLiqui Of those 2 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
+2021-05-08 14:37:09 ⓘ root         Check of all ripe 🥭 accounts complete. Time taken: 2.26 seconds, sleeping for 3 seconds...
+2021-05-08 14:37:12 ⓘ PollingLiqui Update 2 of 109 ripe 🥭 accounts.
+2021-05-08 14:37:12 ⓘ PollingLiqui Of those 109, 81 are liquidatable.
+2021-05-08 14:37:12 ⓘ PollingLiqui Of those 81 liquidatable margin accounts, 2 are 'above water' margin accounts with assets greater than their liabilities.
+2021-05-08 14:37:12 ⓘ PollingLiqui Of those 2 above water margin accounts, 0 are worthwhile margin accounts with more than 0.01 net assets.
+2021-05-08 14:37:12 ⓘ root         Check of all ripe 🥭 accounts complete. Time taken: 0.41 seconds, sleeping for 5 seconds...
 ^C2021-05-08 14:38:36 ⓘ root         Stopping...
 2021-05-08 14:38:36 ⓘ root         Liquidator completed.
 
