@@ -33,6 +33,7 @@ from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquida
 from BaseModel import Group, MarginAccount
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
+from TransactionScout import TransactionScout
 from Wallet import Wallet
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
@@ -113,6 +114,9 @@ try:
         print("Waiting for confirmation...")
 
         context.wait_for_confirmation(transaction_id)
+
+        transaction_scout = TransactionScout.load(context, transaction_id)
+        print(str(transaction_scout))
 
         group_after = Group.load(context)
         margin_account_after_liquidation = MarginAccount.load(context, margin_account.address, group_after)
