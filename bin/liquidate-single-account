@@ -30,7 +30,7 @@ from solana.publickey import PublicKey
 
 from AccountScout import AccountScout
 from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquidator, NullAccountLiquidator
-from BaseModel import Group, MarginAccount
+from BaseModel import Group, MarginAccount, TokenValue
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 from TransactionScout import TransactionScout
@@ -94,7 +94,8 @@ try:
     print("Wallet Balances Before:")
     print(f"    SOL balance: {context.fetch_sol_balance(wallet.address):>18,.8f}")
     for basket_token in group.basket_tokens:
-        print(f"{basket_token.token.name:>7} balance: {context.fetch_token_balance(wallet.address, basket_token.token.mint):>18,.8f}")
+        balance = TokenValue.fetch_total_value(context, wallet.address, basket_token.token)
+        print(f"{basket_token.token.name:>7} balance: {balance.value:>18,.8f}")
 
     prices = group.fetch_token_prices()
     margin_account = MarginAccount.load(context, margin_account_address, group)
@@ -125,7 +126,8 @@ try:
         print("Wallet Balances After:")
         print(f"    SOL balance: {context.fetch_sol_balance(wallet.address):>18,.8f}")
         for basket_token in group.basket_tokens:
-            print(f"{basket_token.token.name:>7} balance: {context.fetch_token_balance(wallet.address, basket_token.token.mint):>18,.8f}")
+            balance = TokenValue.fetch_total_value(context, wallet.address, basket_token.token)
+            print(f"{basket_token.token.name:>7} balance: {balance.value:>18,.8f}")
 
 except Exception as exception:
     logging.critical(f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}")

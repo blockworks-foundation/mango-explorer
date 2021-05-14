@@ -26,9 +26,7 @@ import os.path
 import projectsetup  # noqa: F401
 import traceback
 
-from decimal import Decimal
-
-from BaseModel import Group
+from BaseModel import Group, TokenValue
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 from Wallet import Wallet
@@ -74,7 +72,7 @@ try:
     print(f"    SOL balance: {context.fetch_sol_balance(wallet.address):>18,.8f}")
     group = Group.load(context)
     for basket_token in group.basket_tokens:
-        balance = context.fetch_token_balance(wallet.address, basket_token.token.mint) or Decimal(0)
+        balance = TokenValue.fetch_total_value(context, wallet.address, basket_token.token)
         print(f"{basket_token.token.name:>7} balance: {balance:>18,.8f}")
 except Exception as exception:
     logging.critical(f"group-balances stopped because of exception: {exception} - {traceback.format_exc()}")
