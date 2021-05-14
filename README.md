@@ -96,6 +96,7 @@ Other notebooks are more user-oriented:
 * [SolanaPy](https://github.com/michaelhly/solana-py/)
 * [Python Decimal Class](https://docs.python.org/3/library/decimal.html)
 * [Python Construct Library](https://construct.readthedocs.io/en/latest/)
+* [Python Observables](https://rxpy.readthedocs.io/en/latest/)
 * [Pyston](https://www.pyston.org/)
 * [Flux Aggregator](https://github.com/octopus-network/solana-flux-aggregator)
 
