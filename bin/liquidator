@@ -72,7 +72,7 @@ parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
                     help="fraction of total wallet value a trade must be above to be carried out")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
                     help="factor by which to adjust the SELL price (akin to maximum slippage)")
-parser.add_argument("--notification-target", type=parse_subscription_target, required=True, action="append",
+parser.add_argument("--notification-target", type=parse_subscription_target, action="append",
                     help="The notification target - a compound string that varies depending on the target")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
