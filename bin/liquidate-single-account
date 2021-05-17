@@ -91,7 +91,10 @@ try:
 
     logging.info("Wallet accounts OK.")
 
-    print("Wallet Balances Before:")
+    balances_before = group.fetch_balances(wallet.address)
+    print("Wallet balances before:")
+    TokenValue.report(print, balances_before)
+
     print(f"    SOL balance: {context.fetch_sol_balance(wallet.address):>18,.8f}")
     for basket_token in group.basket_tokens:
         balance = TokenValue.fetch_total_value(context, wallet.address, basket_token.token)
@@ -123,11 +126,10 @@ try:
         margin_account_after_liquidation = MarginAccount.load(context, margin_account.address, group_after)
         intrinsic_balance_sheets_after = margin_account_after_liquidation.get_intrinsic_balance_sheets(group_after)
         print("Margin Account After:", intrinsic_balance_sheets_after)
-        print("Wallet Balances After:")
-        print(f"    SOL balance: {context.fetch_sol_balance(wallet.address):>18,.8f}")
-        for basket_token in group.basket_tokens:
-            balance = TokenValue.fetch_total_value(context, wallet.address, basket_token.token)
-            print(f"{basket_token.token.name:>7} balance: {balance.value:>18,.8f}")
+
+        balances_after = group_after.fetch_balances(wallet.address)
+        print("Wallet balances after:")
+        TokenValue.report(print, balances_after)
 
 except Exception as exception:
     logging.critical(f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}")

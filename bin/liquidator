@@ -34,8 +34,10 @@ from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquida
 from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
+from Notification import parse_subscription_target
 from PollingLiquidator import PollingLiquidator
 from TradeExecutor import SerumImmediateTradeExecutor
+from TransactionScout import TransactionScout
 from Wallet import Wallet
 from WalletBalancer import LiveWalletBalancer, NullWalletBalancer, TargetBalanceParser, WalletBalancer
 
@@ -70,6 +72,8 @@ parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
                     help="fraction of total wallet value a trade must be above to be carried out")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
                     help="factor by which to adjust the SELL price (akin to maximum slippage)")
+parser.add_argument("--notification-target", type=parse_subscription_target, required=True, action="append",
+                    help="The notification target - a compound string that varies depending on the target")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
@@ -125,6 +129,10 @@ try:
     liquidator = PollingLiquidator(context, wallet, account_liquidator, wallet_balancer,
                                    throttle_to_seconds=throttle_ripe_update_to_seconds,
                                    ripe_iterations=ripe_update_iterations)
+    liquidator.liquidations.subscribe(lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
+    for notification_target in args.notification_target:
+        liquidator.liquidations.subscribe(lambda event: notification_target.send(event))
+
     while not stop:
         started_at = time.time()
         try:

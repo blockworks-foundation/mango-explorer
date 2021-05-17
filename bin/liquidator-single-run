@@ -32,6 +32,7 @@ from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 from PollingLiquidator import PollingLiquidator
+from TransactionScout import TransactionScout
 from Wallet import Wallet
 from WalletBalancer import NullWalletBalancer
 
@@ -92,6 +93,7 @@ try:
 
     wallet_balancer = NullWalletBalancer()
     liquidator = PollingLiquidator(context, wallet, account_liquidator, wallet_balancer, ripe_iterations=1)
+    liquidator.liquidations.subscribe(lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
     liquidator.run()
 
 except Exception as exception:
