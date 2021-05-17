@@ -129,9 +129,9 @@ try:
     liquidator = PollingLiquidator(context, wallet, account_liquidator, wallet_balancer,
                                    throttle_to_seconds=throttle_ripe_update_to_seconds,
                                    ripe_iterations=ripe_update_iterations)
-    liquidator.liquidations.subscribe(lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
+    liquidator.liquidations.subscribe(on_next=lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
     for notification_target in args.notification_target:
-        liquidator.liquidations.subscribe(lambda event: notification_target.send(event))
+        liquidator.liquidations.subscribe(on_next=lambda event: notification_target.send(event))
 
     while not stop:
         started_at = time.time()

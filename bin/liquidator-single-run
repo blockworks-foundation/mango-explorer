@@ -93,7 +93,7 @@ try:
 
     wallet_balancer = NullWalletBalancer()
     liquidator = PollingLiquidator(context, wallet, account_liquidator, wallet_balancer, ripe_iterations=1)
-    liquidator.liquidations.subscribe(lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
+    liquidator.liquidations.subscribe(on_next=lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
     liquidator.run()
 
 except Exception as exception:
