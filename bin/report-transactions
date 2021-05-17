@@ -34,7 +34,7 @@ from solana.publickey import PublicKey
 from BaseModel import InstructionType
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from Observables import printing_observer, CaptureFirstItem
+from Observables import CaptureFirstItem, PrintingObserverSubscriber
 from TransactionScout import TransactionScout, fetch_all_recent_transaction_signatures
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
@@ -102,7 +102,7 @@ try:
                 instruction_type))
         )
 
-    pipeline.subscribe(printing_observer(False))
+    pipeline.subscribe(PrintingObserverSubscriber(False))
 
     with open("report.state", "w") as state_file:
         state_file.write(first_item_capturer.captured)
