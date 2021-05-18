@@ -35,7 +35,7 @@ from solana.publickey import PublicKey
 from BaseModel import InstructionType, OwnedTokenValue
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from Notification import parse_subscription_target
+from Notification import NotificationHandler, parse_subscription_target
 from Observables import CaptureFirstItem, PrintingObserverSubscriber
 from TransactionScout import TransactionScout, fetch_all_recent_transaction_signatures
 
@@ -63,8 +63,10 @@ parser.add_argument("--instruction-type", type=lambda ins: InstructionType[ins],
                     help="The signature of the transaction to look up")
 parser.add_argument("--sender", type=PublicKey,
                     help="Only transactions sent by this PublicKey will be returned")
-parser.add_argument("--notification-target", type=parse_subscription_target, action="append", default=[],
-                    help="The notification target - a compound string that varies depending on the target")
+parser.add_argument("--notify-transactions", type=parse_subscription_target, action="append", default=[],
+                    help="The notification target for transaction information")
+parser.add_argument("--notify-errors", type=parse_subscription_target, action="append", default=[],
+                    help="The notification target for errors")
 parser.add_argument("--summarise", action="store_true", default=False,
                     help="create a short summary rather than the full TransactionScout details")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
@@ -72,6 +74,11 @@ parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: g
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
+for notify in args.notify_errors:
+    handler = NotificationHandler(notify)
+    handler.setLevel(logging.ERROR)
+    logging.getLogger().addHandler(handler)
+
 logging.warning(WARNING_DISCLAIMER_TEXT)
 
 
@@ -147,7 +154,7 @@ try:
     fan_out = rx.subject.Subject()
     fan_out.subscribe(PrintingObserverSubscriber(False))
 
-    for notify in args.notification_target:
+    for notify in args.notify_transactions:
         fan_out.subscribe(on_next=notify.send)
 
     pipeline.subscribe(fan_out)

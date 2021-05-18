@@ -34,7 +34,7 @@ from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquida
 from BaseModel import Group
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from Notification import parse_subscription_target
+from Notification import NotificationHandler, parse_subscription_target
 from PollingLiquidator import PollingLiquidator
 from TradeExecutor import SerumImmediateTradeExecutor
 from TransactionScout import TransactionScout
@@ -72,13 +72,20 @@ parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
                     help="fraction of total wallet value a trade must be above to be carried out")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
                     help="factor by which to adjust the SELL price (akin to maximum slippage)")
-parser.add_argument("--notification-target", type=parse_subscription_target, action="append",
-                    help="The notification target - a compound string that varies depending on the target")
+parser.add_argument("--notify-liquidations", type=parse_subscription_target, action="append", default=[],
+                    help="The notification target for liquidation events")
+parser.add_argument("--notify-errors", type=parse_subscription_target, action="append", default=[],
+                    help="The notification target for error events")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
+for notify in args.notify_errors:
+    handler = NotificationHandler(notify)
+    handler.setLevel(logging.ERROR)
+    logging.getLogger().addHandler(handler)
+
 logging.warning(WARNING_DISCLAIMER_TEXT)
 
 try:
@@ -130,7 +137,7 @@ try:
                                    throttle_to_seconds=throttle_ripe_update_to_seconds,
                                    ripe_iterations=ripe_update_iterations)
     liquidator.liquidations.subscribe(on_next=lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
-    for notification_target in args.notification_target:
+    for notification_target in args.notify_liquidations:
         liquidator.liquidations.subscribe(on_next=lambda event: notification_target.send(event))
 
     while not stop:
