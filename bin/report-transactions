@@ -27,13 +27,15 @@ import projectsetup  # noqa: F401
 import rx.operators as ops
 import rx
 import traceback
+import typing
 
 from pathlib import Path
 from solana.publickey import PublicKey
 
-from BaseModel import InstructionType
+from BaseModel import InstructionType, OwnedTokenValue
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
+from Notification import parse_subscription_target
 from Observables import CaptureFirstItem, PrintingObserverSubscriber
 from TransactionScout import TransactionScout, fetch_all_recent_transaction_signatures
 
@@ -61,12 +63,47 @@ parser.add_argument("--instruction-type", type=lambda ins: InstructionType[ins],
                     help="The signature of the transaction to look up")
 parser.add_argument("--sender", type=PublicKey,
                     help="Only transactions sent by this PublicKey will be returned")
+parser.add_argument("--notification-target", type=parse_subscription_target, action="append", default=[],
+                    help="The notification target - a compound string that varies depending on the target")
+parser.add_argument("--summarise", action="store_true", default=False,
+                    help="create a short summary rather than the full TransactionScout details")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
 logging.warning(WARNING_DISCLAIMER_TEXT)
+
+
+def summariser(context: Context) -> typing.Callable[[TransactionScout], str]:
+    def summarise(transaction_scout: TransactionScout) -> str:
+        instruction_details: typing.List[str] = []
+        for ins in transaction_scout.instructions:
+            params = ins.describe_parameters()
+            if params == "":
+                instruction_details += [f"[{ins.instruction_type.name}]"]
+            else:
+                instruction_details += [f"[{ins.instruction_type.name}: {params}]"]
+
+        instructions = ", ".join(instruction_details)
+        changes = OwnedTokenValue.changes(transaction_scout.pre_token_balances, transaction_scout.post_token_balances)
+
+        in_tokens = []
+        for ins in transaction_scout.instructions:
+            if ins.token_in_account is not None:
+                in_tokens += [OwnedTokenValue.find_by_owner(changes, ins.token_in_account)]
+
+        out_tokens = []
+        for ins in transaction_scout.instructions:
+            if ins.token_out_account is not None:
+                out_tokens += [OwnedTokenValue.find_by_owner(changes, ins.token_out_account)]
+
+        changed_tokens = in_tokens + out_tokens
+        changed_tokens_text = ", ".join([f"{tok.token_value.value:,.8f} {tok.token_value.token.name}" for tok in changed_tokens]) or "None"
+
+        return f"« 🥭 {transaction_scout.timestamp} {transaction_scout.group_name} {instructions}\n    From: {transaction_scout.sender}\n    Token Changes: {changed_tokens_text}\n    {transaction_scout.signatures} »"
+    return summarise
+
 
 try:
     since_signature = args.since_signature
@@ -84,11 +121,11 @@ try:
     signatures = fetch_all_recent_transaction_signatures()
     pipeline = rx.from_(signatures).pipe(
         ops.map(first_item_capturer.capture_if_first),
-        # ops.map(debug_print_item("Signature:")),
+        #  ops.map(debug_print_item("Signature:")),
         ops.take_while(lambda sig: sig != since_signature),
         ops.map(lambda sig: TransactionScout.load_if_available(context, sig)),
         ops.filter(lambda item: item is not None),
-        #     ops.take(100),
+        #  ops.take(100),
     )
 
     if sender is not None:
@@ -102,10 +139,22 @@ try:
                 instruction_type))
         )
 
-    pipeline.subscribe(PrintingObserverSubscriber(False))
+    if args.summarise:
+        pipeline = pipeline.pipe(
+            ops.map(summariser(context))
+        )
 
-    with open("report.state", "w") as state_file:
-        state_file.write(first_item_capturer.captured)
+    fan_out = rx.subject.Subject()
+    fan_out.subscribe(PrintingObserverSubscriber(False))
+
+    for notify in args.notification_target:
+        fan_out.subscribe(on_next=notify.send)
+
+    pipeline.subscribe(fan_out)
+
+    if first_item_capturer.captured is not None:
+        with open("report.state", "w") as state_file:
+            state_file.write(first_item_capturer.captured)
 except Exception as exception:
     logging.critical(
         f"transaction-scout stopped because of exception: {exception} - {traceback.format_exc()}")
