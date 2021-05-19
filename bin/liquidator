@@ -138,7 +138,7 @@ try:
                                    ripe_iterations=ripe_update_iterations)
     liquidator.liquidations.subscribe(on_next=lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
     for notification_target in args.notify_liquidations:
-        liquidator.liquidations.subscribe(on_next=lambda event: notification_target.send(event))
+        liquidator.liquidations.subscribe(on_next=notification_target.send)
 
     while not stop:
         started_at = time.time()
