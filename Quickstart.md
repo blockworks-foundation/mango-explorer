@@ -1,6 +1,6 @@
 # 🥭 Mango Explorer
 
-# 🏃‍ Quickstart
+# 🏃‍ Liquidator Quickstart
 
 Let’s assume you have a server set up already, with [docker](https://www.docker.com/) installed. This Quickstart will guide you through setting up and running [mango-explorer](https://gitlab.com/OpinionatedGeek/mango-explorer) to run a liquidator on [Mango Markets](https://mango.markets/). (You’ll need to provide your own funds for the liquidator though!)
 
