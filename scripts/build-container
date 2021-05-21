@@ -4,4 +4,7 @@ CURRENT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd "${CURRENT_DIRECTORY}/.."
 
-docker build . -t opinionatedgeek/mango-explorer:latest
+TAG=${1:-latest}
+
+echo Building opinionatedgeek/mango-explorer:${TAG}
+docker build . -t opinionatedgeek/mango-explorer:${TAG}

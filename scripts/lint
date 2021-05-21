@@ -19,8 +19,16 @@ script_path = Path(os.path.realpath(__file__))
 # notebook directory. It's this notebook directory we want.
 notebook_directory = script_path.parent.parent
 
+parser = argparse.ArgumentParser(description="Run a liquidator for a Mango Markets group.")
+parser.add_argument("--skip-cleanup", action="store_true", default=False,
+                    help="skip removal of the temp directory when finished (will leave processed files for inspection)")
+args = parser.parse_args()
+
 working_directory_name = ".tmplintdir"
 try:
+    if os.path.exists(notebook_directory / working_directory_name):
+        shutil.rmtree(notebook_directory / working_directory_name)
+
     os.mkdir(str(notebook_directory / working_directory_name))
 
     all_notebook_files = [f for f in os.listdir(notebook_directory) if isfile(
@@ -57,9 +65,9 @@ try:
     command = f'mypy "{str(notebook_directory / working_directory_name)}"'
     os.system(command)
 
-
 except Exception as ex:
     print(f"Caught exception: {ex}")
 
-if os.path.exists(notebook_directory / working_directory_name):
-    shutil.rmtree(notebook_directory / working_directory_name)
+if not args.skip_cleanup:
+    if os.path.exists(notebook_directory / working_directory_name):
+        shutil.rmtree(notebook_directory / working_directory_name)

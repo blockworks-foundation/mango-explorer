@@ -14,6 +14,9 @@ report.state
 __pycache__
 .mypy_cache
 
+# Don't check in any experimental commands
+bin/experimental*
+
 # Don't check in anything that might have credentials.
 configuration.json
 wallet.json

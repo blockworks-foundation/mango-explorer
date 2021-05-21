@@ -97,6 +97,7 @@ Other notebooks are more user-oriented:
 * [Python Decimal Class](https://docs.python.org/3/library/decimal.html)
 * [Python Construct Library](https://construct.readthedocs.io/en/latest/)
 * [Python Observables](https://rxpy.readthedocs.io/en/latest/)
+* [RxPy Backpressure](https://github.com/daliclass/rxpy-backpressure)
 * [Pyston](https://www.pyston.org/)
 * [Flux Aggregator](https://github.com/octopus-network/solana-flux-aggregator)
 

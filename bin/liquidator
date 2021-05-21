@@ -30,12 +30,13 @@ import traceback
 from decimal import Decimal
 
 from AccountScout import AccountScout
-from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquidator, NullAccountLiquidator
-from BaseModel import Group
+from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquidator, NullAccountLiquidator, ReportingAccountLiquidator
+from BaseModel import Group, LiquidationEvent, MarginAccount
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
+from LiquidationProcessor import LiquidationProcessor
 from Notification import NotificationHandler, parse_subscription_target
-from PollingLiquidator import PollingLiquidator
+from Observables import EventSource
 from TradeExecutor import SerumImmediateTradeExecutor
 from TransactionScout import TransactionScout
 from Wallet import Wallet
@@ -119,10 +120,16 @@ try:
 
     logging.info("Wallet accounts OK.")
 
+    liquidations_publisher = EventSource[LiquidationEvent]()
+    liquidations_publisher.subscribe(on_next=lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
+    for notification_target in args.notify_liquidations:
+        liquidations_publisher.subscribe(on_next=notification_target.send)
+
     if args.dry_run:
         account_liquidator: AccountLiquidator = NullAccountLiquidator()
     else:
-        account_liquidator = ForceCancelOrdersAccountLiquidator(context, wallet)
+        intermediate = ForceCancelOrdersAccountLiquidator(context, wallet)
+        account_liquidator = ReportingAccountLiquidator(intermediate, context, wallet, liquidations_publisher)
 
     if args.dry_run or (args.target is None) or (len(args.target) == 0):
         wallet_balancer: WalletBalancer = NullWalletBalancer()
@@ -133,28 +140,38 @@ try:
         wallet_balancer = LiveWalletBalancer(context, wallet, trade_executor, action_threshold, tokens, targets)
 
     stop = False
-    liquidator = PollingLiquidator(context, wallet, account_liquidator, wallet_balancer,
-                                   throttle_to_seconds=throttle_ripe_update_to_seconds,
-                                   ripe_iterations=ripe_update_iterations)
-    liquidator.liquidations.subscribe(on_next=lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
-    for notification_target in args.notify_liquidations:
-        liquidator.liquidations.subscribe(on_next=notification_target.send)
+    liquidation_processor = LiquidationProcessor(context, account_liquidator, wallet_balancer)
 
     while not stop:
-        started_at = time.time()
         try:
-            liquidator.run()
+            margin_account_loop_started_at = time.time()
+            ripe = MarginAccount.load_all_ripe(context)
 
-            time_taken = time.time() - started_at
-            should_sleep_for = throttle_reload_to_seconds - int(time_taken)
-            sleep_for = max(should_sleep_for, 0)
-            logging.info(f"Check of all margin accounts complete. Time taken: {time_taken:.2f} seconds, sleeping for {sleep_for} seconds...")
-            time.sleep(sleep_for)
+            liquidation_processor.update_margin_accounts(ripe)
+
+            for counter in range(ripe_update_iterations):
+                price_loop_started_at = time.time()
+                logging.info(f"Update {counter} of {ripe_update_iterations} - {len(ripe)} ripe 🥭 accounts.")
+
+                group = Group.load(context)
+                prices = group.fetch_token_prices()
+
+                liquidation_processor.update_prices(prices)
+
+                price_loop_time_taken = time.time() - price_loop_started_at
+                price_loop_should_sleep_for = throttle_ripe_update_to_seconds - int(price_loop_time_taken)
+                price_loop_sleep_for = max(price_loop_should_sleep_for, 0)
+                logging.info(f"Price fetch and check of all ripe 🥭 accounts complete. Time taken: {price_loop_time_taken:.2f} seconds, sleeping for {price_loop_sleep_for} seconds...")
+                time.sleep(price_loop_sleep_for)
+
+            margin_account_loop_time_taken = time.time() - margin_account_loop_started_at
+            margin_account_should_sleep_for = throttle_reload_to_seconds - int(margin_account_loop_time_taken)
+            margin_account_sleep_for = max(margin_account_should_sleep_for, 0)
+            logging.info(f"Check of all margin accounts complete. Time taken: {margin_account_loop_time_taken:.2f} seconds, sleeping for {margin_account_sleep_for} seconds...")
+            time.sleep(margin_account_sleep_for)
         except KeyboardInterrupt:
             stop = True
             logging.info("Stopping...")
-        except Exception as exception:
-            logging.critical(f"Iteration failed because of exception: {exception}")
 
 except Exception as exception:
     logging.critical(f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}")

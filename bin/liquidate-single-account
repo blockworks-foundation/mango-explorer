@@ -29,10 +29,12 @@ import traceback
 from solana.publickey import PublicKey
 
 from AccountScout import AccountScout
-from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquidator, NullAccountLiquidator
-from BaseModel import Group, MarginAccount, TokenValue
+from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquidator, NullAccountLiquidator, ReportingAccountLiquidator
+from BaseModel import Group, LiquidationEvent, MarginAccount
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
+from Observables import EventSource
+from Notification import NotificationHandler, parse_subscription_target
 from TransactionScout import TransactionScout
 from Wallet import Wallet
 
@@ -57,11 +59,20 @@ parser.add_argument("--log-level", default=logging.INFO, type=lambda level: geta
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 parser.add_argument("--margin-account-address", type=PublicKey,
                     help="Solana address of the Mango Markets margin account to be liquidated")
+parser.add_argument("--notify-liquidations", type=parse_subscription_target, action="append", default=[],
+                    help="The notification target for liquidation events")
+parser.add_argument("--notify-errors", type=parse_subscription_target, action="append", default=[],
+                    help="The notification target for error events")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
+for notify in args.notify_errors:
+    handler = NotificationHandler(notify)
+    handler.setLevel(logging.ERROR)
+    logging.getLogger().addHandler(handler)
+
 logging.warning(WARNING_DISCLAIMER_TEXT)
 
 try:
@@ -91,24 +102,19 @@ try:
 
     logging.info("Wallet accounts OK.")
 
-    balances_before = group.fetch_balances(wallet.address)
-    print("Wallet balances before:")
-    TokenValue.report(print, balances_before)
-
-    print(f"    SOL balance: {context.fetch_sol_balance(wallet.address):>18,.8f}")
-    for basket_token in group.basket_tokens:
-        balance = TokenValue.fetch_total_value(context, wallet.address, basket_token.token)
-        print(f"{basket_token.token.name:>7} balance: {balance.value:>18,.8f}")
-
-    prices = group.fetch_token_prices()
-    margin_account = MarginAccount.load(context, margin_account_address, group)
-    intrinsic_balance_sheets_before = margin_account.get_intrinsic_balance_sheets(group)
-    print("Margin Account Before:", intrinsic_balance_sheets_before)
+    liquidations_publisher = EventSource[LiquidationEvent]()
+    liquidations_publisher.subscribe(on_next=lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
+    for notification_target in args.notify_liquidations:
+        liquidations_publisher.subscribe(on_next=notification_target.send)
 
     if args.dry_run:
         account_liquidator: AccountLiquidator = NullAccountLiquidator()
     else:
-        account_liquidator = ForceCancelOrdersAccountLiquidator(context, wallet)
+        intermediate = ForceCancelOrdersAccountLiquidator(context, wallet)
+        account_liquidator = ReportingAccountLiquidator(intermediate, context, wallet, liquidations_publisher)
+
+    prices = group.fetch_token_prices()
+    margin_account = MarginAccount.load(context, margin_account_address, group)
 
     transaction_id = account_liquidator.liquidate(group, margin_account, prices)
     if transaction_id is None:
@@ -121,15 +127,6 @@ try:
 
         transaction_scout = TransactionScout.load(context, transaction_id)
         print(str(transaction_scout))
-
-        group_after = Group.load(context)
-        margin_account_after_liquidation = MarginAccount.load(context, margin_account.address, group_after)
-        intrinsic_balance_sheets_after = margin_account_after_liquidation.get_intrinsic_balance_sheets(group_after)
-        print("Margin Account After:", intrinsic_balance_sheets_after)
-
-        balances_after = group_after.fetch_balances(wallet.address)
-        print("Wallet balances after:")
-        TokenValue.report(print, balances_after)
 
 except Exception as exception:
     logging.critical(f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}")

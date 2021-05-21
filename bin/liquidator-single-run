@@ -24,14 +24,17 @@ import argparse
 import logging
 import os.path
 import projectsetup  # noqa: F401
+import time
 import traceback
 
 from AccountScout import AccountScout
-from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquidator, NullAccountLiquidator
-from BaseModel import Group
+from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquidator, NullAccountLiquidator, ReportingAccountLiquidator
+from BaseModel import Group, LiquidationEvent, MarginAccount
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from PollingLiquidator import PollingLiquidator
+from LiquidationProcessor import LiquidationProcessor
+from Notification import NotificationHandler, parse_subscription_target
+from Observables import EventSource
 from TransactionScout import TransactionScout
 from Wallet import Wallet
 from WalletBalancer import NullWalletBalancer
@@ -53,6 +56,10 @@ parser.add_argument("--group-id", type=str, default=default_group_id,
                     help="Mango group ID/address")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
+parser.add_argument("--notify-liquidations", type=parse_subscription_target, action="append", default=[],
+                    help="The notification target for liquidation events")
+parser.add_argument("--notify-errors", type=parse_subscription_target, action="append", default=[],
+                    help="The notification target for error events")
 parser.add_argument("--log-level", default=logging.INFO, type=lambda level: getattr(logging, level),
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 parser.add_argument("--dry-run", action="store_true", default=False,
@@ -60,6 +67,11 @@ parser.add_argument("--dry-run", action="store_true", default=False,
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
+for notify in args.notify_errors:
+    handler = NotificationHandler(notify)
+    handler.setLevel(logging.ERROR)
+    logging.getLogger().addHandler(handler)
+
 logging.warning(WARNING_DISCLAIMER_TEXT)
 
 try:
@@ -86,15 +98,30 @@ try:
 
     logging.info("Wallet accounts OK.")
 
+    liquidations_publisher = EventSource[LiquidationEvent]()
+    liquidations_publisher.subscribe(on_next=lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
+    for notification_target in args.notify_liquidations:
+        liquidations_publisher.subscribe(on_next=notification_target.send)
+
     if args.dry_run:
         account_liquidator: AccountLiquidator = NullAccountLiquidator()
     else:
-        account_liquidator = ForceCancelOrdersAccountLiquidator(context, wallet)
+        intermediate = ForceCancelOrdersAccountLiquidator(context, wallet)
+        account_liquidator = ReportingAccountLiquidator(intermediate, context, wallet, liquidations_publisher)
 
     wallet_balancer = NullWalletBalancer()
-    liquidator = PollingLiquidator(context, wallet, account_liquidator, wallet_balancer, ripe_iterations=1)
-    liquidator.liquidations.subscribe(on_next=lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
-    liquidator.run()
+
+    liquidation_processor = LiquidationProcessor(context, account_liquidator, wallet_balancer)
+
+    started_at = time.time()
+    ripe = MarginAccount.load_all_ripe(context)
+    liquidation_processor.update_margin_accounts(ripe)
+
+    prices = group.fetch_token_prices()
+    liquidation_processor.update_prices(prices)
+
+    time_taken = time.time() - started_at
+    logging.info(f"Check of all margin accounts complete. Time taken: {time_taken:.2f} seconds.")
 
 except Exception as exception:
     logging.critical(f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}")
