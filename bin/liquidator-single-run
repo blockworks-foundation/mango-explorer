@@ -33,7 +33,7 @@ from BaseModel import Group, LiquidationEvent, MarginAccount
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 from LiquidationProcessor import LiquidationProcessor
-from Notification import NotificationHandler, parse_subscription_target
+from Notification import FilteringNotificationTarget, NotificationHandler, parse_subscription_target
 from Observables import EventSource
 from TransactionScout import TransactionScout
 from Wallet import Wallet
@@ -56,8 +56,14 @@ parser.add_argument("--group-id", type=str, default=default_group_id,
                     help="Mango group ID/address")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
+parser.add_argument("--name", type=str, default="Mango Markets Liquidator",
+                    help="Name of the liquidator (used in reports and alerts)")
 parser.add_argument("--notify-liquidations", type=parse_subscription_target, action="append", default=[],
                     help="The notification target for liquidation events")
+parser.add_argument("--notify-successful-liquidations", type=parse_subscription_target,
+                    action="append", default=[], help="The notification target for successful liquidation events")
+parser.add_argument("--notify-failed-liquidations", type=parse_subscription_target,
+                    action="append", default=[], help="The notification target for failed liquidation events")
 parser.add_argument("--notify-errors", type=parse_subscription_target, action="append", default=[],
                     help="The notification target for error events")
 parser.add_argument("--log-level", default=logging.INFO, type=lambda level: getattr(logging, level),
@@ -81,6 +87,8 @@ try:
         sys.exit(1)
     wallet = Wallet.load(id_filename)
 
+    liquidator_name = args.name
+
     context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
                       args.group_id)
 
@@ -102,12 +110,22 @@ try:
     liquidations_publisher.subscribe(on_next=lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
     for notification_target in args.notify_liquidations:
         liquidations_publisher.subscribe(on_next=notification_target.send)
+    for notification_target in args.notify_successful_liquidations:
+        filtering = FilteringNotificationTarget(notification_target, lambda item: isinstance(item, LiquidationEvent) and item.succeeded)
+        liquidations_publisher.subscribe(on_next=filtering.send)
+    for notification_target in args.notify_failed_liquidations:
+        filtering = FilteringNotificationTarget(notification_target, lambda item: isinstance(item, LiquidationEvent) and not item.succeeded)
+        liquidations_publisher.subscribe(on_next=filtering.send)
 
     if args.dry_run:
         account_liquidator: AccountLiquidator = NullAccountLiquidator()
     else:
         intermediate = ForceCancelOrdersAccountLiquidator(context, wallet)
-        account_liquidator = ReportingAccountLiquidator(intermediate, context, wallet, liquidations_publisher)
+        account_liquidator = ReportingAccountLiquidator(intermediate,
+                                                        context,
+                                                        wallet,
+                                                        liquidations_publisher,
+                                                        liquidator_name)
 
     wallet_balancer = NullWalletBalancer()
 
