@@ -329,7 +329,7 @@ All settlement transaction IDs confirmed.
 Order execution complete
 ```
 
-If you have problems at this stage, for example with Solana transactions timing out because of network problems, there are useful commands to manually fix things: `group-buy-token`, `group-sell-token` and (particularly useful for problems where Serum completes the order but the token doesn't make it to your wallet) `group-settle`.
+If you have problems at this stage, for example with Solana transactions timing out because of network problems, there are useful commands to manually fix things: `serum-buy`, `serum-sell` and (particularly useful for problems where Serum completes the order but the token doesn't make it to your wallet) `group-settle`.
 
 Now if we check the balances we can see we have roughly a third in each of the three group tokens:
 ```
