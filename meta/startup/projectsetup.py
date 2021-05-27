@@ -7,7 +7,14 @@ import pandas as pd
 import notebookimporter  # noqa: F401
 
 pd.options.display.float_format = '{:,.8f}'.format
-decimal.getcontext().prec = 18
+
+# Increased precision from 18 to 36 because for a decimal like:
+# val = Decimal("17436036573.2030800")
+#
+# The following rounding operations would both throw decimal.InvalidOperation:
+# val.quantize(Decimal('.000000001'))
+# round(val, 9)
+decimal.getcontext().prec = 36
 
 _log_levels = {
     logging.CRITICAL: "🛑",

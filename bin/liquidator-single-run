@@ -29,7 +29,7 @@ import traceback
 
 from AccountScout import AccountScout
 from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquidator, NullAccountLiquidator, ReportingAccountLiquidator
-from BaseModel import Group, LiquidationEvent, MarginAccount
+from BaseModel import Group, LiquidationEvent
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 from LiquidationProcessor import LiquidationProcessor
@@ -132,7 +132,7 @@ try:
     liquidation_processor = LiquidationProcessor(context, account_liquidator, wallet_balancer)
 
     started_at = time.time()
-    ripe = MarginAccount.load_all_ripe(context)
+    ripe = group.load_ripe_margin_accounts()
     liquidation_processor.update_margin_accounts(ripe)
 
     prices = group.fetch_token_prices()
