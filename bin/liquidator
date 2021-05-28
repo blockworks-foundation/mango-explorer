@@ -37,6 +37,7 @@ from Context import Context, default_cluster, default_cluster_url, default_progr
 from LiquidationProcessor import LiquidationProcessor
 from Notification import FilteringNotificationTarget, NotificationHandler, parse_subscription_target
 from Observables import EventSource
+from Retrier import retry_context
 from TradeExecutor import SerumImmediateTradeExecutor
 from TransactionScout import TransactionScout
 from Wallet import Wallet
@@ -162,7 +163,10 @@ try:
     while not stop:
         try:
             margin_account_loop_started_at = time.time()
-            ripe = group.load_ripe_margin_accounts()
+            with retry_context("Margin Account Fetch",
+                               group.load_ripe_margin_accounts,
+                               context.retry_pauses) as margin_account_retrier:
+                ripe = margin_account_retrier.run()
 
             liquidation_processor.update_margin_accounts(ripe)
 
@@ -170,10 +174,12 @@ try:
                 price_loop_started_at = time.time()
                 logging.info(f"Update {counter} of {ripe_update_iterations} - {len(ripe)} ripe 🥭 accounts.")
 
-                group = Group.load(context)
-                prices = group.fetch_token_prices()
+                with retry_context("Price Fetch",
+                                   lambda: Group.load_with_prices(context),
+                                   context.retry_pauses) as price_retrier:
+                    group, prices = price_retrier.run()
 
-                liquidation_processor.update_prices(prices)
+                liquidation_processor.update_prices(group, prices)
 
                 price_loop_time_taken = time.time() - price_loop_started_at
                 price_loop_should_sleep_for = float(throttle_ripe_update_to_seconds) - price_loop_time_taken

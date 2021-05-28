@@ -135,8 +135,9 @@ try:
     ripe = group.load_ripe_margin_accounts()
     liquidation_processor.update_margin_accounts(ripe)
 
+    group = Group.load(context)  # Refresh group data
     prices = group.fetch_token_prices()
-    liquidation_processor.update_prices(prices)
+    liquidation_processor.update_prices(group, prices)
 
     time_taken = time.time() - started_at
     logging.info(f"Check of all margin accounts complete. Time taken: {time_taken:.2f} seconds.")
