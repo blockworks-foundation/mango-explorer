@@ -21,6 +21,7 @@ startup_directory = notebook_directory / "meta" / "startup"
 sys.path.append(str(startup_directory))
 
 import argparse
+import json
 import logging
 import os.path
 import projectsetup  # noqa: F401
@@ -28,7 +29,7 @@ import traceback
 
 from decimal import Decimal
 
-from BaseModel import Group
+from BaseModel import Group, SpotMarketLookup
 from Constants import WARNING_DISCLAIMER_TEXT
 from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 from TradeExecutor import NullTradeExecutor, SerumImmediateTradeExecutor, TradeExecutor
@@ -50,6 +51,8 @@ parser.add_argument("--group-name", type=str, default=default_group_name,
                     help="Mango group name")
 parser.add_argument("--group-id", type=str, default=default_group_id,
                     help="Mango group ID/address")
+parser.add_argument("--token-data-file", type=str, default="solana.tokenlist.json",
+                    help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
@@ -95,7 +98,10 @@ try:
     if args.dry_run:
         trade_executor: TradeExecutor = NullTradeExecutor(print)
     else:
-        trade_executor = SerumImmediateTradeExecutor(context, wallet, group, adjustment_factor, print)
+        with open(args.token_data_file) as json_file:
+            token_data = json.load(json_file)
+            spot_market_lookup = SpotMarketLookup(token_data)
+        trade_executor = SerumImmediateTradeExecutor(context, wallet, spot_market_lookup, adjustment_factor, print)
 
     wallet_balancer = LiveWalletBalancer(context, wallet, trade_executor, action_threshold, tokens, targets)
     wallet_balancer.balance(prices)
