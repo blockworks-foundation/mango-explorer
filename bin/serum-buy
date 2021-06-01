@@ -72,8 +72,8 @@ try:
     wallet = Wallet.load(id_filename)
     adjustment_factor = args.adjustment_factor
 
-    context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
-                      args.group_id)
+    context = Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
+                                        args.dex_program_id, args.group_name, args.group_id)
 
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")

@@ -62,8 +62,8 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(WARNING_DISCLAIMER_TEXT)
 
 try:
-    context = Context(args.cluster, args.cluster_url, args.program_id, args.dex_program_id, args.group_name,
-                      args.group_id)
+    context = Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
+                                        args.dex_program_id, args.group_name, args.group_id)
 
     address = args.address
     object_type = args.type.upper()
