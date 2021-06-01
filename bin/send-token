@@ -80,7 +80,7 @@ try:
     logging.info(f"Wallet address: {wallet.address}")
 
     group = Group.load(context)
-    group_basket_token = BasketToken.find_by_name(group.basket_tokens, args.token_symbol)
+    group_basket_token = BasketToken.find_by_symbol(group.basket_tokens, args.token_symbol)
     group_token = group_basket_token.token
 
     spl_token = Token(context.client, group_token.mint, TOKEN_PROGRAM_ID, wallet.account)
