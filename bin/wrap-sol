@@ -1,0 +1,138 @@
+#!/usr/bin/env pyston3
+
+import os
+import sys
+
+from pathlib import Path
+
+# Get the full path to this script.
+script_path = Path(os.path.realpath(__file__))
+
+# The parent of the script is the bin directory.
+# The parent of the bin directory is the notebook directory.
+# It's this notebook directory we want.
+notebook_directory = script_path.parent.parent
+
+# Add the notebook directory to our import path.
+sys.path.append(str(notebook_directory))
+
+# Add the startup directory to our import path.
+startup_directory = notebook_directory / "meta" / "startup"
+sys.path.append(str(startup_directory))
+
+import argparse
+import logging
+import projectsetup  # noqa: F401
+import typing
+
+from decimal import Decimal
+from solana.account import Account
+from solana.system_program import CreateAccountParams, create_account
+from solana.transaction import Transaction
+from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID, WRAPPED_SOL_MINT
+from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, initialize_account, transfer2
+
+from BaseModel import TokenAccount, TokenLookup
+from Constants import SOL_DECIMAL_DIVISOR, SOL_DECIMALS, WARNING_DISCLAIMER_TEXT
+from Context import default_context as context
+from Wallet import Wallet
+
+parser = argparse.ArgumentParser(description='Creates a new wallet and private key, and saves it to a file.')
+parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of SOL to wrap")
+parser.add_argument("--id-file", type=str, default="id.json",
+                    help="file containing the JSON-formatted wallet private key")
+parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
+                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+parser.add_argument("--overwrite", action="store_true", default=False,
+                    help="overwrite the ID file, if it exists (use with care!)")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(WARNING_DISCLAIMER_TEXT)
+
+id_filename = args.id_file
+if not os.path.isfile(id_filename):
+    logging.error(f"Wallet file '{id_filename}' is not present.")
+    sys.exit(1)
+wallet = Wallet.load(id_filename)
+
+
+lookups = TokenLookup.default_lookups()
+wrapped_sol = lookups.find_by_symbol("SOL")
+
+token_accounts = TokenAccount.fetch_all_for_owner_and_token(context, wallet.address, wrapped_sol)
+
+if len(token_accounts) == 0:
+    close_wrapping_account = False
+else:
+    close_wrapping_account = True
+
+# Overpay - remainder should be sent back to our wallet.
+FEE = Decimal(".005")
+lamports_to_transfer = int((args.quantity + FEE) * SOL_DECIMAL_DIVISOR)
+
+transaction = Transaction()
+signers: typing.List[Account] = [wallet.account]
+
+wrapped_sol_account = Account()
+signers.append(wrapped_sol_account)
+
+transaction.add(
+    create_account(
+        CreateAccountParams(
+            from_pubkey=wallet.address,
+            new_account_pubkey=wrapped_sol_account.public_key(),
+            lamports=lamports_to_transfer,
+            space=ACCOUNT_LEN,
+            program_id=TOKEN_PROGRAM_ID,
+        )
+    )
+)
+transaction.add(
+    initialize_account(
+        InitializeAccountParams(
+            account=wrapped_sol_account.public_key(),
+            mint=WRAPPED_SOL_MINT,
+            owner=wallet.address,
+            program_id=TOKEN_PROGRAM_ID,
+        )
+    )
+)
+
+print("Wrapping SOL:")
+if len(token_accounts) == 0:
+    print(f"    Source: {wallet.address}")
+    print(f"    Destination: {wrapped_sol_account.public_key()}")
+else:
+    print(f"    Temporary account: {wrapped_sol_account.public_key()}")
+    print(f"    Source: {wallet.address}")
+    print(f"    Destination: {token_accounts[0].address}")
+    transaction.add(
+        transfer2(
+            Transfer2Params(
+                amount=int(args.quantity * SOL_DECIMAL_DIVISOR),
+                decimals=int(SOL_DECIMALS),
+                dest=token_accounts[0].address,
+                mint=WRAPPED_SOL_MINT,
+                owner=wallet.address,
+                program_id=TOKEN_PROGRAM_ID,
+                source=wrapped_sol_account.public_key()
+            )
+        )
+    )
+    transaction.add(
+        close_account(
+            CloseAccountParams(
+                account=wrapped_sol_account.public_key(),
+                owner=wallet.address,
+                dest=wallet.address,
+                program_id=TOKEN_PROGRAM_ID,
+            )
+        )
+    )
+
+response = context.client.send_transaction(transaction, *signers)
+transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
+print(f"Waiting on transaction ID: {transaction_id}")
+context.wait_for_confirmation(transaction_id)
+print("Done.")
