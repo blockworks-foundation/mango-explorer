@@ -134,5 +134,6 @@ else:
 response = context.client.send_transaction(transaction, *signers)
 transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
 print(f"Waiting on transaction ID: {transaction_id}")
+
 context.wait_for_confirmation(transaction_id)
-print("Done.")
+print("Transaction confirmed.")
