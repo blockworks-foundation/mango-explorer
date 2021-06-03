@@ -29,7 +29,7 @@ from Constants import WARNING_DISCLAIMER_TEXT
 from Context import default_context as context
 from Wallet import Wallet
 
-parser = argparse.ArgumentParser(description='Creates a new wallet and private key, and saves it to a file.')
+parser = argparse.ArgumentParser(description="Shows all Wrapped SOL accounts for the wallet.")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),

@@ -37,7 +37,7 @@ from Constants import SOL_DECIMAL_DIVISOR, SOL_DECIMALS, WARNING_DISCLAIMER_TEXT
 from Context import default_context as context
 from Wallet import Wallet
 
-parser = argparse.ArgumentParser(description='Unwraps Wrapped SOL to Pure SOL and adds it to the wallet account.')
+parser = argparse.ArgumentParser(description="Unwraps Wrapped SOL to Pure SOL and adds it to the wallet account.")
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of SOL to unwrap")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")

@@ -27,7 +27,7 @@ import projectsetup  # noqa: F401
 from Constants import WARNING_DISCLAIMER_TEXT
 from Wallet import Wallet
 
-parser = argparse.ArgumentParser(description='Creates a new wallet and private key, and saves it to a file.')
+parser = argparse.ArgumentParser(description="Creates a new wallet and private key, and saves it to a file.")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),

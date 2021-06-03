@@ -37,7 +37,7 @@ from Constants import SOL_DECIMAL_DIVISOR, SOL_DECIMALS, WARNING_DISCLAIMER_TEXT
 from Context import default_context as context
 from Wallet import Wallet
 
-parser = argparse.ArgumentParser(description='Creates a new wallet and private key, and saves it to a file.')
+parser = argparse.ArgumentParser(description="Wraps Pure SOL to Wrapped SOL and adds it to the first Wrapped SOL account, creating it if it doesn't exist.")
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of SOL to wrap")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")

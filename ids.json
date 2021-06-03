@@ -19,7 +19,7 @@
     "fee_symbol": "SRM",
     "mango_groups": {
       "BTC_ETH_SOL_SRM_USDC": {
-        "mango_group_pk": "79rqTHePsNnGEX6Re8Xkgf4QEkBfsXncXzyRbyMhHPMU",
+        "mango_group_pk": "F2XViFNBfGfgAfcsHoZcRvR3UuSWVU31pd96oJGuKqvi",
         "mint_pks": [
           "bypQzRBaSDWiKhoAw3hNkf35eF3z3AZCU8Sxks6mTPP",
           "ErWGBLBQMwdyC4H3MR8ef6pFK6gyHAyBxy4o1mHoqKzm",
@@ -45,7 +45,7 @@
           "SOL/USDC": "6vZd6Ghwkuzpbp7qNzBuRkhcfA9H3S7BJ2LCWSYrjfzo",
           "SRM/USDC": "6rRnXBLGzcD5v1q4NfWWZQdgBfqzEuD3g4GqDWVU8yhH"
         },
-        "srm_vault_pk": "8EJes1XNUL3ZodtjdAQMvo66V7LkijbDS5XmPRViM8sc",
+        "srm_vault_pk": "8zGj3Zb15YyZ8dfChXDeREaiDcR4fQ67Jwe1fWWwqwxy",
         "symbols": {
           "BTC": "bypQzRBaSDWiKhoAw3hNkf35eF3z3AZCU8Sxks6mTPP",
           "ETH": "ErWGBLBQMwdyC4H3MR8ef6pFK6gyHAyBxy4o1mHoqKzm",
@@ -54,11 +54,11 @@
           "USDC": "H6hy7Ykzc43EuGivv7VVuUKNpKgUoFAfUY3wdPr4UyRX"
         },
         "vault_pks": [
-          "2LNJSCfxktCvFG9ouBKbArMbQsRf8t2vqK8gBaXSKaQU",
-          "JA2d4bHESoAsXYG7yhQmG5rPU2T4sfAC4Wf54ERLfswi",
-          "DaNQipAgf1EAVfHFRUQKY1qBqLMzrVtUyWQZKQB9souH",
-          "4p3k3wDz6hEcCWBiqLj4egt2NvBiHyE1FUkQUuHvsGL9",
-          "J9fQsNQRSUyhC2kngGgda4yGKBSgcxQX8WrdcFTcnciL"
+          "Av3N1e76sca1f11MKL9PkkbTF1hNqqMZD8GaJQroA1rT",
+          "EZRrbY2ypi4SdxGHfnkvfQupBCEynEQHt7PQ2XQUCeE9",
+          "82ce9X5EXyb575kVVbqyyG3wBvNvCqX5U6A6Z7LdzfGC",
+          "8zGj3Zb15YyZ8dfChXDeREaiDcR4fQ67Jwe1fWWwqwxy",
+          "AZXVYC6QzD5fTH1QbL9n3fxfGsKGx9yA5nTq16h8MFaf"
         ]
       },
       "BTC_ETH_SOL_SRM_USDT": {
@@ -229,7 +229,7 @@
         ]
       }
     },
-    "mango_program_id": "3ZhWpsT19EuBZhG2BvcTVHBtFW4vFacGgLYpXZxotg1P",
+    "mango_program_id": "9XzhtAtDXxW2rjbeVFhTq4fnhD8dqzr154r5b2z6pxEp",
     "oracles": {
       "BTC/USDC": "6Xvk6VC423bbhwnCfMyPfE4C1vytoqsVMUY1Lbqeh6pf",
       "BTC/USDT": "6Xvk6VC423bbhwnCfMyPfE4C1vytoqsVMUY1Lbqeh6pf",
@@ -287,7 +287,7 @@
     "fee_token": "SRM",
     "mango_groups": {
       "BTC_ETH_SOL_SRM_USDC": {
-        "mango_group_pk": "79rqTHePsNnGEX6Re8Xkgf4QEkBfsXncXzyRbyMhHPMU",
+        "mango_group_pk": "47dHNHAM7NiYGYhCVXKFLumaSnfyRdsrvQZzPsA5TpgB",
         "mint_pks": [
           "bypQzRBaSDWiKhoAw3hNkf35eF3z3AZCU8Sxks6mTPP",
           "ErWGBLBQMwdyC4H3MR8ef6pFK6gyHAyBxy4o1mHoqKzm",
