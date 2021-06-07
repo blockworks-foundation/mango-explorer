@@ -26,4 +26,7 @@ def fake_context() -> mango.Context:
 
 
 def fake_index() -> mango.Index:
-    return mango.Index(mango.Version.V1, datetime.datetime.now(), Decimal(0), Decimal(0))
+    token = fake_token()
+    borrow = mango.TokenValue(token, Decimal(0))
+    deposit = mango.TokenValue(token, Decimal(0))
+    return mango.Index(mango.Version.V1, token, datetime.datetime.now(), borrow, deposit)

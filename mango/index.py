@@ -20,6 +20,8 @@ import logging
 from decimal import Decimal
 
 from .layouts import layouts
+from .token import Token
+from .tokenvalue import TokenValue
 from .version import Version
 
 
@@ -28,21 +30,24 @@ from .version import Version
 
 
 class Index:
-    def __init__(self, version: Version, last_update: datetime.datetime, borrow: Decimal, deposit: Decimal):
+    def __init__(self, version: Version, token: Token, last_update: datetime.datetime, borrow: TokenValue, deposit: TokenValue):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.version: Version = version
+        self.token: Token = token
         self.last_update: datetime.datetime = last_update
-        self.borrow: Decimal = borrow
-        self.deposit: Decimal = deposit
+        self.borrow: TokenValue = borrow
+        self.deposit: TokenValue = deposit
 
     @staticmethod
-    def from_layout(layout: layouts.INDEX, decimals: Decimal) -> "Index":
-        borrow = layout.borrow / Decimal(10 ** decimals)
-        deposit = layout.deposit / Decimal(10 ** decimals)
-        return Index(Version.UNSPECIFIED, layout.last_update, borrow, deposit)
+    def from_layout(layout: layouts.INDEX, token: Token) -> "Index":
+        borrow = TokenValue(token, layout.borrow / Decimal(10 ** token.decimals))
+        deposit = TokenValue(token, layout.deposit / Decimal(10 ** token.decimals))
+        return Index(Version.UNSPECIFIED, token, layout.last_update, borrow, deposit)
 
     def __str__(self) -> str:
-        return f"« Index [{self.last_update}]: Borrow: {self.borrow:,.8f}, Deposit: {self.deposit:,.8f} »"
+        return f"""« Index [{self.token.symbol}] ({self.last_update}):
+    Borrow: {self.borrow},
+    Deposit: {self.deposit} »"""
 
     def __repr__(self) -> str:
         return f"{self}"

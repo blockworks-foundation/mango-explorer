@@ -40,6 +40,11 @@ class Token:
     def round(self, value: Decimal) -> Decimal:
         return round(value, int(self.decimals))
 
+    def shift_to_decimals(self, value: Decimal) -> Decimal:
+        divisor = Decimal(10 ** self.decimals)
+        shifted = value / divisor
+        return round(shifted, int(self.decimals))
+
     def symbol_matches(self, symbol: str) -> bool:
         return self.symbol.upper() == symbol.upper()
 

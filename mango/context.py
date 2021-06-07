@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import argparse
 import logging
 import os
 import random
@@ -30,10 +31,6 @@ from .constants import MangoConstants, SOL_DECIMAL_DIVISOR
 
 # # 🥭 Context
 #
-# ## Context class
-#
-# A `Context` object to manage Solana connection and Mango configuration.
-#
 # ## Environment Variables
 #
 # It's possible to override the values in the `Context` variables provided. This can be easier than creating
@@ -45,14 +42,33 @@ from .constants import MangoConstants, SOL_DECIMAL_DIVISOR
 # * GROUP_NAME (defaults to: BTC_ETH_USDT)
 #
 
+default_cluster = os.environ.get("CLUSTER") or "mainnet-beta"
+default_cluster_url = os.environ.get("CLUSTER_URL") or MangoConstants["cluster_urls"][default_cluster]
+
+default_program_id = PublicKey(MangoConstants[default_cluster]["mango_program_id"])
+default_dex_program_id = PublicKey(MangoConstants[default_cluster]["dex_program_id"])
+
+default_group_name = os.environ.get("GROUP_NAME") or "BTC_ETH_USDT"
+default_group_id = PublicKey(MangoConstants[default_cluster]["mango_groups"][default_group_name]["mango_group_pk"])
+
+
+# # 🥭 Context class
+#
+# A `Context` object to manage Solana connection and Mango configuration.
+#
+
 class Context:
     def __init__(self, cluster: str, cluster_url: str, program_id: PublicKey, dex_program_id: PublicKey,
                  group_name: str, group_id: PublicKey):
+        configured_program_id = program_id
+        if group_id == PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV"):
+            configured_program_id = PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
+
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.cluster: str = cluster
         self.cluster_url: str = cluster_url
         self.client: Client = Client(cluster_url)
-        self.program_id: PublicKey = program_id
+        self.program_id: PublicKey = configured_program_id
         self.dex_program_id: PublicKey = dex_program_id
         self.group_name: str = group_name
         self.group_id: PublicKey = group_id
@@ -187,6 +203,52 @@ class Context:
 
         return Context(cluster, cluster_url, program_id, dex_program_id, group_name, group_id)
 
+    # Configuring a `Context` is a common operation for command-line programs and can involve a
+    # lot of duplicate code.
+    #
+    # This function centralises some of it to ensure consistency and readability.
+    #
+    @staticmethod
+    def add_context_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--cluster", type=str, default=default_cluster,
+                            help="Solana RPC cluster name")
+        parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
+                            help="Solana RPC cluster URL")
+        parser.add_argument("--program-id", type=str, default=default_program_id,
+                            help="Mango program ID/address")
+        parser.add_argument("--dex-program-id", type=str, default=default_dex_program_id,
+                            help="DEX program ID/address")
+        parser.add_argument("--group-name", type=str, default=default_group_name,
+                            help="Mango group name")
+        parser.add_argument("--group-id", type=str, default=default_group_id,
+                            help="Mango group ID/address")
+
+    # This function is the converse of `add_context_command_line_parameters()` - it takes
+    # an argument of parsed command-line parameters and expects to see the ones it added
+    # to that collection in the `add_context_command_line_parameters()` call.
+    #
+    # It then uses those parameters to create a properly-configured `Context` object.
+    #
+    @staticmethod
+    def from_context_command_line_parameters(args: argparse.Namespace) -> "Context":
+        # Here we should have values for all our parameters (because they'll either be specified
+        # on the command-line or will be the default_* value) but we may be in the situation where
+        # a group name is specified but not a group ID, and in that case we want to look up the
+        # group ID.
+        #
+        # In that situation, the group_name will not be default_group_name but the group_id will
+        # still be default_group_id. In that situation we want to override what we were passed
+        # as the group_id.
+        group_id = args.group_id
+        if (args.group_name != default_group_name) and (group_id == default_group_id):
+            group_id = PublicKey(MangoConstants[args.cluster]["mango_groups"][args.group_name]["mango_group_pk"])
+
+        program_id = args.program_id
+        if group_id == PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV"):
+            program_id = PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
+
+        return Context(args.cluster, args.cluster_url, program_id, args.dex_program_id, args.group_name, group_id)
+
     def __str__(self) -> str:
         return f"""« Context:
     Cluster: {self.cluster}
@@ -199,6 +261,7 @@ class Context:
 
     def __repr__(self) -> str:
         return f"{self}"
+
 
 # ## Provided Configured Objects
 #
@@ -222,15 +285,6 @@ class Context:
 # A default `Context` object that connects to mainnet, to save having to create one all over the place. This
 # `Context` uses the default values in the `ids.json` file, overridden by environment variables if they're set.
 
-
-default_cluster = os.environ.get("CLUSTER") or "mainnet-beta"
-default_cluster_url = os.environ.get("CLUSTER_URL") or MangoConstants["cluster_urls"][default_cluster]
-
-default_program_id = PublicKey(MangoConstants[default_cluster]["mango_program_id"])
-default_dex_program_id = PublicKey(MangoConstants[default_cluster]["dex_program_id"])
-
-default_group_name = os.environ.get("GROUP_NAME") or "BTC_ETH_USDT"
-default_group_id = PublicKey(MangoConstants[default_cluster]["mango_groups"][default_group_name]["mango_group_pk"])
 
 default_context = Context(default_cluster, default_cluster_url, default_program_id,
                           default_dex_program_id, default_group_name, default_group_id)

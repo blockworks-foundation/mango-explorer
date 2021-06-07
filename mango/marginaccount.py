@@ -45,7 +45,7 @@ from .version import Version
 class MarginAccount(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, account_flags: MangoAccountFlags,
                  has_borrows: bool, mango_group: PublicKey, owner: PublicKey,
-                 deposits: typing.List[Decimal], borrows: typing.List[Decimal],
+                 deposits: typing.List[TokenValue], borrows: typing.List[TokenValue],
                  open_orders: typing.List[PublicKey]):
         super().__init__(account_info)
         self.version: Version = version
@@ -53,13 +53,17 @@ class MarginAccount(AddressableAccount):
         self.has_borrows: bool = has_borrows
         self.mango_group: PublicKey = mango_group
         self.owner: PublicKey = owner
-        self.deposits: typing.List[Decimal] = deposits
-        self.borrows: typing.List[Decimal] = borrows
+        self.deposits: typing.List[TokenValue] = deposits
+        self.borrows: typing.List[TokenValue] = borrows
         self.open_orders: typing.List[PublicKey] = open_orders
         self.open_orders_accounts: typing.List[typing.Optional[OpenOrders]] = [None] * len(open_orders)
 
     @staticmethod
-    def from_layout(layout: construct.Struct, account_info: AccountInfo, version: Version) -> "MarginAccount":
+    def from_layout(layout: construct.Struct, account_info: AccountInfo, version: Version, group: Group) -> "MarginAccount":
+        if group.address != layout.mango_group:
+            raise Exception(
+                f"Margin account belongs to Group ID '{group.address}', not Group ID '{layout.mango_group}'")
+
         if version == Version.V1:
             # This is an old-style margin account, with no borrows flag
             has_borrows = False
@@ -68,19 +72,25 @@ class MarginAccount(AddressableAccount):
             has_borrows = bool(layout.has_borrows)
 
         account_flags: MangoAccountFlags = MangoAccountFlags.from_layout(layout.account_flags)
-        deposits: typing.List[Decimal] = []
+        deposits: typing.List[TokenValue] = []
         for index, deposit in enumerate(layout.deposits):
-            deposits += [deposit]
+            token = group.basket_tokens[index].token
+            rebased_deposit = deposit * group.basket_tokens[index].index.deposit.value
+            token_value = TokenValue(token, rebased_deposit)
+            deposits += [token_value]
 
-        borrows: typing.List[Decimal] = []
+        borrows: typing.List[TokenValue] = []
         for index, borrow in enumerate(layout.borrows):
-            borrows += [borrow]
+            token = group.basket_tokens[index].token
+            rebased_borrow = borrow * group.basket_tokens[index].index.borrow.value
+            token_value = TokenValue(token, rebased_borrow)
+            borrows += [token_value]
 
         return MarginAccount(account_info, version, account_flags, has_borrows, layout.mango_group,
                              layout.owner, deposits, borrows, list(layout.open_orders))
 
     @staticmethod
-    def parse(account_info: AccountInfo) -> "MarginAccount":
+    def parse(account_info: AccountInfo, group: Group) -> "MarginAccount":
         data = account_info.data
         if len(data) == layouts.MARGIN_ACCOUNT_V1.sizeof():
             layout = layouts.MARGIN_ACCOUNT_V1.parse(data)
@@ -92,18 +102,15 @@ class MarginAccount(AddressableAccount):
             raise Exception(
                 f"Data length ({len(data)}) does not match expected size ({layouts.MARGIN_ACCOUNT_V1.sizeof()} or {layouts.MARGIN_ACCOUNT_V2.sizeof()})")
 
-        return MarginAccount.from_layout(layout, account_info, version)
+        return MarginAccount.from_layout(layout, account_info, version, group)
 
     @staticmethod
-    def load(context: Context, margin_account_address: PublicKey, group: typing.Optional[Group] = None) -> "MarginAccount":
+    def load(context: Context, margin_account_address: PublicKey, group: Group) -> "MarginAccount":
         account_info = AccountInfo.load(context, margin_account_address)
         if account_info is None:
             raise Exception(f"MarginAccount account not found at address '{margin_account_address}'")
 
-        margin_account = MarginAccount.parse(account_info)
-        if group is None:
-            group_context = context.new_from_group_id(margin_account.mango_group)
-            group = Group.load(group_context)
+        margin_account = MarginAccount.parse(account_info, group)
         margin_account.load_open_orders_accounts(context, group)
         return margin_account
 
@@ -127,7 +134,7 @@ class MarginAccount(AddressableAccount):
         for margin_account_data in response["result"]:
             address = PublicKey(margin_account_data["pubkey"])
             account = AccountInfo._from_response_values(margin_account_data["account"], address)
-            margin_account = MarginAccount.parse(account)
+            margin_account = MarginAccount.parse(account, group)
             margin_accounts += [margin_account]
         return margin_accounts
 
@@ -166,7 +173,7 @@ class MarginAccount(AddressableAccount):
         for margin_account_data in response["result"]:
             address = PublicKey(margin_account_data["pubkey"])
             account = AccountInfo._from_response_values(margin_account_data["account"], address)
-            margin_account = MarginAccount.parse(account)
+            margin_account = MarginAccount.parse(account, group)
             margin_account.load_open_orders_accounts(context, group)
             margin_accounts += [margin_account]
         return margin_accounts
@@ -209,8 +216,8 @@ class MarginAccount(AddressableAccount):
         settled_assets: typing.List[Decimal] = [Decimal(0)] * len(group.basket_tokens)
         liabilities: typing.List[Decimal] = [Decimal(0)] * len(group.basket_tokens)
         for index, token in enumerate(group.basket_tokens):
-            settled_assets[index] = token.index.deposit * self.deposits[index]
-            liabilities[index] = token.index.borrow * self.borrows[index]
+            settled_assets[index] = token.index.deposit.value * self.deposits[index].value
+            liabilities[index] = token.index.borrow.value * self.borrows[index].value
 
         unsettled_assets: typing.List[Decimal] = [Decimal(0)] * len(group.basket_tokens)
         for index, open_orders_account in enumerate(self.open_orders_accounts):
@@ -332,7 +339,7 @@ class MarginAccount(AddressableAccount):
         for margin_account_data in result:
             address = PublicKey(margin_account_data["pubkey"])
             account = AccountInfo._from_response_values(margin_account_data["account"], address)
-            margin_account = MarginAccount.parse(account)
+            margin_account = MarginAccount.parse(account, group)
             open_orders_addresses += margin_account.open_orders
             margin_accounts += [margin_account]
 
@@ -368,8 +375,8 @@ class MarginAccount(AddressableAccount):
         return ripe_accounts
 
     def __str__(self) -> str:
-        deposits = ", ".join([f"{item:,.8f}" for item in self.deposits])
-        borrows = ", ".join([f"{item:,.8f}" for item in self.borrows])
+        deposits = "\n        ".join([f"{item}" for item in self.deposits])
+        borrows = "\n        ".join([f"{item:}" for item in self.borrows])
         if all(oo is None for oo in self.open_orders_accounts):
             open_orders = f"{self.open_orders}"
         else:
@@ -380,8 +387,10 @@ class MarginAccount(AddressableAccount):
     Has Borrows: {self.has_borrows}
     Owner: {self.owner}
     Mango Group: {self.mango_group}
-    Deposits: [{deposits}]
-    Borrows: [{borrows}]
+    Deposits:
+        {deposits}
+    Borrows:
+        {borrows}
     Mango Open Orders: {open_orders}
 »"""
 

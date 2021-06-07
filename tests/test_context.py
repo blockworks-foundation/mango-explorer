@@ -24,7 +24,7 @@ def test_new_from_cluster():
     context_has_default_values(mango.default_context)
     derived = mango.default_context.new_from_cluster("devnet")
     assert derived.cluster == "devnet"
-    assert derived.cluster_url == "https://devnet.solana.com"
+    assert derived.cluster_url == "https://api.devnet.solana.com"
     assert derived.program_id == PublicKey("9XzhtAtDXxW2rjbeVFhTq4fnhD8dqzr154r5b2z6pxEp")
     assert derived.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
     assert derived.group_name == "BTC_ETH_USDT"

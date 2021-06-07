@@ -1,5 +1,5 @@
 from .context import mango
-from .fakes import fake_account_info, fake_seeded_public_key
+from .fakes import fake_account_info, fake_seeded_public_key, fake_token
 
 from decimal import Decimal
 
@@ -9,8 +9,11 @@ def test_construction():
     has_borrows = False
     mango_group = fake_seeded_public_key("mango group")
     owner = fake_seeded_public_key("owner")
-    deposits = [Decimal(0), Decimal(0), Decimal(0)]
-    borrows = [Decimal(0), Decimal(0), Decimal(0)]
+    token = fake_token()
+    deposits = [mango.TokenValue(token, Decimal(0)), mango.TokenValue(
+        token, Decimal(0)), mango.TokenValue(token, Decimal(0))]
+    borrows = [mango.TokenValue(token, Decimal(0)), mango.TokenValue(
+        token, Decimal(0)), mango.TokenValue(token, Decimal(0))]
     open_orders = [None, None]
     actual = mango.MarginAccount(fake_account_info(), mango.Version.V1, account_flags,
                                  has_borrows, mango_group, owner, deposits, borrows,

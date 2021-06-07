@@ -47,9 +47,9 @@ class Group(AddressableAccount):
                  account_flags: MangoAccountFlags, basket_tokens: typing.List[BasketToken],
                  markets: typing.List[MarketMetadata],
                  signer_nonce: Decimal, signer_key: PublicKey, dex_program_id: PublicKey,
-                 total_deposits: typing.List[Decimal], total_borrows: typing.List[Decimal],
+                 total_deposits: typing.List[TokenValue], total_borrows: typing.List[TokenValue],
                  maint_coll_ratio: Decimal, init_coll_ratio: Decimal, srm_vault: PublicKey,
-                 admin: PublicKey, borrow_limits: typing.List[Decimal]):
+                 admin: PublicKey, borrow_limits: typing.List[TokenValue]):
         super().__init__(account_info)
         self.version: Version = version
         self.context: Context = context
@@ -59,13 +59,13 @@ class Group(AddressableAccount):
         self.signer_nonce: Decimal = signer_nonce
         self.signer_key: PublicKey = signer_key
         self.dex_program_id: PublicKey = dex_program_id
-        self.total_deposits: typing.List[Decimal] = total_deposits
-        self.total_borrows: typing.List[Decimal] = total_borrows
+        self.total_deposits: typing.List[TokenValue] = total_deposits
+        self.total_borrows: typing.List[TokenValue] = total_borrows
         self.maint_coll_ratio: Decimal = maint_coll_ratio
         self.init_coll_ratio: Decimal = init_coll_ratio
         self.srm_vault: PublicKey = srm_vault
         self.admin: PublicKey = admin
-        self.borrow_limits: typing.List[Decimal] = borrow_limits
+        self.borrow_limits: typing.List[TokenValue] = borrow_limits
 
     @property
     def shared_quote_token(self) -> BasketToken:
@@ -75,12 +75,23 @@ class Group(AddressableAccount):
     def base_tokens(self) -> typing.List[BasketToken]:
         return self.basket_tokens[:-1]
 
+    # When loading from a layout, we ignore mint_decimals. In this Discord from Daffy:
+    #   https://discord.com/channels/791995070613159966/818978757648842782/851481660049850388
+    # he says it's:
+    # > same as what is stored on on chain Mint
+    # > Cached on the group so we don't have to pass in the mint every time
+    #
+    # Since we already have that value from our `Token` we don't need to use it and we can
+    # stick with passing around `Token` objects.
+    #
     @staticmethod
     def from_layout(layout: construct.Struct, context: Context, account_info: AccountInfo, version: Version, token_lookup: TokenLookup = TokenLookup.default_lookups(), spot_market_lookup: SpotMarketLookup = SpotMarketLookup.default_lookups()) -> "Group":
         account_flags: MangoAccountFlags = MangoAccountFlags.from_layout(layout.account_flags)
-        indexes = list(map(lambda pair: Index.from_layout(pair[0], pair[1]), zip(layout.indexes, layout.mint_decimals)))
 
         basket_tokens: typing.List[BasketToken] = []
+        total_deposits: typing.List[TokenValue] = []
+        total_borrows: typing.List[TokenValue] = []
+        borrow_limits: typing.List[TokenValue] = []
         for index, token_address in enumerate(layout.tokens):
             static_token_data = token_lookup.find_by_mint(token_address)
             if static_token_data is None:
@@ -88,8 +99,12 @@ class Group(AddressableAccount):
 
             # We create a new Token object here specifically to force the use of our own decimals
             token = Token(static_token_data.symbol, static_token_data.name, token_address, layout.mint_decimals[index])
-            basket_token = BasketToken(token, layout.vaults[index], indexes[index])
+            token_index = Index.from_layout(layout.indexes[index], token)
+            basket_token = BasketToken(token, layout.vaults[index], token_index)
             basket_tokens += [basket_token]
+            total_deposits += [TokenValue(token, token.shift_to_decimals(layout.total_deposits[index]))]
+            total_borrows += [TokenValue(token, token.shift_to_decimals(layout.total_borrows[index]))]
+            borrow_limits += [TokenValue(token, token.shift_to_decimals(layout.borrow_limits[index]))]
 
         markets: typing.List[MarketMetadata] = []
         for index, market_address in enumerate(layout.spot_markets):
@@ -108,9 +123,9 @@ class Group(AddressableAccount):
         init_coll_ratio = layout.init_coll_ratio.quantize(Decimal('.01'))
 
         return Group(account_info, version, context, account_flags, basket_tokens, markets,
-                     layout.signer_nonce, layout.signer_key, layout.dex_program_id, layout.total_deposits,
-                     layout.total_borrows, maint_coll_ratio, init_coll_ratio, layout.srm_vault,
-                     layout.admin, layout.borrow_limits)
+                     layout.signer_nonce, layout.signer_key, layout.dex_program_id, total_deposits,
+                     total_borrows, maint_coll_ratio, init_coll_ratio, layout.srm_vault,
+                     layout.admin, borrow_limits)
 
     @staticmethod
     def parse(context: Context, account_info: AccountInfo) -> "Group":
@@ -177,93 +192,6 @@ class Group(AddressableAccount):
             balance = TokenValue.fetch_total_value(self.context, root_address, basket_token.token)
             balances += [balance]
         return balances
-
-    # The old way of fetching ripe margin accounts was to fetch them all then inspect them to see
-    # if they were ripe. That was a big performance problem - fetching all groups was quite a penalty.
-    #
-    # This is still how it's done in load_ripe_margin_accounts_v1().
-    #
-    # The newer mechanism is to look for the has_borrows flag in the MangoAccount. That should
-    # mean fewer MarginAccounts need to be fetched.
-    #
-    # This newer method is implemented in load_ripe_margin_accounts_v2()
-    # def load_ripe_margin_accounts(self) -> typing.List["MarginAccount"]:
-    #     if self.version == Version.V1:
-    #         return self.load_ripe_margin_accounts_v1()
-    #     else:
-    #         return self.load_ripe_margin_accounts_v2()
-
-    # def load_ripe_margin_accounts_v2(self) -> typing.List["MarginAccount"]:
-    #     started_at = time.time()
-
-    #     filters = [
-    #         # 'has_borrows' offset is: 8 + 32 + 32 + (5 * 16) + (5 * 16) + (4 * 32) + 1
-    #         # = 361
-    #         MemcmpOpts(
-    #             offset=361,
-    #             bytes=encode_int(1)
-    #         ),
-    #         MemcmpOpts(
-    #             offset=layouts.MANGO_ACCOUNT_FLAGS.sizeof(),  # mango_group is just after the MangoAccountFlags, which is the first entry
-    #             bytes=encode_key(self.address)
-    #         )
-    #     ]
-
-    #     response = self.context.client.get_program_accounts(self.context.program_id, data_size=layouts.MARGIN_ACCOUNT_V2.sizeof(
-    #     ), memcmp_opts=filters, commitment=Single, encoding="base64")
-    #     result = self.context.unwrap_or_raise_exception(response)
-    #     margin_accounts = []
-    #     open_orders_addresses = []
-    #     for margin_account_data in result:
-    #         address = PublicKey(margin_account_data["pubkey"])
-    #         account = AccountInfo._from_response_values(margin_account_data["account"], address)
-    #         margin_account = MarginAccount.parse(account)
-    #         open_orders_addresses += margin_account.open_orders
-    #         margin_accounts += [margin_account]
-
-    #     self.logger.info(f"Fetched {len(margin_accounts)} V2 margin accounts to process.")
-
-    #     # It looks like this will be more efficient - just specify only the addresses we
-    #     # need, and install them.
-    #     #
-    #     # Unfortunately there's a limit of 100 for the getMultipleAccounts() RPC call,
-    #     # and doing it repeatedly requires some pauses because of rate limits.
-    #     #
-    #     # It's quicker (so far) to bring back every openorders account for the group.
-    #     #
-    #     # open_orders_addresses = [oo for oo in open_orders_addresses if oo is not None]
-
-    #     # open_orders_account_infos = AccountInfo.load_multiple(self.context, open_orders_addresses)
-    #     # open_orders_account_infos_by_address = {key: value for key, value in [(str(account_info.address), account_info) for account_info in open_orders_account_infos]}
-
-    #     # for margin_account in margin_accounts:
-    #     #     margin_account.install_open_orders_accounts(self, open_orders_account_infos_by_address)
-
-    #     # This just fetches every openorder account for the group.
-    #     open_orders = OpenOrders.load_raw_open_orders_account_infos(self.context, self)
-    #     self.logger.info(f"Fetched {len(open_orders)} openorders accounts.")
-    #     for margin_account in margin_accounts:
-    #         margin_account.install_open_orders_accounts(self, open_orders)
-
-    #     prices = self.fetch_token_prices()
-    #     ripe_accounts = MarginAccount.filter_out_unripe(margin_accounts, self, prices)
-
-    #     time_taken = time.time() - started_at
-    #     self.logger.info(f"Loading ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
-    #     return ripe_accounts
-
-    # def load_ripe_margin_accounts_v1(self) -> typing.List["MarginAccount"]:
-    #     started_at = time.time()
-
-    #     margin_accounts = MarginAccount.load_all_for_group_with_open_orders(self.context, self.context.program_id, self)
-    #     self.logger.info(f"Fetched {len(margin_accounts)} V1 margin accounts to process.")
-
-    #     prices = self.fetch_token_prices()
-    #     ripe_accounts = MarginAccount.filter_out_unripe(margin_accounts, self, prices)
-
-    #     time_taken = time.time() - started_at
-    #     self.logger.info(f"Loading ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
-    #     return ripe_accounts
 
     def __str__(self) -> str:
         total_deposits = "\n        ".join(map(str, self.total_deposits))

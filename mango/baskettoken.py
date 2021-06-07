@@ -69,10 +69,11 @@ class BasketToken:
         return False
 
     def __str__(self) -> str:
+        index = str(self.index).replace("\n", "\n    ")
         return f"""« BasketToken:
     {self.token}
     Vault: {self.vault}
-    Index: {self.index}
+    Index: {index}
 »"""
 
     def __repr__(self) -> str:
