@@ -18,6 +18,7 @@ import logging
 import time
 import typing
 
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from .accountliquidator import AccountLiquidator
@@ -45,6 +46,9 @@ from .walletbalancer import WalletBalancer
 
 
 class LiquidationProcessor:
+    _AGE_ERROR_THRESHOLD = timedelta(minutes=10)
+    _AGE_WARNING_THRESHOLD = timedelta(minutes=5)
+
     def __init__(self, context: Context, account_liquidator: AccountLiquidator, wallet_balancer: WalletBalancer, worthwhile_threshold: Decimal = Decimal("0.01")):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
@@ -53,10 +57,15 @@ class LiquidationProcessor:
         self.worthwhile_threshold: Decimal = worthwhile_threshold
         self.liquidations: EventSource[LiquidationEvent] = EventSource[LiquidationEvent]()
         self.ripe_accounts: typing.Optional[typing.List[MarginAccount]] = None
+        self.ripe_accounts_updated_at: datetime = datetime.now()
+        self.prices_updated_at: datetime = datetime.now()
 
     def update_margin_accounts(self, ripe_margin_accounts: typing.List[MarginAccount]):
-        self.logger.info(f"Received {len(ripe_margin_accounts)} ripe 🥭 margin accounts to process.")
+        self.logger.info(
+            f"Received {len(ripe_margin_accounts)} ripe 🥭 margin accounts to process - prices last updated {self.prices_updated_at:%Y-%m-%d %H:%M:%S}")
+        self._check_update_recency("prices", self.prices_updated_at)
         self.ripe_accounts = ripe_margin_accounts
+        self.ripe_accounts_updated_at = datetime.now()
 
     def update_prices(self, group, prices):
         started_at = time.time()
@@ -65,7 +74,10 @@ class LiquidationProcessor:
             self.logger.info("Ripe accounts is None - skipping")
             return
 
-        self.logger.info(f"Running on {len(self.ripe_accounts)} ripe accounts.")
+        self.logger.info(
+            f"Running on {len(self.ripe_accounts)} ripe accounts - ripe accounts last updated {self.ripe_accounts_updated_at:%Y-%m-%d %H:%M:%S}")
+        self._check_update_recency("ripe account", self.ripe_accounts_updated_at)
+
         updated: typing.List[MarginAccountMetadata] = []
         for margin_account in self.ripe_accounts:
             balance_sheet = margin_account.get_balance_sheet_totals(group, prices)
@@ -85,6 +97,7 @@ class LiquidationProcessor:
 
         self._liquidate_all(group, prices, worthwhile)
 
+        self.prices_updated_at = datetime.now()
         time_taken = time.time() - started_at
         self.logger.info(f"Check of all ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
 
@@ -115,3 +128,12 @@ class LiquidationProcessor:
                 # so let's be a little paranoid about it.
                 if highest in to_process:
                     to_process.remove(highest)
+
+    def _check_update_recency(self, name: str, last_updated_at: datetime) -> None:
+        how_long_ago_was_last_update = datetime.now() - last_updated_at
+        if how_long_ago_was_last_update > LiquidationProcessor._AGE_ERROR_THRESHOLD:
+            self.logger.error(
+                f"Last {name} update was {how_long_ago_was_last_update} ago - more than error threshold {LiquidationProcessor._AGE_ERROR_THRESHOLD}")
+        elif how_long_ago_was_last_update > LiquidationProcessor._AGE_WARNING_THRESHOLD:
+            self.logger.warning(
+                f"Last {name} update was {how_long_ago_was_last_update} ago - more than warning threshold {LiquidationProcessor._AGE_WARNING_THRESHOLD}")
