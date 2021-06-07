@@ -1,0 +1,20 @@
+{
+    "telemetry.enableCrashReporter": false,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.autoComplete.addBrackets": true,
+    "python.formatting.autopep8Args": [
+        "--max-line-length",
+        "120"
+    ],
+    "shebang.associations": [
+        {
+            "pattern": "^#!/usr/bin/env pyston3$",
+            "language": "python"
+        }
+    ]
+}

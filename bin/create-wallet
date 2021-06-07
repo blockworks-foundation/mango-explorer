@@ -1,31 +1,13 @@
 #!/usr/bin/env pyston3
 
+import argparse
 import os
+import logging
 import sys
 
-from pathlib import Path
-
-# Get the full path to this script.
-script_path = Path(os.path.realpath(__file__))
-
-# The parent of the script is the bin directory.
-# The parent of the bin directory is the notebook directory.
-# It's this notebook directory we want.
-notebook_directory = script_path.parent.parent
-
-# Add the notebook directory to our import path.
-sys.path.append(str(notebook_directory))
-
-# Add the startup directory to our import path.
-startup_directory = notebook_directory / "meta" / "startup"
-sys.path.append(str(startup_directory))
-
-import argparse
-import logging
-import projectsetup  # noqa: F401
-
-from Constants import WARNING_DISCLAIMER_TEXT
-from Wallet import Wallet
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Creates a new wallet and private key, and saves it to a file.")
 parser.add_argument("--id-file", type=str, default="id.json",
@@ -37,8 +19,8 @@ parser.add_argument("--overwrite", action="store_true", default=False,
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
-logging.warning(WARNING_DISCLAIMER_TEXT)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-new_wallet = Wallet.create()
+new_wallet = mango.Wallet.create()
 new_wallet.save(args.id_file, args.overwrite)
 print(f"Wallet for address {new_wallet.address} created in file: '{args.id_file}'.")

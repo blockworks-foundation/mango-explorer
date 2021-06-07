@@ -1,75 +1,53 @@
 #!/usr/bin/env pyston3
 
-import os
-import sys
-
-from pathlib import Path
-
-# Get the full path to this script.
-script_path = Path(os.path.realpath(__file__))
-
-# The parent of the script is the bin directory.
-# The parent of the bin directory is the notebook directory.
-# It's this notebook directory we want.
-notebook_directory = script_path.parent.parent
-
-# Add the notebook directory to our import path.
-sys.path.append(str(notebook_directory))
-
-# Add the startup directory to our import path.
-startup_directory = notebook_directory / "meta" / "startup"
-sys.path.append(str(startup_directory))
-
 import argparse
 import logging
+import os
 import os.path
-import projectsetup  # noqa: F401
 import rx.operators as ops
 import rx
+import sys
 import traceback
 import typing
 
-from pathlib import Path
 from solana.publickey import PublicKey
 
-from BaseModel import InstructionType, OwnedTokenValue
-from Constants import WARNING_DISCLAIMER_TEXT
-from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from Notification import FilteringNotificationTarget, NotificationHandler, parse_subscription_target
-from Observables import CaptureFirstItem, PrintingObserverSubscriber
-from TransactionScout import TransactionScout, fetch_all_recent_transaction_signatures
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description="Run the Transaction Scout to display information about a specific transaction.")
-parser.add_argument("--cluster", type=str, default=default_cluster,
+parser = argparse.ArgumentParser(
+    description="Run the Transaction Scout to display information about a specific transaction.")
+parser.add_argument("--cluster", type=str, default=mango.default_cluster,
                     help="Solana RPC cluster name")
-parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
+parser.add_argument("--cluster-url", type=str, default=mango.default_cluster_url,
                     help="Solana RPC cluster URL")
-parser.add_argument("--program-id", type=str, default=default_program_id,
+parser.add_argument("--program-id", type=str, default=mango.default_program_id,
                     help="Mango program ID/address")
-parser.add_argument("--dex-program-id", type=str, default=default_dex_program_id,
+parser.add_argument("--dex-program-id", type=str, default=mango.default_dex_program_id,
                     help="DEX program ID/address")
-parser.add_argument("--group-name", type=str, default=default_group_name,
+parser.add_argument("--group-name", type=str, default=mango.default_group_name,
                     help="Mango group name")
-parser.add_argument("--group-id", type=str, default=default_group_id,
+parser.add_argument("--group-id", type=str, default=mango.default_group_id,
                     help="Mango group ID/address")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--since-signature", type=str,
                     help="The signature of the transaction to look up")
-parser.add_argument("--instruction-type", type=lambda ins: InstructionType[ins],
-                    choices=list(InstructionType),
+parser.add_argument("--instruction-type", type=lambda ins: mango.InstructionType[ins],
+                    choices=list(mango.InstructionType),
                     help="The signature of the transaction to look up")
 parser.add_argument("--sender", type=PublicKey,
                     help="Only transactions sent by this PublicKey will be returned")
-parser.add_argument("--notify-transactions", type=parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify-transactions", type=mango.parse_subscription_target, action="append", default=[],
                     help="The notification target for transaction information")
-parser.add_argument("--notify-successful-transactions", type=parse_subscription_target,
+parser.add_argument("--notify-successful-transactions", type=mango.parse_subscription_target,
                     action="append", default=[], help="The notification target for successful transactions")
-parser.add_argument("--notify-failed-transactions", type=parse_subscription_target,
+parser.add_argument("--notify-failed-transactions", type=mango.parse_subscription_target,
                     action="append", default=[], help="The notification target for failed transactions")
-parser.add_argument("--notify-errors", type=parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
                     help="The notification target for errors")
 parser.add_argument("--summarise", action="store_true", default=False,
                     help="create a short summary rather than the full TransactionScout details")
@@ -79,15 +57,15 @@ args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
 for notify in args.notify_errors:
-    handler = NotificationHandler(notify)
+    handler = mango.NotificationHandler(notify)
     handler.setLevel(logging.ERROR)
     logging.getLogger().addHandler(handler)
 
-logging.warning(WARNING_DISCLAIMER_TEXT)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 
-def summariser(context: Context) -> typing.Callable[[TransactionScout], str]:
-    def summarise(transaction_scout: TransactionScout) -> str:
+def summariser(context: mango.Context) -> typing.Callable[[mango.TransactionScout], str]:
+    def summarise(transaction_scout: mango.TransactionScout) -> str:
         instruction_details: typing.List[str] = []
         for ins in transaction_scout.instructions:
             params = ins.describe_parameters()
@@ -97,20 +75,22 @@ def summariser(context: Context) -> typing.Callable[[TransactionScout], str]:
                 instruction_details += [f"[{ins.instruction_type.name}: {params}]"]
 
         instructions = ", ".join(instruction_details)
-        changes = OwnedTokenValue.changes(transaction_scout.pre_token_balances, transaction_scout.post_token_balances)
+        changes = mango.OwnedTokenValue.changes(
+            transaction_scout.pre_token_balances, transaction_scout.post_token_balances)
 
         in_tokens = []
         for ins in transaction_scout.instructions:
             if ins.token_in_account is not None:
-                in_tokens += [OwnedTokenValue.find_by_owner(changes, ins.token_in_account)]
+                in_tokens += [mango.OwnedTokenValue.find_by_owner(changes, ins.token_in_account)]
 
         out_tokens = []
         for ins in transaction_scout.instructions:
             if ins.token_out_account is not None:
-                out_tokens += [OwnedTokenValue.find_by_owner(changes, ins.token_out_account)]
+                out_tokens += [mango.OwnedTokenValue.find_by_owner(changes, ins.token_out_account)]
 
         changed_tokens = in_tokens + out_tokens
-        changed_tokens_text = ", ".join([f"{tok.token_value.value:,.8f} {tok.token_value.token.name}" for tok in changed_tokens]) or "None"
+        changed_tokens_text = ", ".join(
+            [f"{tok.token_value.value:,.8f} {tok.token_value.token.name}" for tok in changed_tokens]) or "None"
 
         return f"« 🥭 {transaction_scout.timestamp} {transaction_scout.group_name} {instructions}\n    From: {transaction_scout.sender}\n    Token Changes: {changed_tokens_text}\n    {transaction_scout.signatures} »"
     return summarise
@@ -121,20 +101,20 @@ try:
     instruction_type = args.instruction_type
     sender = args.sender
 
-    context = Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
-                                        args.dex_program_id, args.group_name, args.group_id)
+    context = mango.Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
+                                              args.dex_program_id, args.group_name, args.group_id)
 
     logging.info(f"Context: {context}")
     logging.info(f"Since signature: {since_signature}")
     logging.info(f"Filter to instruction type: {instruction_type}")
 
-    first_item_capturer = CaptureFirstItem()
-    signatures = fetch_all_recent_transaction_signatures()
+    first_item_capturer = mango.CaptureFirstItem()
+    signatures = mango.fetch_all_recent_transaction_signatures(context)
     pipeline = rx.from_(signatures).pipe(
         ops.map(first_item_capturer.capture_if_first),
         #  ops.map(debug_print_item("Signature:")),
         ops.take_while(lambda sig: sig != since_signature),
-        ops.map(lambda sig: TransactionScout.load_if_available(context, sig)),
+        ops.map(lambda sig: mango.TransactionScout.load_if_available(context, sig)),
         ops.filter(lambda item: item is not None),
         #  ops.take(100),
     )
@@ -156,15 +136,17 @@ try:
         )
 
     fan_out = rx.subject.Subject()
-    fan_out.subscribe(PrintingObserverSubscriber(False))
+    fan_out.subscribe(mango.PrintingObserverSubscriber(False))
 
     for notify in args.notify_transactions:
         fan_out.subscribe(on_next=notify.send)
     for notification_target in args.notify_successful_transactions:
-        filtering = FilteringNotificationTarget(notification_target, lambda item: isinstance(item, TransactionScout) and item.succeeded)
+        filtering = mango.FilteringNotificationTarget(
+            notification_target, lambda item: isinstance(item, mango.TransactionScout) and item.succeeded)
         fan_out.subscribe(on_next=filtering.send)
     for notification_target in args.notify_failed_transactions:
-        filtering = FilteringNotificationTarget(notification_target, lambda item: isinstance(item, TransactionScout) and not item.succeeded)
+        filtering = mango.FilteringNotificationTarget(notification_target, lambda item: isinstance(
+            item, mango.TransactionScout) and not item.succeeded)
         fan_out.subscribe(on_next=filtering.send)
 
     pipeline.subscribe(fan_out)

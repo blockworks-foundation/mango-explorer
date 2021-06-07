@@ -1,70 +1,43 @@
 #!/usr/bin/env pyston3
 
-import os
-import sys
-
-from pathlib import Path
-
-# Get the full path to this script.
-script_path = Path(os.path.realpath(__file__))
-
-# The parent of the script is the bin directory.
-# The parent of the bin directory is the notebook directory.
-# It's this notebook directory we want.
-notebook_directory = script_path.parent.parent
-
-# Add the notebook directory to our import path.
-sys.path.append(str(notebook_directory))
-
-# Add the startup directory to our import path.
-startup_directory = notebook_directory / "meta" / "startup"
-sys.path.append(str(startup_directory))
-
 import argparse
 import logging
+import os
 import os.path
-import projectsetup  # noqa: F401
+import sys
 import time
 import traceback
 
-from AccountScout import AccountScout
-from AccountLiquidator import AccountLiquidator, ForceCancelOrdersAccountLiquidator, NullAccountLiquidator, ReportingAccountLiquidator
-from BaseModel import Group, LiquidationEvent
-from Constants import WARNING_DISCLAIMER_TEXT
-from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from LiquidationProcessor import LiquidationProcessor
-from Notification import FilteringNotificationTarget, NotificationHandler, parse_subscription_target
-from Observables import EventSource
-from TransactionScout import TransactionScout
-from Wallet import Wallet
-from WalletBalancer import NullWalletBalancer
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Run a single pass of the liquidator for a Mango Markets group.")
-parser.add_argument("--cluster", type=str, default=default_cluster,
+parser.add_argument("--cluster", type=str, default=mango.default_cluster,
                     help="Solana RPC cluster name")
-parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
+parser.add_argument("--cluster-url", type=str, default=mango.default_cluster_url,
                     help="Solana RPC cluster URL")
-parser.add_argument("--program-id", type=str, default=default_program_id,
+parser.add_argument("--program-id", type=str, default=mango.default_program_id,
                     help="Mango program ID/address")
-parser.add_argument("--dex-program-id", type=str, default=default_dex_program_id,
+parser.add_argument("--dex-program-id", type=str, default=mango.default_dex_program_id,
                     help="DEX program ID/address")
-parser.add_argument("--group-name", type=str, default=default_group_name,
+parser.add_argument("--group-name", type=str, default=mango.default_group_name,
                     help="Mango group name")
-parser.add_argument("--group-id", type=str, default=default_group_id,
+parser.add_argument("--group-id", type=str, default=mango.default_group_id,
                     help="Mango group ID/address")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--name", type=str, default="Mango Markets Liquidator",
                     help="Name of the liquidator (used in reports and alerts)")
-parser.add_argument("--notify-liquidations", type=parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify-liquidations", type=mango.parse_subscription_target, action="append", default=[],
                     help="The notification target for liquidation events")
-parser.add_argument("--notify-successful-liquidations", type=parse_subscription_target,
+parser.add_argument("--notify-successful-liquidations", type=mango.parse_subscription_target,
                     action="append", default=[], help="The notification target for successful liquidation events")
-parser.add_argument("--notify-failed-liquidations", type=parse_subscription_target,
+parser.add_argument("--notify-failed-liquidations", type=mango.parse_subscription_target,
                     action="append", default=[], help="The notification target for failed liquidation events")
-parser.add_argument("--notify-errors", type=parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
                     help="The notification target for error events")
 parser.add_argument("--log-level", default=logging.INFO, type=lambda level: getattr(logging, level),
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
@@ -74,31 +47,31 @@ args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
 for notify in args.notify_errors:
-    handler = NotificationHandler(notify)
+    handler = mango.NotificationHandler(notify)
     handler.setLevel(logging.ERROR)
     logging.getLogger().addHandler(handler)
 
-logging.warning(WARNING_DISCLAIMER_TEXT)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
     id_filename = args.id_file
     if not os.path.isfile(id_filename):
         logging.error(f"Wallet file '{id_filename}' is not present.")
         sys.exit(1)
-    wallet = Wallet.load(id_filename)
+    wallet = mango.Wallet.load(id_filename)
 
     liquidator_name = args.name
 
-    context = Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
-                                        args.dex_program_id, args.group_name, args.group_id)
+    context = mango.Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
+                                              args.dex_program_id, args.group_name, args.group_id)
 
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
 
-    group = Group.load(context)
+    group = mango.Group.load(context)
 
     logging.info("Checking wallet accounts.")
-    scout = AccountScout()
+    scout = mango.AccountScout()
     report = scout.verify_account_prepared_for_group(context, group, wallet.address)
     logging.info(f"Wallet account report: {report}")
     if report.has_errors:
@@ -106,36 +79,39 @@ try:
 
     logging.info("Wallet accounts OK.")
 
-    liquidations_publisher = EventSource[LiquidationEvent]()
-    liquidations_publisher.subscribe(on_next=lambda event: logging.info(str(TransactionScout.load(context, event.signature))))
+    liquidations_publisher = mango.EventSource[mango.LiquidationEvent]()
+    liquidations_publisher.subscribe(on_next=lambda event: logging.info(
+        str(mango.TransactionScout.load(context, event.signature))))
     for notification_target in args.notify_liquidations:
         liquidations_publisher.subscribe(on_next=notification_target.send)
     for notification_target in args.notify_successful_liquidations:
-        filtering = FilteringNotificationTarget(notification_target, lambda item: isinstance(item, LiquidationEvent) and item.succeeded)
+        filtering = mango.FilteringNotificationTarget(
+            notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
         liquidations_publisher.subscribe(on_next=filtering.send)
     for notification_target in args.notify_failed_liquidations:
-        filtering = FilteringNotificationTarget(notification_target, lambda item: isinstance(item, LiquidationEvent) and not item.succeeded)
+        filtering = mango.FilteringNotificationTarget(notification_target, lambda item: isinstance(
+            item, mango.LiquidationEvent) and not item.succeeded)
         liquidations_publisher.subscribe(on_next=filtering.send)
 
     if args.dry_run:
-        account_liquidator: AccountLiquidator = NullAccountLiquidator()
+        account_liquidator: mango.AccountLiquidator = mango.NullAccountLiquidator()
     else:
-        intermediate = ForceCancelOrdersAccountLiquidator(context, wallet)
-        account_liquidator = ReportingAccountLiquidator(intermediate,
-                                                        context,
-                                                        wallet,
-                                                        liquidations_publisher,
-                                                        liquidator_name)
+        intermediate = mango.ForceCancelOrdersAccountLiquidator(context, wallet)
+        account_liquidator = mango.ReportingAccountLiquidator(intermediate,
+                                                              context,
+                                                              wallet,
+                                                              liquidations_publisher,
+                                                              liquidator_name)
 
-    wallet_balancer = NullWalletBalancer()
+    wallet_balancer = mango.NullWalletBalancer()
 
-    liquidation_processor = LiquidationProcessor(context, account_liquidator, wallet_balancer)
+    liquidation_processor = mango.LiquidationProcessor(context, account_liquidator, wallet_balancer)
 
     started_at = time.time()
     ripe = group.load_ripe_margin_accounts()
     liquidation_processor.update_margin_accounts(ripe)
 
-    group = Group.load(context)  # Refresh group data
+    group = mango.Group.load(context)  # Refresh group data
     prices = group.fetch_token_prices()
     liquidation_processor.update_prices(group, prices)
 

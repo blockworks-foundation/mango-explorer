@@ -4,6 +4,7 @@ mypy
 nblint
 pandas
 pyserum
+pytest
 rx
 rxpy_backpressure
 solana

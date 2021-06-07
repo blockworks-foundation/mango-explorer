@@ -1,29 +1,10 @@
 #!/usr/bin/env pyston3
 
-import os
-import sys
-
-from pathlib import Path
-
-# Get the full path to this script.
-script_path = Path(os.path.realpath(__file__))
-
-# The parent of the script is the bin directory.
-# The parent of the bin directory is the notebook directory.
-# It's this notebook directory we want.
-notebook_directory = script_path.parent.parent
-
-# Add the notebook directory to our import path.
-sys.path.append(str(notebook_directory))
-
-# Add the startup directory to our import path.
-startup_directory = notebook_directory / "meta" / "startup"
-sys.path.append(str(startup_directory))
-
 import argparse
 import logging
+import os
 import os.path
-import projectsetup  # noqa: F401
+import sys
 import traceback
 
 from decimal import Decimal
@@ -31,24 +12,24 @@ from solana.publickey import PublicKey
 from solana.system_program import TransferParams, transfer
 from solana.transaction import Transaction
 
-from Constants import SOL_DECIMAL_DIVISOR, WARNING_DISCLAIMER_TEXT
-from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from Wallet import Wallet
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Sends SOL to a different address.")
-parser.add_argument("--cluster", type=str, default=default_cluster,
+parser.add_argument("--cluster", type=str, default=mango.default_cluster,
                     help="Solana RPC cluster name")
-parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
+parser.add_argument("--cluster-url", type=str, default=mango.default_cluster_url,
                     help="Solana RPC cluster URL")
-parser.add_argument("--program-id", type=str, default=default_program_id,
+parser.add_argument("--program-id", type=str, default=mango.default_program_id,
                     help="Mango program ID/address")
-parser.add_argument("--dex-program-id", type=str, default=default_dex_program_id,
+parser.add_argument("--dex-program-id", type=str, default=mango.default_dex_program_id,
                     help="DEX program ID/address")
-parser.add_argument("--group-name", type=str, default=default_group_name,
+parser.add_argument("--group-name", type=str, default=mango.default_group_name,
                     help="Mango group name")
-parser.add_argument("--group-id", type=str, default=default_group_id,
+parser.add_argument("--group-id", type=str, default=mango.default_group_id,
                     help="Mango group ID/address")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
@@ -62,17 +43,17 @@ parser.add_argument("--dry-run", action="store_true", default=False,
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
-logging.warning(WARNING_DISCLAIMER_TEXT)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
     id_filename = args.id_file
     if not os.path.isfile(id_filename):
         logging.error(f"Wallet file '{id_filename}' is not present.")
         sys.exit(1)
-    wallet = Wallet.load(id_filename)
+    wallet = mango.Wallet.load(id_filename)
 
-    context = Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
-                                        args.dex_program_id, args.group_name, args.group_id)
+    context = mango.Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
+                                              args.dex_program_id, args.group_name, args.group_id)
 
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
@@ -81,7 +62,7 @@ try:
     print(f"Balance: {sol_balance} SOL")
 
     # "A lamport has a value of 0.000000001 SOL." from https://docs.solana.com/introduction
-    lamports = int(args.quantity * SOL_DECIMAL_DIVISOR)
+    lamports = int(args.quantity * mango.SOL_DECIMAL_DIVISOR)
     source = wallet.address
     destination = args.address
 

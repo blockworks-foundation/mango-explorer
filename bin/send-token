@@ -1,29 +1,10 @@
 #!/usr/bin/env pyston3
 
-import os
-import sys
-
-from pathlib import Path
-
-# Get the full path to this script.
-script_path = Path(os.path.realpath(__file__))
-
-# The parent of the script is the bin directory.
-# The parent of the bin directory is the notebook directory.
-# It's this notebook directory we want.
-notebook_directory = script_path.parent.parent
-
-# Add the notebook directory to our import path.
-sys.path.append(str(notebook_directory))
-
-# Add the startup directory to our import path.
-startup_directory = notebook_directory / "meta" / "startup"
-sys.path.append(str(startup_directory))
-
 import argparse
 import logging
+import os
 import os.path
-import projectsetup  # noqa: F401
+import sys
 import traceback
 
 from decimal import Decimal
@@ -31,25 +12,24 @@ from solana.publickey import PublicKey
 from spl.token.client import Token
 from spl.token.constants import TOKEN_PROGRAM_ID
 
-from BaseModel import BasketToken, Group, TokenAccount
-from Constants import WARNING_DISCLAIMER_TEXT
-from Context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
-from Wallet import Wallet
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Sends one of the Group's SPL tokens to a different address.")
-parser.add_argument("--cluster", type=str, default=default_cluster,
+parser.add_argument("--cluster", type=str, default=mango.default_cluster,
                     help="Solana RPC cluster name")
-parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
+parser.add_argument("--cluster-url", type=str, default=mango.default_cluster_url,
                     help="Solana RPC cluster URL")
-parser.add_argument("--program-id", type=str, default=default_program_id,
+parser.add_argument("--program-id", type=str, default=mango.default_program_id,
                     help="Mango program ID/address")
-parser.add_argument("--dex-program-id", type=str, default=default_dex_program_id,
+parser.add_argument("--dex-program-id", type=str, default=mango.default_dex_program_id,
                     help="DEX program ID/address")
-parser.add_argument("--group-name", type=str, default=default_group_name,
+parser.add_argument("--group-name", type=str, default=mango.default_group_name,
                     help="Mango group name")
-parser.add_argument("--group-id", type=str, default=default_group_id,
+parser.add_argument("--group-id", type=str, default=mango.default_group_id,
                     help="Mango group ID/address")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
@@ -64,23 +44,23 @@ parser.add_argument("--dry-run", action="store_true", default=False,
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
-logging.warning(WARNING_DISCLAIMER_TEXT)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
     id_filename = args.id_file
     if not os.path.isfile(id_filename):
         logging.error(f"Wallet file '{id_filename}' is not present.")
         sys.exit(1)
-    wallet = Wallet.load(id_filename)
+    wallet = mango.Wallet.load(id_filename)
 
-    context = Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
-                                        args.dex_program_id, args.group_name, args.group_id)
+    context = mango.Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
+                                              args.dex_program_id, args.group_name, args.group_id)
 
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
 
-    group = Group.load(context)
-    group_basket_token = BasketToken.find_by_symbol(group.basket_tokens, args.token_symbol)
+    group = mango.Group.load(context)
+    group_basket_token = mango.BasketToken.find_by_symbol(group.basket_tokens, args.token_symbol)
     group_token = group_basket_token.token
 
     spl_token = Token(context.client, group_token.mint, TOKEN_PROGRAM_ID, wallet.account)
@@ -89,21 +69,23 @@ try:
     source = PublicKey(source_account["pubkey"])
 
     # Is the address an actual token account? Or is it the SOL address of the owner?
-    possible_dest = TokenAccount.load(context, args.address)
+    possible_dest = mango.TokenAccount.load(context, args.address)
     if (possible_dest is not None) and (possible_dest.mint == group_token.mint):
         # We successfully loaded the token account.
         destination: PublicKey = args.address
     else:
         destination_accounts = spl_token.get_accounts(args.address)
         if len(destination_accounts["result"]["value"]) == 0:
-            raise Exception(f"Could not find destination account using {args.address} as either owner address or token address.")
+            raise Exception(
+                f"Could not find destination account using {args.address} as either owner address or token address.")
         destination_account = destination_accounts["result"]["value"][0]
         destination = PublicKey(destination_account["pubkey"])
 
     owner = wallet.account
     amount = int(args.quantity * Decimal(10 ** group_token.decimals))
 
-    print("Balance:", source_account["account"]["data"]["parsed"]["info"]["tokenAmount"]["uiAmountString"], group_token.name)
+    print("Balance:", source_account["account"]["data"]["parsed"]
+          ["info"]["tokenAmount"]["uiAmountString"], group_token.name)
     text_amount = f"{amount} {group_token.name} (@ {group_token.decimals} decimal places)"
     print(f"Sending {text_amount}")
     print(f"    From: {source}")

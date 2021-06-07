@@ -1,28 +1,9 @@
 #!/usr/bin/env pyston3
 
-import os
-import sys
-
-from pathlib import Path
-
-# Get the full path to this script.
-script_path = Path(os.path.realpath(__file__))
-
-# The parent of the script is the bin directory.
-# The parent of the bin directory is the notebook directory.
-# It's this notebook directory we want.
-notebook_directory = script_path.parent.parent
-
-# Add the notebook directory to our import path.
-sys.path.append(str(notebook_directory))
-
-# Add the startup directory to our import path.
-startup_directory = notebook_directory / "meta" / "startup"
-sys.path.append(str(startup_directory))
-
 import argparse
 import logging
-import projectsetup  # noqa: F401
+import os
+import sys
 import typing
 
 from solana.account import Account
@@ -31,10 +12,9 @@ from spl.token.constants import TOKEN_PROGRAM_ID
 from solana.transaction import Transaction
 from spl.token.instructions import CloseAccountParams, close_account
 
-from BaseModel import TokenAccount, TokenLookup
-from Constants import WARNING_DISCLAIMER_TEXT
-from Context import default_context as context
-from Wallet import Wallet
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Closes a Wrapped SOL account.")
 parser.add_argument("--id-file", type=str, default="id.json",
@@ -48,18 +28,18 @@ parser.add_argument("--overwrite", action="store_true", default=False,
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
-logging.warning(WARNING_DISCLAIMER_TEXT)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 id_filename = args.id_file
 if not os.path.isfile(id_filename):
     logging.error(f"Wallet file '{id_filename}' is not present.")
     sys.exit(1)
-wallet = Wallet.load(id_filename)
+wallet = mango.Wallet.load(id_filename)
 
-lookups = TokenLookup.default_lookups()
+lookups = mango.TokenLookup.default_lookups()
 wrapped_sol = lookups.find_by_symbol("SOL")
 
-token_account = TokenAccount.load(context, args.address)
+token_account = mango.TokenAccount.load(mango.default_context, args.address)
 if (token_account is None) or (token_account.mint != wrapped_sol.mint):
     raise Exception(f"Account {args.address} is not a {wrapped_sol.name} account.")
 
@@ -80,9 +60,9 @@ transaction.add(
 
 print(f"Closing account: {args.address} with balance {token_account.amount} lamports.")
 
-response = context.client.send_transaction(transaction, *signers)
-transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
+response = mango.default_context.client.send_transaction(transaction, *signers)
+transaction_id = mango.default_context.unwrap_transaction_id_or_raise_exception(response)
 print(f"Waiting on transaction ID: {transaction_id}")
 
-context.wait_for_confirmation(transaction_id)
+mango.default_context.wait_for_confirmation(transaction_id)
 print("Done.")
