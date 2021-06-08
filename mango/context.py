@@ -53,6 +53,15 @@ default_group_name = os.environ.get("GROUP_NAME") or "BTC_ETH_USDT"
 default_group_id = PublicKey(MangoConstants[default_cluster]["mango_groups"][default_group_name]["mango_group_pk"])
 
 
+# The old program ID is used for the 3-token Group, but since the program ID is stored
+# in ids.json per cluster, it's not currently possible to put it in that (shared) file.
+#
+# We keep it here and do some special processing with it.
+#
+_OLD_3_TOKEN_GROUP_ID = PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV")
+_OLD_3_TOKEN_PROGRAM_ID = PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
+
+
 # # 🥭 Context class
 #
 # A `Context` object to manage Solana connection and Mango configuration.
@@ -62,8 +71,8 @@ class Context:
     def __init__(self, cluster: str, cluster_url: str, program_id: PublicKey, dex_program_id: PublicKey,
                  group_name: str, group_id: PublicKey):
         configured_program_id = program_id
-        if group_id == PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV"):
-            configured_program_id = PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
+        if group_id == _OLD_3_TOKEN_GROUP_ID:
+            configured_program_id = _OLD_3_TOKEN_PROGRAM_ID
 
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.cluster: str = cluster
@@ -167,7 +176,12 @@ class Context:
     def new_from_group_name(self, group_name: str) -> "Context":
         group_id = PublicKey(MangoConstants[self.cluster]["mango_groups"][group_name]["mango_group_pk"])
 
-        return Context(self.cluster, self.cluster_url, self.program_id, self.dex_program_id, group_name, group_id)
+        # If this Context had the old 3-token Group, we need to override it's program ID.
+        program_id = self.program_id
+        if self.group_id == _OLD_3_TOKEN_GROUP_ID:
+            program_id = PublicKey(MangoConstants[self.cluster]["mango_program_id"])
+
+        return Context(self.cluster, self.cluster_url, program_id, self.dex_program_id, group_name, group_id)
 
     def new_from_group_id(self, group_id: PublicKey) -> "Context":
         actual_group_name = "« Unknown Group »"
@@ -177,7 +191,12 @@ class Context:
                 actual_group_name = group_name
                 break
 
-        return Context(self.cluster, self.cluster_url, self.program_id, self.dex_program_id, actual_group_name, group_id)
+        # If this Context had the old 3-token Group, we need to override it's program ID.
+        program_id = self.program_id
+        if self.group_id == _OLD_3_TOKEN_GROUP_ID:
+            program_id = PublicKey(MangoConstants[self.cluster]["mango_program_id"])
+
+        return Context(self.cluster, self.cluster_url, program_id, self.dex_program_id, actual_group_name, group_id)
 
     @staticmethod
     def from_command_line(cluster: str, cluster_url: str, program_id: PublicKey,
