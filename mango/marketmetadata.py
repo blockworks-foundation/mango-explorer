@@ -38,6 +38,7 @@ class MarketMetadata:
         self.spot: SpotMarket = spot
         self.oracle: PublicKey = oracle
         self.decimals: Decimal = decimals
+        self.symbol: str = f"{base.token.symbol}/{quote.token.symbol}"
         self._market = None
 
     def fetch_market(self, context: Context) -> Market:

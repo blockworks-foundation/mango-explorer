@@ -57,18 +57,24 @@ try:
 
     group = mango.Group.load(context)
 
+    with open(args.token_data_file) as json_file:
+        token_data = json.load(json_file)
+        spot_market_lookup = mango.SpotMarketLookup(token_data)
+
     if args.dry_run:
         trade_executor: mango.TradeExecutor = mango.NullTradeExecutor(print)
     else:
-        with open(args.token_data_file) as json_file:
-            token_data = json.load(json_file)
-            spot_market_lookup = mango.SpotMarketLookup(token_data)
         trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, spot_market_lookup, Decimal(0), print)
 
     for market_metadata in group.markets:
         market = market_metadata.fetch_market(context)
-        transaction_ids = trade_executor.settle(market_metadata, market)
-        trade_executor.wait_for_settlement_completion(transaction_ids)
+        spot_market = spot_market_lookup.find_by_symbol(market_metadata.symbol)
+        if spot_market is None:
+            logging.warn(
+                f"Skipping settling for market {market_metadata.symbol} because no spot market could be found.")
+        else:
+            transaction_ids = trade_executor.settle(spot_market, market)
+            trade_executor.wait_for_settlement_completion(transaction_ids)
 
     logging.info("Settlement completed.")
 except Exception as exception:
