@@ -10,7 +10,7 @@ from .context import Context, default_cluster, default_cluster_url, default_prog
 from .encoding import decode_binary, encode_binary, encode_key, encode_int
 from .group import Group
 from .index import Index
-from .instructions import InstructionBuilder, ForceCancelOrdersInstructionBuilder, LiquidateInstructionBuilder
+from .instructions import InstructionBuilder, ForceCancelOrdersInstructionBuilder, LiquidateInstructionBuilder, CreateSplAccountInstructionBuilder, InitializeSplAccountInstructionBuilder, TransferSplTokensInstructionBuilder, CloseSplAccountInstructionBuilder
 from .instructiontype import InstructionType
 from .liquidationevent import LiquidationEvent
 from .liquidationprocessor import LiquidationProcessor

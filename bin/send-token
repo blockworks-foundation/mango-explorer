@@ -6,6 +6,7 @@ import os
 import os.path
 import sys
 import traceback
+import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
@@ -69,8 +70,8 @@ try:
     source = PublicKey(source_account["pubkey"])
 
     # Is the address an actual token account? Or is it the SOL address of the owner?
-    possible_dest = mango.TokenAccount.load(context, args.address)
-    if (possible_dest is not None) and (possible_dest.mint == group_token.mint):
+    possible_dest: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(context, args.address)
+    if (possible_dest is not None) and (possible_dest.value.token.mint == group_token.mint):
         # We successfully loaded the token account.
         destination: PublicKey = args.address
     else:

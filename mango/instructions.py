@@ -22,9 +22,11 @@ import typing
 from decimal import Decimal
 from pyserum.market import Market
 from solana.publickey import PublicKey
+from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import AccountMeta, TransactionInstruction
 from solana.sysvar import SYSVAR_CLOCK_PUBKEY
-from spl.token.constants import TOKEN_PROGRAM_ID
+from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
+from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, initialize_account, transfer2
 
 from .baskettoken import BasketToken
 from .context import Context
@@ -32,6 +34,7 @@ from .group import Group
 from .layouts import layouts
 from .marginaccount import MarginAccount
 from .marketmetadata import MarketMetadata
+from .token import Token
 from .tokenaccount import TokenAccount
 from .tokenvalue import TokenValue
 from .wallet import Wallet
@@ -412,7 +415,7 @@ class LiquidateInstructionBuilder(InstructionBuilder):
         if wallet_input_token_account is None:
             raise Exception(f"Could not load wallet input token account for mint '{most_liabilities.token.mint}'")
 
-        if wallet_input_token_account.amount == Decimal(0):
+        if wallet_input_token_account.value.value == Decimal(0):
             logger.warning(
                 f"Wallet token account {wallet_input_token_account.address} has no tokens to send that could fund a liquidation.")
             return None
@@ -426,7 +429,7 @@ class LiquidateInstructionBuilder(InstructionBuilder):
                                            most_liabilities_basket_token, most_assets_basket_token,
                                            wallet_input_token_account,
                                            wallet_output_token_account,
-                                           wallet_input_token_account.amount)
+                                           wallet_input_token_account.value.value)
 
     def __str__(self) -> str:
         # Print the members out using the Rust parameter order and names.
@@ -444,3 +447,77 @@ class LiquidateInstructionBuilder(InstructionBuilder):
     oracle_pks: &[Pubkey]: {self.oracles},
     max_deposit: u64: : {self.maximum_input_amount}
 »"""
+
+
+# # 🥭 CreateSplAccountInstructionBuilder class
+#
+# Creates an SPL token account. Can't do much with it without following by an
+# `InitializeSplAccountInstructionBuilder`.
+#
+
+class CreateSplAccountInstructionBuilder(InstructionBuilder):
+    def __init__(self, context: Context, wallet: Wallet, address: PublicKey, lamports: int = 0):
+        super().__init__(context)
+        self.wallet: Wallet = wallet
+        self.address: PublicKey = address
+        self.lamports: int = lamports
+
+    def build(self) -> TransactionInstruction:
+        minimum_balance_response = self.context.client.get_minimum_balance_for_rent_exemption(ACCOUNT_LEN)
+        minimum_balance = self.context.unwrap_or_raise_exception(minimum_balance_response)
+        return create_account(
+            CreateAccountParams(self.wallet.address, self.address, self.lamports + minimum_balance, ACCOUNT_LEN, TOKEN_PROGRAM_ID))
+
+
+# # 🥭 InitializeSplAccountInstructionBuilder class
+#
+# Initialises an SPL token account, presumably created by a previous
+# `CreateSplAccountInstructionBuilder` instruction.
+#
+
+class InitializeSplAccountInstructionBuilder(InstructionBuilder):
+    def __init__(self, context: Context, wallet: Wallet, token: Token, address: PublicKey):
+        super().__init__(context)
+        self.wallet: Wallet = wallet
+        self.token: Token = token
+        self.address: PublicKey = address
+
+    def build(self) -> TransactionInstruction:
+        return initialize_account(
+            InitializeAccountParams(TOKEN_PROGRAM_ID, self.address, self.token.mint, self.wallet.address))
+
+
+# # 🥭 TransferSplTokensInstructionBuilder class
+#
+# Creates a `TransactionInstruction` that can transfer SPL tokens from one account to
+# another.
+#
+
+class TransferSplTokensInstructionBuilder(InstructionBuilder):
+    def __init__(self, context: Context, wallet: Wallet, token: Token, source: PublicKey, destination: PublicKey, quantity: Decimal):
+        super().__init__(context)
+        self.wallet: Wallet = wallet
+        self.token: Token = token
+        self.source: PublicKey = source
+        self.destination: PublicKey = destination
+        self.amount = int(quantity * (10 ** token.decimals))
+
+    def build(self) -> TransactionInstruction:
+        return transfer2(
+            Transfer2Params(TOKEN_PROGRAM_ID, self.source, self.token.mint, self.destination, self.wallet.address, self.amount, int(self.token.decimals)))
+
+
+# # 🥭 CloseSplAccountInstructionBuilder class
+#
+# Closes an SPL token account and transfers any remaining lamports to the wallet.
+#
+
+class CloseSplAccountInstructionBuilder(InstructionBuilder):
+    def __init__(self, context: Context, wallet: Wallet, address: PublicKey):
+        super().__init__(context)
+        self.wallet: Wallet = wallet
+        self.address: PublicKey = address
+
+    def build(self) -> TransactionInstruction:
+        return close_account(
+            CloseAccountParams(TOKEN_PROGRAM_ID, self.address, self.wallet.address, self.wallet.address))

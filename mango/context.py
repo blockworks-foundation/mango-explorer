@@ -27,6 +27,7 @@ from solana.rpc.types import MemcmpOpts, RPCError, RPCResponse
 from solana.rpc.commitment import Commitment, Single
 
 from .constants import MangoConstants, SOL_DECIMAL_DIVISOR
+from .token import TokenLookup
 
 
 # # 🥭 Context
@@ -74,6 +75,7 @@ class Context:
         self.group_id: PublicKey = group_id
         self.commitment: Commitment = Single
         self.encoding: str = "base64"
+        self.token_lookup: TokenLookup = TokenLookup.default_lookups()
 
         # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451
         # "I think you are better off doing 4,8,16,20,30"

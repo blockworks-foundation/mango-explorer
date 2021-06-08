@@ -10,6 +10,8 @@ sys.path.insert(0, os.path.abspath(
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows all Wrapped SOL accounts for the wallet.")
+parser.add_argument("--symbol", type=str, required=True,
+                    help="symbol of the token to look up, e.g. 'ETH'")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
@@ -29,13 +31,13 @@ wallet = mango.Wallet.load(id_filename)
 
 
 lookups = mango.TokenLookup.default_lookups()
-wrapped_sol = lookups.find_by_symbol("SOL")
+token = lookups.find_by_symbol(args.symbol)
 
-token_accounts = mango.TokenAccount.fetch_all_for_owner_and_token(mango.default_context, wallet.address, wrapped_sol)
+token_accounts = mango.TokenAccount.fetch_all_for_owner_and_token(mango.default_context, wallet.address, token)
 
 if len(token_accounts) == 0:
     print("No wrapped SOL accounts.")
 else:
-    print(f"{wrapped_sol.name}:")
+    print(f"{token.name}:")
     for account in token_accounts:
         print(f"    {account.address}: {account.value}")
