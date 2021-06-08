@@ -83,7 +83,8 @@ try:
         trade_executor = mango.SerumImmediateTradeExecutor(
             context, wallet, spot_market_lookup, adjustment_factor, print)
 
-    wallet_balancer = mango.LiveWalletBalancer(context, wallet, trade_executor, action_threshold, tokens, targets)
+    wallet_balancer = mango.LiveWalletBalancer(
+        context, wallet, group, trade_executor, action_threshold, tokens, targets)
     wallet_balancer.balance(prices)
 
     logging.info("Balancing completed.")

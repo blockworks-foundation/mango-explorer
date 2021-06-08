@@ -135,7 +135,8 @@ try:
             token_data = json.load(json_file)
             spot_market_lookup = mango.SpotMarketLookup(token_data)
         trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, spot_market_lookup, adjustment_factor)
-        wallet_balancer = mango.LiveWalletBalancer(context, wallet, trade_executor, action_threshold, tokens, targets)
+        wallet_balancer = mango.LiveWalletBalancer(
+            context, wallet, group, trade_executor, action_threshold, tokens, targets)
 
     stop = False
     liquidation_processor = mango.LiquidationProcessor(context, account_liquidator, wallet_balancer)

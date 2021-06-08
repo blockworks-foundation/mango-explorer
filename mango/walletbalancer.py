@@ -21,6 +21,7 @@ import typing
 from decimal import Decimal
 
 from .context import Context
+from .group import Group
 from .token import Token
 from .tokenvalue import TokenValue
 from .tradeexecutor import TradeExecutor
@@ -279,10 +280,11 @@ class NullWalletBalancer(WalletBalancer):
 #
 
 class LiveWalletBalancer(WalletBalancer):
-    def __init__(self, context: Context, wallet: Wallet, trade_executor: TradeExecutor, action_threshold: Decimal, tokens: typing.List[Token], target_balances: typing.List[TargetBalance]):
+    def __init__(self, context: Context, wallet: Wallet, group: Group, trade_executor: TradeExecutor, action_threshold: Decimal, tokens: typing.List[Token], target_balances: typing.List[TargetBalance]):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
         self.wallet: Wallet = wallet
+        self.group: Group = group
         self.trade_executor: TradeExecutor = trade_executor
         self.action_threshold: Decimal = action_threshold
         self.tokens: typing.List[Token] = tokens
@@ -323,11 +325,13 @@ class LiveWalletBalancer(WalletBalancer):
 
     def _make_changes(self, balance_changes: typing.List[TokenValue]):
         self.logger.info(f"Balance changes to make: {balance_changes}")
+        quote = self.group.shared_quote_token.token.symbol
         for change in balance_changes:
+            market_symbol = f"{change.token.symbol}/{quote}"
             if change.value < 0:
-                self.trade_executor.sell(change.token.name, change.value.copy_abs())
+                self.trade_executor.sell(market_symbol, change.value.copy_abs())
             else:
-                self.trade_executor.buy(change.token.name, change.value.copy_abs())
+                self.trade_executor.buy(market_symbol, change.value.copy_abs())
 
     def _fetch_balances(self) -> typing.List[TokenValue]:
         balances: typing.List[TokenValue] = []
