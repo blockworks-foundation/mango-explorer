@@ -17,18 +17,7 @@ import mango  # nopep8
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Buys one of the tokens in a Mango Markets group.")
-parser.add_argument("--cluster", type=str, default=mango.default_cluster,
-                    help="Solana RPC cluster name")
-parser.add_argument("--cluster-url", type=str, default=mango.default_cluster_url,
-                    help="Solana RPC cluster URL")
-parser.add_argument("--program-id", type=str, default=mango.default_program_id,
-                    help="Mango program ID/address")
-parser.add_argument("--dex-program-id", type=str, default=mango.default_dex_program_id,
-                    help="DEX program ID/address")
-parser.add_argument("--group-name", type=str, default=mango.default_group_name,
-                    help="Mango group name")
-parser.add_argument("--group-id", type=str, default=mango.default_group_id,
-                    help="Mango group ID/address")
+mango.Context.add_context_command_line_parameters(parser)
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--token-data-file", type=str, default="solana.tokenlist.json",
@@ -39,6 +28,8 @@ parser.add_argument("--symbol", type=str, required=True, help="market symbol to 
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of token to buy")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
                     help="factor by which to adjust the BUY price (akin to maximum slippage)")
+parser.add_argument("--wait", action="store_true", default=False,
+                    help="wait until the transaction is confirmed")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
@@ -53,9 +44,7 @@ try:
         sys.exit(1)
     wallet = mango.Wallet.load(id_filename)
     adjustment_factor = args.adjustment_factor
-
-    context = mango.Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
-                                              args.dex_program_id, args.group_name, args.group_id)
+    context = mango.Context.from_context_command_line_parameters(args)
 
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
@@ -70,7 +59,10 @@ try:
             spot_market_lookup = mango.SpotMarketLookup(token_data)
         trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, spot_market_lookup, adjustment_factor)
 
-    trade_executor.buy(symbol, args.quantity)
+    transaction_id = trade_executor.buy(symbol, args.quantity)
+    if args.wait:
+        logging.info(f"Waiting on {transaction_id}")
+        context.wait_for_confirmation(transaction_id)
 
     logging.info("Buy completed.")
 except Exception as exception:

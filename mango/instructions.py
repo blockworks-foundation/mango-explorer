@@ -20,7 +20,11 @@ import struct
 import typing
 
 from decimal import Decimal
+from pyserum.enums import OrderType, Side
+from pyserum.instructions import ConsumeEventsParams, consume_events, settle_funds, SettleFundsParams
 from pyserum.market import Market
+from pyserum.open_orders_account import make_create_account_instruction
+from solana.account import Account
 from solana.publickey import PublicKey
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import AccountMeta, TransactionInstruction
@@ -521,3 +525,158 @@ class CloseSplAccountInstructionBuilder(InstructionBuilder):
     def build(self) -> TransactionInstruction:
         return close_account(
             CloseAccountParams(TOKEN_PROGRAM_ID, self.address, self.wallet.address, self.wallet.address))
+
+
+# # 🥭 CreateSerumOpenOrdersInstructionBuilder class
+#
+# Creates a Serum openorders-creating instruction.
+#
+class CreateSerumOpenOrdersInstructionBuilder(InstructionBuilder):
+    def __init__(self, context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey):
+        super().__init__(context)
+        self.wallet: Wallet = wallet
+        self.market: Market = market
+        self.open_orders_address: PublicKey = open_orders_address
+
+    def build(self) -> TransactionInstruction:
+        response = self.context.client.get_minimum_balance_for_rent_exemption(layouts.OPEN_ORDERS.sizeof())
+        balanced_needed = self.context.unwrap_or_raise_exception(response)
+        instruction = make_create_account_instruction(
+            owner_address=self.wallet.address,
+            new_account_address=self.open_orders_address,
+            lamports=balanced_needed,
+            program_id=self.market.state.program_id(),
+        )
+
+        return instruction
+
+    def __str__(self) -> str:
+        return f"""« CreateSerumOpenOrdersInstructionBuilder:
+    owner_address: {self.wallet.address},
+    new_account_address: {self.open_orders_address},
+    program_id: {self.market.state.program_id()}
+»"""
+
+
+# # 🥭 NewOrderV3InstructionBuilder class
+#
+# Creates a Serum order-placing instruction using V3 of the NewOrder instruction.
+#
+class NewOrderV3InstructionBuilder(InstructionBuilder):
+    def __init__(self, context: Context, wallet: Wallet, market: Market, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int):
+        super().__init__(context)
+        self.wallet: Wallet = wallet
+        self.market: Market = market
+        self.source: PublicKey = source
+        self.open_orders_address: PublicKey = open_orders_address
+        self.order_type: OrderType = order_type
+        self.side: Side = side
+        self.price: Decimal = price
+        self.quantity: Decimal = quantity
+        self.client_id: int = client_id
+
+    def build(self) -> TransactionInstruction:
+        instruction = self.market.make_place_order_instruction(
+            self.source,
+            self.wallet.account,
+            self.order_type,
+            self.side,
+            float(self.price),
+            float(self.quantity),
+            self.client_id,
+            self.open_orders_address
+            # fee_discount_pubkey: PublicKey = None,
+        )
+
+        return instruction
+
+    def __str__(self) -> str:
+        return f"""« NewOrderV3InstructionBuilder:
+    source.address: {self.source},
+    wallet.account: {self.wallet.account.public_key()},
+    order_type: {self.order_type},
+    side: {self.side},
+    price: {float(self.price)},
+    quantity: {float(self.quantity)},
+    client_id: {self.client_id},
+    open_orders_address: {self.open_orders_address}
+»"""
+
+
+# # 🥭 ConsumeEventsInstructionBuilder class
+#
+# Creates an event-consuming 'crank' instruction.
+#
+class ConsumeEventsInstructionBuilder(InstructionBuilder):
+    def __init__(self, context: Context, wallet: Wallet, market: Market, open_orders_addresses: typing.List[PublicKey], limit: int = 32):
+        super().__init__(context)
+        self.wallet: Wallet = wallet
+        self.market: Market = market
+        self.open_orders_addresses: typing.List[PublicKey] = open_orders_addresses
+        self.limit: int = limit
+
+    def build(self) -> TransactionInstruction:
+        instruction = consume_events(ConsumeEventsParams(
+            market=self.market.state.public_key(),
+            event_queue=self.market.state.event_queue(),
+            open_orders_accounts=self.open_orders_addresses,
+            limit=32
+        ))
+
+        # The interface accepts (and currently requires) two accounts at the end, but
+        # it doesn't actually use them.
+        random_account = Account().public_key()
+        instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=False))
+        instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=False))
+        return instruction
+
+    def __str__(self) -> str:
+        return f"""« ConsumeEventsInstructionBuilder:
+    market: {self.market.state.public_key()},
+    event_queue: {self.market.state.event_queue()},
+    open_orders_accounts: {self.open_orders_addresses},
+    limit: {self.limit}
+»"""
+
+
+# # 🥭 SettleInstructionBuilder class
+#
+# Creates a 'settle' instruction.
+#
+class SettleInstructionBuilder(InstructionBuilder):
+    def __init__(self, context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey):
+        super().__init__(context)
+        self.wallet: Wallet = wallet
+        self.market: Market = market
+        self.base_token_account_address: PublicKey = base_token_account_address
+        self.quote_token_account_address: PublicKey = quote_token_account_address
+        self.open_orders_address: PublicKey = open_orders_address
+        self.vault_signer = PublicKey.create_program_address(
+            [bytes(self.market.state.public_key()), self.market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+            self.market.state.program_id(),
+        )
+
+    def build(self) -> TransactionInstruction:
+        instruction = settle_funds(
+            SettleFundsParams(
+                market=self.market.state.public_key(),
+                open_orders=self.open_orders_address,
+                owner=self.wallet.address,
+                base_vault=self.market.state.base_vault(),
+                quote_vault=self.market.state.quote_vault(),
+                base_wallet=self.base_token_account_address,
+                quote_wallet=self.quote_token_account_address,
+                vault_signer=self.vault_signer,
+                program_id=self.market.state.program_id(),
+            )
+        )
+
+        return instruction
+
+    def __str__(self) -> str:
+        return f"""« SettleInstructionBuilder:
+    market: {self.market.state.public_key()},
+    base_token_account: {self.base_token_account_address},
+    quote_token_account: {self.quote_token_account_address},
+    vault_signer: {self.vault_signer}
+»"""

@@ -139,10 +139,9 @@ class OpenOrders(AddressableAccount):
         orders = ", ".join(map(str, self.orders)) or "None"
         client_ids = ", ".join(map(str, self.client_ids)) or "None"
 
-        return f"""« OpenOrders:
+        return f"""« OpenOrders [{self.address}]:
     Flags: {self.account_flags}
     Program ID: {self.program_id}
-    Address: {self.address}
     Market: {self.market}
     Owner: {self.owner}
     Base Token: {self.base_token_free:,.8f} of {self.base_token_total:,.8f}

@@ -497,7 +497,9 @@ TOKEN_ACCOUNT = construct.Struct(
 
 # ## OPEN_ORDERS
 #
-# Trying to use the `OPEN_ORDERS_LAYOUT` and `OpenOrdersAccount` from `pyserum` just proved too probelmatic. (`OpenOrdersAccount` doesn't expose `referrer_rebate_accrued`, for instance.)
+# Trying to use the `OPEN_ORDERS_LAYOUT` and `OpenOrdersAccount` from `pyserum` just
+# proved too probelmatic. (`OpenOrdersAccount` doesn't expose `referrer_rebate_accrued`,
+# for instance.)
 
 
 OPEN_ORDERS = construct.Struct(
@@ -601,7 +603,9 @@ MARGIN_ACCOUNT_V2 = construct.Struct(
 
 # ## build_margin_account_parser_for_num_tokens() function
 #
-# This function builds a `construct.Struct` that can load a `MarginAccount` with a specific number of tokens. The number of markets and size of padding are derived from the number of tokens.
+# This function builds a `construct.Struct` that can load a `MarginAccount` with a
+# specific number of tokens. The number of markets and size of padding are derived
+# from the number of tokens.
 
 
 def build_margin_account_parser_for_num_tokens(num_tokens: int) -> construct.Struct:

@@ -1,0 +1,33 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
+mango.Context.add_context_command_line_parameters(parser)
+parser.add_argument("--address", type=PublicKey, required=True,
+                    help="address of the account")
+parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
+                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.Context.from_context_command_line_parameters(args)
+
+account_info = mango.AccountInfo.load(context, args.address)
+if account_info is None:
+    print(f"No account at '{args.address}'")
+else:
+    print(account_info)
+    print("Account Data:", account_info.encoded_data())

@@ -48,11 +48,11 @@ class RetryWithPauses:
         self.func: typing.Callable = func
         self.pauses: typing.List[Decimal] = pauses
 
-    def run(self, *args):
+    def run(self, *args, **kwargs):
         captured_exception: Exception = None
         for sleep_time_on_error in self.pauses:
             try:
-                return self.func(*args)
+                return self.func(*args, **kwargs)
             except requests.exceptions.HTTPError as exception:
                 captured_exception = exception
                 if exception.response is not None:

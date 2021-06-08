@@ -24,7 +24,7 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.types import MemcmpOpts, RPCError, RPCResponse
-from solana.rpc.commitment import Commitment, Single
+from solana.rpc.commitment import Commitment
 
 from .constants import MangoConstants, SOL_DECIMAL_DIVISOR
 from .token import TokenLookup
@@ -82,7 +82,7 @@ class Context:
         self.dex_program_id: PublicKey = dex_program_id
         self.group_name: str = group_name
         self.group_id: PublicKey = group_id
-        self.commitment: Commitment = Single
+        self.commitment: Commitment = Commitment("processed")
         self.encoding: str = "base64"
         self.token_lookup: TokenLookup = TokenLookup.default_lookups()
 

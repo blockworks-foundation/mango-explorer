@@ -1,4 +1,7 @@
 from decimal import Decimal
+from typing import NamedTuple
+from pyserum import market
+from pyserum.market.state import MarketState
 from solana.publickey import PublicKey
 
 import datetime
@@ -30,3 +33,10 @@ def fake_index() -> mango.Index:
     borrow = mango.TokenValue(token, Decimal(0))
     deposit = mango.TokenValue(token, Decimal(0))
     return mango.Index(mango.Version.V1, token, datetime.datetime.now(), borrow, deposit)
+
+
+def fake_market() -> market.Market:
+    Container = NamedTuple("Container", [("own_address", PublicKey), ("vault_signer_nonce", int)])
+    container = Container(own_address=fake_seeded_public_key("market address"), vault_signer_nonce=2)
+    state = MarketState(container, fake_seeded_public_key("program ID"), 6, 6)
+    return market.Market(None, state)

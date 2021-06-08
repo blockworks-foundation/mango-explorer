@@ -16,21 +16,22 @@
 
 import abc
 import logging
-import rx
-import rx.operators as ops
 import typing
+
+import spl.token.instructions as spl_token
 
 from decimal import Decimal
 from pyserum.enums import OrderType, Side
 from pyserum.market import Market
 from solana.account import Account
 from solana.publickey import PublicKey
+from solana.rpc.types import TxOpts
+from solana.transaction import Transaction
 
 from .context import Context
-from .openorders import OpenOrders
+from .instructions import ConsumeEventsInstructionBuilder, CreateSerumOpenOrdersInstructionBuilder, NewOrderV3InstructionBuilder, SettleInstructionBuilder
 from .retrier import retry_context
 from .spotmarket import SpotMarket, SpotMarketLookup
-from .token import Token
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
 
@@ -65,20 +66,12 @@ class TradeExecutor(metaclass=abc.ABCMeta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def buy(self, symbol: str, quantity: Decimal):
+    def buy(self, symbol: str, quantity: Decimal) -> str:
         raise NotImplementedError("TradeExecutor.buy() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def sell(self, symbol: str, quantity: Decimal):
+    def sell(self, symbol: str, quantity: Decimal) -> str:
         raise NotImplementedError("TradeExecutor.sell() is not implemented on the base type.")
-
-    @abc.abstractmethod
-    def settle(self, spot_market: SpotMarket, market: Market) -> typing.List[str]:
-        raise NotImplementedError("TradeExecutor.settle() is not implemented on the base type.")
-
-    @abc.abstractmethod
-    def wait_for_settlement_completion(self, settlement_transaction_ids: typing.List[str]):
-        raise NotImplementedError("TradeExecutor.wait_for_settlement_completion() is not implemented on the base type.")
 
 
 # # 🥭 NullTradeExecutor class
@@ -100,28 +93,27 @@ class NullTradeExecutor(TradeExecutor):
         self.logger.info(f"Skipping SELL trade of {quantity:,.8f} of '{symbol}'.")
         self.reporter(f"Skipping SELL trade of {quantity:,.8f} of '{symbol}'.")
 
-    def settle(self, spot_market: SpotMarket, market: Market) -> typing.List[str]:
-        self.logger.info(
-            f"Skipping settling of '{spot_market.base.name}' and '{spot_market.quote.name}' in market {spot_market.address}.")
-        self.reporter(
-            f"Skipping settling of '{spot_market.base.name}' and '{spot_market.quote.name}' in market {spot_market.address}.")
-        return []
-
-    def wait_for_settlement_completion(self, settlement_transaction_ids: typing.List[str]):
-        self.logger.info("Skipping waiting for settlement.")
-        self.reporter("Skipping waiting for settlement.")
-
 
 # # 🥭 SerumImmediateTradeExecutor class
 #
 # This class puts an IOC trade on the Serum orderbook with the expectation it will be filled
-# immediately.
+# immediately. It follows the pattern described here:
+#   https://solanadev.blogspot.com/2021/05/order-techniques-with-project-serum.html
 #
-# The process the `SerumImmediateTradeExecutor` follows to place a trade is:
-# * Call `place_order()` with the order details plus a random `client_id`,
-# * Wait for the `client_id` to appear as a 'fill' in the market's 'event queue',
-# * Call `settle_funds()` to move the trade result funds back into the wallet,
-# * Wait for the `settle_funds()` transaction ID to be confirmed.
+# Here's an example (Raydium?) transaction that does this:
+#   https://solanabeach.io/transaction/3Hb2h7QMM3BbJCK42BUDuVEYwwaiqfp2oQUZMDJvUuoyCRJD5oBmA3B8oAGkB9McdCFtwdT2VrSKM2GCKhJ92FpY
+#
+# Basically, it tries to send to a 'market buy/sell' and settle all in one transaction.
+#
+# It does this by:
+# * Sending a Place Order (V3) instruction
+# * Sending a Consume Events (crank) instruction
+# * Sending a Settle Funds instruction
+# all in the same transaction. With V3 Serum, this should work (assuming the IOC order
+# is filled).
+#
+# It also creates the Serum OpenOrders account for the transaction if it doesn't
+# already exist.
 #
 # The SerumImmediateTradeExecutor constructor takes a `price_adjustment_factor` to allow
 # moving the price it is willing to pay away from the mid-price. Testing shows the price is
@@ -141,6 +133,7 @@ class NullTradeExecutor(TradeExecutor):
 # from the orderbook starting at the current cheapest, until the order was filled or (I'm
 # assuming) the price exceeded the price specified.
 #
+
 
 class SerumImmediateTradeExecutor(TradeExecutor):
     def __init__(self, context: Context, wallet: Wallet, spot_market_lookup: SpotMarketLookup, price_adjustment_factor: Decimal = Decimal(0), reporter: typing.Callable[[str], None] = None):
@@ -162,7 +155,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         else:
             self.reporter = just_log
 
-    def buy(self, symbol: str, quantity: Decimal):
+    def buy(self, symbol: str, quantity: Decimal) -> str:
         spot_market = self._lookup_spot_market(symbol)
         market = Market.load(self.context.client, spot_market.address)
         self.reporter(f"BUY order market: {spot_market.address} {market}")
@@ -174,24 +167,15 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         price = top_price * increase_factor
         self.reporter(f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_price}")
 
-        source_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-            self.context, self.wallet.address, spot_market.quote)
-        self.reporter(f"Source token account: {source_token_account}")
-        if source_token_account is None:
-            raise Exception(f"Could not find source token account for '{spot_market.quote}'")
-
-        self._execute(
+        return self._execute(
             spot_market,
             market,
             Side.BUY,
-            source_token_account,
-            spot_market.base,
-            spot_market.quote,
             price,
             quantity
         )
 
-    def sell(self, symbol: str, quantity: Decimal):
+    def sell(self, symbol: str, quantity: Decimal) -> str:
         spot_market = self._lookup_spot_market(symbol)
         market = Market.load(self.context.client, spot_market.address)
         self.reporter(f"SELL order market: {spot_market.address} {market}")
@@ -204,101 +188,78 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         price = top_price * decrease_factor
         self.reporter(f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_price}")
 
-        source_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-            self.context, self.wallet.address, spot_market.base)
-        self.reporter(f"Source token account: {source_token_account}")
-        if source_token_account is None:
-            raise Exception(f"Could not find source token account for '{spot_market.base}'")
-
-        self._execute(
+        return self._execute(
             spot_market,
             market,
             Side.SELL,
-            source_token_account,
-            spot_market.base,
-            spot_market.quote,
             price,
             quantity
         )
 
-    def _execute(self, spot_market: SpotMarket, market: Market, side: Side, source_token_account: TokenAccount, base_token: Token, quote_token: Token, price: Decimal, quantity: Decimal):
-        with retry_context("Serum Place Order", self._place_order, self.context.retry_pauses) as retrier:
-            client_id, place_order_transaction_id = retrier.run(
-                market, base_token, quote_token, source_token_account.address, self.wallet.account, OrderType.IOC, side, price, quantity)
+    def _execute(self, spot_market: SpotMarket, market: Market, side: Side, price: Decimal, quantity: Decimal) -> str:
+        transaction = Transaction()
+        signers: typing.List[Account] = [self.wallet.account]
 
-        with retry_context("Serum Wait For Order Fill", self._wait_for_order_fill, self.context.retry_pauses) as retrier:
-            retrier.run(market, client_id)
+        base_token_account = TokenAccount.fetch_largest_for_owner_and_token(
+            self.context, self.wallet.address, spot_market.base)
+        if base_token_account is None:
+            create_base_token_account = spl_token.create_associated_token_account(
+                payer=self.wallet.address, owner=self.wallet.address, mint=spot_market.base.mint
+            )
+            transaction.add(create_base_token_account)
+            base_token_account_address = spl_token.get_associated_token_address(
+                self.wallet.address, spot_market.base.mint)
+        else:
+            base_token_account_address = base_token_account.address
 
-        with retry_context("Serum Settle", self.settle, self.context.retry_pauses) as retrier:
-            settlement_transaction_ids = retrier.run(spot_market, market)
+        quote_token_account = TokenAccount.fetch_largest_for_owner_and_token(
+            self.context, self.wallet.address, spot_market.quote)
+        if quote_token_account is None:
+            create_quote_token_account = spl_token.create_associated_token_account(
+                payer=self.wallet.address, owner=self.wallet.address, mint=spot_market.quote.mint
+            )
+            transaction.add(create_quote_token_account)
+            quote_token_account_address = spl_token.get_associated_token_address(
+                self.wallet.address, spot_market.quote.mint)
+        else:
+            quote_token_account_address = quote_token_account.address
 
-        with retry_context("Serum Wait For Settle Completion", self.wait_for_settlement_completion, self.context.retry_pauses) as retrier:
-            retrier.run(settlement_transaction_ids)
+        if side == Side.BUY:
+            source_token_account_address = quote_token_account_address
+        else:
+            source_token_account_address = base_token_account_address
 
-        self.reporter("Order execution complete")
-
-    def _place_order(self, market: Market, base_token: Token, quote_token: Token, paying_token_address: PublicKey, account: Account, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal) -> typing.Tuple[int, str]:
-        to_pay = price * quantity
-        self.logger.info(
-            f"{side.name}ing {quantity} of {base_token.name} at {price} for {to_pay} on {base_token.name}/{quote_token.name} from {paying_token_address}.")
+        open_order_accounts = market.find_open_orders_accounts_for_owner(self.wallet.address)
+        if not open_order_accounts:
+            new_open_orders_account = Account()
+            create_open_orders = CreateSerumOpenOrdersInstructionBuilder(
+                self.context, self.wallet, market, new_open_orders_account.public_key())
+            transaction.add(create_open_orders.build())
+            signers.append(new_open_orders_account)
+            open_orders_address: PublicKey = new_open_orders_account.public_key()
+            open_orders_addresses: typing.List[PublicKey] = [open_orders_address]
+        else:
+            open_orders_address = open_order_accounts[0].address
+            open_orders_addresses = list(oo.address for oo in open_order_accounts)
 
         client_id = self.context.random_client_id()
-        self.reporter(f"""Placing order
-    paying_token_address: {paying_token_address}
-    account: {account.public_key()}
-    order_type: {order_type.name}
-    side: {side.name}
-    price: {float(price)}
-    quantity: {float(quantity)}
-    client_id: {client_id}""")
+        new_order = NewOrderV3InstructionBuilder(self.context, self.wallet, market,
+                                                 source_token_account_address,
+                                                 open_orders_address, OrderType.IOC,
+                                                 side, price, quantity, client_id)
+        transaction.add(new_order.build())
 
-        response = market.place_order(paying_token_address, account, order_type,
-                                      side, float(price), float(quantity), client_id)
-        transaction_id = self.context.unwrap_transaction_id_or_raise_exception(response)
-        self.reporter(f"Order transaction ID: {transaction_id}")
+        consume_events = ConsumeEventsInstructionBuilder(self.context, self.wallet, market, open_orders_addresses)
+        transaction.add(consume_events.build())
 
-        return client_id, transaction_id
+        settle = SettleInstructionBuilder(self.context, self.wallet, market,
+                                          open_orders_address, base_token_account_address, quote_token_account_address)
+        transaction.add(settle.build())
 
-    def _wait_for_order_fill(self, market: Market, client_id: int, max_wait_in_seconds: int = 60):
-        self.logger.info(f"Waiting up to {max_wait_in_seconds} seconds for {client_id}.")
-        return rx.interval(1.0).pipe(
-            ops.flat_map(lambda _: market.load_event_queue()),
-            ops.skip_while(lambda item: item.client_order_id != client_id),
-            ops.skip_while(lambda item: not item.event_flags.fill),
-            ops.first(),
-            ops.map(lambda _: True),
-            ops.timeout(max_wait_in_seconds, rx.return_value(False))
-        ).run()
-
-    def settle(self, spot_market: SpotMarket, market: Market) -> typing.List[str]:
-        base_token_account = TokenAccount.fetch_or_create_largest_for_owner_and_token(
-            self.context, self.wallet.account, spot_market.base)
-        quote_token_account = TokenAccount.fetch_or_create_largest_for_owner_and_token(
-            self.context, self.wallet.account, spot_market.quote)
-
-        open_orders = OpenOrders.load_for_market_and_owner(self.context, spot_market.address, self.wallet.account.public_key(
-        ), self.context.dex_program_id, spot_market.base.decimals, spot_market.quote.decimals)
-
-        transaction_ids = []
-        for open_order_account in open_orders:
-            if (open_order_account.base_token_free > 0) or (open_order_account.quote_token_free > 0):
-                self.reporter(
-                    f"Need to settle open orders: {open_order_account}\nBase account: {base_token_account.address}\nQuote account: {quote_token_account.address}")
-                response = market.settle_funds(self.wallet.account, open_order_account.to_pyserum(
-                ), base_token_account.address, quote_token_account.address)
-                transaction_id = self.context.unwrap_transaction_id_or_raise_exception(response)
-                self.reporter(f"Settlement transaction ID: {transaction_id}")
-                transaction_ids += [transaction_id]
-
-        return transaction_ids
-
-    def wait_for_settlement_completion(self, settlement_transaction_ids: typing.List[str]):
-        if len(settlement_transaction_ids) > 0:
-            self.reporter(f"Waiting on settlement transaction IDs: {settlement_transaction_ids}")
-            for settlement_transaction_id in settlement_transaction_ids:
-                self.reporter(f"Waiting on specific settlement transaction ID: {settlement_transaction_id}")
-                self.context.wait_for_confirmation(settlement_transaction_id)
-            self.reporter("All settlement transaction IDs confirmed.")
+        with retry_context("Place Serum Order And Settle", self.context.client.send_transaction, self.context.retry_pauses) as retrier:
+            opts: TxOpts = TxOpts(preflight_commitment=self.context.commitment)
+            response = retrier.run(transaction, *signers, opts=opts)
+            return self.context.unwrap_transaction_id_or_raise_exception(response)
 
     def _lookup_spot_market(self, symbol: str) -> SpotMarket:
         spot_market = self.spot_market_lookup.find_by_symbol(symbol)

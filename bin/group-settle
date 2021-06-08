@@ -7,8 +7,10 @@ import os
 import os.path
 import sys
 import traceback
+import typing
 
-from decimal import Decimal
+from solana.account import Account
+from solana.transaction import Transaction
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
@@ -17,24 +19,15 @@ import mango  # nopep8
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Settles all openorders transactions in the Group.")
-parser.add_argument("--cluster", type=str, default=mango.default_cluster,
-                    help="Solana RPC cluster name")
-parser.add_argument("--cluster-url", type=str, default=mango.default_cluster_url,
-                    help="Solana RPC cluster URL")
-parser.add_argument("--program-id", type=str, default=mango.default_program_id,
-                    help="Mango program ID/address")
-parser.add_argument("--dex-program-id", type=str, default=mango.default_dex_program_id,
-                    help="DEX program ID/address")
-parser.add_argument("--group-name", type=str, default=mango.default_group_name,
-                    help="Mango group name")
-parser.add_argument("--group-id", type=str, default=mango.default_group_id,
-                    help="Mango group ID/address")
+mango.Context.add_context_command_line_parameters(parser)
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--token-data-file", type=str, default="solana.tokenlist.json",
                     help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+parser.add_argument("--wait", action="store_true", default=False,
+                    help="wait until the transaction is confirmed")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
@@ -48,9 +41,7 @@ try:
         logging.error(f"Wallet file '{id_filename}' is not present.")
         sys.exit(1)
     wallet = mango.Wallet.load(id_filename)
-
-    context = mango.Context.from_command_line(args.cluster, args.cluster_url, args.program_id,
-                                              args.dex_program_id, args.group_name, args.group_id)
+    context = mango.Context.from_context_command_line_parameters(args)
 
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
@@ -61,20 +52,51 @@ try:
         token_data = json.load(json_file)
         spot_market_lookup = mango.SpotMarketLookup(token_data)
 
-    if args.dry_run:
-        trade_executor: mango.TradeExecutor = mango.NullTradeExecutor(print)
-    else:
-        trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, spot_market_lookup, Decimal(0), print)
+    transaction = Transaction()
+    signers: typing.List[Account] = [wallet.account]
 
     for market_metadata in group.markets:
         market = market_metadata.fetch_market(context)
+        open_order_accounts = market.find_open_orders_accounts_for_owner(wallet.address)
+        if not open_order_accounts:
+            logging.warning(
+                f"Skipping settling for market {market_metadata.symbol} - no OpenOrders account could be found.")
+            continue
+
         spot_market = spot_market_lookup.find_by_symbol(market_metadata.symbol)
         if spot_market is None:
-            logging.warn(
-                f"Skipping settling for market {market_metadata.symbol} because no spot market could be found.")
-        else:
-            transaction_ids = trade_executor.settle(spot_market, market)
-            trade_executor.wait_for_settlement_completion(transaction_ids)
+            logging.warning(
+                f"Skipping settling for market {market_metadata.symbol} - no spot market could be found.")
+            continue
+
+        base_token_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
+            context, wallet.address, spot_market.base)
+        if base_token_account is None:
+            logging.warning(
+                f"Skipping settling for market {market_metadata.symbol} - no base token account for '{spot_market.base}'.")
+            continue
+
+        quote_token_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
+            context, wallet.address, spot_market.quote)
+        if quote_token_account is None:
+            logging.warning(
+                f"Skipping settling for market {market_metadata.symbol} - no quote token account for '{spot_market.quote}'.")
+            continue
+
+        logging.info(f"Adding settle instruction for market {market_metadata.symbol}.")
+        settle_instruction = mango.SettleInstructionBuilder(context, wallet, market,
+                                                            open_order_accounts[0].address,
+                                                            base_token_account.address, quote_token_account.address)
+        transaction.add(settle_instruction.build())
+
+    if args.dry_run:
+        print("Skipping transaction processing - dry run is set.")
+    else:
+        response = context.client.send_transaction(transaction, *signers)
+        transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
+        if args.wait:
+            print(f"Waiting on {transaction_id}")
+            context.wait_for_confirmation(transaction_id)
 
     logging.info("Settlement completed.")
 except Exception as exception:
