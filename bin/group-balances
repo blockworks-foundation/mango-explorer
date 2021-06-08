@@ -48,7 +48,7 @@ try:
     logging.info(f"Wallet address: {wallet.address}")
 
     group = mango.Group.load(context)
-    balances = group.fetch_balances(wallet.address)
+    balances = group.fetch_balances(context, wallet.address)
     print("Balances:")
     mango.TokenValue.report(print, balances)
 except Exception as exception:

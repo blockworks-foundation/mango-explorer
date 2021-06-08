@@ -112,7 +112,7 @@ try:
     liquidation_processor.update_margin_accounts(ripe)
 
     group = mango.Group.load(context)  # Refresh group data
-    prices = group.fetch_token_prices()
+    prices = group.fetch_token_prices(context)
     liquidation_processor.update_prices(group, prices)
 
     time_taken = time.time() - started_at

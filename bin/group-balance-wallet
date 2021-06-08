@@ -71,7 +71,7 @@ try:
     targets = list(map(balance_parser.parse, args.target))
     logging.info(f"Targets: {targets}")
 
-    prices = group.fetch_token_prices()
+    prices = group.fetch_token_prices(context)
     logging.info(f"Prices: {prices}")
 
     if args.dry_run:

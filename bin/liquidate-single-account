@@ -108,7 +108,7 @@ try:
                                                               liquidations_publisher,
                                                               liquidator_name)
 
-    prices = group.fetch_token_prices()
+    prices = group.fetch_token_prices(context)
     margin_account = mango.MarginAccount.load(context, margin_account_address, group)
 
     transaction_id = account_liquidator.liquidate(group, margin_account, prices)

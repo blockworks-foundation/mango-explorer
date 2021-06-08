@@ -305,7 +305,7 @@ class MarginAccount(AddressableAccount):
         margin_accounts = MarginAccount.load_all_for_group_with_open_orders(context, context.program_id, group)
         logger.info(f"Fetched {len(margin_accounts)} V1 margin accounts to process.")
 
-        prices = group.fetch_token_prices()
+        prices = group.fetch_token_prices(context)
         ripe_accounts = MarginAccount.filter_out_unripe(margin_accounts, group, prices)
 
         time_taken = time.time() - started_at
@@ -367,7 +367,7 @@ class MarginAccount(AddressableAccount):
         for margin_account in margin_accounts:
             margin_account.install_open_orders_accounts(group, open_orders)
 
-        prices = group.fetch_token_prices()
+        prices = group.fetch_token_prices(context)
         ripe_accounts = MarginAccount.filter_out_unripe(margin_accounts, group, prices)
 
         time_taken = time.time() - started_at

@@ -1,5 +1,5 @@
 from .context import mango
-from .fakes import fake_account_info, fake_context, fake_seeded_public_key, fake_token
+from .fakes import fake_account_info, fake_seeded_public_key, fake_token
 
 from decimal import Decimal
 
@@ -8,7 +8,7 @@ import base64
 
 def test_construction():
     account_info = fake_account_info()
-    context = fake_context()
+    name = "FAKE_GROUP"
     account_flags = mango.MangoAccountFlags(mango.Version.V1, True, False, True, False)
     basket_tokens = [fake_token(), fake_token(), fake_token()]
     markets = []
@@ -23,14 +23,14 @@ def test_construction():
     admin = fake_seeded_public_key("admin")
     borrow_limits = [Decimal(5), Decimal(7), Decimal(2)]
 
-    actual = mango.Group(account_info, mango.Version.V1, context, account_flags,
+    actual = mango.Group(account_info, mango.Version.V1, name, account_flags,
                          basket_tokens, markets, signer_nonce, signer_key, dex_program_id,
                          total_deposits, total_borrows, maint_coll_ratio, init_coll_ratio,
                          srm_vault, admin, borrow_limits)
 
     assert actual is not None
     assert actual.logger is not None
-    assert actual.context == context
+    assert actual.name == name
     assert actual.account_flags == account_flags
     assert actual.basket_tokens == basket_tokens
     assert actual.markets == markets

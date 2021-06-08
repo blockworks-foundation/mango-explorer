@@ -43,7 +43,7 @@ from .version import Version
 
 
 class Group(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version, context: Context,
+    def __init__(self, account_info: AccountInfo, version: Version, name: str,
                  account_flags: MangoAccountFlags, basket_tokens: typing.List[BasketToken],
                  markets: typing.List[MarketMetadata],
                  signer_nonce: Decimal, signer_key: PublicKey, dex_program_id: PublicKey,
@@ -52,7 +52,7 @@ class Group(AddressableAccount):
                  admin: PublicKey, borrow_limits: typing.List[TokenValue]):
         super().__init__(account_info)
         self.version: Version = version
-        self.context: Context = context
+        self.name: str = name
         self.account_flags: MangoAccountFlags = account_flags
         self.basket_tokens: typing.List[BasketToken] = basket_tokens
         self.markets: typing.List[MarketMetadata] = markets
@@ -85,7 +85,7 @@ class Group(AddressableAccount):
     # stick with passing around `Token` objects.
     #
     @staticmethod
-    def from_layout(layout: construct.Struct, context: Context, account_info: AccountInfo, version: Version, token_lookup: TokenLookup = TokenLookup.default_lookups(), spot_market_lookup: SpotMarketLookup = SpotMarketLookup.default_lookups()) -> "Group":
+    def from_layout(layout: construct.Struct, name: str, account_info: AccountInfo, version: Version, token_lookup: TokenLookup = TokenLookup.default_lookups(), spot_market_lookup: SpotMarketLookup = SpotMarketLookup.default_lookups()) -> "Group":
         account_flags: MangoAccountFlags = MangoAccountFlags.from_layout(layout.account_flags)
 
         basket_tokens: typing.List[BasketToken] = []
@@ -122,7 +122,7 @@ class Group(AddressableAccount):
         maint_coll_ratio = layout.maint_coll_ratio.quantize(Decimal('.01'))
         init_coll_ratio = layout.init_coll_ratio.quantize(Decimal('.01'))
 
-        return Group(account_info, version, context, account_flags, basket_tokens, markets,
+        return Group(account_info, version, name, account_flags, basket_tokens, markets,
                      layout.signer_nonce, layout.signer_key, layout.dex_program_id, total_deposits,
                      total_borrows, maint_coll_ratio, init_coll_ratio, layout.srm_vault,
                      layout.admin, borrow_limits)
@@ -140,7 +140,7 @@ class Group(AddressableAccount):
             raise Exception(
                 f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP_V1.sizeof()} or {layouts.GROUP_V2.sizeof()})")
 
-        return Group.from_layout(layout, context, account_info, version)
+        return Group.from_layout(layout, context.group_name, account_info, version)
 
     @staticmethod
     def load(context: Context):
@@ -155,19 +155,18 @@ class Group(AddressableAccount):
                 return index
         return -1
 
-    def fetch_token_prices(self) -> typing.List[TokenValue]:
+    def fetch_token_prices(self, context: Context) -> typing.List[TokenValue]:
         started_at = time.time()
 
         # Note: we can just load the oracle data in a simpler way, with:
-        #   oracles = map(lambda market: Aggregator.load(self.context, market.oracle), self.markets)
+        #   oracles = map(lambda market: Aggregator.load(context, market.oracle), self.markets)
         # but that makes a network request for every oracle. We can reduce that to just one request
         # if we use AccountInfo.load_multiple() and parse the data ourselves.
         #
         # This seems to halve the time this function takes.
         oracle_addresses = list([market.oracle for market in self.markets])
-        oracle_account_infos = AccountInfo.load_multiple(self.context, oracle_addresses)
-        oracles = map(lambda oracle_account_info: Aggregator.parse(
-            self.context, oracle_account_info), oracle_account_infos)
+        oracle_account_infos = AccountInfo.load_multiple(context, oracle_addresses)
+        oracles = map(lambda oracle_account_info: Aggregator.parse(context, oracle_account_info), oracle_account_infos)
         prices = list(map(lambda oracle: oracle.price, oracles)) + [Decimal(1)]
         token_prices = []
         for index, price in enumerate(prices):
@@ -180,16 +179,16 @@ class Group(AddressableAccount):
     @staticmethod
     def load_with_prices(context: Context) -> typing.Tuple["Group", typing.List[TokenValue]]:
         group = Group.load(context)
-        prices = group.fetch_token_prices()
+        prices = group.fetch_token_prices(context)
         return group, prices
 
-    def fetch_balances(self, root_address: PublicKey) -> typing.List[TokenValue]:
+    def fetch_balances(self, context: Context, root_address: PublicKey) -> typing.List[TokenValue]:
         balances: typing.List[TokenValue] = []
-        sol_balance = self.context.fetch_sol_balance(root_address)
+        sol_balance = context.fetch_sol_balance(root_address)
         balances += [TokenValue(SolToken, sol_balance)]
 
         for basket_token in self.basket_tokens:
-            balance = TokenValue.fetch_total_value(self.context, root_address, basket_token.token)
+            balance = TokenValue.fetch_total_value(context, root_address, basket_token.token)
             balances += [balance]
         return balances
 
@@ -201,7 +200,7 @@ class Group(AddressableAccount):
         base_tokens = "\n        ".join([f"{tok}".replace("\n", "\n        ") for tok in self.base_tokens])
         markets = "\n        ".join([f"{mkt}".replace("\n", "\n        ") for mkt in self.markets])
         return f"""
-« Group [{self.version}] {self.address}:
+« Group [{self.version} - {self.name}] {self.address}:
     Flags: {self.account_flags}
     Base Tokens:
         {base_tokens}

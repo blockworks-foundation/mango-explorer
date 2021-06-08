@@ -197,7 +197,7 @@ class ReportingAccountLiquidator(AccountLiquidator):
         balances = margin_account.get_intrinsic_balances(group)
         mam = MarginAccountMetadata(margin_account, balance_sheet, balances)
 
-        balances_before = group.fetch_balances(self.wallet.address)
+        balances_before = group.fetch_balances(self.context, self.wallet.address)
         self.logger.info("Wallet balances before:")
         TokenValue.report(self.logger.info, balances_before)
 
@@ -223,7 +223,7 @@ class ReportingAccountLiquidator(AccountLiquidator):
             self.logger.info(f"Margin account balances after: {intrinsic_balances_after}")
 
             self.logger.info("Wallet Balances After:")
-            balances_after = group_after.fetch_balances(self.wallet.address)
+            balances_after = group_after.fetch_balances(self.context, self.wallet.address)
             TokenValue.report(self.logger.info, balances_after)
 
             liquidation_event = LiquidationEvent(datetime.datetime.now(),
