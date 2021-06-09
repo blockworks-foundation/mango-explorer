@@ -563,7 +563,7 @@ class CreateSerumOpenOrdersInstructionBuilder(InstructionBuilder):
 # Creates a Serum order-placing instruction using V3 of the NewOrder instruction.
 #
 class NewOrderV3InstructionBuilder(InstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, market: Market, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int):
+    def __init__(self, context: Context, wallet: Wallet, market: Market, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, fee_discount_address: typing.Optional[PublicKey]):
         super().__init__(context)
         self.wallet: Wallet = wallet
         self.market: Market = market
@@ -574,6 +574,7 @@ class NewOrderV3InstructionBuilder(InstructionBuilder):
         self.price: Decimal = price
         self.quantity: Decimal = quantity
         self.client_id: int = client_id
+        self.fee_discount_address: typing.Optional[PublicKey] = fee_discount_address
 
     def build(self) -> TransactionInstruction:
         instruction = self.market.make_place_order_instruction(
@@ -584,8 +585,8 @@ class NewOrderV3InstructionBuilder(InstructionBuilder):
             float(self.price),
             float(self.quantity),
             self.client_id,
-            self.open_orders_address
-            # fee_discount_pubkey: PublicKey = None,
+            self.open_orders_address,
+            self.fee_discount_address
         )
 
         return instruction
@@ -600,6 +601,7 @@ class NewOrderV3InstructionBuilder(InstructionBuilder):
     quantity: {float(self.quantity)},
     client_id: {self.client_id},
     open_orders_address: {self.open_orders_address}
+    fee_discount_address: {self.fee_discount_address}
 »"""
 
 

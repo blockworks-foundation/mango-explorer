@@ -1,11 +1,24 @@
+import datetime
+
 from decimal import Decimal
 from typing import NamedTuple
 from pyserum import market
 from pyserum.market.state import MarketState
+from solana.account import Account
 from solana.publickey import PublicKey
+from solana.rpc.api import Client
+from solana.rpc.types import RPCResponse
 
-import datetime
 import mango
+
+
+class MockClient(Client):
+    def __init__(self):
+        super().__init__("http://localhost")
+        self.token_accounts_by_owner = []
+
+    def get_token_accounts_by_owner(self, *args, **kwargs) -> RPCResponse:
+        return RPCResponse(result={"value": self.token_accounts_by_owner})
 
 
 def fake_public_key() -> PublicKey:
@@ -25,7 +38,14 @@ def fake_token() -> mango.Token:
 
 
 def fake_context() -> mango.Context:
-    return mango.Context("fake-cluster", "https://fake-cluster-host", fake_seeded_public_key("program ID"), fake_seeded_public_key("DEX program ID"), "FAKE_GROUP", fake_seeded_public_key("group ID"))
+    context = mango.Context(cluster="test",
+                            cluster_url="http://localhost",
+                            program_id=fake_seeded_public_key("program ID"),
+                            dex_program_id=fake_seeded_public_key("DEX program ID"),
+                            group_name="TEST_GROUP",
+                            group_id=fake_seeded_public_key("group ID"))
+    context.client = MockClient()
+    return context
 
 
 def fake_index() -> mango.Index:
@@ -40,3 +60,16 @@ def fake_market() -> market.Market:
     container = Container(own_address=fake_seeded_public_key("market address"), vault_signer_nonce=2)
     state = MarketState(container, fake_seeded_public_key("program ID"), 6, 6)
     return market.Market(None, state)
+
+
+def fake_token_account() -> mango.TokenAccount:
+    token_account_info = fake_account_info()
+    token = fake_token()
+    token_value = mango.TokenValue(token, Decimal("100"))
+    return mango.TokenAccount(token_account_info, mango.Version.V1, fake_seeded_public_key("owner"), token_value)
+
+
+def fake_wallet() -> mango.Wallet:
+    wallet = mango.Wallet([1] * 64)
+    wallet.account = Account()
+    return wallet

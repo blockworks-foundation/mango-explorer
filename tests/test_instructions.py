@@ -159,8 +159,9 @@ def test_new_order_v3_instruction_builder_constructor():
     price: Decimal = Decimal(72)
     quantity: Decimal = Decimal("0.05")
     client_id: int = 53
+    fee_discount_address: PublicKey = fake_seeded_public_key("fee discount address")
     actual = mango.NewOrderV3InstructionBuilder(
-        context, wallet, market, source, open_orders_address, order_type, side, price, quantity, client_id)
+        context, wallet, market, source, open_orders_address, order_type, side, price, quantity, client_id, fee_discount_address)
     assert actual is not None
     assert actual.logger is not None
     assert actual.context == context
@@ -173,6 +174,7 @@ def test_new_order_v3_instruction_builder_constructor():
     assert actual.price == price
     assert actual.quantity == quantity
     assert actual.client_id == client_id
+    assert actual.fee_discount_address == fee_discount_address
 
 
 def test_consume_events_instruction_builder_constructor():

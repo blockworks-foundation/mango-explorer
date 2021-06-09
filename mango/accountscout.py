@@ -151,7 +151,7 @@ class AccountScout:
                     f"Account '{account_address}' has no account for token '{basket_token.token.name}', mint '{basket_token.token.mint}'.")
             else:
                 report.add_detail(
-                    f"Account '{account_address}' has {len(token_accounts)} {basket_token.token.name} token accounts with mint '{basket_token.token.mint}'.")
+                    f"Account '{account_address}' has {len(token_accounts)} {basket_token.token.name} token account(s) with mint '{basket_token.token.mint}': {[ta.address for ta in token_accounts]}")
 
         # Should have an open orders account for each market in the group. (Only required for re-balancing via Serum, which isn't implemented here yet.)
         for market in group.markets:

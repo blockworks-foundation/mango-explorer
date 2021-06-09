@@ -142,6 +142,8 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         self.wallet: Wallet = wallet
         self.spot_market_lookup: SpotMarketLookup = spot_market_lookup
         self.price_adjustment_factor: Decimal = price_adjustment_factor
+        self._serum_fee_discount_token_address: typing.Optional[PublicKey] = None
+        self._serum_fee_discount_token_address_loaded: bool = False
 
         def report(text):
             self.logger.info(text)
@@ -154,6 +156,24 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             self.reporter = report
         else:
             self.reporter = just_log
+
+    @property
+    def serum_fee_discount_token_address(self) -> typing.Optional[PublicKey]:
+        if self._serum_fee_discount_token_address_loaded:
+            return self._serum_fee_discount_token_address
+
+        # SRM is always the token Serum uses for fee discounts
+        token = self.context.token_lookup.find_by_symbol("SRM")
+        if token is None:
+            raise Exception("Could not load token details for SRM")
+
+        fee_discount_token_account = TokenAccount.fetch_largest_for_owner_and_token(
+            self.context, self.wallet.address, token)
+        if fee_discount_token_account is not None:
+            self._serum_fee_discount_token_address = fee_discount_token_account.address
+
+        self._serum_fee_discount_token_address_loaded = True
+        return self._serum_fee_discount_token_address
 
     def buy(self, symbol: str, quantity: Decimal) -> str:
         spot_market = self._lookup_spot_market(symbol)
@@ -246,7 +266,8 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         new_order = NewOrderV3InstructionBuilder(self.context, self.wallet, market,
                                                  source_token_account_address,
                                                  open_orders_address, OrderType.IOC,
-                                                 side, price, quantity, client_id)
+                                                 side, price, quantity, client_id,
+                                                 self.serum_fee_discount_token_address)
         transaction.add(new_order.build())
 
         consume_events = ConsumeEventsInstructionBuilder(self.context, self.wallet, market, open_orders_addresses)

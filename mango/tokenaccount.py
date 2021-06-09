@@ -54,9 +54,10 @@ class TokenAccount(AddressableAccount):
 
         token_accounts_response = context.client.get_token_accounts_by_owner(
             owner_public_key, opts, commitment=context.commitment)
+        token_accounts = context.unwrap_or_raise_exception(token_accounts_response)
 
         all_accounts: typing.List[TokenAccount] = []
-        for token_account_response in token_accounts_response["result"]["value"]:
+        for token_account_response in token_accounts["value"]:
             account_info = AccountInfo._from_response_values(
                 token_account_response["account"], PublicKey(token_account_response["pubkey"]))
             token_account = TokenAccount.parse(account_info, token)
