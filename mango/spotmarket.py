@@ -21,6 +21,7 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
+from .market import Market
 from .token import Token
 
 
@@ -30,19 +31,13 @@ from .token import Token
 #
 
 
-class SpotMarket:
+class SpotMarket(Market):
     def __init__(self, address: PublicKey, base: Token, quote: Token):
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        super().__init__(base, quote)
         self.address: PublicKey = address
-        self.base: Token = base
-        self.quote: Token = quote
-
-    @property
-    def name(self) -> str:
-        return f"{self.base.symbol}/{self.quote.symbol}"
 
     def __str__(self) -> str:
-        return f"« Market {self.name}: {self.address} »"
+        return f"« SpotMarket {self.symbol}: {self.address} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -74,6 +69,12 @@ class SpotMarket:
 
 
 class SpotMarketLookup:
+    @staticmethod
+    def load(token_data_filename: str) -> "SpotMarketLookup":
+        with open(token_data_filename) as json_file:
+            token_data = json.load(json_file)
+            return SpotMarketLookup(token_data)
+
     @staticmethod
     def _find_data_by_symbol(symbol: str, token_data: typing.Dict) -> typing.Optional[typing.Dict]:
         for token in token_data["tokens"]:

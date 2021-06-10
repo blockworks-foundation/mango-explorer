@@ -115,7 +115,7 @@ class Group(AddressableAccount):
             base_token = BasketToken.find_by_mint(basket_tokens, spot_market.base.mint)
             quote_token = BasketToken.find_by_mint(basket_tokens, spot_market.quote.mint)
 
-            market = MarketMetadata(spot_market.name, market_address, base_token, quote_token,
+            market = MarketMetadata(spot_market.symbol, market_address, base_token, quote_token,
                                     spot_market, layout.oracles[index], layout.oracle_decimals[index])
             markets += [market]
 

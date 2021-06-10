@@ -15,12 +15,14 @@
 
 import argparse
 import logging
+import multiprocessing
 import os
 import random
 import time
 import typing
 
 from decimal import Decimal
+from rx.scheduler import ThreadPoolScheduler
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.types import MemcmpOpts, RPCError, RPCResponse
@@ -61,11 +63,14 @@ default_group_id = PublicKey(MangoConstants[default_cluster]["mango_groups"][def
 _OLD_3_TOKEN_GROUP_ID = PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV")
 _OLD_3_TOKEN_PROGRAM_ID = PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
 
+# Probably best to access this through the Context object
+_pool_scheduler = ThreadPoolScheduler(multiprocessing.cpu_count())
 
 # # 🥭 Context class
 #
 # A `Context` object to manage Solana connection and Mango configuration.
 #
+
 
 class Context:
     def __init__(self, cluster: str, cluster_url: str, program_id: PublicKey, dex_program_id: PublicKey,
@@ -90,6 +95,10 @@ class Context:
         # "I think you are better off doing 4,8,16,20,30"
         self.retry_pauses: typing.List[Decimal] = [Decimal(4), Decimal(
             8), Decimal(16), Decimal(20), Decimal(30)]
+
+    @property
+    def pool_scheduler(self) -> ThreadPoolScheduler:
+        return _pool_scheduler
 
     def fetch_sol_balance(self, account_public_key: PublicKey) -> Decimal:
         result = self.client.get_balance(account_public_key, commitment=self.commitment)
@@ -271,7 +280,7 @@ class Context:
         return Context(args.cluster, args.cluster_url, program_id, args.dex_program_id, args.group_name, group_id)
 
     def __str__(self) -> str:
-        return f"""« Context:
+        return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝:
     Cluster: {self.cluster}
     Cluster URL: {self.cluster_url}
     Program ID: {self.program_id}
