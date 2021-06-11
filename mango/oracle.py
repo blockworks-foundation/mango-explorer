@@ -90,20 +90,20 @@ class Oracle(metaclass=abc.ABCMeta):
         raise NotImplementedError("Oracle.fetch_price() is not implemented on the base type.")
 
 
-# # 🥭 OracleFactory class
+# # 🥭 OracleProvider class
 #
 # Derived versions of this class allow creation of oracles for markets.
 #
 
 
-class OracleFactory(metaclass=abc.ABCMeta):
+class OracleProvider(metaclass=abc.ABCMeta):
     def __init__(self, name: str) -> None:
         self.name = name
 
     @abc.abstractmethod
     def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
-        raise NotImplementedError("OracleFactory.create_oracle_for_market() is not implemented on the base type.")
+        raise NotImplementedError("OracleProvider.create_oracle_for_market() is not implemented on the base type.")
 
     @abc.abstractmethod
     def all_available_symbols(self, context: Context) -> typing.List[str]:
-        raise NotImplementedError("OracleFactory.all_available_symbols() is not implemented on the base type.")
+        raise NotImplementedError("OracleProvider.all_available_symbols() is not implemented on the base type.")

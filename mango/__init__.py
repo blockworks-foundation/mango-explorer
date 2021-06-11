@@ -22,10 +22,9 @@ from .notification import NotificationTarget, TelegramNotificationTarget, Discor
 from .observables import PrintingObserverSubscriber, TimestampedPrintingObserverSubscriber, CollectingObserverSubscriber, CaptureFirstItem, FunctionObserver, create_backpressure_skipping_observer, debug_print_item, log_subscription_error, observable_pipeline_error_reporter, EventSource
 from .openorders import OpenOrders
 from .ownedtokenvalue import OwnedTokenValue
-from .oracles import OracleSource, Price, Oracle, OracleFactory
-from .pyth import PythOracle, PythOracleFactory
+from .oracle import OracleSource, Price, Oracle, OracleProvider
+from .oraclefactory import create_oracle_provider
 from .retrier import RetryWithPauses, retry_context
-from .serum import SerumOracle, SerumOracleFactory
 from .serumaccountflags import SerumAccountFlags
 from .spotmarket import SpotMarket, SpotMarketLookup
 from .token import Token, SolToken, TokenLookup

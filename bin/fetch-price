@@ -33,20 +33,14 @@ context = mango.Context.from_context_command_line_parameters(args)
 
 logging.info(str(context))
 
-lookup = mango.SpotMarketLookup.load(args.token_data_file)
-if args.provider == "pyth":
-    context = context.new_from_cluster("devnet")
-    oracle_factory: mango.OracleFactory = mango.PythOracleFactory()
-elif args.provider == "serum":
-    oracle_factory = mango.SerumOracleFactory(lookup)
-else:
-    raise Exception(f"Unknown oracle provider '{args.provider}'.")
+lookup: mango.SpotMarketLookup = mango.SpotMarketLookup.load(args.token_data_file)
+oracle_provider: mango.OracleProvider = mango.create_oracle_provider(args.provider, lookup)
 
 market = lookup.find_by_symbol(args.symbol)
 if market is None:
     raise Exception(f"Could not find market {args.symbol}.")
 
-oracle = oracle_factory.oracle_for_market(context, market)
+oracle = oracle_provider.oracle_for_market(context, market)
 if oracle is None:
     print(f"Could not find oracle for market {market.symbol} from provider {args.provider}.")
 else:

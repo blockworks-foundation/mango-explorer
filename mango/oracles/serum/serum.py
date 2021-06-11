@@ -21,11 +21,11 @@ from decimal import Decimal
 from pyserum.market.orderbook import OrderBook
 from pyserum.market import Market as SerumMarket
 
-from .accountinfo import AccountInfo
-from .context import Context
-from .market import Market
-from .oracles import Oracle, OracleFactory, OracleSource, Price
-from .spotmarket import SpotMarket, SpotMarketLookup
+from ...accountinfo import AccountInfo
+from ...context import Context
+from ...market import Market
+from ...oracle import Oracle, OracleProvider, OracleSource, Price
+from ...spotmarket import SpotMarket, SpotMarketLookup
 
 
 # # 🥭 Serum
@@ -69,12 +69,12 @@ class SerumOracle(Oracle):
         return Price(self.source, datetime.now(), self.spot_market, top_bid_price, mid_price, top_ask_price)
 
 
-# # 🥭 SerumOracleFactory class
+# # 🥭 SerumOracleProvider class
 #
-# Implements the `OracleFactory` abstract base class specialised to the Serum Network.
+# Implements the `OracleProvider` abstract base class specialised to the Serum Network.
 #
 
-class SerumOracleFactory(OracleFactory):
+class SerumOracleProvider(OracleProvider):
     def __init__(self, spot_market_lookup: SpotMarketLookup) -> None:
         super().__init__("Serum Oracle Factory")
         self.spot_market_lookup = spot_market_lookup
