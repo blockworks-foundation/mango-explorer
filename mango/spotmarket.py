@@ -69,11 +69,19 @@ class SpotMarket(Market):
 
 
 class SpotMarketLookup:
+    def __init__(self, token_data: typing.Dict) -> None:
+        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.token_data: typing.Dict = token_data
+
     @staticmethod
     def load(token_data_filename: str) -> "SpotMarketLookup":
         with open(token_data_filename) as json_file:
             token_data = json.load(json_file)
             return SpotMarketLookup(token_data)
+
+    @staticmethod
+    def default_lookups() -> "SpotMarketLookup":
+        return SpotMarketLookup.load("solana.tokenlist.json")
 
     @staticmethod
     def _find_data_by_symbol(symbol: str, token_data: typing.Dict) -> typing.Optional[typing.Dict]:
@@ -82,9 +90,13 @@ class SpotMarketLookup:
                 return token
         return None
 
-    def __init__(self, token_data: typing.Dict) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.token_data: typing.Dict = token_data
+    @staticmethod
+    def _find_token_by_symbol_or_error(symbol: str, token_data: typing.Dict) -> Token:
+        found_token_data = SpotMarketLookup._find_data_by_symbol(symbol, token_data)
+        if found_token_data is None:
+            raise Exception(f"Could not find data for token symbol '{symbol}'.")
+
+        return Token(symbol, found_token_data["name"], PublicKey(found_token_data["address"]), Decimal(found_token_data["decimals"]))
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[SpotMarket]:
         base_symbol, quote_symbol = symbol.split("/")
@@ -157,8 +169,24 @@ class SpotMarketLookup:
                         return SpotMarket(market_address, base, quote)
         return None
 
-    @staticmethod
-    def default_lookups() -> "SpotMarketLookup":
-        with open("solana.tokenlist.json") as json_file:
-            token_data = json.load(json_file)
-            return SpotMarketLookup(token_data)
+    def all_spot_markets(self) -> typing.List[SpotMarket]:
+        usdt = SpotMarketLookup._find_token_by_symbol_or_error("USDT", self.token_data)
+        usdc = SpotMarketLookup._find_token_by_symbol_or_error("USDC", self.token_data)
+
+        all_markets: typing.List[SpotMarket] = []
+        for token_data in self.token_data["tokens"]:
+            if "extensions" in token_data:
+                if "serumV3Usdc" in token_data["extensions"]:
+                    market_address_string = token_data["extensions"]["serumV3Usdc"]
+                    market_address = PublicKey(market_address_string)
+                    base = Token(token_data["symbol"], token_data["name"], PublicKey(
+                        token_data["address"]), Decimal(token_data["decimals"]))
+                    all_markets += [SpotMarket(market_address, base, usdc)]
+                if "serumV3Usdt" in token_data["extensions"]:
+                    market_address_string = token_data["extensions"]["serumV3Usdt"]
+                    market_address = PublicKey(market_address_string)
+                    base = Token(token_data["symbol"], token_data["name"], PublicKey(
+                        token_data["address"]), Decimal(token_data["decimals"]))
+                    all_markets += [SpotMarket(market_address, base, usdt)]
+
+        return all_markets

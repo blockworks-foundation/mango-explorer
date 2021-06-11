@@ -37,13 +37,13 @@ from .market import Market
 #
 
 class OracleSource():
-    def __init__(self, name: str, provider_name: str, market: Market) -> None:
-        self.name = name
+    def __init__(self, provider_name: str, source_name: str, market: Market) -> None:
         self.provider_name = provider_name
+        self.source_name = source_name
         self.market = market
 
     def __str__(self) -> str:
-        return f"« OracleSource '{self.name}' for market '{self.market.symbol}' »"
+        return f"« OracleSource '{self.source_name}' from '{self.provider_name}' for market '{self.market.symbol}' »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -56,11 +56,17 @@ class OracleSource():
 
 
 class Price():
-    def __init__(self, source: OracleSource, timestamp: datetime, market: Market, value: Decimal) -> None:
+    def __init__(self, source: OracleSource, timestamp: datetime, market: Market, top_bid: Decimal, mid_price: Decimal, top_ask: Decimal) -> None:
         self.source = source
         self.timestamp = timestamp
         self.market = market
-        self.value = value
+        self.top_bid = top_bid
+        self.mid_price = mid_price
+        self.top_ask = top_ask
+
+    @property
+    def spread(self) -> Decimal:
+        return (self.top_ask - self.top_bid) / 2
 
 
 # # 🥭 Oracle class

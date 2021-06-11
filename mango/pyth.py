@@ -51,7 +51,7 @@ class PythOracle(Oracle):
         self.market: Market = market
         self.product_data: pythnetwork.PRODUCT = product_data
         self.address: PublicKey = product_data.address
-        self.source: OracleSource = OracleSource(name, "pyth", market)
+        self.source: OracleSource = OracleSource("Pyth", name, market)
 
     def fetch_price(self, context: Context) -> Price:
         price_account_info = AccountInfo.load(context, self.product_data.px_acc)
@@ -68,7 +68,9 @@ class PythOracle(Oracle):
 
         factor = Decimal(10) ** price_data.expo
         price = price_data.agg.price * factor
-        return Price(self.source, datetime.now(), self.market, price)
+
+        # Pyth has no notion of bids, asks, or spreads so just provide the single price.
+        return Price(self.source, datetime.now(), self.market, price, price, price)
 
 
 # # 🥭 PythOracleFactory class

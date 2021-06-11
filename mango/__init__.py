@@ -25,6 +25,7 @@ from .ownedtokenvalue import OwnedTokenValue
 from .oracles import OracleSource, Price, Oracle, OracleFactory
 from .pyth import PythOracle, PythOracleFactory
 from .retrier import RetryWithPauses, retry_context
+from .serum import SerumOracle, SerumOracleFactory
 from .serumaccountflags import SerumAccountFlags
 from .spotmarket import SpotMarket, SpotMarketLookup
 from .token import Token, SolToken, TokenLookup
