@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 from .oracle import OracleProvider
+from .oracles.ftx import ftx
 from .oracles.pythnetwork import pythnetwork
 from .oracles.serum import serum
 from .spotmarket import SpotMarketLookup
@@ -25,8 +26,10 @@ from .spotmarket import SpotMarketLookup
 #
 
 def create_oracle_provider(provider_name: str, spot_market_lookup: SpotMarketLookup) -> OracleProvider:
-    if provider_name == "pyth":
-        return pythnetwork.PythOracleProvider()
-    elif provider_name == "serum":
+    if provider_name == "serum":
         return serum.SerumOracleProvider(spot_market_lookup)
+    elif provider_name == "ftx":
+        return ftx.FtxOracleProvider()
+    elif provider_name == "pyth":
+        return pythnetwork.PythOracleProvider()
     raise Exception(f"Unknown oracle provider '{provider_name}'.")

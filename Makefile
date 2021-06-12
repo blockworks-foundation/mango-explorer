@@ -3,9 +3,11 @@ commands := $(wildcard bin/*)
 
 setup: ## Install all the build and lint dependencies
 	pip install -r requirements.txt
+	echo "y" | mypy --install-types
 
 upgrade: ## Upgrade all the build and lint dependencies
 	pip install --upgrade -r requirements.txt
+	echo "y" | mypy --install-types
 
 test: ## Run all the tests
 	pytest -rP tests
