@@ -216,8 +216,8 @@ class MarginAccount(AddressableAccount):
         settled_assets: typing.List[Decimal] = [Decimal(0)] * len(group.basket_tokens)
         liabilities: typing.List[Decimal] = [Decimal(0)] * len(group.basket_tokens)
         for index, token in enumerate(group.basket_tokens):
-            settled_assets[index] = token.index.deposit.value * self.deposits[index].value
-            liabilities[index] = token.index.borrow.value * self.borrows[index].value
+            settled_assets[index] = self.deposits[index].value
+            liabilities[index] = self.borrows[index].value
 
         unsettled_assets: typing.List[Decimal] = [Decimal(0)] * len(group.basket_tokens)
         for index, open_orders_account in enumerate(self.open_orders_accounts):
