@@ -15,19 +15,24 @@
 
 
 import requests
+import rx
 import typing
 
 from datetime import datetime
 from decimal import Decimal
+from rx.subject import Subject
+from rx.core import Observable
 
 from ...context import Context
 from ...market import Market
+from ...observables import DisposePropagator
 from ...oracle import Oracle, OracleProvider, OracleSource, Price
+from ...reconnectingwebsocket import ReconnectingWebsocket
 
 
 # # 🥭 FTX
 #
-# This file contains code specific to the [Ftx Network](https://pyth.network/).
+# This file contains code specific to the [Ftx Network](https://ftx.com/).
 #
 
 def _ftx_get_from_url(url: str) -> typing.Dict:
@@ -58,6 +63,37 @@ class FtxOracle(Oracle):
         price = Decimal(result["price"])
 
         return Price(self.source, datetime.now(), self.market, bid, price, ask)
+
+    def to_streaming_observable(self, _: Context) -> rx.core.typing.Observable:
+        subject = Subject()
+
+        def _on_item(data):
+            if data["type"] == "update":
+                bid = Decimal(data["data"]["bid"])
+                ask = Decimal(data["data"]["ask"])
+                mid = (bid + ask) / Decimal(2)
+                time = data["data"]["time"]
+                timestamp = datetime.fromtimestamp(time)
+                price = Price(self.source, timestamp, self.market, bid, mid, ask)
+                subject.on_next(price)
+
+        ws: ReconnectingWebsocket = ReconnectingWebsocket("wss://ftx.com/ws/",
+                                                          f"""{{"op": "subscribe", "channel": "ticker", "market": "{self.market.symbol}"}}""", _on_item)
+
+        def subscribe(observer, scheduler_=None):
+            subject.subscribe(observer, scheduler_)
+
+            disposable = DisposePropagator()
+            disposable.add_ondispose(lambda: ws.close())
+            disposable.add_ondispose(lambda: subject.dispose())
+
+            return disposable
+
+        price_observable = Observable(subscribe)
+
+        ws.open()
+
+        return price_observable
 
 
 # # 🥭 FtxOracleProvider class

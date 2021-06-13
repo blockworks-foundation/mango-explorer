@@ -4,8 +4,6 @@ import argparse
 import logging
 import os
 import os.path
-import rx
-import rx.operators as ops
 import sys
 
 sys.path.insert(0, os.path.abspath(
@@ -48,15 +46,10 @@ else:
         price = oracle.fetch_price(context)
         print(f"The price of '{oracle.symbol}' on {price.source.provider_name} is: '{price.mid_price:,.8f}'")
     else:
-        actual_oracle = oracle  # Capture the oracle at this point.
         print("Press <ENTER> to quit.")
-        price_subscription = rx.interval(1).pipe(
-            ops.subscribe_on(context.pool_scheduler),
-            ops.start_with(-1),
-            ops.map(lambda _: actual_oracle.fetch_price(context)),
-            ops.catch(mango.observable_pipeline_error_reporter),
-            ops.retry(),
-        ).subscribe(on_next=lambda price: print(price.timestamp, price.market.symbol, price.source.provider_name, f"{price.mid_price:,.8f}"))
+        price_subscription = oracle.to_streaming_observable(context)
+        disposable = price_subscription.subscribe(mango.PrintingObserverSubscriber(False))
 
         # Wait - don't exit
         input()
+        disposable.dispose()

@@ -15,6 +15,7 @@
 
 import abc
 import logging
+import rx
 import typing
 
 from datetime import datetime
@@ -68,6 +69,12 @@ class Price():
     def spread(self) -> Decimal:
         return (self.top_ask - self.top_bid) / 2
 
+    def __str__(self) -> str:
+        return f"{self.timestamp} [{self.source.provider_name}] {self.market.symbol}: {self.mid_price:,.8f}"
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
 
 # # 🥭 Oracle class
 #
@@ -87,6 +94,10 @@ class Oracle(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def fetch_price(self, context: Context) -> Price:
+        raise NotImplementedError("Oracle.fetch_price() is not implemented on the base type.")
+
+    @abc.abstractmethod
+    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
         raise NotImplementedError("Oracle.fetch_price() is not implemented on the base type.")
 
 

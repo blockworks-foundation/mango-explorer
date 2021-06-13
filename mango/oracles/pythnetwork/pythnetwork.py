@@ -15,6 +15,8 @@
 
 
 import re
+import rx
+import rx.operators as ops
 import typing
 
 from datetime import datetime
@@ -24,6 +26,7 @@ from solana.publickey import PublicKey
 from ...accountinfo import AccountInfo
 from ...context import Context
 from ...market import Market
+from ...observables import observable_pipeline_error_reporter
 from ...oracle import Oracle, OracleProvider, OracleSource, Price
 
 # Use this for Pyth V1.
@@ -73,6 +76,15 @@ class PythOracle(Oracle):
 
         # Pyth has no notion of bids, asks, or spreads so just provide the single price.
         return Price(self.source, datetime.now(), self.market, price, price, price)
+
+    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
+        return rx.interval(1).pipe(
+            ops.subscribe_on(context.pool_scheduler),
+            ops.start_with(-1),
+            ops.map(lambda _: self.fetch_price(context)),
+            ops.catch(observable_pipeline_error_reporter),
+            ops.retry(),
+        )
 
 
 # # 🥭 PythOracleProvider class

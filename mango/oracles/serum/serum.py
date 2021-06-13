@@ -14,6 +14,8 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
+import rx
+import rx.operators as ops
 import typing
 
 from datetime import datetime
@@ -24,6 +26,7 @@ from pyserum.market import Market as SerumMarket
 from ...accountinfo import AccountInfo
 from ...context import Context
 from ...market import Market
+from ...observables import observable_pipeline_error_reporter
 from ...oracle import Oracle, OracleProvider, OracleSource, Price
 from ...spotmarket import SpotMarket, SpotMarketLookup
 
@@ -67,6 +70,15 @@ class SerumOracle(Oracle):
         mid_price = (top_bid_price + top_ask_price) / 2
 
         return Price(self.source, datetime.now(), self.spot_market, top_bid_price, mid_price, top_ask_price)
+
+    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
+        return rx.interval(1).pipe(
+            ops.subscribe_on(context.pool_scheduler),
+            ops.start_with(-1),
+            ops.map(lambda _: self.fetch_price(context)),
+            ops.catch(observable_pipeline_error_reporter),
+            ops.retry(),
+        )
 
 
 # # 🥭 SerumOracleProvider class

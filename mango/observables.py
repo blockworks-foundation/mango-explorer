@@ -20,6 +20,7 @@ import rx
 import rx.subject
 import typing
 
+from rx.core.abc.disposable import Disposable
 from rxpy_backpressure import BackPressure
 
 
@@ -255,3 +256,21 @@ class EventSource(rx.subject.Subject, typing.Generic[TEventDatum]):
 
     def dispose(self) -> None:
         super().dispose()
+
+
+# # 🥭 DisposePropagator class
+#
+# A `Disposable` class that can 'fan out' `dispose()` calls to perform additional
+# cleanup actions.
+#
+
+class DisposePropagator(Disposable):
+    def __init__(self):
+        self.handlers: typing.List[typing.Callable[[], None]] = []
+
+    def add_ondispose(self, handler: typing.Callable[[], None]):
+        self.handlers += [handler]
+
+    def dispose(self):
+        for handler in self.handlers:
+            handler()
