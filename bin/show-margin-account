@@ -17,7 +17,7 @@ import mango  # nopep8
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Shows the on-chain data of a Mango Markets Margin Account.")
 mango.Context.add_context_command_line_parameters(parser)
-parser.add_argument("--address", type=PublicKey,
+parser.add_argument("--address", type=PublicKey, required=True,
                     help="Solana address of the Mango Markets Margin Account")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
                     help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
