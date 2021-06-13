@@ -46,7 +46,7 @@ class MarginAccount(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, account_flags: MangoAccountFlags,
                  has_borrows: bool, mango_group: PublicKey, owner: PublicKey,
                  deposits: typing.List[TokenValue], borrows: typing.List[TokenValue],
-                 open_orders: typing.List[PublicKey]):
+                 open_orders: typing.List[typing.Optional[PublicKey]]):
         super().__init__(account_info)
         self.version: Version = version
         self.account_flags: MangoAccountFlags = account_flags
@@ -55,7 +55,7 @@ class MarginAccount(AddressableAccount):
         self.owner: PublicKey = owner
         self.deposits: typing.List[TokenValue] = deposits
         self.borrows: typing.List[TokenValue] = borrows
-        self.open_orders: typing.List[PublicKey] = open_orders
+        self.open_orders: typing.List[typing.Optional[PublicKey]] = open_orders
         self.open_orders_accounts: typing.List[typing.Optional[OpenOrders]] = [None] * len(open_orders)
 
     @staticmethod
@@ -223,7 +223,8 @@ class MarginAccount(AddressableAccount):
         for index, open_orders_account in enumerate(self.open_orders_accounts):
             if open_orders_account is not None:
                 unsettled_assets[index] += open_orders_account.base_token_total
-                unsettled_assets[-1] += open_orders_account.quote_token_total
+                unsettled_assets[-1] += open_orders_account.quote_token_total + \
+                    open_orders_account.referrer_rebate_accrued
 
         balance_sheets: typing.List[BalanceSheet] = []
         for index, token in enumerate(group.basket_tokens):

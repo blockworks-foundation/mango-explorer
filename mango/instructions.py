@@ -174,7 +174,7 @@ class ForceCancelOrdersInstructionBuilder(InstructionBuilder):
                 AccountMeta(is_signer=False, is_writable=False, pubkey=self.context.dex_program_id),
                 AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_CLOCK_PUBKEY),
                 *list([AccountMeta(is_signer=False, is_writable=True, pubkey=oo_address)
-                      for oo_address in self.margin_account.open_orders]),
+                      for oo_address in self.margin_account.open_orders if oo_address if oo_address is not None]),
                 *list([AccountMeta(is_signer=False, is_writable=False, pubkey=oracle_address) for oracle_address in self.oracles])
             ],
             program_id=self.context.program_id,
@@ -369,7 +369,7 @@ class LiquidateInstructionBuilder(InstructionBuilder):
                 AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
                 AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_CLOCK_PUBKEY),
                 *list([AccountMeta(is_signer=False, is_writable=True, pubkey=oo_address)
-                      for oo_address in self.margin_account.open_orders]),
+                      for oo_address in self.margin_account.open_orders if oo_address is not None]),
                 *list([AccountMeta(is_signer=False, is_writable=False, pubkey=oracle_address) for oracle_address in self.oracles])
             ],
             program_id=self.context.program_id,

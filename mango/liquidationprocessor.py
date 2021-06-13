@@ -67,7 +67,7 @@ class LiquidationProcessor:
         self.ripe_accounts = ripe_margin_accounts
         self.ripe_accounts_updated_at = datetime.now()
 
-    def update_prices(self, group, prices):
+    def update_prices(self, group: Group, prices):
         started_at = time.time()
 
         if self.ripe_accounts is None:
