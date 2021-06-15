@@ -182,17 +182,14 @@ class MarginAccount(AddressableAccount):
     def filter_out_unripe(cls, margin_accounts: typing.List["MarginAccount"], group: Group, prices: typing.List[TokenValue]) -> typing.List["MarginAccount"]:
         logger: logging.Logger = logging.getLogger(cls.__name__)
 
-        nonzero: typing.List[MarginAccountMetadata] = []
+        ripe_accounts: typing.List[MarginAccount] = []
         for margin_account in margin_accounts:
             balance_sheet = margin_account.get_balance_sheet_totals(group, prices)
             if balance_sheet.collateral_ratio > 0:
-                balances = margin_account.get_intrinsic_balances(group)
-                nonzero += [MarginAccountMetadata(margin_account, balance_sheet, balances)]
-        logger.info(f"Of those {len(margin_accounts)}, {len(nonzero)} have a nonzero collateral ratio.")
-
-        ripe_metadata = filter(lambda mam: mam.balance_sheet.collateral_ratio <= group.init_coll_ratio, nonzero)
-        ripe_accounts = list(map(lambda mam: mam.margin_account, ripe_metadata))
-        logger.info(f"Of those {len(nonzero)}, {len(ripe_accounts)} are ripe 🥭.")
+                if balance_sheet.collateral_ratio <= group.init_coll_ratio:
+                    ripe_accounts += [margin_account]
+        logger.info(
+            f"Of those {len(margin_accounts)}, {len(ripe_accounts)} have a collateral ratio greater than zero but less than the initial collateral ratio of: {group.init_coll_ratio}.")
         return ripe_accounts
 
     def load_open_orders_accounts(self, context: Context, group: Group) -> None:
@@ -394,26 +391,3 @@ class MarginAccount(AddressableAccount):
         {borrows}
     Mango Open Orders: {open_orders}
 »"""
-
-
-# ## MarginAccountMetadata class
-
-
-class MarginAccountMetadata:
-    def __init__(self, margin_account: MarginAccount, balance_sheet: BalanceSheet, balances: typing.List[TokenValue]):
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.margin_account = margin_account
-        self.balance_sheet = balance_sheet
-        self.balances = balances
-
-    @property
-    def assets(self):
-        return self.balance_sheet.assets
-
-    @property
-    def liabilities(self):
-        return self.balance_sheet.liabilities
-
-    @property
-    def collateral_ratio(self):
-        return self.balance_sheet.collateral_ratio

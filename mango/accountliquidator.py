@@ -24,8 +24,9 @@ from solana.transaction import Transaction
 from .context import Context
 from .group import Group
 from .instructions import ForceCancelOrdersInstructionBuilder, InstructionBuilder, LiquidateInstructionBuilder
+from .liquidatablereport import LiquidatableReport
 from .liquidationevent import LiquidationEvent
-from .marginaccount import MarginAccount, MarginAccountMetadata
+from .marginaccount import MarginAccount
 from .observables import EventSource
 from .tokenvalue import TokenValue
 from .transactionscout import TransactionScout
@@ -58,11 +59,11 @@ class AccountLiquidator(metaclass=abc.ABCMeta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def prepare_instructions(self, group: Group, margin_account: MarginAccount, prices: typing.List[TokenValue]) -> typing.List[InstructionBuilder]:
+    def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.List[InstructionBuilder]:
         raise NotImplementedError("AccountLiquidator.prepare_instructions() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def liquidate(self, group: Group, margin_account: MarginAccount, prices: typing.List[TokenValue]) -> typing.Optional[str]:
+    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[str]:
         raise NotImplementedError("AccountLiquidator.liquidate() is not implemented on the base type.")
 
 
@@ -76,11 +77,11 @@ class NullAccountLiquidator(AccountLiquidator):
     def __init__(self):
         super().__init__()
 
-    def prepare_instructions(self, group: Group, margin_account: MarginAccount, prices: typing.List[TokenValue]) -> typing.List[InstructionBuilder]:
+    def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.List[InstructionBuilder]:
         return []
 
-    def liquidate(self, group: Group, margin_account: MarginAccount, prices: typing.List[TokenValue]) -> typing.Optional[str]:
-        self.logger.info(f"Skipping liquidation of margin account [{margin_account.address}]")
+    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[str]:
+        self.logger.info(f"Skipping liquidation of margin account [{liquidatable_report.margin_account.address}]")
         return None
 
 
@@ -100,17 +101,17 @@ class ActualAccountLiquidator(AccountLiquidator):
         self.context = context
         self.wallet = wallet
 
-    def prepare_instructions(self, group: Group, margin_account: MarginAccount, prices: typing.List[TokenValue]) -> typing.List[InstructionBuilder]:
+    def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.List[InstructionBuilder]:
         liquidate_instructions: typing.List[InstructionBuilder] = []
         liquidate_instruction = LiquidateInstructionBuilder.from_margin_account_and_market(
-            self.context, group, self.wallet, margin_account, prices)
+            self.context, liquidatable_report.group, self.wallet, liquidatable_report.margin_account, liquidatable_report.prices)
         if liquidate_instruction is not None:
             liquidate_instructions += [liquidate_instruction]
 
         return liquidate_instructions
 
-    def liquidate(self, group: Group, margin_account: MarginAccount, prices: typing.List[TokenValue]) -> typing.Optional[str]:
-        instruction_builders = self.prepare_instructions(group, margin_account, prices)
+    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[str]:
+        instruction_builders = self.prepare_instructions(liquidatable_report)
 
         if len(instruction_builders) == 0:
             return None
@@ -156,19 +157,19 @@ class ForceCancelOrdersAccountLiquidator(ActualAccountLiquidator):
     def __init__(self, context: Context, wallet: Wallet):
         super().__init__(context, wallet)
 
-    def prepare_instructions(self, group: Group, margin_account: MarginAccount, prices: typing.List[TokenValue]) -> typing.List[InstructionBuilder]:
+    def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.List[InstructionBuilder]:
         force_cancel_orders_instructions: typing.List[InstructionBuilder] = []
-        for index, market_metadata in enumerate(group.markets):
-            open_orders = margin_account.open_orders_accounts[index]
+        for index, market_metadata in enumerate(liquidatable_report.group.markets):
+            open_orders = liquidatable_report.margin_account.open_orders_accounts[index]
             if open_orders is not None:
                 market = market_metadata.fetch_market(self.context)
-                orders = market.load_orders_for_owner(margin_account.owner)
+                orders = market.load_orders_for_owner(liquidatable_report.margin_account.owner)
                 order_count = len(orders)
                 if order_count > 0:
                     force_cancel_orders_instructions += ForceCancelOrdersInstructionBuilder.multiple_instructions_from_margin_account_and_market(
-                        self.context, group, self.wallet, margin_account, market_metadata, order_count)
+                        self.context, liquidatable_report.group, self.wallet, liquidatable_report.margin_account, market_metadata, order_count)
 
-        all_instructions = force_cancel_orders_instructions + super().prepare_instructions(group, margin_account, prices)
+        all_instructions = force_cancel_orders_instructions + super().prepare_instructions(liquidatable_report)
 
         return all_instructions
 
@@ -189,21 +190,18 @@ class ReportingAccountLiquidator(AccountLiquidator):
         self.liquidations_publisher: EventSource[LiquidationEvent] = liquidations_publisher
         self.liquidator_name: str = liquidator_name
 
-    def prepare_instructions(self, group: Group, margin_account: MarginAccount, prices: typing.List[TokenValue]) -> typing.List[InstructionBuilder]:
-        return self.inner.prepare_instructions(group, margin_account, prices)
+    def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.List[InstructionBuilder]:
+        return self.inner.prepare_instructions(liquidatable_report)
 
-    def liquidate(self, group: Group, margin_account: MarginAccount, prices: typing.List[TokenValue]) -> typing.Optional[str]:
-        balance_sheet = margin_account.get_balance_sheet_totals(group, prices)
-        balances = margin_account.get_intrinsic_balances(group)
-        mam = MarginAccountMetadata(margin_account, balance_sheet, balances)
-
-        balances_before = group.fetch_balances(self.context, self.wallet.address)
+    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[str]:
+        balances_before = liquidatable_report.group.fetch_balances(self.context, self.wallet.address)
         self.logger.info("Wallet balances before:")
         TokenValue.report(self.logger.info, balances_before)
 
-        self.logger.info(f"Margin account balances before:\n{mam.balances}")
-        self.logger.info(f"Liquidating margin account: {mam.margin_account}\n{mam.balance_sheet}")
-        transaction_id = self.inner.liquidate(group, mam.margin_account, prices)
+        self.logger.info(f"Margin account balances before:\n{liquidatable_report.balances}")
+        self.logger.info(
+            f"Liquidating margin account: {liquidatable_report.margin_account}\n{liquidatable_report.balance_sheet}")
+        transaction_id = self.inner.liquidate(liquidatable_report)
         if transaction_id is None:
             self.logger.info("No transaction sent.")
         else:
@@ -218,7 +216,8 @@ class ReportingAccountLiquidator(AccountLiquidator):
             transaction_scout = TransactionScout.from_transaction_response(self.context, response)
 
             group_after = Group.load(self.context)
-            margin_account_after_liquidation = MarginAccount.load(self.context, mam.margin_account.address, group_after)
+            margin_account_after_liquidation = MarginAccount.load(
+                self.context, liquidatable_report.margin_account.address, group_after)
             intrinsic_balances_after = margin_account_after_liquidation.get_intrinsic_balances(group_after)
             self.logger.info(f"Margin account balances after: {intrinsic_balances_after}")
 

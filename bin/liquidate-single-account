@@ -7,6 +7,7 @@ import os.path
 import sys
 import traceback
 
+from decimal import Decimal
 from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
@@ -98,8 +99,9 @@ try:
 
     prices = group.fetch_token_prices(context)
     margin_account = mango.MarginAccount.load(context, margin_account_address, group)
-
-    transaction_id = account_liquidator.liquidate(group, margin_account, prices)
+    worthwhile_threshold = Decimal(0)  # No threshold - don't take this into account.
+    liquidatable_report = mango.LiquidatableReport.build(group, prices, margin_account, worthwhile_threshold)
+    transaction_id = account_liquidator.liquidate(liquidatable_report)
     if transaction_id is None:
         print("No transaction sent.")
     else:

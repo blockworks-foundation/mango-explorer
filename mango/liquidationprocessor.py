@@ -24,8 +24,9 @@ from decimal import Decimal
 from .accountliquidator import AccountLiquidator
 from .context import Context
 from .group import Group
+from .liquidatablereport import LiquidatableReport, LiquidatableState
 from .liquidationevent import LiquidationEvent
-from .marginaccount import MarginAccount, MarginAccountMetadata
+from .marginaccount import MarginAccount
 from .observables import EventSource
 from .tokenvalue import TokenValue
 from .walletbalancer import WalletBalancer
@@ -78,20 +79,18 @@ class LiquidationProcessor:
             f"Running on {len(self.ripe_accounts)} ripe accounts - ripe accounts last updated {self.ripe_accounts_updated_at:%Y-%m-%d %H:%M:%S}")
         self._check_update_recency("ripe account", self.ripe_accounts_updated_at)
 
-        updated: typing.List[MarginAccountMetadata] = []
+        updated: typing.List[LiquidatableReport] = []
         for margin_account in self.ripe_accounts:
-            balance_sheet = margin_account.get_balance_sheet_totals(group, prices)
-            balances = margin_account.get_intrinsic_balances(group)
-            updated += [MarginAccountMetadata(margin_account, balance_sheet, balances)]
+            updated += [LiquidatableReport.build(group, prices, margin_account, self.worthwhile_threshold)]
 
-        liquidatable = list(filter(lambda mam: mam.balance_sheet.collateral_ratio <= group.maint_coll_ratio, updated))
+        liquidatable = list(filter(lambda report: report.state & LiquidatableState.LIQUIDATABLE, updated))
         self.logger.info(f"Of those {len(updated)}, {len(liquidatable)} are liquidatable.")
 
-        above_water = list(filter(lambda mam: mam.collateral_ratio > 1, liquidatable))
+        above_water = list(filter(lambda report: report.state & LiquidatableState.ABOVE_WATER, liquidatable))
         self.logger.info(
             f"Of those {len(liquidatable)} liquidatable margin accounts, {len(above_water)} are 'above water' margin accounts with assets greater than their liabilities.")
 
-        worthwhile = list(filter(lambda mam: mam.assets - mam.liabilities > self.worthwhile_threshold, above_water))
+        worthwhile = list(filter(lambda report: report.state & LiquidatableState.WORTHWHILE, above_water))
         self.logger.info(
             f"Of those {len(above_water)} above water margin accounts, {len(worthwhile)} are worthwhile margin accounts with more than ${self.worthwhile_threshold} net assets.")
 
@@ -101,26 +100,26 @@ class LiquidationProcessor:
         time_taken = time.time() - started_at
         self.logger.info(f"Check of all ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
 
-    def _liquidate_all(self, group: Group, prices: typing.List[TokenValue], to_liquidate: typing.List[MarginAccountMetadata]):
+    def _liquidate_all(self, group: Group, prices: typing.List[TokenValue], to_liquidate: typing.List[LiquidatableReport]):
         to_process = to_liquidate
         while len(to_process) > 0:
-            highest_first = sorted(to_process, key=lambda mam: mam.assets - mam.liabilities, reverse=True)
+            highest_first = sorted(to_process,
+                                   key=lambda report: report.balance_sheet.assets - report.balance_sheet.liabilities, reverse=True)
             highest = highest_first[0]
             try:
-                self.account_liquidator.liquidate(group, highest.margin_account, prices)
+                self.account_liquidator.liquidate(highest)
                 self.wallet_balancer.balance(prices)
 
                 updated_margin_account = MarginAccount.load(self.context, highest.margin_account.address, group)
-                balance_sheet = updated_margin_account.get_balance_sheet_totals(group, prices)
-                balances = updated_margin_account.get_intrinsic_balances(group)
-                updated_mam = MarginAccountMetadata(updated_margin_account, balance_sheet, balances)
-                if updated_mam.assets - updated_mam.liabilities > self.worthwhile_threshold:
+                updated_report = LiquidatableReport.build(
+                    group, prices, updated_margin_account, highest.worthwhile_threshold)
+                if not (updated_report.state & LiquidatableState.WORTHWHILE):
                     self.logger.info(
                         f"Margin account {updated_margin_account.address} has been drained and is no longer worthwhile.")
                 else:
                     self.logger.info(
                         f"Margin account {updated_margin_account.address} is still worthwhile - putting it back on list.")
-                    to_process += [updated_mam]
+                    to_process += [updated_report]
             except Exception as exception:
                 self.logger.error(f"Failed to liquidate account '{highest.margin_account.address}' - {exception}")
             finally:
