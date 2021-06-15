@@ -30,10 +30,10 @@ from ...observables import observable_pipeline_error_reporter
 from ...oracle import Oracle, OracleProvider, OracleSource, Price
 
 # Use this for Pyth V1.
-from .layouts_v1 import MAGIC, MAPPING, PRICE, PRODUCT, PYTH_MAPPING_ROOT
+# from .layouts_v1 import MAGIC, MAPPING, PRICE, PRODUCT, PYTH_MAPPING_ROOT
 
 # Use this for Pyth V2.
-# from .layouts import MAGIC, MAPPING, PRICE, PRODUCT, PYTH_MAPPING_ROOT
+from .layouts import MAGIC, MAPPING, PRICE, PRODUCT, PYTH_MAPPING_ROOT
 
 
 # # 🥭 Pyth
