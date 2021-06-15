@@ -1,0 +1,80 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+import traceback
+
+from datetime import timedelta
+from decimal import Decimal
+from threading import Thread
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+import mango.marketmaking.simplemarketmaker  # nopep8
+
+parser = argparse.ArgumentParser(description="Runs a simple market-maker.")
+mango.Context.add_context_command_line_parameters(parser)
+parser.add_argument("--id-file", type=str, default="id.json",
+                    help="file containing the JSON-formatted wallet private key")
+parser.add_argument("--token-data-file", type=str, default="solana.tokenlist.json",
+                    help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
+parser.add_argument("--market", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)")
+parser.add_argument("--spread-ratio", type=Decimal, required=True,
+                    help="fraction of the mid price to be added and subtracted to calculate buy and sell prices")
+parser.add_argument("--position-size-ratio", type=Decimal, required=True,
+                    help="fraction of the token inventory to be bought or sold in each order")
+parser.add_argument("--pause-duration", type=int, default=10,
+                    help="number of seconds to pause between placing orders and cancelling them")
+parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
+                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+parser.add_argument("--dry-run", action="store_true", default=False,
+                    help="runs as read-only and does not perform any transactions")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+try:
+    id_filename = args.id_file
+    if not os.path.isfile(id_filename):
+        logging.error(f"Wallet file '{id_filename}' is not present.")
+        sys.exit(1)
+    wallet = mango.Wallet.load(id_filename)
+    context = mango.Context.from_context_command_line_parameters(args)
+
+    market_symbol = args.market.upper()
+    spot_market_lookup = mango.SpotMarketLookup.load(args.token_data_file)
+    spot_market = spot_market_lookup.find_by_symbol(market_symbol)
+    if spot_market is None:
+        raise Exception(f"Could not find spot market {market_symbol}")
+
+    order_placer: mango.OrderPlacer
+    if args.dry_run:
+        order_placer = mango.NullOrderPlacer(market_symbol, print)
+    else:
+        order_placer = mango.SerumOrderPlacer(context, wallet, spot_market, print)
+
+    oracle_provider: mango.OracleProvider = mango.create_oracle_provider("serum", spot_market_lookup)
+    oracle = oracle_provider.oracle_for_market(context, spot_market)
+    if oracle is None:
+        raise Exception(f"Could not find oracle for spot market {market_symbol}")
+
+    pause_duration = timedelta(seconds=args.pause_duration)
+    market_maker = mango.marketmaking.simplemarketmaker.SimpleMarketMaker(
+        context, wallet, spot_market, order_placer, oracle, args.spread_ratio, args.position_size_ratio, pause_duration)
+
+    print(f"Starting {market_maker} - use <Enter> to stop.")
+    thread = Thread(target=market_maker.start)
+    thread.start()
+
+    input()
+    print(f"Stopping {market_maker} on next iteration...")
+    market_maker.stop()
+except Exception as exception:
+    logging.critical(f"Market maker stopped because of exception: {exception} - {traceback.format_exc()}")
+except:
+    logging.critical(f"Market maker stopped because of uncatchable error: {traceback.format_exc()}")

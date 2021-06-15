@@ -22,6 +22,7 @@ from .marketmetadata import MarketMetadata
 from .notification import NotificationTarget, TelegramNotificationTarget, DiscordNotificationTarget, MailjetNotificationTarget, CsvFileNotificationTarget, FilteringNotificationTarget, NotificationHandler, parse_subscription_target
 from .observables import PrintingObserverSubscriber, TimestampedPrintingObserverSubscriber, CollectingObserverSubscriber, CaptureFirstItem, FunctionObserver, create_backpressure_skipping_observer, debug_print_item, log_subscription_error, observable_pipeline_error_reporter, EventSource
 from .openorders import OpenOrders
+from .orderplacer import OrderPlacer, NullOrderPlacer, SerumOrderPlacer, Order, Side, OrderType
 from .ownedtokenvalue import OwnedTokenValue
 from .oracle import OracleSource, Price, Oracle, OracleProvider
 from .oraclefactory import create_oracle_provider
