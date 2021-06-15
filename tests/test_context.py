@@ -6,10 +6,10 @@ from solana.publickey import PublicKey
 def context_has_default_values(ctx):
     assert ctx.cluster == "mainnet-beta"
     assert ctx.cluster_url == "https://solana-api.projectserum.com"
-    assert ctx.program_id == PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
+    assert ctx.program_id == PublicKey("5fNfvyp5czQVX77yoACa3JJVEhdRaWjPuazuWgjhTqEH")
     assert ctx.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-    assert ctx.group_name == "BTC_ETH_USDT"
-    assert ctx.group_id == PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV")
+    assert ctx.group_name == "BTC_ETH_SOL_SRM_USDC"
+    assert ctx.group_id == PublicKey("2oogpTYm1sp6LPZAWD3bp2wsFpnV2kXL1s52yyFhW5vp")
 
 
 def test_default_context_exists():
@@ -27,8 +27,8 @@ def test_new_from_cluster():
     assert derived.cluster_url == "https://api.devnet.solana.com"
     assert derived.program_id == PublicKey("9XzhtAtDXxW2rjbeVFhTq4fnhD8dqzr154r5b2z6pxEp")
     assert derived.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
-    assert derived.group_name == "BTC_ETH_USDT"
-    assert derived.group_id == PublicKey("2PUXjaYb9XHP6fBLrbz12jFDinzUcQuz7jWu8v2VLTNm")
+    assert derived.group_name == "BTC_ETH_SOL_SRM_USDC"
+    assert derived.group_id == PublicKey("B9Uddrao7b7sCjNZp1BJSQqFzqhMEmBxD2SvYTs2TSBn")
     context_has_default_values(mango.default_context)
 
 
@@ -37,10 +37,10 @@ def test_new_from_cluster_url():
     derived = mango.default_context.new_from_cluster_url("https://some-dev-host")
     assert derived.cluster == "mainnet-beta"
     assert derived.cluster_url == "https://some-dev-host"
-    assert derived.program_id == PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
+    assert derived.program_id == PublicKey("5fNfvyp5czQVX77yoACa3JJVEhdRaWjPuazuWgjhTqEH")
     assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-    assert derived.group_name == "BTC_ETH_USDT"
-    assert derived.group_id == PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV")
+    assert derived.group_name == "BTC_ETH_SOL_SRM_USDC"
+    assert derived.group_id == PublicKey("2oogpTYm1sp6LPZAWD3bp2wsFpnV2kXL1s52yyFhW5vp")
     context_has_default_values(mango.default_context)
 
 
