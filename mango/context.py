@@ -51,7 +51,7 @@ default_cluster_url = os.environ.get("CLUSTER_URL") or MangoConstants["cluster_u
 default_program_id = PublicKey(MangoConstants[default_cluster]["mango_program_id"])
 default_dex_program_id = PublicKey(MangoConstants[default_cluster]["dex_program_id"])
 
-default_group_name = os.environ.get("GROUP_NAME") or "BTC_ETH_USDT"
+default_group_name = os.environ.get("GROUP_NAME") or "BTC_ETH_SOL_SRM_USDC"
 default_group_id = PublicKey(MangoConstants[default_cluster]["mango_groups"][default_group_name]["mango_group_pk"])
 
 
