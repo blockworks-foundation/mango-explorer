@@ -43,10 +43,6 @@ from .wallet import Wallet
 # order on, and the code in the `OrderPlacer` be specialised for that market platform.
 #
 
-class Order(metaclass=abc.ABCMeta):
-    def __repr__(self) -> str:
-        return f"{self}"
-
 
 class Side(enum.Enum):
     BUY = enum.auto()
@@ -69,6 +65,13 @@ class OrderType(enum.Enum):
 
     def __repr__(self) -> str:
         return f"{self}"
+
+
+class Order(typing.NamedTuple):
+    id: int
+    side: Side
+    price: Decimal
+    size: Decimal
 
 
 # # 🥭 OrderPlacer class
@@ -99,6 +102,10 @@ class OrderPlacer(metaclass=abc.ABCMeta):
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         raise NotImplementedError("OrderPlacer.place_order() is not implemented on the base type.")
 
+    @abc.abstractmethod
+    def load_my_orders(self) -> typing.List[Order]:
+        raise NotImplementedError("OrderPlacer.load_my_orders() is not implemented on the base type.")
+
     def __repr__(self) -> str:
         return f"{self}"
 
@@ -110,10 +117,6 @@ class OrderPlacer(metaclass=abc.ABCMeta):
 #
 
 class NullOrderPlacer(OrderPlacer):
-    class NullOrder(Order):
-        def __str__(self) -> str:
-            return """« NullOrder »"""
-
     def __init__(self, market_name: str, reporter: typing.Callable[[str], None] = None):
         super().__init__()
         self.market_name: str = market_name
@@ -128,7 +131,10 @@ class NullOrderPlacer(OrderPlacer):
         report = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.market_name}."
         self.logger.info(report)
         self.reporter(report)
-        return NullOrderPlacer.NullOrder()
+        return Order()
+
+    def load_my_orders(self) -> typing.List[Order]:
+        return []
 
     def __str__(self) -> str:
         return f"""« NullOrderPlacer [{self.market_name}] »"""
@@ -140,13 +146,6 @@ class NullOrderPlacer(OrderPlacer):
 #
 
 class SerumOrderPlacer(OrderPlacer):
-    class SerumOrder(Order):
-        def __init__(self, client_id: int):
-            self.client_id = client_id
-
-        def __str__(self) -> str:
-            return f"""« SerumOrder [{self.client_id}] »"""
-
     def __init__(self, context: Context, wallet: Wallet, spot_market: SpotMarket, reporter: typing.Callable[[str], None] = None):
         super().__init__()
         self.context: Context = context
@@ -172,13 +171,15 @@ class SerumOrderPlacer(OrderPlacer):
             self.reporter = just_log
 
     def cancel_order(self, order: Order) -> None:
-        serum_order: SerumOrderPlacer.SerumOrder = typing.cast(SerumOrderPlacer.SerumOrder, order)
         self.reporter(
-            f"Cancelling order {serum_order.client_id} in openorders {self.open_orders.address} on market {self.spot_market.symbol}.")
-        response = self.market.cancel_order_by_client_id(
-            self.wallet.account, self.open_orders.address, serum_order.client_id,
-            TxOpts(preflight_commitment=self.context.commitment))
-        self.context.unwrap_or_raise_exception(response)
+            f"Cancelling order {order.id} in openorders {self.open_orders.address} on market {self.spot_market.symbol}.")
+        try:
+            response = self.market.cancel_order_by_client_id(
+                self.wallet.account, self.open_orders.address, order.id,
+                TxOpts(preflight_commitment=self.context.commitment))
+            self.context.unwrap_or_raise_exception(response)
+        except Exception as exception:
+            self.logger.warning(f"Failed to cancel order {order.id} - continuing. {exception}")
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
@@ -196,7 +197,19 @@ class SerumOrderPlacer(OrderPlacer):
                                            serum_order_type, serum_side, float(price), float(size),
                                            client_id, TxOpts(preflight_commitment=self.context.commitment))
         self.context.unwrap_or_raise_exception(response)
-        return SerumOrderPlacer.SerumOrder(client_id)
+        return Order(id=client_id, side=side, price=price, size=size)
+
+    def load_my_orders(self) -> typing.List[Order]:
+        serum_orders = self.market.load_orders_for_owner(self.wallet.address)
+        orders: typing.List[Order] = []
+        for serum_order in serum_orders:
+            price = Decimal(serum_order.info.price)
+            size = Decimal(serum_order.info.size)
+            side = Side.BUY if serum_order.side == pyserum.enums.Side.BUY else Side.SELL
+            order = Order(id=serum_order.client_id, side=side, price=price, size=size)
+            orders += [order]
+
+        return orders
 
     def __str__(self) -> str:
         return f"""« SerumOrderPlacer [{self.spot_market.symbol}] »"""

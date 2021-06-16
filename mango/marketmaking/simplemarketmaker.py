@@ -40,8 +40,11 @@ from decimal import Decimal
 # 6. Repeat from Step 1
 #
 # There are many features missing that you'd expect in a more realistic market maker. Here are just a few:
-# * There is no error handling
+# * There is very little error handling
 # * There is no retrying of failed actions
+# * There is no introspection on whether orders are filled
+# * There is no inventory management, nor any attempt to balance number of filled buys with number of
+#   filled sells.
 # * Token prices and quantities are rounded to the token mint's decimals, not the market's tick size and
 #   lot size
 # * The strategy of placing orders at a fixed spread around the mid price without taking any other factors
@@ -50,7 +53,7 @@ from decimal import Decimal
 #
 
 class SimpleMarketMaker:
-    def __init__(self, context: mango.Context, wallet: mango.Wallet, market: mango.Market, order_placer: mango.OrderPlacer, oracle: mango.Oracle, spread_ratio: Decimal, position_size_ratio: Decimal, pause: timedelta):
+    def __init__(self, context: mango.Context, wallet: mango.Wallet, market: mango.Market, order_placer: mango.OrderPlacer, oracle: mango.Oracle, spread_ratio: Decimal, position_size_ratio: Decimal, existing_order_tolerance: Decimal, pause: timedelta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: mango.Context = context
         self.wallet: mango.Wallet = wallet
@@ -59,19 +62,18 @@ class SimpleMarketMaker:
         self.oracle: mango.Oracle = oracle
         self.spread_ratio: Decimal = spread_ratio
         self.position_size_ratio: Decimal = position_size_ratio
+        self.existing_order_tolerance: Decimal = existing_order_tolerance
         self.pause: timedelta = pause
         self.stop_requested = False
 
     def start(self):
+        # On startup there should be no existing orders. If we didn't exit cleanly last time though,
+        # there may still be some hanging around. Cancel any existing orders so we start fresh.
+        self.cleanup()
+
         orders: typing.List[mango.Order] = []
         while not self.stop_requested:
             self.logger.info("Starting fresh iteration.")
-
-            # Cancel all orders.
-            self.logger.info("Cancelling all orders.")
-            for order in orders:
-                self.order_placer.cancel_order(order)
-            orders = []
 
             # Update current state
             price = self.oracle.fetch_price(self.context)
@@ -81,23 +83,37 @@ class SimpleMarketMaker:
             bid, ask = self.calculate_order_prices(price)
             buy_size, sell_size = self.calculate_order_sizes(price, inventory)
 
-            # Place the orders on the orderbook.
-            buy_order = self.order_placer.place_order(mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size)
-            self.logger.info(f"Placed order {buy_order} to BUY {buy_size} at {bid}")
-            sell_order = self.order_placer.place_order(mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size)
-            self.logger.info(f"Placed order {sell_order} to SELL {sell_size} at {ask}")
-            orders = [buy_order, sell_order]
+            current_orders = self.order_placer.load_my_orders()
+            buy_orders = [order for order in current_orders if order.side == mango.Side.BUY]
+            if self.orders_require_action(buy_orders, bid, buy_size):
+                self.logger.info("Cancelling BUY orders.")
+                for order in buy_orders:
+                    self.order_placer.cancel_order(order)
+                buy_order = self.order_placer.place_order(mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size)
+                self.logger.info(f"Placed order {buy_order} to BUY {buy_size} at {bid}")
+
+            sell_orders = [order for order in current_orders if order.side == mango.Side.SELL]
+            if self.orders_require_action(sell_orders, ask, sell_size):
+                self.logger.info("Cancelling SELL orders.")
+                for order in sell_orders:
+                    self.order_placer.cancel_order(order)
+                sell_order = self.order_placer.place_order(mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size)
+                self.logger.info(f"Placed order {sell_order} to SELL {sell_size} at {ask}")
 
             # Wait and hope for fills.
             self.logger.info(f"Pausing for {self.pause} seconds.")
             time.sleep(self.pause.seconds)
 
-        self.logger.info("Cancelling all orders and exiting.")
-        for order in orders:
-            self.order_placer.cancel_order(order)
+        self.cleanup()
 
     def stop(self):
         self.stop_requested = True
+
+    def cleanup(self):
+        self.logger.info("Cleaning up.")
+        orders = self.order_placer.load_my_orders()
+        for order in orders:
+            self.order_placer.cancel_order(order)
 
     def fetch_inventory(self) -> typing.List[mango.TokenValue]:
         return [
@@ -120,6 +136,16 @@ class SimpleMarketMaker:
         sell_size = base_tokens.value * self.position_size_ratio
 
         return (buy_size, sell_size)
+
+    def orders_require_action(self, orders: typing.List[mango.Order], price: Decimal, size: Decimal) -> bool:
+        # Typically there will be zero or one order.
+        for order in orders:
+            price_tolerance = order.price * self.existing_order_tolerance
+            size_tolerance = order.size * self.existing_order_tolerance
+            if (order.price < (price + price_tolerance)) and (order.price > (price - price_tolerance)) and (order.size < (size + size_tolerance) and (order.size > (size - size_tolerance))):
+                return False
+
+        return True
 
     def __str__(self) -> str:
         return f"""« SimpleMarketMaker for market '{self.market.symbol}' »"""

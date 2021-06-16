@@ -27,6 +27,8 @@ parser.add_argument("--spread-ratio", type=Decimal, required=True,
                     help="fraction of the mid price to be added and subtracted to calculate buy and sell prices")
 parser.add_argument("--position-size-ratio", type=Decimal, required=True,
                     help="fraction of the token inventory to be bought or sold in each order")
+parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal("0.0001"),
+                    help="fraction of the token inventory to be bought or sold in each order")
 parser.add_argument("--pause-duration", type=int, default=10,
                     help="number of seconds to pause between placing orders and cancelling them")
 parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
@@ -65,7 +67,7 @@ try:
 
     pause_duration = timedelta(seconds=args.pause_duration)
     market_maker = mango.marketmaking.simplemarketmaker.SimpleMarketMaker(
-        context, wallet, spot_market, order_placer, oracle, args.spread_ratio, args.position_size_ratio, pause_duration)
+        context, wallet, spot_market, order_placer, oracle, args.spread_ratio, args.position_size_ratio, args.existing_order_tolerance, pause_duration)
 
     print(f"Starting {market_maker} - use <Enter> to stop.")
     thread = Thread(target=market_maker.start)
