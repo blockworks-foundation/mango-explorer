@@ -1,7 +1,5 @@
 FROM jupyter/scipy-notebook:latest
 
-ARG LAST_COMMIT=""
-
 USER root
 RUN apt-get update && apt-get -y install jq curl libxml2-dev libxslt-dev libffi-dev zlib1g-dev
 RUN curl -SL -o /var/tmp/pyston_2.2_20.04.deb https://github.com/pyston/pyston/releases/download/pyston_2.2/pyston_2.2_20.04.deb
@@ -39,6 +37,7 @@ RUN jq '. += {"select_keymap_local_storage": false, "stored_keymap": "sublime"}'
 COPY meta/startup /home/jovyan/.ipython/profile_default/startup
 COPY meta/jupyter/custom /home/jovyan/.jupyter/custom
 
+ARG LAST_COMMIT=""
 RUN echo ${LAST_COMMIT} > /home/jovyan/work/.version
 
 ENV PATH="/home/jovyan/work/bin:${PATH}:/home/jovyan/work/scripts:/home/jovyan/.local/share/solana/install/active_release/bin"
