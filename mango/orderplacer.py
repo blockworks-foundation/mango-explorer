@@ -131,7 +131,7 @@ class NullOrderPlacer(OrderPlacer):
         report = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.market_name}."
         self.logger.info(report)
         self.reporter(report)
-        return Order()
+        return Order(id=0, side=side, price=price, size=size)
 
     def load_my_orders(self) -> typing.List[Order]:
         return []

@@ -41,7 +41,7 @@ from decimal import Decimal
 #
 # There are many features missing that you'd expect in a more realistic market maker. Here are just a few:
 # * There is very little error handling
-# * There is no retrying of failed actions
+# * There is no retrying of failed actions
 # * There is no introspection on whether orders are filled
 # * There is no inventory management, nor any attempt to balance number of filled buys with number of
 #   filled sells.
@@ -71,7 +71,6 @@ class SimpleMarketMaker:
         # there may still be some hanging around. Cancel any existing orders so we start fresh.
         self.cleanup()
 
-        orders: typing.List[mango.Order] = []
         while not self.stop_requested:
             self.logger.info("Starting fresh iteration.")
 
