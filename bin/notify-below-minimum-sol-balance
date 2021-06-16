@@ -1,0 +1,45 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+from decimal import Decimal
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(
+    description="Sends a notification if an account's SOL balance is below the '--minimum-sol-balance' parameter threshold.")
+mango.Context.add_context_command_line_parameters(parser)
+parser.add_argument("--name", type=str, required=True,
+                    help="name of the account")
+parser.add_argument("--address", type=PublicKey, required=True,
+                    help="address of the account")
+parser.add_argument("--minimum-sol-balance", type=Decimal, default=Decimal("0.1"),
+                    help="the minimum SOL balance required for the alert. A SOL balance less than this value will trigger a nifitication.")
+parser.add_argument("--notify", type=mango.parse_subscription_target, action="append", default=[],
+                    help="The notification target for low balance events")
+parser.add_argument("--log-level", default=logging.ERROR, type=lambda level: getattr(logging, level),
+                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.Context.from_context_command_line_parameters(args)
+
+account_info = mango.AccountInfo.load(context, args.address)
+if account_info is None:
+    raise Exception(f"No account at '{args.address}'")
+else:
+    account_sols = account_info.lamports / mango.SOL_DECIMAL_DIVISOR
+    if account_sols < args.minimum_sol_balance:
+        report = f"Account \"{args.name} [{args.address}]\" on {context.cluster} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
+        for notify in args.notify:
+            notify.send(report)
+        print(f"Notification sent: {report}")
