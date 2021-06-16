@@ -273,11 +273,17 @@ class Context:
         if (args.group_name != default_group_name) and (group_id == default_group_id):
             group_id = PublicKey(MangoConstants[args.cluster]["mango_groups"][args.group_name]["mango_group_pk"])
 
+        # Same problem here, but with cluster names and URLs. We want someone to be able to change the
+        # cluster just by changing the cluster name.
+        cluster_url = args.cluster_url
+        if (args.cluster != default_cluster) and (cluster_url == default_cluster_url):
+            cluster_url = MangoConstants["cluster_urls"][args.cluster]
+
         program_id = args.program_id
         if group_id == PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV"):
             program_id = PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
 
-        return Context(args.cluster, args.cluster_url, program_id, args.dex_program_id, args.group_name, group_id)
+        return Context(args.cluster, cluster_url, program_id, args.dex_program_id, args.group_name, group_id)
 
     def __str__(self) -> str:
         return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝:
