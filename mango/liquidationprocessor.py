@@ -76,23 +76,26 @@ class LiquidationProcessor:
             return
 
         self.logger.info(
-            f"Running on {len(self.ripe_accounts)} ripe accounts - ripe accounts last updated {self.ripe_accounts_updated_at:%Y-%m-%d %H:%M:%S}")
+            f"Ripe accounts last updated {self.ripe_accounts_updated_at:%Y-%m-%d %H:%M:%S}")
         self._check_update_recency("ripe account", self.ripe_accounts_updated_at)
 
+        report: typing.List[str] = []
         updated: typing.List[LiquidatableReport] = []
         for margin_account in self.ripe_accounts:
             updated += [LiquidatableReport.build(group, prices, margin_account, self.worthwhile_threshold)]
 
         liquidatable = list(filter(lambda report: report.state & LiquidatableState.LIQUIDATABLE, updated))
-        self.logger.info(f"Of those {len(updated)}, {len(liquidatable)} are liquidatable.")
+        report += [f"Of those {len(updated)} ripe accounts, {len(liquidatable)} are liquidatable."]
 
         above_water = list(filter(lambda report: report.state & LiquidatableState.ABOVE_WATER, liquidatable))
-        self.logger.info(
-            f"Of those {len(liquidatable)} liquidatable margin accounts, {len(above_water)} are 'above water' margin accounts with assets greater than their liabilities.")
+        report += [f"Of those {len(liquidatable)} liquidatable margin accounts, {len(above_water)} have assets greater than their liabilities."]
 
         worthwhile = list(filter(lambda report: report.state & LiquidatableState.WORTHWHILE, above_water))
-        self.logger.info(
-            f"Of those {len(above_water)} above water margin accounts, {len(worthwhile)} are worthwhile margin accounts with more than ${self.worthwhile_threshold} net assets.")
+        report += [f"Of those {len(above_water)} above water margin accounts, {len(worthwhile)} are worthwhile margin accounts with more than ${self.worthwhile_threshold} net assets."]
+
+        report_text = "\n    ".join(report)
+        self.logger.info(f"""Running on {len(self.ripe_accounts)} ripe accounts:
+    {report_text}""")
 
         self._liquidate_all(group, prices, worthwhile)
 
