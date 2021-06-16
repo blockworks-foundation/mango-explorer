@@ -32,7 +32,7 @@ lint: flake8 mypy
 ci: lint test ## Run all the tests and code checks
 
 docker-build:
-	docker build . -t opinionatedgeek/mango-explorer:latest
+	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer:latest
 
 docker-push:
 	docker push opinionatedgeek/mango-explorer:latest
@@ -40,7 +40,7 @@ docker-push:
 docker: docker-build docker-push
 
 docker-experimental-build:
-	docker build . -t opinionatedgeek/mango-explorer:experimental
+	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer:experimental
 
 docker-experimental-push:
 	docker push opinionatedgeek/mango-explorer:experimental
