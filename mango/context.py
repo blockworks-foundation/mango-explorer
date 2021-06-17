@@ -100,6 +100,11 @@ class Context:
     def pool_scheduler(self) -> ThreadPoolScheduler:
         return _pool_scheduler
 
+    @staticmethod
+    def default():
+        return Context(default_cluster, default_cluster_url, default_program_id,
+                       default_dex_program_id, default_group_name, default_group_id)
+
     def fetch_sol_balance(self, account_public_key: PublicKey) -> Decimal:
         result = self.client.get_balance(account_public_key, commitment=self.commitment)
         value = Decimal(result["result"]["value"])
@@ -164,7 +169,7 @@ class Context:
             f"Waiting up to {max_wait_in_seconds} seconds for {transaction_id}.")
         for wait in range(0, max_wait_in_seconds):
             time.sleep(1)
-            confirmed = default_context.client.get_confirmed_transaction(transaction_id)
+            confirmed = self.client.get_confirmed_transaction(transaction_id)
             if confirmed["result"] is not None:
                 self.logger.info(f"Confirmed after {wait} seconds.")
                 return confirmed["result"]
@@ -297,57 +302,3 @@ class Context:
 
     def __repr__(self) -> str:
         return f"{self}"
-
-
-# ## Provided Configured Objects
-#
-# This file provides 3 `Context` objects, already configured and ready to use.
-# * default_context (uses the environment variables specified above and `ids.json` file for configuration)
-# * solana_context (uses the environment variables specified above and `ids.json` file for configuration but
-#   explicitly sets the RPC server to be [Solana's mainnet RPC server](https://api.mainnet-beta.solana.com))
-# * serum_context (uses the environment variables specified above and `ids.json` file for configuration but
-#   explicitly sets the RPC server to be [Project Serum's mainnet RPC server](https://solana-api.projectserum.com))
-# * rpcpool_context (uses the environment variables specified above and `ids.json` file for configuration but
-#   explicitly sets the RPC server to be [RPCPool's free mainnet RPC server](https://api.rpcpool.com))
-#
-# Where notebooks depend on `default_context`, you can change this behaviour by adding an import line like:
-# ```
-# from Context import solana_context as default_context
-# ```
-# This can be useful if one of the RPC servers starts behaving oddly.
-
-# ### default_context object
-#
-# A default `Context` object that connects to mainnet, to save having to create one all over the place. This
-# `Context` uses the default values in the `ids.json` file, overridden by environment variables if they're set.
-
-
-default_context = Context(default_cluster, default_cluster_url, default_program_id,
-                          default_dex_program_id, default_group_name, default_group_id)
-
-
-# ### solana_context object
-#
-# A `Context` object that connects to mainnet using Solana's own https://api.mainnet-beta.solana.com server.
-# Apart from the RPC server URL, this `Context` uses the default values in the `ids.json` file, overridden by
-# environment variables if they're set.
-
-solana_context = default_context.new_from_cluster_url("https://api.mainnet-beta.solana.com")
-
-
-# ### serum_context object
-#
-# A `Context` object that connects to mainnet using Serum's own https://solana-api.projectserum.com server.
-# Apart from the RPC server URL, this `Context` uses the default values in the `ids.json` file, overridden by
-# environment variables if they're set.
-
-serum_context = default_context.new_from_cluster_url("https://solana-api.projectserum.com")
-
-
-# ### rpcpool_context object
-#
-# A `Context` object that connects to mainnet using RPCPool's free https://api.rpcpool.com server.
-# Apart from the RPC server URL, this `Context` uses the default values in the `ids.json` file, overridden by
-# environment variables if they're set.
-
-rpcpool_context = default_context.new_from_cluster_url("https://api.rpcpool.com")

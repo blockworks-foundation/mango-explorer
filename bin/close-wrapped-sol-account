@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.abspath(
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Closes a Wrapped SOL account.")
+mango.Context.add_context_command_line_parameters(parser)
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
 parser.add_argument("--address", type=PublicKey,
@@ -33,7 +34,7 @@ if not os.path.isfile(id_filename):
     logging.error(f"Wallet file '{id_filename}' is not present.")
     sys.exit(1)
 wallet = mango.Wallet.load(id_filename)
-context = mango.default_context
+context = mango.Context.from_context_command_line_parameters(args)
 
 lookups = mango.TokenLookup.default_lookups()
 wrapped_sol = lookups.find_by_symbol("SOL")
