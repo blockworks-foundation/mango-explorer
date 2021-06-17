@@ -16,25 +16,16 @@ import mango  # nopep8
 
 parser = argparse.ArgumentParser(
     description="Wraps Pure SOL to Wrapped SOL and adds it to the first Wrapped SOL account, creating that account if it doesn't exist.")
-mango.Context.add_context_command_line_parameters(parser)
+mango.Context.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of SOL to wrap")
-parser.add_argument("--id-file", type=str, default="id.json",
-                    help="file containing the JSON-formatted wallet private key")
-parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
-                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
-parser.add_argument("--overwrite", action="store_true", default=False,
-                    help="overwrite the ID file, if it exists (use with care!)")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-id_filename = args.id_file
-if not os.path.isfile(id_filename):
-    logging.error(f"Wallet file '{id_filename}' is not present.")
-    sys.exit(1)
-wallet = mango.Wallet.load(id_filename)
-context = mango.Context.from_context_command_line_parameters(args)
+context = mango.Context.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 wrapped_sol = context.token_lookup.find_by_symbol("SOL")
 amount_to_transfer = int(args.quantity * mango.SOL_DECIMAL_DIVISOR)

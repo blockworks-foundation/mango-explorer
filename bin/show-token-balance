@@ -10,27 +10,17 @@ sys.path.insert(0, os.path.abspath(
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows all Wrapped SOL accounts for the wallet.")
-mango.Context.add_context_command_line_parameters(parser)
+mango.Context.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--symbol", type=str, required=True,
                     help="symbol of the token to look up, e.g. 'ETH'")
-parser.add_argument("--id-file", type=str, default="id.json",
-                    help="file containing the JSON-formatted wallet private key")
-parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
-                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
-parser.add_argument("--overwrite", action="store_true", default=False,
-                    help="overwrite the ID file, if it exists (use with care!)")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-id_filename = args.id_file
-if not os.path.isfile(id_filename):
-    logging.error(f"Wallet file '{id_filename}' is not present.")
-    sys.exit(1)
-wallet = mango.Wallet.load(id_filename)
-context = mango.Context.from_context_command_line_parameters(args)
-
+context = mango.Context.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 lookups = mango.TokenLookup.default_lookups()
 token = lookups.find_by_symbol(args.symbol)

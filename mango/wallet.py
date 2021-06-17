@@ -14,8 +14,10 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
+import argparse
 import json
 import logging
+import os
 import os.path
 import typing
 
@@ -35,7 +37,16 @@ from solana.publickey import PublicKey
 # ```
 # [200,48,184,13... for another 60 bytes...]
 # ```
-# **TODO:** It would be good to be able to load a `Wallet` from a mnemonic string. I haven't yet found a Python library that can generate a BIP44 derived seed for Solana that matches the derived seeds created by Sollet and Ledger.
+#
+# Alternatively (useful for some environments) the bytes can be loaded from the environment.
+# The environment key is "SECRET_KEY", so it would be stored in the environment using something
+# like:
+# ```
+# export SECRET_KEY="[200,48,184,13... for another 60 bytes...]"
+# ```
+# **TODO:** It would be good to be able to load a `Wallet` from a mnemonic string. I haven't
+# yet found a Python library that can generate a BIP44 derived seed for Solana that matches
+# the derived seeds created by Sollet and Ledger.
 #
 
 
@@ -75,16 +86,44 @@ class Wallet:
         new_secret_key = new_account.secret_key()
         return Wallet(new_secret_key)
 
+    # Configuring a `Wallet` is a common operation for command-line programs and can involve a
+    # lot of duplicate code.
+    #
+    # This function centralises some of it to ensure consistency and readability.
+    #
+    @staticmethod
+    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--id-file", type=str, default=_DEFAULT_WALLET_FILENAME,
+                            help="file containing the JSON-formatted wallet private key")
 
-# default_wallet object
-#
-# A default Wallet object that loads the private key from the id.json file, if it exists.
-#
+    # This function is the converse of `add_command_line_parameters()` - it takes
+    # an argument of parsed command-line parameters and expects to see the ones it added
+    # to that collection in the `add_command_line_parameters()` call.
+    #
+    # It then uses those parameters to create a properly-configured `Wallet` object.
+    #
 
-default_wallet: typing.Optional[Wallet] = None
-if os.path.isfile(_DEFAULT_WALLET_FILENAME):
-    try:
-        default_wallet = Wallet.load(_DEFAULT_WALLET_FILENAME)
-    except Exception as exception:
-        logging.warning(
-            f"Failed to load default wallet from file '{_DEFAULT_WALLET_FILENAME}' - exception: {exception}")
+    @staticmethod
+    def from_command_line_parameters(args: argparse.Namespace) -> typing.Optional["Wallet"]:
+        # We always have an args.id_file (because we specify a default) so check for the environment
+        # variable and give it priority.
+        environment_secret_key = os.environ.get("SECRET_KEY")
+        if environment_secret_key is not None:
+            secret_key_bytes = json.loads(environment_secret_key)
+            if len(secret_key_bytes) >= 32:
+                return Wallet(secret_key_bytes)
+
+        # Here we should have values for all our parameters.
+        id_filename = args.id_file
+        if os.path.isfile(id_filename):
+            return Wallet.load(id_filename)
+
+        return None
+
+    @staticmethod
+    def from_command_line_parameters_or_raise(args: argparse.Namespace) -> "Wallet":
+        wallet = Wallet.from_command_line_parameters(args)
+        if wallet is None:
+            raise Exception("No wallet file or environment variables available.")
+
+        return wallet

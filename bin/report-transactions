@@ -20,9 +20,7 @@ import mango  # nopep8
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
     description="Run the Transaction Scout to display information about a specific transaction.")
-mango.Context.add_context_command_line_parameters(parser)
-parser.add_argument("--id-file", type=str, default="id.json",
-                    help="file containing the JSON-formatted wallet private key")
+mango.Context.add_command_line_parameters(parser)
 parser.add_argument("--since-signature", type=str,
                     help="The signature of the transaction to look up")
 parser.add_argument("--instruction-type", type=lambda ins: mango.InstructionType[ins],
@@ -40,8 +38,6 @@ parser.add_argument("--notify-errors", type=mango.parse_subscription_target, act
                     help="The notification target for errors")
 parser.add_argument("--summarise", action="store_true", default=False,
                     help="create a short summary rather than the full TransactionScout details")
-parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
-                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -90,7 +86,7 @@ try:
     instruction_type = args.instruction_type
     sender = args.sender
 
-    context = mango.Context.from_context_command_line_parameters(args)
+    context = mango.Context.from_command_line_parameters(args)
 
     logging.info(f"Context: {context}")
     logging.info(f"Since signature: {since_signature}")

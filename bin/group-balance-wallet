@@ -18,13 +18,8 @@ import mango  # nopep8
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
     description="Balance the value of tokens in a Mango Markets group to specific values or percentages.")
-mango.Context.add_context_command_line_parameters(parser)
-parser.add_argument("--token-data-file", type=str, default="solana.tokenlist.json",
-                    help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
-parser.add_argument("--id-file", type=str, default="id.json",
-                    help="file containing the JSON-formatted wallet private key")
-parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
-                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+mango.Context.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--target", type=str, action="append", required=True,
                     help="token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5' or 'ETH:33%')")
 parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
@@ -39,15 +34,10 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
-    id_filename = args.id_file
-    if not os.path.isfile(id_filename):
-        logging.error(f"Wallet file '{id_filename}' is not present.")
-        sys.exit(1)
-    wallet = mango.Wallet.load(id_filename)
+    context = mango.Context.from_command_line_parameters(args)
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     action_threshold = args.action_threshold
     adjustment_factor = args.adjustment_factor
-
-    context = mango.Context.from_context_command_line_parameters(args)
 
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")

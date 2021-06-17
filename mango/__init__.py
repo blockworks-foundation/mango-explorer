@@ -35,7 +35,7 @@ from .tokenvalue import TokenValue
 from .tradeexecutor import TradeExecutor, NullTradeExecutor, SerumImmediateTradeExecutor
 from .transactionscout import MangoInstruction, TransactionScout, fetch_all_recent_transaction_signatures
 from .version import Version
-from .wallet import Wallet, default_wallet
+from .wallet import Wallet
 from .walletbalancer import TargetBalance, FixedTargetBalance, PercentageTargetBalance, TargetBalanceParser, sort_changes_for_trades, calculate_required_balance_changes, FilterSmallChanges, WalletBalancer, NullWalletBalancer, LiveWalletBalancer
 
 from .layouts import layouts

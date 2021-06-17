@@ -12,8 +12,6 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Creates a new wallet and private key, and saves it to a file.")
 parser.add_argument("--id-file", type=str, default="id.json",
                     help="file containing the JSON-formatted wallet private key")
-parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
-                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 parser.add_argument("--overwrite", action="store_true", default=False,
                     help="overwrite the ID file, if it exists (use with care!)")
 args = parser.parse_args()

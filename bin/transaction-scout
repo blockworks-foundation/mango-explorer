@@ -15,13 +15,9 @@ import mango  # nopep8
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
     description="Run the Transaction Scout to display information about a specific transaction.")
-mango.Context.add_context_command_line_parameters(parser)
-parser.add_argument("--id-file", type=str, default="id.json",
-                    help="file containing the JSON-formatted wallet private key")
+mango.Context.add_command_line_parameters(parser)
 parser.add_argument("--signature", type=str, required=True,
                     help="The signature of the transaction to look up")
-parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
-                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -30,7 +26,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 try:
     signature = args.signature
 
-    context = mango.Context.from_context_command_line_parameters(args)
+    context = mango.Context.from_command_line_parameters(args)
 
     logging.info(f"Context: {context}")
     logging.info(f"Signature: {signature}")

@@ -17,13 +17,10 @@ import mango  # nopep8
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Liquidate a single margin account.")
-mango.Context.add_context_command_line_parameters(parser)
-parser.add_argument("--id-file", type=str, default="id.json",
-                    help="file containing the JSON-formatted wallet private key")
+mango.Context.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--name", type=str, default="Mango Markets Liquidator",
                     help="Name of the liquidator (used in reports and alerts)")
-parser.add_argument("--log-level", default=logging.INFO, type=lambda level: getattr(logging, level),
-                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 parser.add_argument("--address", type=PublicKey,
                     help="Solana address of the Mango Markets margin account to be liquidated")
 parser.add_argument("--notify-liquidations", type=mango.parse_subscription_target, action="append", default=[],
@@ -47,16 +44,10 @@ for notify in args.notify_errors:
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
-    id_filename = args.id_file
-    if not os.path.isfile(id_filename):
-        logging.error(f"Wallet file '{id_filename}' is not present.")
-        sys.exit(1)
-    wallet = mango.Wallet.load(id_filename)
-
+    context = mango.Context.from_command_line_parameters(args)
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     margin_account_address = args.address
     liquidator_name = args.name
-
-    context = mango.Context.from_context_command_line_parameters(args)
 
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")

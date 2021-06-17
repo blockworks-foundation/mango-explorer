@@ -17,13 +17,10 @@ import mango  # nopep8
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
     description="Run the Account Scout to display problems and information about an account.")
-mango.Context.add_context_command_line_parameters(parser)
-parser.add_argument("--id-file", type=str, default="id.json",
-                    help="file containing the JSON-formatted wallet private key")
+mango.Context.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey,
                     help="User's root address for the Account Scout to check (if not provided, the wallet address is used)")
-parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
-                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -32,14 +29,10 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 try:
     address = args.address
     if address is None:
-        id_filename = args.id_file
-        if not os.path.isfile(id_filename):
-            logging.error(f"Address parameter not specified and wallet file '{id_filename}' is not present.")
-            sys.exit(1)
-        wallet = mango.Wallet.load(id_filename)
+        wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
         address = wallet.address
 
-    context = mango.Context.from_context_command_line_parameters(args)
+    context = mango.Context.from_command_line_parameters(args)
 
     logging.info(f"Context: {context}")
     logging.info(f"Address: {address}")

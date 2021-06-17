@@ -16,18 +16,16 @@ import mango  # nopep8
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Shows the on-chain data of a Mango Markets Margin Account.")
-mango.Context.add_context_command_line_parameters(parser)
+mango.Context.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey, required=True,
                     help="Solana address of the Mango Markets Margin Account")
-parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
-                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
-    context = mango.Context.from_context_command_line_parameters(args)
+    context = mango.Context.from_command_line_parameters(args)
 
     group = mango.Group.load(context)
     margin_account = mango.MarginAccount.load(context, args.address, group)

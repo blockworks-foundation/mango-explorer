@@ -244,7 +244,7 @@ class Context:
     # This function centralises some of it to ensure consistency and readability.
     #
     @staticmethod
-    def add_context_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--cluster", type=str, default=default_cluster,
                             help="Solana RPC cluster name")
         parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
@@ -258,14 +258,22 @@ class Context:
         parser.add_argument("--group-id", type=str, default=default_group_id,
                             help="Mango group ID/address")
 
-    # This function is the converse of `add_context_command_line_parameters()` - it takes
+        parser.add_argument("--token-data-file", type=str, default="solana.tokenlist.json",
+                            help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
+
+        # This isn't really a Context thing but we don't have a better place for it (yet) and we
+        # don't want to duplicate it in every command.
+        parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
+                            help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+
+    # This function is the converse of `add_command_line_parameters()` - it takes
     # an argument of parsed command-line parameters and expects to see the ones it added
-    # to that collection in the `add_context_command_line_parameters()` call.
+    # to that collection in the `add_command_line_parameters()` call.
     #
     # It then uses those parameters to create a properly-configured `Context` object.
     #
     @staticmethod
-    def from_context_command_line_parameters(args: argparse.Namespace) -> "Context":
+    def from_command_line_parameters(args: argparse.Namespace) -> "Context":
         # Here we should have values for all our parameters (because they'll either be specified
         # on the command-line or will be the default_* value) but we may be in the situation where
         # a group name is specified but not a group ID, and in that case we want to look up the

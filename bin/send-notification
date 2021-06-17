@@ -17,8 +17,6 @@ parser = argparse.ArgumentParser(description="Sends SOL to a different address."
 parser.add_argument("--notification-target", type=mango.parse_subscription_target, required=True, action="append",
                     help="The notification target - a compound string that varies depending on the target")
 parser.add_argument("--message", type=str, help="Message to send")
-parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
-                    help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
