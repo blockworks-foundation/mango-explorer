@@ -26,16 +26,14 @@ def test_null_trade_executor_constructor():
 def test_serum_trade_executor_constructor():
     context: mango.Context = fake_context()
     wallet: mango.Wallet = {"fake": "Wallet"}
-    spot_market_lookup: mango.SpotMarketLookup = mango.SpotMarketLookup.default_lookups()
     price_adjustment_factor: Decimal = Decimal(0.05)
 
     def reporter(x):
         return None
-    actual = mango.SerumImmediateTradeExecutor(context, wallet, spot_market_lookup, price_adjustment_factor, reporter)
+    actual = mango.SerumImmediateTradeExecutor(context, wallet, price_adjustment_factor, reporter)
     assert actual is not None
     assert actual.logger is not None
     assert actual.context == context
     assert actual.wallet == wallet
-    assert actual.spot_market_lookup == spot_market_lookup
     assert actual.price_adjustment_factor == price_adjustment_factor
     assert actual.reporter is not None

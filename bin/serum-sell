@@ -1,7 +1,6 @@
 #!/usr/bin/env pyston3
 
 import argparse
-import json
 import logging
 import os
 import os.path
@@ -46,10 +45,7 @@ try:
     if args.dry_run:
         trade_executor: mango.TradeExecutor = mango.NullTradeExecutor()
     else:
-        with open(args.token_data_file) as json_file:
-            token_data = json.load(json_file)
-            spot_market_lookup = mango.SpotMarketLookup(token_data)
-        trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, spot_market_lookup, adjustment_factor)
+        trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, adjustment_factor)
 
     transaction_id = trade_executor.sell(symbol, args.quantity)
     if args.wait:

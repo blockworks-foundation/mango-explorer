@@ -1,7 +1,6 @@
 #!/usr/bin/env pyston3
 
 import argparse
-import json
 import logging
 import os
 import os.path
@@ -39,10 +38,6 @@ try:
 
     group = mango.Group.load(context)
 
-    with open(args.token_data_file) as json_file:
-        token_data = json.load(json_file)
-        spot_market_lookup = mango.SpotMarketLookup(token_data)
-
     transaction = Transaction()
     signers: typing.List[Account] = [wallet.account]
 
@@ -54,7 +49,7 @@ try:
                 f"Skipping settling for market {market_metadata.symbol} - no OpenOrders account could be found.")
             continue
 
-        spot_market = spot_market_lookup.find_by_symbol(market_metadata.symbol)
+        spot_market = context.market_lookup.find_by_symbol(market_metadata.symbol)
         if spot_market is None:
             logging.warning(
                 f"Skipping settling for market {market_metadata.symbol} - no spot market could be found.")

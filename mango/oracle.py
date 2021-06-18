@@ -116,5 +116,5 @@ class OracleProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError("OracleProvider.create_oracle_for_market() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def all_available_symbols(self, context: Context) -> typing.List[str]:
+    def all_available_symbols(self, context: Context) -> typing.Sequence[str]:
         raise NotImplementedError("OracleProvider.all_available_symbols() is not implemented on the base type.")

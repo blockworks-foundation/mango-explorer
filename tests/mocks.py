@@ -1,5 +1,5 @@
 from .context import mango
-from .fakes import fake_account_info, fake_seeded_public_key
+from .fakes import fake_account_info, fake_context, fake_seeded_public_key
 
 import typing
 
@@ -11,7 +11,7 @@ from solana.publickey import PublicKey
 # Mocks are more involved than fakes, but do tend to allow more introspection.
 #
 
-token_lookup = mango.TokenLookup.default_lookups()
+token_lookup = fake_context().token_lookup
 ETH = token_lookup.find_by_symbol("ETH")
 BTC = token_lookup.find_by_symbol("BTC")
 SOL = token_lookup.find_by_symbol("SOL")

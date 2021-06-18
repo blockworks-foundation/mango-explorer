@@ -31,7 +31,7 @@ from solana.transaction import Transaction
 from .context import Context
 from .instructions import ConsumeEventsInstructionBuilder, CreateSerumOpenOrdersInstructionBuilder, NewOrderV3InstructionBuilder, SettleInstructionBuilder
 from .retrier import retry_context
-from .spotmarket import SpotMarket, SpotMarketLookup
+from .spotmarket import SpotMarket
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
 
@@ -136,11 +136,10 @@ class NullTradeExecutor(TradeExecutor):
 
 
 class SerumImmediateTradeExecutor(TradeExecutor):
-    def __init__(self, context: Context, wallet: Wallet, spot_market_lookup: SpotMarketLookup, price_adjustment_factor: Decimal = Decimal(0), reporter: typing.Callable[[str], None] = None):
+    def __init__(self, context: Context, wallet: Wallet, price_adjustment_factor: Decimal = Decimal(0), reporter: typing.Callable[[str], None] = None):
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
-        self.spot_market_lookup: SpotMarketLookup = spot_market_lookup
         self.price_adjustment_factor: Decimal = price_adjustment_factor
         self._serum_fee_discount_token_address: typing.Optional[PublicKey] = None
         self._serum_fee_discount_token_address_loaded: bool = False
@@ -227,8 +226,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
                 payer=self.wallet.address, owner=self.wallet.address, mint=spot_market.base.mint
             )
             transaction.add(create_base_token_account)
-            base_token_account_address = spl_token.get_associated_token_address(
-                self.wallet.address, spot_market.base.mint)
+            base_token_account_address = create_base_token_account.keys[1].pubkey
         else:
             base_token_account_address = base_token_account.address
 
@@ -239,8 +237,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
                 payer=self.wallet.address, owner=self.wallet.address, mint=spot_market.quote.mint
             )
             transaction.add(create_quote_token_account)
-            quote_token_account_address = spl_token.get_associated_token_address(
-                self.wallet.address, spot_market.quote.mint)
+            quote_token_account_address = create_quote_token_account.keys[1].pubkey
         else:
             quote_token_account_address = quote_token_account.address
 
@@ -283,9 +280,12 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             return self.context.unwrap_transaction_id_or_raise_exception(response)
 
     def _lookup_spot_market(self, symbol: str) -> SpotMarket:
-        spot_market = self.spot_market_lookup.find_by_symbol(symbol)
+        spot_market = self.context.market_lookup.find_by_symbol(symbol)
         if spot_market is None:
             raise Exception(f"Spot market '{symbol}' could not be found.")
+
+        if not isinstance(spot_market, SpotMarket):
+            raise Exception(f"Spot market '{symbol}' is not a Serum market.")
 
         self.logger.info(f"Base token: {spot_market.base}")
         self.logger.info(f"Quote token: {spot_market.quote}")

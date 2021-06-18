@@ -96,8 +96,6 @@ SolToken = Token("SOL", "Pure SOL", SOL_MINT_ADDRESS, SOL_DECIMALS)
 #
 # This class allows us to look up token symbols, names, mint addresses and decimals, all from our Solana static data.
 #
-# The `_find_data_by_symbol()` is used here and later in the `SpotMarketLookup` class.
-#
 # The static data is the [Solana token list](https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json) provided by Serum.
 #
 # You can load a `TokenLookup` class by something like:
@@ -106,9 +104,14 @@ SolToken = Token("SOL", "Pure SOL", SOL_MINT_ADDRESS, SOL_DECIMALS)
 #     token_data = json.load(json_file)
 #     token_lookup = TokenLookup(token_data)
 # ```
+#
+# It's usually easiest to access it via the `Context` as `context.token_lookup`.
+#
 
 
 class TokenLookup:
+    DEFAULT_FILE_NAME = "solana.tokenlist.json"
+
     @staticmethod
     def _find_data_by_symbol(symbol: str, token_data: typing.Dict) -> typing.Optional[typing.Dict]:
         for token in token_data["tokens"]:
@@ -136,7 +139,7 @@ class TokenLookup:
         return None
 
     @staticmethod
-    def default_lookups() -> "TokenLookup":
-        with open("solana.tokenlist.json") as json_file:
+    def load(filename: str) -> "TokenLookup":
+        with open(filename) as json_file:
             token_data = json.load(json_file)
             return TokenLookup(token_data)

@@ -28,7 +28,7 @@ from ...context import Context
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import Oracle, OracleProvider, OracleSource, Price
-from ...spotmarket import SpotMarket, SpotMarketLookup
+from ...spotmarket import SpotMarket
 
 
 # # 🥭 Serum
@@ -87,24 +87,24 @@ class SerumOracle(Oracle):
 #
 
 class SerumOracleProvider(OracleProvider):
-    def __init__(self, spot_market_lookup: SpotMarketLookup) -> None:
+    def __init__(self) -> None:
         super().__init__("Serum Oracle Factory")
-        self.spot_market_lookup = spot_market_lookup
 
     def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
         if isinstance(market, SpotMarket):
-            spot_market: SpotMarket = market
+            return SerumOracle(market)
         else:
-            optional_spot_market = self.spot_market_lookup.find_by_symbol(market.symbol)
+            optional_spot_market = context.market_lookup.find_by_symbol(market.symbol)
             if optional_spot_market is None:
                 return None
-            spot_market = optional_spot_market
+            if isinstance(optional_spot_market, SpotMarket):
+                return SerumOracle(optional_spot_market)
 
-        return SerumOracle(spot_market)
+        return None
 
-    def all_available_symbols(self, context: Context) -> typing.List[str]:
-        all_spot_markets = self.spot_market_lookup.all_spot_markets()
+    def all_available_symbols(self, context: Context) -> typing.Sequence[str]:
+        all_markets = context.market_lookup.all_markets()
         symbols: typing.List[str] = []
-        for spot_market in all_spot_markets:
+        for spot_market in all_markets:
             symbols += [spot_market.symbol]
         return symbols

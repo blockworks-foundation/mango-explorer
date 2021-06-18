@@ -106,7 +106,7 @@ class PythOracleProvider(OracleProvider):
                 return PythOracle(market, product)
         return None
 
-    def all_available_symbols(self, context: Context) -> typing.List[str]:
+    def all_available_symbols(self, context: Context) -> typing.Sequence[str]:
         pyth_context = context.new_from_cluster("devnet")
         products = self._fetch_all_pyth_products(pyth_context, self.address)
         symbols: typing.List[str] = []

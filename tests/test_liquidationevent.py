@@ -1,5 +1,5 @@
 from .context import mango
-from .fakes import fake_public_key
+from .fakes import fake_context, fake_public_key
 
 from decimal import Decimal
 
@@ -7,7 +7,7 @@ import datetime
 
 
 def test_liquidation_event():
-    token_lookup = mango.TokenLookup.default_lookups()
+    token_lookup = fake_context().token_lookup
     balances_before = [
         mango.TokenValue(token_lookup.find_by_symbol("ETH"), Decimal(1)),
         mango.TokenValue(token_lookup.find_by_symbol("BTC"), Decimal("0.1")),

@@ -29,6 +29,8 @@ from solana.rpc.types import MemcmpOpts, RPCError, RPCResponse
 from solana.rpc.commitment import Commitment
 
 from .constants import MangoConstants, SOL_DECIMAL_DIVISOR
+from .market import CompoundMarketLookup, MarketLookup
+from .spotmarket import SpotMarketLookup
 from .token import TokenLookup
 
 
@@ -74,7 +76,7 @@ _pool_scheduler = ThreadPoolScheduler(multiprocessing.cpu_count())
 
 class Context:
     def __init__(self, cluster: str, cluster_url: str, program_id: PublicKey, dex_program_id: PublicKey,
-                 group_name: str, group_id: PublicKey):
+                 group_name: str, group_id: PublicKey, token_filename: str = TokenLookup.DEFAULT_FILE_NAME):
         configured_program_id = program_id
         if group_id == _OLD_3_TOKEN_GROUP_ID:
             configured_program_id = _OLD_3_TOKEN_PROGRAM_ID
@@ -89,7 +91,11 @@ class Context:
         self.group_id: PublicKey = group_id
         self.commitment: Commitment = Commitment("processed")
         self.encoding: str = "base64"
-        self.token_lookup: TokenLookup = TokenLookup.default_lookups()
+        self.token_lookup: TokenLookup = TokenLookup.load(token_filename)
+
+        spot_market_lookup: SpotMarketLookup = SpotMarketLookup.load(token_filename)
+        all_market_lookup = CompoundMarketLookup([spot_market_lookup])
+        self.market_lookup: MarketLookup = all_market_lookup
 
         # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451
         # "I think you are better off doing 4,8,16,20,30"
@@ -263,7 +269,7 @@ class Context:
 
         # This isn't really a Context thing but we don't have a better place for it (yet) and we
         # don't want to duplicate it in every command.
-        parser.add_argument("--log-level", default=logging.WARNING, type=lambda level: getattr(logging, level),
+        parser.add_argument("--log-level", default=logging.INFO, type=lambda level: getattr(logging, level),
                             help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 
     # This function is the converse of `add_command_line_parameters()` - it takes

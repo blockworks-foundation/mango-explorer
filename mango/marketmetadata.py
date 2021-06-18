@@ -16,11 +16,12 @@
 import logging
 
 from decimal import Decimal
-from pyserum.market import Market
+from pyserum.market import Market as PySerumMarket
 from solana.publickey import PublicKey
 
 from .baskettoken import BasketToken
 from .context import Context
+from .market import Market
 from .spotmarket import SpotMarket
 
 # # 🥭 MarketMetadata class
@@ -29,28 +30,31 @@ from .spotmarket import SpotMarket
 
 class MarketMetadata:
     def __init__(self, name: str, address: PublicKey, base: BasketToken, quote: BasketToken,
-                 spot: SpotMarket, oracle: PublicKey, decimals: Decimal):
+                 spot: Market, oracle: PublicKey, decimals: Decimal):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.address: PublicKey = address
         self.base: BasketToken = base
         self.quote: BasketToken = quote
+
+        if not isinstance(spot, SpotMarket):
+            raise Exception(f"Spot '{spot}' is not a spot market.")
         self.spot: SpotMarket = spot
         self.oracle: PublicKey = oracle
         self.decimals: Decimal = decimals
         self.symbol: str = f"{base.token.symbol}/{quote.token.symbol}"
         self._market = None
 
-    def fetch_market(self, context: Context) -> Market:
+    def fetch_market(self, context: Context) -> PySerumMarket:
         if self._market is None:
-            self._market = Market.load(context.client, self.spot.address)
+            self._market = PySerumMarket.load(context.client, self.spot.address)
 
         return self._market
 
     def __str__(self) -> str:
         base = f"{self.base}".replace("\n", "\n    ")
         quote = f"{self.quote}".replace("\n", "\n    ")
-        return f"""« Market '{self.name}' [{self.address}/{self.spot.address}]:
+        return f"""« MarketMetadata '{self.name}' [{self.address}/{self.spot.address}]:
     Base: {base}
     Quote: {quote}
     Oracle: {self.oracle} ({self.decimals} decimals)

@@ -3,4 +3,5 @@
 CURRENT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_DIRECTORY="${CURRENT_DIRECTORY}/.."
 
-grep -i -R "${1}" ${PROJECT_DIRECTORY}/mango/* ${PROJECT_DIRECTORY}/tests/* ${PROJECT_DIRECTORY}/bin/* ${PROJECT_DIRECTORY}/*.ipynb
+cd ${PROJECT_DIRECTORY}
+grep -i -R --exclude-dir __pycache__ "${1}" bin/* mango/* *.ipynb tests/*

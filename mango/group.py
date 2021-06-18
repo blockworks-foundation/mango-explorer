@@ -29,12 +29,10 @@ from .index import Index
 from .layouts import layouts
 from .mangoaccountflags import MangoAccountFlags
 from .marketmetadata import MarketMetadata
-from .spotmarket import SpotMarketLookup
+from .market import MarketLookup
 from .token import SolToken, Token, TokenLookup
 from .tokenvalue import TokenValue
 from .version import Version
-# from .marginaccount import MarginAccount
-# from .openorders import OpenOrders
 
 # # 🥭 Group class
 #
@@ -85,7 +83,7 @@ class Group(AddressableAccount):
     # stick with passing around `Token` objects.
     #
     @staticmethod
-    def from_layout(layout: construct.Struct, name: str, account_info: AccountInfo, version: Version, token_lookup: TokenLookup = TokenLookup.default_lookups(), spot_market_lookup: SpotMarketLookup = SpotMarketLookup.default_lookups()) -> "Group":
+    def from_layout(layout: construct.Struct, name: str, account_info: AccountInfo, version: Version, token_lookup: TokenLookup, market_lookup: MarketLookup) -> "Group":
         account_flags: MangoAccountFlags = MangoAccountFlags.from_layout(layout.account_flags)
 
         basket_tokens: typing.List[BasketToken] = []
@@ -108,7 +106,7 @@ class Group(AddressableAccount):
 
         markets: typing.List[MarketMetadata] = []
         for index, market_address in enumerate(layout.spot_markets):
-            spot_market = spot_market_lookup.find_by_address(market_address)
+            spot_market = market_lookup.find_by_address(market_address)
             if spot_market is None:
                 raise Exception(f"Could not find spot market with address '{market_address}'.")
 
@@ -140,7 +138,7 @@ class Group(AddressableAccount):
             raise Exception(
                 f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP_V1.sizeof()} or {layouts.GROUP_V2.sizeof()})")
 
-        return Group.from_layout(layout, context.group_name, account_info, version)
+        return Group.from_layout(layout, context.group_name, account_info, version, context.token_lookup, context.market_lookup)
 
     @staticmethod
     def load(context: Context):

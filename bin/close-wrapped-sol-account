@@ -27,8 +27,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 context = mango.Context.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-lookups = mango.TokenLookup.default_lookups()
-wrapped_sol = lookups.find_by_symbol("SOL")
+wrapped_sol = context.token_lookup.find_by_symbol("SOL")
 
 token_account: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(context, args.address)
 if (token_account is None) or (token_account.value.token.mint != wrapped_sol.mint):

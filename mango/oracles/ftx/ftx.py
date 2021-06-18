@@ -108,7 +108,7 @@ class FtxOracleProvider(OracleProvider):
     def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
         return FtxOracle(market)
 
-    def all_available_symbols(self, context: Context) -> typing.List[str]:
+    def all_available_symbols(self, context: Context) -> typing.Sequence[str]:
         result = _ftx_get_from_url("https://ftx.com/api/markets")
         symbols: typing.List[str] = []
         for market in result:

@@ -1,13 +1,13 @@
 #!/usr/bin/env pyston3
 
 import argparse
-import json
 import logging
 import os
 import os.path
 import rx
 import rx.operators as ops
 import sys
+import threading
 import traceback
 
 from decimal import Decimal
@@ -107,10 +107,7 @@ try:
     else:
         balance_parser = mango.TargetBalanceParser(tokens)
         targets = list(map(balance_parser.parse, args.target))
-        with open(args.token_data_file) as json_file:
-            token_data = json.load(json_file)
-            spot_market_lookup = mango.SpotMarketLookup(token_data)
-        trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, spot_market_lookup, adjustment_factor)
+        trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, adjustment_factor)
         wallet_balancer = mango.LiveWalletBalancer(
             context, wallet, group, trade_executor, action_threshold, tokens, targets)
 
@@ -152,9 +149,9 @@ try:
         ops.retry()
     ).subscribe(mango.create_backpressure_skipping_observer(on_next=lambda piped: liquidation_processor.update_prices(piped[0], piped[1]), on_error=mango.log_subscription_error))
 
-    # Wait - don't exit
-    input()
-
+    # Wait - don't exit. Exiting will be handled by signals/interrupts.
+    waiter = threading.Event()
+    waiter.wait()
 except KeyboardInterrupt:
     logging.info("Liquidator stopping...")
 except Exception as exception:

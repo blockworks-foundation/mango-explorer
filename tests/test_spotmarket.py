@@ -8,7 +8,7 @@ def test_spot_market_constructor():
     address = PublicKey("11111111111111111111111111111114")
     base = mango.Token("BASE", "Base Token", PublicKey("11111111111111111111111111111115"), Decimal(7))
     quote = mango.Token("QUOTE", "Quote Token", PublicKey("11111111111111111111111111111116"), Decimal(9))
-    actual = mango.SpotMarket(address, base, quote)
+    actual = mango.SpotMarket(base, quote, address)
     assert actual is not None
     assert actual.logger is not None
     assert actual.address == address
@@ -126,8 +126,8 @@ def test_spot_market_lookup():
     assert actual.find_by_symbol("BTC/USDC").address == PublicKey("A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw")
 
 
-def test_spot_market_default_lookups():
-    market_lookup = mango.SpotMarketLookup.default_lookups()
+def test_spot_market_lookups_with_full_data():
+    market_lookup = mango.SpotMarketLookup.load(mango.TokenLookup.DEFAULT_FILE_NAME)
     eth_usdt = market_lookup.find_by_symbol("ETH/USDT")
     assert eth_usdt.base.symbol == "ETH"
     assert eth_usdt.quote.symbol == "USDT"

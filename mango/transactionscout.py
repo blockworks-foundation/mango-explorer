@@ -25,7 +25,6 @@ from .context import Context
 from .instructiontype import InstructionType
 from .layouts import layouts
 from .ownedtokenvalue import OwnedTokenValue
-from .token import TokenLookup
 from .tokenvalue import TokenValue
 
 
@@ -317,7 +316,7 @@ class TransactionScout:
             decimals = Decimal(balance["uiTokenAmount"]["decimals"])
             divisor = Decimal(10) ** decimals
             value = amount / divisor
-            token = TokenLookup.default_lookups().find_by_mint(mint)
+            token = context.token_lookup.find_by_mint(mint)
             return OwnedTokenValue(account, TokenValue(token, value))
 
         try:

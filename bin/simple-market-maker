@@ -40,25 +40,26 @@ try:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
     market_symbol = args.market.upper()
-    spot_market_lookup = mango.SpotMarketLookup.load(args.token_data_file)
-    spot_market = spot_market_lookup.find_by_symbol(market_symbol)
-    if spot_market is None:
+    market = context.market_lookup.find_by_symbol(market_symbol)
+    if market is None:
         raise Exception(f"Could not find spot market {market_symbol}")
 
     order_placer: mango.OrderPlacer
     if args.dry_run:
         order_placer = mango.NullOrderPlacer(market_symbol, print)
+    elif isinstance(market, mango.SpotMarket):
+        order_placer = mango.SerumOrderPlacer(context, wallet, market, print)
     else:
-        order_placer = mango.SerumOrderPlacer(context, wallet, spot_market, print)
+        raise Exception(f"Could not find order placer for market {market_symbol}")
 
-    oracle_provider: mango.OracleProvider = mango.create_oracle_provider("serum", spot_market_lookup)
-    oracle = oracle_provider.oracle_for_market(context, spot_market)
+    oracle_provider: mango.OracleProvider = mango.create_oracle_provider("serum")
+    oracle = oracle_provider.oracle_for_market(context, market)
     if oracle is None:
         raise Exception(f"Could not find oracle for spot market {market_symbol}")
 
     pause_duration = timedelta(seconds=args.pause_duration)
     market_maker = mango.marketmaking.simplemarketmaker.SimpleMarketMaker(
-        context, wallet, spot_market, order_placer, oracle, args.spread_ratio, args.position_size_ratio, args.existing_order_tolerance, pause_duration)
+        context, wallet, market, order_placer, oracle, args.spread_ratio, args.position_size_ratio, args.existing_order_tolerance, pause_duration)
 
     print(f"Starting {market_maker} - use <Enter> to stop.")
     thread = Thread(target=market_maker.start)

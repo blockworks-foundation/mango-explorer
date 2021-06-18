@@ -17,7 +17,6 @@ from .oracle import OracleProvider
 from .oracles.ftx import ftx
 from .oracles.pythnetwork import pythnetwork
 from .oracles.serum import serum
-from .spotmarket import SpotMarketLookup
 
 
 # # 🥭 Oracle Factory
@@ -25,9 +24,9 @@ from .spotmarket import SpotMarketLookup
 # This file allows you to create a concreate OracleProvider for a specified provider name.
 #
 
-def create_oracle_provider(provider_name: str, spot_market_lookup: SpotMarketLookup) -> OracleProvider:
+def create_oracle_provider(provider_name: str) -> OracleProvider:
     if provider_name == "serum":
-        return serum.SerumOracleProvider(spot_market_lookup)
+        return serum.SerumOracleProvider()
     elif provider_name == "ftx":
         return ftx.FtxOracleProvider()
     elif provider_name == "pyth":
