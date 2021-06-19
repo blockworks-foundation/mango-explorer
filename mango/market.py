@@ -49,12 +49,15 @@ class MarketLookup(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
+    @abc.abstractmethod
     def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:
         raise NotImplementedError("MarketLookup.find_by_symbol() is not implemented on the base type.")
 
+    @abc.abstractmethod
     def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
         raise NotImplementedError("MarketLookup.find_by_address() is not implemented on the base type.")
 
+    @abc.abstractmethod
     def all_markets(self) -> typing.Sequence[Market]:
         raise NotImplementedError("MarketLookup.all_markets() is not implemented on the base type.")
 
