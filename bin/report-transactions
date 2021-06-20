@@ -140,7 +140,7 @@ try:
             state_file.write(first_item_capturer.captured)
 except Exception as exception:
     logging.critical(
-        f"transaction-scout stopped because of exception: {exception} - {traceback.format_exc()}")
+        f"report-transactions stopped because of exception: {exception} - {traceback.format_exc()}")
 except:
     logging.critical(
-        f"transaction-scout stopped because of uncatchable error: {traceback.format_exc()}")
+        f"report-transactions stopped because of uncatchable error: {traceback.format_exc()}")

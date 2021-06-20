@@ -19,7 +19,7 @@ import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description="Sends one of the Group's SPL tokens to a different address.")
+parser = argparse.ArgumentParser(description="Sends an SPL tokens to a different address.")
 mango.Context.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--token-symbol", type=str, required=True, help="token symbol to send (e.g. ETH)")
@@ -84,6 +84,6 @@ try:
     updated_balance_text = updated_balance["result"]["value"]["uiAmountString"]
     print(f"{text_amount} sent. Balance now: {updated_balance_text} {group_token.name}")
 except Exception as exception:
-    logging.critical(f"group-send-token stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(f"send-token stopped because of exception: {exception} - {traceback.format_exc()}")
 except:
-    logging.critical(f"group-send-token stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(f"send-token stopped because of uncatchable error: {traceback.format_exc()}")

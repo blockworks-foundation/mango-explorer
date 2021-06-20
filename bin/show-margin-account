@@ -32,6 +32,6 @@ try:
 
     print(margin_account)
 except Exception as exception:
-    logging.critical(f"group-balances stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(f"show-margin-account stopped because of exception: {exception} - {traceback.format_exc()}")
 except:
-    logging.critical(f"group-balances stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(f"show-margin-account stopped because of uncatchable error: {traceback.format_exc()}")

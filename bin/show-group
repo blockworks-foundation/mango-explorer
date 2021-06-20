@@ -26,6 +26,6 @@ try:
     group = mango.Group.load(context)
     print(group)
 except Exception as exception:
-    logging.critical(f"group-balances stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(f"show-group stopped because of exception: {exception} - {traceback.format_exc()}")
 except:
-    logging.critical(f"group-balances stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(f"show-group stopped because of uncatchable error: {traceback.format_exc()}")

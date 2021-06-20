@@ -29,6 +29,6 @@ try:
 
     print("Notifications sent")
 except Exception as exception:
-    logging.critical(f"send-sols stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(f"send-notification stopped because of exception: {exception} - {traceback.format_exc()}")
 except:
-    logging.critical(f"send-sols stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(f"send-notification stopped because of uncatchable error: {traceback.format_exc()}")
