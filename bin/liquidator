@@ -110,12 +110,14 @@ try:
     for notification_target in args.notify_liquidations:
         liquidations_publisher.subscribe(on_next=notification_target.send)
     for notification_target in args.notify_successful_liquidations:
+        captured_notification_target = notification_target
         filtering = mango.FilteringNotificationTarget(
-            notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
+            captured_notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
         liquidations_publisher.subscribe(on_next=filtering.send)
     for notification_target in args.notify_failed_liquidations:
+        captured_notification_target = notification_target
         filtering = mango.FilteringNotificationTarget(
-            notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded)
+            captured_notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded)
         liquidations_publisher.subscribe(on_next=filtering.send)
 
     if args.dry_run:
