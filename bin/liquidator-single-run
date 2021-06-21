@@ -85,7 +85,7 @@ try:
 
     wallet_balancer = mango.NullWalletBalancer()
 
-    liquidation_processor = mango.LiquidationProcessor(context, account_liquidator, wallet_balancer)
+    liquidation_processor = mango.LiquidationProcessor(context, liquidator_name, account_liquidator, wallet_balancer)
 
     started_at = time.time()
     ripe = group.load_ripe_margin_accounts()

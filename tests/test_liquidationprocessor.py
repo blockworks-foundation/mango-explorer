@@ -9,10 +9,11 @@ from decimal import Decimal
 
 def test_constructor():
     context: mango.Context = fake_context()
+    name: str = "Test Liquidator"
     account_liquidator: mango.AccountLiquidator = mango.NullAccountLiquidator()
     wallet_balancer: mango.WalletBalancer = mango.NullWalletBalancer()
     worthwhile_threshold: Decimal = Decimal("0.1")
-    actual = mango.LiquidationProcessor(context, account_liquidator, wallet_balancer, worthwhile_threshold)
+    actual = mango.LiquidationProcessor(context, name, account_liquidator, wallet_balancer, worthwhile_threshold)
     assert actual is not None
     assert actual.logger is not None
     assert actual.context == context
@@ -51,10 +52,11 @@ class LiquidateMock:
 
 def capturing_liquidation_processor() -> LiquidateMock:
     context: mango.Context = fake_context()
+    name: str = "Test Liquidator"
     account_liquidator: mango.AccountLiquidator = mango.NullAccountLiquidator()
     wallet_balancer: mango.WalletBalancer = mango.NullWalletBalancer()
     worthwhile_threshold: Decimal = Decimal("0.1")
-    actual = mango.LiquidationProcessor(context, account_liquidator, wallet_balancer, worthwhile_threshold)
+    actual = mango.LiquidationProcessor(context, name, account_liquidator, wallet_balancer, worthwhile_threshold)
 
     return LiquidateMock(actual)
 

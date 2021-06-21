@@ -5,10 +5,12 @@ import logging
 import os
 import os.path
 import rx
+import rx.core.typing
 import rx.operators as ops
 import sys
 import threading
 import traceback
+import typing
 
 from decimal import Decimal
 
@@ -52,6 +54,30 @@ for notify in args.notify_errors:
     logging.getLogger().addHandler(handler)
 
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+
+def start_subscriptions(context: mango.Context, liquidation_processor: mango.LiquidationProcessor, fetch_prices: typing.Callable[[typing.Any], typing.Any], fetch_margin_accounts: typing.Callable[[typing.Any], typing.Any], throttle_reload_to_seconds: Decimal, throttle_ripe_update_to_seconds: Decimal):
+    liquidation_processor.state = mango.LiquidationProcessorState.STARTING
+
+    logging.info("Starting margin account fetcher subscription")
+    margin_account_subscription = rx.interval(float(throttle_reload_to_seconds)).pipe(
+        ops.subscribe_on(context.pool_scheduler),
+        ops.start_with(-1),
+        ops.map(fetch_margin_accounts(context)),
+        ops.catch(mango.observable_pipeline_error_reporter),
+        ops.retry()
+    ).subscribe(mango.create_backpressure_skipping_observer(on_next=liquidation_processor.update_margin_accounts, on_error=mango.log_subscription_error))
+
+    logging.info("Starting price fetcher subscription")
+    price_subscription = rx.interval(float(throttle_ripe_update_to_seconds)).pipe(
+        ops.subscribe_on(context.pool_scheduler),
+        ops.map(fetch_prices(context)),
+        ops.catch(mango.observable_pipeline_error_reporter),
+        ops.retry()
+    ).subscribe(mango.create_backpressure_skipping_observer(on_next=lambda piped: liquidation_processor.update_prices(piped[0], piped[1]), on_error=mango.log_subscription_error))
+
+    return margin_account_subscription, price_subscription
+
 
 try:
     context = mango.Context.from_command_line_parameters(args)
@@ -131,24 +157,40 @@ try:
                 return retrier.run()
         return _fetch_margin_accounts
 
-    liquidation_processor = mango.LiquidationProcessor(context, account_liquidator, wallet_balancer)
+    class LiquidationProcessorSubscriptions:
+        def __init__(self, margin_account: rx.core.typing.Disposable, price: rx.core.typing.Disposable):
+            self.margin_account: rx.core.typing.Disposable = margin_account
+            self.price: rx.core.typing.Disposable = price
 
-    logging.info("Starting margin account fetcher subscription")
-    margin_account_subscription = rx.interval(float(throttle_reload_to_seconds)).pipe(
-        ops.subscribe_on(context.pool_scheduler),
-        ops.start_with(-1),
-        ops.map(fetch_margin_accounts(context)),
-        ops.catch(mango.observable_pipeline_error_reporter),
-        ops.retry()
-    ).subscribe(mango.create_backpressure_skipping_observer(on_next=liquidation_processor.update_margin_accounts, on_error=mango.log_subscription_error))
+    liquidation_processor = mango.LiquidationProcessor(context, liquidator_name, account_liquidator, wallet_balancer)
+    margin_account_subscription, price_subscription = start_subscriptions(
+        context, liquidation_processor, fetch_prices, fetch_margin_accounts, throttle_reload_to_seconds, throttle_ripe_update_to_seconds)
 
-    logging.info("Starting price fetcher subscription")
-    price_subscription = rx.interval(float(throttle_ripe_update_to_seconds)).pipe(
-        ops.subscribe_on(context.pool_scheduler),
-        ops.map(fetch_prices(context)),
-        ops.catch(mango.observable_pipeline_error_reporter),
-        ops.retry()
-    ).subscribe(mango.create_backpressure_skipping_observer(on_next=lambda piped: liquidation_processor.update_prices(piped[0], piped[1]), on_error=mango.log_subscription_error))
+    subscriptions = LiquidationProcessorSubscriptions(margin_account=margin_account_subscription,
+                                                      price=price_subscription)
+
+    def on_unhealthy(liquidation_processor: mango.LiquidationProcessor):
+        if liquidation_processor.state != mango.LiquidationProcessorState.UNHEALTHY:
+            logging.info(
+                f"Ignoring LiquidationProcessor state change - state is: {liquidation_processor.state}")
+            return
+
+        logging.warning("Liquidation processor has been marked as unhealthy so recreating subscriptions.")
+        try:
+            subscriptions.margin_account.dispose()
+        except Exception as exception:
+            logging.warning(f"Ignoring problem disposing of margin account subscription: {exception}")
+        try:
+            subscriptions.price.dispose()
+        except Exception as exception:
+            logging.warning(f"Ignoring problem disposing of margin account subscription: {exception}")
+
+        margin_account_subscription, price_subscription = start_subscriptions(
+            context, liquidation_processor, fetch_prices, fetch_margin_accounts, throttle_reload_to_seconds, throttle_ripe_update_to_seconds)
+        subscriptions.margin_account = margin_account_subscription
+        subscriptions.price = price_subscription
+
+    liquidation_processor.state_change.subscribe(on_next=on_unhealthy)
 
     # Wait - don't exit. Exiting will be handled by signals/interrupts.
     waiter = threading.Event()

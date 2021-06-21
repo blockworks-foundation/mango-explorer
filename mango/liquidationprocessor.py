@@ -13,7 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
+import enum
 import logging
 import time
 import typing
@@ -38,6 +38,20 @@ from .walletbalancer import WalletBalancer
 #
 
 
+# # 💧 LiquidationProcessorState enum
+#
+# An enum that describes the current state of the `LiquidationProcessor`.
+#
+
+class LiquidationProcessorState(enum.Enum):
+    STARTING = enum.auto()
+    HEALTHY = enum.auto()
+    UNHEALTHY = enum.auto()
+
+    def __str__(self):
+        return self.name
+
+
 # # 💧 LiquidationProcessor class
 #
 # An `AccountLiquidator` liquidates a `MarginAccount`. A `LiquidationProcessor` processes a
@@ -50,9 +64,10 @@ class LiquidationProcessor:
     _AGE_ERROR_THRESHOLD = timedelta(minutes=10)
     _AGE_WARNING_THRESHOLD = timedelta(minutes=5)
 
-    def __init__(self, context: Context, account_liquidator: AccountLiquidator, wallet_balancer: WalletBalancer, worthwhile_threshold: Decimal = Decimal("0.01")):
+    def __init__(self, context: Context, name: str, account_liquidator: AccountLiquidator, wallet_balancer: WalletBalancer, worthwhile_threshold: Decimal = Decimal("0.01")):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
+        self.name: str = name
         self.account_liquidator: AccountLiquidator = account_liquidator
         self.wallet_balancer: WalletBalancer = wallet_balancer
         self.worthwhile_threshold: Decimal = worthwhile_threshold
@@ -60,6 +75,8 @@ class LiquidationProcessor:
         self.ripe_accounts: typing.Optional[typing.List[MarginAccount]] = None
         self.ripe_accounts_updated_at: datetime = datetime.now()
         self.prices_updated_at: datetime = datetime.now()
+        self.state: LiquidationProcessorState = LiquidationProcessorState.STARTING
+        self.state_change: EventSource[LiquidationProcessor] = EventSource[LiquidationProcessor]()
 
     def update_margin_accounts(self, ripe_margin_accounts: typing.List[MarginAccount]):
         self.logger.info(
@@ -67,12 +84,19 @@ class LiquidationProcessor:
         self._check_update_recency("prices", self.prices_updated_at)
         self.ripe_accounts = ripe_margin_accounts
         self.ripe_accounts_updated_at = datetime.now()
+        # If this is the first time through, mark ourselves as Healthy.
+        if self.state == LiquidationProcessorState.STARTING:
+            self.state = LiquidationProcessorState.HEALTHY
 
     def update_prices(self, group: Group, prices):
         started_at = time.time()
 
+        if self.state == LiquidationProcessorState.STARTING:
+            self.logger.info("Still starting - skipping price update.")
+            return
+
         if self.ripe_accounts is None:
-            self.logger.info("Ripe accounts is None - skipping")
+            self.logger.info("Ripe accounts is None - skipping price update.")
             return
 
         self.logger.info(
@@ -134,8 +158,10 @@ class LiquidationProcessor:
     def _check_update_recency(self, name: str, last_updated_at: datetime) -> None:
         how_long_ago_was_last_update = datetime.now() - last_updated_at
         if how_long_ago_was_last_update > LiquidationProcessor._AGE_ERROR_THRESHOLD:
+            self.state = LiquidationProcessorState.UNHEALTHY
+            self.state_change.on_next(self)
             self.logger.error(
-                f"Last {name} update was {how_long_ago_was_last_update} ago - more than error threshold {LiquidationProcessor._AGE_ERROR_THRESHOLD}")
+                f"Liquidator '{self.name}' - last {name} update was {how_long_ago_was_last_update} ago - more than error threshold {LiquidationProcessor._AGE_ERROR_THRESHOLD}")
         elif how_long_ago_was_last_update > LiquidationProcessor._AGE_WARNING_THRESHOLD:
             self.logger.warning(
-                f"Last {name} update was {how_long_ago_was_last_update} ago - more than warning threshold {LiquidationProcessor._AGE_WARNING_THRESHOLD}")
+                f"Liquidator '{self.name}' - last {name} update was {how_long_ago_was_last_update} ago - more than warning threshold {LiquidationProcessor._AGE_WARNING_THRESHOLD}")
