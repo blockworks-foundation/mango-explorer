@@ -19,7 +19,6 @@ import typing
 from decimal import Decimal
 from pyserum.open_orders_account import OpenOrdersAccount
 from solana.publickey import PublicKey
-from solana.rpc.commitment import Single
 from solana.rpc.types import MemcmpOpts
 
 from .accountinfo import AccountInfo
@@ -102,7 +101,7 @@ class OpenOrders(AddressableAccount):
         ]
 
         response = context.client.get_program_accounts(
-            group.dex_program_id, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters, commitment=Single, encoding="base64")
+            group.dex_program_id, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters, commitment=context.commitment, encoding="base64")
         account_infos = list(map(lambda pair: AccountInfo._from_response_values(pair[0], pair[1]), [
                              (result["account"], PublicKey(result["pubkey"])) for result in response["result"]]))
         account_infos_by_address = {key: value for key, value in [
@@ -130,7 +129,7 @@ class OpenOrders(AddressableAccount):
         ]
 
         response = context.client.get_program_accounts(
-            context.dex_program_id, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters, commitment=Single, encoding="base64")
+            context.dex_program_id, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters, commitment=context.commitment, encoding="base64")
         accounts = list(map(lambda pair: AccountInfo._from_response_values(pair[0], pair[1]), [
                         (result["account"], PublicKey(result["pubkey"])) for result in response["result"]]))
         return list(map(lambda acc: OpenOrders.parse(acc, base_decimals, quote_decimals), accounts))

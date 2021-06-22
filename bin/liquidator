@@ -109,16 +109,16 @@ try:
         str(mango.TransactionScout.load(context, event.signature))))
     for notification_target in args.notify_liquidations:
         liquidations_publisher.subscribe(on_next=notification_target.send)
-    for notification_target in args.notify_successful_liquidations:
-        captured_notification_target = notification_target
-        filtering = mango.FilteringNotificationTarget(
-            captured_notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
-        liquidations_publisher.subscribe(on_next=filtering.send)
-    for notification_target in args.notify_failed_liquidations:
-        captured_notification_target = notification_target
-        filtering = mango.FilteringNotificationTarget(
-            captured_notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded)
-        liquidations_publisher.subscribe(on_next=filtering.send)
+    for successful_notification_target in args.notify_successful_liquidations:
+        captured_successful_notification_target = successful_notification_target
+        filtering_successful = mango.FilteringNotificationTarget(
+            captured_successful_notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
+        liquidations_publisher.subscribe(on_next=filtering_successful.send)
+    for failed_notification_target in args.notify_failed_liquidations:
+        captured_failed_notification_target = failed_notification_target
+        filtering_failed = mango.FilteringNotificationTarget(
+            captured_failed_notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded)
+        liquidations_publisher.subscribe(on_next=filtering_failed.send)
 
     if args.dry_run:
         intermediate: mango.AccountLiquidator = mango.NullAccountLiquidator()
@@ -140,21 +140,43 @@ try:
         wallet_balancer = mango.LiveWalletBalancer(
             context, wallet, group, trade_executor, action_threshold, tokens, targets)
 
+    # These (along with `context`) are captured and read by `load_updated_price_details()`.
+    group_address = group.address
+    oracle_addresses = list([market.oracle for market in group.markets])
+
+    def load_updated_price_details() -> typing.Tuple[mango.Group, typing.List[mango.TokenValue]]:
+        all_addresses = [group_address, *oracle_addresses]
+        all_account_infos = mango.AccountInfo.load_multiple(context, all_addresses)
+        group_account_info = all_account_infos[0]
+        oracle_account_infos = all_account_infos[1:]
+        group = mango.Group.parse(context, group_account_info)
+
+        oracles = map(lambda oracle_account_info: mango.Aggregator.parse(
+            context, oracle_account_info), oracle_account_infos)
+        prices = list(map(lambda oracle: oracle.price, oracles)) + [Decimal(1)]
+        token_prices = []
+        for index, price in enumerate(prices):
+            token_prices += [mango.TokenValue(group.basket_tokens[index].token, price)]
+
+        return group, token_prices
+
     def fetch_prices(context):
         def _fetch_prices(_):
             with mango.retry_context("Price Fetch",
-                                     lambda: mango.Group.load_with_prices(context),
+                                     load_updated_price_details,
                                      context.retry_pauses) as retrier:
                 return retrier.run()
 
         return _fetch_prices
 
     def fetch_margin_accounts(context):
-        group = mango.Group.load(context)
+        def _actual_fetch():
+            group = mango.Group.load(context)
+            return mango.MarginAccount.load_ripe(context, group)
 
         def _fetch_margin_accounts(_):
             with mango.retry_context("Margin Account Fetch",
-                                     lambda: mango.MarginAccount.load_ripe(context, group),
+                                     _actual_fetch,
                                      context.retry_pauses) as retrier:
                 return retrier.run()
         return _fetch_margin_accounts

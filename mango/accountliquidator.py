@@ -201,7 +201,25 @@ class ReportingAccountLiquidator(AccountLiquidator):
         self.logger.info(f"Margin account balances before:\n{liquidatable_report.balances}")
         self.logger.info(
             f"Liquidating margin account: {liquidatable_report.margin_account}\n{liquidatable_report.balance_sheet}")
-        transaction_id = self.inner.liquidate(liquidatable_report)
+        try:
+            transaction_id = self.inner.liquidate(liquidatable_report)
+        except Exception as exception:
+            # It would be nice if we had a strongly-typed way of checking this.
+            if "MangoErrorCode::NotLiquidatable" in str(exception):
+                failed_liquidation_event = LiquidationEvent(datetime.datetime.now(),
+                                                            self.liquidator_name,
+                                                            self.context.group_name,
+                                                            False,
+                                                            "",
+                                                            self.wallet.address,
+                                                            liquidatable_report.margin_account.address,
+                                                            balances_before,
+                                                            balances_before)
+                self.liquidations_publisher.publish(failed_liquidation_event)
+                return None
+            else:
+                raise exception
+
         if transaction_id is None:
             self.logger.info("No transaction sent.")
         else:

@@ -21,7 +21,6 @@ import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
-from solana.rpc.commitment import Single
 from solana.rpc.types import MemcmpOpts
 
 from .accountinfo import AccountInfo
@@ -129,7 +128,7 @@ class MarginAccount(AddressableAccount):
             parser = layouts.MARGIN_ACCOUNT_V2
 
         response = context.client.get_program_accounts(
-            program_id, data_size=parser.sizeof(), memcmp_opts=filters, commitment=Single, encoding="base64")
+            program_id, data_size=parser.sizeof(), memcmp_opts=filters, commitment=context.commitment, encoding="base64")
         margin_accounts = []
         for margin_account_data in response["result"]:
             address = PublicKey(margin_account_data["pubkey"])
@@ -168,7 +167,7 @@ class MarginAccount(AddressableAccount):
         ]
 
         response = context.client.get_program_accounts(
-            context.program_id, memcmp_opts=filters, commitment=Single, encoding="base64")
+            context.program_id, memcmp_opts=filters, commitment=context.commitment, encoding="base64")
         margin_accounts = []
         for margin_account_data in response["result"]:
             address = PublicKey(margin_account_data["pubkey"])
@@ -330,7 +329,7 @@ class MarginAccount(AddressableAccount):
 
         data_size = layouts.MARGIN_ACCOUNT_V2.sizeof()
         response = context.client.get_program_accounts(
-            context.program_id, data_size=data_size, memcmp_opts=filters, commitment=Single, encoding="base64")
+            context.program_id, data_size=data_size, memcmp_opts=filters, commitment=context.commitment, encoding="base64")
         result = context.unwrap_or_raise_exception(response)
         margin_accounts = []
         open_orders_addresses = []
