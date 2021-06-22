@@ -7,6 +7,8 @@ import os.path
 import sys
 import traceback
 
+from solana.publickey import PublicKey
+
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 import mango  # nopep8
@@ -16,6 +18,8 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Display the balances of all grop tokens in the current wallet.")
 mango.Context.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--address", type=PublicKey,
+                    help="Root address to check (if not provided, the wallet address is used)")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -23,13 +27,17 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
     context = mango.Context.from_command_line_parameters(args)
-    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+    address = args.address
+    if address is None:
+        wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+        address = wallet.address
 
     logging.info(f"Context: {context}")
-    logging.info(f"Wallet address: {wallet.address}")
+    logging.info(f"Address: {address}")
 
     group = mango.Group.load(context)
-    balances = group.fetch_balances(context, wallet.address)
+    balances = group.fetch_balances(context, address)
     print("Balances:")
     mango.TokenValue.report(print, balances)
 except Exception as exception:

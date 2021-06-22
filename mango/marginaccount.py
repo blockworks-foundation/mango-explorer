@@ -43,7 +43,7 @@ from .version import Version
 
 class MarginAccount(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, account_flags: MangoAccountFlags,
-                 has_borrows: bool, mango_group: PublicKey, owner: PublicKey,
+                 has_borrows: bool, mango_group: PublicKey, owner: PublicKey, being_liquidated: bool,
                  deposits: typing.List[TokenValue], borrows: typing.List[TokenValue],
                  open_orders: typing.List[typing.Optional[PublicKey]]):
         super().__init__(account_info)
@@ -52,6 +52,7 @@ class MarginAccount(AddressableAccount):
         self.has_borrows: bool = has_borrows
         self.mango_group: PublicKey = mango_group
         self.owner: PublicKey = owner
+        self.being_liquidated: bool = being_liquidated
         self.deposits: typing.List[TokenValue] = deposits
         self.borrows: typing.List[TokenValue] = borrows
         self.open_orders: typing.List[typing.Optional[PublicKey]] = open_orders
@@ -86,7 +87,7 @@ class MarginAccount(AddressableAccount):
             borrows += [token_value]
 
         return MarginAccount(account_info, version, account_flags, has_borrows, layout.mango_group,
-                             layout.owner, deposits, borrows, list(layout.open_orders))
+                             layout.owner, layout.being_liquidated, deposits, borrows, list(layout.open_orders))
 
     @staticmethod
     def parse(account_info: AccountInfo, group: Group) -> "MarginAccount":

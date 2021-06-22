@@ -34,6 +34,7 @@ from .tokenvalue import TokenValue
 class LiquidatableState(enum.Flag):
     UNSET = 0
     RIPE = enum.auto()
+    BEING_LIQUIDATED = enum.auto()
     LIQUIDATABLE = enum.auto()
     ABOVE_WATER = enum.auto()
     WORTHWHILE = enum.auto()
@@ -72,5 +73,11 @@ class LiquidatableReport:
 
             if balance_sheet.assets - balance_sheet.liabilities > worthwhile_threshold:
                 state |= LiquidatableState.WORTHWHILE
+
+        # If a liquidation is ongoing, their account may be above the `maint_coll_ratio` but still
+        # be liquidatable until it reaches `init_coll_ratio`.
+        if margin_account.being_liquidated:
+            state |= LiquidatableState.BEING_LIQUIDATED
+            state |= LiquidatableState.LIQUIDATABLE
 
         return LiquidatableReport(group, prices, margin_account, balance_sheet, balances, state, worthwhile_threshold)

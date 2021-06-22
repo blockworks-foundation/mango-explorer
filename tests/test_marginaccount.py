@@ -9,6 +9,7 @@ def test_construction():
     has_borrows = False
     mango_group = fake_seeded_public_key("mango group")
     owner = fake_seeded_public_key("owner")
+    being_liquidated = False
     token = fake_token()
     deposits = [mango.TokenValue(token, Decimal(0)), mango.TokenValue(
         token, Decimal(0)), mango.TokenValue(token, Decimal(0))]
@@ -16,8 +17,8 @@ def test_construction():
         token, Decimal(0)), mango.TokenValue(token, Decimal(0))]
     open_orders = [None, None]
     actual = mango.MarginAccount(fake_account_info(), mango.Version.V1, account_flags,
-                                 has_borrows, mango_group, owner, deposits, borrows,
-                                 open_orders)
+                                 has_borrows, mango_group, owner, being_liquidated,
+                                 deposits, borrows, open_orders)
     assert actual is not None
     assert actual.logger is not None
     assert actual.version == mango.Version.V1
