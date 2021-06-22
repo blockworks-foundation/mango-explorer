@@ -148,7 +148,8 @@ class LiquidationProcessor:
                         f"Margin account {updated_margin_account.address} is still worthwhile - putting it back on list.")
                     to_process += [updated_report]
             except Exception as exception:
-                self.logger.error(f"Failed to liquidate account '{highest.margin_account.address}' - {exception}")
+                self.logger.error(
+                    f"Liquidator '{self.name}' - failed to liquidate account '{highest.margin_account.address}' - {exception}.")
             finally:
                 # highest should always be in to_process, but we're outside the try-except block
                 # so let's be a little paranoid about it.
