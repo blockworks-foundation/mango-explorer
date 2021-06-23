@@ -316,7 +316,7 @@ class TransactionScout:
             decimals = Decimal(balance["uiTokenAmount"]["decimals"])
             divisor = Decimal(10) ** decimals
             value = amount / divisor
-            token = context.token_lookup.find_by_mint(mint)
+            token = context.token_lookup.find_by_mint_or_raise(mint)
             return OwnedTokenValue(account, TokenValue(token, value))
 
         try:

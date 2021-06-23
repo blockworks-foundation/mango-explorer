@@ -27,7 +27,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 context = mango.Context.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-wrapped_sol = context.token_lookup.find_by_symbol("SOL")
+wrapped_sol = context.token_lookup.find_by_symbol_or_raise("SOL")
 amount_to_transfer = int(args.quantity * mango.SOL_DECIMAL_DIVISOR)
 
 transaction = Transaction()

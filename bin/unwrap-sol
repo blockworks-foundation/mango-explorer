@@ -26,7 +26,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 context = mango.Context.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-wrapped_sol = context.token_lookup.find_by_symbol("SOL")
+wrapped_sol = context.token_lookup.find_by_symbol_or_raise("SOL")
 
 largest_token_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
     context, wallet.address, wrapped_sol)

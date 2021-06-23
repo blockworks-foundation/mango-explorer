@@ -128,20 +128,34 @@ class TokenLookup:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.token_data = token_data
 
-    def find_by_symbol(self, symbol: str):
+    def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
         found = TokenLookup._find_data_by_symbol(symbol, self.token_data)
         if found is not None:
             return Token(found["symbol"], found["name"], PublicKey(found["address"]), Decimal(found["decimals"]))
 
         return None
 
-    def find_by_mint(self, mint: PublicKey):
+    def find_by_mint(self, mint: PublicKey) -> typing.Optional[Token]:
         mint_string: str = str(mint)
         for token in self.token_data["tokens"]:
             if token["address"] == mint_string:
                 return Token(token["symbol"], token["name"], PublicKey(token["address"]), Decimal(token["decimals"]))
 
         return None
+
+    def find_by_symbol_or_raise(self, symbol: str) -> Token:
+        token = self.find_by_symbol(symbol)
+        if token is None:
+            raise Exception(f"Could not find token with symbol '{symbol}'.")
+
+        return token
+
+    def find_by_mint_or_raise(self, mint: PublicKey) -> Token:
+        token = self.find_by_mint(mint)
+        if token is None:
+            raise Exception(f"Could not find token with mint {mint}.")
+
+        return token
 
     @staticmethod
     def load(filename: str) -> "TokenLookup":

@@ -12,11 +12,11 @@ from solana.publickey import PublicKey
 #
 
 token_lookup = fake_context().token_lookup
-ETH = token_lookup.find_by_symbol("ETH")
-BTC = token_lookup.find_by_symbol("BTC")
-SOL = token_lookup.find_by_symbol("SOL")
-SRM = token_lookup.find_by_symbol("SRM")
-USDC = token_lookup.find_by_symbol("USDC")
+ETH = token_lookup.find_by_symbol_or_raise("ETH")
+BTC = token_lookup.find_by_symbol_or_raise("BTC")
+SOL = token_lookup.find_by_symbol_or_raise("SOL")
+SRM = token_lookup.find_by_symbol_or_raise("SRM")
+USDC = token_lookup.find_by_symbol_or_raise("USDC")
 
 
 def mock_group():
