@@ -56,7 +56,7 @@ class AccountInfo:
 
     @staticmethod
     def load(context: Context, address: PublicKey) -> typing.Optional["AccountInfo"]:
-        response: RPCResponse = context.client.get_account_info(address)
+        response: RPCResponse = context.client.get_account_info(address, commitment=context.commitment)
         result = context.unwrap_or_raise_exception(response)
         if result["value"] is None:
             return None
