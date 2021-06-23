@@ -430,11 +430,14 @@ class LiquidateInstructionBuilder(InstructionBuilder):
         if wallet_output_token_account is None:
             raise Exception(f"Could not load wallet output token account for mint '{most_assets.token.mint}'")
 
+        # Convert the token amount to the native representation
+        maximum_input_value = wallet_input_token_account.value
+        maximum_input_amount = maximum_input_value.token.shift_to_native(maximum_input_value.value)
         return LiquidateInstructionBuilder(context, group, wallet, margin_account, oracles,
                                            most_liabilities_basket_token, most_assets_basket_token,
                                            wallet_input_token_account,
                                            wallet_output_token_account,
-                                           wallet_input_token_account.value.value)
+                                           maximum_input_amount)
 
     def __str__(self) -> str:
         # Print the members out using the Rust parameter order and names.
