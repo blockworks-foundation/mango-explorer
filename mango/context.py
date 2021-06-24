@@ -25,8 +25,8 @@ from decimal import Decimal
 from rx.scheduler import ThreadPoolScheduler
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
-from solana.rpc.types import MemcmpOpts, RPCError, RPCResponse
 from solana.rpc.commitment import Commitment
+from solana.rpc.types import MemcmpOpts, RPCError, RPCResponse, TxOpts
 
 from .constants import MangoConstants, SOL_DECIMAL_DIVISOR
 from .market import CompoundMarketLookup, MarketLookup
@@ -90,6 +90,7 @@ class Context:
         self.group_name: str = group_name
         self.group_id: PublicKey = group_id
         self.commitment: Commitment = Commitment("processed")
+        self.transaction_options: TxOpts = TxOpts(preflight_commitment=self.commitment)
         self.encoding: str = "base64"
         self.token_lookup: TokenLookup = TokenLookup.load(token_filename)
 

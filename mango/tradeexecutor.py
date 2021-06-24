@@ -25,7 +25,6 @@ from pyserum.enums import OrderType, Side
 from pyserum.market import Market
 from solana.account import Account
 from solana.publickey import PublicKey
-from solana.rpc.types import TxOpts
 from solana.transaction import Transaction
 
 from .context import Context
@@ -275,8 +274,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         transaction.add(settle.build())
 
         with retry_context("Place Serum Order And Settle", self.context.client.send_transaction, self.context.retry_pauses) as retrier:
-            opts: TxOpts = TxOpts(preflight_commitment=self.context.commitment)
-            response = retrier.run(transaction, *signers, opts=opts)
+            response = retrier.run(transaction, *signers, opts=self.context.transaction_options)
             return self.context.unwrap_transaction_id_or_raise_exception(response)
 
     def _lookup_spot_market(self, symbol: str) -> SpotMarket:

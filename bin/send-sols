@@ -58,7 +58,8 @@ try:
         params = TransferParams(from_pubkey=source, to_pubkey=destination, lamports=lamports)
         transaction.add(transfer(params))
 
-        transfer_response = context.client.send_transaction(transaction, wallet.account)
+        transfer_response = context.client.send_transaction(
+            transaction, wallet.account, opts=context.transaction_options)
         transaction_id = context.unwrap_transaction_id_or_raise_exception(transfer_response)
         print(f"Waiting on transaction ID: {transaction_id}")
         context.wait_for_confirmation(transaction_id)

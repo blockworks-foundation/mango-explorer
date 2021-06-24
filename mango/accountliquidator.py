@@ -129,7 +129,8 @@ class ActualAccountLiquidator(AccountLiquidator):
             self.logger.debug("    Data:", " ".join(f"{x:02x}" for x in instruction.data))
             self.logger.debug("    Program ID:", instruction.program_id)
 
-        transaction_response = self.context.client.send_transaction(transaction, self.wallet.account)
+        transaction_response = self.context.client.send_transaction(
+            transaction, self.wallet.account, opts=self.context.transaction_options)
         transaction_id = self.context.unwrap_transaction_id_or_raise_exception(transaction_response)
         return transaction_id
 

@@ -23,7 +23,6 @@ import typing
 
 from decimal import Decimal
 from pyserum.market import Market
-from solana.rpc.types import TxOpts
 
 from .context import Context
 from .openorders import OpenOrders
@@ -176,7 +175,7 @@ class SerumOrderPlacer(OrderPlacer):
         try:
             response = self.market.cancel_order_by_client_id(
                 self.wallet.account, self.open_orders.address, order.id,
-                TxOpts(preflight_commitment=self.context.commitment))
+                self.context.transaction_options)
             self.context.unwrap_or_raise_exception(response)
         except Exception as exception:
             self.logger.warning(f"Failed to cancel order {order.id} - continuing. {exception}")
@@ -195,7 +194,7 @@ class SerumOrderPlacer(OrderPlacer):
 
         response = self.market.place_order(token_account.address, self.wallet.account,
                                            serum_order_type, serum_side, float(price), float(size),
-                                           client_id, TxOpts(preflight_commitment=self.context.commitment))
+                                           client_id, self.context.transaction_options)
         self.context.unwrap_or_raise_exception(response)
         return Order(id=client_id, side=side, price=price, size=size)
 

@@ -57,7 +57,7 @@ print(f"    Temporary account: {wrapped_sol_account.public_key()}")
 print(f"    Source: {largest_token_account.address}")
 print(f"    Destination: {wallet.address}")
 
-response = context.client.send_transaction(transaction, *signers)
+response = context.client.send_transaction(transaction, *signers, opts=context.transaction_options)
 transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
 print(f"Waiting on transaction ID: {transaction_id}")
 

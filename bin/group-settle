@@ -78,7 +78,7 @@ try:
     if args.dry_run:
         print("Skipping transaction processing - dry run is set.")
     else:
-        response = context.client.send_transaction(transaction, *signers)
+        response = context.client.send_transaction(transaction, *signers, opts=context.transaction_options)
         transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
         if args.wait:
             print(f"Waiting on {transaction_id}")

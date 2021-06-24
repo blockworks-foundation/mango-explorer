@@ -42,7 +42,7 @@ transaction.add(close_instruction.build())
 
 print(f"Closing account: {args.address} with balance {token_account.value.value} lamports.")
 
-response = context.client.send_transaction(transaction, *signers)
+response = context.client.send_transaction(transaction, *signers, opts=context.transaction_options)
 transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
 print(f"Waiting on transaction ID: {transaction_id}")
 
