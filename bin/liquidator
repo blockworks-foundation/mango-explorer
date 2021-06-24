@@ -33,6 +33,8 @@ parser.add_argument("--target", type=str, action="append",
                     help="token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5' or 'ETH:33%')")
 parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
                     help="fraction of total wallet value a trade must be above to be carried out")
+parser.add_argument("--worthwhile-threshold", type=Decimal, default=Decimal("0.01"),
+                    help="value a liquidation must be above to be carried out")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
                     help="factor by which to adjust the SELL price (akin to maximum slippage)")
 parser.add_argument("--notify-liquidations", type=mango.parse_subscription_target, action="append", default=[],
@@ -84,6 +86,7 @@ try:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
     action_threshold = args.action_threshold
+    worthwhile_threshold = args.worthwhile_threshold
     adjustment_factor = args.adjustment_factor
     throttle_reload_to_seconds = args.throttle_reload_to_seconds
     throttle_ripe_update_to_seconds = args.throttle_ripe_update_to_seconds
@@ -186,7 +189,8 @@ try:
             self.margin_account: rx.core.typing.Disposable = margin_account
             self.price: rx.core.typing.Disposable = price
 
-    liquidation_processor = mango.LiquidationProcessor(context, liquidator_name, account_liquidator, wallet_balancer)
+    liquidation_processor = mango.LiquidationProcessor(
+        context, liquidator_name, account_liquidator, wallet_balancer, worthwhile_threshold)
     margin_account_subscription, price_subscription = start_subscriptions(
         context, liquidation_processor, fetch_prices, fetch_margin_accounts, throttle_reload_to_seconds, throttle_ripe_update_to_seconds)
 
