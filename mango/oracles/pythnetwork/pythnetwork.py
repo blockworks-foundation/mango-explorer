@@ -120,7 +120,7 @@ class PythOracleProvider(OracleProvider):
         fixed_usdt = re.sub('USDT$', 'USD', normalised)
         return re.sub('USDC$', 'USD', fixed_usdt)
 
-    def _pyth_symbol_to_market_symbols(self, symbol: str) -> typing.List[str]:
+    def _pyth_symbol_to_market_symbols(self, symbol: str) -> typing.Sequence[str]:
         if symbol.endswith("USD"):
             return [f"{symbol}C", f"{symbol}T"]
         return [symbol]
@@ -141,7 +141,7 @@ class PythOracleProvider(OracleProvider):
 
         return mapping
 
-    def _fetch_all_pyth_products(self, context: Context, address: PublicKey) -> typing.List[typing.Any]:
+    def _fetch_all_pyth_products(self, context: Context, address: PublicKey) -> typing.Sequence[typing.Any]:
         mapping = self._load_pyth_mapping(context, address)
         all_product_addresses = mapping.products[0:int(mapping.num)]
         product_account_infos = AccountInfo.load_multiple(context, all_product_addresses)

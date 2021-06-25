@@ -1,5 +1,3 @@
-import datetime
-
 from decimal import Decimal
 from typing import NamedTuple
 from pyserum import market
@@ -37,6 +35,11 @@ def fake_token() -> mango.Token:
     return mango.Token("FAKE", "Fake Token", fake_seeded_public_key("fake token"), Decimal(6))
 
 
+def fake_token_info() -> mango.TokenInfo:
+    token = fake_token()
+    return mango.TokenInfo(token, fake_seeded_public_key("root bank"), Decimal(7))
+
+
 def fake_context() -> mango.Context:
     context = mango.Context(cluster="test",
                             cluster_url="http://localhost",
@@ -46,13 +49,6 @@ def fake_context() -> mango.Context:
                             group_id=fake_seeded_public_key("group ID"))
     context.client = MockClient()
     return context
-
-
-def fake_index() -> mango.Index:
-    token = fake_token()
-    borrow = mango.TokenValue(token, Decimal(0))
-    deposit = mango.TokenValue(token, Decimal(0))
-    return mango.Index(mango.Version.V1, token, datetime.datetime.now(), borrow, deposit)
 
 
 def fake_market() -> market.Market:

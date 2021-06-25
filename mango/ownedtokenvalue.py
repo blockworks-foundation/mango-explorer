@@ -35,7 +35,7 @@ class OwnedTokenValue:
         self.token_value = token_value
 
     @staticmethod
-    def find_by_owner(values: typing.List["OwnedTokenValue"], owner: PublicKey) -> "OwnedTokenValue":
+    def find_by_owner(values: typing.Sequence["OwnedTokenValue"], owner: PublicKey) -> "OwnedTokenValue":
         found = [value for value in values if value.owner == owner]
         if len(found) == 0:
             raise Exception(f"Owner '{owner}' not found in: {values}")
@@ -46,7 +46,7 @@ class OwnedTokenValue:
         return found[0]
 
     @staticmethod
-    def changes(before: typing.List["OwnedTokenValue"], after: typing.List["OwnedTokenValue"]) -> typing.List["OwnedTokenValue"]:
+    def changes(before: typing.Sequence["OwnedTokenValue"], after: typing.Sequence["OwnedTokenValue"]) -> typing.Sequence["OwnedTokenValue"]:
         changes: typing.List[OwnedTokenValue] = []
         for before_value in before:
             after_value = OwnedTokenValue.find_by_owner(after, before_value.owner)

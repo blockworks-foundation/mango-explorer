@@ -29,11 +29,11 @@ logging.getLogger().setLevel(args.log_level)
 context = mango.Context.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-group = mango.MangoGroup.load(context, context.group_id)
-margin_accounts = mango.MangoAccount.load_all_for_owner(context, wallet.address, group)
-if len(margin_accounts) == 0:
+group = mango.Group.load(context, context.group_id)
+accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
+if len(accounts) == 0:
     raise Exception(f"Could not find any margin accounts for '{wallet.address}'.")
-margin_account = margin_accounts[0]
+margin_account = accounts[0]
 
 token = context.token_lookup.find_by_symbol(args.symbol)
 print(token)
@@ -58,7 +58,7 @@ node_bank = root_bank.pick_node_bank(context)
 withdraw = mango.build_withdraw_instructions(
     context, wallet, group, margin_account, root_bank, node_bank, withdrawal_token_account, args.allow_borrow)
 print(withdraw)
-signers: typing.List[Account] = [wallet.account]
+signers: typing.Sequence[Account] = [wallet.account]
 
 transaction = Transaction()
 transaction.instructions.extend(withdraw)

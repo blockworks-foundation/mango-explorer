@@ -21,11 +21,11 @@ mypy:
 	for file in bin/* ; do \
         cp $${file} .tmplintdir/$${file##*/}.py ; \
 	done
-	-mypy mango tests .tmplintdir
+	-mypy --no-incremental --cache-dir=/dev/null mango tests .tmplintdir
 	rm -rf .tmplintdir
 
 flake8:
-	flake8 --extend-ignore E402,E501,E722,W291,W391 . tests/* bin/*
+	flake8 --extend-ignore E402,E501,E722,W291,W391 . bin/*
 
 lint: flake8 mypy
 

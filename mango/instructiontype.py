@@ -43,4 +43,4 @@ class InstructionType(enum.IntEnum):
     PartialLiquidate = 16
 
     def __str__(self):
-        return self.name
+        return self.value

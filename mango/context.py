@@ -83,7 +83,7 @@ class Context:
         self.commitment: Commitment = Commitment("processed")
         self.transaction_options: TxOpts = TxOpts(preflight_commitment=self.commitment)
         self.encoding: str = "base64"
-        ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(cluster)
+        ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(cluster, group_name)
         spl_token_lookup: TokenLookup = SplTokenLookup.load(token_filename)
         all_token_lookup: TokenLookup = CompoundTokenLookup(
             [ids_json_token_lookup, spl_token_lookup])
@@ -96,7 +96,7 @@ class Context:
 
         # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451
         # "I think you are better off doing 4,8,16,20,30"
-        self.retry_pauses: typing.List[Decimal] = [Decimal(4), Decimal(
+        self.retry_pauses: typing.Sequence[Decimal] = [Decimal(4), Decimal(
             8), Decimal(16), Decimal(20), Decimal(30)]
 
     @property

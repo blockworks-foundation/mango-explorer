@@ -24,7 +24,7 @@ from .accountinfo import AccountInfo
 
 # # 🥭 AddressableAccount class
 #
-# Some of our most-used objects (like `Group` or `MarginAccount`) are accounts on Solana
+# Some of our most-used objects (like `Group` or `Account`) are accounts on Solana
 # with packed data. When these are loaded, they're typically loaded by loading the
 # `AccountInfo` and parsing it in an object-specific way.
 #

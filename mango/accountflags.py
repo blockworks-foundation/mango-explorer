@@ -21,12 +21,12 @@ from .layouts import layouts
 from .version import Version
 
 
-# # 🥭 SerumAccountFlags class
+# # 🥭 AccountFlags class
 #
-# The Serum prefix is because there's also `MangoAccountFlags` for the Mango-specific flags.
+# Encapsulates the Serum AccountFlags data.
 #
 
-class SerumAccountFlags:
+class AccountFlags:
     def __init__(self, version: Version, initialized: bool, market: bool, open_orders: bool,
                  request_queue: bool, event_queue: bool, bids: bool, asks: bool, disabled: bool):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -41,10 +41,10 @@ class SerumAccountFlags:
         self.disabled: bool = disabled
 
     @staticmethod
-    def from_layout(layout: layouts.SERUM_ACCOUNT_FLAGS) -> "SerumAccountFlags":
-        return SerumAccountFlags(Version.UNSPECIFIED, layout.initialized, layout.market,
-                                 layout.open_orders, layout.request_queue, layout.event_queue,
-                                 layout.bids, layout.asks, layout.disabled)
+    def from_layout(layout: layouts.ACCOUNT_FLAGS) -> "AccountFlags":
+        return AccountFlags(Version.UNSPECIFIED, layout.initialized, layout.market,
+                            layout.open_orders, layout.request_queue, layout.event_queue,
+                            layout.bids, layout.asks, layout.disabled)
 
     def __str__(self) -> str:
         flags: typing.List[typing.Optional[str]] = []
@@ -57,7 +57,7 @@ class SerumAccountFlags:
         flags += ["asks" if self.asks else None]
         flags += ["disabled" if self.disabled else None]
         flag_text = " | ".join(flag for flag in flags if flag is not None) or "None"
-        return f"« SerumAccountFlags: {flag_text} »"
+        return f"« AccountFlags: {flag_text} »"
 
     def __repr__(self) -> str:
         return f"{self}"

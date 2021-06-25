@@ -23,66 +23,66 @@ from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
 from .encoding import encode_key
+from .group import Group
 from .layouts import layouts
-from .mangogroup import MangoGroup
 from .metadata import Metadata
 from .version import Version
 
-# # 🥭 MangoAccount class
+# # 🥭 Account class
 #
-# `MangoAccount` holds information about the account for a particular user/wallet for a particualr `MangoGroup`.
+# `Account` holds information about the account for a particular user/wallet for a particualr `Group`.
 #
 
 
-class MangoAccount(AddressableAccount):
+class Account(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
-                 meta_data: Metadata, group: PublicKey, owner: PublicKey, in_basket: typing.List[Decimal],
-                 deposits: typing.List[Decimal], borrows: typing.List[Decimal],
-                 spot_open_orders: typing.List[PublicKey], perp_accounts: typing.List[typing.Any]):
+                 meta_data: Metadata, group: PublicKey, owner: PublicKey, in_basket: typing.Sequence[Decimal],
+                 deposits: typing.Sequence[Decimal], borrows: typing.Sequence[Decimal],
+                 spot_open_orders: typing.Sequence[PublicKey], perp_accounts: typing.Sequence[typing.Any]):
         super().__init__(account_info)
         self.version: Version = version
 
         self.meta_data: Metadata = meta_data
         self.group: PublicKey = group
         self.owner: PublicKey = owner
-        self.in_basket: typing.List[Decimal] = in_basket
-        self.deposits: typing.List[Decimal] = deposits
-        self.borrows: typing.List[Decimal] = borrows
-        self.spot_open_orders: typing.List[PublicKey] = spot_open_orders
-        self.perp_accounts: typing.List[layouts.PERP_ACCOUNT] = perp_accounts
+        self.in_basket: typing.Sequence[Decimal] = in_basket
+        self.deposits: typing.Sequence[Decimal] = deposits
+        self.borrows: typing.Sequence[Decimal] = borrows
+        self.spot_open_orders: typing.Sequence[PublicKey] = spot_open_orders
+        self.perp_accounts: typing.Sequence[layouts.PERP_ACCOUNT] = perp_accounts
 
     @staticmethod
-    def from_layout(layout: layouts.MANGO_ACCOUNT, account_info: AccountInfo, version: Version) -> "MangoAccount":
+    def from_layout(layout: layouts.MANGO_ACCOUNT, account_info: AccountInfo, version: Version) -> "Account":
         meta_data = Metadata.from_layout(layout.meta_data)
         group: PublicKey = layout.group
         owner: PublicKey = layout.owner
-        in_basket: typing.List[Decimal] = layout.in_basket
-        deposits: typing.List[Decimal] = layout.deposits
-        borrows: typing.List[Decimal] = layout.borrows
-        spot_open_orders: typing.List[PublicKey] = layout.spot_open_orders
-        perp_accounts: typing.List[typing.Any] = layout.perp_accounts
+        in_basket: typing.Sequence[Decimal] = layout.in_basket
+        deposits: typing.Sequence[Decimal] = layout.deposits
+        borrows: typing.Sequence[Decimal] = layout.borrows
+        spot_open_orders: typing.Sequence[PublicKey] = layout.spot_open_orders
+        perp_accounts: typing.Sequence[typing.Any] = layout.perp_accounts
 
-        return MangoAccount(account_info, version, meta_data, group, owner, in_basket, deposits, borrows, spot_open_orders, perp_accounts)
+        return Account(account_info, version, meta_data, group, owner, in_basket, deposits, borrows, spot_open_orders, perp_accounts)
 
     @staticmethod
-    def parse(context: Context, account_info: AccountInfo) -> "MangoAccount":
+    def parse(context: Context, account_info: AccountInfo) -> "Account":
         data = account_info.data
         if len(data) != layouts.MANGO_ACCOUNT.sizeof():
             raise Exception(
-                f"MangoAccount data length ({len(data)}) does not match expected size ({layouts.MANGO_ACCOUNT.sizeof()}")
+                f"Account data length ({len(data)}) does not match expected size ({layouts.MANGO_ACCOUNT.sizeof()}")
 
         layout = layouts.MANGO_ACCOUNT.parse(data)
-        return MangoAccount.from_layout(layout, account_info, Version.V1)
+        return Account.from_layout(layout, account_info, Version.V1)
 
     @staticmethod
-    def load(context: Context, address: PublicKey) -> "MangoAccount":
+    def load(context: Context, address: PublicKey) -> "Account":
         account_info = AccountInfo.load(context, address)
         if account_info is None:
-            raise Exception(f"MangoAccount account not found at address '{address}'")
-        return MangoAccount.parse(context, account_info)
+            raise Exception(f"Account account not found at address '{address}'")
+        return Account.parse(context, account_info)
 
     @staticmethod
-    def load_all_for_owner(context: Context, owner: PublicKey, group: MangoGroup) -> typing.List["MangoAccount"]:
+    def load_all_for_owner(context: Context, owner: PublicKey, group: Group) -> typing.Sequence["Account"]:
         # mango_group is just after the METADATA, which is the first entry.
         group_offset = layouts.METADATA.sizeof()
         # owner is just after mango_group in the layout, and it's a PublicKey which is 32 bytes.
@@ -104,7 +104,7 @@ class MangoAccount(AddressableAccount):
         for account_data in response["result"]:
             address = PublicKey(account_data["pubkey"])
             account_info = AccountInfo._from_response_values(account_data["account"], address)
-            account = MangoAccount.parse(context, account_info)
+            account = Account.parse(context, account_info)
             accounts += [account]
         return accounts
 

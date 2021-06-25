@@ -38,7 +38,7 @@ from solana.publickey import PublicKey
 # `decode_binary()` decodes the data properly based on which encoding was used.
 
 
-def decode_binary(encoded: typing.List) -> bytes:
+def decode_binary(encoded: typing.Sequence) -> bytes:
     if isinstance(encoded, str):
         return base58.b58decode(encoded)
     elif encoded[1] == "base64":
@@ -53,7 +53,7 @@ def decode_binary(encoded: typing.List) -> bytes:
 #
 
 
-def encode_binary(decoded: bytes) -> typing.List:
+def encode_binary(decoded: bytes) -> typing.Sequence:
     return [base64.b64encode(decoded), "base64"]
 
 

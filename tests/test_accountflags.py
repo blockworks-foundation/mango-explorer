@@ -10,8 +10,8 @@ def test_constructor():
     bids: bool = True
     asks: bool = True
     disabled: bool = True
-    actual = mango.SerumAccountFlags(mango.Version.V1, initialized, market, open_orders,
-                                     request_queue, event_queue, bids, asks, disabled)
+    actual = mango.AccountFlags(mango.Version.V1, initialized, market, open_orders,
+                                request_queue, event_queue, bids, asks, disabled)
     assert actual is not None
     assert actual.logger is not None
     assert actual.version == mango.Version.V1
@@ -24,9 +24,9 @@ def test_constructor():
     assert actual.asks == asks
     assert actual.disabled == disabled
 
-    actual2 = mango.SerumAccountFlags(mango.Version.V2, not initialized, not market,
-                                      not open_orders, not request_queue, not event_queue,
-                                      not bids, not asks, not disabled)
+    actual2 = mango.AccountFlags(mango.Version.V2, not initialized, not market,
+                                 not open_orders, not request_queue, not event_queue,
+                                 not bids, not asks, not disabled)
     assert actual2 is not None
     assert actual2.logger is not None
     assert actual2.version == mango.Version.V2

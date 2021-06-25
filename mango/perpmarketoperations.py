@@ -17,13 +17,13 @@
 import typing
 
 from decimal import Decimal
-from solana.account import Account
+from solana.account import Account as SolanaAccount
 from solana.publickey import PublicKey
 from solana.transaction import Transaction
 
+from .account import Account
 from .accountinfo import AccountInfo
 from .context import Context
-from .mangoaccount import MangoAccount
 from .marketoperations import MarketOperations
 from .merpsinstructions import build_cancel_perp_order_instructions, build_place_perp_order_instructions
 from .orderbookside import OrderBookSide
@@ -40,13 +40,13 @@ from .wallet import Wallet
 
 class PerpMarketOperations(MarketOperations):
     def __init__(self, market_name: str, context: Context, wallet: Wallet,
-                 margin_account: MangoAccount, perp_market: PerpMarket,
+                 margin_account: Account, perp_market: PerpMarket,
                  reporter: typing.Callable[[str], None] = None):
         super().__init__()
         self.market_name: str = market_name
         self.context: Context = context
         self.wallet: Wallet = wallet
-        self.margin_account: MangoAccount = margin_account
+        self.margin_account: Account = margin_account
         self.perp_market: PerpMarket = perp_market
         self.reporter = reporter or (lambda _: None)
 
@@ -55,7 +55,7 @@ class PerpMarketOperations(MarketOperations):
         self.logger.info(report)
         self.reporter(report)
 
-        signers: typing.List[Account] = [self.wallet.account]
+        signers: typing.Sequence[SolanaAccount] = [self.wallet.account]
         transaction = Transaction()
         cancel_instructions = build_cancel_perp_order_instructions(
             self.context, self.wallet, self.margin_account, self.perp_market, order)
@@ -69,7 +69,7 @@ class PerpMarketOperations(MarketOperations):
         self.logger.info(report)
         self.reporter(report)
 
-        signers: typing.List[Account] = [self.wallet.account]
+        signers: typing.Sequence[SolanaAccount] = [self.wallet.account]
         transaction = Transaction()
         place_instructions = build_place_perp_order_instructions(
             self.context, self.wallet, self.perp_market.group, self.margin_account, self.perp_market, price, size, client_order_id, side, order_type)
@@ -79,7 +79,7 @@ class PerpMarketOperations(MarketOperations):
 
         return Order(id=0, side=side, price=price, size=size, client_id=client_order_id, owner=self.margin_account.address)
 
-    def load_orders(self) -> typing.List[Order]:
+    def load_orders(self) -> typing.Sequence[Order]:
         bids_address: PublicKey = self.perp_market.bids
         asks_address: PublicKey = self.perp_market.asks
         [bids, asks] = AccountInfo.load_multiple(self.context, [bids_address, asks_address])
@@ -88,7 +88,7 @@ class PerpMarketOperations(MarketOperations):
 
         return [*bid_side.orders(), *ask_side.orders()]
 
-    def load_my_orders(self) -> typing.List[Order]:
+    def load_my_orders(self) -> typing.Sequence[Order]:
         orders = self.load_orders()
         mine = []
         for order in orders:

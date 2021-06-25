@@ -6,6 +6,7 @@ import os
 import os.path
 import sys
 import traceback
+import typing
 
 from decimal import Decimal
 
@@ -42,13 +43,15 @@ try:
     logging.info(f"Wallet address: {wallet.address}")
 
     group = mango.Group.load(context)
-    tokens = [basket_token.token for basket_token in group.basket_tokens]
+    tokens = [token_info.token for token_info in group.tokens if token_info is not None]
 
     balance_parser = mango.TargetBalanceParser(tokens)
     targets = list(map(balance_parser.parse, args.target))
     logging.info(f"Targets: {targets}")
 
-    prices = group.fetch_token_prices(context)
+    # TODO - fetch prices when available for V3.
+    # prices = group.fetch_token_prices(context)
+    prices: typing.Sequence[mango.TokenValue] = []
     logging.info(f"Prices: {prices}")
 
     if args.dry_run:

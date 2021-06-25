@@ -34,7 +34,7 @@ if (token_account is None) or (token_account.value.token.mint != wrapped_sol.min
     raise Exception(f"Account {args.address} is not a {wrapped_sol.name} account.")
 
 transaction = Transaction()
-signers: typing.List[Account] = [wallet.account]
+signers: typing.Sequence[Account] = [wallet.account]
 payer = wallet.address
 
 close_instruction = mango.CloseSplAccountInstructionBuilder(context, wallet, args.address)

@@ -128,7 +128,7 @@ class SimpleMarketMaker:
         for order in orders:
             self.market_operations.cancel_order(order)
 
-    def fetch_inventory(self) -> typing.List[mango.TokenValue]:
+    def fetch_inventory(self) -> typing.Sequence[mango.TokenValue]:
         return [
             mango.TokenValue.fetch_total_value(self.context, self.wallet.address, self.market.base),
             mango.TokenValue.fetch_total_value(self.context, self.wallet.address, self.market.quote)
@@ -140,7 +140,7 @@ class SimpleMarketMaker:
 
         return (bid, ask)
 
-    def calculate_order_sizes(self, price: mango.Price, inventory: typing.List[mango.TokenValue]):
+    def calculate_order_sizes(self, price: mango.Price, inventory: typing.Sequence[mango.TokenValue]):
         base_tokens: typing.Optional[mango.TokenValue] = mango.TokenValue.find_by_token(inventory, price.market.base)
         if base_tokens is None:
             raise Exception(f"Could not find market-maker base token {price.market.base.symbol} in inventory.")
@@ -149,7 +149,7 @@ class SimpleMarketMaker:
         sell_size = base_tokens.value * self.position_size_ratio
         return (buy_size, sell_size)
 
-    def orders_require_action(self, orders: typing.List[mango.Order], price: Decimal, size: Decimal) -> bool:
+    def orders_require_action(self, orders: typing.Sequence[mango.Order], price: Decimal, size: Decimal) -> bool:
         # for order in orders:
         #     price_tolerance = order.price * self.existing_order_tolerance
         #     size_tolerance = order.size * self.existing_order_tolerance

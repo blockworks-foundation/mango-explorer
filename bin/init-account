@@ -24,12 +24,12 @@ logging.getLogger().setLevel(args.log_level)
 context = mango.Context.from_command_line_parameters(args).new_from_cluster("devnet")
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-group = mango.MangoGroup.load(context, context.group_id)
+group = mango.Group.load(context, context.group_id)
 
 mango_account = Account()
-init = mango.build_create_margin_account_instructions(context, wallet, group, mango_account)
+init = mango.build_create_account_instructions(context, wallet, group, mango_account)
 
-signers: typing.List[Account] = [wallet.account, mango_account]
+signers: typing.Sequence[Account] = [wallet.account, mango_account]
 
 transaction = Transaction()
 transaction.instructions.extend(init)

@@ -21,12 +21,12 @@ import typing
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from .account import Account
 from .accountliquidator import AccountLiquidator
 from .context import Context
 from .group import Group
 from .liquidatablereport import LiquidatableReport, LiquidatableState
 from .liquidationevent import LiquidationEvent
-from .marginaccount import MarginAccount
 from .observables import EventSource
 from .tokenvalue import TokenValue
 from .walletbalancer import WalletBalancer
@@ -54,8 +54,8 @@ class LiquidationProcessorState(enum.Enum):
 
 # # 💧 LiquidationProcessor class
 #
-# An `AccountLiquidator` liquidates a `MarginAccount`. A `LiquidationProcessor` processes a
-# list of `MarginAccount`s, determines if they're liquidatable, and calls an
+# An `AccountLiquidator` liquidates a `Account`. A `LiquidationProcessor` processes a
+# list of `Account`s, determines if they're liquidatable, and calls an
 # `AccountLiquidator` to do the work.
 #
 
@@ -72,13 +72,13 @@ class LiquidationProcessor:
         self.wallet_balancer: WalletBalancer = wallet_balancer
         self.worthwhile_threshold: Decimal = worthwhile_threshold
         self.liquidations: EventSource[LiquidationEvent] = EventSource[LiquidationEvent]()
-        self.ripe_accounts: typing.Optional[typing.List[MarginAccount]] = None
+        self.ripe_accounts: typing.Optional[typing.Sequence[Account]] = None
         self.ripe_accounts_updated_at: datetime = datetime.now()
         self.prices_updated_at: datetime = datetime.now()
         self.state: LiquidationProcessorState = LiquidationProcessorState.STARTING
         self.state_change: EventSource[LiquidationProcessor] = EventSource[LiquidationProcessor]()
 
-    def update_margin_accounts(self, ripe_margin_accounts: typing.List[MarginAccount]):
+    def update_margin_accounts(self, ripe_margin_accounts: typing.Sequence[Account]):
         self.logger.info(
             f"Received {len(ripe_margin_accounts)} ripe 🥭 margin accounts to process - prices last updated {self.prices_updated_at:%Y-%m-%d %H:%M:%S}")
         self._check_update_recency("prices", self.prices_updated_at)
@@ -127,17 +127,19 @@ class LiquidationProcessor:
         time_taken = time.time() - started_at
         self.logger.info(f"Check of all ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
 
-    def _liquidate_all(self, group: Group, prices: typing.List[TokenValue], to_liquidate: typing.List[LiquidatableReport]):
-        to_process = to_liquidate
+    def _liquidate_all(self, group: Group, prices: typing.Sequence[TokenValue], to_liquidate: typing.Sequence[LiquidatableReport]):
+        to_process = list(to_liquidate)
         while len(to_process) > 0:
-            highest_first = sorted(to_process,
-                                   key=lambda report: report.balance_sheet.assets - report.balance_sheet.liabilities, reverse=True)
+            # TODO - sort this when LiquidationReport has the proper details for V3.
+            # highest_first = sorted(to_process,
+            #                        key=lambda report: report.balance_sheet.assets - report.balance_sheet.liabilities, reverse=True)
+            highest_first = to_process
             highest = highest_first[0]
             try:
                 self.account_liquidator.liquidate(highest)
                 self.wallet_balancer.balance(prices)
 
-                updated_margin_account = MarginAccount.load(self.context, highest.margin_account.address, group)
+                updated_margin_account = Account.load(self.context, highest.account.address)
                 updated_report = LiquidatableReport.build(
                     group, prices, updated_margin_account, highest.worthwhile_threshold)
                 if not (updated_report.state & LiquidatableState.WORTHWHILE):
@@ -149,7 +151,7 @@ class LiquidationProcessor:
                     to_process += [updated_report]
             except Exception as exception:
                 self.logger.error(
-                    f"Liquidator '{self.name}' - failed to liquidate account '{highest.margin_account.address}' - {exception}.")
+                    f"Liquidator '{self.name}' - failed to liquidate account '{highest.account.address}' - {exception}.")
             finally:
                 # highest should always be in to_process, but we're outside the try-except block
                 # so let's be a little paranoid about it.

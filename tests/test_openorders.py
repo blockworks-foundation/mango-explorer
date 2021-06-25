@@ -10,7 +10,7 @@ def test_constructor():
     market = fake_public_key()
     owner = fake_public_key()
 
-    flags = mango.SerumAccountFlags(mango.Version.V1, True, False, True, False, False, False, False, False)
+    flags = mango.AccountFlags(mango.Version.V1, True, False, True, False, False, False, False, False)
     actual = mango.OpenOrders(account_info, mango.Version.V1, program_id, flags, market,
                               owner, Decimal(0), Decimal(0), Decimal(0), Decimal(0),
                               Decimal(0), Decimal(0), [], [], Decimal(0))

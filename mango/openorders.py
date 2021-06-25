@@ -21,13 +21,13 @@ from pyserum.open_orders_account import OpenOrdersAccount
 from solana.publickey import PublicKey
 from solana.rpc.types import MemcmpOpts
 
+from .accountflags import AccountFlags
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
 from .encoding import encode_key
 from .group import Group
 from .layouts import layouts
-from .serumaccountflags import SerumAccountFlags
 from .version import Version
 
 # # 🥭 OpenOrders class
@@ -36,15 +36,15 @@ from .version import Version
 
 class OpenOrders(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, program_id: PublicKey,
-                 account_flags: SerumAccountFlags, market: PublicKey, owner: PublicKey,
+                 account_flags: AccountFlags, market: PublicKey, owner: PublicKey,
                  base_token_free: Decimal, base_token_total: Decimal, quote_token_free: Decimal,
                  quote_token_total: Decimal, free_slot_bits: Decimal, is_bid_bits: Decimal,
-                 orders: typing.List[Decimal], client_ids: typing.List[Decimal],
+                 orders: typing.Sequence[Decimal], client_ids: typing.Sequence[Decimal],
                  referrer_rebate_accrued: Decimal):
         super().__init__(account_info)
         self.version: Version = version
         self.program_id: PublicKey = program_id
-        self.account_flags: SerumAccountFlags = account_flags
+        self.account_flags: AccountFlags = account_flags
         self.market: PublicKey = market
         self.owner: PublicKey = owner
         self.base_token_free: Decimal = base_token_free
@@ -53,8 +53,8 @@ class OpenOrders(AddressableAccount):
         self.quote_token_total: Decimal = quote_token_total
         self.free_slot_bits: Decimal = free_slot_bits
         self.is_bid_bits: Decimal = is_bid_bits
-        self.orders: typing.List[Decimal] = orders
-        self.client_ids: typing.List[Decimal] = client_ids
+        self.orders: typing.Sequence[Decimal] = orders
+        self.client_ids: typing.Sequence[Decimal] = client_ids
         self.referrer_rebate_accrued: Decimal = referrer_rebate_accrued
 
     # Sometimes pyserum wants to take its own OpenOrdersAccount as a parameter (e.g. in settle_funds())
@@ -64,7 +64,7 @@ class OpenOrders(AddressableAccount):
     @staticmethod
     def from_layout(layout: layouts.OPEN_ORDERS, account_info: AccountInfo,
                     base_decimals: Decimal, quote_decimals: Decimal) -> "OpenOrders":
-        account_flags = SerumAccountFlags.from_layout(layout.account_flags)
+        account_flags = AccountFlags.from_layout(layout.account_flags)
         program_id = account_info.owner
 
         base_divisor = 10 ** base_decimals
@@ -73,8 +73,8 @@ class OpenOrders(AddressableAccount):
         base_token_total: Decimal = layout.base_token_total / base_divisor
         quote_token_free: Decimal = layout.quote_token_free / quote_divisor
         quote_token_total: Decimal = layout.quote_token_total / quote_divisor
-        nonzero_orders: typing.List[Decimal] = list([order for order in layout.orders if order != 0])
-        nonzero_client_ids: typing.List[Decimal] = list(
+        nonzero_orders: typing.Sequence[Decimal] = list([order for order in layout.orders if order != 0])
+        nonzero_client_ids: typing.Sequence[Decimal] = list(
             [client_id for client_id in layout.client_ids if client_id != 0])
 
         return OpenOrders(account_info, Version.UNSPECIFIED, program_id, account_flags, layout.market,
@@ -95,7 +95,7 @@ class OpenOrders(AddressableAccount):
     def load_raw_open_orders_account_infos(context: Context, group: Group) -> typing.Dict[str, AccountInfo]:
         filters = [
             MemcmpOpts(
-                offset=layouts.SERUM_ACCOUNT_FLAGS.sizeof() + 37,
+                offset=layouts.ACCOUNT_FLAGS.sizeof() + 37,
                 bytes=encode_key(group.signer_key)
             )
         ]
@@ -119,11 +119,11 @@ class OpenOrders(AddressableAccount):
     def load_for_market_and_owner(context: Context, market: PublicKey, owner: PublicKey, program_id: PublicKey, base_decimals: Decimal, quote_decimals: Decimal):
         filters = [
             MemcmpOpts(
-                offset=layouts.SERUM_ACCOUNT_FLAGS.sizeof() + 5,
+                offset=layouts.ACCOUNT_FLAGS.sizeof() + 5,
                 bytes=encode_key(market)
             ),
             MemcmpOpts(
-                offset=layouts.SERUM_ACCOUNT_FLAGS.sizeof() + 37,
+                offset=layouts.ACCOUNT_FLAGS.sizeof() + 37,
                 bytes=encode_key(owner)
             )
         ]

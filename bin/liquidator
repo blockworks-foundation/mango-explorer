@@ -96,7 +96,7 @@ try:
     logging.info(f"Wallet address: {wallet.address}")
 
     group = mango.Group.load(context)
-    tokens = [basket_token.token for basket_token in group.basket_tokens]
+    tokens = [token_info.token for token_info in group.tokens if token_info is not None]
 
     logging.info("Checking wallet accounts.")
     scout = mango.AccountScout()
@@ -123,16 +123,11 @@ try:
             captured_failed_notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded)
         liquidations_publisher.subscribe(on_next=filtering_failed.send)
 
+    # TODO: Add proper liquidator classes here when they're written for V3
     if args.dry_run:
-        intermediate: mango.AccountLiquidator = mango.NullAccountLiquidator()
+        account_liquidator: mango.AccountLiquidator = mango.NullAccountLiquidator()
     else:
-        intermediate = mango.ForceCancelOrdersAccountLiquidator(context, wallet)
-
-    account_liquidator: mango.AccountLiquidator = mango.ReportingAccountLiquidator(intermediate,
-                                                                                   context,
-                                                                                   wallet,
-                                                                                   liquidations_publisher,
-                                                                                   liquidator_name)
+        account_liquidator = mango.NullAccountLiquidator()
 
     if args.dry_run or (args.target is None) or (len(args.target) == 0):
         wallet_balancer: mango.WalletBalancer = mango.NullWalletBalancer()
@@ -145,23 +140,16 @@ try:
 
     # These (along with `context`) are captured and read by `load_updated_price_details()`.
     group_address = group.address
-    oracle_addresses = list([market.oracle for market in group.markets])
+    oracle_addresses = group.oracles
 
-    def load_updated_price_details() -> typing.Tuple[mango.Group, typing.List[mango.TokenValue]]:
+    def load_updated_price_details() -> typing.Tuple[mango.Group, typing.Sequence[mango.TokenValue]]:
         all_addresses = [group_address, *oracle_addresses]
         all_account_infos = mango.AccountInfo.load_multiple(context, all_addresses)
         group_account_info = all_account_infos[0]
-        oracle_account_infos = all_account_infos[1:]
         group = mango.Group.parse(context, group_account_info)
 
-        oracles = map(lambda oracle_account_info: mango.Aggregator.parse(
-            context, oracle_account_info), oracle_account_infos)
-        prices = list(map(lambda oracle: oracle.price, oracles)) + [Decimal(1)]
-        token_prices = []
-        for index, price in enumerate(prices):
-            token_prices += [mango.TokenValue(group.basket_tokens[index].token, price)]
-
-        return group, token_prices
+        # TODO - fetch prices when code available in V3.
+        return group, []
 
     def fetch_prices(context):
         def _fetch_prices(_):
@@ -175,7 +163,7 @@ try:
     def fetch_margin_accounts(context):
         def _actual_fetch():
             group = mango.Group.load(context)
-            return mango.MarginAccount.load_ripe(context, group)
+            return mango.Account.load_ripe(context, group)
 
         def _fetch_margin_accounts(_):
             with mango.retry_context("Margin Account Fetch",

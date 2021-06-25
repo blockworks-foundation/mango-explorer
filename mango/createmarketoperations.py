@@ -16,11 +16,11 @@
 
 import typing
 
+from .account import Account
 from .context import Context
-from .mangoaccount import MangoAccount
+from .group import Group
 from .market import Market
 from .marketoperations import MarketOperations, NullMarketOperations
-from .mangogroup import MangoGroup
 from .perpmarket import PerpMarket
 from .perpmarketoperations import PerpMarketOperations
 # from .serummarketoperations import SerumMarketOperations
@@ -38,8 +38,8 @@ def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, ma
     elif isinstance(market, SpotMarket):
         #     return SerumMarketOperations(context, wallet, market, reporter)
         # elif isinstance(market, PerpMarket):
-        group = MangoGroup.load(context, context.group_id)
-        margin_accounts = MangoAccount.load_all_for_owner(context, wallet.address, group)
+        group = Group.load(context, context.group_id)
+        margin_accounts = Account.load_all_for_owner(context, wallet.address, group)
         perp_market_info = group.perp_markets[0]
         if perp_market_info is None:
             raise Exception("Perp market not found at index 0.")

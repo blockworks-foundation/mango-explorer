@@ -73,27 +73,23 @@ try:
             item, mango.LiquidationEvent) and not item.succeeded)
         liquidations_publisher.subscribe(on_next=filtering.send)
 
+    # TODO: Add proper liquidator classes here when they're written for V3
     if args.dry_run:
         account_liquidator: mango.AccountLiquidator = mango.NullAccountLiquidator()
     else:
-        intermediate = mango.ForceCancelOrdersAccountLiquidator(context, wallet)
-        account_liquidator = mango.ReportingAccountLiquidator(intermediate,
-                                                              context,
-                                                              wallet,
-                                                              liquidations_publisher,
-                                                              liquidator_name)
+        account_liquidator = mango.NullAccountLiquidator()
 
     wallet_balancer = mango.NullWalletBalancer()
 
     liquidation_processor = mango.LiquidationProcessor(context, liquidator_name, account_liquidator, wallet_balancer)
 
     started_at = time.time()
-    ripe = group.load_ripe_margin_accounts()
-    liquidation_processor.update_margin_accounts(ripe)
+    # ripe = group.load_ripe_margin_accounts()
+    liquidation_processor.update_margin_accounts([])
 
     group = mango.Group.load(context)  # Refresh group data
-    prices = group.fetch_token_prices(context)
-    liquidation_processor.update_prices(group, prices)
+    # prices = group.fetch_token_prices(context)
+    liquidation_processor.update_prices(group, [])
 
     time_taken = time.time() - started_at
     logging.info(f"Check of all margin accounts complete. Time taken: {time_taken:.2f} seconds.")

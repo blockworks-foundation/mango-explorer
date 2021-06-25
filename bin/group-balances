@@ -36,7 +36,7 @@ try:
     logging.info(f"Context: {context}")
     logging.info(f"Address: {address}")
 
-    group = mango.MangoGroup.load(context)
+    group = mango.Group.load(context)
     balances = group.fetch_balances(context, address)
     print("Balances:")
     mango.TokenValue.report(print, balances)

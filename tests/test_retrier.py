@@ -8,7 +8,7 @@ import typing
 def test_constructor():
     name: str = "Test"
     func: typing.Callable = lambda: 1
-    pauses: typing.List[Decimal] = [Decimal(2)]
+    pauses: typing.Sequence[Decimal] = [Decimal(2)]
     actual = mango.RetryWithPauses(name, func, pauses)
     assert actual is not None
     assert actual.logger is not None
@@ -23,7 +23,7 @@ def test_0_retry():
 
     # Number of retries is the number of pauses - 1.
     # The retrier only pauses if an exception is raised.
-    pauses: typing.List[Decimal] = [Decimal(0)]
+    pauses: typing.Sequence[Decimal] = [Decimal(0)]
 
     class FuncScope:
         called: int = 0
@@ -48,7 +48,7 @@ def test_1_retry():
 
     # Number of retries is the number of pauses - 1.
     # The retrier only pauses if an exception is raised.
-    pauses: typing.List[Decimal] = [Decimal(0), Decimal(0)]
+    pauses: typing.Sequence[Decimal] = [Decimal(0), Decimal(0)]
 
     class FuncScope:
         called: int = 0
@@ -73,7 +73,7 @@ def test_3_retries():
 
     # Number of retries is the number of pauses - 1.
     # The retrier only pauses if an exception is raised.
-    pauses: typing.List[Decimal] = [Decimal(0), Decimal(0), Decimal(0), Decimal(0)]
+    pauses: typing.Sequence[Decimal] = [Decimal(0), Decimal(0), Decimal(0), Decimal(0)]
 
     class FuncScope:
         called: int = 0
@@ -98,7 +98,7 @@ def test_with_context():
 
     # Number of retries is the number of pauses - 1.
     # The retrier only pauses if an exception is raised.
-    pauses: typing.List[Decimal] = [Decimal(0), Decimal(0), Decimal(0), Decimal(0)]
+    pauses: typing.Sequence[Decimal] = [Decimal(0), Decimal(0), Decimal(0), Decimal(0)]
 
     class FuncScope:
         called: int = 0

@@ -52,7 +52,7 @@ class Token:
         return self.symbol.upper() == symbol.upper()
 
     @staticmethod
-    def find_by_symbol(values: typing.List["Token"], symbol: str) -> "Token":
+    def find_by_symbol(values: typing.Sequence["Token"], symbol: str) -> "Token":
         found = [value for value in values if value.symbol_matches(symbol)]
         if len(found) == 0:
             raise Exception(f"Token '{symbol}' not found in token values: {values}")
@@ -63,7 +63,7 @@ class Token:
         return found[0]
 
     @staticmethod
-    def find_by_mint(values: typing.List["Token"], mint: PublicKey) -> "Token":
+    def find_by_mint(values: typing.Sequence["Token"], mint: PublicKey) -> "Token":
         found = [value for value in values if value.mint == mint]
         if len(found) == 0:
             raise Exception(f"Token '{mint}' not found in token values: {values}")

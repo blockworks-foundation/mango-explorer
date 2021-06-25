@@ -78,20 +78,17 @@ try:
             item, mango.LiquidationEvent) and not item.succeeded)
         liquidations_publisher.subscribe(on_next=filtering.send)
 
+    # TODO: Add proper liquidator classes here when they're written for V3
     if args.dry_run:
         account_liquidator: mango.AccountLiquidator = mango.NullAccountLiquidator()
     else:
-        intermediate = mango.ForceCancelOrdersAccountLiquidator(context, wallet)
-        account_liquidator = mango.ReportingAccountLiquidator(intermediate,
-                                                              context,
-                                                              wallet,
-                                                              liquidations_publisher,
-                                                              liquidator_name)
+        account_liquidator = mango.NullAccountLiquidator()
 
-    prices = group.fetch_token_prices(context)
-    margin_account = mango.MarginAccount.load(context, margin_account_address, group)
+    # TODO - fetch prices when available for V3.
+    # prices = group.fetch_token_prices(context)
+    margin_account = mango.Account.load(context, margin_account_address)
     worthwhile_threshold = Decimal(0)  # No threshold - don't take this into account.
-    liquidatable_report = mango.LiquidatableReport.build(group, prices, margin_account, worthwhile_threshold)
+    liquidatable_report = mango.LiquidatableReport.build(group, [], margin_account, worthwhile_threshold)
     transaction_id = account_liquidator.liquidate(liquidatable_report)
     if transaction_id is None:
         print("No transaction sent.")

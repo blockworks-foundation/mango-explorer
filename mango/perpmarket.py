@@ -20,8 +20,8 @@ from solana.publickey import PublicKey
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
+from .group import Group
 from .layouts import layouts
-from .mangogroup import MangoGroup
 from .metadata import Metadata
 from .tokeninfo import TokenInfo
 from .version import Version
@@ -34,7 +34,7 @@ from .version import Version
 
 class PerpMarket(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
-                 meta_data: Metadata, group: MangoGroup, bids: PublicKey, asks: PublicKey,
+                 meta_data: Metadata, group: Group, bids: PublicKey, asks: PublicKey,
                  event_queue: PublicKey, long_funding: Decimal, short_funding: Decimal,
                  open_interest: Decimal, quote_lot_size: Decimal, index_oracle: PublicKey,
                  last_updated: datetime, seq_num: Decimal, contract_size: Decimal
@@ -43,7 +43,7 @@ class PerpMarket(AddressableAccount):
         self.version: Version = version
 
         self.meta_data: Metadata = meta_data
-        self.group: MangoGroup = group
+        self.group: Group = group
         self.bids: PublicKey = bids
         self.asks: PublicKey = asks
         self.event_queue: PublicKey = event_queue
@@ -74,7 +74,7 @@ class PerpMarket(AddressableAccount):
         self.quote_token: TokenInfo = quote_token
 
     @staticmethod
-    def from_layout(layout: layouts.PERP_MARKET, account_info: AccountInfo, version: Version, group: MangoGroup) -> "PerpMarket":
+    def from_layout(layout: layouts.PERP_MARKET, account_info: AccountInfo, version: Version, group: Group) -> "PerpMarket":
         meta_data = Metadata.from_layout(layout.meta_data)
         bids: PublicKey = layout.bids
         asks: PublicKey = layout.asks
@@ -91,7 +91,7 @@ class PerpMarket(AddressableAccount):
         return PerpMarket(account_info, version, meta_data, group, bids, asks, event_queue, long_funding, short_funding, open_interest, quote_lot_size, index_oracle, last_updated, seq_num, contract_size)
 
     @staticmethod
-    def parse(account_info: AccountInfo, group: MangoGroup) -> "PerpMarket":
+    def parse(account_info: AccountInfo, group: Group) -> "PerpMarket":
         data = account_info.data
         if len(data) != layouts.PERP_MARKET.sizeof():
             raise Exception(
@@ -101,7 +101,7 @@ class PerpMarket(AddressableAccount):
         return PerpMarket.from_layout(layout, account_info, Version.V1, group)
 
     @staticmethod
-    def load(context: Context, group: MangoGroup, address: PublicKey) -> "PerpMarket":
+    def load(context: Context, group: Group, address: PublicKey) -> "PerpMarket":
         account_info = AccountInfo.load(context, address)
         if account_info is None:
             raise Exception(f"PerpMarket account not found at address '{address}'")

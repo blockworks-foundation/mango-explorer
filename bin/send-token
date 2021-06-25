@@ -22,7 +22,7 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Sends an SPL tokens to a different address.")
 mango.Context.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--token-symbol", type=str, required=True, help="token symbol to send (e.g. ETH)")
+parser.add_argument("--symbol", type=str, required=True, help="token symbol to send (e.g. ETH)")
 parser.add_argument("--address", type=PublicKey,
                     help="Destination address for the SPL token - can be either the actual token address or the address of the owner of the token address")
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of token to send")
@@ -40,18 +40,18 @@ try:
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
 
-    group = mango.Group.load(context)
-    group_basket_token = mango.BasketToken.find_by_symbol(group.basket_tokens, args.token_symbol)
-    group_token = group_basket_token.token
+    token = context.token_lookup.find_by_symbol(args.symbol)
+    if token is None:
+        raise Exception(f"Could not find details of token with symbol {args.symbol}.")
 
-    spl_token = Token(context.client, group_token.mint, TOKEN_PROGRAM_ID, wallet.account)
+    spl_token = Token(context.client, token.mint, TOKEN_PROGRAM_ID, wallet.account)
     source_accounts = spl_token.get_accounts(wallet.address)
     source_account = source_accounts["result"]["value"][0]
     source = PublicKey(source_account["pubkey"])
 
     # Is the address an actual token account? Or is it the SOL address of the owner?
     possible_dest: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(context, args.address)
-    if (possible_dest is not None) and (possible_dest.value.token.mint == group_token.mint):
+    if (possible_dest is not None) and (possible_dest.value.token.mint == token.mint):
         # We successfully loaded the token account.
         destination: PublicKey = args.address
     else:
@@ -63,11 +63,11 @@ try:
         destination = PublicKey(destination_account["pubkey"])
 
     owner = wallet.account
-    amount = int(args.quantity * Decimal(10 ** group_token.decimals))
+    amount = int(args.quantity * Decimal(10 ** token.decimals))
 
     print("Balance:", source_account["account"]["data"]["parsed"]
-          ["info"]["tokenAmount"]["uiAmountString"], group_token.name)
-    text_amount = f"{amount} {group_token.name} (@ {group_token.decimals} decimal places)"
+          ["info"]["tokenAmount"]["uiAmountString"], token.name)
+    text_amount = f"{amount} {token.name} (@ {token.decimals} decimal places)"
     print(f"Sending {text_amount}")
     print(f"    From: {source}")
     print(f"      To: {destination}")
@@ -82,7 +82,7 @@ try:
 
     updated_balance = spl_token.get_balance(source)
     updated_balance_text = updated_balance["result"]["value"]["uiAmountString"]
-    print(f"{text_amount} sent. Balance now: {updated_balance_text} {group_token.name}")
+    print(f"{text_amount} sent. Balance now: {updated_balance_text} {token.name}")
 except Exception as exception:
     logging.critical(f"send-token stopped because of exception: {exception} - {traceback.format_exc()}")
 except:

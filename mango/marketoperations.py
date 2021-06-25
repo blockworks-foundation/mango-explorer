@@ -64,11 +64,11 @@ class MarketOperations(metaclass=abc.ABCMeta):
         raise NotImplementedError("MarketOperations.place_order() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def load_orders(self) -> typing.List[Order]:
+    def load_orders(self) -> typing.Sequence[Order]:
         raise NotImplementedError("MarketOperations.load_orders() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def load_my_orders(self) -> typing.List[Order]:
+    def load_my_orders(self) -> typing.Sequence[Order]:
         raise NotImplementedError("MarketOperations.load_my_orders() is not implemented on the base type.")
 
     def __repr__(self) -> str:
@@ -99,10 +99,10 @@ class NullMarketOperations(MarketOperations):
         self.reporter(report)
         return Order(id=0, side=side, price=price, size=size, client_id=0, owner=SYSTEM_PROGRAM_ADDRESS)
 
-    def load_orders(self) -> typing.List[Order]:
+    def load_orders(self) -> typing.Sequence[Order]:
         return []
 
-    def load_my_orders(self) -> typing.List[Order]:
+    def load_my_orders(self) -> typing.Sequence[Order]:
         return []
 
     def __str__(self) -> str:

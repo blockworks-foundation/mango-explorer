@@ -16,17 +16,17 @@
 import typing
 
 from decimal import Decimal
-from solana.account import Account
+from solana.account import Account as SolanaAccount
 from solana.system_program import CreateAccountParams, create_account
 from solana.sysvar import SYSVAR_CLOCK_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
 from spl.token.constants import TOKEN_PROGRAM_ID
 
+from .account import Account
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
+from .group import Group
 from .layouts import layouts
-from .mangoaccount import MangoAccount
-from .mangogroup import MangoGroup
 from .orders import Order, OrderType, Side
 from .perpmarket import PerpMarket
 from .rootbank import NodeBank, RootBank
@@ -39,7 +39,7 @@ from .wallet import Wallet
 #
 
 
-def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margin_account: MangoAccount, perp_market: PerpMarket, order: Order) -> typing.Sequence[TransactionInstruction]:
+def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margin_account: Account, perp_market: PerpMarket, order: Order) -> typing.Sequence[TransactionInstruction]:
     # { buy: 0, sell: 1 }
     raw_side: int = 1 if order.side == Side.SELL else 0
 
@@ -73,7 +73,7 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margi
     ]
 
 
-def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: MangoGroup, margin_account: MangoAccount, perp_market: PerpMarket, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType) -> typing.Sequence[TransactionInstruction]:
+def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, margin_account: Account, perp_market: PerpMarket, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType) -> typing.Sequence[TransactionInstruction]:
     # { buy: 0, sell: 1 }
     raw_side: int = 1 if side == Side.SELL else 0
     # { limit: 0, ioc: 1, postOnly: 2 }
@@ -125,14 +125,14 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
     ]
 
 
-def build_create_margin_account_instructions(context: Context, wallet: Wallet, group: MangoGroup, new_account: Account) -> typing.Sequence[TransactionInstruction]:
+def build_create_account_instructions(context: Context, wallet: Wallet, group: Group, new_account: SolanaAccount) -> typing.Sequence[TransactionInstruction]:
     mango_account_address = new_account.public_key()
 
     minimum_balance_response = context.client.get_minimum_balance_for_rent_exemption(layouts.MANGO_ACCOUNT.sizeof())
     minimum_balance = context.unwrap_or_raise_exception(minimum_balance_response)
     create = create_account(
         CreateAccountParams(wallet.address, mango_account_address, minimum_balance, layouts.MANGO_ACCOUNT.sizeof(), context.program_id))
-    # /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+    # /// 0. `[]` mango_group_ai - Group that this mango account is for
     # /// 1. `[writable]` mango_account_ai - the mango account data
     # /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
     # /// 3. `[]` rent_ai - Rent sysvar account
@@ -169,7 +169,7 @@ def build_create_margin_account_instructions(context: Context, wallet: Wallet, g
 #     quantity: u64,
 #     allow_borrow: bool,
 # },
-def build_withdraw_instructions(context: Context, wallet: Wallet, group: MangoGroup, margin_account: MangoAccount, root_bank: RootBank, node_bank: NodeBank, token_account: TokenAccount, allow_borrow: bool) -> typing.Sequence[TransactionInstruction]:
+def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, margin_account: Account, root_bank: RootBank, node_bank: NodeBank, token_account: TokenAccount, allow_borrow: bool) -> typing.Sequence[TransactionInstruction]:
     value = token_account.value.shift_to_native().value
     withdraw = TransactionInstruction(
         keys=[

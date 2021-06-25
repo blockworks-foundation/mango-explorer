@@ -30,19 +30,21 @@ from .tokenlookup import TokenLookup
 
 
 class TokenInfo():
-    def __init__(self, token: typing.Optional[Token], root_bank: PublicKey, decimals: Decimal):
+    def __init__(self, token: Token, root_bank: PublicKey, decimals: Decimal):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.token: typing.Optional[Token] = token
+        self.token: Token = token
         self.root_bank: PublicKey = root_bank
         self.decimals: Decimal = decimals
 
     def from_layout(layout: layouts.TOKEN_INFO, token_lookup: TokenLookup) -> "TokenInfo":
         token = token_lookup.find_by_mint(layout.mint)
-        # TODO - this should be resolved. The decimals should match, but the mixture of token lookups is getting messy.
-        # if token is not None:
-        #     if layout.decimals != token.decimals:
-        #         raise Exception(
-        #             f"Conflict between number of decimals in token static data {token.decimals} and group {layout.decimals} for token {token.symbol}.")
+        if token is None:
+            raise Exception(f"Token with mint {layout.mint} could not be found.")
+
+        if layout.decimals != token.decimals:
+            raise Exception(
+                f"Conflict between number of decimals in token static data {token.decimals} and group {layout.decimals} for token {token.symbol}.")
+
         return TokenInfo(token, layout.root_bank, layout.decimals)
 
     def from_layout_or_none(layout: layouts.TOKEN_INFO, token_lookup: TokenLookup) -> typing.Optional["TokenInfo"]:

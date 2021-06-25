@@ -40,7 +40,7 @@ class AccountInfo:
         self.rent_epoch: Decimal = rent_epoch
         self.data: bytes = data
 
-    def encoded_data(self) -> typing.List:
+    def encoded_data(self) -> typing.Sequence:
         return encode_binary(self.data)
 
     def __str__(self) -> str:
@@ -64,12 +64,12 @@ class AccountInfo:
         return AccountInfo._from_response_values(result["value"], address)
 
     @staticmethod
-    def load_multiple(context: Context, addresses: typing.Sequence[PublicKey], chunk_size: int = 100, sleep_between_calls: float = 0.0) -> typing.List["AccountInfo"]:
+    def load_multiple(context: Context, addresses: typing.Sequence[PublicKey], chunk_size: int = 100, sleep_between_calls: float = 0.0) -> typing.Sequence["AccountInfo"]:
         # This is a tricky one to get right.
         # Some errors this can generate:
         #  413 Client Error: Payload Too Large for url
         #  Error response from server: 'Too many inputs provided; max 100', code: -32602
-        address_strings: typing.List[str] = list(map(PublicKey.__str__, addresses))
+        address_strings: typing.Sequence[str] = list(map(PublicKey.__str__, addresses))
         multiple: typing.List[AccountInfo] = []
         chunks = AccountInfo._split_list_into_chunks(address_strings, chunk_size)
         for counter, chunk in enumerate(chunks):
@@ -100,7 +100,7 @@ class AccountInfo:
         return AccountInfo._from_response_values(response["result"]["value"], address)
 
     @staticmethod
-    def _split_list_into_chunks(to_chunk: typing.List, chunk_size: int = 100) -> typing.List[typing.List]:
+    def _split_list_into_chunks(to_chunk: typing.Sequence, chunk_size: int = 100) -> typing.Sequence[typing.Sequence]:
         chunks = []
         start = 0
         while start < len(to_chunk):

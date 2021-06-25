@@ -99,7 +99,7 @@ class SerumMarketOperations(MarketOperations):
                       client_id=serum_order.client_id, owner=serum_order.open_order_address)
         return order
 
-    def load_orders(self) -> typing.List[Order]:
+    def load_orders(self) -> typing.Sequence[Order]:
         asks = self.market.load_asks()
         orders: typing.List[Order] = []
         for serum_order in asks:
@@ -111,7 +111,7 @@ class SerumMarketOperations(MarketOperations):
 
         return orders
 
-    def load_my_orders(self) -> typing.List[Order]:
+    def load_my_orders(self) -> typing.Sequence[Order]:
         serum_orders = self.market.load_orders_for_owner(self.wallet.address)
         orders: typing.List[Order] = []
         for serum_order in serum_orders:

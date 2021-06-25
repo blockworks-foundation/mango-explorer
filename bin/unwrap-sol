@@ -34,10 +34,8 @@ if largest_token_account is None:
     raise Exception(f"No {wrapped_sol.name} accounts found for owner {wallet.address}.")
 
 transaction = Transaction()
-signers: typing.List[Account] = [wallet.account]
-
 wrapped_sol_account = Account()
-signers.append(wrapped_sol_account)
+signers: typing.Sequence[Account] = [wallet.account, wrapped_sol_account]
 
 create_instruction = mango.CreateSplAccountInstructionBuilder(
     context, wallet, wrapped_sol_account.public_key())
