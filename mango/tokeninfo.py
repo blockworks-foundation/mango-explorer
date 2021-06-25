@@ -20,7 +20,8 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .layouts import layouts
-from .token import Token, TokenLookup
+from .token import Token
+from .tokenlookup import TokenLookup
 
 # # 🥭 TokenInfo class
 #

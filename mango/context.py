@@ -29,9 +29,12 @@ from solana.rpc.commitment import Commitment
 from solana.rpc.types import MemcmpOpts, RPCError, RPCResponse, TxOpts
 
 from .constants import MangoConstants, SOL_DECIMAL_DIVISOR
-from .market import CompoundMarketLookup, MarketLookup
-from .spotmarket import MangoV3MarketLookup, SpotMarketLookup
-from .token import CompoundTokenLookup, MangoV3TokenLookup, SplTokenLookup, TokenLookup
+from .idsjsonmarketlookup import IdsJsonMarketLookup
+from .idsjsontokenlookup import IdsJsonTokenLookup
+from .marketlookup import CompoundMarketLookup, MarketLookup
+from .serummarketlookup import SerumMarketLookup
+from .spltokenlookup import SplTokenLookup
+from .tokenlookup import TokenLookup, CompoundTokenLookup
 
 
 # # 🥭 Context
@@ -80,15 +83,15 @@ class Context:
         self.commitment: Commitment = Commitment("processed")
         self.transaction_options: TxOpts = TxOpts(preflight_commitment=self.commitment)
         self.encoding: str = "base64"
-        mangov3_token_lookup: TokenLookup = MangoV3TokenLookup(cluster)
+        ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(cluster)
         spl_token_lookup: TokenLookup = SplTokenLookup.load(token_filename)
         all_token_lookup: TokenLookup = CompoundTokenLookup(
-            [mangov3_token_lookup, spl_token_lookup])
+            [ids_json_token_lookup, spl_token_lookup])
         self.token_lookup: TokenLookup = all_token_lookup
 
-        mangov3_market_lookup: MarketLookup = MangoV3MarketLookup(cluster)
-        spot_market_lookup: SpotMarketLookup = SpotMarketLookup.load(token_filename)
-        all_market_lookup = CompoundMarketLookup([mangov3_market_lookup, spot_market_lookup])
+        ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(cluster)
+        serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(token_filename)
+        all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, serum_market_lookup])
         self.market_lookup: MarketLookup = all_market_lookup
 
         # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451

@@ -29,8 +29,9 @@ from .index import Index
 from .layouts import layouts
 from .mangoaccountflags import MangoAccountFlags
 from .marketmetadata import MarketMetadata
-from .market import MarketLookup
-from .token import SolToken, Token, TokenLookup
+from .marketlookup import MarketLookup
+from .token import SolToken, Token
+from .tokenlookup import TokenLookup
 from .tokenvalue import TokenValue
 from .version import Version
 

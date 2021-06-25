@@ -19,7 +19,7 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .layouts import layouts
-from .market import MarketLookup
+from .marketlookup import MarketLookup
 
 
 # # 🥭 SpotMarketInfo class

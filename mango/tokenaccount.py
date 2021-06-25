@@ -26,7 +26,8 @@ from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
 from .layouts import layouts
-from .token import Token, TokenLookup
+from .token import Token
+from .tokenlookup import TokenLookup
 from .tokenvalue import TokenValue
 from .version import Version
 

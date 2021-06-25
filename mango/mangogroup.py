@@ -22,12 +22,13 @@ from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
 from .layouts import layouts
-from .market import MarketLookup
+from .marketlookup import MarketLookup
 from .metadata import Metadata
 from .perpmarketinfo import PerpMarketInfo
 from .spotmarketinfo import SpotMarketInfo
-from .token import SolToken, TokenLookup
+from .token import SolToken
 from .tokeninfo import TokenInfo
+from .tokenlookup import TokenLookup
 from .tokenvalue import TokenValue
 from .version import Version
 
