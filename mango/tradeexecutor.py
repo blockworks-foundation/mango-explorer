@@ -28,7 +28,7 @@ from solana.publickey import PublicKey
 from solana.transaction import Transaction
 
 from .context import Context
-from .instructions import build_create_serum_open_orders_instructions, build_serum_place_order_instructions, build_serum_consume_events_instructions, build_serum_settle_instructions
+from .instructions import build_compound_serum_place_order_instructions, build_create_serum_open_orders_instructions
 from .retrier import retry_context
 from .spotmarket import SpotMarket
 from .tokenaccount import TokenAccount
@@ -96,20 +96,11 @@ class NullTradeExecutor(TradeExecutor):
 # # 🥭 SerumImmediateTradeExecutor class
 #
 # This class puts an IOC trade on the Serum orderbook with the expectation it will be filled
-# immediately. It follows the pattern described here:
+# immediately. It uses the build_compound_serum_place_order_instructions function which follows
+# the pattern described here:
 #   https://solanadev.blogspot.com/2021/05/order-techniques-with-project-serum.html
 #
-# Here's an example (Raydium?) transaction that does this:
-#   https://solanabeach.io/transaction/3Hb2h7QMM3BbJCK42BUDuVEYwwaiqfp2oQUZMDJvUuoyCRJD5oBmA3B8oAGkB9McdCFtwdT2VrSKM2GCKhJ92FpY
-#
 # Basically, it tries to send to a 'market buy/sell' and settle all in one transaction.
-#
-# It does this by:
-# * Sending a Place Order (V3) instruction
-# * Sending a Consume Events (crank) instruction
-# * Sending a Settle Funds instruction
-# all in the same transaction. With V3 Serum, this should work (assuming the IOC order
-# is filled).
 #
 # It also creates the Serum OpenOrders account for the transaction if it doesn't
 # already exist.
@@ -259,20 +250,9 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             open_orders_addresses = list(oo.address for oo in open_order_accounts)
 
         client_id = self.context.random_client_id()
-        new_order = build_serum_place_order_instructions(self.context, self.wallet, market,
-                                                         source_token_account_address,
-                                                         open_orders_address, OrderType.IOC,
-                                                         side, price, quantity, client_id,
-                                                         self.serum_fee_discount_token_address)
-        transaction.instructions.extend(new_order)
-
-        consume_events = build_serum_consume_events_instructions(
-            self.context, self.wallet, market, open_orders_addresses)
-        transaction.instructions.extend(consume_events)
-
-        settle = build_serum_settle_instructions(self.context, self.wallet, market,
-                                                 open_orders_address, base_token_account_address, quote_token_account_address)
-        transaction.instructions.extend(settle)
+        place_order_instructions = build_compound_serum_place_order_instructions(self.context, self.wallet, market, source_token_account_address, open_orders_address,
+                                                                                 open_orders_addresses, OrderType.IOC, side, price, quantity, client_id, base_token_account_address, quote_token_account_address, self.serum_fee_discount_token_address)
+        transaction.instructions.extend(place_order_instructions)
 
         with retry_context("Place Serum Order And Settle", self.context.client.send_transaction, self.context.retry_pauses) as retrier:
             response = retrier.run(transaction, *signers, opts=self.context.transaction_options)

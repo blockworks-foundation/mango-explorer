@@ -183,6 +183,37 @@ def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Ma
     return [instruction]
 
 
+# # 🥭 build_serum_place_order_instructions function
+#
+# This function puts a trade on the Serum orderbook and then cranks and settles.
+# It follows the pattern described here:
+#   https://solanadev.blogspot.com/2021/05/order-techniques-with-project-serum.html
+#
+# Here's an example (Raydium?) transaction that does this:
+#   https://solanabeach.io/transaction/3Hb2h7QMM3BbJCK42BUDuVEYwwaiqfp2oQUZMDJvUuoyCRJD5oBmA3B8oAGkB9McdCFtwdT2VrSKM2GCKhJ92FpY
+#
+# Basically, it tries to send to a 'buy/sell' and settle all in one transaction.
+#
+# It does this by:
+# * Sending a Place Order (V3) instruction
+# * Sending a Consume Events (crank) instruction
+# * Sending a Settle Funds instruction
+# all in the same transaction. With V3 Serum, this should consistently settle funds to the wallet
+# immediately if the order is filled (either because it's IOC or because it matches an order on the
+# orderbook).
+#
+
+def build_compound_serum_place_order_instructions(context: Context, wallet: Wallet, market: Market, source: PublicKey, open_orders_address: PublicKey, all_open_orders_addresses: typing.Sequence[PublicKey], order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, base_token_account_address: PublicKey, quote_token_account_address: PublicKey, fee_discount_address: typing.Optional[PublicKey], consume_limit: int = 32) -> typing.Sequence[TransactionInstruction]:
+    place_order = build_serum_place_order_instructions(
+        context, wallet, market, source, open_orders_address, order_type, side, price, quantity, client_id, fee_discount_address)
+    consume_events = build_serum_consume_events_instructions(
+        context, wallet, market, all_open_orders_addresses, consume_limit)
+    settle = build_serum_settle_instructions(
+        context, wallet, market, open_orders_address, base_token_account_address, quote_token_account_address)
+
+    return [*place_order, *consume_events, *settle]
+
+
 # # 🥭 build_cancel_perp_order_instruction function
 #
 # Builds the instructions necessary for cancelling a perp order.
