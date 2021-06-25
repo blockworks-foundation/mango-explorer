@@ -17,6 +17,7 @@
 import logging
 import mango
 import time
+import traceback
 import typing
 
 from datetime import timedelta
@@ -74,44 +75,38 @@ class SimpleMarketMaker:
         while not self.stop_requested:
             self.logger.info("Starting fresh iteration.")
 
-            # Update current state
-            price = self.oracle.fetch_price(self.context)
-            inventory = self.fetch_inventory()
+            try:
+                # Update current state
+                price = self.oracle.fetch_price(self.context)
+                inventory = self.fetch_inventory()
 
-            # Calculate what we want the orders to be.
-            bid, ask = self.calculate_order_prices(price)
-            buy_size, sell_size = self.calculate_order_sizes(price, inventory)
+                # Calculate what we want the orders to be.
+                bid, ask = self.calculate_order_prices(price)
+                buy_size, sell_size = self.calculate_order_sizes(price, inventory)
 
-            current_orders = self.market_operations.load_my_orders()
-            buy_orders = [order for order in current_orders if order.side == mango.Side.BUY]
-            if self.orders_require_action(buy_orders, bid, buy_size):
-                self.logger.info("Cancelling BUY orders.")
-                for order in buy_orders:
-                    try:
+                current_orders = self.market_operations.load_my_orders()
+                buy_orders = [order for order in current_orders if order.side == mango.Side.BUY]
+                if self.orders_require_action(buy_orders, bid, buy_size):
+                    self.logger.info("Cancelling BUY orders.")
+                    for order in buy_orders:
                         self.market_operations.cancel_order(order)
-                    except Exception as exception:
-                        self.logger.warning(f"Problem cancelling BUY order {order}: {exception}")
-                try:
+
                     buy_order = self.market_operations.place_order(
                         mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size)
                     self.logger.info(f"Placed order {buy_order} to BUY {buy_size} at {bid}")
-                except Exception as exception:
-                    self.logger.warning(f"Problem placing order to BUY {buy_size} at {bid}: {exception}")
 
-            sell_orders = [order for order in current_orders if order.side == mango.Side.SELL]
-            if self.orders_require_action(sell_orders, ask, sell_size):
-                self.logger.info("Cancelling SELL orders.")
-                for order in sell_orders:
-                    try:
+                sell_orders = [order for order in current_orders if order.side == mango.Side.SELL]
+                if self.orders_require_action(sell_orders, ask, sell_size):
+                    self.logger.info("Cancelling SELL orders.")
+                    for order in sell_orders:
                         self.market_operations.cancel_order(order)
-                    except Exception as exception:
-                        self.logger.warning(f"Problem cancelling SELL order {order}: {exception}")
-                try:
+
                     sell_order = self.market_operations.place_order(
                         mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size)
                     self.logger.info(f"Placed order {sell_order} to SELL {sell_size} at {ask}")
-                except Exception as exception:
-                    self.logger.warning(f"Problem order {sell_order} to SELL {sell_size} at {ask}: {exception}")
+            except Exception as exception:
+                self.logger.warning(
+                    f"Pausing and continuing after problem running market-making iteration: {exception} - {traceback.format_exc()}")
 
             # Wait and hope for fills.
             self.logger.info(f"Pausing for {self.pause} seconds.")
