@@ -1,0 +1,6 @@
+#!/usr/bin/env pyston3
+
+import os.path
+
+with open(os.path.join(os.path.dirname(__file__), "../.version")) as version_file:
+    print(version_file.read())
