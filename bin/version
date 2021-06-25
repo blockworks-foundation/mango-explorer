@@ -2,5 +2,9 @@
 
 import os.path
 
-with open(os.path.join(os.path.dirname(__file__), "../.version")) as version_file:
-    print(version_file.read())
+version_filename: str = os.path.join(os.path.dirname(__file__), "../.version")
+if os.path.isfile(version_filename):
+    with open(os.path.join(os.path.dirname(__file__), "../.version")) as version_file:
+        print(version_file.read())
+else:
+    print(f"No version file found at '{version_filename}'.")
