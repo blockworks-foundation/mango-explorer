@@ -9,7 +9,7 @@ import sys
 from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+    os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")

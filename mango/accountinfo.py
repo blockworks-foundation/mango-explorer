@@ -64,7 +64,7 @@ class AccountInfo:
         return AccountInfo._from_response_values(result["value"], address)
 
     @staticmethod
-    def load_multiple(context: Context, addresses: typing.List[PublicKey], chunk_size: int = 100, sleep_between_calls: float = 0.0) -> typing.List["AccountInfo"]:
+    def load_multiple(context: Context, addresses: typing.Sequence[PublicKey], chunk_size: int = 100, sleep_between_calls: float = 0.0) -> typing.List["AccountInfo"]:
         # This is a tricky one to get right.
         # Some errors this can generate:
         #  413 Client Error: Payload Too Large for url

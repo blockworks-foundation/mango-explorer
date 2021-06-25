@@ -7,7 +7,7 @@ import os.path
 import sys
 
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+    os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Displays the price from the Pyth Network.")
@@ -39,7 +39,7 @@ if oracle is None:
 else:
     if not args.stream:
         price = oracle.fetch_price(context)
-        print(f"The price of '{oracle.symbol}' on {price.source.provider_name} is: '{price.mid_price:,.8f}'")
+        print(f"The price of «{oracle.symbol}» on {price.source.provider_name} is: '{price.mid_price:,.8f}'")
     else:
         print("Press <ENTER> to quit.")
         price_subscription = oracle.to_streaming_observable(context)

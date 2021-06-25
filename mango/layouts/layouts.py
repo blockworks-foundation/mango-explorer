@@ -102,6 +102,22 @@ class FloatAdapter(construct.Adapter):
         return bytes(obj)
 
 
+# ## SignedDecimalAdapter class
+#
+# Another simple `Decimal` `Adapter` but this one specifically works with signed decimals.
+
+class SignedDecimalAdapter(construct.Adapter):
+    def __init__(self, size: int = 8):
+        construct.Adapter.__init__(self, construct.BytesInteger(size, signed=True, swapped=True))
+
+    def _decode(self, obj, context, path) -> Decimal:
+        return Decimal(obj)
+
+    def _encode(self, obj, context, path) -> int:
+        # Can only encode int values.
+        return int(obj)
+
+
 # ## PublicKeyAdapter
 #
 # A simple construct `Adapter` that lets us use `PublicKey`s directly in our structs.
@@ -134,6 +150,101 @@ class DatetimeAdapter(construct.Adapter):
 
     def _encode(self, obj, context, path) -> bytes:
         return bytes(obj)
+
+
+# ## FloatI80F48Adapter
+#
+# Rust docs say a fixed::types::I80F48 is:
+# "FixedI128 with 80 integer bits and 48 fractional bits.""
+#
+# So it's 128 bits, or 16 bytes, long, and the first 10 bytes are the
+# integer part and the last 6 bytes are the fractional part.
+
+
+class FloatI80F48Adapter(construct.Adapter):
+    def __init__(self):
+        self.size = 16
+        construct.Adapter.__init__(self, construct.BytesInteger(self.size, swapped=True))
+
+        # For our string of bits, our 'fixed point' is between the 10th byte and 11th byte. We want
+        # the last 6 bytes to be fractional, so:
+        fixed_point_in_bits = 8 * 6
+
+        # So our divisor is 2 to the power of the fixed point
+        self.divisor = Decimal(2 ** fixed_point_in_bits)
+
+    def _decode(self, obj, context, path) -> Decimal:
+        # How many decimal places precision should we allow for an I80F48? We could:
+        # return round(Decimal(obj) / self.divisor, 12)
+        return Decimal(obj) / self.divisor
+
+    def _encode(self, obj, context, path) -> bytes:
+        return bytes(obj)
+
+
+# ## BookPriceAdapter
+#
+# This is a workaround for the way Serum encodes order IDs.
+#
+# The order ID is 16 bytes, which is fine. But:
+# * The first 8 bytes are also the sequence_number.
+# * The last 8 bytes are also the price.
+#
+# Really, it'd be nice if this adapter could place 3 keys in the layout struct, but I haven't
+# found out how to do that. So as a quick workaround, we return the three keys in their own
+# dictionary.
+
+class BookPriceAdapter(construct.Adapter):
+    def __init__(self):
+        construct.Adapter.__init__(self, construct.Bytes(16))
+
+    def _decode(self, obj, context, path) -> typing.Dict[str, Decimal]:
+        order_id = Decimal(int.from_bytes(obj, 'little', signed=False))
+        low_order = obj[:8]
+        high_order = obj[8:]
+        sequence_number = Decimal(int.from_bytes(low_order, 'little', signed=False))
+        price = Decimal(int.from_bytes(high_order, 'little', signed=False))
+
+        return {
+            "order_id": order_id,
+            "price": price,
+            "sequence_number": sequence_number
+        }
+
+    def _encode(self, obj, context, path) -> int:
+        # Not done yet
+        raise NotImplementedError()
+
+
+# ## OrderBookNodeAdapter
+#
+# An OrderBook node can be one of 5 different types, all the same size but differentiated by their tag.
+#
+# I thought there might be a way to get this working using the `construct.Select()` mechanism, but it
+# didn't work - complaining about the use of sizeof(), even though all NODE layouts are exactly 72 bytes.
+
+class OrderBookNodeAdapter(construct.Adapter):
+    def __init__(self):
+        construct.Adapter.__init__(self, construct.Bytes(72))
+
+    def _decode(self, obj, context, path) -> Decimal:
+        any_node = ANY_NODE.parse(obj)
+        if any_node.tag == Decimal(0):
+            return UNINITIALIZED_BOOK_NODE.parse(obj)
+        elif any_node.tag == Decimal(1):
+            return INNER_BOOK_NODE.parse(obj)
+        elif any_node.tag == Decimal(2):
+            return LEAF_BOOK_NODE.parse(obj)
+        elif any_node.tag == Decimal(3):
+            return FREE_BOOK_NODE.parse(obj)
+        elif any_node.tag == Decimal(4):
+            return LAST_FREE_BOOK_NODE.parse(obj)
+
+        raise Exception(f"Unknown node type tag: {any_node.tag}")
+
+    def _encode(self, obj, context, path) -> int:
+        # Not done yet
+        raise NotImplementedError()
 
 
 # # Layout Structs
@@ -1007,4 +1118,308 @@ InstructionParsersByVariant = {
     14: PLACE_AND_SETTLE,
     15: FORCE_CANCEL_ORDERS,
     16: PARTIAL_LIQUIDATE
+}
+
+
+MAX_TOKENS: int = 32
+MAX_PAIRS: int = MAX_TOKENS - 1
+MAX_NODE_BANKS: int = 8
+QUOTE_INDEX: int = MAX_TOKENS - 1
+OPEN_ORDERS_MAX_ORDERS: int = 32
+MAX_BOOK_NODES: int = 1024
+
+DATA_TYPE = construct.Enum(construct.Int8ul, Group=0, MarginAccount=1, RootBank=2,
+                           NodeBank=3, PerpMarket=4, Bids=5, Asks=6, Cache=7, EventQueue=8)
+
+METADATA = construct.Struct(
+    "data_type" / DATA_TYPE,
+    "version" / DecimalAdapter(1),
+    "is_initialized" / DecimalAdapter(1),
+    "padding" / construct.Padding(5)
+)
+
+
+TOKEN_INFO = construct.Struct(
+    "mint" / PublicKeyAdapter(),
+    "root_bank" / PublicKeyAdapter(),
+    "decimals" / DecimalAdapter(1),
+    "padding" / construct.Padding(7)
+)
+
+
+SPOT_MARKET_INFO = construct.Struct(
+    "spot_market" / PublicKeyAdapter(),
+    "maint_asset_weight" / FloatI80F48Adapter(),
+    "init_asset_weight" / FloatI80F48Adapter(),
+    "maint_liab_weight" / FloatI80F48Adapter(),
+    "init_liab_weight" / FloatI80F48Adapter(),
+    "liquidation_fee" / FloatI80F48Adapter()
+)
+
+PERP_MARKET_INFO = construct.Struct(
+    "perp_market" / PublicKeyAdapter(),
+    "maint_asset_weight" / FloatI80F48Adapter(),
+    "init_asset_weight" / FloatI80F48Adapter(),
+    "maint_liab_weight" / FloatI80F48Adapter(),
+    "init_liab_weight" / FloatI80F48Adapter(),
+    "liquidation_fee" / FloatI80F48Adapter(),
+    "base_lot_size" / SignedDecimalAdapter(),
+    "quote_lot_size" / SignedDecimalAdapter(),
+)
+
+# usize is a u64 on Solana, so a regular DecimalAdapter() works
+MANGO_GROUP = construct.Struct(
+    "meta_data" / METADATA,
+    "num_oracles" / DecimalAdapter(),
+    "tokens" / construct.Array(MAX_TOKENS, TOKEN_INFO),
+    "spot_markets" / construct.Array(MAX_PAIRS, SPOT_MARKET_INFO),
+    "perp_markets" / construct.Array(MAX_PAIRS, PERP_MARKET_INFO),
+    "oracles" / construct.Array(MAX_PAIRS, PublicKeyAdapter()),
+    "signer_nonce" / DecimalAdapter(),
+    "signer_key" / PublicKeyAdapter(),
+    "admin" / PublicKeyAdapter(),
+    "dex_program_id" / PublicKeyAdapter(),
+    "cache" / PublicKeyAdapter(),
+    "valid_interval" / DecimalAdapter()
+)
+
+ROOT_BANK = construct.Struct(
+    "meta_data" / METADATA,
+    "num_node_banks" / DecimalAdapter(),
+    "node_banks" / construct.Array(MAX_NODE_BANKS, PublicKeyAdapter()),
+    "deposit_index" / FloatI80F48Adapter(),
+    "borrow_index" / FloatI80F48Adapter(),
+    "last_updated" / DatetimeAdapter()
+)
+
+NODE_BANK = construct.Struct(
+    "meta_data" / METADATA,
+    "deposit" / FloatI80F48Adapter(),
+    "borrow" / FloatI80F48Adapter(),
+    "vault" / PublicKeyAdapter()
+)
+
+PERP_OPEN_ORDERS = construct.Struct(
+    "bids_quantity" / SignedDecimalAdapter(),
+    "asks_quantity" / SignedDecimalAdapter(),
+    "is_free_bits" / DecimalAdapter(4),
+    "is_bid_bits" / DecimalAdapter(4),
+    "orders" / construct.Array(OPEN_ORDERS_MAX_ORDERS, SignedDecimalAdapter(16)),
+    "client_order_ids" / construct.Array(OPEN_ORDERS_MAX_ORDERS, SignedDecimalAdapter())
+)
+
+PERP_ACCOUNT = construct.Struct(
+    "base_position" / SignedDecimalAdapter(),
+    "quote_position" / FloatI80F48Adapter(),
+    "long_settled_funding" / FloatI80F48Adapter(),
+    "short_settled_funding" / FloatI80F48Adapter(),
+    "open_orders" / PERP_OPEN_ORDERS
+)
+
+MANGO_ACCOUNT = construct.Struct(
+    "meta_data" / METADATA,
+    "group" / PublicKeyAdapter(),
+    "owner" / PublicKeyAdapter(),
+    "in_basket" / construct.Array(MAX_PAIRS, DecimalAdapter(1)),
+    "num_in_basket" / DecimalAdapter(1),
+    "deposits" / construct.Array(MAX_TOKENS, FloatI80F48Adapter()),
+    "borrows" / construct.Array(MAX_TOKENS, FloatI80F48Adapter()),
+    "spot_open_orders" / construct.Array(MAX_PAIRS, PublicKeyAdapter()),
+    "perp_accounts" / construct.Array(MAX_PAIRS, PERP_ACCOUNT),
+    "being_liquidated" / DecimalAdapter(1),
+    "padding" / construct.Padding(7)
+)
+
+PERP_MARKET = construct.Struct(
+    "meta_data" / METADATA,
+    "group" / PublicKeyAdapter(),
+    "bids" / PublicKeyAdapter(),
+    "asks" / PublicKeyAdapter(),
+    "event_queue" / PublicKeyAdapter(),
+
+    "long_funding" / FloatI80F48Adapter(),
+    "short_funding" / FloatI80F48Adapter(),
+    "open_interest" / SignedDecimalAdapter(),
+    "quote_lot_size" / SignedDecimalAdapter(),
+    "index_oracle" / PublicKeyAdapter(),
+    "last_updated" / DatetimeAdapter(),
+    "seq_num" / DecimalAdapter(),
+    "contract_size" / SignedDecimalAdapter()
+)
+
+
+# #[derive(Copy, Clone, Pod)]
+# #[repr(C)]
+# pub struct AnyNode {
+#     pub tag: u32,
+#     pub data: [u8; 68],
+# }
+ANY_NODE = construct.Struct(
+    "tag" / DecimalAdapter(4),
+    "data" / construct.Bytes(68)
+)
+
+
+UNINITIALIZED_BOOK_NODE = construct.Struct(
+    "type_name" / construct.Computed(lambda _: "uninitialized"),
+    "tag" / construct.Const(Decimal(0), DecimalAdapter(4)),
+    "data" / construct.Bytes(68)
+)
+assert UNINITIALIZED_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
+
+INNER_BOOK_NODE = construct.Struct(
+    "type_name" / construct.Computed(lambda _: "inner"),
+    "tag" / construct.Const(Decimal(1), DecimalAdapter(4)),
+    # Only the first prefixLen high-order bits of key are meaningful
+    "prefix_len" / DecimalAdapter(4),
+    "key" / DecimalAdapter(16),
+    "children" / construct.Array(2, DecimalAdapter(4)),
+    "padding" / construct.Padding(40)
+)
+assert INNER_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
+
+LEAF_BOOK_NODE = construct.Struct(
+    "type_name" / construct.Computed(lambda _: "leaf"),
+    "tag" / construct.Const(Decimal(2), DecimalAdapter(4)),
+    # Index into OPEN_ORDERS_LAYOUT.orders
+    "owner_slot" / DecimalAdapter(1),
+    "padding" / construct.Padding(3),
+    # (price, seqNum)
+    "key" / BookPriceAdapter(),
+    # "sequence_number" / DecimalAdapter(),
+    # "price" / DecimalAdapter(),
+    # Open orders account
+    "owner" / PublicKeyAdapter(),
+    # In units of lot size
+    "quantity" / DecimalAdapter(),
+    "client_order_id" / DecimalAdapter()
+)
+assert LEAF_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
+
+FREE_BOOK_NODE = construct.Struct(
+    "type_name" / construct.Computed(lambda _: "free"),
+    "tag" / construct.Const(Decimal(3), DecimalAdapter(4)),
+    "next" / DecimalAdapter(4),
+    "padding" / construct.Padding(64)
+)
+assert FREE_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
+
+LAST_FREE_BOOK_NODE = construct.Struct(
+    "type_name" / construct.Computed(lambda _: "last_free"),
+    "tag" / construct.Const(Decimal(4), DecimalAdapter(4)),
+    "padding" / construct.Padding(68)
+)
+assert LAST_FREE_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
+
+# #[derive(Copy, Clone, Pod, Loadable)]
+# #[repr(C)]
+# pub struct BookSide {
+#     pub meta_data: MetaData,
+#
+#     pub bump_index: usize,
+#     pub free_list_len: usize,
+#     pub free_list_head: u32,
+#     pub root_node: u32,
+#     pub leaf_count: usize,
+#     pub nodes: [AnyNode; MAX_BOOK_NODES], // TODO make this variable length
+# }
+ORDERBOOK_SIDE = construct.Struct(
+    "meta_data" / METADATA,
+    "bump_index" / DecimalAdapter(),
+    "free_list_len" / DecimalAdapter(),
+    "free_list_head" / DecimalAdapter(4),
+    "root_node" / DecimalAdapter(4),
+    "leaf_count" / DecimalAdapter(),
+    "nodes" / construct.Array(MAX_BOOK_NODES, OrderBookNodeAdapter())
+)
+
+
+# /// Place an order on a perp market
+# /// Accounts expected by this instruction (6):
+# /// 0. `[]` mango_group_ai - TODO
+# /// 1. `[writable]` mango_account_ai - TODO
+# /// 2. `[signer]` owner_ai - TODO
+# /// 3. `[]` mango_cache_ai - TODO
+# /// 4. `[writable]` perp_market_ai - TODO
+# /// 5. `[writable]` bids_ai - TODO
+# /// 6. `[writable]` asks_ai - TODO
+# /// 7. `[writable]` event_queue_ai - TODO
+PLACE_PERP_ORDER = construct.Struct(
+    "variant" / construct.Const(12, construct.BytesInteger(4, swapped=True)),
+
+    "price" / SignedDecimalAdapter(),
+    "quantity" / SignedDecimalAdapter(),
+    "client_order_id" / DecimalAdapter(),
+    "side" / DecimalAdapter(4),  # { buy: 0, sell: 1 }
+    "order_type" / DecimalAdapter(4)  # { limit: 0, ioc: 1, postOnly: 2 }
+)
+
+# /// Initialize a Mango account for a user
+# ///
+# /// Accounts expected by this instruction (4):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[writable]` mango_account_ai - the mango account data
+# /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
+# /// 3. `[]` rent_ai - Rent sysvar account
+# InitMangoAccount,
+INIT_MANGO_ACCOUNT = construct.Struct(
+    "variant" / construct.Const(1, construct.BytesInteger(4, swapped=True))
+)
+
+
+# Cancel a Perp order using it's ID and Side.
+#
+# 0. `[]` mangoGroupPk
+# 1. `[writable]` mangoAccountPk
+# 2. `[signer]` ownerPk
+# 3. `[writable]` perpMarketPk
+# 4. `[writable]` bidsPk
+# 5. `[writable]` asksPk
+# 6. `[writable]` eventQueuePk
+CANCEL_PERP_ORDER = construct.Struct(
+    "variant" / construct.Const(14, construct.BytesInteger(4, swapped=True)),
+
+    "order_id" / DecimalAdapter(16),
+    "side" / DecimalAdapter(4)  # { buy: 0, sell: 1 }
+)
+
+
+# Withdraw {
+#     quantity: u64,
+#     allow_borrow: bool,
+# },
+WITHDRAW_V3 = construct.Struct(
+    "variant" / construct.Const(14, construct.BytesInteger(4, swapped=True)),
+
+    "quantity" / DecimalAdapter(),
+    "allow_borrow" / DecimalAdapter(1)
+)
+
+
+MerpsInstructionParsersByVariant = {
+    0: None,  # INIT_MANGO_GROUP,
+    1: INIT_MANGO_ACCOUNT,  # INIT_MANGO_ACCOUNT,
+    2: None,  # DEPOSIT,
+    3: WITHDRAW_V3,  # WITHDRAW,
+    4: None,  # ADD_SPOT_MARKET,
+    5: None,  # ADD_TO_BASKET,
+    6: None,  # BORROW,
+    7: None,  # CACHE_PRICES,
+    8: None,  # CACHE_ROOT_BANKS,
+    9: None,  # PLACE_SPOT_ORDER,
+    10: None,  # ADD_ORACLE,
+    11: None,  # ADD_PERP_MARKET,
+    12: PLACE_PERP_ORDER,  # PLACE_PERP_ORDER,
+    13: None,  # CANCEL_PERP_ORDER_BY_CLIENT_ID,
+    14: CANCEL_PERP_ORDER,  # CANCEL_PERP_ORDER,
+    15: None,  # CONSUME_EVENTS,
+    16: None,  # CACHE_PERP_MARKETS,
+    17: None,  # UPDATE_FUNDING,
+    18: None,  # SET_ORACLE,
+    19: None,  # SETTLE_FUNDS,
+    20: None,  # CANCEL_SPOT_ORDER,
+    21: None,  # UPDATE_ROOT_BANK,
+    22: None,  # SETTLE_PNL,
+    23: None,  # SETTLE_BORROW,
 }

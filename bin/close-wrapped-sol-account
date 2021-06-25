@@ -11,7 +11,7 @@ from solana.publickey import PublicKey
 from solana.transaction import Transaction
 
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+    os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Closes a Wrapped SOL account.")

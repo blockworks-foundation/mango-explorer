@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
+import copy
 import rx
 import rx.operators as ops
 import typing
@@ -22,6 +23,8 @@ from datetime import datetime
 from decimal import Decimal
 from pyserum.market.orderbook import OrderBook
 from pyserum.market import Market as SerumMarket
+from solana.publickey import PublicKey
+from solana.rpc.api import Client
 
 from ...accountinfo import AccountInfo
 from ...context import Context
@@ -42,6 +45,7 @@ from ...spotmarket import SpotMarket
 # Implements the `Oracle` abstract base class specialised to the Serum DEX.
 #
 
+
 class SerumOracle(Oracle):
     def __init__(self, spot_market: SpotMarket):
         name = f"Serum Oracle for {spot_market.symbol}"
@@ -51,8 +55,14 @@ class SerumOracle(Oracle):
         self._serum_market: SerumMarket = None
 
     def fetch_price(self, context: Context) -> Price:
+        # TODO: Do this right?
+        context = copy.copy(context)
+        context.cluster = "mainnet-beta"
+        context.cluster_url = "https://solana-api.projectserum.com"
+        context.client = Client(context.cluster_url)
         if self._serum_market is None:
-            self._serum_market = SerumMarket.load(context.client, self.spot_market.address, context.dex_program_id)
+            self._serum_market = SerumMarket.load(context.client, PublicKey(
+                "A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw"), context.dex_program_id)
 
         bids_address = self._serum_market.state.bids()
         asks_address = self._serum_market.state.asks()
@@ -72,6 +82,7 @@ class SerumOracle(Oracle):
         return Price(self.source, datetime.now(), self.spot_market, top_bid_price, mid_price, top_ask_price)
 
     def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
+        context = context.new_from_cluster("mainnet-beta")
         return rx.interval(1).pipe(
             ops.subscribe_on(context.pool_scheduler),
             ops.start_with(-1),

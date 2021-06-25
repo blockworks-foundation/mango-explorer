@@ -8,7 +8,7 @@ import sys
 import traceback
 
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+    os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
@@ -23,7 +23,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 try:
     context = mango.Context.from_command_line_parameters(args)
 
-    group = mango.Group.load(context)
+    group = mango.MangoGroup.load(context)
     print(group)
 except Exception as exception:
     logging.critical(f"show-group stopped because of exception: {exception} - {traceback.format_exc()}")

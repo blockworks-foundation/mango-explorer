@@ -16,6 +16,7 @@
 
 import decimal
 import json
+import os.path
 
 from solana.publickey import PublicKey
 
@@ -97,5 +98,5 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 # Load all Mango Market's constants from its own `ids.json` file (retrieved from [GitHub](https://raw.githubusercontent.com/blockworks-foundation/mango-client-ts/main/src/ids.json).
 
 
-with open("ids.json") as json_file:
+with open(os.path.join(os.path.dirname(__file__), "../data/ids.json")) as json_file:
     MangoConstants = json.load(json_file)

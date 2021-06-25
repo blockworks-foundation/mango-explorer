@@ -1,0 +1,40 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+from decimal import Decimal
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+import mango.marketmaking.simplemarketmaker  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows all orders on a market.")
+mango.Context.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--market", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)")
+parser.add_argument("--quantity", type=Decimal, required=True, help="quantity to BUY or SELL")
+parser.add_argument("--price", type=Decimal, required=True, help="price to BUY or SELL at")
+parser.add_argument("--side", type=mango.Side, required=True, choices=list(mango.Side), help="side: BUY or SELL")
+parser.add_argument("--order-type", type=mango.OrderType, required=True,
+                    choices=list(mango.OrderType), help="Order type: LIMIT, IOC or POST_ONLY")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.Context.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+market_symbol = args.market.upper()
+market = context.market_lookup.find_by_symbol(market_symbol)
+if market is None:
+    raise Exception(f"Could not find market {market_symbol}")
+
+market_operations = mango.create_market_operations(context, wallet, False, market, print)
+placed = market_operations.place_order(args.side, args.order_type, args.price, args.quantity)
+print(placed)

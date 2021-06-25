@@ -1,0 +1,67 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+import typing
+
+from decimal import Decimal
+from solana.account import Account
+from solana.transaction import Transaction
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Withdraw funds from a margin account")
+mango.Context.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--symbol", type=str, required=True, help="token symbol to withdraw (e.g. USDC)")
+parser.add_argument("--quantity", type=Decimal, required=True, help="quantity token to withdraw")
+parser.add_argument("--allow-borrow", action="store_true", default=False,
+                    help="allow borrowing to fund the withdrawal")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+
+context = mango.Context.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+group = mango.MangoGroup.load(context, context.group_id)
+margin_accounts = mango.MangoAccount.load_all_for_owner(context, wallet.address, group)
+if len(margin_accounts) == 0:
+    raise Exception(f"Could not find any margin accounts for '{wallet.address}'.")
+margin_account = margin_accounts[0]
+
+token = context.token_lookup.find_by_symbol(args.symbol)
+print(token)
+if token is None:
+    raise Exception(f"Could not find token with symbol '{args.symbol}'.")
+
+token_account = mango.TokenAccount.fetch_or_create_largest_for_owner_and_token(context, wallet.account, token)
+withdrawal_value = mango.TokenValue(token, args.quantity)
+withdrawal_token_account = mango.TokenAccount(
+    token_account.account_info, token_account.version, token_account.owner, withdrawal_value)
+
+root_bank_address = None
+for token_info in group.tokens:
+    if token_info is not None and token_info.token is not None and token_info.token.mint == token.mint:
+        root_bank_address = token_info.root_bank
+if root_bank_address is None:
+    raise Exception(f"Could not find token root bank for symbol '{args.symbol}'.")
+
+root_bank = mango.RootBank.load(context, root_bank_address)
+node_bank = root_bank.pick_node_bank(context)
+
+withdraw = mango.build_withdraw_instructions(
+    context, wallet, group, margin_account, root_bank, node_bank, withdrawal_token_account, args.allow_borrow)
+print(withdraw)
+signers: typing.List[Account] = [wallet.account]
+
+transaction = Transaction()
+transaction.instructions.extend(withdraw)
+response = context.client.send_transaction(transaction, *signers, opts=context.transaction_options)
+transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
+print("Signature:", transaction_id)

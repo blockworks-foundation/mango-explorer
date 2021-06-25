@@ -37,6 +37,10 @@ class TokenValue:
         self.token = token
         self.value = value
 
+    def shift_to_native(self) -> "TokenValue":
+        new_value = self.token.shift_to_native(self.value)
+        return TokenValue(self.token, new_value)
+
     @staticmethod
     def fetch_total_value_or_none(context: Context, account_public_key: PublicKey, token: Token) -> typing.Optional["TokenValue"]:
         opts = TokenAccountOpts(mint=token.mint)

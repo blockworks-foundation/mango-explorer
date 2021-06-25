@@ -30,8 +30,8 @@ from solana.rpc.types import MemcmpOpts, RPCError, RPCResponse, TxOpts
 
 from .constants import MangoConstants, SOL_DECIMAL_DIVISOR
 from .market import CompoundMarketLookup, MarketLookup
-from .spotmarket import SpotMarketLookup
-from .token import TokenLookup
+from .spotmarket import MangoV3MarketLookup, SpotMarketLookup
+from .token import CompoundTokenLookup, MangoV3TokenLookup, SplTokenLookup, TokenLookup
 
 
 # # 🥭 Context
@@ -47,23 +47,15 @@ from .token import TokenLookup
 # * GROUP_NAME (defaults to: BTC_ETH_USDT)
 #
 
-default_cluster = os.environ.get("CLUSTER") or "mainnet-beta"
+_default_group_data = MangoConstants["groups"][2]
+default_cluster = os.environ.get("CLUSTER") or _default_group_data["cluster"]
 default_cluster_url = os.environ.get("CLUSTER_URL") or MangoConstants["cluster_urls"][default_cluster]
 
-default_program_id = PublicKey(MangoConstants[default_cluster]["mango_program_id"])
-default_dex_program_id = PublicKey(MangoConstants[default_cluster]["dex_program_id"])
+default_program_id = PublicKey(_default_group_data["mangoProgramId"])
+default_dex_program_id = PublicKey(_default_group_data["serumProgramId"])
 
-default_group_name = os.environ.get("GROUP_NAME") or "BTC_ETH_SOL_SRM_USDC"
-default_group_id = PublicKey(MangoConstants[default_cluster]["mango_groups"][default_group_name]["mango_group_pk"])
-
-
-# The old program ID is used for the 3-token Group, but since the program ID is stored
-# in ids.json per cluster, it's not currently possible to put it in that (shared) file.
-#
-# We keep it here and do some special processing with it.
-#
-_OLD_3_TOKEN_GROUP_ID = PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV")
-_OLD_3_TOKEN_PROGRAM_ID = PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
+default_group_name = os.environ.get("GROUP_NAME") or _default_group_data["name"]
+default_group_id = PublicKey(_default_group_data["publicKey"])
 
 # Probably best to access this through the Context object
 _pool_scheduler = ThreadPoolScheduler(multiprocessing.cpu_count())
@@ -76,26 +68,27 @@ _pool_scheduler = ThreadPoolScheduler(multiprocessing.cpu_count())
 
 class Context:
     def __init__(self, cluster: str, cluster_url: str, program_id: PublicKey, dex_program_id: PublicKey,
-                 group_name: str, group_id: PublicKey, token_filename: str = TokenLookup.DEFAULT_FILE_NAME):
-        configured_program_id = program_id
-        if group_id == _OLD_3_TOKEN_GROUP_ID:
-            configured_program_id = _OLD_3_TOKEN_PROGRAM_ID
-
+                 group_name: str, group_id: PublicKey, token_filename: str = SplTokenLookup.DefaultDataFilepath):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.cluster: str = cluster
         self.cluster_url: str = cluster_url
         self.client: Client = Client(cluster_url)
-        self.program_id: PublicKey = configured_program_id
+        self.program_id: PublicKey = program_id
         self.dex_program_id: PublicKey = dex_program_id
         self.group_name: str = group_name
         self.group_id: PublicKey = group_id
         self.commitment: Commitment = Commitment("processed")
         self.transaction_options: TxOpts = TxOpts(preflight_commitment=self.commitment)
         self.encoding: str = "base64"
-        self.token_lookup: TokenLookup = TokenLookup.load(token_filename)
+        mangov3_token_lookup: TokenLookup = MangoV3TokenLookup(cluster)
+        spl_token_lookup: TokenLookup = SplTokenLookup.load(token_filename)
+        all_token_lookup: TokenLookup = CompoundTokenLookup(
+            [mangov3_token_lookup, spl_token_lookup])
+        self.token_lookup: TokenLookup = all_token_lookup
 
+        mangov3_market_lookup: MarketLookup = MangoV3MarketLookup(cluster)
         spot_market_lookup: SpotMarketLookup = SpotMarketLookup.load(token_filename)
-        all_market_lookup = CompoundMarketLookup([spot_market_lookup])
+        all_market_lookup = CompoundMarketLookup([mangov3_market_lookup, spot_market_lookup])
         self.market_lookup: MarketLookup = all_market_lookup
 
         # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451
@@ -185,56 +178,39 @@ class Context:
 
     def new_from_cluster(self, cluster: str) -> "Context":
         cluster_url = MangoConstants["cluster_urls"][cluster]
-        program_id = PublicKey(MangoConstants[cluster]["mango_program_id"])
-        dex_program_id = PublicKey(MangoConstants[cluster]["dex_program_id"])
-        group_id = PublicKey(MangoConstants[cluster]["mango_groups"][self.group_name]["mango_group_pk"])
-
-        return Context(cluster, cluster_url, program_id, dex_program_id, self.group_name, group_id)
+        for group_data in MangoConstants["groups"]:
+            if group_data["cluster"] == cluster:
+                if group_data["name"] == self.group_name:
+                    program_id = PublicKey(group_data["mangoProgramId"])
+                    dex_program_id = PublicKey(group_data["serumProgramId"])
+                    group_id = PublicKey(_default_group_data["publicKey"])
+                    return Context(cluster, cluster_url, program_id, dex_program_id, self.group_name, group_id)
+        raise Exception(f"Could not find group name '{self.group_name}' in cluster '{cluster}'.")
 
     def new_from_cluster_url(self, cluster_url: str) -> "Context":
         return Context(self.cluster, cluster_url, self.program_id, self.dex_program_id, self.group_name, self.group_id)
 
     def new_from_group_name(self, group_name: str) -> "Context":
-        group_id = PublicKey(MangoConstants[self.cluster]["mango_groups"][group_name]["mango_group_pk"])
-
-        # If this Context had the old 3-token Group, we need to override it's program ID.
-        program_id = self.program_id
-        if self.group_id == _OLD_3_TOKEN_GROUP_ID:
-            program_id = PublicKey(MangoConstants[self.cluster]["mango_program_id"])
-
-        return Context(self.cluster, self.cluster_url, program_id, self.dex_program_id, group_name, group_id)
+        for group_data in MangoConstants["groups"]:
+            if group_data["cluster"] == self.cluster:
+                if group_data["name"] == group_name:
+                    program_id = PublicKey(group_data["mangoProgramId"])
+                    dex_program_id = PublicKey(group_data["serumProgramId"])
+                    group_id = PublicKey(_default_group_data["publicKey"])
+                    return Context(self.cluster, self.cluster_url, program_id, dex_program_id, group_name, group_id)
+        raise Exception(f"Could not find group name '{group_name}' in cluster '{self.cluster}'.")
 
     def new_from_group_id(self, group_id: PublicKey) -> "Context":
-        actual_group_name = "« Unknown Group »"
         group_id_str = str(group_id)
-        for group_name in MangoConstants[self.cluster]["mango_groups"]:
-            if MangoConstants[self.cluster]["mango_groups"][group_name]["mango_group_pk"] == group_id_str:
-                actual_group_name = group_name
-                break
-
-        # If this Context had the old 3-token Group, we need to override it's program ID.
-        program_id = self.program_id
-        if self.group_id == _OLD_3_TOKEN_GROUP_ID:
-            program_id = PublicKey(MangoConstants[self.cluster]["mango_program_id"])
-
-        return Context(self.cluster, self.cluster_url, program_id, self.dex_program_id, actual_group_name, group_id)
-
-    @staticmethod
-    def from_command_line(cluster: str, cluster_url: str, program_id: PublicKey,
-                          dex_program_id: PublicKey, group_name: str,
-                          group_id: PublicKey) -> "Context":
-        # Here we should have values for all our parameters (because they'll either be specified
-        # on the command-line or will be the default_* value) but we may be in the situation where
-        # a group name is specified but not a group ID, and in that case we want to look up the
-        # group ID.
-        #
-        # In that situation, the group_name will not be default_group_name but the group_id will
-        # still be default_group_id. In that situation we want to override what we were passed
-        # as the group_id.
-        if (group_name != default_group_name) and (group_id == default_group_id):
-            group_id = PublicKey(MangoConstants[cluster]["mango_groups"][group_name]["mango_group_pk"])
-
-        return Context(cluster, cluster_url, program_id, dex_program_id, group_name, group_id)
+        for group_data in MangoConstants["groups"]:
+            if group_data["cluster"] == self.cluster:
+                if group_data["publicKey"] == group_id_str:
+                    program_id = PublicKey(group_data["mangoProgramId"])
+                    dex_program_id = PublicKey(group_data["serumProgramId"])
+                    group_id = PublicKey(_default_group_data["publicKey"])
+                    group_name = _default_group_data["name"]
+                    return Context(self.cluster, self.cluster_url, program_id, dex_program_id, group_name, group_id)
+        raise Exception(f"Could not find group with ID '{group_id}' in cluster '{self.cluster}'.")
 
     @staticmethod
     def from_cluster_and_group_name(cluster: str, group_name: str) -> "Context":
@@ -265,7 +241,7 @@ class Context:
         parser.add_argument("--group-id", type=str, default=default_group_id,
                             help="Mango group ID/address")
 
-        parser.add_argument("--token-data-file", type=str, default="solana.tokenlist.json",
+        parser.add_argument("--token-data-file", type=str, default=SplTokenLookup.DefaultDataFilepath,
                             help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
 
         # This isn't really a Context thing but we don't have a better place for it (yet) and we
@@ -291,7 +267,13 @@ class Context:
         # as the group_id.
         group_id = args.group_id
         if (args.group_name != default_group_name) and (group_id == default_group_id):
-            group_id = PublicKey(MangoConstants[args.cluster]["mango_groups"][args.group_name]["mango_group_pk"])
+            for group in MangoConstants["groups"]:
+                if group["cluster"] == args.cluster and group["name"].upper() == args.group_name.upper():
+                    group_id = PublicKey(group["publicKey"])
+        elif (args.cluster != default_cluster) and (group_id == default_group_id):
+            for group in MangoConstants["groups"]:
+                if group["cluster"] == args.cluster and group["name"].upper() == args.group_name.upper():
+                    group_id = PublicKey(group["publicKey"])
 
         # Same problem here, but with cluster names and URLs. We want someone to be able to change the
         # cluster just by changing the cluster name.

@@ -1,0 +1,38 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+from decimal import Decimal
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+import mango.marketmaking.simplemarketmaker  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows all orders on a market.")
+mango.Context.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--market", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)")
+parser.add_argument("--order-id", type=int, required=True, help="ID of the order to cancel")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.Context.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+market_symbol = args.market.upper()
+market = context.market_lookup.find_by_symbol(market_symbol)
+if market is None:
+    raise Exception(f"Could not find market {market_symbol}")
+
+market_operations = mango.create_market_operations(context, wallet, False, market, print)
+order = mango.Order(id=args.order_id, client_id=0, owner=wallet.address,
+                    side=mango.Side.BUY, price=Decimal(0), size=Decimal(0))
+cancellation = market_operations.cancel_order(order)
+print(cancellation)

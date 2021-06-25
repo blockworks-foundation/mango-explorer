@@ -13,15 +13,16 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
+import abc
 import json
 import logging
+import os.path
 import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-from .constants import SOL_DECIMALS, SOL_MINT_ADDRESS
+from .constants import MangoConstants, SOL_DECIMALS, SOL_MINT_ADDRESS
 
 
 # # 🥭 Token class
@@ -82,7 +83,7 @@ class Token:
         return False
 
     def __str__(self) -> str:
-        return f"« Token '{self.name}' [{self.mint} ({self.decimals} decimals)] »"
+        return f"« 𝚃𝚘𝚔𝚎𝚗 '{self.name}' [{self.mint} ({self.decimals} decimals)] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -99,39 +100,65 @@ SolToken = Token("SOL", "Pure SOL", SOL_MINT_ADDRESS, SOL_DECIMALS)
 
 # # 🥭 TokenLookup class
 #
-# This class allows us to look up token symbols, names, mint addresses and decimals, all from our Solana static data.
+# This class allows us to look up token symbols, names, mint addresses and decimals, all from our Mango
+# and Solana static data.
 #
-# The static data is the [Solana token list](https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json) provided by Serum.
+# It's usually easiest to access it via the `Context` as `context.token_lookup`.
 #
-# You can load a `TokenLookup` class by something like:
+
+
+class TokenLookup(metaclass=abc.ABCMeta):
+    def __init__(self) -> None:
+        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+
+    @abc.abstractmethod
+    def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
+        raise NotImplementedError("TokenLookup.find_by_symbol() is not implemented on the base type.")
+
+    @abc.abstractmethod
+    def find_by_mint(self, mint: PublicKey) -> typing.Optional[Token]:
+        raise NotImplementedError("TokenLookup.find_by_mint() is not implemented on the base type.")
+
+    def find_by_symbol_or_raise(self, symbol: str) -> Token:
+        token = self.find_by_symbol(symbol)
+        if token is None:
+            raise Exception(f"Could not find token with symbol '{symbol}'.")
+
+        return token
+
+    def find_by_mint_or_raise(self, mint: PublicKey) -> Token:
+        token = self.find_by_mint(mint)
+        if token is None:
+            raise Exception(f"Could not find token with mint {mint}.")
+
+        return token
+
+
+# # 🥭 SplTokenLookup class
+#
+# This class allows us to look up token data specifically from Solana static data.
+#
+# The Solana static data is the [Solana token list](https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json) provided by Serum.
+#
+# You can load an `SplTokenLookup` class by something like:
 # ```
 # with open("solana.tokenlist.json") as json_file:
 #     token_data = json.load(json_file)
 #     token_lookup = TokenLookup(token_data)
 # ```
 #
-# It's usually easiest to access it via the `Context` as `context.token_lookup`.
-#
 
-
-class TokenLookup:
-    DEFAULT_FILE_NAME = "solana.tokenlist.json"
-
-    @staticmethod
-    def _find_data_by_symbol(symbol: str, token_data: typing.Dict) -> typing.Optional[typing.Dict]:
-        for token in token_data["tokens"]:
-            if token["symbol"] == symbol:
-                return token
-        return None
+class SplTokenLookup(TokenLookup):
+    DefaultDataFilepath = os.path.join(os.path.dirname(__file__), "../data/solana.tokenlist.json")
 
     def __init__(self, token_data: typing.Dict) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.token_data = token_data
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
-        found = TokenLookup._find_data_by_symbol(symbol, self.token_data)
-        if found is not None:
-            return Token(found["symbol"], found["name"], PublicKey(found["address"]), Decimal(found["decimals"]))
+        for token in self.token_data["tokens"]:
+            if token["symbol"] == symbol:
+                return Token(token["symbol"], token["name"], PublicKey(token["address"]), Decimal(token["decimals"]))
 
         return None
 
@@ -161,4 +188,75 @@ class TokenLookup:
     def load(filename: str) -> "TokenLookup":
         with open(filename) as json_file:
             token_data = json.load(json_file)
-            return TokenLookup(token_data)
+            return SplTokenLookup(token_data)
+
+
+class CompoundTokenLookup(TokenLookup):
+    def __init__(self, lookups: typing.Sequence[TokenLookup]) -> None:
+        super().__init__()
+        self.lookups: typing.Sequence[TokenLookup] = lookups
+
+    def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
+        for lookup in self.lookups:
+            result = lookup.find_by_symbol(symbol)
+            if result is not None:
+                return result
+        return None
+
+    def find_by_mint(self, mint: PublicKey) -> typing.Optional[Token]:
+        for lookup in self.lookups:
+            result = lookup.find_by_mint(mint)
+            if result is not None:
+                return result
+        return None
+
+
+class MangoTokenLookup(TokenLookup):
+    # The old way Mango stores symbol-mint mappings in ids.json doesn't store the decimals.
+    # We defer to a different `TokenLookup` to find out the right decimals.
+    def __init__(self, cluster: str, decimal_token_lookup: TokenLookup) -> None:
+        super().__init__()
+        self.cluster: str = cluster
+        self.decimal_token_lookup: TokenLookup = decimal_token_lookup
+
+    def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
+        for stored_symbol, stored_address in MangoConstants[self.cluster]["symbols"].items():
+            if stored_symbol == symbol:
+                other_lookup = self.decimal_token_lookup.find_by_symbol(symbol)
+                if other_lookup is None:
+                    return None
+                return Token(stored_symbol, stored_symbol, PublicKey(stored_address), other_lookup.decimals)
+        return None
+
+    def find_by_mint(self, mint: PublicKey) -> typing.Optional[Token]:
+        mint_str: str = str(mint)
+        for stored_symbol, stored_address in MangoConstants[self.cluster]["symbols"].items():
+            if stored_address == mint_str:
+                other_lookup = self.decimal_token_lookup.find_by_symbol(stored_symbol)
+                if other_lookup is None:
+                    return None
+                return Token(stored_symbol, stored_symbol, PublicKey(stored_address), other_lookup.decimals)
+        return None
+
+
+class MangoV3TokenLookup(TokenLookup):
+    def __init__(self, cluster: str) -> None:
+        super().__init__()
+        self.cluster: str = cluster
+
+    def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
+        for group in MangoConstants["groups"]:
+            if group["cluster"] == self.cluster:
+                for token in group["tokens"]:
+                    if token["symbol"] == symbol:
+                        return Token(token["symbol"], token["symbol"], PublicKey(token["mintKey"]), Decimal(token["decimals"]))
+        return None
+
+    def find_by_mint(self, mint: PublicKey) -> typing.Optional[Token]:
+        mint_str = str(mint)
+        for group in MangoConstants["groups"]:
+            if group["cluster"] == self.cluster:
+                for token in group["tokens"]:
+                    if token["mintKey"] == mint_str:
+                        return Token(token["symbol"], token["symbol"], PublicKey(token["mintKey"]), Decimal(token["decimals"]))
+        return None

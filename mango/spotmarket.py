@@ -20,8 +20,9 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
+from .constants import MangoConstants
 from .market import Market, MarketLookup
-from .token import Token
+from .token import Token, TokenLookup
 
 
 # # 🥭 SpotMarket class
@@ -36,7 +37,7 @@ class SpotMarket(Market):
         self.address: PublicKey = address
 
     def __str__(self) -> str:
-        return f"« SpotMarket {self.symbol}: {self.address} »"
+        return f"« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol}: {self.address} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -94,6 +95,9 @@ class SpotMarketLookup(MarketLookup):
         return Token(symbol, found_token_data["name"], PublicKey(found_token_data["address"]), Decimal(found_token_data["decimals"]))
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:
+        if "/" not in symbol:
+            return None
+
         base_symbol, quote_symbol = symbol.split("/")
         base_data = SpotMarketLookup._find_data_by_symbol(base_symbol, self.token_data)
         if base_data is None:
@@ -185,3 +189,98 @@ class SpotMarketLookup(MarketLookup):
                     all_markets += [SpotMarket(base, usdt, market_address)]
 
         return all_markets
+
+
+class MangoMarketLookup(MarketLookup):
+    def __init__(self, cluster: str, token_lookup: TokenLookup) -> None:
+        super().__init__()
+        self.cluster: str = cluster
+        self.token_lookup: TokenLookup = token_lookup
+
+    @staticmethod
+    def _from_data(name: str, address: str, token_lookup: TokenLookup) -> Market:
+        base_symbol, quote_symbol = name.split("/")
+        base = token_lookup.find_by_symbol_or_raise(base_symbol)
+        quote = token_lookup.find_by_symbol_or_raise(quote_symbol)
+        public_key = PublicKey(address)
+        return SpotMarket(base, quote, public_key)
+
+    def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:
+        for stored_symbol, stored_address in MangoConstants[self.cluster]["spot_markets"].items():
+            if stored_symbol == symbol:
+                return MangoMarketLookup._from_data(stored_symbol, stored_address, self.token_lookup)
+        return None
+
+    def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
+        address_str: str = str(address)
+        for stored_symbol, stored_address in MangoConstants[self.cluster]["spot_markets"].items():
+            if stored_address == address_str:
+                return MangoMarketLookup._from_data(stored_symbol, stored_address, self.token_lookup)
+        return None
+
+    def all_markets(self) -> typing.Sequence[Market]:
+        markets = []
+        for stored_symbol, stored_address in MangoConstants[self.cluster]["spot_markets"].items():
+            market = MangoMarketLookup._from_data(stored_symbol, stored_address, self.token_lookup)
+            markets = [market]
+
+        return markets
+
+
+class MangoV3MarketLookup(MarketLookup):
+    def __init__(self, cluster: str) -> None:
+        super().__init__()
+        self.cluster: str = cluster
+
+    @staticmethod
+    def _from_dict(data: typing.Dict, tokens: typing.Sequence[Token], quote_symbol: str) -> Market:
+        base_symbol = data["baseSymbol"]
+        if tokens[0].symbol == quote_symbol and tokens[1].symbol == base_symbol:
+            quote = tokens[0]
+            base = tokens[1]
+        elif tokens[0].symbol == base_symbol and tokens[1].symbol == quote_symbol:
+            base = tokens[0]
+            quote = tokens[1]
+        else:
+            raise Exception(f"Could not find base ('{base_symbol}') or quote symbol ('{quote_symbol}') in tokens.")
+
+        address = PublicKey(data["publicKey"])
+        return SpotMarket(base, quote, address)
+
+    @staticmethod
+    def _load_tokens(data: typing.Dict) -> typing.Sequence[Token]:
+        tokens: typing.List[Token] = []
+        for token_data in data:
+            token = Token(token_data["symbol"], token_data["symbol"], PublicKey(
+                token_data["mintKey"]), Decimal(token_data["decimals"]))
+            tokens += [token]
+        return tokens
+
+    def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:
+        for group in MangoConstants["groups"]:
+            if group["cluster"] == self.cluster:
+                for market_data in group["perpMarkets"]:
+                    if market_data["name"].upper() == symbol.upper():
+                        tokens = MangoV3MarketLookup._load_tokens(group["tokens"])
+                        return MangoV3MarketLookup._from_dict(market_data, tokens, group["quoteSymbol"])
+        return None
+
+    def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
+        for group in MangoConstants["groups"]:
+            if group["cluster"] == self.cluster:
+                for spot_market in group["spotMarkets"]:
+                    if spot_market["key"] == str(address):
+                        tokens = MangoV3MarketLookup._load_tokens(group["tokens"])
+                        return MangoV3MarketLookup._from_dict(spot_market, tokens, group["quoteSymbol"])
+        return None
+
+    def all_markets(self) -> typing.Sequence[Market]:
+        markets = []
+        for group in MangoConstants["groups"]:
+            if group["cluster"] == self.cluster:
+                for spot_market in group["spotMarkets"]:
+                    tokens = MangoV3MarketLookup._load_tokens(group["tokens"])
+                    market = MangoV3MarketLookup._from_dict(spot_market, tokens, group["quoteSymbol"])
+                    markets = [market]
+
+        return markets

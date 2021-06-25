@@ -1,0 +1,35 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+import mango.marketmaking.simplemarketmaker  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows details of a Merps account.")
+mango.Context.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--address", type=PublicKey, required=False,
+                    help="address of Merps account (defaults to first Merps account in wallet)")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.Context.from_command_line_parameters(args)
+
+address = args.address
+if address is None:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    address = wallet.address
+
+group = mango.MangoGroup.load(context, context.group_id)
+mango_accounts = mango.MangoAccount.load_all_for_owner(context, address, group)
+print(mango_accounts)

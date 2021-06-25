@@ -31,21 +31,13 @@ lint: flake8 mypy
 
 ci: lint test ## Run all the tests and code checks
 
-docker-build:
-	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer:latest
+docker-v3-build:
+	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer-v3:experimental
 
-docker-push:
-	docker push opinionatedgeek/mango-explorer:latest
+docker-v3-push:
+	docker push opinionatedgeek/mango-explorer-v3:experimental
 
-docker: docker-build docker-push
-
-docker-experimental-build:
-	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer:experimental
-
-docker-experimental-push:
-	docker push opinionatedgeek/mango-explorer:experimental
-
-docker-experimental: docker-experimental-build docker-experimental-push
+docker-v3: docker-v3-build docker-v3-push
 
 # Absolutely awesome: http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help:

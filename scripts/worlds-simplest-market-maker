@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+MARKET="BTC-PERP"
+POSITION_SIZE="0.01"
+SLEEP_BETWEEN_ORDER_PLACES="60"
+let fixed_spread=100
+
+printf "Running on market %s with position size %f\nPress Control+C to stop...\n" $MARKET $POSITION_SIZE
+while :
+do
+    cancel-my-orders --market $MARKET --log-level ERROR
+
+    let current_price=$(fetch-price --provider serum --symbol BTC/USDC --log-level ERROR | cut -d"'" -f 2 | sed 's/,//' | sed 's/\.[0-9]*//')
+    place-order --market $MARKET --order-type LIMIT --log-level ERROR \
+        --side BUY --quantity $POSITION_SIZE --price $((current_price - fixed_spread))
+    place-order --market $MARKET --order-type LIMIT --log-level ERROR \
+        --side SELL --quantity $POSITION_SIZE --price $((current_price + fixed_spread))
+
+	sleep $SLEEP_BETWEEN_ORDER_PLACES
+done

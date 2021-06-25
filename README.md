@@ -102,15 +102,6 @@ Other notebooks are more user-oriented:
 * [Flux Aggregator](https://github.com/octopus-network/solana-flux-aggregator)
 
 
-## TODO
-
-Still to come:
-* More work on margin accounts and valuation
-* The notebooks use [hard-coded data from the Mango Client](https://raw.githubusercontent.com/blockworks-foundation/mango-client-ts/main/src/ids.json) - it would be good if it could do without that.
-
-Don't hold your breath waiting for these!
-
-
 # Support
 
 You can contact me [@OpinionatedGeek on Twitter](https://twitter.com/OpinionatedGeek).

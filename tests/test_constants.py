@@ -10,6 +10,6 @@ def test_system_program_address():
 
 
 def test_mango_constants():
-    mango_group = mango.MangoConstants["mainnet-beta"]
-    assert mango_group is not None
-    assert len(mango_group["oracles"]) > 0
+    mango_groups = mango.MangoConstants["groups"]
+    assert mango_groups is not None
+    assert len(mango_groups) > 0

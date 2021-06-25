@@ -53,12 +53,12 @@ from decimal import Decimal
 #
 
 class SimpleMarketMaker:
-    def __init__(self, context: mango.Context, wallet: mango.Wallet, market: mango.Market, order_placer: mango.OrderPlacer, oracle: mango.Oracle, spread_ratio: Decimal, position_size_ratio: Decimal, existing_order_tolerance: Decimal, pause: timedelta):
+    def __init__(self, context: mango.Context, wallet: mango.Wallet, market: mango.Market, market_operations: mango.MarketOperations, oracle: mango.Oracle, spread_ratio: Decimal, position_size_ratio: Decimal, existing_order_tolerance: Decimal, pause: timedelta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: mango.Context = context
         self.wallet: mango.Wallet = wallet
         self.market: mango.Market = market
-        self.order_placer: mango.OrderPlacer = order_placer
+        self.market_operations: mango.MarketOperations = market_operations
         self.oracle: mango.Oracle = oracle
         self.spread_ratio: Decimal = spread_ratio
         self.position_size_ratio: Decimal = position_size_ratio
@@ -82,22 +82,36 @@ class SimpleMarketMaker:
             bid, ask = self.calculate_order_prices(price)
             buy_size, sell_size = self.calculate_order_sizes(price, inventory)
 
-            current_orders = self.order_placer.load_my_orders()
+            current_orders = self.market_operations.load_my_orders()
             buy_orders = [order for order in current_orders if order.side == mango.Side.BUY]
             if self.orders_require_action(buy_orders, bid, buy_size):
                 self.logger.info("Cancelling BUY orders.")
                 for order in buy_orders:
-                    self.order_placer.cancel_order(order)
-                buy_order = self.order_placer.place_order(mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size)
-                self.logger.info(f"Placed order {buy_order} to BUY {buy_size} at {bid}")
+                    try:
+                        self.market_operations.cancel_order(order)
+                    except Exception as exception:
+                        self.logger.warning(f"Problem cancelling BUY order {order}: {exception}")
+                try:
+                    buy_order = self.market_operations.place_order(
+                        mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size)
+                    self.logger.info(f"Placed order {buy_order} to BUY {buy_size} at {bid}")
+                except Exception as exception:
+                    self.logger.warning(f"Problem placing order to BUY {buy_size} at {bid}: {exception}")
 
             sell_orders = [order for order in current_orders if order.side == mango.Side.SELL]
             if self.orders_require_action(sell_orders, ask, sell_size):
                 self.logger.info("Cancelling SELL orders.")
                 for order in sell_orders:
-                    self.order_placer.cancel_order(order)
-                sell_order = self.order_placer.place_order(mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size)
-                self.logger.info(f"Placed order {sell_order} to SELL {sell_size} at {ask}")
+                    try:
+                        self.market_operations.cancel_order(order)
+                    except Exception as exception:
+                        self.logger.warning(f"Problem cancelling SELL order {order}: {exception}")
+                try:
+                    sell_order = self.market_operations.place_order(
+                        mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size)
+                    self.logger.info(f"Placed order {sell_order} to SELL {sell_size} at {ask}")
+                except Exception as exception:
+                    self.logger.warning(f"Problem order {sell_order} to SELL {sell_size} at {ask}: {exception}")
 
             # Wait and hope for fills.
             self.logger.info(f"Pausing for {self.pause} seconds.")
@@ -110,9 +124,9 @@ class SimpleMarketMaker:
 
     def cleanup(self):
         self.logger.info("Cleaning up.")
-        orders = self.order_placer.load_my_orders()
+        orders = self.market_operations.load_my_orders()
         for order in orders:
-            self.order_placer.cancel_order(order)
+            self.market_operations.cancel_order(order)
 
     def fetch_inventory(self) -> typing.List[mango.TokenValue]:
         return [
@@ -133,21 +147,44 @@ class SimpleMarketMaker:
 
         buy_size = base_tokens.value * self.position_size_ratio
         sell_size = base_tokens.value * self.position_size_ratio
-
         return (buy_size, sell_size)
 
     def orders_require_action(self, orders: typing.List[mango.Order], price: Decimal, size: Decimal) -> bool:
-        # Typically there will be zero or one order.
-        for order in orders:
-            price_tolerance = order.price * self.existing_order_tolerance
-            size_tolerance = order.size * self.existing_order_tolerance
-            if (order.price < (price + price_tolerance)) and (order.price > (price - price_tolerance)) and (order.size < (size + size_tolerance) and (order.size > (size - size_tolerance))):
-                return False
+        # for order in orders:
+        #     price_tolerance = order.price * self.existing_order_tolerance
+        #     size_tolerance = order.size * self.existing_order_tolerance
+        #     self.logger.info(
+        #         f"Comparing price {order.price} with {price - price_tolerance} and {price + price_tolerance}")
+        #     self.logger.info(f"Comparing size {order.size} with {size - size_tolerance} and {size + size_tolerance}")
+        #     if (order.price < (price + price_tolerance)) and (order.price > (price - price_tolerance)):
+        #         self.logger.info("Price is within tolerance")
+        #     else:
+        #         self.logger.info("Price is NOT within tolerance")
+        #     if (order.size < (size + size_tolerance) and (order.size > (size - size_tolerance))):
+        #         self.logger.info("Size is within tolerance.")
+        #     else:
+        #         self.logger.info("Size is NOT within tolerance.")
 
-        return True
+        def within_tolerance(target_value, order_value, tolerance):
+            tolerated = order_value * tolerance
+            return (order_value < (target_value + tolerated)) and (order_value > (target_value - tolerated))
+        return len(orders) == 0 or not all([(within_tolerance(price, order.price, self.existing_order_tolerance)) and within_tolerance(size, order.size, self.existing_order_tolerance) for order in orders])
+        # # Typically there will be zero or one order.
+        # for order in orders:
+        #     price_tolerance = order.price * self.existing_order_tolerance
+        #     size_tolerance = order.size * self.existing_order_tolerance
+        #     self.logger.info(
+        #         f"Comparing price {order.price} with {price - price_tolerance} and {price + price_tolerance}")
+        #     self.logger.info(f"Comparing size {order.size} with {size - size_tolerance} and {size + size_tolerance}")
+        #     if (order.price < (price + price_tolerance)) and (order.price > (price - price_tolerance)) and (order.size < (size + size_tolerance) and (order.size > (size - size_tolerance))):
+        #         self.logger.info("At least one order needs to be replaced.")
+        #         return False
+
+        # self.logger.info("No orders need to be replaced.")
+        # return True
 
     def __str__(self) -> str:
-        return f"""« SimpleMarketMaker for market '{self.market.symbol}' »"""
+        return f"""« 𝚂𝚒𝚖𝚙𝚕𝚎𝙼𝚊𝚛𝚔𝚎𝚝𝙼𝚊𝚔𝚎𝚛 for market '{self.market.symbol}' »"""
 
     def __repr__(self) -> str:
         return f"{self}"
