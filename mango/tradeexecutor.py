@@ -28,7 +28,7 @@ from solana.publickey import PublicKey
 from solana.transaction import Transaction
 
 from .context import Context
-from .instructions import ConsumeEventsInstructionBuilder, CreateSerumOpenOrdersInstructionBuilder, NewOrderV3InstructionBuilder, SettleInstructionBuilder
+from .instructions import build_create_serum_open_orders_instructions, build_serum_place_order_instructions, build_serum_consume_events_instructions, build_serum_settle_instructions
 from .retrier import retry_context
 from .spotmarket import SpotMarket
 from .tokenaccount import TokenAccount
@@ -248,9 +248,9 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         open_order_accounts = market.find_open_orders_accounts_for_owner(self.wallet.address)
         if not open_order_accounts:
             new_open_orders_account = Account()
-            create_open_orders = CreateSerumOpenOrdersInstructionBuilder(
+            create_open_orders = build_create_serum_open_orders_instructions(
                 self.context, self.wallet, market, new_open_orders_account.public_key())
-            transaction.add(create_open_orders.build())
+            transaction.instructions.extend(create_open_orders)
             signers.append(new_open_orders_account)
             open_orders_address: PublicKey = new_open_orders_account.public_key()
             open_orders_addresses: typing.List[PublicKey] = [open_orders_address]
@@ -259,19 +259,20 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             open_orders_addresses = list(oo.address for oo in open_order_accounts)
 
         client_id = self.context.random_client_id()
-        new_order = NewOrderV3InstructionBuilder(self.context, self.wallet, market,
-                                                 source_token_account_address,
-                                                 open_orders_address, OrderType.IOC,
-                                                 side, price, quantity, client_id,
-                                                 self.serum_fee_discount_token_address)
-        transaction.add(new_order.build())
+        new_order = build_serum_place_order_instructions(self.context, self.wallet, market,
+                                                         source_token_account_address,
+                                                         open_orders_address, OrderType.IOC,
+                                                         side, price, quantity, client_id,
+                                                         self.serum_fee_discount_token_address)
+        transaction.instructions.extend(new_order)
 
-        consume_events = ConsumeEventsInstructionBuilder(self.context, self.wallet, market, open_orders_addresses)
-        transaction.add(consume_events.build())
+        consume_events = build_serum_consume_events_instructions(
+            self.context, self.wallet, market, open_orders_addresses)
+        transaction.instructions.extend(consume_events)
 
-        settle = SettleInstructionBuilder(self.context, self.wallet, market,
-                                          open_orders_address, base_token_account_address, quote_token_account_address)
-        transaction.add(settle.build())
+        settle = build_serum_settle_instructions(self.context, self.wallet, market,
+                                                 open_orders_address, base_token_account_address, quote_token_account_address)
+        transaction.instructions.extend(settle)
 
         with retry_context("Place Serum Order And Settle", self.context.client.send_transaction, self.context.retry_pauses) as retrier:
             response = retrier.run(transaction, *signers, opts=self.context.transaction_options)

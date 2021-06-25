@@ -37,8 +37,8 @@ transaction = Transaction()
 signers: typing.Sequence[Account] = [wallet.account]
 payer = wallet.address
 
-close_instruction = mango.CloseSplAccountInstructionBuilder(context, wallet, args.address)
-transaction.add(close_instruction.build())
+close_instruction = mango.build_close_spl_account_instructions(context, wallet, args.address)
+transaction.instructions.extend(close_instruction)
 
 print(f"Closing account: {args.address} with balance {token_account.value.value} lamports.")
 

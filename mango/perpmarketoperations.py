@@ -25,7 +25,7 @@ from .account import Account
 from .accountinfo import AccountInfo
 from .context import Context
 from .marketoperations import MarketOperations
-from .merpsinstructions import build_cancel_perp_order_instructions, build_place_perp_order_instructions
+from .instructions import build_cancel_perp_order_instructions, build_place_perp_order_instructions
 from .orderbookside import OrderBookSide
 from .orders import Order, OrderType, Side
 from .perpmarket import PerpMarket

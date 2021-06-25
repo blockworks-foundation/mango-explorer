@@ -18,7 +18,8 @@ import abc
 import logging
 import typing
 
-from .instructions import InstructionBuilder
+from solana.transaction import TransactionInstruction
+
 from .liquidatablereport import LiquidatableReport
 
 
@@ -47,7 +48,7 @@ class AccountLiquidator(metaclass=abc.ABCMeta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.Sequence[InstructionBuilder]:
+    def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.Sequence[TransactionInstruction]:
         raise NotImplementedError("AccountLiquidator.prepare_instructions() is not implemented on the base type.")
 
     @abc.abstractmethod
@@ -64,7 +65,7 @@ class NullAccountLiquidator(AccountLiquidator):
     def __init__(self):
         super().__init__()
 
-    def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.Sequence[InstructionBuilder]:
+    def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.Sequence[TransactionInstruction]:
         return []
 
     def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[str]:

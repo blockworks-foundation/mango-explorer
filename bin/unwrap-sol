@@ -37,18 +37,16 @@ transaction = Transaction()
 wrapped_sol_account = Account()
 signers: typing.Sequence[Account] = [wallet.account, wrapped_sol_account]
 
-create_instruction = mango.CreateSplAccountInstructionBuilder(
-    context, wallet, wrapped_sol_account.public_key())
-transaction.add(create_instruction.build())
-init_instruction = mango.InitializeSplAccountInstructionBuilder(
+create_instruction = mango.build_create_spl_account_instructions(
     context, wallet, wrapped_sol, wrapped_sol_account.public_key())
-transaction.add(init_instruction.build())
+transaction.instructions.extend(create_instruction)
 
-unwrap_instruction = mango.TransferSplTokensInstructionBuilder(
+unwrap_instruction = mango.build_transfer_spl_tokens_instructions(
     context, wallet, wrapped_sol, largest_token_account.address, wrapped_sol_account.public_key(), args.quantity)
-transaction.add(unwrap_instruction.build())
-close_instruction = mango.CloseSplAccountInstructionBuilder(context, wallet, wrapped_sol_account.public_key())
-transaction.add(close_instruction.build())
+transaction.instructions.extend(unwrap_instruction)
+
+close_instruction = mango.build_close_spl_account_instructions(context, wallet, wrapped_sol_account.public_key())
+transaction.instructions.extend(close_instruction)
 
 print("Unwrapping SOL:")
 print(f"    Temporary account: {wrapped_sol_account.public_key()}")

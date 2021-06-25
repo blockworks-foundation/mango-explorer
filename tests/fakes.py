@@ -18,6 +18,9 @@ class MockClient(Client):
     def get_token_accounts_by_owner(self, *args, **kwargs) -> RPCResponse:
         return RPCResponse(result={"value": self.token_accounts_by_owner})
 
+    def get_minimum_balance_for_rent_exemption(size, *args, **kwargs) -> RPCResponse:
+        return RPCResponse(result=27)
+
 
 def fake_public_key() -> PublicKey:
     return PublicKey("11111111111111111111111111111112")
@@ -55,6 +58,14 @@ def fake_market() -> market.Market:
     Container = NamedTuple("Container", [("own_address", PublicKey), ("vault_signer_nonce", int)])
     container = Container(own_address=fake_seeded_public_key("market address"), vault_signer_nonce=2)
     state = MarketState(container, fake_seeded_public_key("program ID"), 6, 6)
+    state.base_vault = lambda: fake_seeded_public_key("base vault")
+    state.quote_vault = lambda: fake_seeded_public_key("quote vault")
+    state.event_queue = lambda: fake_seeded_public_key("event queue")
+    state.request_queue = lambda: fake_seeded_public_key("request queue")
+    state.bids = lambda: fake_seeded_public_key("bids")
+    state.asks = lambda: fake_seeded_public_key("asks")
+    state.base_lot_size = lambda: 1
+    state.quote_lot_size = lambda: 1
     return market.Market(None, state)
 
 
