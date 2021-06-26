@@ -15,6 +15,7 @@
 
 
 import logging
+import typing
 
 from decimal import Decimal
 
@@ -46,12 +47,17 @@ class BalanceSheet:
             return Decimal(0)
         return self.assets / self.liabilities
 
+    @staticmethod
+    def report(values: typing.Sequence["BalanceSheet"], reporter: typing.Callable[[str], None] = print) -> None:
+        for value in values:
+            reporter(str(value))
+
     def __str__(self) -> str:
-        name = "«Unspecified»"
+        name = "«𝚄𝚗𝚜𝚙𝚎𝚌𝚒𝚏𝚒𝚎𝚍»"
         if self.token is not None:
             name = self.token.name
 
-        return f"""« BalanceSheet [{name}]:
+        return f"""« 𝙱𝚊𝚕𝚊𝚗𝚌𝚎𝚂𝚑𝚎𝚎𝚝 [{name}]:
     Assets :           {self.assets:>18,.8f}
     Settled Assets :   {self.settled_assets:>18,.8f}
     Unsettled Assets : {self.unsettled_assets:>18,.8f}

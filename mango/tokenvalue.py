@@ -69,7 +69,7 @@ class TokenValue:
         return value
 
     @staticmethod
-    def report(reporter: typing.Callable[[str], None], values: typing.Sequence["TokenValue"]) -> None:
+    def report(values: typing.Sequence["TokenValue"], reporter: typing.Callable[[str], None] = print) -> None:
         for value in values:
             reporter(f"{value.value:>18,.8f} {value.token.name}")
 
