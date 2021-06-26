@@ -16,9 +16,11 @@ import mango  # nopep8
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Shows the on-chain data of a Mango Markets Margin Account.")
-mango.Context.add_command_line_parameters(parser)
+mango.Context.add_command_line_parameters(parser, logging_default=logging.ERROR)
 parser.add_argument("--address", type=PublicKey, required=True,
                     help="Solana address of the Mango Markets Margin Account")
+parser.add_argument("--fetch-prices", action="store_true", default=False,
+                    help="fetches the current market prices and calculates value of tokens")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -31,6 +33,23 @@ try:
     margin_account = mango.MarginAccount.load(context, args.address, group)
 
     print(margin_account)
+
+    def indent_print(to_print):
+        print("    " + to_print.replace("\n", "\n    "))
+
+    if args.fetch_prices:
+        prices = group.fetch_token_prices(context)
+        print(f"\nCurrent prices in {group.shared_quote_token.token.name}:")
+        mango.TokenValue.report(prices)
+
+        print("\nIntrinsic Balances:")
+        mango.BalanceSheet.report(margin_account.get_intrinsic_balance_sheets(group), indent_print)
+
+        print(f"Balances priced in {group.shared_quote_token.token.name}:")
+        mango.BalanceSheet.report(margin_account.get_priced_balance_sheets(group, prices), indent_print)
+
+        print("Total:")
+        mango.BalanceSheet.report([margin_account.get_balance_sheet_totals(group, prices)], indent_print)
 except Exception as exception:
     logging.critical(f"show-margin-account stopped because of exception: {exception} - {traceback.format_exc()}")
 except:

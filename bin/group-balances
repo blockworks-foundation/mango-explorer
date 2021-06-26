@@ -39,7 +39,7 @@ try:
     group = mango.Group.load(context)
     balances = group.fetch_balances(context, address)
     print("Balances:")
-    mango.TokenValue.report(print, balances)
+    mango.TokenValue.report(balances)
 except Exception as exception:
     logging.critical(f"group-balances stopped because of exception: {exception} - {traceback.format_exc()}")
 except:

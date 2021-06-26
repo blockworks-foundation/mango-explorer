@@ -197,7 +197,7 @@ class ReportingAccountLiquidator(AccountLiquidator):
     def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[str]:
         balances_before = liquidatable_report.group.fetch_balances(self.context, self.wallet.address)
         self.logger.info("Wallet balances before:")
-        TokenValue.report(self.logger.info, balances_before)
+        TokenValue.report(balances_before, self.logger.info)
 
         self.logger.info(f"Margin account balances before:\n{liquidatable_report.balances}")
         self.logger.info(
@@ -242,7 +242,7 @@ class ReportingAccountLiquidator(AccountLiquidator):
 
             self.logger.info("Wallet Balances After:")
             balances_after = group_after.fetch_balances(self.context, self.wallet.address)
-            TokenValue.report(self.logger.info, balances_after)
+            TokenValue.report(balances_after, self.logger.info)
 
             liquidation_event = LiquidationEvent(datetime.datetime.now(),
                                                  self.liquidator_name,
@@ -256,7 +256,7 @@ class ReportingAccountLiquidator(AccountLiquidator):
 
             self.logger.info("Wallet Balances Changes:")
             changes = TokenValue.changes(balances_before, balances_after)
-            TokenValue.report(self.logger.info, changes)
+            TokenValue.report(changes, self.logger.info)
 
             self.liquidations_publisher.publish(liquidation_event)
 

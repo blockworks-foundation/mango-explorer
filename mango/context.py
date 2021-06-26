@@ -251,7 +251,7 @@ class Context:
     # This function centralises some of it to ensure consistency and readability.
     #
     @staticmethod
-    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+    def add_command_line_parameters(parser: argparse.ArgumentParser, logging_default=logging.INFO) -> None:
         parser.add_argument("--cluster", type=str, default=default_cluster,
                             help="Solana RPC cluster name")
         parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
@@ -270,7 +270,7 @@ class Context:
 
         # This isn't really a Context thing but we don't have a better place for it (yet) and we
         # don't want to duplicate it in every command.
-        parser.add_argument("--log-level", default=logging.INFO, type=lambda level: getattr(logging, level),
+        parser.add_argument("--log-level", default=logging_default, type=lambda level: getattr(logging, level),
                             help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 
     # This function is the converse of `add_command_line_parameters()` - it takes
