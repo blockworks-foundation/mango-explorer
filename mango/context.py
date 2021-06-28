@@ -143,29 +143,13 @@ class Context:
         # sys.maxsize, which could be lower on 32-bit systems or higher on 128-bit systems.
         return random.randrange(9223372036854775807)
 
-    @staticmethod
-    def _lookup_name_by_address(address: PublicKey, collection: typing.Dict[str, str]) -> typing.Optional[str]:
-        address_string = str(address)
-        for stored_name, stored_address in collection.items():
-            if stored_address == address_string:
-                return stored_name
-        return None
-
-    @staticmethod
-    def _lookup_address_by_name(name: str, collection: typing.Dict[str, str]) -> typing.Optional[PublicKey]:
-        for stored_name, stored_address in collection.items():
-            if stored_name == name:
-                return PublicKey(stored_address)
-        return None
-
     def lookup_group_name(self, group_address: PublicKey) -> str:
-        for name, values in MangoConstants[self.cluster]["mango_groups"].items():
-            if values["mango_group_pk"] == str(group_address):
-                return name
-        return "« Unknown Group »"
+        group_address_str = str(group_address)
+        for group in MangoConstants["groups"]:
+            if group["cluster"] == self.cluster and group["publicKey"] == group_address_str:
+                return group["name"]
 
-    def lookup_oracle_name(self, token_address: PublicKey) -> str:
-        return Context._lookup_name_by_address(token_address, MangoConstants[self.cluster]["oracles"]) or "« Unknown Oracle »"
+        return "« Unknown Group »"
 
     def wait_for_confirmation(self, transaction_id: str, max_wait_in_seconds: int = 60) -> typing.Optional[typing.Dict]:
         self.logger.info(

@@ -97,7 +97,8 @@ class Group(AddressableAccount):
                 f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP.sizeof()}")
 
         layout = layouts.GROUP.parse(data)
-        return Group.from_layout(layout, "merps_test_v3", account_info, Version.V1, context.token_lookup, context.market_lookup)
+        name = context.lookup_group_name(account_info.address)
+        return Group.from_layout(layout, name, account_info, Version.V1, context.token_lookup, context.market_lookup)
 
     @staticmethod
     def load(context: Context, address: typing.Optional[PublicKey] = None) -> "Group":
