@@ -71,30 +71,32 @@ _Alternatively_ if you're using `podman` instead of `docker`, run this:
 
 # 5. 👛 Create The Wallet
 
-**Note: `solana-py` [generates 32-byte secret keys but can use 64-byte secret keys](https://github.com/michaelhly/solana-py/issues/47). This can cause problems with other software - some wallets won't accept 32-byte private keys and instead require 64-byte ones. If you want to be able to use a wallet with this account, it is recommended you create the account yourself (using your wallet?) and place the 64-byte private key in the id.json manually.**
-
 Run the following command to create your wallet:
 ```
-# mango-explorer create-wallet --overwrite
+# solana-keygen new --force --outfile /var/mango-explorer/id.json
 ```
-This will output a lot of text, like:
+This will ask you for a passphrase to protect your wallet - just press ENTER for no passphrase (`mango-explorer` doesn't work with passphrases on key files yet and no-one has asked for it).
+
+The output will be something like the following:
 ```
-2021-05-08 14:14:22 ⚠ root         Failed to load default wallet from file 'id.json' - exception: Expecting value: line 1 column 1 (char 0)
-2021-05-08 14:14:22 ⚠ root
-⚠ WARNING ⚠
+Generating a new keypair
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+For added security, enter a BIP39 passphrase
 
-    🥭 Mango Markets: https://mango.markets
-    📄 Documentation: https://docs.mango.markets/
-    💬 Discord: https://discord.gg/67jySBhxrg
-    🐦 Twitter: https://twitter.com/mangomarkets
-    🚧 Github: https://github.com/blockworks-foundation
-    📧 Email: mailto:hello@blockworks.foundation
+NOTE! This passphrase improves security of the recovery seed phrase NOT the
+keypair file itself, which is stored as insecure plain text
 
-Wallet for address 48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB created in file: 'id.json'.
+BIP39 Passphrase (empty for none):
+
+Wrote new keypair to /Users/geoff/idx.json
+=========================================================================
+pubkey: uVBU7j2VGqNKLrYFfCcbU71sopkD4nW58Rk7CTyEYFm
+=========================================================================
+Save this seed phrase to recover your new keypair:
+artist stadium topple few dawn quit group worry mother banner shadow term
+=========================================================================
 ```
-That's fine - that's what a successful run of the command looks like.
+That's what a successful run of the command looks like.
 
 This will create a Solana wallet and write its secret key to /var/mango-explorer/id.json. **Looking after this file is entirely your responsibility. If you lose this file, you lose the private key for all the funds in the wallet. If you give it to someone else you give them the entire contents of your wallet.**
 
@@ -103,9 +105,9 @@ Once successfully created, if you look at the file you’ll see the bytes of you
 It should look something like this, but with different numbers:
 ```
 # cat /var/mango-explorer/id.json
-[248, 239, 243, 124, 6, 15, 150, 183, 123, 142, 242, 28, 140, 246, 204, 228, 202, 128, 241, 28, 133, 222, 28, 210, 131, 115, 94, 142, 22, 93, 253, 221]
+[110,49,211,169,16,1,52,50,225,133,73,175,67,185,69,124,79,194,153,3,53,41,204,180,255,80,44,140,43,222,6,53,13,114,16,218,159,70,85,72,57,243,132,149,4,117,23,61,10,101,43,62,61,1,216,197,55,59,237,8,106,171,135,60]
 ```
-Yes, that's the actual secret key of the account used to run the examples for this quickstart.
+Yes, that's the actual secret key of the account.
 
 # 6. 💰 Add Some SOL
 
