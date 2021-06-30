@@ -501,9 +501,10 @@ def build_compound_spot_place_order_instructions(context: Context, wallet: Walle
                                                  fee_discount_address: typing.Optional[PublicKey]) -> typing.Sequence[TransactionInstruction]:
     place_order = build_spot_place_order_instructions(
         context, wallet, group, account, market, source, open_orders_address, order_type, side, price, quantity, client_id, fee_discount_address)
-    open_order_accounts = market.find_open_orders_accounts_for_owner(wallet.address)
-    open_order_addresses = list(oo.address for oo in open_order_accounts)
-    consume_events = build_serum_consume_events_instructions(context, wallet, market, open_order_addresses)
+
+    open_orders_addresses = list([oo for oo in account.spot_open_orders if oo is not None])
+
+    consume_events = build_serum_consume_events_instructions(context, wallet, market, open_orders_addresses)
 
     quote_token_info = group.shared_quote_token
     base_token_infos = [
@@ -518,10 +519,11 @@ def build_compound_spot_place_order_instructions(context: Context, wallet: Walle
 
     settle: typing.Sequence[TransactionInstruction] = []
     if base_token_account is not None and quote_token_account is not None:
+        open_order_accounts = market.find_open_orders_accounts_for_owner(wallet.address)
         settlement_open_orders = [oo for oo in open_order_accounts if oo.market == market.state.public_key()]
         if len(settlement_open_orders) > 0 and settlement_open_orders[0] is not None:
             settle = build_serum_settle_instructions(
-                context, wallet, market, settlement_open_orders[0].address, base_token_account.address, quote_token_account.address)
+                context, wallet, market, open_orders_address, base_token_account.address, quote_token_account.address)
 
     return [*place_order, *consume_events, *settle]
 
