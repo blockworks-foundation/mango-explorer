@@ -14,29 +14,25 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import abc
-import logging
+from solana.publickey import PublicKey
 
+from .market import Market
 from .token import Token
 
 
-# # 🥭 Market class
+# # 🥭 SerumMarket class
 #
-# This class describes a crypto market. It *must* have a base token and a quote token.
+# This class encapsulates our knowledge of a Serum spot market.
 #
 
-class Market(metaclass=abc.ABCMeta):
-    def __init__(self, base: Token, quote: Token):
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.base: Token = base
-        self.quote: Token = quote
 
-    @property
-    def symbol(self) -> str:
-        return f"{self.base.symbol}/{self.quote.symbol}"
+class SerumMarket(Market):
+    def __init__(self, base: Token, quote: Token, address: PublicKey):
+        super().__init__(base, quote)
+        self.address: PublicKey = address
 
     def __str__(self) -> str:
-        return f"« 𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} »"
+        return f"« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol}: {self.address} »"
 
     def __repr__(self) -> str:
         return f"{self}"

@@ -23,8 +23,11 @@ from .market import Market
 from .marketoperations import MarketOperations, NullMarketOperations
 from .perpmarket import PerpMarket
 from .perpmarketoperations import PerpMarketOperations
-# from .serummarketoperations import SerumMarketOperations
+from .perpsmarket import PerpsMarket
+from .serummarket import SerumMarket
+from .serummarketoperations import SerumMarketOperations
 from .spotmarket import SpotMarket
+from .spotmarketoperations import SpotMarketOperations
 from .wallet import Wallet
 
 # # 🥭 create_market_operations
@@ -35,9 +38,13 @@ from .wallet import Wallet
 def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, market: Market, reporter: typing.Callable[[str], None]) -> MarketOperations:
     if dry_run:
         return NullMarketOperations(market.symbol, reporter)
+    elif isinstance(market, SerumMarket):
+        return SerumMarketOperations(context, wallet, market, reporter)
     elif isinstance(market, SpotMarket):
-        #     return SerumMarketOperations(context, wallet, market, reporter)
-        # elif isinstance(market, PerpMarket):
+        group = Group.load(context, market.group_address)
+        margin_accounts = Account.load_all_for_owner(context, wallet.address, group)
+        return SpotMarketOperations(context, wallet, group, margin_accounts[0], market, reporter)
+    elif isinstance(market, PerpsMarket):
         group = Group.load(context, context.group_id)
         margin_accounts = Account.load_all_for_owner(context, wallet.address, group)
         perp_market_info = group.perp_markets[0]

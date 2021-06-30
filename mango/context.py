@@ -50,7 +50,7 @@ from .tokenlookup import TokenLookup, CompoundTokenLookup
 # * GROUP_NAME (defaults to: BTC_ETH_USDT)
 #
 
-_default_group_data = MangoConstants["groups"][2]
+_default_group_data = MangoConstants["groups"][0]
 default_cluster = os.environ.get("CLUSTER") or _default_group_data["cluster"]
 default_cluster_url = os.environ.get("CLUSTER_URL") or MangoConstants["cluster_urls"][default_cluster]
 
@@ -84,14 +84,17 @@ class Context:
         self.transaction_options: TxOpts = TxOpts(preflight_commitment=self.commitment)
         self.encoding: str = "base64"
         ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(cluster, group_name)
-        spl_token_lookup: TokenLookup = SplTokenLookup.load(token_filename)
-        all_token_lookup: TokenLookup = CompoundTokenLookup(
-            [ids_json_token_lookup, spl_token_lookup])
+        all_token_lookup = ids_json_token_lookup
+        if cluster == "mainnet-beta":
+            spl_token_lookup: TokenLookup = SplTokenLookup.load(token_filename)
+            all_token_lookup = CompoundTokenLookup([ids_json_token_lookup, spl_token_lookup])
         self.token_lookup: TokenLookup = all_token_lookup
 
         ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(cluster)
-        serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(token_filename)
-        all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, serum_market_lookup])
+        all_market_lookup = ids_json_market_lookup
+        if cluster == "mainnet-beta":
+            serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(token_filename)
+            all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, serum_market_lookup])
         self.market_lookup: MarketLookup = all_market_lookup
 
         # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451

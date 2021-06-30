@@ -1,5 +1,5 @@
 from .context import mango
-from .fakes import fake_context, fake_public_key
+from .fakes import fake_public_key, fake_token
 
 from decimal import Decimal
 
@@ -7,16 +7,15 @@ import datetime
 
 
 def test_liquidation_event():
-    token_lookup = fake_context().token_lookup
     balances_before = [
-        mango.TokenValue(token_lookup.find_by_symbol("ETH"), Decimal(1)),
-        mango.TokenValue(token_lookup.find_by_symbol("BTC"), Decimal("0.1")),
-        mango.TokenValue(token_lookup.find_by_symbol("USDT"), Decimal(1000))
+        mango.TokenValue(fake_token("ETH"), Decimal(1)),
+        mango.TokenValue(fake_token("BTC"), Decimal("0.1")),
+        mango.TokenValue(fake_token("USDT"), Decimal(1000))
     ]
     balances_after = [
-        mango.TokenValue(token_lookup.find_by_symbol("ETH"), Decimal(1)),
-        mango.TokenValue(token_lookup.find_by_symbol("BTC"), Decimal("0.05")),
-        mango.TokenValue(token_lookup.find_by_symbol("USDT"), Decimal(2000))
+        mango.TokenValue(fake_token("ETH"), Decimal(1)),
+        mango.TokenValue(fake_token("BTC"), Decimal("0.05")),
+        mango.TokenValue(fake_token("USDT"), Decimal(2000))
     ]
     timestamp = datetime.datetime(2021, 5, 17, 12, 20, 56)
     event = mango.LiquidationEvent(timestamp, "Liquidator", "Group", True, "signature",

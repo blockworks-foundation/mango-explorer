@@ -22,7 +22,7 @@ from solana.publickey import PublicKey
 
 from .market import Market
 from .marketlookup import MarketLookup
-from .spotmarket import SpotMarket
+from .serummarket import SerumMarket
 from .token import Token
 
 
@@ -119,7 +119,7 @@ class SerumMarketLookup(MarketLookup):
                 f"Could not find market with quote token '{quote.symbol}'. Only markets based on USDC or USDT are supported.")
             return None
 
-        return SpotMarket(base, quote, market_address)
+        return SerumMarket(base, quote, market_address)
 
     def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
         address_string: str = str(address)
@@ -136,7 +136,7 @@ class SerumMarketLookup(MarketLookup):
                             raise Exception("Could not load token data for USDC (which should always be present).")
                         quote = Token(quote_data["symbol"], quote_data["name"], PublicKey(
                             quote_data["address"]), Decimal(quote_data["decimals"]))
-                        return SpotMarket(base, quote, market_address)
+                        return SerumMarket(base, quote, market_address)
                 if "serumV3Usdt" in token_data["extensions"]:
                     if token_data["extensions"]["serumV3Usdt"] == address_string:
                         market_address_string = token_data["extensions"]["serumV3Usdt"]
@@ -148,14 +148,14 @@ class SerumMarketLookup(MarketLookup):
                             raise Exception("Could not load token data for USDT (which should always be present).")
                         quote = Token(quote_data["symbol"], quote_data["name"], PublicKey(
                             quote_data["address"]), Decimal(quote_data["decimals"]))
-                        return SpotMarket(base, quote, market_address)
+                        return SerumMarket(base, quote, market_address)
         return None
 
     def all_markets(self) -> typing.Sequence[Market]:
         usdt = SerumMarketLookup._find_token_by_symbol_or_error("USDT", self.token_data)
         usdc = SerumMarketLookup._find_token_by_symbol_or_error("USDC", self.token_data)
 
-        all_markets: typing.List[SpotMarket] = []
+        all_markets: typing.List[SerumMarket] = []
         for token_data in self.token_data["tokens"]:
             if "extensions" in token_data:
                 if "serumV3Usdc" in token_data["extensions"]:
@@ -163,12 +163,12 @@ class SerumMarketLookup(MarketLookup):
                     market_address = PublicKey(market_address_string)
                     base = Token(token_data["symbol"], token_data["name"], PublicKey(
                         token_data["address"]), Decimal(token_data["decimals"]))
-                    all_markets += [SpotMarket(base, usdc, market_address)]
+                    all_markets += [SerumMarket(base, usdc, market_address)]
                 if "serumV3Usdt" in token_data["extensions"]:
                     market_address_string = token_data["extensions"]["serumV3Usdt"]
                     market_address = PublicKey(market_address_string)
                     base = Token(token_data["symbol"], token_data["name"], PublicKey(
                         token_data["address"]), Decimal(token_data["decimals"]))
-                    all_markets += [SpotMarket(base, usdt, market_address)]
+                    all_markets += [SerumMarket(base, usdt, market_address)]
 
         return all_markets

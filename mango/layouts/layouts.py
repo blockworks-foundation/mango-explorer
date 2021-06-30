@@ -600,7 +600,7 @@ CANCEL_PERP_ORDER = construct.Struct(
 #     quantity: u64,
 #     allow_borrow: bool,
 # },
-WITHDRAW_V3 = construct.Struct(
+WITHDRAW = construct.Struct(
     "variant" / construct.Const(14, construct.BytesInteger(4, swapped=True)),
 
     "quantity" / DecimalAdapter(),
@@ -608,17 +608,74 @@ WITHDRAW_V3 = construct.Struct(
 )
 
 
+# /// Place an order on the Serum Dex using Mango account
+# /// Accounts expected by this instruction (22+openorders):
+# { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+# { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
+# { isSigner: true, isWritable: false, pubkey: ownerPk },
+# { isSigner: false, isWritable: false, pubkey: mangoCachePk },
+# { isSigner: false, isWritable: false, pubkey: serumDexPk },
+# { isSigner: false, isWritable: true, pubkey: spotMarketPk },
+# { isSigner: false, isWritable: true, pubkey: bidsPk },
+# { isSigner: false, isWritable: true, pubkey: asksPk },
+# { isSigner: false, isWritable: true, pubkey: requestQueuePk },
+# { isSigner: false, isWritable: true, pubkey: eventQueuePk },
+# { isSigner: false, isWritable: true, pubkey: spotMktBaseVaultPk },
+# { isSigner: false, isWritable: true, pubkey: spotMktQuoteVaultPk },
+# { isSigner: false, isWritable: false, pubkey: baseRootBankPk },
+# { isSigner: false, isWritable: true, pubkey: baseNodeBankPk },
+# { isSigner: false, isWritable: true, pubkey: quoteRootBankPk },
+# { isSigner: false, isWritable: true, pubkey: quoteNodeBankPk },
+# { isSigner: false, isWritable: true, pubkey: quoteVaultPk },
+# { isSigner: false, isWritable: true, pubkey: baseVaultPk },
+# { isSigner: false, isWritable: false, pubkey: TOKEN_PROGRAM_ID },
+# { isSigner: false, isWritable: false, pubkey: signerPk },
+# { isSigner: false, isWritable: false, pubkey: SYSVAR_RENT_PUBKEY },
+# { isSigner: false, isWritable: false, pubkey: dexSignerPk },
+# ...openOrders.map((pubkey) => ({
+#   isSigner: false,
+#   isWritable: true, // TODO: only pass the one writable you are going to place the order on
+#   pubkey,
+# })),
+PLACE_SPOT_ORDER = construct.Struct(
+    "variant" / construct.Const(9, construct.BytesInteger(4, swapped=True)),  # 4
+
+    'side' / DecimalAdapter(4),  # 8
+    "limit_price" / DecimalAdapter(),  # 16
+    'max_base_quantity' / DecimalAdapter(),  # 24
+    'max_quote_quantity' / DecimalAdapter(),  # 32
+    'self_trade_behavior' / DecimalAdapter(4),  # 36
+    'order_type' / DecimalAdapter(4),  # 40
+    'client_id' / DecimalAdapter(),  # 48
+    'limit' / DecimalAdapter(2),  # 50
+)
+
+# /// Cancel an order using dex instruction
+# ///
+# /// Accounts expected by this instruction ():
+# ///
+# CancelSpotOrder {
+#     order: serum_dex::instruction::CancelOrderInstructionV2,
+# },
+CANCEL_SPOT_ORDER = construct.Struct(
+    "variant" / construct.Const(20, construct.BytesInteger(4, swapped=True)),
+
+    'side' / DecimalAdapter(4),
+    "order_id" / DecimalAdapter(16)
+)
+
+
 InstructionParsersByVariant = {
     0: None,  # INIT_MANGO_GROUP,
     1: INIT_MANGO_ACCOUNT,  # INIT_MANGO_ACCOUNT,
     2: None,  # DEPOSIT,
-    3: WITHDRAW_V3,  # WITHDRAW,
+    3: WITHDRAW,  # WITHDRAW,
     4: None,  # ADD_SPOT_MARKET,
     5: None,  # ADD_TO_BASKET,
     6: None,  # BORROW,
     7: None,  # CACHE_PRICES,
     8: None,  # CACHE_ROOT_BANKS,
-    9: None,  # PLACE_SPOT_ORDER,
+    9: PLACE_SPOT_ORDER,  # PLACE_SPOT_ORDER,
     10: None,  # ADD_ORACLE,
     11: None,  # ADD_PERP_MARKET,
     12: PLACE_PERP_ORDER,  # PLACE_PERP_ORDER,
@@ -629,7 +686,7 @@ InstructionParsersByVariant = {
     17: None,  # UPDATE_FUNDING,
     18: None,  # SET_ORACLE,
     19: None,  # SETTLE_FUNDS,
-    20: None,  # CANCEL_SPOT_ORDER,
+    20: CANCEL_SPOT_ORDER,  # CANCEL_SPOT_ORDER,
     21: None,  # UPDATE_ROOT_BANK,
     22: None,  # SETTLE_PNL,
     23: None,  # SETTLE_BORROW,

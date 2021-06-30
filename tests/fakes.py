@@ -34,8 +34,8 @@ def fake_account_info(address: PublicKey = fake_public_key(), executable: bool =
     return mango.AccountInfo(address, executable, lamports, owner, rent_epoch, data)
 
 
-def fake_token() -> mango.Token:
-    return mango.Token("FAKE", "Fake Token", fake_seeded_public_key("fake token"), Decimal(6))
+def fake_token(symbol: str = "FAKE") -> mango.Token:
+    return mango.Token(symbol, f"Fake Token ({symbol})", fake_seeded_public_key(f"fake token ({symbol})"), Decimal(6))
 
 
 def fake_token_info() -> mango.TokenInfo:

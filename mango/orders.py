@@ -15,10 +15,12 @@
 
 
 import enum
+import pyserum.enums
 
 import typing
 
 from decimal import Decimal
+from pyserum.market.types import Order as SerumOrder
 from solana.publickey import PublicKey
 
 
@@ -79,3 +81,12 @@ class Order(typing.NamedTuple):
     side: Side
     price: Decimal
     size: Decimal
+
+    @staticmethod
+    def from_serum_order(serum_order: SerumOrder) -> "Order":
+        price = Decimal(serum_order.info.price)
+        size = Decimal(serum_order.info.size)
+        side = Side.BUY if serum_order.side == pyserum.enums.Side.BUY else Side.SELL
+        order = Order(id=serum_order.order_id, side=side, price=price, size=size,
+                      client_id=serum_order.client_id, owner=serum_order.open_order_address)
+        return order

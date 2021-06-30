@@ -32,8 +32,10 @@ from .oraclefactory import create_oracle_provider
 from .perpmarket import PerpMarket
 from .perpmarketinfo import PerpMarketInfo
 from .perpmarketoperations import PerpMarketOperations
+from .perpsmarket import PerpsMarket
 from .retrier import RetryWithPauses, retry_context
 from .rootbank import NodeBank, RootBank
+from .serummarket import SerumMarket
 from .serummarketlookup import SerumMarketLookup
 from .serummarketoperations import SerumMarketOperations
 from .spltokenlookup import SplTokenLookup

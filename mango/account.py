@@ -114,8 +114,8 @@ class Account(AddressableAccount):
         borrows = ", ".join([f"{borrow}" for borrow in self.borrows])
         spot_open_orders = ", ".join([f"{oo}" for oo in self.spot_open_orders if oo is not None])
         perp_accounts = ", ".join(
-            [f"{perp}" for perp in self.perp_accounts if perp.open_orders.is_free_bits != 0xFFFFFFFF])
-        return f"""« 𝙼𝚎𝚛𝚙𝚜𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {self.version} [{self.address}]
+            [f"{perp}".replace("\n", "\n        ") for perp in self.perp_accounts if perp.open_orders.is_free_bits != 0xFFFFFFFF])
+        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {self.version} [{self.address}]
     {self.meta_data}
     Owner: {self.owner}
     Group: {self.group}

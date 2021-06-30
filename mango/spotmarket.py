@@ -27,9 +27,10 @@ from .token import Token
 
 
 class SpotMarket(Market):
-    def __init__(self, base: Token, quote: Token, address: PublicKey):
+    def __init__(self, base: Token, quote: Token, address: PublicKey, group_address: PublicKey):
         super().__init__(base, quote)
         self.address: PublicKey = address
+        self.group_address: PublicKey = group_address
 
     def __str__(self) -> str:
         return f"« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol}: {self.address} »"

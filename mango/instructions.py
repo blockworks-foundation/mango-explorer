@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
+import pyserum.enums
 import typing
 
 from decimal import Decimal
@@ -24,7 +25,7 @@ from pyserum.open_orders_account import make_create_account_instruction
 from solana.account import Account as SolanaAccount
 from solana.publickey import PublicKey
 from solana.system_program import CreateAccountParams, create_account
-from solana.sysvar import SYSVAR_CLOCK_PUBKEY
+from solana.sysvar import SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
 from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, initialize_account, transfer2
@@ -145,6 +146,7 @@ def build_serum_consume_events_instructions(context: Context, wallet: Wallet, ma
         market=market.state.public_key(),
         event_queue=market.state.event_queue(),
         open_orders_accounts=open_orders_addresses,
+        program_id=context.dex_program_id,
         limit=limit
     ))
 
@@ -369,9 +371,202 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
             #                    pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in margin_account.spot_open_orders])
         ],
         program_id=context.program_id,
-        data=layouts.WITHDRAW_V3.build({
+        data=layouts.WITHDRAW.build({
             "quantity": value,
             "allow_borrow": allow_borrow
         })
     )
     return [withdraw]
+
+
+# # 🥭 build_mango_place_order_instructions function
+#
+# Creates a Mango order-placing instruction using the Serum instruction as the inner instruction.
+#
+
+def build_spot_place_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account,
+                                        market: Market, source: PublicKey, open_orders_address: PublicKey,
+                                        order_type: OrderType, side: Side, price: Decimal,
+                                        quantity: Decimal, client_id: int,
+                                        fee_discount_address: typing.Optional[PublicKey]) -> typing.Sequence[TransactionInstruction]:
+
+    serum_order_type = pyserum.enums.OrderType.POST_ONLY if order_type == OrderType.POST_ONLY else pyserum.enums.OrderType.IOC if order_type == OrderType.IOC else pyserum.enums.OrderType.LIMIT
+    serum_side = pyserum.enums.Side.BUY if side == Side.BUY else pyserum.enums.Side.SELL
+    intrinsic_price = market.state.price_number_to_lots(float(price))
+    max_base_quantity = market.state.base_size_number_to_lots(float(quantity))
+    max_quote_quantity = market.state.base_size_number_to_lots(
+        float(quantity)) * market.state.quote_lot_size() * market.state.price_number_to_lots(float(price))
+
+    quote_token_info = group.shared_quote_token
+    base_token_infos = [
+        token_info for token_info in group.base_tokens if token_info is not None and token_info.token.mint == market.state.base_mint()]
+    if len(base_token_infos) != 1:
+        raise Exception(
+            f"Could not find base token info for group {group.address} - length was {len(base_token_infos)} when it should be 1.")
+    base_token_info = base_token_infos[0]
+
+    vault_signer = PublicKey.create_program_address(
+        [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+        market.state.program_id(),
+    )
+
+    base_root_bank = RootBank.load(context, base_token_info.root_bank)
+    base_node_bank = base_root_bank.pick_node_bank(context)
+    quote_root_bank = RootBank.load(context, quote_token_info.root_bank)
+    quote_node_bank = quote_root_bank.pick_node_bank(context)
+
+    # /// Accounts expected by this instruction (22+openorders):
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
+    # { isSigner: true, isWritable: false, pubkey: ownerPk },
+    # { isSigner: false, isWritable: false, pubkey: mangoCachePk },
+    # { isSigner: false, isWritable: false, pubkey: serumDexPk },
+    # { isSigner: false, isWritable: true, pubkey: spotMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: bidsPk },
+    # { isSigner: false, isWritable: true, pubkey: asksPk },
+    # { isSigner: false, isWritable: true, pubkey: requestQueuePk },
+    # { isSigner: false, isWritable: true, pubkey: eventQueuePk },
+    # { isSigner: false, isWritable: true, pubkey: spotMktBaseVaultPk },
+    # { isSigner: false, isWritable: true, pubkey: spotMktQuoteVaultPk },
+    # { isSigner: false, isWritable: false, pubkey: baseRootBankPk },
+    # { isSigner: false, isWritable: true, pubkey: baseNodeBankPk },
+    # { isSigner: false, isWritable: true, pubkey: quoteRootBankPk },
+    # { isSigner: false, isWritable: true, pubkey: quoteNodeBankPk },
+    # { isSigner: false, isWritable: true, pubkey: quoteVaultPk },
+    # { isSigner: false, isWritable: true, pubkey: baseVaultPk },
+    # { isSigner: false, isWritable: false, pubkey: TOKEN_PROGRAM_ID },
+    # { isSigner: false, isWritable: false, pubkey: signerPk },
+    # { isSigner: false, isWritable: false, pubkey: SYSVAR_RENT_PUBKEY },
+    # { isSigner: false, isWritable: false, pubkey: dexSignerPk },
+    # ...openOrders.map((pubkey) => ({
+    #   isSigner: false,
+    #   isWritable: true, // TODO: only pass the one writable you are going to place the order on
+    #   pubkey,
+    # })),
+    fee_discount_address_meta: typing.List[AccountMeta] = []
+    if fee_discount_address is not None:
+        fee_discount_address_meta = [AccountMeta(is_signer=False, is_writable=False, pubkey=fee_discount_address)]
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=context.dex_program_id),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.public_key()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.bids()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.asks()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.request_queue()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.event_queue()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.base_vault()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.quote_vault()),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=base_root_bank.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=base_node_bank.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=quote_root_bank.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=quote_node_bank.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=quote_node_bank.vault),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=base_node_bank.vault),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
+                *list([AccountMeta(is_signer=False, is_writable=(oo_address == open_orders_address),
+                                   pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders]),
+                *fee_discount_address_meta
+            ],
+            program_id=context.program_id,
+            data=layouts.PLACE_SPOT_ORDER.build(
+                dict(
+                    side=serum_side,
+                    limit_price=intrinsic_price,
+                    max_base_quantity=max_base_quantity,
+                    max_quote_quantity=max_quote_quantity,
+                    self_trade_behavior=pyserum.enums.SelfTradeBehavior.DECREMENT_TAKE,
+                    order_type=serum_order_type,
+                    client_id=client_id,
+                    limit=65535,
+                )
+            )
+        )
+    ]
+
+    return instructions
+
+
+def build_compound_spot_place_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account,
+                                                 market: Market, source: PublicKey, open_orders_address: PublicKey,
+                                                 order_type: OrderType, side: Side, price: Decimal,
+                                                 quantity: Decimal, client_id: int,
+                                                 fee_discount_address: typing.Optional[PublicKey]) -> typing.Sequence[TransactionInstruction]:
+    place_order = build_spot_place_order_instructions(
+        context, wallet, group, account, market, source, open_orders_address, order_type, side, price, quantity, client_id, fee_discount_address)
+    open_order_accounts = market.find_open_orders_accounts_for_owner(wallet.address)
+    open_order_addresses = list(oo.address for oo in open_order_accounts)
+    consume_events = build_serum_consume_events_instructions(context, wallet, market, open_order_addresses)
+
+    quote_token_info = group.shared_quote_token
+    base_token_infos = [
+        token_info for token_info in group.base_tokens if token_info is not None and token_info.token.mint == market.state.base_mint()]
+    if len(base_token_infos) != 1:
+        raise Exception(
+            f"Could not find base token info for group {group.address} - length was {len(base_token_infos)} when it should be 1.")
+    base_token_info = base_token_infos[0]
+    base_token_account = TokenAccount.fetch_largest_for_owner_and_token(context, wallet.address, base_token_info.token)
+    quote_token_account = TokenAccount.fetch_largest_for_owner_and_token(
+        context, wallet.address, quote_token_info.token)
+
+    settle: typing.Sequence[TransactionInstruction] = []
+    if base_token_account is not None and quote_token_account is not None:
+        settlement_open_orders = [oo for oo in open_order_accounts if oo.market == market.state.public_key()]
+        if len(settlement_open_orders) > 0 and settlement_open_orders[0] is not None:
+            settle = build_serum_settle_instructions(
+                context, wallet, market, settlement_open_orders[0].address, base_token_account.address, quote_token_account.address)
+
+    return [*place_order, *consume_events, *settle]
+
+
+# # 🥭 build_cancel_perp_order_instruction function
+#
+# Builds the instructions necessary for cancelling a perp order.
+#
+
+
+def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: Market, order: Order, open_orders_address: PublicKey) -> typing.Sequence[TransactionInstruction]:
+    # { buy: 0, sell: 1 }
+    raw_side: int = 1 if order.side == Side.SELL else 0
+
+    # Accounts expected by this instruction:
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: true, isWritable: false, pubkey: ownerPk },
+    # { isSigner: false, isWritable: false, pubkey: mangoAccountPk },
+    # { isSigner: false, isWritable: false, pubkey: dexProgramId },
+    # { isSigner: false, isWritable: true, pubkey: spotMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: bidsPk },
+    # { isSigner: false, isWritable: true, pubkey: asksPk },
+    # { isSigner: false, isWritable: true, pubkey: openOrdersPk },
+    # { isSigner: false, isWritable: false, pubkey: signerKey },
+    # { isSigner: false, isWritable: true, pubkey: eventQueuePk },
+
+    return [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=account.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=context.dex_program_id),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.public_key()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.bids()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.asks()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=open_orders_address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.event_queue())
+            ],
+            program_id=context.program_id,
+            data=layouts.CANCEL_SPOT_ORDER.build(
+                {
+                    "order_id": order.id,
+                    "side": raw_side
+                })
+        )
+    ]

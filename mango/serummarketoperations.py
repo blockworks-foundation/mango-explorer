@@ -19,14 +19,13 @@ import typing
 
 from decimal import Decimal
 from pyserum.market import Market
-from pyserum.market.types import Order as SerumOrder
 from solana.rpc.types import TxOpts
 
 from .context import Context
 from .marketoperations import MarketOperations
 from .openorders import OpenOrders
 from .orders import Order, OrderType, Side
-from .spotmarket import SpotMarket
+from .serummarket import SerumMarket
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
 
@@ -37,16 +36,16 @@ from .wallet import Wallet
 #
 
 class SerumMarketOperations(MarketOperations):
-    def __init__(self, context: Context, wallet: Wallet, spot_market: SpotMarket, reporter: typing.Callable[[str], None] = None):
+    def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket, reporter: typing.Callable[[str], None] = None):
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
-        self.spot_market: SpotMarket = spot_market
-        self.market: Market = Market.load(context.client, spot_market.address, context.dex_program_id)
+        self.serum_market: SerumMarket = serum_market
+        self.market: Market = Market.load(context.client, serum_market.address, context.dex_program_id)
         all_open_orders = OpenOrders.load_for_market_and_owner(
-            context, spot_market.address, wallet.address, context.dex_program_id, spot_market.base.decimals, spot_market.quote.decimals)
+            context, serum_market.address, wallet.address, context.dex_program_id, serum_market.base.decimals, serum_market.quote.decimals)
         if len(all_open_orders) == 0:
-            raise Exception(f"No OpenOrders account available for market {spot_market}.")
+            raise Exception(f"No OpenOrders account available for market {serum_market}.")
         self.open_orders = all_open_orders[0]
 
         def report(text):
@@ -63,7 +62,7 @@ class SerumMarketOperations(MarketOperations):
 
     def cancel_order(self, order: Order) -> str:
         self.reporter(
-            f"Cancelling order {order.id} in openorders {self.open_orders.address} on market {self.spot_market.symbol}.")
+            f"Cancelling order {order.id} in openorders {self.open_orders.address} on market {self.serum_market.symbol}.")
         try:
             response = self.market.cancel_order_by_client_id(
                 self.wallet.account, self.open_orders.address, order.id,
@@ -75,12 +74,12 @@ class SerumMarketOperations(MarketOperations):
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
-        report: str = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.spot_market.symbol} with ID {client_id}."
+        report: str = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.serum_market.symbol} with ID {client_id}."
         self.logger.info(report)
         self.reporter(report)
         serum_order_type = pyserum.enums.OrderType.POST_ONLY if order_type == OrderType.POST_ONLY else pyserum.enums.OrderType.IOC if order_type == OrderType.IOC else pyserum.enums.OrderType.LIMIT
         serum_side = pyserum.enums.Side.BUY if side == Side.BUY else pyserum.enums.Side.SELL
-        payer_token = self.spot_market.quote if side == Side.BUY else self.spot_market.base
+        payer_token = self.serum_market.quote if side == Side.BUY else self.serum_market.base
         token_account = TokenAccount.fetch_largest_for_owner_and_token(self.context, self.wallet.address, payer_token)
         if token_account is None:
             raise Exception(f"Could not find payer token account for token {payer_token.symbol}.")
@@ -91,23 +90,15 @@ class SerumMarketOperations(MarketOperations):
         self.context.unwrap_or_raise_exception(response)
         return Order(id=0, side=side, price=price, size=size, client_id=client_id, owner=self.open_orders.address)
 
-    def _serum_order_to_order(serum_order: SerumOrder) -> Order:
-        price = Decimal(serum_order.info.price)
-        size = Decimal(serum_order.info.size)
-        side = Side.BUY if serum_order.side == pyserum.enums.Side.BUY else Side.SELL
-        order = Order(id=serum_order.order_id, side=side, price=price, size=size,
-                      client_id=serum_order.client_id, owner=serum_order.open_order_address)
-        return order
-
     def load_orders(self) -> typing.Sequence[Order]:
         asks = self.market.load_asks()
         orders: typing.List[Order] = []
         for serum_order in asks:
-            orders += [SerumMarketOperations._serum_order_to_order(serum_order)]
+            orders += [Order.from_serum_order(serum_order)]
 
         bids = self.market.load_bids()
         for serum_order in bids:
-            orders += [SerumMarketOperations._serum_order_to_order(serum_order)]
+            orders += [Order.from_serum_order(serum_order)]
 
         return orders
 
@@ -115,9 +106,9 @@ class SerumMarketOperations(MarketOperations):
         serum_orders = self.market.load_orders_for_owner(self.wallet.address)
         orders: typing.List[Order] = []
         for serum_order in serum_orders:
-            orders += [SerumMarketOperations._serum_order_to_order(serum_order)]
+            orders += [Order.from_serum_order(serum_order)]
 
         return orders
 
     def __str__(self) -> str:
-        return f"""« 𝚂𝚎𝚛𝚞𝚖𝙾𝚛𝚍𝚎𝚛𝙿𝚕𝚊𝚌𝚎𝚛 [{self.spot_market.symbol}] »"""
+        return f"""« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.serum_market.symbol}] »"""

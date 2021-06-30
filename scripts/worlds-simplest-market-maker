@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-MARKET="BTC-PERP"
-POSITION_SIZE="0.01"
-SLEEP_BETWEEN_ORDER_PLACES="60"
+MARKET=${1:-BTC-PERP}
+POSITION_SIZE=${2:-0.01}
+SLEEP_BETWEEN_ORDER_PLACES=${3:-60}
 let fixed_spread=100
 
 printf "Running on market %s with position size %f\nPress Control+C to stop...\n" $MARKET $POSITION_SIZE
