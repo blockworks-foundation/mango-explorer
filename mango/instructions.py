@@ -366,9 +366,8 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
             AccountMeta(is_signer=False, is_writable=True, pubkey=token_account.address),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_CLOCK_PUBKEY),
-            # *list([AccountMeta(is_signer=False, is_writable=False,
-            #                    pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in margin_account.spot_open_orders])
+            *list([AccountMeta(is_signer=False, is_writable=False,
+                               pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in margin_account.spot_open_orders])
         ],
         program_id=context.program_id,
         data=layouts.WITHDRAW.build({
@@ -376,6 +375,7 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
             "allow_borrow": allow_borrow
         })
     )
+
     return [withdraw]
 
 

@@ -36,7 +36,6 @@ if len(accounts) == 0:
 margin_account = accounts[0]
 
 token = context.token_lookup.find_by_symbol(args.symbol)
-print(token)
 if token is None:
     raise Exception(f"Could not find token with symbol '{args.symbol}'.")
 
@@ -57,7 +56,6 @@ node_bank = root_bank.pick_node_bank(context)
 
 withdraw = mango.build_withdraw_instructions(
     context, wallet, group, margin_account, root_bank, node_bank, withdrawal_token_account, args.allow_borrow)
-print(withdraw)
 signers: typing.Sequence[Account] = [wallet.account]
 
 transaction = Transaction()

@@ -601,7 +601,7 @@ CANCEL_PERP_ORDER = construct.Struct(
 #     allow_borrow: bool,
 # },
 WITHDRAW = construct.Struct(
-    "variant" / construct.Const(14, construct.BytesInteger(4, swapped=True)),
+    "variant" / construct.Const(3, construct.BytesInteger(4, swapped=True)),
 
     "quantity" / DecimalAdapter(),
     "allow_borrow" / DecimalAdapter(1)
