@@ -1,13 +1,14 @@
+import datetime
+import mango
+
 from decimal import Decimal
-from typing import NamedTuple
 from pyserum import market
 from pyserum.market.state import MarketState
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.types import RPCResponse
-
-import mango
+from typing import NamedTuple
 
 
 class MockClient(Client):
@@ -40,7 +41,10 @@ def fake_token(symbol: str = "FAKE") -> mango.Token:
 
 def fake_token_info() -> mango.TokenInfo:
     token = fake_token()
-    return mango.TokenInfo(token, fake_seeded_public_key("root bank"), Decimal(7))
+    meta_data = mango.Metadata(mango.layouts.DATA_TYPE.Group, mango.Version.V1, True)
+    root_bank = mango.RootBank(fake_account_info(), mango.Version.V1, meta_data, [],
+                               Decimal(5), Decimal(2), datetime.datetime.now())
+    return mango.TokenInfo(token, root_bank, Decimal(7))
 
 
 def fake_context() -> mango.Context:

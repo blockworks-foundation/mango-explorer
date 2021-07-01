@@ -23,12 +23,10 @@ import spl.token.instructions as spl_token
 from decimal import Decimal
 from pyserum.enums import OrderType, Side
 from pyserum.market import Market
-from solana.account import Account
 from solana.publickey import PublicKey
-from solana.transaction import Transaction
 
 from .context import Context
-from .instructions import build_compound_serum_place_order_instructions, build_create_serum_open_orders_instructions
+from .instructions import InstructionData, build_compound_serum_place_order_instructions, build_create_serum_open_orders_instructions
 from .retrier import retry_context
 from .spotmarket import SpotMarket
 from .tokenaccount import TokenAccount
@@ -206,8 +204,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         )
 
     def _execute(self, spot_market: SpotMarket, market: Market, side: Side, price: Decimal, quantity: Decimal) -> str:
-        transaction = Transaction()
-        signers: typing.List[Account] = [self.wallet.account]
+        all_instructions: InstructionData = InstructionData.from_wallet(self.wallet)
 
         base_token_account = TokenAccount.fetch_largest_for_owner_and_token(
             self.context, self.wallet.address, spot_market.base)
@@ -215,7 +212,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             create_base_token_account = spl_token.create_associated_token_account(
                 payer=self.wallet.address, owner=self.wallet.address, mint=spot_market.base.mint
             )
-            transaction.add(create_base_token_account)
+            all_instructions += InstructionData.from_instruction(create_base_token_account)
             base_token_account_address = create_base_token_account.keys[1].pubkey
         else:
             base_token_account_address = base_token_account.address
@@ -226,7 +223,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             create_quote_token_account = spl_token.create_associated_token_account(
                 payer=self.wallet.address, owner=self.wallet.address, mint=spot_market.quote.mint
             )
-            transaction.add(create_quote_token_account)
+            all_instructions += InstructionData.from_instruction(create_quote_token_account)
             quote_token_account_address = create_quote_token_account.keys[1].pubkey
         else:
             quote_token_account_address = quote_token_account.address
@@ -238,12 +235,9 @@ class SerumImmediateTradeExecutor(TradeExecutor):
 
         open_order_accounts = market.find_open_orders_accounts_for_owner(self.wallet.address)
         if not open_order_accounts:
-            new_open_orders_account = Account()
-            create_open_orders = build_create_serum_open_orders_instructions(
-                self.context, self.wallet, market, new_open_orders_account.public_key())
-            transaction.instructions.extend(create_open_orders)
-            signers.append(new_open_orders_account)
-            open_orders_address: PublicKey = new_open_orders_account.public_key()
+            create_open_orders = build_create_serum_open_orders_instructions(self.context, self.wallet, market)
+            all_instructions += create_open_orders
+            open_orders_address: PublicKey = create_open_orders.signers[0].public_key()
             open_orders_addresses: typing.List[PublicKey] = [open_orders_address]
         else:
             open_orders_address = open_order_accounts[0].address
@@ -252,11 +246,9 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         client_id = self.context.random_client_id()
         place_order_instructions = build_compound_serum_place_order_instructions(self.context, self.wallet, market, source_token_account_address, open_orders_address,
                                                                                  open_orders_addresses, OrderType.IOC, side, price, quantity, client_id, base_token_account_address, quote_token_account_address, self.serum_fee_discount_token_address)
-        transaction.instructions.extend(place_order_instructions)
-
-        with retry_context("Place Serum Order And Settle", self.context.client.send_transaction, self.context.retry_pauses) as retrier:
-            response = retrier.run(transaction, *signers, opts=self.context.transaction_options)
-            return self.context.unwrap_transaction_id_or_raise_exception(response)
+        all_instructions += place_order_instructions
+        with retry_context("Place Serum Order And Settle", all_instructions.execute_and_unwrap_transaction_id, self.context.retry_pauses) as retrier:
+            return retrier.run(self.context)
 
     def _lookup_spot_market(self, symbol: str) -> SpotMarket:
         spot_market = self.context.market_lookup.find_by_symbol(symbol)

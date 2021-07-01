@@ -6,7 +6,6 @@ import os
 import sys
 import typing
 
-from solana.account import Account
 from solana.publickey import PublicKey
 from solana.transaction import Transaction
 
@@ -34,16 +33,15 @@ if (token_account is None) or (token_account.value.token.mint != wrapped_sol.min
     raise Exception(f"Account {args.address} is not a {wrapped_sol.name} account.")
 
 transaction = Transaction()
-signers: typing.Sequence[Account] = [wallet.account]
 payer = wallet.address
+signers = mango.InstructionData.from_wallet(wallet)
 
 close_instruction = mango.build_close_spl_account_instructions(context, wallet, args.address)
-transaction.instructions.extend(close_instruction)
 
 print(f"Closing account: {args.address} with balance {token_account.value.value} lamports.")
 
-response = context.client.send_transaction(transaction, *signers, opts=context.transaction_options)
-transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
+all_instructions = signers + close_instruction
+transaction_id = all_instructions.execute_and_unwrap_transaction_id(context)
 print(f"Waiting on transaction ID: {transaction_id}")
 
 context.wait_for_confirmation(transaction_id)

@@ -139,7 +139,7 @@ class LiquidationProcessor:
                 self.account_liquidator.liquidate(highest)
                 self.wallet_balancer.balance(prices)
 
-                updated_margin_account = Account.load(self.context, highest.account.address)
+                updated_margin_account = Account.load(self.context, highest.account.address, group)
                 updated_report = LiquidatableReport.build(
                     group, prices, updated_margin_account, highest.worthwhile_threshold)
                 if not (updated_report.state & LiquidatableState.WORTHWHILE):

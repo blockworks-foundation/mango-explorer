@@ -5,10 +5,6 @@ import logging
 import os
 import os.path
 import sys
-import typing
-
-from solana.account import Account
-from solana.transaction import Transaction
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
@@ -26,13 +22,8 @@ wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 group = mango.Group.load(context, context.group_id)
 
-mango_account = Account()
-init = mango.build_create_account_instructions(context, wallet, group, mango_account)
-
-signers: typing.Sequence[Account] = [wallet.account, mango_account]
-
-transaction = Transaction()
-transaction.instructions.extend(init)
-response = context.client.send_transaction(transaction, *signers, opts=context.transaction_options)
-transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
+signers: mango.InstructionData = mango.InstructionData.from_wallet(wallet)
+init = mango.build_create_account_instructions(context, wallet, group)
+all_instructions = signers + init
+transaction_id = all_instructions.execute_and_unwrap_transaction_id(context)
 print("Signature:", transaction_id)

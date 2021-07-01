@@ -25,6 +25,7 @@ from .layouts import layouts
 from .marketlookup import MarketLookup
 from .metadata import Metadata
 from .perpmarketinfo import PerpMarketInfo
+from .rootbank import RootBank
 from .spotmarketinfo import SpotMarketInfo
 from .token import SolToken
 from .tokeninfo import TokenInfo
@@ -44,7 +45,8 @@ class Group(AddressableAccount):
                  spot_markets: typing.Sequence[typing.Optional[SpotMarketInfo]],
                  perp_markets: typing.Sequence[typing.Optional[PerpMarketInfo]],
                  oracles: typing.Sequence[PublicKey], signer_nonce: Decimal, signer_key: PublicKey,
-                 admin: PublicKey, dex_program_id: PublicKey, cache: PublicKey, valid_interval: Decimal):
+                 admin: PublicKey, dex_program_id: PublicKey, cache: PublicKey, valid_interval: Decimal,
+                 insurance_vault: typing.Optional[PublicKey]):
         super().__init__(account_info)
         self.version: Version = version
         self.name: str = name
@@ -60,6 +62,7 @@ class Group(AddressableAccount):
         self.dex_program_id: PublicKey = dex_program_id
         self.cache: PublicKey = cache
         self.valid_interval: Decimal = valid_interval
+        self.insurance_vault: typing.Optional[PublicKey] = insurance_vault
 
     @property
     def shared_quote_token(self) -> TokenInfo:
@@ -73,21 +76,29 @@ class Group(AddressableAccount):
         return self.tokens[:-1]
 
     @staticmethod
-    def from_layout(layout: layouts.GROUP, name: str, account_info: AccountInfo, version: Version, token_lookup: TokenLookup, market_lookup: MarketLookup) -> "Group":
-        meta_data = Metadata.from_layout(layout.meta_data)
-        num_oracles = layout.num_oracles
-        tokens = [TokenInfo.from_layout_or_none(t, token_lookup) for t in layout.tokens]
-        spot_markets = [SpotMarketInfo.from_layout_or_none(m, market_lookup) for m in layout.spot_markets]
-        perp_markets = [PerpMarketInfo.from_layout_or_none(p) for p in layout.perp_markets]
-        oracles = list(layout.oracles)[:int(num_oracles)]
-        signer_nonce = layout.signer_nonce
-        signer_key = layout.signer_key
-        admin = layout.admin
-        dex_program_id = layout.dex_program_id
-        cache = layout.cache
-        valid_interval = layout.valid_interval
+    def from_layout(context: Context, layout: layouts.GROUP, name: str, account_info: AccountInfo, version: Version, token_lookup: TokenLookup, market_lookup: MarketLookup) -> "Group":
+        meta_data: Metadata = Metadata.from_layout(layout.meta_data)
+        num_oracles: Decimal = layout.num_oracles
 
-        return Group(account_info, version, name, meta_data, tokens, spot_markets, perp_markets, oracles, signer_nonce, signer_key, admin, dex_program_id, cache, valid_interval)
+        root_bank_addresses = [ti.root_bank for ti in layout.tokens if ti is not None and ti.root_bank is not None]
+        root_banks = RootBank.load_multiple(context, root_bank_addresses)
+        tokens: typing.List[typing.Optional[TokenInfo]] = [
+            TokenInfo.from_layout_or_none(t, token_lookup, root_banks) for t in layout.tokens]
+
+        spot_markets: typing.List[typing.Optional[SpotMarketInfo]] = [
+            SpotMarketInfo.from_layout_or_none(m, market_lookup) for m in layout.spot_markets]
+        perp_markets: typing.List[typing.Optional[PerpMarketInfo]] = [
+            PerpMarketInfo.from_layout_or_none(p) for p in layout.perp_markets]
+        oracles: typing.List[PublicKey] = list(layout.oracles)[:int(num_oracles)]
+        signer_nonce: Decimal = layout.signer_nonce
+        signer_key: PublicKey = layout.signer_key
+        admin: PublicKey = layout.admin
+        dex_program_id: PublicKey = layout.dex_program_id
+        cache: PublicKey = layout.cache
+        valid_interval: Decimal = layout.valid_interval
+        insurance_vault: PublicKey = layout.insurance_vault
+
+        return Group(account_info, version, name, meta_data, tokens, spot_markets, perp_markets, oracles, signer_nonce, signer_key, admin, dex_program_id, cache, valid_interval, insurance_vault)
 
     @staticmethod
     def parse(context: Context, account_info: AccountInfo) -> "Group":
@@ -98,7 +109,7 @@ class Group(AddressableAccount):
 
         layout = layouts.GROUP.parse(data)
         name = context.lookup_group_name(account_info.address)
-        return Group.from_layout(layout, name, account_info, Version.V1, context.token_lookup, context.market_lookup)
+        return Group.from_layout(context, layout, name, account_info, Version.V1, context.token_lookup, context.market_lookup)
 
     @staticmethod
     def load(context: Context, address: typing.Optional[PublicKey] = None) -> "Group":
@@ -133,7 +144,8 @@ class Group(AddressableAccount):
     Signer [Nonce: {self.signer_nonce}]: {self.signer_key}
     Admin: {self.admin}
     DEX Program ID: {self.dex_program_id}
-    Merps Cache: {self.cache}
+    Cache: {self.cache}
+    Insurance Vault: {self.insurance_vault}
     Valid Interval: {self.valid_interval}
     Tokens:
         {tokens}

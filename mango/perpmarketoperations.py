@@ -17,15 +17,13 @@
 import typing
 
 from decimal import Decimal
-from solana.account import Account as SolanaAccount
 from solana.publickey import PublicKey
-from solana.transaction import Transaction
 
 from .account import Account
 from .accountinfo import AccountInfo
 from .context import Context
 from .marketoperations import MarketOperations
-from .instructions import build_cancel_perp_order_instructions, build_place_perp_order_instructions
+from .instructions import InstructionData, build_cancel_perp_order_instructions, build_place_perp_order_instructions
 from .orderbookside import OrderBookSide
 from .orders import Order, OrderType, Side
 from .perpmarket import PerpMarket
@@ -55,13 +53,11 @@ class PerpMarketOperations(MarketOperations):
         self.logger.info(report)
         self.reporter(report)
 
-        signers: typing.Sequence[SolanaAccount] = [self.wallet.account]
-        transaction = Transaction()
+        signers: InstructionData = InstructionData.from_wallet(self.wallet)
         cancel_instructions = build_cancel_perp_order_instructions(
             self.context, self.wallet, self.margin_account, self.perp_market, order)
-        transaction.instructions.extend(cancel_instructions)
-        response = self.context.client.send_transaction(transaction, *signers, opts=self.context.transaction_options)
-        return self.context.unwrap_transaction_id_or_raise_exception(response)
+        all_instructions = signers + cancel_instructions
+        return all_instructions.execute_and_unwrap_transaction_id(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         client_order_id = self.context.random_client_id()
@@ -69,13 +65,11 @@ class PerpMarketOperations(MarketOperations):
         self.logger.info(report)
         self.reporter(report)
 
-        signers: typing.Sequence[SolanaAccount] = [self.wallet.account]
-        transaction = Transaction()
+        signers: InstructionData = InstructionData.from_wallet(self.wallet)
         place_instructions = build_place_perp_order_instructions(
             self.context, self.wallet, self.perp_market.group, self.margin_account, self.perp_market, price, size, client_order_id, side, order_type)
-        transaction.instructions.extend(place_instructions)
-        response = self.context.client.send_transaction(transaction, *signers, opts=self.context.transaction_options)
-        self.context.unwrap_transaction_id_or_raise_exception(response)
+        all_instructions = signers + place_instructions
+        all_instructions.execute(self.context)
 
         return Order(id=0, side=side, price=price, size=size, client_id=client_order_id, owner=self.margin_account.address)
 

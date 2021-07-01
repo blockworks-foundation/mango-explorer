@@ -4,7 +4,6 @@ import argparse
 import logging
 import os
 import sys
-import typing
 
 from decimal import Decimal
 from solana.account import Account
@@ -35,26 +34,21 @@ if largest_token_account is None:
 
 transaction = Transaction()
 wrapped_sol_account = Account()
-signers: typing.Sequence[Account] = [wallet.account, wrapped_sol_account]
-
-create_instruction = mango.build_create_spl_account_instructions(
+signers = mango.InstructionData.from_signers([wallet.account, wrapped_sol_account])
+create_instructions = mango.build_create_spl_account_instructions(
     context, wallet, wrapped_sol, wrapped_sol_account.public_key())
-transaction.instructions.extend(create_instruction)
-
-unwrap_instruction = mango.build_transfer_spl_tokens_instructions(
+unwrap_instructions = mango.build_transfer_spl_tokens_instructions(
     context, wallet, wrapped_sol, largest_token_account.address, wrapped_sol_account.public_key(), args.quantity)
-transaction.instructions.extend(unwrap_instruction)
+close_instructions = mango.build_close_spl_account_instructions(context, wallet, wrapped_sol_account.public_key())
 
-close_instruction = mango.build_close_spl_account_instructions(context, wallet, wrapped_sol_account.public_key())
-transaction.instructions.extend(close_instruction)
+all_instructions = signers + create_instructions + unwrap_instructions + close_instructions
 
 print("Unwrapping SOL:")
 print(f"    Temporary account: {wrapped_sol_account.public_key()}")
 print(f"    Source: {largest_token_account.address}")
 print(f"    Destination: {wallet.address}")
 
-response = context.client.send_transaction(transaction, *signers, opts=context.transaction_options)
-transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
+transaction_id = all_instructions.execute_and_unwrap_transaction_id(context)
 print(f"Waiting on transaction ID: {transaction_id}")
 
 context.wait_for_confirmation(transaction_id)

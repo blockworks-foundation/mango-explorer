@@ -13,7 +13,6 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-from mango.metadata import Metadata
 import typing
 
 from datetime import datetime
@@ -24,6 +23,7 @@ from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
 from .layouts import layouts
+from .metadata import Metadata
 from .version import Version
 
 
@@ -132,6 +132,27 @@ class RootBank(AddressableAccount):
         if account_info is None:
             raise Exception(f"RootBank account not found at address '{address}'")
         return RootBank.parse(account_info)
+
+    @staticmethod
+    def load_multiple(context: Context, addresses: typing.Sequence[PublicKey]) -> typing.Sequence["RootBank"]:
+        account_infos = AccountInfo.load_multiple(context, addresses)
+        root_banks = []
+        for account_info in account_infos:
+            root_bank = RootBank.parse(account_info)
+            root_banks += [root_bank]
+
+        return root_banks
+
+    @staticmethod
+    def find_by_address(values: typing.Sequence["RootBank"], address: PublicKey) -> "RootBank":
+        found = [value for value in values if value.address == address]
+        if len(found) == 0:
+            raise Exception(f"RootBank '{address}' not found in root banks: {values}")
+
+        if len(found) > 1:
+            raise Exception(f"RootBank '{address}' matched multiple root banks in: {values}")
+
+        return found[0]
 
     def __str__(self):
         return f"""« 𝚁𝚘𝚘𝚝𝙱𝚊𝚗𝚔 [{self.version}] {self.address}

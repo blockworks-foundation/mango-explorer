@@ -86,7 +86,7 @@ try:
 
     # TODO - fetch prices when available for V3.
     # prices = group.fetch_token_prices(context)
-    margin_account = mango.Account.load(context, margin_account_address)
+    margin_account = mango.Account.load(context, margin_account_address, group)
     worthwhile_threshold = Decimal(0)  # No threshold - don't take this into account.
     liquidatable_report = mango.LiquidatableReport.build(group, [], margin_account, worthwhile_threshold)
     transaction_id = account_liquidator.liquidate(liquidatable_report)

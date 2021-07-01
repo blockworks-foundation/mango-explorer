@@ -17,11 +17,12 @@ def test_build_create_spl_account_instructions():
     new_spl_account: PublicKey = fake_seeded_public_key("new SPL account")
     actual = mango.build_create_spl_account_instructions(context, wallet, token, new_spl_account)
     assert actual is not None
-    assert len(actual) == 2
-    assert actual[0] is not None
-    assert isinstance(actual[0], TransactionInstruction)
-    assert actual[1] is not None
-    assert isinstance(actual[1], TransactionInstruction)
+    assert len(actual.signers) == 1
+    assert len(actual.instructions) == 2
+    assert actual.instructions[0] is not None
+    assert isinstance(actual.instructions[0], TransactionInstruction)
+    assert actual.instructions[1] is not None
+    assert isinstance(actual.instructions[1], TransactionInstruction)
 
 
 def test_build_transfer_spl_tokens_instructions():
@@ -33,9 +34,10 @@ def test_build_transfer_spl_tokens_instructions():
     quantity: int = 7
     actual = mango.build_transfer_spl_tokens_instructions(context, wallet, token, source, destination, quantity)
     assert actual is not None
-    assert len(actual) == 1
-    assert actual[0] is not None
-    assert isinstance(actual[0], TransactionInstruction)
+    assert len(actual.signers) == 0
+    assert len(actual.instructions) == 1
+    assert actual.instructions[0] is not None
+    assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
 def test_build_close_spl_account_instructions():
@@ -44,21 +46,22 @@ def test_build_close_spl_account_instructions():
     address: PublicKey = fake_seeded_public_key("target SPL account")
     actual = mango.build_close_spl_account_instructions(context, wallet, address)
     assert actual is not None
-    assert len(actual) == 1
-    assert actual[0] is not None
-    assert isinstance(actual[0], TransactionInstruction)
+    assert len(actual.signers) == 0
+    assert len(actual.instructions) == 1
+    assert actual.instructions[0] is not None
+    assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
 def test_build_create_serum_open_orders_instructions():
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()
     market: Market = fake_market()
-    open_orders_address: PublicKey = fake_seeded_public_key("open orders account")
-    actual = mango.build_create_serum_open_orders_instructions(context, wallet, market, open_orders_address)
+    actual = mango.build_create_serum_open_orders_instructions(context, wallet, market)
     assert actual is not None
-    assert len(actual) == 1
-    assert actual[0] is not None
-    assert isinstance(actual[0], TransactionInstruction)
+    assert len(actual.signers) == 1
+    assert len(actual.instructions) == 1
+    assert actual.instructions[0] is not None
+    assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
 def test_build_serum_place_order_instructions():
@@ -76,9 +79,10 @@ def test_build_serum_place_order_instructions():
     actual = mango.build_serum_place_order_instructions(
         context, wallet, market, source, open_orders_address, order_type, side, price, quantity, client_id, fee_discount_address)
     assert actual is not None
-    assert len(actual) == 1
-    assert actual[0] is not None
-    assert isinstance(actual[0], TransactionInstruction)
+    assert len(actual.signers) == 0
+    assert len(actual.instructions) == 1
+    assert actual.instructions[0] is not None
+    assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
 def test_build_serum_consume_events_instructions():
@@ -89,9 +93,10 @@ def test_build_serum_consume_events_instructions():
     limit: int = 64
     actual = mango.build_serum_consume_events_instructions(context, wallet, market, open_orders_addresses, limit)
     assert actual is not None
-    assert len(actual) == 1
-    assert actual[0] is not None
-    assert isinstance(actual[0], TransactionInstruction)
+    assert len(actual.signers) == 0
+    assert len(actual.instructions) == 1
+    assert actual.instructions[0] is not None
+    assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
 def test_build_serum_settle_instructions():
@@ -104,6 +109,7 @@ def test_build_serum_settle_instructions():
     actual = mango.build_serum_settle_instructions(
         context, wallet, market, open_orders_address, base_token_account_address, quote_token_account_address)
     assert actual is not None
-    assert len(actual) == 1
-    assert actual[0] is not None
-    assert isinstance(actual[0], TransactionInstruction)
+    assert len(actual.signers) == 0
+    assert len(actual.instructions) == 1
+    assert actual.instructions[0] is not None
+    assert isinstance(actual.instructions[0], TransactionInstruction)

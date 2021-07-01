@@ -123,11 +123,14 @@ class SimpleMarketMaker:
         for order in orders:
             self.market_operations.cancel_order(order)
 
-    def fetch_inventory(self) -> typing.Sequence[mango.TokenValue]:
-        return [
-            mango.TokenValue.fetch_total_value(self.context, self.wallet.address, self.market.base),
-            mango.TokenValue.fetch_total_value(self.context, self.wallet.address, self.market.quote)
-        ]
+    def fetch_inventory(self) -> typing.Sequence[typing.Optional[mango.TokenValue]]:
+        group = mango.Group.load(self.context)
+        accounts = mango.Account.load_all_for_owner(self.context, self.wallet.address, group)
+        if len(accounts) == 0:
+            raise Exception("No Mango account found.")
+
+        account = accounts[0]
+        return account.net_assets
 
     def calculate_order_prices(self, price: mango.Price):
         bid = price.mid_price - (price.mid_price * self.spread_ratio)
@@ -135,48 +138,27 @@ class SimpleMarketMaker:
 
         return (bid, ask)
 
-    def calculate_order_sizes(self, price: mango.Price, inventory: typing.Sequence[mango.TokenValue]):
+    def calculate_order_sizes(self, price: mango.Price, inventory: typing.Sequence[typing.Optional[mango.TokenValue]]):
         base_tokens: typing.Optional[mango.TokenValue] = mango.TokenValue.find_by_token(inventory, price.market.base)
         if base_tokens is None:
             raise Exception(f"Could not find market-maker base token {price.market.base.symbol} in inventory.")
 
-        buy_size = base_tokens.value * self.position_size_ratio
-        sell_size = base_tokens.value * self.position_size_ratio
+        quote_tokens: typing.Optional[mango.TokenValue] = mango.TokenValue.find_by_token(inventory, price.market.quote)
+        if quote_tokens is None:
+            raise Exception(f"Could not find market-maker quote token {price.market.quote.symbol} in inventory.")
+
+        total = (base_tokens.value * price.mid_price) + quote_tokens.value
+        position_size = total * self.position_size_ratio
+
+        buy_size = position_size / price.mid_price
+        sell_size = position_size / price.mid_price
         return (buy_size, sell_size)
 
     def orders_require_action(self, orders: typing.Sequence[mango.Order], price: Decimal, size: Decimal) -> bool:
-        # for order in orders:
-        #     price_tolerance = order.price * self.existing_order_tolerance
-        #     size_tolerance = order.size * self.existing_order_tolerance
-        #     self.logger.info(
-        #         f"Comparing price {order.price} with {price - price_tolerance} and {price + price_tolerance}")
-        #     self.logger.info(f"Comparing size {order.size} with {size - size_tolerance} and {size + size_tolerance}")
-        #     if (order.price < (price + price_tolerance)) and (order.price > (price - price_tolerance)):
-        #         self.logger.info("Price is within tolerance")
-        #     else:
-        #         self.logger.info("Price is NOT within tolerance")
-        #     if (order.size < (size + size_tolerance) and (order.size > (size - size_tolerance))):
-        #         self.logger.info("Size is within tolerance.")
-        #     else:
-        #         self.logger.info("Size is NOT within tolerance.")
-
         def within_tolerance(target_value, order_value, tolerance):
             tolerated = order_value * tolerance
             return (order_value < (target_value + tolerated)) and (order_value > (target_value - tolerated))
         return len(orders) == 0 or not all([(within_tolerance(price, order.price, self.existing_order_tolerance)) and within_tolerance(size, order.size, self.existing_order_tolerance) for order in orders])
-        # # Typically there will be zero or one order.
-        # for order in orders:
-        #     price_tolerance = order.price * self.existing_order_tolerance
-        #     size_tolerance = order.size * self.existing_order_tolerance
-        #     self.logger.info(
-        #         f"Comparing price {order.price} with {price - price_tolerance} and {price + price_tolerance}")
-        #     self.logger.info(f"Comparing size {order.size} with {size - size_tolerance} and {size + size_tolerance}")
-        #     if (order.price < (price + price_tolerance)) and (order.price > (price - price_tolerance)) and (order.size < (size + size_tolerance) and (order.size > (size - size_tolerance))):
-        #         self.logger.info("At least one order needs to be replaced.")
-        #         return False
-
-        # self.logger.info("No orders need to be replaced.")
-        # return True
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚒𝚖𝚙𝚕𝚎𝙼𝚊𝚛𝚔𝚎𝚝𝙼𝚊𝚔𝚎𝚛 for market '{self.market.symbol}' »"""

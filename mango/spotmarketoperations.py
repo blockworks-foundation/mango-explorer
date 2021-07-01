@@ -21,15 +21,13 @@ from decimal import Decimal
 from pyserum.market import Market
 from pyserum.market.orderbook import OrderBook as SerumOrderBook
 from pyserum.market.types import Order as SerumOrder
-from solana.account import Account as SolanaAccount
 from solana.publickey import PublicKey
-from solana.transaction import Transaction
 
 from .account import Account
 from .accountinfo import AccountInfo
 from .context import Context
 from .group import Group
-from .instructions import build_compound_spot_place_order_instructions, build_cancel_spot_order_instructions
+from .instructions import InstructionData, build_compound_spot_place_order_instructions, build_cancel_spot_order_instructions
 from .marketoperations import MarketOperations
 from .orders import Order, OrderType, Side
 from .spotmarket import SpotMarket
@@ -102,13 +100,11 @@ class SpotMarketOperations(MarketOperations):
 
         open_orders = self.account.spot_open_orders[self.group_market_index]
 
-        signers: typing.Sequence[SolanaAccount] = [self.wallet.account]
-        transaction = Transaction()
+        signers: InstructionData = InstructionData.from_wallet(self.wallet)
         cancel_instructions = build_cancel_spot_order_instructions(
             self.context, self.wallet, self.group, self.account, self.market, order, open_orders)
-        transaction.instructions.extend(cancel_instructions)
-        response = self.context.client.send_transaction(transaction, *signers, opts=self.context.transaction_options)
-        return self.context.unwrap_transaction_id_or_raise_exception(response)
+        all_instructions = signers + cancel_instructions
+        return all_instructions.execute_and_unwrap_transaction_id(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         payer_token = self.spot_market.quote if side == Side.BUY else self.spot_market.base
@@ -117,21 +113,18 @@ class SpotMarketOperations(MarketOperations):
         if payer_token_account is None:
             raise Exception(f"Could not find a source token account for token {payer_token}.")
 
-        open_orders = self.account.spot_open_orders[self.group_market_index]
         client_order_id = self.context.random_client_id()
         report = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.spot_market.symbol} using client ID {client_order_id}."
         self.logger.info(report)
         self.reporter(report)
 
-        signers: typing.Sequence[SolanaAccount] = [self.wallet.account]
-        transaction = Transaction()
+        signers: InstructionData = InstructionData.from_wallet(self.wallet)
         place_instructions = build_compound_spot_place_order_instructions(
             self.context, self.wallet, self.group, self.account, self.market, payer_token_account.address,
-            open_orders, order_type, side, price, size, client_order_id, self.serum_fee_discount_token_address)
+            order_type, side, price, size, client_order_id, self.serum_fee_discount_token_address)
 
-        transaction.instructions.extend(place_instructions)
-        response = self.context.client.send_transaction(transaction, *signers, opts=self.context.transaction_options)
-        self.context.unwrap_transaction_id_or_raise_exception(response)
+        all_instructions = signers + place_instructions
+        all_instructions.execute(self.context)
 
         return Order(id=0, side=side, price=price, size=size, client_id=client_order_id, owner=self.account.address)
 

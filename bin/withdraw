@@ -5,11 +5,8 @@ import logging
 import os
 import os.path
 import sys
-import typing
 
 from decimal import Decimal
-from solana.account import Account
-from solana.transaction import Transaction
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
@@ -44,22 +41,20 @@ withdrawal_value = mango.TokenValue(token, args.quantity)
 withdrawal_token_account = mango.TokenAccount(
     token_account.account_info, token_account.version, token_account.owner, withdrawal_value)
 
-root_bank_address = None
+
+root_bank = None
 for token_info in group.tokens:
     if token_info is not None and token_info.token is not None and token_info.token.mint == token.mint:
-        root_bank_address = token_info.root_bank
-if root_bank_address is None:
+        root_bank = token_info.root_bank
+if root_bank is None:
     raise Exception(f"Could not find token root bank for symbol '{args.symbol}'.")
 
-root_bank = mango.RootBank.load(context, root_bank_address)
 node_bank = root_bank.pick_node_bank(context)
 
+signers: mango.InstructionData = mango.InstructionData.from_wallet(wallet)
 withdraw = mango.build_withdraw_instructions(
     context, wallet, group, margin_account, root_bank, node_bank, withdrawal_token_account, args.allow_borrow)
-signers: typing.Sequence[Account] = [wallet.account]
 
-transaction = Transaction()
-transaction.instructions.extend(withdraw)
-response = context.client.send_transaction(transaction, *signers, opts=context.transaction_options)
-transaction_id = context.unwrap_transaction_id_or_raise_exception(response)
+all_instructions = signers + withdraw
+transaction_id = all_instructions.execute_and_unwrap_transaction_id(context)
 print("Signature:", transaction_id)

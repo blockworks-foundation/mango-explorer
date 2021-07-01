@@ -1,9 +1,6 @@
 # Mac OS X files
 .DS_Store
 
-# Don't store any data in git
-data/
-
 # Ignore tmp/ directories
 tmp/
 .tmplintdir/

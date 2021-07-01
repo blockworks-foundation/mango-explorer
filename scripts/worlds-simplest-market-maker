@@ -16,5 +16,6 @@ do
     place-order --market $MARKET --order-type LIMIT --log-level ERROR \
         --side SELL --quantity $POSITION_SIZE --price $((current_price + fixed_spread))
 
+    echo "Last market-making action: $(date)"
 	sleep $SLEEP_BETWEEN_ORDER_PLACES
 done

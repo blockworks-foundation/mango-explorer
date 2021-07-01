@@ -377,7 +377,8 @@ GROUP = construct.Struct(
     "admin" / PublicKeyAdapter(),
     "dex_program_id" / PublicKeyAdapter(),
     "cache" / PublicKeyAdapter(),
-    "valid_interval" / DecimalAdapter()
+    "valid_interval" / DecimalAdapter(),
+    "insurance_vault" / PublicKeyAdapter()
 )
 
 ROOT_BANK = construct.Struct(
@@ -424,7 +425,8 @@ MANGO_ACCOUNT = construct.Struct(
     "spot_open_orders" / construct.Array(MAX_PAIRS, PublicKeyAdapter()),
     "perp_accounts" / construct.Array(MAX_PAIRS, PERP_ACCOUNT),
     "being_liquidated" / DecimalAdapter(1),
-    "padding" / construct.Padding(7)
+    "is_bankrupt" / construct.Flag,
+    "padding" / construct.Padding(6)
 )
 
 PERP_MARKET = construct.Struct(

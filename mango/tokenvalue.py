@@ -74,8 +74,9 @@ class TokenValue:
             reporter(f"{value.value:>18,.8f} {value.token.name}")
 
     @staticmethod
-    def find_by_symbol(values: typing.Sequence["TokenValue"], symbol: str) -> "TokenValue":
-        found = [value for value in values if value.token.symbol_matches(symbol)]
+    def find_by_symbol(values: typing.Sequence[typing.Optional["TokenValue"]], symbol: str) -> "TokenValue":
+        found = [
+            value for value in values if value is not None and value.token is not None and value.token.symbol_matches(symbol)]
         if len(found) == 0:
             raise Exception(f"Token '{symbol}' not found in token values: {values}")
 
@@ -85,8 +86,8 @@ class TokenValue:
         return found[0]
 
     @staticmethod
-    def find_by_mint(values: typing.Sequence["TokenValue"], mint: PublicKey) -> "TokenValue":
-        found = [value for value in values if value.token.mint == mint]
+    def find_by_mint(values: typing.Sequence[typing.Optional["TokenValue"]], mint: PublicKey) -> "TokenValue":
+        found = [value for value in values if value is not None and value.token is not None and value.token.mint == mint]
         if len(found) == 0:
             raise Exception(f"Token '{mint}' not found in token values: {values}")
 
@@ -96,7 +97,7 @@ class TokenValue:
         return found[0]
 
     @staticmethod
-    def find_by_token(values: typing.Sequence["TokenValue"], token: Token) -> "TokenValue":
+    def find_by_token(values: typing.Sequence[typing.Optional["TokenValue"]], token: Token) -> "TokenValue":
         return TokenValue.find_by_mint(values, token.mint)
 
     @staticmethod
@@ -110,7 +111,10 @@ class TokenValue:
         return changes
 
     def __str__(self) -> str:
-        return f"« TokenValue: {self.value:>18,.8f} {self.token.name} »"
+        name = "« 𝚄𝚗-𝙽𝚊𝚖𝚎𝚍 𝚃𝚘𝚔𝚎𝚗 »"
+        if self.token and self.token.name:
+            name = self.token.name
+        return f"« 𝚃𝚘𝚔𝚎𝚗𝚅𝚊𝚕𝚞𝚎: {self.value:>18,.8f} {name} »"
 
     def __repr__(self) -> str:
         return f"{self}"
