@@ -129,10 +129,11 @@ class Account(AddressableAccount):
 
     def __str__(self):
         deposits = "\n        ".join(
-            [f"{deposit}" for deposit in self.deposits if deposit.value != Decimal(0)] or ["None"])
-        borrows = "\n        ".join([f"{borrow}" for borrow in self.borrows if borrow.value != Decimal(0)] or ["None"])
+            [f"{deposit}" for deposit in self.deposits if deposit is not None and deposit.value != Decimal(0)] or ["None"])
+        borrows = "\n        ".join(
+            [f"{borrow}" for borrow in self.borrows if borrow is not None and borrow.value != Decimal(0)] or ["None"])
         net_assets = "\n        ".join(
-            [f"{net_asset}" for net_asset in self.net_assets if net_asset.value != Decimal(0)] or ["None"])
+            [f"{net_asset}" for net_asset in self.net_assets if net_asset is not None and net_asset.value != Decimal(0)] or ["None"])
         spot_open_orders = ", ".join([f"{oo}" for oo in self.spot_open_orders if oo is not None])
         perp_accounts = ", ".join(
             [f"{perp}".replace("\n", "\n        ") for perp in self.perp_accounts if perp.open_orders.is_free_bits != 0xFFFFFFFF])

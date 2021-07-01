@@ -595,7 +595,7 @@ def build_compound_spot_place_order_instructions(context: Context, wallet: Walle
                                                  market: Market, source: PublicKey, order_type: OrderType,
                                                  side: Side, price: Decimal, quantity: Decimal, client_id: int,
                                                  fee_discount_address: typing.Optional[PublicKey]) -> InstructionData:
-    open_orders_address, create_open_orders = _ensure_openorders(context, wallet, group, account, market)
+    _, create_open_orders = _ensure_openorders(context, wallet, group, account, market)
 
     place_order = build_spot_place_order_instructions(context, wallet, group, account, market, source, order_type,
                                                       side, price, quantity, client_id, fee_discount_address)
@@ -604,26 +604,26 @@ def build_compound_spot_place_order_instructions(context: Context, wallet: Walle
 
     consume_events = build_serum_consume_events_instructions(context, wallet, market, open_orders_addresses)
 
-    quote_token_info = group.shared_quote_token
-    base_token_infos = [
-        token_info for token_info in group.base_tokens if token_info is not None and token_info.token.mint == market.state.base_mint()]
-    if len(base_token_infos) != 1:
-        raise Exception(
-            f"Could not find base token info for group {group.address} - length was {len(base_token_infos)} when it should be 1.")
-    base_token_info = base_token_infos[0]
-    base_token_account = TokenAccount.fetch_largest_for_owner_and_token(context, wallet.address, base_token_info.token)
-    quote_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-        context, wallet.address, quote_token_info.token)
+    # quote_token_info = group.shared_quote_token
+    # base_token_infos = [
+    #     token_info for token_info in group.base_tokens if token_info is not None and token_info.token.mint == market.state.base_mint()]
+    # if len(base_token_infos) != 1:
+    #     raise Exception(
+    #         f"Could not find base token info for group {group.address} - length was {len(base_token_infos)} when it should be 1.")
+    # base_token_info = base_token_infos[0]
+    # base_token_account = TokenAccount.fetch_largest_for_owner_and_token(context, wallet.address, base_token_info.token)
+    # quote_token_account = TokenAccount.fetch_largest_for_owner_and_token(
+    #     context, wallet.address, quote_token_info.token)
 
-    settle: InstructionData = InstructionData.empty()
-    if base_token_account is not None and quote_token_account is not None:
-        open_order_accounts = market.find_open_orders_accounts_for_owner(wallet.address)
-        settlement_open_orders = [oo for oo in open_order_accounts if oo.market == market.state.public_key()]
-        if len(settlement_open_orders) > 0 and settlement_open_orders[0] is not None:
-            settle = build_serum_settle_instructions(
-                context, wallet, market, open_orders_address, base_token_account.address, quote_token_account.address)
+    # settle: InstructionData = InstructionData.empty()
+    # if base_token_account is not None and quote_token_account is not None:
+    #     open_order_accounts = market.find_open_orders_accounts_for_owner(wallet.address)
+    #     settlement_open_orders = [oo for oo in open_order_accounts if oo.market == market.state.public_key()]
+    #     if len(settlement_open_orders) > 0 and settlement_open_orders[0] is not None:
+    #         settle = build_serum_settle_instructions(
+    #             context, wallet, market, open_orders_address, base_token_account.address, quote_token_account.address)
 
-    combined = create_open_orders + place_order + consume_events + settle
+    combined = create_open_orders + place_order + consume_events  # + settle
     return combined
 
 
