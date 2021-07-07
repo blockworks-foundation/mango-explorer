@@ -133,7 +133,7 @@ _token_out_indices: typing.Dict[InstructionType, int] = {
 
 
 class MangoInstruction:
-    def __init__(self, instruction_type: InstructionType, instruction_data: typing.Any, accounts: typing.List[PublicKey]):
+    def __init__(self, instruction_type: InstructionType, instruction_data: typing.Any, accounts: typing.Sequence[PublicKey]):
         self.instruction_type = instruction_type
         self.instruction_data = instruction_data
         self.accounts = accounts
@@ -212,7 +212,7 @@ class MangoInstruction:
         return None
 
     @staticmethod
-    def from_response(context: Context, all_accounts: typing.List[PublicKey], instruction_data: typing.Dict) -> typing.Optional["MangoInstruction"]:
+    def from_response(context: Context, all_accounts: typing.Sequence[PublicKey], instruction_data: typing.Dict) -> typing.Optional["MangoInstruction"]:
         program_account_index = instruction_data["programIdIndex"]
         if all_accounts[program_account_index] != context.program_id:
             # It's an instruction, it's just not a Mango one.
@@ -224,6 +224,8 @@ class MangoInstruction:
         decoded = base58.b58decode(data)
         initial = layouts.MANGO_INSTRUCTION_VARIANT_FINDER.parse(decoded)
         parser = layouts.InstructionParsersByVariant[initial.variant]
+        if parser is None:
+            raise Exception(f"Could not find instruction parser for variant {initial.variant}.")
 
         # A whole bunch of accounts are listed for a transaction. Some (or all) of them apply
         # to this instruction. The instruction data gives the index of each account it uses,
@@ -253,20 +255,20 @@ class MangoInstruction:
 
 
 class TransactionScout:
-    def __init__(self, timestamp: datetime.datetime, signatures: typing.List[str],
-                 succeeded: bool, group_name: str, accounts: typing.List[PublicKey],
-                 instructions: typing.List[MangoInstruction], messages: typing.List[str],
-                 pre_token_balances: typing.List[OwnedTokenValue],
-                 post_token_balances: typing.List[OwnedTokenValue]):
+    def __init__(self, timestamp: datetime.datetime, signatures: typing.Sequence[str],
+                 succeeded: bool, group_name: str, accounts: typing.Sequence[PublicKey],
+                 instructions: typing.Sequence[MangoInstruction], messages: typing.Sequence[str],
+                 pre_token_balances: typing.Sequence[OwnedTokenValue],
+                 post_token_balances: typing.Sequence[OwnedTokenValue]):
         self.timestamp: datetime.datetime = timestamp
-        self.signatures: typing.List[str] = signatures
+        self.signatures: typing.Sequence[str] = signatures
         self.succeeded: bool = succeeded
         self.group_name: str = group_name
-        self.accounts: typing.List[PublicKey] = accounts
-        self.instructions: typing.List[MangoInstruction] = instructions
-        self.messages: typing.List[str] = messages
-        self.pre_token_balances: typing.List[OwnedTokenValue] = pre_token_balances
-        self.post_token_balances: typing.List[OwnedTokenValue] = post_token_balances
+        self.accounts: typing.Sequence[PublicKey] = accounts
+        self.instructions: typing.Sequence[MangoInstruction] = instructions
+        self.messages: typing.Sequence[str] = messages
+        self.pre_token_balances: typing.Sequence[OwnedTokenValue] = pre_token_balances
+        self.post_token_balances: typing.Sequence[OwnedTokenValue] = post_token_balances
 
     @property
     def summary(self) -> str:
@@ -318,7 +320,7 @@ class TransactionScout:
 
     @staticmethod
     def from_transaction_response(context: Context, response: typing.Dict) -> "TransactionScout":
-        def balance_to_token_value(accounts: typing.List[PublicKey], balance: typing.Dict) -> OwnedTokenValue:
+        def balance_to_token_value(accounts: typing.Sequence[PublicKey], balance: typing.Dict) -> OwnedTokenValue:
             mint = PublicKey(balance["mint"])
             account = accounts[balance["accountIndex"]]
             amount = Decimal(balance["uiTokenAmount"]["amount"])
@@ -361,7 +363,7 @@ class TransactionScout:
             raise Exception(f"Exception fetching transaction '{signature}'", exception)
 
     def __str__(self) -> str:
-        def format_tokens(account_token_values: typing.List[OwnedTokenValue]) -> str:
+        def format_tokens(account_token_values: typing.Sequence[OwnedTokenValue]) -> str:
             if len(account_token_values) == 0:
                 return "None"
             return "\n        ".join([f"{atv}" for atv in account_token_values])
@@ -405,7 +407,7 @@ class TransactionScout:
 # # 🥭 fetch_all_recent_transaction_signatures function
 #
 
-def fetch_all_recent_transaction_signatures(context: Context, in_the_last: datetime.timedelta = datetime.timedelta(days=1)) -> typing.List[str]:
+def fetch_all_recent_transaction_signatures(context: Context, in_the_last: datetime.timedelta = datetime.timedelta(days=1)) -> typing.Sequence[str]:
     now = datetime.datetime.now()
     recency_cutoff = now - in_the_last
     recency_cutoff_timestamp = recency_cutoff.timestamp()
@@ -419,7 +421,8 @@ def fetch_all_recent_transaction_signatures(context: Context, in_the_last: datet
         signature_results += signature_result
         if (len(signature_result) == 0) or (signature_result[-1]["blockTime"] < recency_cutoff_timestamp):
             all_fetched = True
-        before = signature_results[-1]["signature"]
+        else:
+            before = signature_results[-1]["signature"]
 
     recent = [result["signature"] for result in signature_results if result["blockTime"] > recency_cutoff_timestamp]
     return recent
