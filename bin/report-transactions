@@ -1,6 +1,7 @@
 #!/usr/bin/env pyston3
 
 import argparse
+import itertools
 import logging
 import os
 import os.path
@@ -104,13 +105,12 @@ try:
 
     first_item_capturer = mango.CaptureFirstItem()
     signatures = mango.fetch_all_recent_transaction_signatures(context)
-    pipeline = rx.from_(signatures).pipe(
+    oldest_first = reversed(list(itertools.takewhile(lambda sig: sig != since_signature, signatures)))
+    pipeline = rx.from_(oldest_first).pipe(
         ops.map(first_item_capturer.capture_if_first),
         #  ops.map(debug_print_item("Signature:")),
-        ops.take_while(lambda sig: sig != since_signature),
         ops.map(lambda sig: mango.TransactionScout.load_if_available(context, sig)),
         ops.filter(lambda item: item is not None),
-        #  ops.take(100),
     )
 
     if sender is not None:
@@ -145,9 +145,9 @@ try:
 
     pipeline.subscribe(fan_out)
 
-    if first_item_capturer.captured is not None:
+    if len(signatures) > 0:
         with open(args.since_state_filename, "w") as state_file:
-            state_file.write(first_item_capturer.captured)
+            state_file.write(signatures[0])
 except Exception as exception:
     logging.critical(
         f"report-transactions stopped because of exception: {exception} - {traceback.format_exc()}")

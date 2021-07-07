@@ -333,7 +333,7 @@ class TransactionScout:
         try:
             succeeded = True if response["meta"]["err"] is None else False
             accounts = list(map(PublicKey, response["transaction"]["message"]["accountKeys"]))
-            instructions: typing.Sequence[MangoInstruction] = []
+            instructions: typing.List[MangoInstruction] = []
             for instruction_data in response["transaction"]["message"]["instructions"]:
                 instruction = MangoInstruction.from_response(context, accounts, instruction_data)
                 if instruction is not None:
@@ -421,7 +421,8 @@ def fetch_all_recent_transaction_signatures(context: Context, in_the_last: datet
         signature_results += signature_result
         if (len(signature_result) == 0) or (signature_result[-1]["blockTime"] < recency_cutoff_timestamp):
             all_fetched = True
-        before = signature_results[-1]["signature"]
+        else:
+            before = signature_results[-1]["signature"]
 
     recent = [result["signature"] for result in signature_results if result["blockTime"] > recency_cutoff_timestamp]
     return recent
