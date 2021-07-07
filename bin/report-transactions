@@ -13,7 +13,7 @@ import typing
 from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+    os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
@@ -21,8 +21,8 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(
     description="Run the Transaction Scout to display information about a specific transaction.")
 mango.Context.add_command_line_parameters(parser)
-parser.add_argument("--since-signature", type=str,
-                    help="The signature of the transaction to look up")
+parser.add_argument("--since-state-filename", type=str, default="report.state",
+                    help="The name of the state file containing the signature of the last transaction looked up")
 parser.add_argument("--instruction-type", type=lambda ins: mango.InstructionType[ins],
                     choices=list(mango.InstructionType),
                     help="The signature of the transaction to look up")
@@ -52,7 +52,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 def summariser(context: mango.Context) -> typing.Callable[[mango.TransactionScout], str]:
     def summarise(transaction_scout: mango.TransactionScout) -> str:
         instruction_details: typing.List[str] = []
-        instruction_targets: typing.List[PublicKey] = []
+        instruction_targets: typing.List[str] = []
         for ins in transaction_scout.instructions:
             params = ins.describe_parameters()
             if params == "":
@@ -88,7 +88,11 @@ def summariser(context: mango.Context) -> typing.Callable[[mango.TransactionScou
 
 
 try:
-    since_signature = args.since_signature
+    since_signature: str = ""
+    if os.path.isfile(args.since_state_filename):
+        with open(args.since_state_filename, "r") as state_file:
+            since_signature = state_file.read()
+
     instruction_type = args.instruction_type
     sender = args.sender
 
@@ -142,7 +146,7 @@ try:
     pipeline.subscribe(fan_out)
 
     if first_item_capturer.captured is not None:
-        with open("report.state", "w") as state_file:
+        with open(args.since_state_filename, "w") as state_file:
             state_file.write(first_item_capturer.captured)
 except Exception as exception:
     logging.critical(
