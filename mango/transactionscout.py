@@ -202,6 +202,15 @@ class MangoInstruction:
 
         return additional_data
 
+    # It'd be nice to be able to describe the target of some operations, like liquidations. So far
+    # only `PartialLiquidate` is handled in the code below but it could be extended if others also
+    # have a useful target.
+    def describe_target(self) -> typing.Optional[PublicKey]:
+        if self.instruction_type == InstructionType.PartialLiquidate:
+            return self.accounts[4]
+
+        return None
+
     @staticmethod
     def from_response(context: Context, all_accounts: typing.List[PublicKey], instruction_data: typing.Dict) -> typing.Optional["MangoInstruction"]:
         program_account_index = instruction_data["programIdIndex"]
@@ -246,7 +255,7 @@ class MangoInstruction:
 class TransactionScout:
     def __init__(self, timestamp: datetime.datetime, signatures: typing.List[str],
                  succeeded: bool, group_name: str, accounts: typing.List[PublicKey],
-                 instructions: typing.List[typing.Any], messages: typing.List[str],
+                 instructions: typing.List[MangoInstruction], messages: typing.List[str],
                  pre_token_balances: typing.List[OwnedTokenValue],
                  post_token_balances: typing.List[OwnedTokenValue]):
         self.timestamp: datetime.datetime = timestamp
@@ -254,7 +263,7 @@ class TransactionScout:
         self.succeeded: bool = succeeded
         self.group_name: str = group_name
         self.accounts: typing.List[PublicKey] = accounts
-        self.instructions: typing.List[typing.Any] = instructions
+        self.instructions: typing.List[MangoInstruction] = instructions
         self.messages: typing.List[str] = messages
         self.pre_token_balances: typing.List[OwnedTokenValue] = pre_token_balances
         self.post_token_balances: typing.List[OwnedTokenValue] = post_token_balances
@@ -322,7 +331,7 @@ class TransactionScout:
         try:
             succeeded = True if response["meta"]["err"] is None else False
             accounts = list(map(PublicKey, response["transaction"]["message"]["accountKeys"]))
-            instructions = []
+            instructions: MangoInstruction = []
             for instruction_data in response["transaction"]["message"]["instructions"]:
                 instruction = MangoInstruction.from_response(context, accounts, instruction_data)
                 if instruction is not None:
