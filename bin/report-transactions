@@ -52,14 +52,19 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 def summariser(context: mango.Context) -> typing.Callable[[mango.TransactionScout], str]:
     def summarise(transaction_scout: mango.TransactionScout) -> str:
         instruction_details: typing.List[str] = []
+        instruction_targets: typing.List[PublicKey] = []
         for ins in transaction_scout.instructions:
             params = ins.describe_parameters()
             if params == "":
                 instruction_details += [f"[{ins.instruction_type.name}]"]
             else:
                 instruction_details += [f"[{ins.instruction_type.name}: {params}]"]
+            target = ins.describe_target()
+            if target is not None:
+                instruction_targets += [str(target)]
 
         instructions = ", ".join(instruction_details)
+        targets = ", ".join(instruction_targets) or "None"
         changes = mango.OwnedTokenValue.changes(
             transaction_scout.pre_token_balances, transaction_scout.post_token_balances)
 
@@ -78,7 +83,7 @@ def summariser(context: mango.Context) -> typing.Callable[[mango.TransactionScou
             [f"{tok.token_value.value:,.8f} {tok.token_value.token.name}" for tok in changed_tokens]) or "None"
 
         success_marker = "✅" if transaction_scout.succeeded else "❌"
-        return f"« 🥭 {transaction_scout.timestamp} {success_marker} {transaction_scout.group_name} {instructions}\n    From: {transaction_scout.sender}\n    Token Changes: {changed_tokens_text}\n    {transaction_scout.signatures} »"
+        return f"« 🥭 {transaction_scout.timestamp} {success_marker} {transaction_scout.group_name} {instructions}\n    From: {transaction_scout.sender}\n    Target(s): {targets}\n    Token Changes: {changed_tokens_text}\n    {transaction_scout.signatures} »"
     return summarise
 
 
