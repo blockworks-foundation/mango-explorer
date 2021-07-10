@@ -12,7 +12,7 @@ tmpfile=$(mktemp /tmp/file-age-check-script.XXXXXX)
 FILENAME=${1:-/var/tmp/health}
 MINUTES_OLD=${2:-5}
 
-touch -d "${MINUTES_OLD} minutes ago" ${FILENAME}
+touch -d "${MINUTES_OLD} minutes ago" ${tmpfile}
 if [ ${FILENAME} -ot ${tmpfile} ]; then
     rm -f ${tmpfile}
     exit 1
