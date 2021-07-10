@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# This command takes a filename and a time (integer, in minutes) and exits successfully if the modification
+# time of the file is less than the time given.
+#
+# This is useful for health checks that can be observed outside a container environment. For example, if
+# an iteration of a market-maker writes to a 'health' file after every iteration, then a process (like a
+# Kubernetes liveness check) can test that file to see if it has been updated within the last couple of
+# minutes, and fail a 'liveness' check if it hasn't been.
+#
+tmpfile=$(mktemp /tmp/file-age-check-script.XXXXXX)
+FILENAME=${1:-/var/tmp/health}
+MINUTES_OLD=${2:-5}
+
+touch -d "${MINUTES_OLD} minutes ago" ${FILENAME}
+if [ ${FILENAME} -ot ${tmpfile} ]; then
+    rm -f ${tmpfile}
+    exit 1
+fi
+rm -f ${tmpfile}
