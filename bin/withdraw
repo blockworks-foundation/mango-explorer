@@ -51,10 +51,10 @@ if root_bank is None:
 
 node_bank = root_bank.pick_node_bank(context)
 
-signers: mango.InstructionData = mango.InstructionData.from_wallet(wallet)
+signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
 withdraw = mango.build_withdraw_instructions(
     context, wallet, group, margin_account, root_bank, node_bank, withdrawal_token_account, args.allow_borrow)
 
 all_instructions = signers + withdraw
-transaction_id = all_instructions.execute_and_unwrap_transaction_id(context)
+transaction_id = all_instructions.execute_and_unwrap_transaction_ids(context)[0]
 print("Signature:", transaction_id)

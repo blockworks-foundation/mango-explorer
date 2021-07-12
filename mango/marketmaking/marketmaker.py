@@ -15,6 +15,7 @@
 
 
 import logging
+
 import mango
 import traceback
 import typing
@@ -23,30 +24,32 @@ from decimal import Decimal
 from mango.marketmaking.modelstate import ModelState
 
 
-# # 🥭 SimpleMarketMaker class
+# # 🥭 MarketMaker class
 #
 # An event-driven market-maker.
 #
 
 class MarketMaker:
     def __init__(self, wallet: mango.Wallet, market: mango.Market,
+                 market_instruction_builder: mango.MarketInstructionBuilder,
                  spread_ratio: Decimal, position_size_ratio: Decimal):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.wallet: mango.Wallet = wallet
         self.market: mango.Market = market
+        self.market_instruction_builder: mango.MarketInstructionBuilder = market_instruction_builder
         self.spread_ratio: Decimal = spread_ratio
         self.position_size_ratio: Decimal = position_size_ratio
-        self.buys = []
-        self.sells = []
+        self.buy_client_ids: typing.List[int] = []
+        self.sell_client_ids: typing.List[int] = []
 
-    def calculate_order_prices(self, model_state: ModelState):
+    def calculate_order_prices(self, model_state: ModelState) -> typing.Tuple[Decimal, Decimal]:
         price: mango.Price = model_state.price
-        bid = price.mid_price - (price.mid_price * self.spread_ratio)
-        ask = price.mid_price + (price.mid_price * self.spread_ratio)
+        bid: Decimal = price.mid_price - (price.mid_price * self.spread_ratio)
+        ask: Decimal = price.mid_price + (price.mid_price * self.spread_ratio)
 
         return (bid, ask)
 
-    def calculate_order_sizes(self, model_state: ModelState):
+    def calculate_order_sizes(self, model_state: ModelState) -> typing.Tuple[Decimal, Decimal]:
         price: mango.Price = model_state.price
         inventory: typing.Sequence[typing.Optional[mango.TokenValue]] = model_state.account.net_assets
         base_tokens: typing.Optional[mango.TokenValue] = mango.TokenValue.find_by_token(inventory, price.market.base)
@@ -60,92 +63,42 @@ class MarketMaker:
         total = (base_tokens.value * price.mid_price) + quote_tokens.value
         position_size = total * self.position_size_ratio
 
-        buy_size = position_size / price.mid_price
-        sell_size = position_size / price.mid_price
+        buy_size: Decimal = position_size / price.mid_price
+        sell_size: Decimal = position_size / price.mid_price
         return (buy_size, sell_size)
 
-    def pulse_perp(self, context: mango.Context, model_state: ModelState):
+    def pulse(self, context: mango.Context, model_state: ModelState):
         try:
             bid, ask = self.calculate_order_prices(model_state)
             buy_size, sell_size = self.calculate_order_sizes(model_state)
-            payer = mango.InstructionData.from_wallet(self.wallet)
-            perp_market = model_state.perp_market
-            perp_account = model_state.account.perp_accounts[perp_market.market_index]
+            payer = mango.CombinableInstructions.from_wallet(self.wallet)
 
-            cancellations = mango.InstructionData.empty()
-            print("Client IDs", [client_id for client_id in perp_account.open_orders.client_order_ids if client_id != 0])
-            for client_order_id in perp_account.open_orders.client_order_ids:
-                if client_order_id != 0:
-                    self.logger.info(f"Cancelling order with client ID: {client_order_id}")
-                    order = mango.Order(id=0, client_id=client_order_id, owner=self.wallet.address,
-                                        side=mango.Side.BUY, price=Decimal(0), size=Decimal(0))
-                    cancel = mango.build_cancel_perp_order_instructions(
-                        context, self.wallet, model_state.account, perp_market, order)
+            cancellations = mango.CombinableInstructions.empty()
+            for order_id, client_id in model_state.placed_order_ids:
+                if client_id != 0:
+                    self.logger.info(f"Cancelling order with client ID: {client_id}")
+                    side = mango.Side.BUY if client_id in self.buy_client_ids else mango.Side.SELL
+                    order = mango.Order(id=int(order_id), client_id=int(client_id), owner=self.wallet.address,
+                                        side=side, price=Decimal(0), size=Decimal(0))
+                    cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
                     cancellations += cancel
 
             buy_client_id = context.random_client_id()
-            buy = mango.build_place_perp_order_instructions(
-                context, self.wallet, model_state.group, model_state.account, perp_market, bid, buy_size, buy_client_id, mango.Side.BUY, mango.OrderType.LIMIT)
+            self.buy_client_ids += [buy_client_id]
             self.logger.info(f"Placing BUY order for {buy_size} at price {bid} with client ID: {buy_client_id}")
+            buy = self.market_instruction_builder.build_place_order_instructions(
+                mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size, buy_client_id)
 
             sell_client_id = context.random_client_id()
-            sell = mango.build_place_perp_order_instructions(
-                context, self.wallet, model_state.group, model_state.account, perp_market, ask, sell_size, sell_client_id, mango.Side.SELL, mango.OrderType.LIMIT)
+            self.sell_client_ids += [sell_client_id]
             self.logger.info(f"Placing SELL order for {sell_size} at price {ask} with client ID: {sell_client_id}")
+            sell = self.market_instruction_builder.build_place_order_instructions(
+                mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size, sell_client_id)
 
-            crank = mango.build_mango_consume_events_instructions(
-                context, self.wallet, model_state.group, model_state.account, model_state.perp_market)
-            (payer + cancellations + buy + sell + crank).execute(context)
-        except Exception as exception:
-            self.logger.error(f"Market-maker error on pulse: {exception} - {traceback.format_exc()}")
+            settle = self.market_instruction_builder.build_settle_instructions()
 
-    def pulse_spot(self, context: mango.Context, model_state: ModelState):
-        try:
-            bid, ask = self.calculate_order_prices(model_state)
-            buy_size, sell_size = self.calculate_order_sizes(model_state)
-            payer = mango.InstructionData.from_wallet(self.wallet)
-
-            srm = context.token_lookup.find_by_symbol("SRM")
-            if srm is None:
-                fee_discount_token_account_address = None
-            else:
-                fee_discount_token_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
-                    context, self.wallet.address, srm)
-                fee_discount_token_account_address = fee_discount_token_account.address
-
-            cancellations = mango.InstructionData.empty()
-            for order_id in model_state.spot_open_orders.orders:
-                if order_id != 0:
-                    side = mango.Side.BUY if order_id in self.buys else mango.Side.SELL
-                    self.logger.info(f"Cancelling order with client ID: {order_id}")
-                    order = mango.Order(id=order_id, client_id=0, owner=self.wallet.address,
-                                        side=mango.Side.BUY, price=Decimal(0), size=Decimal(0))
-                    cancel = mango.build_cancel_spot_order_instructions(
-                        context, self.wallet, model_state.group, model_state.account, model_state.spot_market, order, model_state.spot_open_orders.address)
-                    cancellations += cancel
-
-            buy_client_id = context.random_client_id()
-            buy = mango.build_spot_place_order_instructions(context, self.wallet, model_state.group,
-                                                            model_state.account, model_state.spot_market,
-                                                            mango.OrderType.LIMIT,
-                                                            mango.Side.BUY, bid, buy_size, buy_client_id,
-                                                            fee_discount_token_account_address)
-            self.buys += [buy_client_id]
-            self.logger.info(f"Placing BUY order for {buy_size} at price {bid} with client ID: {buy_client_id}")
-
-            sell_client_id = context.random_client_id()
-            sell = mango.build_spot_place_order_instructions(context, self.wallet, model_state.group,
-                                                             model_state.account, model_state.spot_market,
-                                                             mango.OrderType.LIMIT,
-                                                             mango.Side.SELL, ask, sell_size, sell_client_id,
-                                                             fee_discount_token_account_address)
-            self.sells += [sell_client_id]
-            self.logger.info(f"Placing SELL order for {sell_size} at price {ask} with client ID: {sell_client_id}")
-
-            open_orders_addresses = list([oo for oo in model_state.account.spot_open_orders if oo is not None])
-            crank = mango.build_serum_consume_events_instructions(
-                context, self.wallet, model_state.spot_market, open_orders_addresses)
-            (payer + cancellations + buy + sell + crank).execute(context)
+            crank = self.market_instruction_builder.build_crank_instructions()
+            (payer + cancellations + buy + sell + settle + crank).execute(context)
         except Exception as exception:
             self.logger.error(f"Market-maker error on pulse: {exception} - {traceback.format_exc()}")
 

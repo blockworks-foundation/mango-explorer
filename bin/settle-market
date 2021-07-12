@@ -39,7 +39,7 @@ try:
     if market is None:
         raise Exception(f"Could not find market {market_symbol}")
 
-    instructions = mango.InstructionData.from_wallet(wallet)
+    instructions: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
 
     group = mango.Group.load(context)
     accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
@@ -77,7 +77,7 @@ try:
     if args.dry_run:
         print("Skipping transaction processing - dry run is set.")
     else:
-        transaction_id = instructions.execute_and_unwrap_transaction_id(context)
+        transaction_id = instructions.execute_and_unwrap_transaction_ids(context)[0]
         if args.wait:
             print(f"Waiting on {transaction_id}")
             context.wait_for_confirmation(transaction_id)

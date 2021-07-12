@@ -47,7 +47,7 @@ try:
     else:
         trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, adjustment_factor)
 
-    transaction_id = trade_executor.sell(symbol, args.quantity)
+    transaction_id = trade_executor.sell(symbol, args.quantity)[0]
     if args.wait:
         logging.info(f"Waiting on {transaction_id}")
         context.wait_for_confirmation(transaction_id)

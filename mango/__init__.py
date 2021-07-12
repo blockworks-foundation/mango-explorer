@@ -5,6 +5,7 @@ from .accountliquidator import AccountLiquidator, NullAccountLiquidator
 from .accountscout import ScoutReport, AccountScout
 from .addressableaccount import AddressableAccount
 from .balancesheet import BalanceSheet
+from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS, SOL_MINT_ADDRESS, SOL_DECIMALS, SOL_DECIMAL_DIVISOR, WARNING_DISCLAIMER_TEXT, MangoConstants
 from .context import Context, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
 from .createmarketoperations import create_market_operations
@@ -12,12 +13,13 @@ from .encoding import decode_binary, encode_binary, encode_key, encode_int
 from .group import Group
 from .idsjsontokenlookup import IdsJsonTokenLookup
 from .idsjsonmarketlookup import IdsJsonMarketLookup
-from .instructions import InstructionData, build_create_solana_account_instructions, build_create_spl_account_instructions, build_transfer_spl_tokens_instructions, build_close_spl_account_instructions, build_create_serum_open_orders_instructions, build_serum_place_order_instructions, build_serum_consume_events_instructions, build_serum_settle_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions, build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_create_account_instructions, build_place_perp_order_instructions, build_withdraw_instructions
+from .instructions import build_create_solana_account_instructions, build_create_spl_account_instructions, build_transfer_spl_tokens_instructions, build_close_spl_account_instructions, build_create_serum_open_orders_instructions, build_serum_place_order_instructions, build_serum_consume_events_instructions, build_serum_settle_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions, build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_create_account_instructions, build_place_perp_order_instructions, build_withdraw_instructions
 from .instructiontype import InstructionType
 from .liquidatablereport import LiquidatableState, LiquidatableReport
 from .liquidationevent import LiquidationEvent
 from .liquidationprocessor import LiquidationProcessor, LiquidationProcessorState
 from .market import Market
+from .marketinstructionbuilder import MarketInstructionBuilder, NullMarketInstructionBuilder
 from .marketlookup import MarketLookup, CompoundMarketLookup
 from .marketoperations import MarketOperations, NullMarketOperations
 from .metadata import Metadata
@@ -31,6 +33,7 @@ from .oracle import OracleSource, Price, Oracle, OracleProvider
 from .oraclefactory import create_oracle_provider
 from .perpmarket import PerpMarket
 from .perpmarketinfo import PerpMarketInfo
+from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarketoperations import PerpMarketOperations
 from .perpsmarket import PerpsMarket
 from .reconnectingwebsocket import ReconnectingWebsocket
@@ -38,10 +41,12 @@ from .retrier import RetryWithPauses, retry_context
 from .rootbank import NodeBank, RootBank
 from .serummarket import SerumMarket
 from .serummarketlookup import SerumMarketLookup
+from .serummarketinstructionbuilder import SerumMarketInstructionBuilder
 from .serummarketoperations import SerumMarketOperations
 from .spltokenlookup import SplTokenLookup
 from .spotmarket import SpotMarket
 from .spotmarketinfo import SpotMarketInfo
+from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
 from .token import Token, SolToken
 from .tokenaccount import TokenAccount
 from .tokeninfo import TokenInfo

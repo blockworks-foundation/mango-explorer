@@ -7,7 +7,6 @@ import sys
 import typing
 
 from solana.publickey import PublicKey
-from solana.transaction import Transaction
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
@@ -32,16 +31,15 @@ token_account: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(con
 if (token_account is None) or (token_account.value.token.mint != wrapped_sol.mint):
     raise Exception(f"Account {args.address} is not a {wrapped_sol.name} account.")
 
-transaction = Transaction()
-payer = wallet.address
-signers = mango.InstructionData.from_wallet(wallet)
+payer: PublicKey = wallet.address
+signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
 
 close_instruction = mango.build_close_spl_account_instructions(context, wallet, args.address)
 
 print(f"Closing account: {args.address} with balance {token_account.value.value} lamports.")
 
 all_instructions = signers + close_instruction
-transaction_id = all_instructions.execute_and_unwrap_transaction_id(context)
+transaction_id = all_instructions.execute_and_unwrap_transaction_ids(context)[0]
 print(f"Waiting on transaction ID: {transaction_id}")
 
 context.wait_for_confirmation(transaction_id)

@@ -60,17 +60,17 @@ class SerumMarketOperations(MarketOperations):
         else:
             self.reporter = just_log
 
-    def cancel_order(self, order: Order) -> str:
+    def cancel_order(self, order: Order) -> typing.Sequence[str]:
         self.reporter(
             f"Cancelling order {order.id} in openorders {self.open_orders.address} on market {self.serum_market.symbol}.")
         try:
             response = self.market.cancel_order_by_client_id(
                 self.wallet.account, self.open_orders.address, order.id,
                 TxOpts(preflight_commitment=self.context.commitment))
-            return self.context.unwrap_transaction_id_or_raise_exception(response)
+            return [self.context.unwrap_transaction_id_or_raise_exception(response)]
         except Exception as exception:
             self.logger.warning(f"Failed to cancel order {order.id} - continuing. {exception}")
-            return ""
+            return [""]
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         client_id: int = self.context.random_client_id()

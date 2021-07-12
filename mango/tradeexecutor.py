@@ -25,8 +25,9 @@ from pyserum.enums import OrderType, Side
 from pyserum.market import Market
 from solana.publickey import PublicKey
 
+from .combinableinstructions import CombinableInstructions
 from .context import Context
-from .instructions import InstructionData, build_compound_serum_place_order_instructions, build_create_serum_open_orders_instructions
+from .instructions import build_compound_serum_place_order_instructions, build_create_serum_open_orders_instructions
 from .retrier import retry_context
 from .spotmarket import SpotMarket
 from .tokenaccount import TokenAccount
@@ -63,11 +64,11 @@ class TradeExecutor(metaclass=abc.ABCMeta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def buy(self, symbol: str, quantity: Decimal) -> str:
+    def buy(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
         raise NotImplementedError("TradeExecutor.buy() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def sell(self, symbol: str, quantity: Decimal) -> str:
+    def sell(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
         raise NotImplementedError("TradeExecutor.sell() is not implemented on the base type.")
 
 
@@ -162,7 +163,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         self._serum_fee_discount_token_address_loaded = True
         return self._serum_fee_discount_token_address
 
-    def buy(self, symbol: str, quantity: Decimal) -> str:
+    def buy(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
         spot_market = self._lookup_spot_market(symbol)
         market = Market.load(self.context.client, spot_market.address)
         self.reporter(f"BUY order market: {spot_market.address} {market}")
@@ -182,7 +183,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             quantity
         )
 
-    def sell(self, symbol: str, quantity: Decimal) -> str:
+    def sell(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
         spot_market = self._lookup_spot_market(symbol)
         market = Market.load(self.context.client, spot_market.address)
         self.reporter(f"SELL order market: {spot_market.address} {market}")
@@ -203,8 +204,8 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             quantity
         )
 
-    def _execute(self, spot_market: SpotMarket, market: Market, side: Side, price: Decimal, quantity: Decimal) -> str:
-        all_instructions: InstructionData = InstructionData.from_wallet(self.wallet)
+    def _execute(self, spot_market: SpotMarket, market: Market, side: Side, price: Decimal, quantity: Decimal) -> typing.Sequence[str]:
+        all_instructions: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
 
         base_token_account = TokenAccount.fetch_largest_for_owner_and_token(
             self.context, self.wallet.address, spot_market.base)
@@ -212,7 +213,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             create_base_token_account = spl_token.create_associated_token_account(
                 payer=self.wallet.address, owner=self.wallet.address, mint=spot_market.base.mint
             )
-            all_instructions += InstructionData.from_instruction(create_base_token_account)
+            all_instructions += CombinableInstructions.from_instruction(create_base_token_account)
             base_token_account_address = create_base_token_account.keys[1].pubkey
         else:
             base_token_account_address = base_token_account.address
@@ -223,7 +224,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             create_quote_token_account = spl_token.create_associated_token_account(
                 payer=self.wallet.address, owner=self.wallet.address, mint=spot_market.quote.mint
             )
-            all_instructions += InstructionData.from_instruction(create_quote_token_account)
+            all_instructions += CombinableInstructions.from_instruction(create_quote_token_account)
             quote_token_account_address = create_quote_token_account.keys[1].pubkey
         else:
             quote_token_account_address = quote_token_account.address
@@ -247,7 +248,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         place_order_instructions = build_compound_serum_place_order_instructions(self.context, self.wallet, market, source_token_account_address, open_orders_address,
                                                                                  open_orders_addresses, OrderType.IOC, side, price, quantity, client_id, base_token_account_address, quote_token_account_address, self.serum_fee_discount_token_address)
         all_instructions += place_order_instructions
-        with retry_context("Place Serum Order And Settle", all_instructions.execute_and_unwrap_transaction_id, self.context.retry_pauses) as retrier:
+        with retry_context("Place Serum Order And Settle", all_instructions.execute_and_unwrap_transaction_ids, self.context.retry_pauses) as retrier:
             return retrier.run(self.context)
 
     def _lookup_spot_market(self, symbol: str) -> SpotMarket:

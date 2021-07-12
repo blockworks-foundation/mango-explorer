@@ -21,9 +21,10 @@ from solana.publickey import PublicKey
 
 from .account import Account
 from .accountinfo import AccountInfo
+from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .marketoperations import MarketOperations
-from .instructions import InstructionData, build_cancel_perp_order_instructions, build_place_perp_order_instructions
+from .instructions import build_cancel_perp_order_instructions, build_place_perp_order_instructions
 from .orderbookside import OrderBookSide
 from .orders import Order, OrderType, Side
 from .perpmarket import PerpMarket
@@ -48,17 +49,17 @@ class PerpMarketOperations(MarketOperations):
         self.perp_market: PerpMarket = perp_market
         self.reporter = reporter or (lambda _: None)
 
-    def cancel_order(self, order: Order) -> str:
+    def cancel_order(self, order: Order) -> typing.Sequence[str]:
         report = f"Cancelling order on market {self.market_name}."
         self.logger.info(report)
         self.reporter(report)
 
-        signers: InstructionData = InstructionData.from_wallet(self.wallet)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel_instructions = build_cancel_perp_order_instructions(
             self.context, self.wallet, self.margin_account, self.perp_market, order)
         all_instructions = signers + cancel_instructions
 
-        return all_instructions.execute_and_unwrap_transaction_id(self.context)
+        return all_instructions.execute_and_unwrap_transaction_ids(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         client_order_id = self.context.random_client_id()
@@ -66,7 +67,7 @@ class PerpMarketOperations(MarketOperations):
         self.logger.info(report)
         self.reporter(report)
 
-        signers: InstructionData = InstructionData.from_wallet(self.wallet)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         place_instructions = build_place_perp_order_instructions(
             self.context, self.wallet, self.perp_market.group, self.margin_account, self.perp_market, price, size, client_order_id, side, order_type)
         all_instructions = signers + place_instructions

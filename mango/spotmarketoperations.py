@@ -25,9 +25,10 @@ from solana.publickey import PublicKey
 
 from .account import Account
 from .accountinfo import AccountInfo
+from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import Group
-from .instructions import InstructionData, build_compound_spot_place_order_instructions, build_cancel_spot_order_instructions
+from .instructions import build_compound_spot_place_order_instructions, build_cancel_spot_order_instructions
 from .marketoperations import MarketOperations
 from .orders import Order, OrderType, Side
 from .spotmarket import SpotMarket
@@ -93,18 +94,18 @@ class SpotMarketOperations(MarketOperations):
         self._serum_fee_discount_token_address_loaded = True
         return self._serum_fee_discount_token_address
 
-    def cancel_order(self, order: Order) -> str:
+    def cancel_order(self, order: Order) -> typing.Sequence[str]:
         report = f"Cancelling order {order.id} on market {self.spot_market.symbol}."
         self.logger.info(report)
         self.reporter(report)
 
         open_orders = self.account.spot_open_orders[self.group_market_index]
 
-        signers: InstructionData = InstructionData.from_wallet(self.wallet)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel_instructions = build_cancel_spot_order_instructions(
             self.context, self.wallet, self.group, self.account, self.market, order, open_orders)
         all_instructions = signers + cancel_instructions
-        return all_instructions.execute_and_unwrap_transaction_id(self.context)
+        return all_instructions.execute_and_unwrap_transaction_ids(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         payer_token = self.spot_market.quote if side == Side.BUY else self.spot_market.base
@@ -118,7 +119,7 @@ class SpotMarketOperations(MarketOperations):
         self.logger.info(report)
         self.reporter(report)
 
-        signers: InstructionData = InstructionData.from_wallet(self.wallet)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         place_instructions = build_compound_spot_place_order_instructions(
             self.context, self.wallet, self.group, self.account, self.market, payer_token_account.address,
             order_type, side, price, size, client_order_id, self.serum_fee_discount_token_address)

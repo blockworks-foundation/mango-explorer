@@ -22,8 +22,8 @@ wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 group = mango.Group.load(context, context.group_id)
 
-signers: mango.InstructionData = mango.InstructionData.from_wallet(wallet)
+signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
 init = mango.build_create_account_instructions(context, wallet, group)
 all_instructions = signers + init
-transaction_id = all_instructions.execute_and_unwrap_transaction_id(context)
+transaction_id = all_instructions.execute_and_unwrap_transaction_ids(context)[0]
 print("Signature:", transaction_id)

@@ -26,11 +26,12 @@ from solana.account import Account as SolanaAccount
 from solana.publickey import PublicKey
 from solana.system_program import CreateAccountParams, create_account
 from solana.sysvar import SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY
-from solana.transaction import AccountMeta, Transaction, TransactionInstruction
+from solana.transaction import AccountMeta, TransactionInstruction
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
 from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, initialize_account, transfer2
 
 from .account import Account
+from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import Group
@@ -56,71 +57,19 @@ from .wallet import Wallet
 # the function signature in future.
 #
 
-class InstructionData():
-    def __init__(self, signers: typing.Sequence[SolanaAccount], instructions: typing.Sequence[TransactionInstruction]):
-        self.signers: typing.Sequence[SolanaAccount] = signers
-        self.instructions: typing.Sequence[TransactionInstruction] = instructions
-
-    @staticmethod
-    def empty() -> "InstructionData":
-        return InstructionData(signers=[], instructions=[])
-
-    @staticmethod
-    def from_signers(signers: typing.Sequence[SolanaAccount]) -> "InstructionData":
-        return InstructionData(signers=signers, instructions=[])
-
-    @staticmethod
-    def from_wallet(wallet: Wallet) -> "InstructionData":
-        return InstructionData(signers=[wallet.account], instructions=[])
-
-    @staticmethod
-    def from_instruction(instruction: TransactionInstruction) -> "InstructionData":
-        return InstructionData(signers=[], instructions=[instruction])
-
-    def __add__(self, new_instruction_data: "InstructionData") -> "InstructionData":
-        all_signers = [*self.signers, *new_instruction_data.signers]
-        all_instructions = [*self.instructions, *new_instruction_data.instructions]
-        return InstructionData(signers=all_signers, instructions=all_instructions)
-
-    def execute(self, context: Context) -> typing.Any:
-        transaction = Transaction()
-        transaction.instructions.extend(self.instructions)
-        response = context.client.send_transaction(transaction, *self.signers, opts=context.transaction_options)
-        return context.unwrap_or_raise_exception(response)
-
-    def execute_and_unwrap_transaction_id(self, context: Context) -> typing.Any:
-        return typing.cast(str, self.execute(context))
-
-    def __str__(self) -> str:
-        report: typing.List[str] = []
-        for index, signer in enumerate(self.signers):
-            report += [f"Signer[{index}]: {signer}"]
-
-        for index, instruction in enumerate(self.instructions):
-            for index, key in enumerate(instruction.keys):
-                report += [f"Key[{index}]: {key.pubkey} {key.is_signer: <5} {key.is_writable: <5}"]
-            report += [f"Program ID: {instruction.program_id}"]
-            report += ["Data: " + "".join("{:02x}".format(x) for x in instruction.data)]
-
-        return "\n".join(report)
-
-    def __repr__(self) -> str:
-        return f"{self}"
-
-
 # # 🥭 _ensure_openorders function
 #
-# Unlike most functions in this file, `_ensure_openorders()` returns a tuple, not just an `InstructionData`.
+# Unlike most functions in this file, `_ensure_openorders()` returns a tuple, not just an `CombinableInstructions`.
 #
 # The idea is: callers just want to know the OpenOrders address, but if it doesn't exist they may need to add
 # the instructions and signers for its creation before they try to use it.
 #
-# This function will always return the proper OpenOrders address, and will also return the `InstructionData` to
+# This function will always return the proper OpenOrders address, and will also return the `CombinableInstructions` to
 # create it (which will be empty of signers and instructions if the OpenOrders already exists).
 #
 
 
-def _ensure_openorders(context: Context, wallet: Wallet, group: Group, account: Account, market: Market) -> typing.Tuple[PublicKey, InstructionData]:
+def _ensure_openorders(context: Context, wallet: Wallet, group: Group, account: Account, market: Market) -> typing.Tuple[PublicKey, CombinableInstructions]:
     spot_market_address = market.state.public_key()
     market_index: int = -1
     for index, spot in enumerate(group.spot_markets):
@@ -131,7 +80,7 @@ def _ensure_openorders(context: Context, wallet: Wallet, group: Group, account: 
 
     open_orders_address = account.spot_open_orders[market_index]
     if open_orders_address is not None:
-        return open_orders_address, InstructionData.empty()
+        return open_orders_address, CombinableInstructions.empty()
 
     creation = build_create_solana_account_instructions(
         context, wallet, context.dex_program_id, layouts.OPEN_ORDERS.sizeof())
@@ -150,14 +99,14 @@ def _ensure_openorders(context: Context, wallet: Wallet, group: Group, account: 
 # necesary.
 #
 
-def build_create_solana_account_instructions(context: Context, wallet: Wallet, program_id: PublicKey, size: int, lamports: int = 0) -> InstructionData:
+def build_create_solana_account_instructions(context: Context, wallet: Wallet, program_id: PublicKey, size: int, lamports: int = 0) -> CombinableInstructions:
     minimum_balance_response = context.client.get_minimum_balance_for_rent_exemption(
         size, commitment=context.commitment)
     minimum_balance = context.unwrap_or_raise_exception(minimum_balance_response)
     account = SolanaAccount()
     create_instruction = create_account(
         CreateAccountParams(wallet.address, account.public_key(), lamports + minimum_balance, size, program_id))
-    return InstructionData(signers=[account], instructions=[create_instruction])
+    return CombinableInstructions(signers=[account], instructions=[create_instruction])
 
 
 # # 🥭 build_create_spl_account_instructions function
@@ -166,12 +115,12 @@ def build_create_solana_account_instructions(context: Context, wallet: Wallet, p
 # necesary.
 #
 
-def build_create_spl_account_instructions(context: Context, wallet: Wallet, token: Token, address: PublicKey, lamports: int = 0) -> InstructionData:
+def build_create_spl_account_instructions(context: Context, wallet: Wallet, token: Token, address: PublicKey, lamports: int = 0) -> CombinableInstructions:
     create_instructions = build_create_solana_account_instructions(context, wallet, TOKEN_PROGRAM_ID, ACCOUNT_LEN,
                                                                    lamports)
     initialize_instruction = initialize_account(InitializeAccountParams(
         TOKEN_PROGRAM_ID, address, token.mint, wallet.address))
-    return create_instructions + InstructionData(signers=[], instructions=[initialize_instruction])
+    return create_instructions + CombinableInstructions(signers=[], instructions=[initialize_instruction])
 
 
 # # 🥭 build_transfer_spl_tokens_instructions function
@@ -179,11 +128,11 @@ def build_create_spl_account_instructions(context: Context, wallet: Wallet, toke
 # Creates an instruction to transfer SPL tokens from one account to another.
 #
 
-def build_transfer_spl_tokens_instructions(context: Context, wallet: Wallet, token: Token, source: PublicKey, destination: PublicKey, quantity: Decimal) -> InstructionData:
+def build_transfer_spl_tokens_instructions(context: Context, wallet: Wallet, token: Token, source: PublicKey, destination: PublicKey, quantity: Decimal) -> CombinableInstructions:
     amount = int(quantity * (10 ** token.decimals))
     instructions = [transfer2(Transfer2Params(TOKEN_PROGRAM_ID, source, token.mint,
                               destination, wallet.address, amount, int(token.decimals)))]
-    return InstructionData(signers=[], instructions=instructions)
+    return CombinableInstructions(signers=[], instructions=instructions)
 
 
 # # 🥭 build_close_spl_account_instructions function
@@ -191,8 +140,8 @@ def build_transfer_spl_tokens_instructions(context: Context, wallet: Wallet, tok
 # Creates an instructio to close an SPL token account and transfers any remaining lamports to the wallet.
 #
 
-def build_close_spl_account_instructions(context: Context, wallet: Wallet, address: PublicKey) -> InstructionData:
-    return InstructionData(signers=[], instructions=[close_account(CloseAccountParams(TOKEN_PROGRAM_ID, address, wallet.address, wallet.address))])
+def build_close_spl_account_instructions(context: Context, wallet: Wallet, address: PublicKey) -> CombinableInstructions:
+    return CombinableInstructions(signers=[], instructions=[close_account(CloseAccountParams(TOKEN_PROGRAM_ID, address, wallet.address, wallet.address))])
 
 
 # # 🥭 build_create_serum_open_orders_instructions function
@@ -200,7 +149,7 @@ def build_close_spl_account_instructions(context: Context, wallet: Wallet, addre
 # Creates a Serum openorders-creating instruction.
 #
 
-def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet, market: Market) -> InstructionData:
+def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet, market: Market) -> CombinableInstructions:
     new_open_orders_account = SolanaAccount()
     response = context.client.get_minimum_balance_for_rent_exemption(
         layouts.OPEN_ORDERS.sizeof(), commitment=context.commitment)
@@ -212,7 +161,7 @@ def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet
         program_id=market.state.program_id(),
     )
 
-    return InstructionData(signers=[new_open_orders_account], instructions=[instruction])
+    return CombinableInstructions(signers=[new_open_orders_account], instructions=[instruction])
 
 
 # # 🥭 build_serum_place_order_instructions function
@@ -220,7 +169,7 @@ def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet
 # Creates a Serum order-placing instruction using V3 of the NewOrder instruction.
 #
 
-def build_serum_place_order_instructions(context: Context, wallet: Wallet, market: Market, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, fee_discount_address: typing.Optional[PublicKey]) -> InstructionData:
+def build_serum_place_order_instructions(context: Context, wallet: Wallet, market: Market, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
     serum_order_type: SerumOrderType = SerumOrderType.POST_ONLY if order_type == OrderType.POST_ONLY else SerumOrderType.IOC if order_type == OrderType.IOC else SerumOrderType.LIMIT
     serum_side: SerumSide = SerumSide.SELL if side == Side.SELL else SerumSide.BUY
 
@@ -236,7 +185,7 @@ def build_serum_place_order_instructions(context: Context, wallet: Wallet, marke
         fee_discount_address
     )
 
-    return InstructionData(signers=[], instructions=[instruction])
+    return CombinableInstructions(signers=[], instructions=[instruction])
 
 
 # # 🥭 build_serum_consume_events_instructions function
@@ -244,7 +193,7 @@ def build_serum_place_order_instructions(context: Context, wallet: Wallet, marke
 # Creates an event-consuming 'crank' instruction.
 #
 
-def build_serum_consume_events_instructions(context: Context, wallet: Wallet, market: Market, open_orders_addresses: typing.Sequence[PublicKey], limit: int = 32) -> InstructionData:
+def build_serum_consume_events_instructions(context: Context, wallet: Wallet, market: Market, open_orders_addresses: typing.Sequence[PublicKey], limit: int = 32) -> CombinableInstructions:
     instruction = consume_events(ConsumeEventsParams(
         market=market.state.public_key(),
         event_queue=market.state.event_queue(),
@@ -258,7 +207,7 @@ def build_serum_consume_events_instructions(context: Context, wallet: Wallet, ma
     random_account = SolanaAccount().public_key()
     instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=False))
     instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=False))
-    return InstructionData(signers=[], instructions=[instruction])
+    return CombinableInstructions(signers=[], instructions=[instruction])
 
 
 # # 🥭 build_serum_settle_instructions function
@@ -266,7 +215,7 @@ def build_serum_consume_events_instructions(context: Context, wallet: Wallet, ma
 # Creates a 'settle' instruction.
 #
 
-def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> InstructionData:
+def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
     vault_signer = PublicKey.create_program_address(
         [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
         market.state.program_id(),
@@ -285,7 +234,7 @@ def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Ma
         )
     )
 
-    return InstructionData(signers=[], instructions=[instruction])
+    return CombinableInstructions(signers=[], instructions=[instruction])
 
 
 # # 🥭 build_compound_serum_place_order_instructions function
@@ -308,7 +257,7 @@ def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Ma
 # orderbook).
 #
 
-def build_compound_serum_place_order_instructions(context: Context, wallet: Wallet, market: Market, source: PublicKey, open_orders_address: PublicKey, all_open_orders_addresses: typing.Sequence[PublicKey], order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, base_token_account_address: PublicKey, quote_token_account_address: PublicKey, fee_discount_address: typing.Optional[PublicKey], consume_limit: int = 32) -> InstructionData:
+def build_compound_serum_place_order_instructions(context: Context, wallet: Wallet, market: Market, source: PublicKey, open_orders_address: PublicKey, all_open_orders_addresses: typing.Sequence[PublicKey], order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, base_token_account_address: PublicKey, quote_token_account_address: PublicKey, fee_discount_address: typing.Optional[PublicKey], consume_limit: int = 32) -> CombinableInstructions:
     place_order = build_serum_place_order_instructions(
         context, wallet, market, source, open_orders_address, order_type, side, price, quantity, client_id, fee_discount_address)
     consume_events = build_serum_consume_events_instructions(
@@ -325,7 +274,7 @@ def build_compound_serum_place_order_instructions(context: Context, wallet: Wall
 #
 
 
-def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margin_account: Account, perp_market: PerpMarket, order: Order) -> InstructionData:
+def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margin_account: Account, perp_market: PerpMarket, order: Order) -> CombinableInstructions:
     # Prefer cancelling by client ID so we don't have to keep track of the order side.
     if order.client_id != 0:
         data: bytes = layouts.CANCEL_PERP_ORDER_BY_CLIENT_ID.build(
@@ -365,10 +314,10 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margi
             data=data
         )
     ]
-    return InstructionData(signers=[], instructions=instructions)
+    return CombinableInstructions(signers=[], instructions=instructions)
 
 
-def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, margin_account: Account, perp_market: PerpMarket, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType) -> InstructionData:
+def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, margin_account: Account, perp_market: PerpMarket, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType) -> CombinableInstructions:
     # { buy: 0, sell: 1 }
     raw_side: int = 1 if side == Side.SELL else 0
     # { limit: 0, ioc: 1, postOnly: 2 }
@@ -418,10 +367,10 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
                 })
         )
     ]
-    return InstructionData(signers=[], instructions=instructions)
+    return CombinableInstructions(signers=[], instructions=instructions)
 
 
-def build_mango_consume_events_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket, limit: Decimal = Decimal(32)) -> InstructionData:
+def build_mango_consume_events_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket, limit: Decimal = Decimal(32)) -> CombinableInstructions:
     # Accounts expected by this instruction (6):
     # 0. `[]` mangoGroupPk
     # 1. `[]` perpMarketPk
@@ -443,10 +392,10 @@ def build_mango_consume_events_instructions(context: Context, wallet: Wallet, gr
                 })
         )
     ]
-    return InstructionData(signers=[], instructions=instructions)
+    return CombinableInstructions(signers=[], instructions=instructions)
 
 
-def build_create_account_instructions(context: Context, wallet: Wallet, group: Group) -> InstructionData:
+def build_create_account_instructions(context: Context, wallet: Wallet, group: Group) -> CombinableInstructions:
     create_account_instructions = build_create_solana_account_instructions(
         context, wallet, context.program_id, layouts.MANGO_ACCOUNT)
     mango_account_address = create_account_instructions.signers[0].public_key()
@@ -465,7 +414,7 @@ def build_create_account_instructions(context: Context, wallet: Wallet, group: G
         program_id=context.program_id,
         data=layouts.INIT_MANGO_ACCOUNT.build({})
     )
-    return create_account_instructions + InstructionData(signers=[], instructions=[init])
+    return create_account_instructions + CombinableInstructions(signers=[], instructions=[init])
 
 
 # /// Withdraw funds that were deposited earlier.
@@ -488,7 +437,7 @@ def build_create_account_instructions(context: Context, wallet: Wallet, group: G
 #     quantity: u64,
 #     allow_borrow: bool,
 # },
-def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, margin_account: Account, root_bank: RootBank, node_bank: NodeBank, token_account: TokenAccount, allow_borrow: bool) -> InstructionData:
+def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, margin_account: Account, root_bank: RootBank, node_bank: NodeBank, token_account: TokenAccount, allow_borrow: bool) -> CombinableInstructions:
     value = token_account.value.shift_to_native().value
     withdraw = TransactionInstruction(
         keys=[
@@ -512,7 +461,7 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
         })
     )
 
-    return InstructionData(signers=[], instructions=[withdraw])
+    return CombinableInstructions(signers=[], instructions=[withdraw])
 
 
 # # 🥭 build_mango_place_order_instructions function
@@ -524,8 +473,8 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
                                         market: Market,
                                         order_type: OrderType, side: Side, price: Decimal,
                                         quantity: Decimal, client_id: int,
-                                        fee_discount_address: typing.Optional[PublicKey]) -> InstructionData:
-    instructions: InstructionData = InstructionData.empty()
+                                        fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
+    instructions: CombinableInstructions = CombinableInstructions.empty()
 
     open_orders_address, create_open_orders = _ensure_openorders(context, wallet, group, account, market)
     instructions += create_open_orders
@@ -627,13 +576,13 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
         )
     )
 
-    return instructions + InstructionData(signers=[], instructions=[place_spot_instruction])
+    return instructions + CombinableInstructions(signers=[], instructions=[place_spot_instruction])
 
 
 def build_compound_spot_place_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account,
                                                  market: Market, source: PublicKey, order_type: OrderType,
                                                  side: Side, price: Decimal, quantity: Decimal, client_id: int,
-                                                 fee_discount_address: typing.Optional[PublicKey]) -> InstructionData:
+                                                 fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
     _, create_open_orders = _ensure_openorders(context, wallet, group, account, market)
 
     place_order = build_spot_place_order_instructions(context, wallet, group, account, market, order_type,
@@ -654,7 +603,7 @@ def build_compound_spot_place_order_instructions(context: Context, wallet: Walle
     # quote_token_account = TokenAccount.fetch_largest_for_owner_and_token(
     #     context, wallet.address, quote_token_info.token)
 
-    # settle: InstructionData = InstructionData.empty()
+    # settle: CombinableInstructions = CombinableInstructions.empty()
     # if base_token_account is not None and quote_token_account is not None:
     #     open_order_accounts = market.find_open_orders_accounts_for_owner(wallet.address)
     #     settlement_open_orders = [oo for oo in open_order_accounts if oo.market == market.state.public_key()]
@@ -672,7 +621,7 @@ def build_compound_spot_place_order_instructions(context: Context, wallet: Walle
 #
 
 
-def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: Market, order: Order, open_orders_address: PublicKey) -> InstructionData:
+def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: Market, order: Order, open_orders_address: PublicKey) -> CombinableInstructions:
     # { buy: 0, sell: 1 }
     raw_side: int = 1 if order.side == Side.SELL else 0
 
@@ -710,4 +659,4 @@ def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group
                 })
         )
     ]
-    return InstructionData(signers=[], instructions=instructions)
+    return CombinableInstructions(signers=[], instructions=instructions)

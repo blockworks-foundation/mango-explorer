@@ -56,7 +56,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def cancel_order(self, order: Order) -> str:
+    def cancel_order(self, order: Order) -> typing.Sequence[str]:
         raise NotImplementedError("MarketOperations.cancel_order() is not implemented on the base type.")
 
     @abc.abstractmethod
@@ -87,7 +87,7 @@ class NullMarketOperations(MarketOperations):
         self.market_name: str = market_name
         self.reporter = reporter or (lambda _: None)
 
-    def cancel_order(self, order: Order) -> str:
+    def cancel_order(self, order: Order) -> typing.Sequence[str]:
         report = f"Cancelling order on market {self.market_name}."
         self.logger.info(report)
         self.reporter(report)
