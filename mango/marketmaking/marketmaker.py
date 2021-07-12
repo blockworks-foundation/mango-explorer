@@ -61,16 +61,16 @@ class MarketMaker:
 
             place_orders = mango.CombinableInstructions.empty()
             for desired_order in desired_orders:
-                client_id = context.random_client_id()
+                desired_client_id: int = context.random_client_id()
                 if desired_order.side == mango.Side.BUY:
-                    self.buy_client_ids += [client_id]
+                    self.buy_client_ids += [desired_client_id]
                 else:
-                    self.sell_client_ids += [client_id]
+                    self.sell_client_ids += [desired_client_id]
 
                 self.logger.info(
-                    f"Placing {desired_order.side} order for {desired_order.quantity} at price {desired_order.price} with client ID: {client_id}")
+                    f"Placing {desired_order.side} order for {desired_order.quantity} at price {desired_order.price} with client ID: {desired_client_id}")
                 place_order = self.market_instruction_builder.build_place_order_instructions(
-                    desired_order.side, desired_order.order_type, desired_order.price, desired_order.quantity, client_id)
+                    desired_order.side, desired_order.order_type, desired_order.price, desired_order.quantity, desired_client_id)
                 place_orders += place_order
 
             settle = self.market_instruction_builder.build_settle_instructions()

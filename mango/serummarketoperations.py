@@ -69,7 +69,12 @@ class SerumMarketOperations(MarketOperations):
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         place = self.market_instruction_builder.build_place_order_instructions(
             side, order_type, price, size, client_id)
-        (signers + place).execute(self.context)
+
+        crank = self.market_instruction_builder.build_crank_instructions()
+
+        settle = self.market_instruction_builder.build_settle_instructions()
+
+        (signers + place + crank + settle).execute(self.context)
         return Order(id=0, side=side, price=price, size=size, client_id=client_id, owner=self.market_instruction_builder.open_orders.address)
 
     def load_orders(self) -> typing.Sequence[Order]:

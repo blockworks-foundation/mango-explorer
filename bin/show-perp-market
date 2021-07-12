@@ -1,0 +1,34 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+import traceback
+
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows the on-chain data of a Mango Markets Group.")
+mango.Context.add_command_line_parameters(parser)
+parser.add_argument("--address", type=PublicKey, required=True,
+                    help="address of the account")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+try:
+    context = mango.Context.from_command_line_parameters(args)
+
+    group = mango.Group.load(context)
+    perp_market = mango.PerpMarket.load(context, args.address, group)
+    print(perp_market)
+except Exception as exception:
+    logging.critical(f"show-perp-market stopped because of exception: {exception} - {traceback.format_exc()}")
+except:
+    logging.critical(f"show-perp-market stopped because of uncatchable error: {traceback.format_exc()}")

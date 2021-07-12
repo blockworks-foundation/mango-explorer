@@ -55,4 +55,4 @@ class NullDesiredOrdersBuilder(DesiredOrdersBuilder):
         return []
 
     def __str__(self) -> str:
-        return f"« 𝙽𝚞𝚕𝚕𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"
+        return "« 𝙽𝚞𝚕𝚕𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"

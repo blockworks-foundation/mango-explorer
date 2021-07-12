@@ -115,7 +115,7 @@ class PerpMarket(AddressableAccount):
     def __str__(self):
         return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝 {self.version} [{self.address}]
     {self.meta_data}
-    Group: {self.group}
+    Group: {self.group.address}
     Bids: {self.bids}
     Asks: {self.asks}
     Event Queue: {self.event_queue}
