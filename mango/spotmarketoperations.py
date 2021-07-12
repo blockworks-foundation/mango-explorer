@@ -18,21 +18,18 @@ import itertools
 import typing
 
 from decimal import Decimal
-from pyserum.market import Market
 from pyserum.market.orderbook import OrderBook as SerumOrderBook
 from pyserum.market.types import Order as SerumOrder
-from solana.publickey import PublicKey
 
 from .account import Account
 from .accountinfo import AccountInfo
 from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import Group
-from .instructions import build_compound_spot_place_order_instructions, build_cancel_spot_order_instructions
 from .marketoperations import MarketOperations
 from .orders import Order, OrderType, Side
 from .spotmarket import SpotMarket
-from .tokenaccount import TokenAccount
+from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
 from .wallet import Wallet
 
 
@@ -42,25 +39,17 @@ from .wallet import Wallet
 #
 
 class SpotMarketOperations(MarketOperations):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, reporter: typing.Callable[[str], None] = None):
+    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, market_instruction_builder: SpotMarketInstructionBuilder, reporter: typing.Callable[[str], None] = None):
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.group: Group = group
         self.account: Account = account
         self.spot_market: SpotMarket = spot_market
-        self.market: Market = Market.load(context.client, spot_market.address, context.dex_program_id)
-        self._serum_fee_discount_token_address: typing.Optional[PublicKey] = None
-        self._serum_fee_discount_token_address_loaded: bool = False
+        self.market_instruction_builder: SpotMarketInstructionBuilder = market_instruction_builder
 
-        market_index: int = -1
-        for index, spot in enumerate(self.group.spot_markets):
-            if spot is not None and spot.address == self.spot_market.address:
-                market_index = index
-        if market_index == -1:
-            raise Exception(f"Could not find spot market {self.spot_market.address} in group {self.group.address}")
-
-        self.group_market_index: int = market_index
+        self.market_index = group.find_spot_market_index(spot_market.address)
+        self.open_orders = self.account.spot_open_orders[self.market_index]
 
         def report(text):
             self.logger.info(text)
@@ -74,66 +63,31 @@ class SpotMarketOperations(MarketOperations):
         else:
             self.reporter = just_log
 
-    @property
-    def serum_fee_discount_token_address(self) -> typing.Optional[PublicKey]:
-        if self._serum_fee_discount_token_address_loaded:
-            return self._serum_fee_discount_token_address
-
-        # SRM is always the token Serum uses for fee discounts
-        token = self.context.token_lookup.find_by_symbol("SRM")
-        if token is None:
-            self._serum_fee_discount_token_address_loaded = True
-            self._serum_fee_discount_token_address = None
-            return self._serum_fee_discount_token_address
-
-        fee_discount_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-            self.context, self.wallet.address, token)
-        if fee_discount_token_account is not None:
-            self._serum_fee_discount_token_address = fee_discount_token_account.address
-
-        self._serum_fee_discount_token_address_loaded = True
-        return self._serum_fee_discount_token_address
-
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
-        report = f"Cancelling order {order.id} on market {self.spot_market.symbol}."
-        self.logger.info(report)
-        self.reporter(report)
-
-        open_orders = self.account.spot_open_orders[self.group_market_index]
-
+        self.reporter(f"Cancelling order {order.id} on market {self.spot_market.symbol}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        cancel_instructions = build_cancel_spot_order_instructions(
-            self.context, self.wallet, self.group, self.account, self.market, order, open_orders)
-        all_instructions = signers + cancel_instructions
-        return all_instructions.execute_and_unwrap_transaction_ids(self.context)
+        cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
+        return (signers + cancel).execute_and_unwrap_transaction_ids(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
-        payer_token = self.spot_market.quote if side == Side.BUY else self.spot_market.base
-        payer_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-            self.context, self.wallet.address, payer_token)
-        if payer_token_account is None:
-            raise Exception(f"Could not find a source token account for token {payer_token}.")
-
-        client_order_id = self.context.random_client_id()
-        report = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.spot_market.symbol} using client ID {client_order_id}."
+        client_id: int = self.context.random_client_id()
+        report: str = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.spot_market.symbol} with ID {client_id}."
         self.logger.info(report)
         self.reporter(report)
 
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        place_instructions = build_compound_spot_place_order_instructions(
-            self.context, self.wallet, self.group, self.account, self.market, payer_token_account.address,
-            order_type, side, price, size, client_order_id, self.serum_fee_discount_token_address)
+        place = self.market_instruction_builder.build_place_order_instructions(
+            side, order_type, price, size, client_id)
+        (signers + place).execute(self.context)
 
-        all_instructions = signers + place_instructions
-        all_instructions.execute(self.context)
-
-        return Order(id=0, side=side, price=price, size=size, client_id=client_order_id, owner=self.account.address)
+        return Order(id=0, side=side, price=price, size=size, client_id=client_id, owner=self.open_orders)
 
     def _load_serum_orders(self) -> typing.Sequence[SerumOrder]:
+        raw_market = self.market_instruction_builder.raw_market
         [bids_info, asks_info] = AccountInfo.load_multiple(
-            self.context, [self.market.state.bids(), self.market.state.asks()])
-        bids_orderbook = SerumOrderBook.from_bytes(self.market.state, bids_info.data)
-        asks_orderbook = SerumOrderBook.from_bytes(self.market.state, asks_info.data)
+            self.context, [raw_market.state.bids(), raw_market.state.asks()])
+        bids_orderbook = SerumOrderBook.from_bytes(raw_market.state, bids_info.data)
+        asks_orderbook = SerumOrderBook.from_bytes(raw_market.state, asks_info.data)
 
         return list(itertools.chain(bids_orderbook.orders(), asks_orderbook.orders()))
 
@@ -146,12 +100,11 @@ class SpotMarketOperations(MarketOperations):
         return orders
 
     def load_my_orders(self) -> typing.Sequence[Order]:
-        open_orders_account = self.account.spot_open_orders[self.group_market_index]
-        if not open_orders_account:
+        if not self.open_orders:
             return []
 
         all_orders = self._load_serum_orders()
-        serum_orders = [o for o in all_orders if o.open_order_address == open_orders_account]
+        serum_orders = [o for o in all_orders if o.open_order_address == self.open_orders]
         orders: typing.List[Order] = []
         for serum_order in serum_orders:
             orders += [Order.from_serum_order(serum_order)]

@@ -71,12 +71,7 @@ from .wallet import Wallet
 
 def _ensure_openorders(context: Context, wallet: Wallet, group: Group, account: Account, market: Market) -> typing.Tuple[PublicKey, CombinableInstructions]:
     spot_market_address = market.state.public_key()
-    market_index: int = -1
-    for index, spot in enumerate(group.spot_markets):
-        if spot is not None and spot.address == spot_market_address:
-            market_index = index
-    if market_index == -1:
-        raise Exception(f"Could not find spot market {spot_market_address} in group {group.address}")
+    market_index = group.find_spot_market_index(spot_market_address)
 
     open_orders_address = account.spot_open_orders[market_index]
     if open_orders_address is not None:
@@ -274,7 +269,7 @@ def build_compound_serum_place_order_instructions(context: Context, wallet: Wall
 #
 
 
-def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margin_account: Account, perp_market: PerpMarket, order: Order) -> CombinableInstructions:
+def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, account: Account, perp_market: PerpMarket, order: Order) -> CombinableInstructions:
     # Prefer cancelling by client ID so we don't have to keep track of the order side.
     if order.client_id != 0:
         data: bytes = layouts.CANCEL_PERP_ORDER_BY_CLIENT_ID.build(
@@ -302,8 +297,8 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margi
     instructions = [
         TransactionInstruction(
             keys=[
-                AccountMeta(is_signer=False, is_writable=False, pubkey=margin_account.group.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=margin_account.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=account.group.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
                 AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.bids),
@@ -317,7 +312,7 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margi
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
-def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, margin_account: Account, perp_market: PerpMarket, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType) -> CombinableInstructions:
+def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType) -> CombinableInstructions:
     # { buy: 0, sell: 1 }
     raw_side: int = 1 if side == Side.SELL else 0
     # { limit: 0, ioc: 1, postOnly: 2 }
@@ -346,7 +341,7 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
         TransactionInstruction(
             keys=[
                 AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=margin_account.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
                 AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
                 AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.address),
@@ -354,7 +349,7 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.asks),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.event_queue),
                 *list([AccountMeta(is_signer=False, is_writable=False,
-                                   pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in margin_account.spot_open_orders])
+                                   pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders])
             ],
             program_id=context.program_id,
             data=layouts.PLACE_PERP_ORDER.build(
@@ -437,12 +432,12 @@ def build_create_account_instructions(context: Context, wallet: Wallet, group: G
 #     quantity: u64,
 #     allow_borrow: bool,
 # },
-def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, margin_account: Account, root_bank: RootBank, node_bank: NodeBank, token_account: TokenAccount, allow_borrow: bool) -> CombinableInstructions:
+def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, account: Account, root_bank: RootBank, node_bank: NodeBank, token_account: TokenAccount, allow_borrow: bool) -> CombinableInstructions:
     value = token_account.value.shift_to_native().value
     withdraw = TransactionInstruction(
         keys=[
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=margin_account.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
             AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
             AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
@@ -452,7 +447,7 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
             *list([AccountMeta(is_signer=False, is_writable=False,
-                               pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in margin_account.spot_open_orders])
+                               pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders])
         ],
         program_id=context.program_id,
         data=layouts.WITHDRAW.build({

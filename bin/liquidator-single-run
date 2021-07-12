@@ -84,8 +84,7 @@ try:
     liquidation_processor = mango.LiquidationProcessor(context, liquidator_name, account_liquidator, wallet_balancer)
 
     started_at = time.time()
-    # ripe = group.load_ripe_margin_accounts()
-    liquidation_processor.update_margin_accounts([])
+    liquidation_processor.update_accounts([])
 
     group = mango.Group.load(context)  # Refresh group data
     # prices = group.fetch_token_prices(context)

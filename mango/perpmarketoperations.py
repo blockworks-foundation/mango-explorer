@@ -24,10 +24,10 @@ from .accountinfo import AccountInfo
 from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .marketoperations import MarketOperations
-from .instructions import build_cancel_perp_order_instructions, build_place_perp_order_instructions
 from .orderbookside import OrderBookSide
 from .orders import Order, OrderType, Side
 from .perpmarket import PerpMarket
+from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .wallet import Wallet
 
 
@@ -39,41 +39,35 @@ from .wallet import Wallet
 
 class PerpMarketOperations(MarketOperations):
     def __init__(self, market_name: str, context: Context, wallet: Wallet,
-                 margin_account: Account, perp_market: PerpMarket,
+                 market_instruction_builder: PerpMarketInstructionBuilder,
+                 account: Account, perp_market: PerpMarket,
                  reporter: typing.Callable[[str], None] = None):
         super().__init__()
         self.market_name: str = market_name
         self.context: Context = context
         self.wallet: Wallet = wallet
-        self.margin_account: Account = margin_account
+        self.market_instruction_builder: PerpMarketInstructionBuilder = market_instruction_builder
+        self.account: Account = account
         self.perp_market: PerpMarket = perp_market
         self.reporter = reporter or (lambda _: None)
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
-        report = f"Cancelling order on market {self.market_name}."
-        self.logger.info(report)
-        self.reporter(report)
-
+        self.reporter(f"Cancelling order {order.id} on market {self.market_name}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        cancel_instructions = build_cancel_perp_order_instructions(
-            self.context, self.wallet, self.margin_account, self.perp_market, order)
-        all_instructions = signers + cancel_instructions
-
-        return all_instructions.execute_and_unwrap_transaction_ids(self.context)
+        cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
+        return (signers + cancel).execute_and_unwrap_transaction_ids(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
-        client_order_id = self.context.random_client_id()
-        report = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.market_name} using client ID {client_order_id}."
+        client_id: int = self.context.random_client_id()
+        report: str = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.market_name} with ID {client_id}."
         self.logger.info(report)
         self.reporter(report)
 
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        place_instructions = build_place_perp_order_instructions(
-            self.context, self.wallet, self.perp_market.group, self.margin_account, self.perp_market, price, size, client_order_id, side, order_type)
-        all_instructions = signers + place_instructions
-        all_instructions.execute(self.context)
-
-        return Order(id=0, side=side, price=price, size=size, client_id=client_order_id, owner=self.margin_account.address)
+        place = self.market_instruction_builder.build_place_order_instructions(
+            side, order_type, price, size, client_id)
+        (signers + place).execute(self.context)
+        return Order(id=0, side=side, price=price, size=size, client_id=client_id, owner=self.account.address)
 
     def load_orders(self) -> typing.Sequence[Order]:
         bids_address: PublicKey = self.perp_market.bids
@@ -88,7 +82,7 @@ class PerpMarketOperations(MarketOperations):
         orders = self.load_orders()
         mine = []
         for order in orders:
-            if order.owner == self.margin_account.address:
+            if order.owner == self.account.address:
                 mine += [order]
 
         return mine

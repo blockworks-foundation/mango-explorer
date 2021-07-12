@@ -46,12 +46,12 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 try:
     context = mango.Context.from_command_line_parameters(args)
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-    margin_account_address = args.address
+    account_address = args.address
     liquidator_name = args.name
 
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
-    logging.info(f"Margin account address: {margin_account_address}")
+    logging.info(f"Margin account address: {account_address}")
 
     group = mango.Group.load(context)
 
@@ -86,9 +86,9 @@ try:
 
     # TODO - fetch prices when available for V3.
     # prices = group.fetch_token_prices(context)
-    margin_account = mango.Account.load(context, margin_account_address, group)
+    account = mango.Account.load(context, account_address, group)
     worthwhile_threshold = Decimal(0)  # No threshold - don't take this into account.
-    liquidatable_report = mango.LiquidatableReport.build(group, [], margin_account, worthwhile_threshold)
+    liquidatable_report = mango.LiquidatableReport.build(group, [], account, worthwhile_threshold)
     transaction_id = account_liquidator.liquidate(liquidatable_report)
     if transaction_id is None:
         print("No transaction sent.")

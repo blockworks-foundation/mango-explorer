@@ -25,14 +25,14 @@ from .tokenvalue import TokenValue
 
 
 class LiquidationEvent:
-    def __init__(self, timestamp: datetime.datetime, liquidator_name: str, group_name: str, succeeded: bool, signature: str, wallet_address: PublicKey, margin_account_address: PublicKey, balances_before: typing.Sequence[TokenValue], balances_after: typing.Sequence[TokenValue]):
+    def __init__(self, timestamp: datetime.datetime, liquidator_name: str, group_name: str, succeeded: bool, signature: str, wallet_address: PublicKey, account_address: PublicKey, balances_before: typing.Sequence[TokenValue], balances_after: typing.Sequence[TokenValue]):
         self.timestamp: datetime.datetime = timestamp
         self.liquidator_name: str = liquidator_name
         self.group_name: str = group_name
         self.succeeded: bool = succeeded
         self.signature: str = signature
         self.wallet_address: PublicKey = wallet_address
-        self.margin_account_address: PublicKey = margin_account_address
+        self.account_address: PublicKey = account_address
         self.balances_before: typing.Sequence[TokenValue] = balances_before
         self.balances_after: typing.Sequence[TokenValue] = balances_after
         self.changes: typing.Sequence[TokenValue] = TokenValue.changes(balances_before, balances_after)
@@ -45,7 +45,7 @@ class LiquidationEvent:
     🗃️ Group: {self.group_name}
     📇 Signature: {self.signature}
     👛 Wallet: {self.wallet_address}
-    💳 Margin Account: {self.margin_account_address}
+    💳 Margin Account: {self.account_address}
     💸 Changes:
         {changes_text}
 »"""

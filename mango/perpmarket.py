@@ -59,17 +59,11 @@ class PerpMarket(AddressableAccount):
         self.scaler: PublicKey = scaler
         self.total_liquidity_points: Decimal = total_liquidity_points
 
-        market_index = -1
-        for index, pm in enumerate(group.perp_markets):
-            if pm is not None and pm.address == self.address:
-                market_index = index
-        if market_index == -1:
-            raise Exception(f"Could not find perp market {self.address} in group {group.address}")
-        self.market_index = market_index
+        self.market_index = group.find_perp_market_index(self.address)
 
-        base_token = group.tokens[market_index]
+        base_token = group.tokens[self.market_index]
         if base_token is None:
-            raise Exception(f"Could not find base token at index {market_index} for perp market {self.address}.")
+            raise Exception(f"Could not find base token at index {self.market_index} for perp market {self.address}.")
         self.base_token: TokenInfo = base_token
 
         quote_token = group.tokens[-1]

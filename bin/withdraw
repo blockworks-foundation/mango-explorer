@@ -30,7 +30,7 @@ group = mango.Group.load(context, context.group_id)
 accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
 if len(accounts) == 0:
     raise Exception(f"Could not find any margin accounts for '{wallet.address}'.")
-margin_account = accounts[0]
+account = accounts[0]
 
 token = context.token_lookup.find_by_symbol(args.symbol)
 if token is None:
@@ -53,7 +53,7 @@ node_bank = root_bank.pick_node_bank(context)
 
 signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
 withdraw = mango.build_withdraw_instructions(
-    context, wallet, group, margin_account, root_bank, node_bank, withdrawal_token_account, args.allow_borrow)
+    context, wallet, group, account, root_bank, node_bank, withdrawal_token_account, args.allow_borrow)
 
 all_instructions = signers + withdraw
 transaction_id = all_instructions.execute_and_unwrap_transaction_ids(context)[0]

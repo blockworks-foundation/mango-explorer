@@ -22,11 +22,14 @@ from .group import Group
 from .market import Market
 from .marketoperations import MarketOperations, NullMarketOperations
 from .perpmarket import PerpMarket
+from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarketoperations import PerpMarketOperations
 from .perpsmarket import PerpsMarket
 from .serummarket import SerumMarket
+from .serummarketinstructionbuilder import SerumMarketInstructionBuilder
 from .serummarketoperations import SerumMarketOperations
 from .spotmarket import SpotMarket
+from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
 from .spotmarketoperations import SpotMarketOperations
 from .wallet import Wallet
 
@@ -39,18 +42,27 @@ def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, ma
     if dry_run:
         return NullMarketOperations(market.symbol, reporter)
     elif isinstance(market, SerumMarket):
-        return SerumMarketOperations(context, wallet, market, reporter)
+        serum_market_instruction_builder: SerumMarketInstructionBuilder = SerumMarketInstructionBuilder.load(
+            context, wallet, market)
+        return SerumMarketOperations(context, wallet, market, serum_market_instruction_builder, reporter)
     elif isinstance(market, SpotMarket):
         group = Group.load(context, market.group_address)
-        margin_accounts = Account.load_all_for_owner(context, wallet.address, group)
-        return SpotMarketOperations(context, wallet, group, margin_accounts[0], market, reporter)
+        accounts = Account.load_all_for_owner(context, wallet.address, group)
+        account = accounts[0]
+        spot_market_instruction_builder: SpotMarketInstructionBuilder = SpotMarketInstructionBuilder.load(
+            context, wallet, group, account, market)
+        return SpotMarketOperations(context, wallet, group, account, market, spot_market_instruction_builder, reporter)
     elif isinstance(market, PerpsMarket):
         group = Group.load(context, context.group_id)
-        margin_accounts = Account.load_all_for_owner(context, wallet.address, group)
+        accounts = Account.load_all_for_owner(context, wallet.address, group)
+        account = accounts[0]
         perp_market_info = group.perp_markets[0]
         if perp_market_info is None:
             raise Exception("Perp market not found at index 0.")
         perp_market = PerpMarket.load(context, perp_market_info.address, group)
-        return PerpMarketOperations(market.symbol, context, wallet, margin_accounts[0], perp_market, reporter)
+        perp_market_instruction_builder: PerpMarketInstructionBuilder = PerpMarketInstructionBuilder.load(
+            context, wallet, group, account, perp_market)
+
+        return PerpMarketOperations(market.symbol, context, wallet, perp_market_instruction_builder, account, perp_market, reporter)
     else:
         raise Exception(f"Could not find order placer for market {market.symbol}")

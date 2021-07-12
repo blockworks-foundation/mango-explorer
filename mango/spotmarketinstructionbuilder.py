@@ -75,12 +75,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         if quote_token_account is None:
             raise Exception(f"Could not find source token account for quote token {spot_market.quote.symbol}.")
 
-        market_index: int = -1
-        for index, spot in enumerate(group.spot_markets):
-            if spot is not None and spot.address == spot_market.address:
-                market_index = index
-        if market_index == -1:
-            raise Exception(f"Could not find spot market {spot_market.address} in group {group.address}")
+        market_index = group.find_spot_market_index(spot_market.address)
 
         return SpotMarketInstructionBuilder(context, wallet, group, account, spot_market, raw_market, base_token_account, quote_token_account, market_index, fee_discount_token_address)
 

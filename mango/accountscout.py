@@ -155,12 +155,12 @@ class AccountScout:
                         f"Account '{account_address}' has {len(token_accounts)} {basket_token.token.name} token account(s) with mint '{basket_token.token.mint}': {[ta.address for ta in token_accounts]}")
 
         # May have one or more Mango Markets margin account, but it's optional for liquidating
-        margin_accounts = Account.load_all_for_owner(context, account_address, group)
-        if len(margin_accounts) == 0:
+        accounts = Account.load_all_for_owner(context, account_address, group)
+        if len(accounts) == 0:
             report.add_detail(f"Account '{account_address}' has no Mango Markets margin accounts.")
         else:
-            for margin_account in margin_accounts:
-                report.add_detail(f"Margin account: {margin_account}")
+            for account in accounts:
+                report.add_detail(f"Margin account: {account}")
 
         return report
 

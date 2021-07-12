@@ -119,6 +119,20 @@ class Group(AddressableAccount):
             raise Exception(f"Group account not found at address '{group_address}'")
         return Group.parse(context, account_info)
 
+    def find_spot_market_index(self, spot_market_address: PublicKey) -> int:
+        for index, spot in enumerate(self.spot_markets):
+            if spot is not None and spot.address == spot_market_address:
+                return index
+
+        raise Exception(f"Could not find spot market {spot_market_address} in group {self.address}")
+
+    def find_perp_market_index(self, perp_market_address: PublicKey) -> int:
+        for index, pm in enumerate(self.perp_markets):
+            if pm is not None and pm.address == perp_market_address:
+                return index
+
+        raise Exception(f"Could not find perp market {perp_market_address} in group {self.address}")
+
     def fetch_balances(self, context: Context, root_address: PublicKey) -> typing.Sequence[TokenValue]:
         balances: typing.List[TokenValue] = []
         sol_balance = context.fetch_sol_balance(root_address)

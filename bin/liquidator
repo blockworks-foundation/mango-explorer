@@ -58,17 +58,17 @@ for notify in args.notify_errors:
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 
-def start_subscriptions(context: mango.Context, liquidation_processor: mango.LiquidationProcessor, fetch_prices: typing.Callable[[typing.Any], typing.Any], fetch_margin_accounts: typing.Callable[[typing.Any], typing.Any], throttle_reload_to_seconds: Decimal, throttle_ripe_update_to_seconds: Decimal):
+def start_subscriptions(context: mango.Context, liquidation_processor: mango.LiquidationProcessor, fetch_prices: typing.Callable[[typing.Any], typing.Any], fetch_accounts: typing.Callable[[typing.Any], typing.Any], throttle_reload_to_seconds: Decimal, throttle_ripe_update_to_seconds: Decimal):
     liquidation_processor.state = mango.LiquidationProcessorState.STARTING
 
     logging.info("Starting margin account fetcher subscription")
-    margin_account_subscription = rx.interval(float(throttle_reload_to_seconds)).pipe(
+    account_subscription = rx.interval(float(throttle_reload_to_seconds)).pipe(
         ops.subscribe_on(context.pool_scheduler),
         ops.start_with(-1),
-        ops.map(fetch_margin_accounts(context)),
+        ops.map(fetch_accounts(context)),
         ops.catch(mango.observable_pipeline_error_reporter),
         ops.retry()
-    ).subscribe(mango.create_backpressure_skipping_observer(on_next=liquidation_processor.update_margin_accounts, on_error=mango.log_subscription_error))
+    ).subscribe(mango.create_backpressure_skipping_observer(on_next=liquidation_processor.update_accounts, on_error=mango.log_subscription_error))
 
     logging.info("Starting price fetcher subscription")
     price_subscription = rx.interval(float(throttle_ripe_update_to_seconds)).pipe(
@@ -78,7 +78,7 @@ def start_subscriptions(context: mango.Context, liquidation_processor: mango.Liq
         ops.retry()
     ).subscribe(mango.create_backpressure_skipping_observer(on_next=lambda piped: liquidation_processor.update_prices(piped[0], piped[1]), on_error=mango.log_subscription_error))
 
-    return margin_account_subscription, price_subscription
+    return account_subscription, price_subscription
 
 
 try:
@@ -160,29 +160,29 @@ try:
 
         return _fetch_prices
 
-    def fetch_margin_accounts(context):
+    def fetch_accounts(context):
         def _actual_fetch():
             group = mango.Group.load(context)
             return mango.Account.load_ripe(context, group)
 
-        def _fetch_margin_accounts(_):
+        def _fetch_accounts(_):
             with mango.retry_context("Margin Account Fetch",
                                      _actual_fetch,
                                      context.retry_pauses) as retrier:
                 return retrier.run()
-        return _fetch_margin_accounts
+        return _fetch_accounts
 
     class LiquidationProcessorSubscriptions:
-        def __init__(self, margin_account: rx.core.typing.Disposable, price: rx.core.typing.Disposable):
-            self.margin_account: rx.core.typing.Disposable = margin_account
+        def __init__(self, account: rx.core.typing.Disposable, price: rx.core.typing.Disposable):
+            self.account: rx.core.typing.Disposable = account
             self.price: rx.core.typing.Disposable = price
 
     liquidation_processor = mango.LiquidationProcessor(
         context, liquidator_name, account_liquidator, wallet_balancer, worthwhile_threshold)
-    margin_account_subscription, price_subscription = start_subscriptions(
-        context, liquidation_processor, fetch_prices, fetch_margin_accounts, throttle_reload_to_seconds, throttle_ripe_update_to_seconds)
+    account_subscription, price_subscription = start_subscriptions(
+        context, liquidation_processor, fetch_prices, fetch_accounts, throttle_reload_to_seconds, throttle_ripe_update_to_seconds)
 
-    subscriptions = LiquidationProcessorSubscriptions(margin_account=margin_account_subscription,
+    subscriptions = LiquidationProcessorSubscriptions(account=account_subscription,
                                                       price=price_subscription)
 
     def on_unhealthy(liquidation_processor: mango.LiquidationProcessor):
@@ -193,7 +193,7 @@ try:
 
         logging.warning("Liquidation processor has been marked as unhealthy so recreating subscriptions.")
         try:
-            subscriptions.margin_account.dispose()
+            subscriptions.account.dispose()
         except Exception as exception:
             logging.warning(f"Ignoring problem disposing of margin account subscription: {exception}")
         try:
@@ -201,9 +201,9 @@ try:
         except Exception as exception:
             logging.warning(f"Ignoring problem disposing of margin account subscription: {exception}")
 
-        margin_account_subscription, price_subscription = start_subscriptions(
-            context, liquidation_processor, fetch_prices, fetch_margin_accounts, throttle_reload_to_seconds, throttle_ripe_update_to_seconds)
-        subscriptions.margin_account = margin_account_subscription
+        account_subscription, price_subscription = start_subscriptions(
+            context, liquidation_processor, fetch_prices, fetch_accounts, throttle_reload_to_seconds, throttle_ripe_update_to_seconds)
+        subscriptions.account = account_subscription
         subscriptions.price = price_subscription
 
     liquidation_processor.state_change.subscribe(on_next=on_unhealthy)
