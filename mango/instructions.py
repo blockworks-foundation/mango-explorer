@@ -82,16 +82,6 @@ class InstructionData():
         all_instructions = [*self.instructions, *new_instruction_data.instructions]
         return InstructionData(signers=all_signers, instructions=all_instructions)
 
-    def show(self, report: typing.Callable) -> None:
-        for index, signer in enumerate(self.signers):
-            report("Signer", index, signer)
-
-        for index, instruction in enumerate(self.instructions):
-            for index, key in enumerate(instruction.keys):
-                report("Key", index, key.pubkey, key.is_signer, key.is_writable)
-            report("Program ID", instruction.program_id)
-            report("Data", "".join("{:02x}".format(x) for x in instruction.data))
-
     def execute(self, context: Context) -> typing.Any:
         transaction = Transaction()
         transaction.instructions.extend(self.instructions)
@@ -100,6 +90,22 @@ class InstructionData():
 
     def execute_and_unwrap_transaction_id(self, context: Context) -> typing.Any:
         return typing.cast(str, self.execute(context))
+
+    def __str__(self) -> str:
+        report: typing.List[str] = []
+        for index, signer in enumerate(self.signers):
+            report += [f"Signer[{index}]: {signer}"]
+
+        for index, instruction in enumerate(self.instructions):
+            for index, key in enumerate(instruction.keys):
+                report += [f"Key[{index}]: {key.pubkey} {key.is_signer: <5} {key.is_writable: <5}"]
+            report += [f"Program ID: {instruction.program_id}"]
+            report += ["Data: " + "".join("{:02x}".format(x) for x in instruction.data)]
+
+        return "\n".join(report)
+
+    def __repr__(self) -> str:
+        return f"{self}"
 
 
 # # 🥭 _ensure_openorders function
@@ -320,10 +326,22 @@ def build_compound_serum_place_order_instructions(context: Context, wallet: Wall
 
 
 def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margin_account: Account, perp_market: PerpMarket, order: Order) -> InstructionData:
-    # { buy: 0, sell: 1 }
-    raw_side: int = 1 if order.side == Side.SELL else 0
+    # Prefer cancelling by client ID so we don't have to keep track of the order side.
+    if order.client_id != 0:
+        data: bytes = layouts.CANCEL_PERP_ORDER_BY_CLIENT_ID.build(
+            {
+                "client_order_id": order.client_id
+            })
+    else:
+        # { buy: 0, sell: 1 }
+        raw_side: int = 1 if order.side == Side.SELL else 0
+        data = layouts.CANCEL_PERP_ORDER.build(
+            {
+                "order_id": order.id,
+                "side": raw_side
+            })
 
-    # Accounts expected by this instruction:
+    # Accounts expected by this instruction (both CANCEL_PERP_ORDER and CANCEL_PERP_ORDER_BY_CLIENT_ID are the same):
     # 0. `[]` mangoGroupPk
     # 1. `[writable]` mangoAccountPk
     # 2. `[signer]` ownerPk
@@ -335,7 +353,7 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margi
     instructions = [
         TransactionInstruction(
             keys=[
-                AccountMeta(is_signer=False, is_writable=False, pubkey=perp_market.group.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=margin_account.group.address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=margin_account.address),
                 AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.address),
@@ -344,11 +362,7 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, margi
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.event_queue)
             ],
             program_id=context.program_id,
-            data=layouts.CANCEL_PERP_ORDER.build(
-                {
-                    "order_id": order.id,
-                    "side": raw_side
-                })
+            data=data
         )
     ]
     return InstructionData(signers=[], instructions=instructions)
@@ -366,8 +380,8 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
     base_factor = Decimal(10) ** base_decimals
     quote_factor = Decimal(10) ** quote_decimals
 
-    native_price = ((price * quote_factor) * perp_market.contract_size) / (perp_market.quote_lot_size * base_factor)
-    native_quantity = (quantity * base_factor) / perp_market.contract_size
+    native_price = ((price * quote_factor) * perp_market.base_lot_size) / (perp_market.quote_lot_size * base_factor)
+    native_quantity = (quantity * base_factor) / perp_market.base_lot_size
 
     # /// Accounts expected by this instruction (6):
     # /// 0. `[]` mango_group_ai - TODO
@@ -401,6 +415,31 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
                     "client_order_id": client_order_id,
                     "side": raw_side,
                     "order_type": raw_order_type
+                })
+        )
+    ]
+    return InstructionData(signers=[], instructions=instructions)
+
+
+def build_mango_consume_events_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket, limit: Decimal = Decimal(32)) -> InstructionData:
+    # Accounts expected by this instruction (6):
+    # 0. `[]` mangoGroupPk
+    # 1. `[]` perpMarketPk
+    # 2. `[writable]` eventQueuePk
+    # 3+ `[writable]` mangoAccountPks...
+
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.event_queue),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address)
+            ],
+            program_id=context.program_id,
+            data=layouts.CONSUME_EVENTS.build(
+                {
+                    "limit": limit,
                 })
         )
     ]
@@ -482,7 +521,7 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
 #
 
 def build_spot_place_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account,
-                                        market: Market, source: PublicKey,
+                                        market: Market,
                                         order_type: OrderType, side: Side, price: Decimal,
                                         quantity: Decimal, client_id: int,
                                         fee_discount_address: typing.Optional[PublicKey]) -> InstructionData:
@@ -597,7 +636,7 @@ def build_compound_spot_place_order_instructions(context: Context, wallet: Walle
                                                  fee_discount_address: typing.Optional[PublicKey]) -> InstructionData:
     _, create_open_orders = _ensure_openorders(context, wallet, group, account, market)
 
-    place_order = build_spot_place_order_instructions(context, wallet, group, account, market, source, order_type,
+    place_order = build_spot_place_order_instructions(context, wallet, group, account, market, order_type,
                                                       side, price, quantity, client_id, fee_discount_address)
 
     open_orders_addresses = list([oo for oo in account.spot_open_orders if oo is not None])

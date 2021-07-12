@@ -46,7 +46,7 @@ class Group(AddressableAccount):
                  perp_markets: typing.Sequence[typing.Optional[PerpMarketInfo]],
                  oracles: typing.Sequence[PublicKey], signer_nonce: Decimal, signer_key: PublicKey,
                  admin: PublicKey, dex_program_id: PublicKey, cache: PublicKey, valid_interval: Decimal,
-                 insurance_vault: typing.Optional[PublicKey]):
+                 dao_vault: typing.Optional[PublicKey]):
         super().__init__(account_info)
         self.version: Version = version
         self.name: str = name
@@ -62,7 +62,7 @@ class Group(AddressableAccount):
         self.dex_program_id: PublicKey = dex_program_id
         self.cache: PublicKey = cache
         self.valid_interval: Decimal = valid_interval
-        self.insurance_vault: typing.Optional[PublicKey] = insurance_vault
+        self.dao_vault: typing.Optional[PublicKey] = dao_vault
 
     @property
     def shared_quote_token(self) -> TokenInfo:
@@ -96,16 +96,16 @@ class Group(AddressableAccount):
         dex_program_id: PublicKey = layout.dex_program_id
         cache: PublicKey = layout.cache
         valid_interval: Decimal = layout.valid_interval
-        insurance_vault: PublicKey = layout.insurance_vault
+        dao_vault: PublicKey = layout.dao_vault
 
-        return Group(account_info, version, name, meta_data, tokens, spot_markets, perp_markets, oracles, signer_nonce, signer_key, admin, dex_program_id, cache, valid_interval, insurance_vault)
+        return Group(account_info, version, name, meta_data, tokens, spot_markets, perp_markets, oracles, signer_nonce, signer_key, admin, dex_program_id, cache, valid_interval, dao_vault)
 
     @staticmethod
     def parse(context: Context, account_info: AccountInfo) -> "Group":
         data = account_info.data
         if len(data) != layouts.GROUP.sizeof():
             raise Exception(
-                f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP.sizeof()}")
+                f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP.sizeof()})")
 
         layout = layouts.GROUP.parse(data)
         name = context.lookup_group_name(account_info.address)
@@ -145,7 +145,7 @@ class Group(AddressableAccount):
     Admin: {self.admin}
     DEX Program ID: {self.dex_program_id}
     Cache: {self.cache}
-    Insurance Vault: {self.insurance_vault}
+    DAO Vault: {self.dao_vault}
     Valid Interval: {self.valid_interval}
     Tokens:
         {tokens}

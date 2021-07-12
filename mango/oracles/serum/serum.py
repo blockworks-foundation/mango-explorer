@@ -82,7 +82,9 @@ class SerumOracle(Oracle):
         return Price(self.source, datetime.now(), self.spot_market, top_bid_price, mid_price, top_ask_price)
 
     def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
-        context = context.new_from_cluster("mainnet-beta")
+        context.cluster = "mainnet-beta"
+        context.cluster_url = "https://solana-api.projectserum.com"
+        context.client = Client(context.cluster_url)
         return rx.interval(1).pipe(
             ops.subscribe_on(context.pool_scheduler),
             ops.start_with(-1),

@@ -28,6 +28,8 @@
 #
 # So for example `GROUP` is defined below but it's a low-level dependency. In general, code
 # should depend and work with the `Group` class, not the `GROUP` structure.
+#
+# Note: usize is a u64 on Solana, so a regular DecimalAdapter() works
 
 
 import construct
@@ -221,10 +223,12 @@ class BookPriceAdapter(construct.Adapter):
 #
 # I thought there might be a way to get this working using the `construct.Select()` mechanism, but it
 # didn't work - complaining about the use of sizeof(), even though all NODE layouts are exactly 72 bytes.
+_NODE_SIZE = 88
+
 
 class OrderBookNodeAdapter(construct.Adapter):
     def __init__(self):
-        construct.Adapter.__init__(self, construct.Bytes(72))
+        construct.Adapter.__init__(self, construct.Bytes(_NODE_SIZE))
 
     def _decode(self, obj, context, path) -> Decimal:
         any_node = ANY_NODE.parse(obj)
@@ -265,8 +269,6 @@ class OrderBookNodeAdapter(construct.Adapter):
 #     Disabled = 1u64 << 7,
 # }
 # ```
-
-
 ACCOUNT_FLAGS = construct.BitsSwapped(
     construct.BitStruct(
         "initialized" / construct.Flag,
@@ -322,12 +324,26 @@ MAX_TOKENS: int = 32
 MAX_PAIRS: int = MAX_TOKENS - 1
 MAX_NODE_BANKS: int = 8
 QUOTE_INDEX: int = MAX_TOKENS - 1
-OPEN_ORDERS_MAX_ORDERS: int = 32
 MAX_BOOK_NODES: int = 1024
 
 DATA_TYPE = construct.Enum(construct.Int8ul, Group=0, Account=1, RootBank=2,
                            NodeBank=3, PerpMarket=4, Bids=5, Asks=6, Cache=7, EventQueue=8)
 
+
+# # 🥭 METADATA
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# #[derive(Copy, Clone, Pod, Default)]
+# #[repr(C)]
+# /// Stores meta information about the `Account` on chain
+# pub struct MetaData {
+#     pub data_type: u8,
+#     pub version: u8,
+#     pub is_initialized: bool,
+#     pub padding: [u8; 5], // This makes explicit the 8 byte alignment padding
+# }
+# ```
 METADATA = construct.Struct(
     "data_type" / DATA_TYPE,
     "version" / DecimalAdapter(1),
@@ -336,6 +352,19 @@ METADATA = construct.Struct(
 )
 
 
+# # 🥭 TOKEN_INFO
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# #[derive(Copy, Clone, Pod)]
+# #[repr(C)]
+# pub struct TokenInfo {
+#     pub mint: Pubkey,
+#     pub root_bank: Pubkey,
+#     pub decimals: u8,
+#     pub padding: [u8; 7],
+# }
+# ```
 TOKEN_INFO = construct.Struct(
     "mint" / PublicKeyAdapter(),
     "root_bank" / PublicKeyAdapter(),
@@ -344,6 +373,21 @@ TOKEN_INFO = construct.Struct(
 )
 
 
+# # 🥭 SPOT_MARKET_INFO
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# #[derive(Copy, Clone, Pod)]
+# #[repr(C)]
+# pub struct SpotMarketInfo {
+#     pub spot_market: Pubkey,
+#     pub maint_asset_weight: I80F48,
+#     pub init_asset_weight: I80F48,
+#     pub maint_liab_weight: I80F48,
+#     pub init_liab_weight: I80F48,
+#     pub liquidation_fee: I80F48,
+# }
+# ```
 SPOT_MARKET_INFO = construct.Struct(
     "spot_market" / PublicKeyAdapter(),
     "maint_asset_weight" / FloatI80F48Adapter(),
@@ -353,6 +397,25 @@ SPOT_MARKET_INFO = construct.Struct(
     "liquidation_fee" / FloatI80F48Adapter()
 )
 
+# # 🥭 PERP_MARKET_INFO
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# #[derive(Copy, Clone, Pod)]
+# #[repr(C)]
+# pub struct PerpMarketInfo {
+#     pub perp_market: Pubkey, // One of these may be empty
+#     pub maint_asset_weight: I80F48,
+#     pub init_asset_weight: I80F48,
+#     pub maint_liab_weight: I80F48,
+#     pub init_liab_weight: I80F48,
+#     pub liquidation_fee: I80F48,
+#     pub maker_fee: I80F48,
+#     pub taker_fee: I80F48,
+#     pub base_lot_size: i64,  // The lot size of the underlying
+#     pub quote_lot_size: i64, // min tick
+# }
+# ```
 PERP_MARKET_INFO = construct.Struct(
     "perp_market" / PublicKeyAdapter(),
     "maint_asset_weight" / FloatI80F48Adapter(),
@@ -360,11 +423,38 @@ PERP_MARKET_INFO = construct.Struct(
     "maint_liab_weight" / FloatI80F48Adapter(),
     "init_liab_weight" / FloatI80F48Adapter(),
     "liquidation_fee" / FloatI80F48Adapter(),
+    "maker_fee" / FloatI80F48Adapter(),
+    "taker_fee" / FloatI80F48Adapter(),
     "base_lot_size" / SignedDecimalAdapter(),
     "quote_lot_size" / SignedDecimalAdapter(),
 )
 
-# usize is a u64 on Solana, so a regular DecimalAdapter() works
+# # 🥭 GROUP
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# #[derive(Copy, Clone, Pod, Loadable)]
+# #[repr(C)]
+# pub struct MangoGroup {
+#     pub meta_data: MetaData,
+#     pub num_oracles: usize, // incremented every time add_oracle is called
+#
+#     pub tokens: [TokenInfo; MAX_TOKENS],
+#     pub spot_markets: [SpotMarketInfo; MAX_PAIRS],
+#     pub perp_markets: [PerpMarketInfo; MAX_PAIRS],
+#
+#     pub oracles: [Pubkey; MAX_PAIRS],
+#
+#     pub signer_nonce: u64,
+#     pub signer_key: Pubkey,
+#     pub admin: Pubkey,          // Used to add new markets and adjust risk params
+#     pub dex_program_id: Pubkey, // Consider allowing more
+#     pub mango_cache: Pubkey,
+#     pub valid_interval: u64,
+#
+#     pub dao_vault: Pubkey,
+# }
+# ```
 GROUP = construct.Struct(
     "meta_data" / METADATA,
     "num_oracles" / DecimalAdapter(),
@@ -378,94 +468,267 @@ GROUP = construct.Struct(
     "dex_program_id" / PublicKeyAdapter(),
     "cache" / PublicKeyAdapter(),
     "valid_interval" / DecimalAdapter(),
-    "insurance_vault" / PublicKeyAdapter()
+    "dao_vault" / PublicKeyAdapter()
 )
 
+# # 🥭 ROOT_BANK
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# /// This is the root bank for one token's lending and borrowing info
+# #[derive(Copy, Clone, Pod, Loadable)]
+# #[repr(C)]
+# pub struct RootBank {
+#     pub meta_data: MetaData,
+#
+#     pub optimal_util: I80F48,
+#     pub optimal_rate: I80F48,
+#     pub max_rate: I80F48,
+#
+#     pub num_node_banks: usize,
+#     pub node_banks: [Pubkey; MAX_NODE_BANKS],
+#
+#     pub deposit_index: I80F48,
+#     pub borrow_index: I80F48,
+#     pub last_updated: u64,
+#
+#     padding: [u8; 64], // used for future expansions
+# }
+# ```
 ROOT_BANK = construct.Struct(
     "meta_data" / METADATA,
+    "optimal_util" / FloatI80F48Adapter(),
+    "optimal_rate" / FloatI80F48Adapter(),
+    "max_rate" / FloatI80F48Adapter(),
+
     "num_node_banks" / DecimalAdapter(),
     "node_banks" / construct.Array(MAX_NODE_BANKS, PublicKeyAdapter()),
     "deposit_index" / FloatI80F48Adapter(),
     "borrow_index" / FloatI80F48Adapter(),
-    "last_updated" / DatetimeAdapter()
+    "last_updated" / DatetimeAdapter(),
+
+    construct.Padding(64)
 )
 
+# # 🥭 NODE_BANK
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# #[derive(Copy, Clone, Pod, Loadable)]
+# #[repr(C)]
+# pub struct NodeBank {
+#     pub meta_data: MetaData,
+#
+#     pub deposits: I80F48,
+#     pub borrows: I80F48,
+#     pub vault: Pubkey,
+# }
+# ```
 NODE_BANK = construct.Struct(
     "meta_data" / METADATA,
-    "deposit" / FloatI80F48Adapter(),
-    "borrow" / FloatI80F48Adapter(),
+    "deposits" / FloatI80F48Adapter(),
+    "borrows" / FloatI80F48Adapter(),
     "vault" / PublicKeyAdapter()
 )
 
+# # 🥭 PERP_OPEN_ORDERS
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# #[derive(Copy, Clone, Pod)]
+# #[repr(C)]
+# pub struct PerpOpenOrders {
+#     pub bids_quantity: i64, // total contracts in sell orders
+#     pub asks_quantity: i64, // total quote currency in buy orders
+#     pub is_free_bits: u32,
+#     pub is_bid_bits: u32,
+#     pub orders: [i128; 32],
+#     pub client_order_ids: [u64; 32],
+# }
+# ```
 PERP_OPEN_ORDERS = construct.Struct(
     "bids_quantity" / SignedDecimalAdapter(),
     "asks_quantity" / SignedDecimalAdapter(),
     "is_free_bits" / DecimalAdapter(4),
     "is_bid_bits" / DecimalAdapter(4),
-    "orders" / construct.Array(OPEN_ORDERS_MAX_ORDERS, SignedDecimalAdapter(16)),
-    "client_order_ids" / construct.Array(OPEN_ORDERS_MAX_ORDERS, SignedDecimalAdapter())
+    "orders" / construct.Array(MAX_TOKENS, SignedDecimalAdapter(16)),
+    "client_order_ids" / construct.Array(MAX_TOKENS, SignedDecimalAdapter())
 )
 
+# # 🥭 PERP_ACCOUNT
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# #[derive(Copy, Clone, Pod)]
+# #[repr(C)]
+# pub struct PerpAccount {
+#     pub base_position: i64,     // measured in base lots
+#     pub quote_position: I80F48, // measured in native quote
+#
+#     pub long_settled_funding: I80F48,
+#     pub short_settled_funding: I80F48,
+#     pub open_orders: PerpOpenOrders,
+#     pub liquidity_points: I80F48,
+# }
+# ```
 PERP_ACCOUNT = construct.Struct(
     "base_position" / SignedDecimalAdapter(),
     "quote_position" / FloatI80F48Adapter(),
     "long_settled_funding" / FloatI80F48Adapter(),
     "short_settled_funding" / FloatI80F48Adapter(),
-    "open_orders" / PERP_OPEN_ORDERS
+    "open_orders" / PERP_OPEN_ORDERS,
+    "liquidity_points" / FloatI80F48Adapter(),
 )
 
+# # 🥭 MANGO_ACCOUNT
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# pub const MAX_NUM_IN_MARGIN_BASKET: u8 = 10;
+# #[derive(Copy, Clone, Pod, Loadable)]
+# #[repr(C)]
+# pub struct MangoAccount {
+#     pub meta_data: MetaData,
+#
+#     pub mango_group: Pubkey,
+#     pub owner: Pubkey,
+#
+#     // pub in_basket: [bool; MAX_TOKENS],
+#     pub in_margin_basket: [bool; MAX_PAIRS],
+#     pub num_in_margin_basket: u8,
+#
+#     // Spot and Margin related data
+#     pub deposits: [I80F48; MAX_TOKENS],
+#     pub borrows: [I80F48; MAX_TOKENS],
+#     pub spot_open_orders: [Pubkey; MAX_PAIRS],
+#
+#     // Perps related data
+#     pub perp_accounts: [PerpAccount; MAX_PAIRS],
+#
+#     /// This account cannot open new positions or borrow until `init_health >= 0`
+#     pub being_liquidated: bool,
+#
+#     /// This account cannot do anything except go through `resolve_bankruptcy`
+#     pub is_bankrupt: bool,
+#     pub padding: [u8; 6],
+# }
+# ```
 MANGO_ACCOUNT = construct.Struct(
     "meta_data" / METADATA,
     "group" / PublicKeyAdapter(),
     "owner" / PublicKeyAdapter(),
-    "in_basket" / construct.Array(MAX_PAIRS, DecimalAdapter(1)),
-    "num_in_basket" / DecimalAdapter(1),
+    "in_margin_basket" / construct.Array(MAX_PAIRS, DecimalAdapter(1)),
+    "num_in_margin_basket" / DecimalAdapter(1),
     "deposits" / construct.Array(MAX_TOKENS, FloatI80F48Adapter()),
     "borrows" / construct.Array(MAX_TOKENS, FloatI80F48Adapter()),
     "spot_open_orders" / construct.Array(MAX_PAIRS, PublicKeyAdapter()),
     "perp_accounts" / construct.Array(MAX_PAIRS, PERP_ACCOUNT),
     "being_liquidated" / DecimalAdapter(1),
-    "is_bankrupt" / construct.Flag,
+    "is_bankrupt" / DecimalAdapter(1),
     "padding" / construct.Padding(6)
 )
 
+
+# # 🥭 PERP_MARKET
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# /// This will hold top level info about the perps market
+# /// Likely all perps transactions on a market will be locked on this one because this will be passed in as writable
+# #[derive(Copy, Clone, Pod, Loadable, Default)]
+# #[repr(C)]
+# pub struct PerpMarket {
+#     pub meta_data: MetaData,
+#
+#     pub mango_group: Pubkey,
+#     pub bids: Pubkey,
+#     pub asks: Pubkey,
+#     pub event_queue: Pubkey,
+#     pub quote_lot_size: i64, // number of quote native that reresents min tick
+#     pub base_lot_size: i64,  // represents number of base native quantity; greater than 0
+#
+#     // TODO - consider just moving this into the cache
+#     pub long_funding: I80F48,
+#     pub short_funding: I80F48,
+#
+#     pub open_interest: i64, // This is i64 to keep consistent with the units of contracts, but should always be > 0
+#
+#     pub last_updated: u64,
+#     pub seq_num: u64,
+#     pub fees_accrued: I80F48, // native quote currency
+#
+#     // Liquidity incentive params
+#     pub max_depth_bps: I80F48,
+#     pub scaler: I80F48,
+#     pub total_liquidity_points: I80F48,
+# }
+# ```
 PERP_MARKET = construct.Struct(
     "meta_data" / METADATA,
     "group" / PublicKeyAdapter(),
     "bids" / PublicKeyAdapter(),
     "asks" / PublicKeyAdapter(),
     "event_queue" / PublicKeyAdapter(),
+    "quote_lot_size" / SignedDecimalAdapter(),
+    "base_lot_size" / SignedDecimalAdapter(),
 
     "long_funding" / FloatI80F48Adapter(),
     "short_funding" / FloatI80F48Adapter(),
     "open_interest" / SignedDecimalAdapter(),
-    "quote_lot_size" / SignedDecimalAdapter(),
-    "index_oracle" / PublicKeyAdapter(),
     "last_updated" / DatetimeAdapter(),
     "seq_num" / DecimalAdapter(),
-    "contract_size" / SignedDecimalAdapter()
+
+    "fees_accrued" / FloatI80F48Adapter(),
+    "max_depth_bips" / FloatI80F48Adapter(),
+    "scaler" / FloatI80F48Adapter(),
+    "total_liquidity_points" / FloatI80F48Adapter()
 )
 
 
+# # 🥭 ANY_NODE
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/matching.rs):
+# ```
+# const NODE_SIZE: usize = 88;
 # #[derive(Copy, Clone, Pod)]
 # #[repr(C)]
 # pub struct AnyNode {
 #     pub tag: u32,
-#     pub data: [u8; 68],
+#     pub data: [u8; NODE_SIZE - 4],
 # }
+# ```
 ANY_NODE = construct.Struct(
     "tag" / DecimalAdapter(4),
-    "data" / construct.Bytes(68)
+    "data" / construct.Bytes(_NODE_SIZE - 4)
 )
+assert ANY_NODE.sizeof() == _NODE_SIZE
 
 
+# # 🥭 UNINITIALIZED_BOOK_NODE
+#
+# There is no Rust structure for this - it's just a blank node.
+#
 UNINITIALIZED_BOOK_NODE = construct.Struct(
     "type_name" / construct.Computed(lambda _: "uninitialized"),
     "tag" / construct.Const(Decimal(0), DecimalAdapter(4)),
-    "data" / construct.Bytes(68)
+    "data" / construct.Bytes(_NODE_SIZE - 4)
 )
 assert UNINITIALIZED_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
 
+# # 🥭 INNER_BOOK_NODE
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/matching.rs):
+# ```
+# #[derive(Copy, Clone, Pod)]
+# #[repr(C)]
+# pub struct InnerNode {
+#     pub tag: u32,
+#     pub prefix_len: u32,
+#     pub key: i128,
+#     pub children: [u32; 2],
+#     pub padding: [u8; NODE_SIZE - 32],
+# }
+# ```
 INNER_BOOK_NODE = construct.Struct(
     "type_name" / construct.Computed(lambda _: "inner"),
     "tag" / construct.Const(Decimal(1), DecimalAdapter(4)),
@@ -473,10 +736,33 @@ INNER_BOOK_NODE = construct.Struct(
     "prefix_len" / DecimalAdapter(4),
     "key" / DecimalAdapter(16),
     "children" / construct.Array(2, DecimalAdapter(4)),
-    "padding" / construct.Padding(40)
+    "padding" / construct.Padding(_NODE_SIZE - 32)
 )
 assert INNER_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
 
+# # 🥭 LEAF_BOOK_NODE
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/matching.rs):
+# ```
+# #[derive(Debug, Copy, Clone, PartialEq, Eq, Pod)]
+# #[repr(C)]
+# pub struct LeafNode {
+#     pub tag: u32,
+#     pub owner_slot: u8,
+#     pub padding: [u8; 3],
+#     pub key: i128,
+#     pub owner: Pubkey,
+#     pub quantity: i64,
+#     pub client_order_id: u64,
+#
+#     // Liquidity incentive related parameters
+#     // Either the best bid or best ask at the time the order was placed
+#     pub best_initial: i64,
+#
+#     // The time the order was place
+#     pub timestamp: u64,
+# }
+# ```
 LEAF_BOOK_NODE = construct.Struct(
     "type_name" / construct.Computed(lambda _: "leaf"),
     "tag" / construct.Const(Decimal(2), DecimalAdapter(4)),
@@ -485,31 +771,55 @@ LEAF_BOOK_NODE = construct.Struct(
     "padding" / construct.Padding(3),
     # (price, seqNum)
     "key" / BookPriceAdapter(),
-    # "sequence_number" / DecimalAdapter(),
-    # "price" / DecimalAdapter(),
-    # Open orders account
     "owner" / PublicKeyAdapter(),
     # In units of lot size
     "quantity" / DecimalAdapter(),
-    "client_order_id" / DecimalAdapter()
+    "client_order_id" / DecimalAdapter(),
+
+    "best_initial" / SignedDecimalAdapter(),
+    "timestamp" / DatetimeAdapter()
 )
 assert LEAF_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
 
+# # 🥭 FREE_BOOK_NODE
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/matching.rs):
+# ```
+# #[derive(Copy, Clone, Pod)]
+# #[repr(C)]
+# struct FreeNode {
+#     tag: u32,
+#     next: u32,
+#     padding: [u8; NODE_SIZE - 8],
+# }
+# ```
 FREE_BOOK_NODE = construct.Struct(
     "type_name" / construct.Computed(lambda _: "free"),
     "tag" / construct.Const(Decimal(3), DecimalAdapter(4)),
     "next" / DecimalAdapter(4),
-    "padding" / construct.Padding(64)
+    "padding" / construct.Padding(_NODE_SIZE - 8)
 )
 assert FREE_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
 
+# # 🥭 FREE_BOOK_NODE
+#
+# Last Free Node is identical to free node, apart from the tag.
+#
 LAST_FREE_BOOK_NODE = construct.Struct(
     "type_name" / construct.Computed(lambda _: "last_free"),
     "tag" / construct.Const(Decimal(4), DecimalAdapter(4)),
-    "padding" / construct.Padding(68)
+    "next" / DecimalAdapter(4),
+    "padding" / construct.Padding(_NODE_SIZE - 8)
 )
 assert LAST_FREE_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
 
+
+# # 🥭 ORDERBOOK_SIDE
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/matching.rs):
+# ```
+# pub const MAX_BOOK_NODES: usize = 1024; // NOTE: this cannot be larger than u32::MAX
+#
 # #[derive(Copy, Clone, Pod, Loadable)]
 # #[repr(C)]
 # pub struct BookSide {
@@ -522,6 +832,7 @@ assert LAST_FREE_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
 #     pub leaf_count: usize,
 #     pub nodes: [AnyNode; MAX_BOOK_NODES], // TODO make this variable length
 # }
+# ```
 ORDERBOOK_SIDE = construct.Struct(
     "meta_data" / METADATA,
     "bump_index" / DecimalAdapter(),
@@ -530,6 +841,124 @@ ORDERBOOK_SIDE = construct.Struct(
     "root_node" / DecimalAdapter(4),
     "leaf_count" / DecimalAdapter(),
     "nodes" / construct.Array(MAX_BOOK_NODES, OrderBookNodeAdapter())
+)
+
+
+# # 🥭 FILL_EVENT
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/queue.rs):
+# ```
+# const EVENT_SIZE: usize = 152;
+# #[derive(Copy, Clone, Debug, Pod)]
+# #[repr(C)]
+# pub struct FillEvent {
+#     pub event_type: u8,
+#     pub side: Side, // side from the taker's POV
+#     pub maker_slot: u8,
+#     pub maker_out: bool, // true if maker order quantity == 0
+#     pub padding: [u8; 4],
+#     pub maker: Pubkey,
+#     pub maker_order_id: i128,
+#     pub maker_client_order_id: u64,
+#
+#     // The best bid/ask at the time the maker order was placed. Used for liquidity incentives
+#     pub best_initial: i64,
+#
+#     // Timestamp of when the maker order was placed; copied over from the LeafNode
+#     pub timestamp: u64,
+#
+#     pub taker: Pubkey,
+#     pub taker_order_id: i128,
+#     pub taker_client_order_id: u64,
+#
+#     pub price: i64,
+#     pub quantity: i64, // number of quote lots
+# }
+# ```
+FILL_EVENT = construct.Struct(
+    "event_type" / construct.Const(b'\x00'),
+    "side" / DecimalAdapter(1),
+    "maker_slot" / DecimalAdapter(1),
+    "maker_out" / construct.Flag,
+    construct.Padding(4),
+    "maker" / PublicKeyAdapter(),
+    "maker_order_id" / SignedDecimalAdapter(16),
+    "maker_client_order_id" / DecimalAdapter(),
+
+    "best_initial" / SignedDecimalAdapter(),
+
+    "timestamp" / DatetimeAdapter(),
+
+    "taker" / PublicKeyAdapter(),
+    "taker_order_id" / SignedDecimalAdapter(16),
+    "taker_client_order_id" / DecimalAdapter(),
+
+    "price" / SignedDecimalAdapter(),
+    "quantity" / SignedDecimalAdapter()
+)
+_EVENT_SIZE = 152
+assert FILL_EVENT.sizeof() == _EVENT_SIZE
+
+# # 🥭 OUT_EVENT
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/queue.rs):
+# ```
+# #[derive(Copy, Clone, Debug, Pod)]
+# #[repr(C)]
+# pub struct OutEvent {
+#     pub event_type: u8,
+#     pub side: Side,
+#     pub slot: u8,
+#     padding0: [u8; 5],
+#     pub owner: Pubkey,
+#     pub quantity: i64,
+#     padding1: [u8; EVENT_SIZE - 48],
+# }
+# ```
+OUT_EVENT = construct.Struct(
+    "event_type" / construct.Const(b'\x01'),
+    "side" / DecimalAdapter(1),
+    "slot" / DecimalAdapter(1),
+    construct.Padding(5),
+    "owner" / PublicKeyAdapter(),
+    "quantity" / SignedDecimalAdapter(),
+    construct.Padding(_EVENT_SIZE - 48)
+)
+assert OUT_EVENT.sizeof() == _EVENT_SIZE
+
+UNKNOWN_EVENT = construct.Struct(
+    "flags" / construct.Bytes(1),
+    construct.Padding(7),
+    "owner" / PublicKeyAdapter(),
+    construct.Padding(_EVENT_SIZE - 40)
+)
+assert UNKNOWN_EVENT.sizeof() == _EVENT_SIZE
+
+# # 🥭 PERP_EVENT_QUEUE
+#
+# The event queue is handled a little differently. The idea is that there's some header data and then a ring
+# buffer of events. These events are overwritten as new events come in. Each event has the same fixed size, so
+# it's straightforward to offset into the ring buffer if you know the index.
+#
+# Here's some of the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/queue.rs):
+# ```
+# # #[derive(Copy, Clone, Pod)]
+# #[repr(C)]
+# pub struct EventQueueHeader {
+#     pub meta_data: MetaData,
+#     head: usize,
+#     count: usize,
+#     seq_num: usize,
+# }
+# ```
+PERP_EVENT_QUEUE = construct.Struct(
+    "meta_data" / METADATA,
+    "head" / DecimalAdapter(),
+    "count" / DecimalAdapter(),
+    "seq_num" / DecimalAdapter(),
+    "events" / construct.RepeatUntil(lambda obj, lst, ctx: len(lst) == ctx["seq_num"],
+                                     construct.Select(FILL_EVENT, OUT_EVENT, UNKNOWN_EVENT))
+    # "events" / construct.GreedyRange(FILL_EVENT)
 )
 
 # # Instruction Structs
@@ -563,8 +992,8 @@ PLACE_PERP_ORDER = construct.Struct(
     "price" / SignedDecimalAdapter(),
     "quantity" / SignedDecimalAdapter(),
     "client_order_id" / DecimalAdapter(),
-    "side" / DecimalAdapter(4),  # { buy: 0, sell: 1 }
-    "order_type" / DecimalAdapter(4)  # { limit: 0, ioc: 1, postOnly: 2 }
+    "side" / DecimalAdapter(1),  # { buy: 0, sell: 1 }
+    "order_type" / DecimalAdapter(1)  # { limit: 0, ioc: 1, postOnly: 2 }
 )
 
 # /// Initialize a Mango account for a user
@@ -667,6 +1096,34 @@ CANCEL_SPOT_ORDER = construct.Struct(
 )
 
 
+# Cancel a Perp order using only it's client ID.
+#
+# 0. `[]` mangoGroupPk
+# 1. `[writable]` mangoAccountPk
+# 2. `[signer]` ownerPk
+# 3. `[writable]` perpMarketPk
+# 4. `[writable]` bidsPk
+# 5. `[writable]` asksPk
+# 6. `[writable]` eventQueuePk
+CANCEL_PERP_ORDER_BY_CLIENT_ID = construct.Struct(
+    "variant" / construct.Const(13, construct.BytesInteger(4, swapped=True)),
+
+    "client_order_id" / DecimalAdapter()
+)
+
+# Run the Mango crank.
+#
+# 0. `[]` mangoGroupPk
+# 1. `[]` perpMarketPk
+# 2. `[writable]` eventQueuePk
+# 3+ `[writable]` mangoAccountPks...
+CONSUME_EVENTS = construct.Struct(
+    "variant" / construct.Const(15, construct.BytesInteger(4, swapped=True)),
+
+    "limit" / DecimalAdapter()
+)
+
+
 InstructionParsersByVariant = {
     0: None,  # INIT_MANGO_GROUP,
     1: INIT_MANGO_ACCOUNT,  # INIT_MANGO_ACCOUNT,
@@ -681,9 +1138,9 @@ InstructionParsersByVariant = {
     10: None,  # ADD_ORACLE,
     11: None,  # ADD_PERP_MARKET,
     12: PLACE_PERP_ORDER,  # PLACE_PERP_ORDER,
-    13: None,  # CANCEL_PERP_ORDER_BY_CLIENT_ID,
+    13: CANCEL_PERP_ORDER_BY_CLIENT_ID,  # CANCEL_PERP_ORDER_BY_CLIENT_ID,
     14: CANCEL_PERP_ORDER,  # CANCEL_PERP_ORDER,
-    15: None,  # CONSUME_EVENTS,
+    15: CONSUME_EVENTS,  # CONSUME_EVENTS,
     16: None,  # CACHE_PERP_MARKETS,
     17: None,  # UPDATE_FUNDING,
     18: None,  # SET_ORACLE,

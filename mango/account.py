@@ -37,7 +37,7 @@ from .version import Version
 
 class Account(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
-                 meta_data: Metadata, group: Group, owner: PublicKey, in_basket: typing.Sequence[Decimal],
+                 meta_data: Metadata, group: Group, owner: PublicKey, in_margin_basket: typing.Sequence[Decimal],
                  deposits: typing.Sequence[typing.Optional[TokenValue]], borrows: typing.Sequence[typing.Optional[TokenValue]],
                  net_assets: typing.Sequence[typing.Optional[TokenValue]], spot_open_orders: typing.Sequence[PublicKey],
                  perp_accounts: typing.Sequence[typing.Any], is_bankrupt: bool):
@@ -47,7 +47,7 @@ class Account(AddressableAccount):
         self.meta_data: Metadata = meta_data
         self.group: Group = group
         self.owner: PublicKey = owner
-        self.in_basket: typing.Sequence[Decimal] = in_basket
+        self.in_margin_basket: typing.Sequence[Decimal] = in_margin_basket
         self.deposits: typing.Sequence[typing.Optional[TokenValue]] = deposits
         self.borrows: typing.Sequence[typing.Optional[TokenValue]] = borrows
         self.net_assets: typing.Sequence[typing.Optional[TokenValue]] = net_assets
@@ -59,7 +59,7 @@ class Account(AddressableAccount):
     def from_layout(layout: layouts.MANGO_ACCOUNT, account_info: AccountInfo, version: Version, group: Group) -> "Account":
         meta_data = Metadata.from_layout(layout.meta_data)
         owner: PublicKey = layout.owner
-        in_basket: typing.Sequence[Decimal] = layout.in_basket
+        in_margin_basket: typing.Sequence[Decimal] = layout.in_margin_basket
         deposits: typing.List[typing.Optional[TokenValue]] = []
         borrows: typing.List[typing.Optional[TokenValue]] = []
         net_assets: typing.List[typing.Optional[TokenValue]] = []
@@ -81,14 +81,14 @@ class Account(AddressableAccount):
         perp_accounts: typing.Sequence[typing.Any] = layout.perp_accounts
         is_bankrupt: bool = layout.is_bankrupt
 
-        return Account(account_info, version, meta_data, group, owner, in_basket, deposits, borrows, net_assets, spot_open_orders, perp_accounts, is_bankrupt)
+        return Account(account_info, version, meta_data, group, owner, in_margin_basket, deposits, borrows, net_assets, spot_open_orders, perp_accounts, is_bankrupt)
 
     @staticmethod
     def parse(context: Context, account_info: AccountInfo, group: Group) -> "Account":
         data = account_info.data
         if len(data) != layouts.MANGO_ACCOUNT.sizeof():
             raise Exception(
-                f"Account data length ({len(data)}) does not match expected size ({layouts.MANGO_ACCOUNT.sizeof()}")
+                f"Account data length ({len(data)}) does not match expected size ({layouts.MANGO_ACCOUNT.sizeof()})")
 
         layout = layouts.MANGO_ACCOUNT.parse(data)
         return Account.from_layout(layout, account_info, Version.V1, group)
@@ -153,3 +153,6 @@ class Account(AddressableAccount):
     Perp Accounts:
         {perp_accounts}
 »"""
+
+    def __repr__(self) -> str:
+        return f"{self}"

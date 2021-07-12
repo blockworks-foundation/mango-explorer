@@ -57,6 +57,7 @@ class PerpMarketOperations(MarketOperations):
         cancel_instructions = build_cancel_perp_order_instructions(
             self.context, self.wallet, self.margin_account, self.perp_market, order)
         all_instructions = signers + cancel_instructions
+
         return all_instructions.execute_and_unwrap_transaction_id(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:

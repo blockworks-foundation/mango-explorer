@@ -1,0 +1,89 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import pyserum.market
+import sys
+import traceback
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+# We explicitly want argument parsing to be outside the main try-except block because some arguments
+# (like --help) will cause an exit, which our except: block traps.
+parser = argparse.ArgumentParser(description="Settles all openorders transactions in the Group.")
+mango.Context.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--market", type=str, required=True, help="market symbol to make market upon (e.g. ETH/USDC)")
+parser.add_argument("--wait", action="store_true", default=False,
+                    help="wait until the transaction is confirmed")
+parser.add_argument("--dry-run", action="store_true", default=False,
+                    help="runs as read-only and does not perform any transactions")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+try:
+    context = mango.Context.from_command_line_parameters(args)
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+    logging.info(f"Context: {context}")
+    logging.info(f"Wallet address: {wallet.address}")
+
+    market_symbol = args.market.upper()
+    market = context.market_lookup.find_by_symbol(market_symbol)
+    if market is None:
+        raise Exception(f"Could not find market {market_symbol}")
+
+    instructions = mango.InstructionData.from_wallet(wallet)
+
+    group = mango.Group.load(context)
+    accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
+    account = accounts[0]
+    quote_token_info = group.shared_quote_token
+    for index, open_orders in enumerate(account.spot_open_orders):
+        if open_orders is not None:
+            print(f"Using open_orders: {open_orders}")
+            spot_market = group.spot_markets[index]
+            if spot_market is None:
+                continue
+            base_token_info = group.base_tokens[index]
+            if base_token_info is None:
+                continue
+
+            base_token_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
+                context, wallet.address, base_token_info.token)
+            if base_token_account is None:
+                logging.warning(
+                    f"Skipping settling for market {market.symbol} - no base token account for '{base_token_info}'.")
+                continue
+
+            quote_token_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
+                context, wallet.address, quote_token_info.token)
+            if quote_token_account is None:
+                logging.warning(
+                    f"Skipping settling for market {market.symbol} - no quote token account for '{quote_token_info}'.")
+                continue
+
+            serum_market = pyserum.market.Market.load(context.client, spot_market.address, context.dex_program_id)
+            settle_instruction = mango.build_serum_settle_instructions(
+                context, wallet, serum_market, open_orders, base_token_account.address, quote_token_account.address)
+            instructions += settle_instruction
+
+    if args.dry_run:
+        print("Skipping transaction processing - dry run is set.")
+    else:
+        transaction_id = instructions.execute_and_unwrap_transaction_id(context)
+        if args.wait:
+            print(f"Waiting on {transaction_id}")
+            context.wait_for_confirmation(transaction_id)
+
+    logging.info("Settlement completed.")
+except Exception as exception:
+    logging.critical(f"group-settle stopped because of exception: {exception} - {traceback.format_exc()}")
+except:
+    logging.critical(f"group-settle stopped because of uncatchable error: {traceback.format_exc()}")

@@ -78,14 +78,16 @@ class FtxOracle(Oracle):
                 subject.on_next(price)
 
         ws: ReconnectingWebsocket = ReconnectingWebsocket("wss://ftx.com/ws/",
-                                                          f"""{{"op": "subscribe", "channel": "ticker", "market": "{self.market.symbol}"}}""", _on_item)
+                                                          lambda ws: ws.send(
+                                                              f"""{{"op": "subscribe", "channel": "ticker", "market": "{self.market.symbol}"}}"""),
+                                                          _on_item)
 
         def subscribe(observer, scheduler_=None):
             subject.subscribe(observer, scheduler_)
 
             disposable = DisposePropagator()
-            disposable.add_ondispose(lambda: ws.close())
-            disposable.add_ondispose(lambda: subject.dispose())
+            disposable.add_disposable(lambda: ws.close())
+            disposable.add_disposable(lambda: subject.dispose())
 
             return disposable
 

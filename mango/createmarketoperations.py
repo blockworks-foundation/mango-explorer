@@ -35,7 +35,7 @@ from .wallet import Wallet
 # This function deals with the creation of a `MarketOperations` object for a given `Market`.
 
 
-def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, market: Market, reporter: typing.Callable[[str], None]) -> MarketOperations:
+def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, market: Market, reporter: typing.Callable[[str], None] = lambda _: None) -> MarketOperations:
     if dry_run:
         return NullMarketOperations(market.symbol, reporter)
     elif isinstance(market, SerumMarket):
@@ -50,7 +50,7 @@ def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, ma
         perp_market_info = group.perp_markets[0]
         if perp_market_info is None:
             raise Exception("Perp market not found at index 0.")
-        perp_market = PerpMarket.load(context, group, perp_market_info.address)
+        perp_market = PerpMarket.load(context, perp_market_info.address, group)
         return PerpMarketOperations(market.symbol, context, wallet, margin_accounts[0], perp_market, reporter)
     else:
         raise Exception(f"Could not find order placer for market {market.symbol}")

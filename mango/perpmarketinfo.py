@@ -54,5 +54,16 @@ class PerpMarketInfo():
     Quote Lot Size: {self.quote_lot_size}
 »"""
 
+    @staticmethod
+    def find_by_address(values: typing.Sequence[typing.Optional["PerpMarketInfo"]], address: PublicKey) -> "PerpMarketInfo":
+        found = [value for value in values if value is not None and value.address == address]
+        if len(found) == 0:
+            raise Exception(f"PerpMarketInfo '{address}' not found in values: {values}")
+
+        if len(found) > 1:
+            raise Exception(f"PerpMarketInfo '{address}' matched multiple objects in values: {values}")
+
+        return found[0]
+
     def __repr__(self) -> str:
         return f"{self}"

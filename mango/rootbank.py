@@ -35,30 +35,30 @@ from .version import Version
 
 class NodeBank(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
-                 deposit: Decimal, borrow: Decimal, vault: PublicKey):
+                 deposits: Decimal, borrows: Decimal, vault: PublicKey):
         super().__init__(account_info)
         self.version: Version = version
 
         self.meta_data: Metadata = meta_data
-        self.deposit: Decimal = deposit
-        self.borrow: Decimal = borrow
+        self.deposits: Decimal = deposits
+        self.borrows: Decimal = borrows
         self.vault: PublicKey = vault
 
     @staticmethod
     def from_layout(layout: layouts.ROOT_BANK, account_info: AccountInfo, version: Version) -> "NodeBank":
         meta_data: Metadata = layout.meta_data
-        deposit: Decimal = layout.deposit
-        borrow: Decimal = layout.borrow
+        deposits: Decimal = layout.deposits
+        borrows: Decimal = layout.borrows
         vault: PublicKey = layout.vault
 
-        return NodeBank(account_info, version, meta_data, deposit, borrow, vault)
+        return NodeBank(account_info, version, meta_data, deposits, borrows, vault)
 
     @staticmethod
     def parse(account_info: AccountInfo) -> "NodeBank":
         data = account_info.data
         if len(data) != layouts.NODE_BANK.sizeof():
             raise Exception(
-                f"NodeBank data length ({len(data)}) does not match expected size ({layouts.NODE_BANK.sizeof()}")
+                f"NodeBank data length ({len(data)}) does not match expected size ({layouts.NODE_BANK.sizeof()})")
 
         layout = layouts.NODE_BANK.parse(data)
         return NodeBank.from_layout(layout, account_info, Version.V1)
@@ -121,7 +121,7 @@ class RootBank(AddressableAccount):
         data = account_info.data
         if len(data) != layouts.ROOT_BANK.sizeof():
             raise Exception(
-                f"RootBank data length ({len(data)}) does not match expected size ({layouts.ROOT_BANK.sizeof()}")
+                f"RootBank data length ({len(data)}) does not match expected size ({layouts.ROOT_BANK.sizeof()})")
 
         layout = layouts.ROOT_BANK.parse(data)
         return RootBank.from_layout(layout, account_info, Version.V1)

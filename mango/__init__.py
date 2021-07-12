@@ -12,7 +12,7 @@ from .encoding import decode_binary, encode_binary, encode_key, encode_int
 from .group import Group
 from .idsjsontokenlookup import IdsJsonTokenLookup
 from .idsjsonmarketlookup import IdsJsonMarketLookup
-from .instructions import InstructionData, build_create_solana_account_instructions, build_create_spl_account_instructions, build_transfer_spl_tokens_instructions, build_close_spl_account_instructions, build_create_serum_open_orders_instructions, build_serum_place_order_instructions, build_serum_consume_events_instructions, build_serum_settle_instructions, build_cancel_perp_order_instructions, build_create_account_instructions, build_place_perp_order_instructions, build_withdraw_instructions
+from .instructions import InstructionData, build_create_solana_account_instructions, build_create_spl_account_instructions, build_transfer_spl_tokens_instructions, build_close_spl_account_instructions, build_create_serum_open_orders_instructions, build_serum_place_order_instructions, build_serum_consume_events_instructions, build_serum_settle_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions, build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_create_account_instructions, build_place_perp_order_instructions, build_withdraw_instructions
 from .instructiontype import InstructionType
 from .liquidatablereport import LiquidatableState, LiquidatableReport
 from .liquidationevent import LiquidationEvent
@@ -22,7 +22,7 @@ from .marketlookup import MarketLookup, CompoundMarketLookup
 from .marketoperations import MarketOperations, NullMarketOperations
 from .metadata import Metadata
 from .notification import NotificationTarget, TelegramNotificationTarget, DiscordNotificationTarget, MailjetNotificationTarget, CsvFileNotificationTarget, FilteringNotificationTarget, NotificationHandler, parse_subscription_target
-from .observables import PrintingObserverSubscriber, TimestampedPrintingObserverSubscriber, CollectingObserverSubscriber, CaptureFirstItem, FunctionObserver, create_backpressure_skipping_observer, debug_print_item, log_subscription_error, observable_pipeline_error_reporter, EventSource
+from .observables import DisposePropagator, NullObserverSubscriber, PrintingObserverSubscriber, TimestampedPrintingObserverSubscriber, CollectingObserverSubscriber, LatestItemObserverSubscriber, CaptureFirstItem, FunctionObserver, create_backpressure_skipping_observer, debug_print_item, log_subscription_error, observable_pipeline_error_reporter, EventSource
 from .openorders import OpenOrders
 from .orderbookside import OrderBookSide
 from .orders import Order, OrderType, Side
@@ -33,6 +33,7 @@ from .perpmarket import PerpMarket
 from .perpmarketinfo import PerpMarketInfo
 from .perpmarketoperations import PerpMarketOperations
 from .perpsmarket import PerpsMarket
+from .reconnectingwebsocket import ReconnectingWebsocket
 from .retrier import RetryWithPauses, retry_context
 from .rootbank import NodeBank, RootBank
 from .serummarket import SerumMarket
@@ -51,6 +52,7 @@ from .transactionscout import MangoInstruction, TransactionScout, fetch_all_rece
 from .version import Version
 from .wallet import Wallet
 from .walletbalancer import TargetBalance, FixedTargetBalance, PercentageTargetBalance, TargetBalanceParser, sort_changes_for_trades, calculate_required_balance_changes, FilterSmallChanges, WalletBalancer, NullWalletBalancer, LiveWalletBalancer
+from .websocketsubscription import WebSocketSubscription, WebSocketSubscriptionManager
 
 from .layouts import layouts
 

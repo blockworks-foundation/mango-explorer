@@ -67,7 +67,7 @@ class OrderBookSide(AddressableAccount):
         data = account_info.data
         if len(data) != layouts.ORDERBOOK_SIDE.sizeof():
             raise Exception(
-                f"OrderBookSide data length ({len(data)}) does not match expected size ({layouts.ORDERBOOK_SIDE.sizeof()}")
+                f"OrderBookSide data length ({len(data)}) does not match expected size ({layouts.ORDERBOOK_SIDE.sizeof()})")
 
         layout = layouts.ORDERBOOK_SIDE.parse(data)
         return OrderBookSide.from_layout(layout, account_info, Version.V1, perp_market)
@@ -93,13 +93,15 @@ class OrderBookSide(AddressableAccount):
             index = int(stack.pop())
             node = self.nodes[index]
             if node.type_name == "leaf":
-                base_factor = Decimal(10) ** self.perp_market.base_token.decimals
-                quote_factor = Decimal(10) ** self.perp_market.quote_token.decimals
                 price = node.key["price"]
                 quantity = node.quantity
-                actual_price = ((price / quote_factor) / self.perp_market.contract_size) * \
-                    (self.perp_market.quote_lot_size * base_factor)
-                actual_quantity = (quantity / base_factor) * self.perp_market.contract_size
+
+                decimals_differential = self.perp_market.base_token.decimals - self.perp_market.quote_token.decimals
+                native_to_ui = Decimal(10) ** decimals_differential
+                actual_price = price * (self.perp_market.quote_lot_size / self.perp_market.base_lot_size) * native_to_ui
+
+                base_factor = Decimal(10) ** self.perp_market.base_token.decimals
+                actual_quantity = (quantity * self.perp_market.base_lot_size) / base_factor
 
                 yield Order(int(node.key["order_id"]),
                             node.client_order_id,

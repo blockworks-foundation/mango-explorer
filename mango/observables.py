@@ -14,12 +14,12 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import datetime
 import logging
 import rx
 import rx.subject
 import typing
 
+from datetime import datetime
 from rx.core.abc.disposable import Disposable
 from rxpy_backpressure import BackPressure
 
@@ -29,6 +29,26 @@ from rxpy_backpressure import BackPressure
 # This notebook contains some useful shared tools to work with
 # [RX Observables](https://rxpy.readthedocs.io/en/latest/reference_observable.html).
 #
+
+# # 🥭 NullObserverSubscriber class
+#
+# This class can subscribe to an `Observable` to do nothing but make sure it runs.
+#
+
+
+class NullObserverSubscriber(rx.core.typing.Observer):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def on_next(self, item: typing.Any) -> None:
+        pass
+
+    def on_error(self, ex: Exception) -> None:
+        pass
+
+    def on_completed(self) -> None:
+        pass
+
 
 # # 🥭 PrintingObserverSubscriber class
 #
@@ -40,10 +60,12 @@ class PrintingObserverSubscriber(rx.core.typing.Observer):
     def __init__(self, report_no_output: bool) -> None:
         super().__init__()
         self.report_no_output = report_no_output
+        self.counter = 0
 
     def on_next(self, item: typing.Any) -> None:
         self.report_no_output = False
-        print(item)
+        print(self.counter, item)
+        self.counter += 1
 
     def on_error(self, ex: Exception) -> None:
         self.report_no_output = False
@@ -64,7 +86,7 @@ class TimestampedPrintingObserverSubscriber(PrintingObserverSubscriber):
         super().__init__(report_no_output)
 
     def on_next(self, item: typing.Any) -> None:
-        super().on_next(f"{datetime.datetime.now()}: {item}")
+        super().on_next(f"{datetime.now()}: {item}")
 
 
 # # 🥭 CollectingObserverSubscriber class
@@ -90,7 +112,7 @@ class CollectingObserverSubscriber(rx.core.typing.Observer):
 
 # # 🥭 CaptureFirstItem class
 #
-# This captures the first item to pass through the pipeline, allowing it to be instpected
+# This captures the first item to pass through the pipeline, allowing it to be inspected
 # later.
 #
 
@@ -106,6 +128,31 @@ class CaptureFirstItem:
             self.has_captured = True
 
         return item
+
+
+# # 🥭 NullObserverSubscriber class
+#
+# This class can subscribe to an `Observable` to do nothing but make sure it runs.
+#
+
+TItem = typing.TypeVar('TItem')
+
+
+class LatestItemObserverSubscriber(rx.core.typing.Observer, typing.Generic[TItem]):
+    def __init__(self, initial: TItem) -> None:
+        super().__init__()
+        self.latest: TItem = initial
+        self.update_timestamp: datetime = datetime.now()
+
+    def on_next(self, item: TItem) -> None:
+        self.latest = item
+        self.update_timestamp = datetime.now()
+
+    def on_error(self, ex: Exception) -> None:
+        pass
+
+    def on_completed(self) -> None:
+        pass
 
 
 # # 🥭 FunctionObserver
@@ -266,11 +313,11 @@ class EventSource(rx.subject.Subject, typing.Generic[TEventDatum]):
 
 class DisposePropagator(Disposable):
     def __init__(self):
-        self.handlers: typing.List[typing.Callable[[], None]] = []
+        self.disposables: typing.List[Disposable] = []
 
-    def add_ondispose(self, handler: typing.Callable[[], None]):
-        self.handlers += [handler]
+    def add_disposable(self, disposable: Disposable):
+        self.disposables += [disposable]
 
     def dispose(self):
-        for handler in self.handlers:
-            handler()
+        for disposable in self.disposables:
+            disposable.dispose()
