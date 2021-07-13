@@ -22,7 +22,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 context = mango.Context.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-token = context.token_lookup.find_by_symbol_or_raise(args.symbol)
+token = context.token_lookup.find_by_symbol_or_raise(args.symbol.upper())
 token_accounts = mango.TokenAccount.fetch_all_for_owner_and_token(context, wallet.address, token)
 
 if len(token_accounts) == 0:

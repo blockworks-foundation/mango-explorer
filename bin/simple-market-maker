@@ -29,6 +29,8 @@ parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal(
                     help="fraction of the token inventory to be bought or sold in each order")
 parser.add_argument("--pause-duration", type=int, default=10,
                     help="number of seconds to pause between placing orders and cancelling them")
+parser.add_argument("--oracle-provider", type=str, default="serum",
+                    help="name of the oracle service providing the prices")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
@@ -48,7 +50,7 @@ try:
     market_operations: mango.MarketOperations = mango.create_market_operations(
         context, wallet, args.dry_run, market, print)
 
-    oracle_provider: mango.OracleProvider = mango.create_oracle_provider("serum")
+    oracle_provider: mango.OracleProvider = mango.create_oracle_provider(args.oracle_provider)
     oracle = oracle_provider.oracle_for_market(context, market)
     if oracle is None:
         raise Exception(f"Could not find oracle for spot market {market_symbol}")

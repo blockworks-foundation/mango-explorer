@@ -81,6 +81,9 @@ class SerumMarketLookup(MarketLookup):
         if "/" not in symbol:
             return None
 
+        if symbol.startswith("SERUM:"):
+            symbol = symbol.split(":", 1)[1]
+
         base_symbol, quote_symbol = symbol.split("/")
         base_data = SerumMarketLookup._find_data_by_symbol(base_symbol, self.token_data)
         if base_data is None:

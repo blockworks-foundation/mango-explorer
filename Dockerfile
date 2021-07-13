@@ -1,7 +1,7 @@
 FROM jupyter/scipy-notebook:latest
 
 USER root
-RUN apt-get update && apt-get -y install jq curl libxml2-dev libxslt-dev libffi-dev zlib1g-dev
+RUN apt-get update && apt-get -y install bc jq curl libxml2-dev libxslt-dev libffi-dev zlib1g-dev
 RUN curl -SL -o /var/tmp/pyston_2.2_20.04.deb https://github.com/pyston/pyston/releases/download/pyston_2.2/pyston_2.2_20.04.deb
 RUN apt-get -y install /var/tmp/pyston_2.2_20.04.deb
 RUN rm -f /var/tmp/pyston_2.2_20.04.deb

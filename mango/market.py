@@ -17,6 +17,8 @@
 import abc
 import logging
 
+from solana.publickey import PublicKey
+
 from .token import Token
 
 
@@ -40,3 +42,17 @@ class Market(metaclass=abc.ABCMeta):
 
     def __repr__(self) -> str:
         return f"{self}"
+
+
+# # 🥭 AddressableMarket class
+#
+# This class describes a crypto market. It *must* have a base token and a quote token.
+#
+
+class AddressableMarket(Market):
+    def __init__(self, base: Token, quote: Token, address: PublicKey):
+        super().__init__(base, quote)
+        self.address: PublicKey = address
+
+    def __str__(self) -> str:
+        return f"« 𝙰𝚍𝚍𝚛𝚎𝚜𝚜𝚊𝚋𝚕𝚎𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}] »"

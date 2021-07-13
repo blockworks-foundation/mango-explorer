@@ -14,8 +14,7 @@ def test_build_create_spl_account_instructions():
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()
     token: mango.Token = fake_token()
-    new_spl_account: PublicKey = fake_seeded_public_key("new SPL account")
-    actual = mango.build_create_spl_account_instructions(context, wallet, token, new_spl_account)
+    actual = mango.build_create_spl_account_instructions(context, wallet, token)
     assert actual is not None
     assert len(actual.signers) == 1
     assert len(actual.instructions) == 2

@@ -1,20 +1,19 @@
 #!/usr/bin/env bash
-
 MARKET=${1:-BTC-PERP}
-POSITION_SIZE=${2:-0.01}
-SLEEP_BETWEEN_ORDER_PLACES=${3:-60}
-let fixed_spread=100
+FIXED_POSITION_SIZE=${2:-0.01}
+FIXED_SPREAD=${3:-100}
+SLEEP_BETWEEN_ORDER_PLACES=${4:-60}
 
-printf "Running on market %s with position size %f\nPress Control+C to stop...\n" $MARKET $POSITION_SIZE
+printf "Running on market %s with position size %f and prices +/- %f from current price\nPress Control+C to stop...\n" $MARKET $FIXED_POSITION_SIZE $FIXED_SPREAD
 while :
 do
     cancel-my-orders --market $MARKET --log-level ERROR
 
-    let current_price=$(fetch-price --provider serum --symbol BTC/USDC --log-level ERROR | cut -d"'" -f 2 | sed 's/,//' | sed 's/\.[0-9]*//')
+    CURRENT_PRICE=$(fetch-price --provider serum --symbol $MARKET --log-level ERROR --cluster mainnet-beta | cut -d"'" -f 2 | sed 's/,//')
     place-order --market $MARKET --order-type LIMIT --log-level ERROR \
-        --side BUY --quantity $POSITION_SIZE --price $((current_price - fixed_spread))
+        --side BUY --quantity $FIXED_POSITION_SIZE --price $(echo "$CURRENT_PRICE - $FIXED_SPREAD" | bc)
     place-order --market $MARKET --order-type LIMIT --log-level ERROR \
-        --side SELL --quantity $POSITION_SIZE --price $((current_price + fixed_spread))
+        --side SELL --quantity $FIXED_POSITION_SIZE --price $(echo "$CURRENT_PRICE + $FIXED_SPREAD" | bc)
 
     echo "Last ${MARKET} market-making action: $(date)" > /var/tmp/worlds-simplest-market-maker
 	sleep $SLEEP_BETWEEN_ORDER_PLACES

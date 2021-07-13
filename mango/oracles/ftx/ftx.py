@@ -15,6 +15,7 @@
 
 
 import requests
+import re
 import rx
 import typing
 
@@ -50,14 +51,15 @@ def _ftx_get_from_url(url: str) -> typing.Dict:
 
 
 class FtxOracle(Oracle):
-    def __init__(self, market: Market):
-        name = f"Ftx Oracle for {market.symbol}"
+    def __init__(self, market: Market, ftx_symbol: str):
+        name = f"Ftx Oracle for {market.symbol} / {ftx_symbol}"
         super().__init__(name, market)
         self.market: Market = market
+        self.ftx_symbol: str = ftx_symbol
         self.source: OracleSource = OracleSource("FTX", name, market)
 
     def fetch_price(self, context: Context) -> Price:
-        result = _ftx_get_from_url(f"https://ftx.com/api/markets/{self.market.symbol}")
+        result = _ftx_get_from_url(f"https://ftx.com/api/markets/{self.ftx_symbol}")
         bid = Decimal(result["bid"])
         ask = Decimal(result["ask"])
         price = Decimal(result["price"])
@@ -79,7 +81,7 @@ class FtxOracle(Oracle):
 
         ws: ReconnectingWebsocket = ReconnectingWebsocket("wss://ftx.com/ws/",
                                                           lambda ws: ws.send(
-                                                              f"""{{"op": "subscribe", "channel": "ticker", "market": "{self.market.symbol}"}}"""),
+                                                              f"""{{"op": "subscribe", "channel": "ticker", "market": "{self.ftx_symbol}"}}"""),
                                                           _on_item)
 
         def subscribe(observer, scheduler_=None):
@@ -108,12 +110,20 @@ class FtxOracleProvider(OracleProvider):
         super().__init__("Ftx Oracle Factory")
 
     def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
-        return FtxOracle(market)
+        symbol = self._market_symbol_to_ftx_symbol(market.symbol)
+        return FtxOracle(market, symbol)
 
     def all_available_symbols(self, context: Context) -> typing.Sequence[str]:
         result = _ftx_get_from_url("https://ftx.com/api/markets")
         symbols: typing.List[str] = []
         for market in result:
-            symbols += [market["name"]]
+            symbol: str = market["name"]
+            if symbol.endswith("USD"):
+                symbol = f"{symbol}C"
+            symbols += [symbol]
 
         return symbols
+
+    def _market_symbol_to_ftx_symbol(self, symbol: str) -> str:
+        normalised = symbol.upper()
+        return re.sub('USDC$', 'USD', normalised)

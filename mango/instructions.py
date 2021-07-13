@@ -110,12 +110,16 @@ def build_create_solana_account_instructions(context: Context, wallet: Wallet, p
 # necesary.
 #
 
-def build_create_spl_account_instructions(context: Context, wallet: Wallet, token: Token, address: PublicKey, lamports: int = 0) -> CombinableInstructions:
-    create_instructions = build_create_solana_account_instructions(context, wallet, TOKEN_PROGRAM_ID, ACCOUNT_LEN,
-                                                                   lamports)
+def build_create_spl_account_instructions(context: Context, wallet: Wallet, token: Token, lamports: int = 0) -> CombinableInstructions:
+    create_account_instructions = build_create_solana_account_instructions(
+        context, wallet, TOKEN_PROGRAM_ID, ACCOUNT_LEN, lamports)
+    print("Using TOKEN_PROGRAM_ID", TOKEN_PROGRAM_ID)
+    print("Using address", create_account_instructions.signers[0].public_key())
+    print("Using mint", token.mint)
+    print("Using wallet.address", wallet.address)
     initialize_instruction = initialize_account(InitializeAccountParams(
-        TOKEN_PROGRAM_ID, address, token.mint, wallet.address))
-    return create_instructions + CombinableInstructions(signers=[], instructions=[initialize_instruction])
+        TOKEN_PROGRAM_ID, create_account_instructions.signers[0].public_key(), token.mint, wallet.address))
+    return create_account_instructions + CombinableInstructions(signers=[], instructions=[initialize_instruction])
 
 
 # # 🥭 build_transfer_spl_tokens_instructions function

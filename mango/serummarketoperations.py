@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
+from mango.constants import SYSTEM_PROGRAM_ADDRESS
 import typing
 
 from decimal import Decimal
@@ -63,7 +64,6 @@ class SerumMarketOperations(MarketOperations):
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
         report: str = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.serum_market.symbol} with ID {client_id}."
-        self.logger.info(report)
         self.reporter(report)
 
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
@@ -75,7 +75,8 @@ class SerumMarketOperations(MarketOperations):
         settle = self.market_instruction_builder.build_settle_instructions()
 
         (signers + place + crank + settle).execute(self.context)
-        return Order(id=0, side=side, price=price, size=size, client_id=client_id, owner=self.market_instruction_builder.open_orders.address)
+        open_orders_address = self.market_instruction_builder.open_orders_address or SYSTEM_PROGRAM_ADDRESS
+        return Order(id=0, side=side, price=price, size=size, client_id=client_id, owner=open_orders_address)
 
     def load_orders(self) -> typing.Sequence[Order]:
         asks = self.market.load_asks()

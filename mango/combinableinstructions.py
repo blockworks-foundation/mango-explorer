@@ -116,7 +116,7 @@ class CombinableInstructions():
     def __str__(self) -> str:
         report: typing.List[str] = []
         for index, signer in enumerate(self.signers):
-            report += [f"Signer[{index}]: {signer}"]
+            report += [f"Signer[{index}]: {signer.public_key()}"]
 
         for index, instruction in enumerate(self.instructions):
             for index, key in enumerate(instruction.keys):

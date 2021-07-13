@@ -40,7 +40,7 @@ try:
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
 
-    token = context.token_lookup.find_by_symbol(args.symbol)
+    token = context.token_lookup.find_by_symbol(args.symbol.upper())
     if token is None:
         raise Exception(f"Could not find details of token with symbol {args.symbol}.")
 

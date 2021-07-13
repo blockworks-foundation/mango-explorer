@@ -86,15 +86,23 @@ class Context:
         ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(cluster, group_name)
         all_token_lookup = ids_json_token_lookup
         if cluster == "mainnet-beta":
-            spl_token_lookup: TokenLookup = SplTokenLookup.load(token_filename)
-            all_token_lookup = CompoundTokenLookup([ids_json_token_lookup, spl_token_lookup])
+            mainnet_spl_token_lookup: TokenLookup = SplTokenLookup.load(token_filename)
+            all_token_lookup = CompoundTokenLookup([ids_json_token_lookup, mainnet_spl_token_lookup])
+        elif cluster == "devnet":
+            devnet_token_filename = token_filename.rsplit('.', 1)[0] + ".devnet.json"
+            devnet_spl_token_lookup: TokenLookup = SplTokenLookup.load(devnet_token_filename)
+            all_token_lookup = CompoundTokenLookup([ids_json_token_lookup, devnet_spl_token_lookup])
         self.token_lookup: TokenLookup = all_token_lookup
 
         ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(cluster)
         all_market_lookup = ids_json_market_lookup
         if cluster == "mainnet-beta":
-            serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(token_filename)
-            all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, serum_market_lookup])
+            mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(token_filename)
+            all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, mainnet_serum_market_lookup])
+        elif cluster == "devnet":
+            devnet_token_filename = token_filename.rsplit('.', 1)[0] + ".devnet.json"
+            devnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(devnet_token_filename)
+            all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, devnet_serum_market_lookup])
         self.market_lookup: MarketLookup = all_market_lookup
 
         # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451
