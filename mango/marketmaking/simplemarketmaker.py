@@ -91,9 +91,9 @@ class SimpleMarketMaker:
                     for order in buy_orders:
                         self.market_operations.cancel_order(order)
 
-                    buy_order = self.market_operations.place_order(
-                        mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size)
-                    self.logger.info(f"Placed order {buy_order} to BUY {buy_size} at {bid}")
+                buy_order = self.market_operations.place_order(
+                    mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size)
+                self.logger.info(f"Placed order {buy_order} to BUY {buy_size} at {bid}")
 
                 sell_orders = [order for order in current_orders if order.side == mango.Side.SELL]
                 if self.orders_require_action(sell_orders, ask, sell_size):
@@ -101,9 +101,9 @@ class SimpleMarketMaker:
                     for order in sell_orders:
                         self.market_operations.cancel_order(order)
 
-                    sell_order = self.market_operations.place_order(
-                        mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size)
-                    self.logger.info(f"Placed order {sell_order} to SELL {sell_size} at {ask}")
+                sell_order = self.market_operations.place_order(
+                    mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size)
+                self.logger.info(f"Placed order {sell_order} to SELL {sell_size} at {ask}")
             except Exception as exception:
                 self.logger.warning(
                     f"Pausing and continuing after problem running market-making iteration: {exception} - {traceback.format_exc()}")
