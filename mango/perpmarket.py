@@ -38,7 +38,7 @@ class PerpMarket(AddressableAccount):
                  event_queue: PublicKey, base_lot_size: Decimal, quote_lot_size: Decimal, long_funding: Decimal,
                  short_funding: Decimal, open_interest: Decimal, last_updated: datetime, seq_num: Decimal,
                  fees_accrued: Decimal, max_depth_bips: Decimal, scaler: PublicKey,
-                 total_liquidity_points: Decimal):
+                 total_liquidity_points: Decimal, points_per_mngo: Decimal, mngo_vault: PublicKey):
         super().__init__(account_info)
         self.version: Version = version
 
@@ -58,6 +58,8 @@ class PerpMarket(AddressableAccount):
         self.max_depth_bips: Decimal = max_depth_bips
         self.scaler: PublicKey = scaler
         self.total_liquidity_points: Decimal = total_liquidity_points
+        self.points_per_mngo: Decimal = points_per_mngo
+        self.mngo_vault: PublicKey = mngo_vault
 
         self.market_index = group.find_perp_market_index(self.address)
 
@@ -90,10 +92,13 @@ class PerpMarket(AddressableAccount):
         max_depth_bips: Decimal = layout.max_depth_bips
         scaler: PublicKey = layout.scaler
         total_liquidity_points: Decimal = layout.total_liquidity_points
+        points_per_mngo: Decimal = layout.points_per_mngo
+        mngo_vault: PublicKey = layout.mngo_vault
 
         return PerpMarket(account_info, version, meta_data, group, bids, asks, event_queue,
                           base_lot_size, quote_lot_size, long_funding, short_funding, open_interest,
-                          last_updated, seq_num, fees_accrued, max_depth_bips, scaler, total_liquidity_points)
+                          last_updated, seq_num, fees_accrued, max_depth_bips, scaler, total_liquidity_points,
+                          points_per_mngo, mngo_vault)
 
     @staticmethod
     def parse(account_info: AccountInfo, group: Group) -> "PerpMarket":
@@ -130,4 +135,6 @@ class PerpMarket(AddressableAccount):
     Max Depth Bips: {self.max_depth_bips}
     Scaler: {self.scaler}
     Total Liquidity Points: {self.total_liquidity_points}
+    Points Per MNGO: {self.points_per_mngo}
+    MNGO Vault: {self.mngo_vault}
 »"""

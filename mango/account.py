@@ -40,7 +40,8 @@ class Account(AddressableAccount):
                  meta_data: Metadata, group: Group, owner: PublicKey, in_margin_basket: typing.Sequence[Decimal],
                  deposits: typing.Sequence[typing.Optional[TokenValue]], borrows: typing.Sequence[typing.Optional[TokenValue]],
                  net_assets: typing.Sequence[typing.Optional[TokenValue]], spot_open_orders: typing.Sequence[PublicKey],
-                 perp_accounts: typing.Sequence[typing.Any], is_bankrupt: bool):
+                 perp_accounts: typing.Sequence[typing.Any], msrm_amount: Decimal, being_liquidated: bool,
+                 is_bankrupt: bool):
         super().__init__(account_info)
         self.version: Version = version
 
@@ -53,6 +54,8 @@ class Account(AddressableAccount):
         self.net_assets: typing.Sequence[typing.Optional[TokenValue]] = net_assets
         self.spot_open_orders: typing.Sequence[PublicKey] = spot_open_orders
         self.perp_accounts: typing.Sequence[layouts.PERP_ACCOUNT] = perp_accounts
+        self.msrm_amount: Decimal = msrm_amount
+        self.being_liquidated: bool = being_liquidated
         self.is_bankrupt: bool = is_bankrupt
 
     @staticmethod
@@ -79,9 +82,11 @@ class Account(AddressableAccount):
 
         spot_open_orders: typing.Sequence[PublicKey] = layout.spot_open_orders
         perp_accounts: typing.Sequence[typing.Any] = layout.perp_accounts
+        msrm_amount: Decimal = layout.msrm_amount
+        being_liquidated: bool = layout.being_liquidated
         is_bankrupt: bool = layout.is_bankrupt
 
-        return Account(account_info, version, meta_data, group, owner, in_margin_basket, deposits, borrows, net_assets, spot_open_orders, perp_accounts, is_bankrupt)
+        return Account(account_info, version, meta_data, group, owner, in_margin_basket, deposits, borrows, net_assets, spot_open_orders, perp_accounts, msrm_amount, being_liquidated, is_bankrupt)
 
     @staticmethod
     def parse(context: Context, account_info: AccountInfo, group: Group) -> "Account":
@@ -140,6 +145,8 @@ class Account(AddressableAccount):
         group = f"{self.group}".replace("\n", "\n        ")
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {self.version} [{self.address}]
     {self.meta_data}
+    Bankrupt? {self.is_bankrupt}
+    Being Liquidated? {self.being_liquidated}
     Owner: {self.owner}
         {group}
     Deposits:
@@ -152,6 +159,7 @@ class Account(AddressableAccount):
         {spot_open_orders}
     Perp Accounts:
         {perp_accounts}
+    MSRM: {self.msrm_amount}
 »"""
 
     def __repr__(self) -> str:

@@ -452,7 +452,10 @@ PERP_MARKET_INFO = construct.Struct(
 #     pub mango_cache: Pubkey,
 #     pub valid_interval: u64,
 #
+#     // DAO vault is funded by the Mango DAO with USDC and can be withdrawn by the DAO
 #     pub dao_vault: Pubkey,
+#     pub srm_vault: Pubkey,
+#     pub msrm_vault: Pubkey,
 # }
 # ```
 GROUP = construct.Struct(
@@ -468,7 +471,9 @@ GROUP = construct.Struct(
     "dex_program_id" / PublicKeyAdapter(),
     "cache" / PublicKeyAdapter(),
     "valid_interval" / DecimalAdapter(),
-    "dao_vault" / PublicKeyAdapter()
+    "dao_vault" / PublicKeyAdapter(),
+    "srm_vault" / PublicKeyAdapter(),
+    "msrm_vault" / PublicKeyAdapter()
 )
 
 # # 🥭 ROOT_BANK
@@ -593,7 +598,6 @@ PERP_ACCOUNT = construct.Struct(
 #     pub mango_group: Pubkey,
 #     pub owner: Pubkey,
 #
-#     // pub in_basket: [bool; MAX_TOKENS],
 #     pub in_margin_basket: [bool; MAX_PAIRS],
 #     pub num_in_margin_basket: u8,
 #
@@ -605,6 +609,7 @@ PERP_ACCOUNT = construct.Struct(
 #     // Perps related data
 #     pub perp_accounts: [PerpAccount; MAX_PAIRS],
 #
+#     pub msrm_amount: u64,
 #     /// This account cannot open new positions or borrow until `init_health >= 0`
 #     pub being_liquidated: bool,
 #
@@ -623,9 +628,10 @@ MANGO_ACCOUNT = construct.Struct(
     "borrows" / construct.Array(MAX_TOKENS, FloatI80F48Adapter()),
     "spot_open_orders" / construct.Array(MAX_PAIRS, PublicKeyAdapter()),
     "perp_accounts" / construct.Array(MAX_PAIRS, PERP_ACCOUNT),
+    "msrm_amount" / DecimalAdapter(),
     "being_liquidated" / DecimalAdapter(1),
     "is_bankrupt" / DecimalAdapter(1),
-    "padding" / construct.Padding(6)
+    construct.Padding(6)
 )
 
 
@@ -661,6 +667,10 @@ MANGO_ACCOUNT = construct.Struct(
 #     pub max_depth_bps: I80F48,
 #     pub scaler: I80F48,
 #     pub total_liquidity_points: I80F48,
+#     pub points_per_mngo: I80F48, // how many points equal 1 native MNGO
+#
+#     // mngo_vault holds mango tokens to be disbursed as liquidity incentives for this perp market
+#     pub mngo_vault: Pubkey,
 # }
 # ```
 PERP_MARKET = construct.Struct(
@@ -674,14 +684,19 @@ PERP_MARKET = construct.Struct(
 
     "long_funding" / FloatI80F48Adapter(),
     "short_funding" / FloatI80F48Adapter(),
+
     "open_interest" / SignedDecimalAdapter(),
+
     "last_updated" / DatetimeAdapter(),
     "seq_num" / DecimalAdapter(),
-
     "fees_accrued" / FloatI80F48Adapter(),
+
     "max_depth_bips" / FloatI80F48Adapter(),
     "scaler" / FloatI80F48Adapter(),
-    "total_liquidity_points" / FloatI80F48Adapter()
+    "total_liquidity_points" / FloatI80F48Adapter(),
+    "points_per_mngo" / FloatI80F48Adapter(),
+
+    "mngo_vault" / PublicKeyAdapter()
 )
 
 

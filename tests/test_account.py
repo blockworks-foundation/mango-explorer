@@ -16,13 +16,16 @@ def test_construction():
     net_assets = [Decimal(10), Decimal(0), Decimal(5)]
     spot_open_orders = [fake_seeded_public_key("spot1"), fake_seeded_public_key(
         "spot2"), fake_seeded_public_key("spot3")]
+    msrm_amount = Decimal(0)
+    being_liquidated = False
     is_bankrupt = False
 
     # TODO - this isn't right.
     perp_accounts = [fake_seeded_public_key("perp1"), fake_seeded_public_key("perp2"), fake_seeded_public_key("perp3")]
 
     actual = mango.Account(account_info, mango.Version.V1, meta_data, group, owner, in_margin_basket,
-                           deposits, borrows, net_assets, spot_open_orders, perp_accounts, is_bankrupt)
+                           deposits, borrows, net_assets, spot_open_orders, perp_accounts, msrm_amount,
+                           being_liquidated, is_bankrupt)
 
     assert actual is not None
     assert actual.logger is not None
@@ -36,3 +39,6 @@ def test_construction():
     assert actual.net_assets == net_assets
     assert actual.spot_open_orders == spot_open_orders
     assert actual.perp_accounts == perp_accounts
+    assert actual.msrm_amount == msrm_amount
+    assert actual.being_liquidated == being_liquidated
+    assert actual.is_bankrupt == is_bankrupt

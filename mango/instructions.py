@@ -286,13 +286,12 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, accou
             })
 
     # Accounts expected by this instruction (both CANCEL_PERP_ORDER and CANCEL_PERP_ORDER_BY_CLIENT_ID are the same):
-    # 0. `[]` mangoGroupPk
-    # 1. `[writable]` mangoAccountPk
-    # 2. `[signer]` ownerPk
-    # 3. `[writable]` perpMarketPk
-    # 4. `[writable]` bidsPk
-    # 5. `[writable]` asksPk
-    # 6. `[writable]` eventQueuePk
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
+    # { isSigner: true, isWritable: false, pubkey: ownerPk },
+    # { isSigner: false, isWritable: false, pubkey: perpMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: bidsPk },
+    # { isSigner: false, isWritable: true, pubkey: asksPk },
 
     instructions = [
         TransactionInstruction(
@@ -300,10 +299,9 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, accou
                 AccountMeta(is_signer=False, is_writable=False, pubkey=account.group.address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
                 AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=perp_market.address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.bids),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.asks),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.event_queue)
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.asks)
             ],
             program_id=context.program_id,
             data=data
@@ -520,10 +518,11 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
     # { isSigner: false, isWritable: false, pubkey: signerPk },
     # { isSigner: false, isWritable: false, pubkey: SYSVAR_RENT_PUBKEY },
     # { isSigner: false, isWritable: false, pubkey: dexSignerPk },
-    # ...openOrders.map((pubkey) => ({
-    #   isSigner: false,
-    #   isWritable: true, // TODO: only pass the one writable you are going to place the order on
-    #   pubkey,
+    # { isSigner: false, isWritable: false, pubkey: msrmOrSrmVaultPk },
+    # ...openOrders.map(({ pubkey, isWritable }) => ({
+    #     isSigner: false,
+    #     isWritable,
+    #     pubkey,
     # })),
     fee_discount_address_meta: typing.List[AccountMeta] = []
     if fee_discount_address is not None:
@@ -552,6 +551,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
             AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY),
             AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.srm_vault or SYSTEM_PROGRAM_ADDRESS),
             *list([AccountMeta(is_signer=False, is_writable=(oo_address == open_orders_address),
                                pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders]),
             *fee_discount_address_meta
@@ -610,9 +610,9 @@ def build_compound_spot_place_order_instructions(context: Context, wallet: Walle
     return combined
 
 
-# # 🥭 build_cancel_perp_order_instruction function
+# # 🥭 build_cancel_spot_order_instruction function
 #
-# Builds the instructions necessary for cancelling a perp order.
+# Builds the instructions necessary for cancelling a spot order.
 #
 
 

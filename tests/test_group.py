@@ -18,12 +18,15 @@ def test_construction():
     admin_key = fake_seeded_public_key("admin key")
     dex_program_id = fake_seeded_public_key("DEX program ID")
     cache_key = fake_seeded_public_key("cache key")
-    dao_vault = fake_seeded_public_key("insurance vault")
     valid_interval = Decimal(7)
+    dao_vault = fake_seeded_public_key("insurance vault")
+    srm_vault = fake_seeded_public_key("SRM vault")
+    msrm_vault = fake_seeded_public_key("MSRM vault")
 
     actual = mango.Group(account_info, mango.Version.V1, name, meta_data, token_infos,
                          spot_markets, perp_markets, oracles, signer_nonce, signer_key,
-                         admin_key, dex_program_id, cache_key, valid_interval, dao_vault)
+                         admin_key, dex_program_id, cache_key, valid_interval, dao_vault,
+                         srm_vault, msrm_vault)
 
     assert actual is not None
     assert actual.logger is not None
@@ -40,6 +43,8 @@ def test_construction():
     assert actual.cache == cache_key
     assert actual.valid_interval == valid_interval
     assert actual.dao_vault == dao_vault
+    assert actual.srm_vault == srm_vault
+    assert actual.msrm_vault == msrm_vault
 
 
 # Need better stubs/fakes/mocks before reinstating this, now that Group loading tries to fetch the RootBanks.

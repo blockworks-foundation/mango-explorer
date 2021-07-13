@@ -8,6 +8,66 @@
   "groups": [
     {
       "cluster": "devnet",
+      "name": "mango_test_v3.4",
+      "publicKey": "CNd6bmeM1q7yS1C54xwT4fKpF3EquLWhFmF9xVweGjrM",
+      "quoteSymbol": "USDC",
+      "mangoProgramId": "32WeJ46tuY6QEkgydqzHYU5j85UT9m1cPJwFxPjuSVCt",
+      "serumProgramId": "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY",
+      "tokens": [
+        {
+          "symbol": "USDC",
+          "mintKey": "EMjjdsqERN4wJUR9jMBax2pzqQPeGLNn5NeucbHpDUZK",
+          "decimals": 9,
+          "rootKey": "313wvMRvKN4BphP1qP3RG854KDzhu5Gg8wvi6VVsWp43",
+          "nodeKeys": [
+            "BXNs5nSef9eo16Sxxth5ed9WFjPBqkibxwdRmQVHPK4x"
+          ]
+        },
+        {
+          "symbol": "BTC",
+          "mintKey": "bypQzRBaSDWiKhoAw3hNkf35eF3z3AZCU8Sxks6mTPP",
+          "decimals": 6,
+          "rootKey": "6b54SUFyXxnTUF9iQDDGQeB3m3F3vctkojwD2J4N3Gae",
+          "nodeKeys": [
+            "Drvtng3669H9F2KhmNbg8sB5SEnrBYo2L9t6Dug7JdZg"
+          ]
+        }
+      ],
+      "oracles": [
+        {
+          "symbol": "BTC",
+          "publicKey": "5c5T9996DKTqNcjFczz9MRASGubpxY2WfmCdpFdd5Di1"
+        }
+      ],
+      "perpMarkets": [
+        {
+          "name": "BTC-PERP",
+          "publicKey": "Dgr3VDcjvwMoMPXw2Dqz3vuudGDCSwMM9vaV8LVnMYtk",
+          "baseSymbol": "BTC",
+          "baseDecimals": 6,
+          "quoteDecimals": 9,
+          "marketIndex": 0,
+          "bidsKey": "2mJw42YxF6bSi7NxgP1wLbc9J1NybX8Ms88xYiXAEQyc",
+          "asksKey": "FSczMHXhsorbiMXuGAhiY6yo2shRTFgbsmYMvZ8VCJPm",
+          "eventsKey": "41iaEsaJrcC5CDJJU85AvqMdrvASGgnCdHUs43gKCcoX"
+        }
+      ],
+      "spotMarkets": [
+        {
+          "name": "BTC/USDC",
+          "publicKey": "E1mfsnnCcL24JcDQxr7F2BpWjkyy5x2WHys8EL2pnCj9",
+          "baseSymbol": "BTC",
+          "baseDecimals": 6,
+          "quoteDecimals": 9,
+          "marketIndex": 0,
+          "bidsKey": "8ovMqp4Tb7xe4r3bXdeyzzucMQfemcn2Wi2j55aYS2rR",
+          "asksKey": "GJ5PKrUkGrjHRhP1kNztgfHixYXyNpsRy8S2StBQ171n",
+          "eventsKey": "4xJ5T9c7m5wyt9Xw4PnP6yAU1sdqaegsiyGC6CvG2mUJ"
+        }
+      ]
+    },
+    {
+      "cluster": "devnet",
       "name": "mango_test_v3.3",
       "publicKey": "Bio3MdqCwpEJ3rgCumci1h8WcMFFcwU6UMBsKcuT5kJp",
       "quoteSymbol": "USDC",

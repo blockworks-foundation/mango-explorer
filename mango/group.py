@@ -46,7 +46,7 @@ class Group(AddressableAccount):
                  perp_markets: typing.Sequence[typing.Optional[PerpMarketInfo]],
                  oracles: typing.Sequence[PublicKey], signer_nonce: Decimal, signer_key: PublicKey,
                  admin: PublicKey, dex_program_id: PublicKey, cache: PublicKey, valid_interval: Decimal,
-                 dao_vault: typing.Optional[PublicKey]):
+                 dao_vault: PublicKey, srm_vault: PublicKey, msrm_vault: PublicKey):
         super().__init__(account_info)
         self.version: Version = version
         self.name: str = name
@@ -62,7 +62,9 @@ class Group(AddressableAccount):
         self.dex_program_id: PublicKey = dex_program_id
         self.cache: PublicKey = cache
         self.valid_interval: Decimal = valid_interval
-        self.dao_vault: typing.Optional[PublicKey] = dao_vault
+        self.dao_vault: PublicKey = dao_vault
+        self.srm_vault: PublicKey = srm_vault
+        self.msrm_vault: PublicKey = msrm_vault
 
     @property
     def shared_quote_token(self) -> TokenInfo:
@@ -97,8 +99,10 @@ class Group(AddressableAccount):
         cache: PublicKey = layout.cache
         valid_interval: Decimal = layout.valid_interval
         dao_vault: PublicKey = layout.dao_vault
+        srm_vault: PublicKey = layout.srm_vault
+        msrm_vault: PublicKey = layout.msrm_vault
 
-        return Group(account_info, version, name, meta_data, tokens, spot_markets, perp_markets, oracles, signer_nonce, signer_key, admin, dex_program_id, cache, valid_interval, dao_vault)
+        return Group(account_info, version, name, meta_data, tokens, spot_markets, perp_markets, oracles, signer_nonce, signer_key, admin, dex_program_id, cache, valid_interval, dao_vault, srm_vault, msrm_vault)
 
     @staticmethod
     def parse(context: Context, account_info: AccountInfo) -> "Group":
@@ -160,6 +164,8 @@ class Group(AddressableAccount):
     DEX Program ID: {self.dex_program_id}
     Cache: {self.cache}
     DAO Vault: {self.dao_vault}
+    SRM Vault: {self.srm_vault}
+    MSRM Vault: {self.msrm_vault}
     Valid Interval: {self.valid_interval}
     Tokens:
         {tokens}
