@@ -59,7 +59,9 @@ class SerumMarketOperations(MarketOperations):
         self.reporter(f"Cancelling order {order.id} on market {self.serum_market.symbol}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
-        return (signers + cancel).execute_and_unwrap_transaction_ids(self.context)
+        crank = self.market_instruction_builder.build_crank_instructions()
+        settle = self.market_instruction_builder.build_settle_instructions()
+        return (signers + cancel + crank + settle).execute_and_unwrap_transaction_ids(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
