@@ -64,7 +64,8 @@ class SerumOracle(Oracle):
         context.cluster_url = "https://solana-api.projectserum.com"
         context.client = Client(context.cluster_url)
         mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(SplTokenLookup.DefaultDataFilepath)
-        adjusted_market = mainnet_serum_market_lookup.find_by_symbol(self.market.symbol) or self.market
+        mainnet_market = mainnet_serum_market_lookup.find_by_symbol(self.market.symbol) or self.market
+        adjusted_market: AddressableMarket = typing.cast(AddressableMarket, mainnet_market)
         if self._serum_market is None:
             self._serum_market = RawSerumMarket.load(context.client, adjusted_market.address, context.dex_program_id)
 
@@ -128,5 +129,5 @@ class SerumOracleProvider(OracleProvider):
 
     def _market_symbol_to_serum_symbol(self, symbol: str) -> str:
         normalised = symbol.upper()
-        fixed_perp = re.sub('\-PERP$', '/USDC', normalised)
+        fixed_perp = re.sub("\\-PERP$", "/USDC", normalised)
         return fixed_perp

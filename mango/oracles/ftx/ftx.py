@@ -126,6 +126,6 @@ class FtxOracleProvider(OracleProvider):
 
     def _market_symbol_to_ftx_symbol(self, symbol: str) -> str:
         normalised = symbol.upper()
-        fixed_usdc = re.sub('USDC$', 'USD', normalised)
-        fixed_perp = re.sub('\-PERP$', '/USD', fixed_usdc)
+        fixed_usdc = re.sub("USDC$", "USD", normalised)
+        fixed_perp = re.sub("\\-PERP$", "/USD", fixed_usdc)
         return fixed_perp
