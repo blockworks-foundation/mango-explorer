@@ -30,5 +30,9 @@ class PerpsMarket(AddressableMarket):
     def __init__(self, base: Token, quote: Token, address: PublicKey):
         super().__init__(InventorySource.ACCOUNT, base, quote, address)
 
+    @property
+    def symbol(self) -> str:
+        return f"{self.base.symbol}-PERP"
+
     def __str__(self) -> str:
         return f"« 𝙿𝚎𝚛𝚙𝚜𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}] »"

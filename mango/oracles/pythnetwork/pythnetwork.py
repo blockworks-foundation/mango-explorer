@@ -118,7 +118,9 @@ class PythOracleProvider(OracleProvider):
     def _market_symbol_to_pyth_symbol(self, symbol: str) -> str:
         normalised = symbol.upper()
         fixed_usdt = re.sub('USDT$', 'USD', normalised)
-        return re.sub('USDC$', 'USD', fixed_usdt)
+        fixed_usdc = re.sub('USDC$', 'USD', fixed_usdt)
+        fixed_perp = re.sub('\-PERP$', '/USD', fixed_usdc)
+        return fixed_perp
 
     def _pyth_symbol_to_market_symbols(self, symbol: str) -> typing.Sequence[str]:
         if symbol.endswith("USD"):

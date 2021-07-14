@@ -15,6 +15,7 @@
 
 
 import copy
+import re
 import rx
 import rx.operators as ops
 import typing
@@ -108,11 +109,12 @@ class SerumOracleProvider(OracleProvider):
         elif isinstance(market, SerumMarket):
             return SerumOracle(market)
         else:
-            optional_spot_market = context.market_lookup.find_by_symbol(market.symbol)
-            if optional_spot_market is None:
+            fixed_symbol = self._market_symbol_to_serum_symbol(market.symbol)
+            underlying_market = context.market_lookup.find_by_symbol(fixed_symbol)
+            if underlying_market is None:
                 return None
-            if isinstance(optional_spot_market, SpotMarket):
-                return SerumOracle(optional_spot_market)
+            if isinstance(underlying_market, SpotMarket) or isinstance(underlying_market, SerumMarket):
+                return SerumOracle(underlying_market)
 
         return None
 
@@ -122,3 +124,8 @@ class SerumOracleProvider(OracleProvider):
         for market in all_markets:
             symbols += [market.symbol]
         return symbols
+
+    def _market_symbol_to_serum_symbol(self, symbol: str) -> str:
+        normalised = symbol.upper()
+        fixed_perp = re.sub('\-PERP$', '/USDC', normalised)
+        return fixed_perp
