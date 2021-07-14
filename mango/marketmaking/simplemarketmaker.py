@@ -67,7 +67,7 @@ class SimpleMarketMaker:
         self.existing_order_tolerance: Decimal = existing_order_tolerance
         self.pause: timedelta = pause
         self.stop_requested = False
-        self.health_filename = "/var/tmp/mango_simple_market_maker"
+        self.health_filename = "/var/tmp/mango_healthcheck_simple_market_maker"
 
     def start(self):
         # On startup there should be no existing orders. If we didn't exit cleanly last time though,

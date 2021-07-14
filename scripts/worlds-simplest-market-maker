@@ -15,6 +15,6 @@ do
     place-order --market $MARKET --order-type LIMIT --log-level ERROR \
         --side SELL --quantity $FIXED_POSITION_SIZE --price $(echo "$CURRENT_PRICE + $FIXED_SPREAD" | bc)
 
-    echo "Last ${MARKET} market-making action: $(date)" > /var/tmp/mango_worlds_simplest_market_maker
+    echo "Last ${MARKET} market-making action: $(date)" > /var/tmp/mango_healthcheck_worlds_simplest_market_maker
 	sleep $SLEEP_BETWEEN_ORDER_PLACES
 done
