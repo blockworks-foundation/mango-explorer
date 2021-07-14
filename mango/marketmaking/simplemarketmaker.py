@@ -22,6 +22,7 @@ import typing
 
 from datetime import timedelta
 from decimal import Decimal
+from pathlib import Path
 
 
 # # 🥭 SimpleMarketMaker class
@@ -66,6 +67,7 @@ class SimpleMarketMaker:
         self.existing_order_tolerance: Decimal = existing_order_tolerance
         self.pause: timedelta = pause
         self.stop_requested = False
+        self.health_filename = "/var/tmp/mango_simple_market_maker"
 
     def start(self):
         # On startup there should be no existing orders. If we didn't exit cleanly last time though,
@@ -78,6 +80,7 @@ class SimpleMarketMaker:
             try:
                 # Update current state
                 price = self.oracle.fetch_price(self.context)
+                self.logger.info(f"Price is: {price}")
                 inventory = self.fetch_inventory()
 
                 # Calculate what we want the orders to be.
@@ -90,20 +93,16 @@ class SimpleMarketMaker:
                     self.logger.info("Cancelling BUY orders.")
                     for order in buy_orders:
                         self.market_operations.cancel_order(order)
-
-                buy_order = self.market_operations.place_order(
-                    mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size)
-                self.logger.info(f"Placed order {buy_order} to BUY {buy_size} at {bid}")
+                    self.market_operations.place_order(mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size)
 
                 sell_orders = [order for order in current_orders if order.side == mango.Side.SELL]
                 if self.orders_require_action(sell_orders, ask, sell_size):
                     self.logger.info("Cancelling SELL orders.")
                     for order in sell_orders:
                         self.market_operations.cancel_order(order)
+                    self.market_operations.place_order(mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size)
 
-                sell_order = self.market_operations.place_order(
-                    mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size)
-                self.logger.info(f"Placed order {sell_order} to SELL {sell_size} at {ask}")
+                self.update_health_on_successful_iteration()
             except Exception as exception:
                 self.logger.warning(
                     f"Pausing and continuing after problem running market-making iteration: {exception} - {traceback.format_exc()}")
@@ -112,10 +111,14 @@ class SimpleMarketMaker:
             self.logger.info(f"Pausing for {self.pause} seconds.")
             time.sleep(self.pause.seconds)
 
+        self.logger.info("Stopped.")
+
         self.cleanup()
 
     def stop(self):
+        self.logger.info("Stop requested.")
         self.stop_requested = True
+        Path(self.health_filename).unlink(missing_ok=True)
 
     def cleanup(self):
         self.logger.info("Cleaning up.")
@@ -124,13 +127,26 @@ class SimpleMarketMaker:
             self.market_operations.cancel_order(order)
 
     def fetch_inventory(self) -> typing.Sequence[typing.Optional[mango.TokenValue]]:
-        group = mango.Group.load(self.context)
-        accounts = mango.Account.load_all_for_owner(self.context, self.wallet.address, group)
-        if len(accounts) == 0:
-            raise Exception("No Mango account found.")
+        if self.market.inventory_source == mango.InventorySource.SPL_TOKENS:
+            base_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
+                self.context, self.wallet.address, self.market.base)
+            if base_account is None:
+                raise Exception(
+                    f"Could not find token account owned by {self.wallet.address} for base token {self.market.base}.")
+            quote_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
+                self.context, self.wallet.address, self.market.quote)
+            if quote_account is None:
+                raise Exception(
+                    f"Could not find token account owned by {self.wallet.address} for quote token {self.market.quote}.")
+            return [base_account.value, quote_account.value]
+        else:
+            group = mango.Group.load(self.context)
+            accounts = mango.Account.load_all_for_owner(self.context, self.wallet.address, group)
+            if len(accounts) == 0:
+                raise Exception("No Mango account found.")
 
-        account = accounts[0]
-        return account.net_assets
+            account = accounts[0]
+            return account.net_assets
 
     def calculate_order_prices(self, price: mango.Price):
         bid = price.mid_price - (price.mid_price * self.spread_ratio)
@@ -159,6 +175,12 @@ class SimpleMarketMaker:
             tolerated = order_value * tolerance
             return (order_value < (target_value + tolerated)) and (order_value > (target_value - tolerated))
         return len(orders) == 0 or not all([(within_tolerance(price, order.price, self.existing_order_tolerance)) and within_tolerance(size, order.size, self.existing_order_tolerance) for order in orders])
+
+    def update_health_on_successful_iteration(self) -> None:
+        try:
+            Path(self.health_filename).touch(mode=0o666, exist_ok=True)
+        except Exception as exception:
+            self.logger.warning(f"Touching file '{self.health_filename}' raised exception: {exception}")
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚒𝚖𝚙𝚕𝚎𝙼𝚊𝚛𝚔𝚎𝚝𝙼𝚊𝚔𝚎𝚛 for market '{self.market.symbol}' »"""

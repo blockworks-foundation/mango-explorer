@@ -31,7 +31,7 @@ market = context.market_lookup.find_by_symbol(market_symbol)
 if market is None:
     raise Exception(f"Could not find market {market_symbol}")
 
-market_operations = mango.create_market_operations(context, wallet, False, market, print)
+market_operations = mango.create_market_operations(context, wallet, False, market)
 order = mango.Order(id=args.order_id, client_id=0, owner=wallet.address,
                     side=mango.Side.BUY, price=Decimal(0), size=Decimal(0))
 cancellation = market_operations.cancel_order(order)

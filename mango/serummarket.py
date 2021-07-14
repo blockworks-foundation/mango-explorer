@@ -16,7 +16,7 @@
 
 from solana.publickey import PublicKey
 
-from .market import AddressableMarket
+from .market import AddressableMarket, InventorySource
 from .token import Token
 
 
@@ -28,7 +28,7 @@ from .token import Token
 
 class SerumMarket(AddressableMarket):
     def __init__(self, base: Token, quote: Token, address: PublicKey):
-        super().__init__(base, quote, address)
+        super().__init__(InventorySource.SPL_TOKENS, base, quote, address)
 
     def __str__(self) -> str:
         return f"« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}] »"

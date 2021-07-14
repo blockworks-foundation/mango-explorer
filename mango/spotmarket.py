@@ -16,7 +16,7 @@
 
 from solana.publickey import PublicKey
 
-from .market import AddressableMarket
+from .market import AddressableMarket, InventorySource
 from .token import Token
 
 
@@ -28,7 +28,7 @@ from .token import Token
 
 class SpotMarket(AddressableMarket):
     def __init__(self, base: Token, quote: Token, address: PublicKey, group_address: PublicKey):
-        super().__init__(base, quote, address)
+        super().__init__(InventorySource.ACCOUNT, base, quote, address)
         self.group_address: PublicKey = group_address
 
     def __str__(self) -> str:

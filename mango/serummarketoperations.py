@@ -14,13 +14,17 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-from mango.constants import SYSTEM_PROGRAM_ADDRESS
+import itertools
 import typing
 
 from decimal import Decimal
 from pyserum.market import Market
+from pyserum.market.orderbook import OrderBook as SerumOrderBook
+from pyserum.market.types import Order as SerumOrder
 
+from .accountinfo import AccountInfo
 from .combinableinstructions import CombinableInstructions
+from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .marketoperations import MarketOperations
 from .orders import Order, OrderType, Side
@@ -35,28 +39,17 @@ from .wallet import Wallet
 #
 
 class SerumMarketOperations(MarketOperations):
-    def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket, market_instruction_builder: SerumMarketInstructionBuilder, reporter: typing.Callable[[str], None] = None):
+    def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket, market_instruction_builder: SerumMarketInstructionBuilder):
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.serum_market: SerumMarket = serum_market
-        self.market: Market = Market.load(context.client, serum_market.address, context.dex_program_id)
+        self.raw_market: Market = Market.load(context.client, serum_market.address, context.dex_program_id)
         self.market_instruction_builder: SerumMarketInstructionBuilder = market_instruction_builder
 
-        def report(text):
-            self.logger.info(text)
-            reporter(text)
-
-        def just_log(text):
-            self.logger.info(text)
-
-        if reporter is not None:
-            self.reporter = report
-        else:
-            self.reporter = just_log
-
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
-        self.reporter(f"Cancelling order {order.id} on market {self.serum_market.symbol}.")
+        self.logger.info(
+            f"Cancelling order {order.id} for size {order.size} at price {order.price} on market {self.serum_market.symbol} with client ID {order.client_id}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
         crank = self.market_instruction_builder.build_crank_instructions()
@@ -65,8 +58,8 @@ class SerumMarketOperations(MarketOperations):
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
-        report: str = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.serum_market.symbol} with ID {client_id}."
-        self.reporter(report)
+        self.logger.info(
+            f"Placing {order_type} {side} order for size {size} at price {price} on market {self.serum_market.symbol} with client ID {client_id}.")
 
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         place = self.market_instruction_builder.build_place_order_instructions(
@@ -80,20 +73,30 @@ class SerumMarketOperations(MarketOperations):
         open_orders_address = self.market_instruction_builder.open_orders_address or SYSTEM_PROGRAM_ADDRESS
         return Order(id=0, side=side, price=price, size=size, client_id=client_id, owner=open_orders_address)
 
-    def load_orders(self) -> typing.Sequence[Order]:
-        asks = self.market.load_asks()
-        orders: typing.List[Order] = []
-        for serum_order in asks:
-            orders += [Order.from_serum_order(serum_order)]
+    def _load_serum_orders(self) -> typing.Sequence[SerumOrder]:
+        raw_market = self.market_instruction_builder.raw_market
+        [bids_info, asks_info] = AccountInfo.load_multiple(
+            self.context, [raw_market.state.bids(), raw_market.state.asks()])
+        bids_orderbook = SerumOrderBook.from_bytes(raw_market.state, bids_info.data)
+        asks_orderbook = SerumOrderBook.from_bytes(raw_market.state, asks_info.data)
 
-        bids = self.market.load_bids()
-        for serum_order in bids:
+        return list(itertools.chain(bids_orderbook.orders(), asks_orderbook.orders()))
+
+    def load_orders(self) -> typing.Sequence[Order]:
+        all_orders = self._load_serum_orders()
+        orders: typing.List[Order] = []
+        for serum_order in all_orders:
             orders += [Order.from_serum_order(serum_order)]
 
         return orders
 
     def load_my_orders(self) -> typing.Sequence[Order]:
-        serum_orders = self.market.load_orders_for_owner(self.wallet.address)
+        open_orders_address = self.market_instruction_builder.open_orders_address
+        if not open_orders_address:
+            return []
+
+        all_orders = self._load_serum_orders()
+        serum_orders = [o for o in all_orders if o.open_order_address == open_orders_address]
         orders: typing.List[Order] = []
         for serum_order in serum_orders:
             orders += [Order.from_serum_order(serum_order)]

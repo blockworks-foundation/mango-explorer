@@ -82,21 +82,18 @@ class MarketOperations(metaclass=abc.ABCMeta):
 #
 
 class NullMarketOperations(MarketOperations):
-    def __init__(self, market_name: str, reporter: typing.Callable[[str], None] = None):
+    def __init__(self, market_name: str):
         super().__init__()
         self.market_name: str = market_name
-        self.reporter = reporter or (lambda _: None)
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
-        report = f"Cancelling order on market {self.market_name}."
-        self.logger.info(report)
-        self.reporter(report)
-        return ""
+        self.logger.info(
+            f"Cancelling order {order.id} for size {order.size} at price {order.price} on market {self.market_name} with client ID {order.client_id}.")
+        return [""]
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
-        report = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.market_name}."
-        self.logger.info(report)
-        self.reporter(report)
+        self.logger.info(
+            f"Placing {order_type} {side} order for size {size} at price {price} on market {self.market_name}.")
         return Order(id=0, side=side, price=price, size=size, client_id=0, owner=SYSTEM_PROGRAM_ADDRESS)
 
     def load_orders(self) -> typing.Sequence[Order]:

@@ -40,8 +40,7 @@ from .wallet import Wallet
 class PerpMarketOperations(MarketOperations):
     def __init__(self, market_name: str, context: Context, wallet: Wallet,
                  market_instruction_builder: PerpMarketInstructionBuilder,
-                 account: Account, perp_market: PerpMarket,
-                 reporter: typing.Callable[[str], None] = None):
+                 account: Account, perp_market: PerpMarket):
         super().__init__()
         self.market_name: str = market_name
         self.context: Context = context
@@ -49,19 +48,18 @@ class PerpMarketOperations(MarketOperations):
         self.market_instruction_builder: PerpMarketInstructionBuilder = market_instruction_builder
         self.account: Account = account
         self.perp_market: PerpMarket = perp_market
-        self.reporter = reporter or (lambda _: None)
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
-        self.reporter(f"Cancelling order {order.id} on market {self.market_name}.")
+        self.logger.info(
+            f"Cancelling order {order.id} for size {order.size} at price {order.price} on market {self.market_name} with client ID {order.client_id}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
         return (signers + cancel).execute_and_unwrap_transaction_ids(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
-        report: str = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.market_name} with ID {client_id}."
-        self.logger.info(report)
-        self.reporter(report)
+        self.logger.info(
+            f"Placing {order_type} {side} order for size {size} at price {price} on market {self.market_name} with ID {client_id}.")
 
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         place = self.market_instruction_builder.build_place_order_instructions(

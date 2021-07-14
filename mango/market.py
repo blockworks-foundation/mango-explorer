@@ -15,11 +15,23 @@
 
 
 import abc
+import enum
 import logging
 
 from solana.publickey import PublicKey
 
 from .token import Token
+
+
+class InventorySource(enum.Enum):
+    SPL_TOKENS = enum.auto()
+    ACCOUNT = enum.auto()
+
+    def __str__(self) -> str:
+        return self.name
+
+    def __repr__(self) -> str:
+        return f"{self}"
 
 
 # # 🥭 Market class
@@ -28,8 +40,9 @@ from .token import Token
 #
 
 class Market(metaclass=abc.ABCMeta):
-    def __init__(self, base: Token, quote: Token):
+    def __init__(self, inventory_source: InventorySource, base: Token, quote: Token):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.inventory_source: InventorySource = inventory_source
         self.base: Token = base
         self.quote: Token = quote
 
@@ -50,8 +63,8 @@ class Market(metaclass=abc.ABCMeta):
 #
 
 class AddressableMarket(Market):
-    def __init__(self, base: Token, quote: Token, address: PublicKey):
-        super().__init__(base, quote)
+    def __init__(self, inventory_source: InventorySource, base: Token, quote: Token, address: PublicKey):
+        super().__init__(inventory_source, base, quote)
         self.address: PublicKey = address
 
     def __str__(self) -> str:

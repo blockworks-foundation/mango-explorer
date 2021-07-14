@@ -39,7 +39,7 @@ from .wallet import Wallet
 #
 
 class SpotMarketOperations(MarketOperations):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, market_instruction_builder: SpotMarketInstructionBuilder, reporter: typing.Callable[[str], None] = None):
+    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, market_instruction_builder: SpotMarketInstructionBuilder):
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
@@ -51,29 +51,17 @@ class SpotMarketOperations(MarketOperations):
         self.market_index = group.find_spot_market_index(spot_market.address)
         self.open_orders = self.account.spot_open_orders[self.market_index]
 
-        def report(text):
-            self.logger.info(text)
-            reporter(text)
-
-        def just_log(text):
-            self.logger.info(text)
-
-        if reporter is not None:
-            self.reporter = report
-        else:
-            self.reporter = just_log
-
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
-        self.reporter(f"Cancelling order {order.id} on market {self.spot_market.symbol}.")
+        self.logger.info(
+            f"Cancelling order {order.id} for size {order.size} at price {order.price} on market {self.spot_market.symbol} with client ID {order.client_id}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
         return (signers + cancel).execute_and_unwrap_transaction_ids(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
-        report: str = f"Placing {order_type} {side} order for size {size} at price {price} on market {self.spot_market.symbol} with ID {client_id}."
-        self.logger.info(report)
-        self.reporter(report)
+        self.logger.info(
+            f"Placing {order_type} {side} order for size {size} at price {price} on market {self.spot_market.symbol} with ID {client_id}.")
 
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         place = self.market_instruction_builder.build_place_order_instructions(

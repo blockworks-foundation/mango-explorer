@@ -90,7 +90,6 @@ class CombinableInstructions():
         vetted_chunks: typing.List[typing.List[TransactionInstruction]] = []
         current_chunk: typing.List[TransactionInstruction] = []
         for instruction in self.instructions:
-            # current_chunk += [instruction]
             in_progress_chunk = current_chunk + [instruction]
             if CombinableInstructions.transaction_size(self.signers, in_progress_chunk) < _MAXIMUM_TRANSACTION_LENGTH:
                 current_chunk = in_progress_chunk
@@ -100,7 +99,9 @@ class CombinableInstructions():
 
         all_chunks = vetted_chunks + [current_chunk]
 
-        self.logger.info(f"Running instructions in {len(all_chunks)} transaction(s).")
+        if len(all_chunks) > 1:
+            self.logger.info(f"Running instructions in {len(all_chunks)} transactions.")
+
         results = []
         for chunk in all_chunks:
             transaction = Transaction()

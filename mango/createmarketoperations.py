@@ -14,8 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import typing
-
 from .account import Account
 from .context import Context
 from .group import Group
@@ -38,20 +36,20 @@ from .wallet import Wallet
 # This function deals with the creation of a `MarketOperations` object for a given `Market`.
 
 
-def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, market: Market, reporter: typing.Callable[[str], None] = lambda _: None) -> MarketOperations:
+def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, market: Market) -> MarketOperations:
     if dry_run:
-        return NullMarketOperations(market.symbol, reporter)
+        return NullMarketOperations(market.symbol)
     elif isinstance(market, SerumMarket):
         serum_market_instruction_builder: SerumMarketInstructionBuilder = SerumMarketInstructionBuilder.load(
             context, wallet, market)
-        return SerumMarketOperations(context, wallet, market, serum_market_instruction_builder, reporter)
+        return SerumMarketOperations(context, wallet, market, serum_market_instruction_builder)
     elif isinstance(market, SpotMarket):
         group = Group.load(context, market.group_address)
         accounts = Account.load_all_for_owner(context, wallet.address, group)
         account = accounts[0]
         spot_market_instruction_builder: SpotMarketInstructionBuilder = SpotMarketInstructionBuilder.load(
             context, wallet, group, account, market)
-        return SpotMarketOperations(context, wallet, group, account, market, spot_market_instruction_builder, reporter)
+        return SpotMarketOperations(context, wallet, group, account, market, spot_market_instruction_builder)
     elif isinstance(market, PerpsMarket):
         group = Group.load(context, context.group_id)
         accounts = Account.load_all_for_owner(context, wallet.address, group)
@@ -63,6 +61,6 @@ def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, ma
         perp_market_instruction_builder: PerpMarketInstructionBuilder = PerpMarketInstructionBuilder.load(
             context, wallet, group, account, perp_market)
 
-        return PerpMarketOperations(market.symbol, context, wallet, perp_market_instruction_builder, account, perp_market, reporter)
+        return PerpMarketOperations(market.symbol, context, wallet, perp_market_instruction_builder, account, perp_market)
     else:
         raise Exception(f"Could not find order placer for market {market.symbol}")

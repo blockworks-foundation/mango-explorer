@@ -84,6 +84,9 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
 
     def build_cancel_order_instructions(self, order: Order) -> CombinableInstructions:
         # For us to cancel an order, an open_orders account must already exist (or have existed).
+        if self.open_orders_address is None:
+            raise Exception(f"Cannot cancel order with client ID {order.client_id} - no OpenOrders account.")
+
         raw_instruction = self.raw_market.make_cancel_order_by_client_id_instruction(
             self.wallet.account, self.open_orders_address, order.client_id
         )
