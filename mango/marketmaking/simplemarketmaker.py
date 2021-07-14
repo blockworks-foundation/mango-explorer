@@ -82,6 +82,7 @@ class SimpleMarketMaker:
                 price = self.oracle.fetch_price(self.context)
                 self.logger.info(f"Price is: {price}")
                 inventory = self.fetch_inventory()
+                print(inventory)
 
                 # Calculate what we want the orders to be.
                 bid, ask = self.calculate_order_prices(price)
@@ -163,11 +164,8 @@ class SimpleMarketMaker:
         if quote_tokens is None:
             raise Exception(f"Could not find market-maker quote token {price.market.quote.symbol} in inventory.")
 
-        total = (base_tokens.value * price.mid_price) + quote_tokens.value
-        position_size = total * self.position_size_ratio
-
-        buy_size = position_size / price.mid_price
-        sell_size = position_size / price.mid_price
+        buy_size = base_tokens.value * self.position_size_ratio
+        sell_size = (quote_tokens.value / price.mid_price) * self.position_size_ratio
         return (buy_size, sell_size)
 
     def orders_require_action(self, orders: typing.Sequence[mango.Order], price: Decimal, size: Decimal) -> bool:
