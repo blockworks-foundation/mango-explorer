@@ -32,6 +32,8 @@ from ...market import AddressableMarket, Market
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import Oracle, OracleProvider, OracleSource, Price
 from ...serummarket import SerumMarket
+from ...serummarketlookup import SerumMarketLookup
+from ...spltokenlookup import SplTokenLookup
 from ...spotmarket import SpotMarket
 
 
@@ -61,15 +63,17 @@ class SerumOracle(Oracle):
         context.cluster = "mainnet-beta"
         context.cluster_url = "https://solana-api.projectserum.com"
         context.client = Client(context.cluster_url)
+        mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(SplTokenLookup.DefaultDataFilepath)
+        adjusted_market = mainnet_serum_market_lookup.find_by_symbol(self.market.symbol) or self.market
         if self._serum_market is None:
-            self._serum_market = RawSerumMarket.load(context.client, self.market.address, context.dex_program_id)
+            self._serum_market = RawSerumMarket.load(context.client, adjusted_market.address, context.dex_program_id)
 
         bids_address = self._serum_market.state.bids()
         asks_address = self._serum_market.state.asks()
         bid_ask_account_infos = AccountInfo.load_multiple(context, [bids_address, asks_address])
         if len(bid_ask_account_infos) != 2:
             raise Exception(
-                f"Failed to get bid/ask data from Serum for market address {self.market.address} (bids: {bids_address}, asks: {asks_address}).")
+                f"Failed to get bid/ask data from Serum for market address {adjusted_market.address} (bids: {bids_address}, asks: {asks_address}).")
         bids = OrderBook.from_bytes(self._serum_market.state, bid_ask_account_infos[0].data)
         asks = OrderBook.from_bytes(self._serum_market.state, bid_ask_account_infos[1].data)
 
@@ -82,9 +86,6 @@ class SerumOracle(Oracle):
         return Price(self.source, datetime.now(), self.market, top_bid_price, mid_price, top_ask_price)
 
     def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
-        context.cluster = "mainnet-beta"
-        context.cluster_url = "https://solana-api.projectserum.com"
-        context.client = Client(context.cluster_url)
         return rx.interval(1).pipe(
             ops.subscribe_on(context.pool_scheduler),
             ops.start_with(-1),
