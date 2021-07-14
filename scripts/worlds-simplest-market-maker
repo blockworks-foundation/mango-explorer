@@ -3,13 +3,14 @@ MARKET=${1:-BTC-PERP}
 FIXED_POSITION_SIZE=${2:-0.01}
 FIXED_SPREAD=${3:-100}
 SLEEP_BETWEEN_ORDER_PLACES=${4:-60}
+ORACLE_MARKET=${MARKET//\-PERP/\/USDC}
 
 printf "Running on market %s with position size %f and prices +/- %f from current price\nPress Control+C to stop...\n" $MARKET $FIXED_POSITION_SIZE $FIXED_SPREAD
 while :
 do
     cancel-my-orders --market $MARKET --log-level ERROR
 
-    CURRENT_PRICE=$(fetch-price --provider serum --symbol $MARKET --log-level ERROR --cluster mainnet-beta | cut -d"'" -f 2 | sed 's/,//')
+    CURRENT_PRICE=$(fetch-price --provider serum --symbol $ORACLE_MARKET --log-level ERROR --cluster mainnet-beta | cut -d"'" -f 2 | sed 's/,//')
     place-order --market $MARKET --order-type LIMIT --log-level ERROR \
         --side BUY --quantity $FIXED_POSITION_SIZE --price $(echo "$CURRENT_PRICE - $FIXED_SPREAD" | bc)
     place-order --market $MARKET --order-type LIMIT --log-level ERROR \
