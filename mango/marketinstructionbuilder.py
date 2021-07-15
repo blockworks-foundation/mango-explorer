@@ -20,7 +20,7 @@ import logging
 from decimal import Decimal
 
 from .combinableinstructions import CombinableInstructions
-from .orders import Order, OrderType, Side
+from .orders import Order
 
 
 # # 🥭 MarketInstructionBuilder class
@@ -50,7 +50,7 @@ class MarketInstructionBuilder(metaclass=abc.ABCMeta):
             "MarketInstructionBuilder.build_cancel_order_instructions() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def build_place_order_instructions(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal, client_order_id: int) -> CombinableInstructions:
+    def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
         raise NotImplementedError(
             "MarketInstructionBuilder.build_place_order_instructions() is not implemented on the base type.")
 
@@ -81,7 +81,7 @@ class NullMarketInstructionBuilder(MarketInstructionBuilder):
     def build_cancel_order_instructions(self, order: Order) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
-    def build_place_order_instructions(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal, client_order_id: int) -> CombinableInstructions:
+    def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
     def build_settle_instructions(self) -> CombinableInstructions:

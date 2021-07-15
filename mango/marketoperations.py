@@ -29,7 +29,7 @@ from .orders import Order, OrderType, Side
 # This file deals with placing orders. We want the interface to be simple and basic:
 # ```
 # order_placer.cancel_order(context, market)
-# order_placer.place_order(context, market, side, order_type, price, size)
+# order_placer.place_order(context, market, side, order_type, price, quantity)
 # ```
 # This requires the `MarketOperations` already know a bit about the market it is placing the
 # order on, and the code in the `MarketOperations` be specialised for that market platform.
@@ -46,7 +46,7 @@ from .orders import Order, OrderType, Side
 # Whichever choice is made, the calling code shouldn't have to care. It should be able to
 # use its `MarketOperations` class as simply as:
 # ```
-# order_placer.place_order(context, side, order_type, price, size)
+# order_placer.place_order(context, side, order_type, price, quantity)
 # ```
 #
 
@@ -60,7 +60,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
         raise NotImplementedError("MarketOperations.cancel_order() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
+    def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
         raise NotImplementedError("MarketOperations.place_order() is not implemented on the base type.")
 
     @abc.abstractmethod
@@ -88,13 +88,13 @@ class NullMarketOperations(MarketOperations):
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
         self.logger.info(
-            f"Cancelling order {order.id} for size {order.size} at price {order.price} on market {self.market_name} with client ID {order.client_id}.")
+            f"Cancelling order {order.id} for quantity {order.quantity} at price {order.price} on market {self.market_name} with client ID {order.client_id}.")
         return [""]
 
-    def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
+    def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
         self.logger.info(
-            f"Placing {order_type} {side} order for size {size} at price {price} on market {self.market_name}.")
-        return Order(id=0, side=side, price=price, size=size, client_id=0, owner=SYSTEM_PROGRAM_ADDRESS)
+            f"Placing {order_type} {side} order for quantity {quantity} at price {price} on market {self.market_name}.")
+        return Order(id=0, side=side, price=price, quantity=quantity, client_id=0, owner=SYSTEM_PROGRAM_ADDRESS, order_type=order_type)
 
     def load_orders(self) -> typing.Sequence[Order]:
         return []

@@ -91,7 +91,8 @@ class CombinableInstructions():
         current_chunk: typing.List[TransactionInstruction] = []
         for instruction in self.instructions:
             in_progress_chunk = current_chunk + [instruction]
-            if CombinableInstructions.transaction_size(self.signers, in_progress_chunk) < _MAXIMUM_TRANSACTION_LENGTH:
+            transaction_size = CombinableInstructions.transaction_size(self.signers, in_progress_chunk)
+            if transaction_size < _MAXIMUM_TRANSACTION_LENGTH:
                 current_chunk = in_progress_chunk
             else:
                 vetted_chunks += [current_chunk]
@@ -99,8 +100,17 @@ class CombinableInstructions():
 
         all_chunks = vetted_chunks + [current_chunk]
 
+        if len(all_chunks) == 1 and len(all_chunks[0]) == 0:
+            self.logger.info("No instructions to run.")
+            return []
+
         if len(all_chunks) > 1:
             self.logger.info(f"Running instructions in {len(all_chunks)} transactions.")
+
+        total_in_chunks = sum(map(lambda chunk: len(chunk), all_chunks))
+        if total_in_chunks != len(self.instructions):
+            raise Exception(
+                f"Failed to chunk instructions. Have {total_in_chunks} instuctions in chunks. Should have {len(self.instructions)}.")
 
         results = []
         for chunk in all_chunks:

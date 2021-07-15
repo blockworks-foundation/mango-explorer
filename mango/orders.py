@@ -23,6 +23,7 @@ from decimal import Decimal
 from pyserum.market.types import Order as SerumOrder
 from solana.publickey import PublicKey
 
+from .constants import SYSTEM_PROGRAM_ADDRESS
 
 # # 🥭 Orders
 #
@@ -57,6 +58,7 @@ class Side(enum.Enum):
 
 class OrderType(enum.Enum):
     # We use strings here so that argparse can work with these as parameters.
+    UNKNOWN = "UNKNOWN"
     LIMIT = "LIMIT"
     IOC = "IOC"
     POST_ONLY = "POST_ONLY"
@@ -80,13 +82,35 @@ class Order(typing.NamedTuple):
     owner: PublicKey
     side: Side
     price: Decimal
-    size: Decimal
+    quantity: Decimal
+    order_type: OrderType
+
+    # Returns an identical order with the ID changed.
+    def with_id(self, id: int) -> "Order":
+        return Order(id=id, side=self.side, price=self.price, quantity=self.quantity,
+                     client_id=self.client_id, owner=self.owner, order_type=self.order_type)
+
+    # Returns an identical order with the Client ID changed.
+    def with_client_id(self, client_id: int) -> "Order":
+        return Order(id=self.id, side=self.side, price=self.price, quantity=self.quantity,
+                     client_id=client_id, owner=self.owner, order_type=self.order_type)
 
     @staticmethod
     def from_serum_order(serum_order: SerumOrder) -> "Order":
         price = Decimal(serum_order.info.price)
-        size = Decimal(serum_order.info.size)
+        quantity = Decimal(serum_order.info.size)
         side = Side.BUY if serum_order.side == pyserum.enums.Side.BUY else Side.SELL
-        order = Order(id=serum_order.order_id, side=side, price=price, size=size,
-                      client_id=serum_order.client_id, owner=serum_order.open_order_address)
+        order = Order(id=serum_order.order_id, side=side, price=price, quantity=quantity,
+                      client_id=serum_order.client_id, owner=serum_order.open_order_address,
+                      order_type=OrderType.UNKNOWN)
         return order
+
+    @staticmethod
+    def from_basic_info(side: Side, price: Decimal, quantity: Decimal, order_type: OrderType = OrderType.UNKNOWN) -> "Order":
+        order = Order(id=0, side=side, price=price, quantity=quantity, client_id=0,
+                      owner=SYSTEM_PROGRAM_ADDRESS, order_type=order_type)
+        return order
+
+    @staticmethod
+    def from_ids(id: int, client_id: int) -> "Order":
+        return Order(id=id, client_id=client_id, owner=SYSTEM_PROGRAM_ADDRESS, side=Side.BUY, price=Decimal(0), quantity=Decimal(0), order_type=OrderType.UNKNOWN)

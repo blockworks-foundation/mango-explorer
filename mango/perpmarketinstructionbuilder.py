@@ -22,7 +22,7 @@ from .context import Context
 from .group import Group
 from .marketinstructionbuilder import MarketInstructionBuilder
 from .instructions import build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_place_perp_order_instructions
-from .orders import Order, OrderType, Side
+from .orders import Order
 from .perpmarket import PerpMarket
 from .wallet import Wallet
 
@@ -53,9 +53,9 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         return build_cancel_perp_order_instructions(
             self.context, self.wallet, self.account, self.perp_market, order)
 
-    def build_place_order_instructions(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal, client_id: int) -> CombinableInstructions:
+    def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
         return build_place_perp_order_instructions(
-            self.context, self.wallet, self.perp_market.group, self.account, self.perp_market, price, size, client_id, side, order_type)
+            self.context, self.wallet, self.perp_market.group, self.account, self.perp_market, order.price, order.quantity, order.client_id, order.side, order.order_type)
 
     def build_settle_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()

@@ -32,7 +32,6 @@ class ModelState:
                  group_watcher: mango.LatestItemObserverSubscriber[mango.Group],
                  price_watcher: mango.LatestItemObserverSubscriber[mango.Price],
                  perp_market_watcher: typing.Optional[mango.LatestItemObserverSubscriber[mango.PerpMarket]],
-                 spot_market_watcher: mango.LatestItemObserverSubscriber[mango.SpotMarket],
                  spot_open_orders_watcher: mango.LatestItemObserverSubscriber[mango.OpenOrders]
                  ):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -42,7 +41,6 @@ class ModelState:
         self.price_watcher: mango.LatestItemObserverSubscriber[mango.Price] = price_watcher
         self.perp_market_watcher: typing.Optional[mango.LatestItemObserverSubscriber[mango.PerpMarket]
                                                   ] = perp_market_watcher
-        self.spot_market_watcher: mango.LatestItemObserverSubscriber[mango.SpotMarket] = spot_market_watcher
         self.spot_open_orders_watcher: mango.LatestItemObserverSubscriber[mango.OpenOrders] = spot_open_orders_watcher
 
     @property
@@ -58,10 +56,6 @@ class ModelState:
         if self.perp_market_watcher is None:
             return None
         return self.perp_market_watcher.latest
-
-    @property
-    def spot_market(self) -> mango.SpotMarket:
-        return self.spot_market_watcher.latest
 
     @property
     def spot_open_orders(self) -> mango.OpenOrders:

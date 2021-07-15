@@ -6,8 +6,6 @@ import os
 import os.path
 import sys
 
-from decimal import Decimal
-
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
@@ -32,7 +30,6 @@ if market is None:
     raise Exception(f"Could not find market {market_symbol}")
 
 market_operations = mango.create_market_operations(context, wallet, False, market)
-order = mango.Order(id=args.order_id, client_id=0, owner=wallet.address,
-                    side=mango.Side.BUY, price=Decimal(0), size=Decimal(0))
+order = mango.Order.from_ids(id=args.order_id, client_id=0)
 cancellation = market_operations.cancel_order(order)
 print(cancellation)

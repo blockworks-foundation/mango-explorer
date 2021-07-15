@@ -19,7 +19,6 @@ import logging
 import mango
 import typing
 
-from .desiredorder import DesiredOrder
 from .modelstate import ModelState
 
 
@@ -35,7 +34,7 @@ class DesiredOrdersBuilder(metaclass=abc.ABCMeta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[DesiredOrder]:
+    def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
         raise NotImplementedError("DesiredOrdersBuilder.build() is not implemented on the base type.")
 
     def __repr__(self) -> str:
@@ -51,7 +50,7 @@ class NullDesiredOrdersBuilder(DesiredOrdersBuilder):
     def __init__(self):
         super().__init__()
 
-    def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[DesiredOrder]:
+    def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
         return []
 
     def __str__(self) -> str:

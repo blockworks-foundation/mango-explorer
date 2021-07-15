@@ -53,19 +53,20 @@ class SpotMarketOperations(MarketOperations):
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
         self.logger.info(
-            f"Cancelling order {order.id} for size {order.size} at price {order.price} on market {self.spot_market.symbol} with client ID {order.client_id}.")
+            f"Cancelling order {order.id} for quantity {order.quantity} at price {order.price} on market {self.spot_market.symbol} with client ID {order.client_id}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
         return (signers + cancel).execute_and_unwrap_transaction_ids(self.context)
 
-    def place_order(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal) -> Order:
+    def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
         self.logger.info(
-            f"Placing {order_type} {side} order for size {size} at price {price} on market {self.spot_market.symbol} with ID {client_id}.")
+            f"Placing {order_type} {side} order for quantity {quantity} at price {price} on market {self.spot_market.symbol} with ID {client_id}.")
 
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        place = self.market_instruction_builder.build_place_order_instructions(
-            side, order_type, price, size, client_id)
+        order = Order(id=0, client_id=client_id, side=side, price=price,
+                      quantity=quantity, owner=self.open_orders, order_type=order_type)
+        place = self.market_instruction_builder.build_place_order_instructions(order)
 
         crank = self.market_instruction_builder.build_crank_instructions()
 
@@ -73,7 +74,7 @@ class SpotMarketOperations(MarketOperations):
 
         (signers + place + crank + settle).execute(self.context)
 
-        return Order(id=0, side=side, price=price, size=size, client_id=client_id, owner=self.open_orders)
+        return order
 
     def _load_serum_orders(self) -> typing.Sequence[SerumOrder]:
         raw_market = self.market_instruction_builder.raw_market

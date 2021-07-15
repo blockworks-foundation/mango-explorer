@@ -86,22 +86,22 @@ class SimpleMarketMaker:
 
                 # Calculate what we want the orders to be.
                 bid, ask = self.calculate_order_prices(price)
-                buy_size, sell_size = self.calculate_order_sizes(price, inventory)
+                buy_quantity, sell_quantity = self.calculate_order_quantities(price, inventory)
 
                 current_orders = self.market_operations.load_my_orders()
                 buy_orders = [order for order in current_orders if order.side == mango.Side.BUY]
-                if self.orders_require_action(buy_orders, bid, buy_size):
+                if self.orders_require_action(buy_orders, bid, buy_quantity):
                     self.logger.info("Cancelling BUY orders.")
                     for order in buy_orders:
                         self.market_operations.cancel_order(order)
-                    self.market_operations.place_order(mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size)
+                    self.market_operations.place_order(mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_quantity)
 
                 sell_orders = [order for order in current_orders if order.side == mango.Side.SELL]
-                if self.orders_require_action(sell_orders, ask, sell_size):
+                if self.orders_require_action(sell_orders, ask, sell_quantity):
                     self.logger.info("Cancelling SELL orders.")
                     for order in sell_orders:
                         self.market_operations.cancel_order(order)
-                    self.market_operations.place_order(mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size)
+                    self.market_operations.place_order(mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_quantity)
 
                 self.update_health_on_successful_iteration()
             except Exception as exception:
@@ -155,7 +155,7 @@ class SimpleMarketMaker:
 
         return (bid, ask)
 
-    def calculate_order_sizes(self, price: mango.Price, inventory: typing.Sequence[typing.Optional[mango.TokenValue]]):
+    def calculate_order_quantities(self, price: mango.Price, inventory: typing.Sequence[typing.Optional[mango.TokenValue]]):
         base_tokens: typing.Optional[mango.TokenValue] = mango.TokenValue.find_by_token(inventory, price.market.base)
         if base_tokens is None:
             raise Exception(f"Could not find market-maker base token {price.market.base.symbol} in inventory.")
@@ -164,15 +164,15 @@ class SimpleMarketMaker:
         if quote_tokens is None:
             raise Exception(f"Could not find market-maker quote token {price.market.quote.symbol} in inventory.")
 
-        buy_size = base_tokens.value * self.position_size_ratio
-        sell_size = (quote_tokens.value / price.mid_price) * self.position_size_ratio
-        return (buy_size, sell_size)
+        buy_quantity = base_tokens.value * self.position_size_ratio
+        sell_quantity = (quote_tokens.value / price.mid_price) * self.position_size_ratio
+        return (buy_quantity, sell_quantity)
 
-    def orders_require_action(self, orders: typing.Sequence[mango.Order], price: Decimal, size: Decimal) -> bool:
+    def orders_require_action(self, orders: typing.Sequence[mango.Order], price: Decimal, quantity: Decimal) -> bool:
         def within_tolerance(target_value, order_value, tolerance):
             tolerated = order_value * tolerance
             return (order_value < (target_value + tolerated)) and (order_value > (target_value - tolerated))
-        return len(orders) == 0 or not all([(within_tolerance(price, order.price, self.existing_order_tolerance)) and within_tolerance(size, order.size, self.existing_order_tolerance) for order in orders])
+        return len(orders) == 0 or not all([(within_tolerance(price, order.price, self.existing_order_tolerance)) and within_tolerance(quantity, order.quantity, self.existing_order_tolerance) for order in orders])
 
     def update_health_on_successful_iteration(self) -> None:
         try:

@@ -20,6 +20,7 @@ import rx.subject
 import typing
 
 from datetime import datetime
+from pathlib import Path
 from rx.core.abc.disposable import Disposable
 from rxpy_backpressure import BackPressure
 
@@ -321,3 +322,34 @@ class DisposePropagator(Disposable):
     def dispose(self):
         for disposable in self.disposables:
             disposable.dispose()
+
+
+# # 🥭 FileToucherObserver class
+#
+# An `Observer` that touches a file every time an item is observed, and deletes that file when the
+# `Observable` completes.
+#
+# The use case for this is for things like health checks. If a file like /var/tmp/helathz is touched
+# every time an item is processed, systems running contianer images can watch for these files and
+# trigger alerts or restarts if the file hasn't been touched within a certain time limit.
+#
+class FileToucherObserver(rx.core.typing.Observer):
+    def __init__(self, filename: str):
+        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.filename = filename
+
+    def on_next(self, _: typing.Any) -> None:
+        try:
+            Path(self.filename).touch(mode=0o666, exist_ok=True)
+        except Exception as exception:
+            self.logger.warning(f"Touching file '{self.filename}' raised exception: {exception}")
+
+    def on_error(self, exception: Exception) -> None:
+        self.logger.warning(f"FileTouchObserver ignoring error: {exception}")
+
+    def on_completed(self) -> None:
+        try:
+            self.logger.info(f"Cleaning up touch file '{self.filename}'.")
+            Path(self.filename).unlink(missing_ok=True)
+        except Exception as exception:
+            self.logger.warning(f"Deleting touch file '{self.filename}' raised exception: {exception}")

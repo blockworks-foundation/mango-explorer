@@ -92,7 +92,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         )
         return CombinableInstructions.from_instruction(raw_instruction)
 
-    def build_place_order_instructions(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal, client_id: int) -> CombinableInstructions:
+    def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
         ensure_open_orders = CombinableInstructions.empty()
         if self.open_orders_address is None:
             ensure_open_orders = build_create_serum_open_orders_instructions(
@@ -100,12 +100,12 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
 
             self.open_orders_address = ensure_open_orders.signers[0].public_key()
 
-        serum_order_type = pyserum.enums.OrderType.POST_ONLY if order_type == OrderType.POST_ONLY else pyserum.enums.OrderType.IOC if order_type == OrderType.IOC else pyserum.enums.OrderType.LIMIT
-        serum_side = pyserum.enums.Side.BUY if side == Side.BUY else pyserum.enums.Side.SELL
-        payer_token_account = self.quote_token_account if side == Side.BUY else self.base_token_account
+        serum_order_type = pyserum.enums.OrderType.POST_ONLY if order.order_type == OrderType.POST_ONLY else pyserum.enums.OrderType.IOC if order.order_type == OrderType.IOC else pyserum.enums.OrderType.LIMIT
+        serum_side = pyserum.enums.Side.BUY if order.side == Side.BUY else pyserum.enums.Side.SELL
+        payer_token_account = self.quote_token_account if order.side == Side.BUY else self.base_token_account
 
         raw_instruction = self.raw_market.make_place_order_instruction(payer_token_account.address, self.wallet.account, serum_order_type, serum_side, float(
-            price), float(size), client_id, self.open_orders_address, self.fee_discount_token_address)
+            order.price), float(order.quantity), order.client_id, self.open_orders_address, self.fee_discount_token_address)
 
         place = CombinableInstructions.from_instruction(raw_instruction)
 

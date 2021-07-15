@@ -20,46 +20,52 @@ import typing
 
 from decimal import Decimal
 
-from .desiredorder import DesiredOrder
 from .desiredordersbuilder import DesiredOrdersBuilder
 from .modelstate import ModelState
 
 
-# # 🥭 FixedRatioDesiredOrdersBuilder class
+# # 🥭 FixedRatiosDesiredOrdersBuilder class
 #
 # Builds orders using a fixed spread ratio and a fixed position size ratio.
 #
 
-class FixedRatioDesiredOrdersBuilder(DesiredOrdersBuilder):
-    def __init__(self, spread_ratio: Decimal, position_size_ratio: Decimal):
+class FixedRatiosDesiredOrdersBuilder(DesiredOrdersBuilder):
+    def __init__(self, spread_ratios: typing.Sequence[Decimal], position_size_ratios: typing.Sequence[Decimal]):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.spread_ratio: Decimal = spread_ratio
-        self.position_size_ratio: Decimal = position_size_ratio
+        if len(spread_ratios) != len(position_size_ratios):
+            raise Exception("List of spread ratios and position size ratios must be the same length.")
 
-    def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[DesiredOrder]:
+        self.spread_ratios: typing.Sequence[Decimal] = spread_ratios
+        self.position_size_ratios: typing.Sequence[Decimal] = position_size_ratios
+
+    def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
         inventory: typing.Sequence[typing.Optional[mango.TokenValue]] = model_state.account.net_assets
         base_tokens: typing.Optional[mango.TokenValue] = mango.TokenValue.find_by_token(inventory, price.market.base)
-        if base_tokens is None:
-            raise Exception(f"Could not find market-maker base token {price.market.base.symbol} in inventory.")
-
         quote_tokens: typing.Optional[mango.TokenValue] = mango.TokenValue.find_by_token(inventory, price.market.quote)
-        if quote_tokens is None:
-            raise Exception(f"Could not find market-maker quote token {price.market.quote.symbol} in inventory.")
 
         total = (base_tokens.value * price.mid_price) + quote_tokens.value
-        position_size = total * self.position_size_ratio
 
-        buy_size: Decimal = position_size / price.mid_price
-        sell_size: Decimal = position_size / price.mid_price
+        orders: typing.List[mango.Order] = []
+        for counter in range(len(self.spread_ratios)):
+            position_size_ratio = self.position_size_ratios[counter]
+            spread_ratio = self.spread_ratios[counter]
 
-        bid: Decimal = price.mid_price - (price.mid_price * self.spread_ratio)
-        ask: Decimal = price.mid_price + (price.mid_price * self.spread_ratio)
+            position_size = total * position_size_ratio
+            buy_quantity: Decimal = position_size / price.mid_price
+            sell_quantity: Decimal = position_size / price.mid_price
 
-        return [
-            DesiredOrder(mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_size),
-            DesiredOrder(mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_size)
-        ]
+            bid: Decimal = price.mid_price - (price.mid_price * spread_ratio)
+            ask: Decimal = price.mid_price + (price.mid_price * spread_ratio)
+
+            orders += [
+                mango.Order.from_basic_info(mango.Side.BUY, price=bid, quantity=buy_quantity,
+                                            order_type=mango.OrderType.POST_ONLY),
+                mango.Order.from_basic_info(mango.Side.SELL, price=ask, quantity=sell_quantity,
+                                            order_type=mango.OrderType.POST_ONLY)
+            ]
+
+        return orders
 
     def __str__(self) -> str:
         return f"« 𝙵𝚒𝚡𝚎𝚍𝚁𝚊𝚝𝚒𝚘𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜𝙱𝚞𝚒𝚕𝚍𝚎𝚛 using ratios - spread: {self.spread_ratio}, position size: {self.position_size_ratio} »"

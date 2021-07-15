@@ -13,26 +13,29 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
 import mango
+import typing
 
-from decimal import Decimal
 
-
-# # 🥭 DesiredOrder class
+# # 🥭 ReconciledOrders class
 #
-# Encapsulates a single order we want to be present on the orderbook.
+# Desired orders and existing orders are reconciled into:
+# * existing orders to keep unchanged
+# * existing orders to be cancelled
+# * new orders to be placed
+# * desired orders to ignore
 #
-
-class DesiredOrder:
-    def __init__(self, side: mango.Side, order_type: mango.OrderType, price: Decimal, quantity: Decimal):
-        self.side: mango.Side = side
-        self.order_type: mango.OrderType = order_type
-        self.price: Decimal = price
-        self.quantity: Decimal = quantity
+# This class encapsulates the outcome of such a reconciliation.
+#
+class ReconciledOrders:
+    def __init__(self):
+        self.to_keep: typing.List[mango.Order] = []
+        self.to_place: typing.List[mango.Order] = []
+        self.to_cancel: typing.List[mango.Order] = []
+        self.to_ignore: typing.List[mango.Order] = []
 
     def __str__(self) -> str:
-        return f"""« 𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛: {self.order_type} - {self.side} {self.quantity} at {self.price} »"""
+        return f"« 𝚁𝚎𝚌𝚘𝚗𝚌𝚒𝚕𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜 [keep: {len(self.to_keep)}, place: {len(self.to_place)}, cancel: {len(self.to_cancel)}, ignore: {len(self.to_ignore)}] »"
 
     def __repr__(self) -> str:
         return f"{self}"

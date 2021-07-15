@@ -23,9 +23,9 @@ from .account import Account
 from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import Group
-from .instructions import build_compound_spot_place_order_instructions, build_cancel_spot_order_instructions
+from .instructions import build_compound_spot_place_order_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions
 from .marketinstructionbuilder import MarketInstructionBuilder
-from .orders import Order, OrderType, Side
+from .orders import Order, Side
 from .spotmarket import SpotMarket
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
@@ -84,11 +84,11 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         return build_cancel_spot_order_instructions(
             self.context, self.wallet, self.group, self.account, self.raw_market, order, open_orders)
 
-    def build_place_order_instructions(self, side: Side, order_type: OrderType, price: Decimal, size: Decimal, client_id: int) -> CombinableInstructions:
-        payer_token_account = self.quote_token_account if side == Side.BUY else self.base_token_account
-        return build_compound_spot_place_order_instructions(
-            self.context, self.wallet, self.group, self.account, self.raw_market, payer_token_account.address,
-            order_type, side, price, size, client_id, self.fee_discount_token_address)
+    def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
+        return build_spot_place_order_instructions(self.context, self.wallet, self.group, self.account,
+                                                   self.raw_market, order.order_type, order.side, order.price,
+                                                   order.quantity, order.client_id,
+                                                   self.fee_discount_token_address)
 
     def build_settle_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()

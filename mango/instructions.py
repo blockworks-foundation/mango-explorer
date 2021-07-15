@@ -50,7 +50,7 @@ from .wallet import Wallet
 # to send to Solana.
 #
 # One important distinction between these functions and the more common `create instruction functions` in
-# Solana is that these functions *all return a list of instructions and signers*.
+# Solana is that these functions *all return a combinable of instructions and signers*.
 #
 # It's likely that some operations will require actions split across multiple instructions because of
 # instruction size limitiations, so all our functions are prepared for this without having to change

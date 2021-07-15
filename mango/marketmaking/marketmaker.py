@@ -19,10 +19,10 @@ import mango
 import traceback
 import typing
 
-from decimal import Decimal
-
 from .desiredordersbuilder import DesiredOrdersBuilder
 from .modelstate import ModelState
+from .orderreconciler import OrderReconciler
+from .ordertracker import OrderTracker
 
 
 # # 🥭 MarketMaker class
@@ -33,48 +33,44 @@ from .modelstate import ModelState
 class MarketMaker:
     def __init__(self, wallet: mango.Wallet, market: mango.Market,
                  market_instruction_builder: mango.MarketInstructionBuilder,
-                 desired_orders_builder: DesiredOrdersBuilder):
+                 desired_orders_builder: DesiredOrdersBuilder,
+                 order_reconciler: OrderReconciler):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.wallet: mango.Wallet = wallet
         self.market: mango.Market = market
         self.market_instruction_builder: mango.MarketInstructionBuilder = market_instruction_builder
         self.desired_orders_builder: DesiredOrdersBuilder = desired_orders_builder
+        self.order_reconciler: OrderReconciler = order_reconciler
+        self.order_tracker: OrderTracker = OrderTracker()
 
         self.buy_client_ids: typing.List[int] = []
         self.sell_client_ids: typing.List[int] = []
 
     def pulse(self, context: mango.Context, model_state: ModelState):
         try:
-            desired_orders = self.desired_orders_builder.build(context, model_state)
-
             payer = mango.CombinableInstructions.from_wallet(self.wallet)
 
+            desired_orders = self.desired_orders_builder.build(context, model_state)
+            existing_orders = self.order_tracker.existing_orders(model_state)
+            reconciled = self.order_reconciler.reconcile(model_state, existing_orders, desired_orders)
+
             cancellations = mango.CombinableInstructions.empty()
-            for order_id, client_id in model_state.placed_order_ids:
-                if client_id != 0:
-                    self.logger.info(f"Cancelling order with client ID: {client_id}")
-                    side = mango.Side.BUY if client_id in self.buy_client_ids else mango.Side.SELL
-                    order = mango.Order(id=int(order_id), client_id=int(client_id), owner=self.wallet.address,
-                                        side=side, price=Decimal(0), size=Decimal(0))
-                    cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
-                    cancellations += cancel
+            for to_cancel in reconciled.to_cancel:
+                cancel = self.market_instruction_builder.build_cancel_order_instructions(to_cancel)
+                cancellations += cancel
 
             place_orders = mango.CombinableInstructions.empty()
-            for desired_order in desired_orders:
+            for to_place in reconciled.to_place:
                 desired_client_id: int = context.random_client_id()
-                if desired_order.side == mango.Side.BUY:
-                    self.buy_client_ids += [desired_client_id]
-                else:
-                    self.sell_client_ids += [desired_client_id]
+                to_place_with_client_id = to_place.with_client_id(desired_client_id)
+                self.order_tracker.track(to_place_with_client_id)
 
                 self.logger.info(
-                    f"Placing {desired_order.side} order for {desired_order.quantity} at price {desired_order.price} with client ID: {desired_client_id}")
-                place_order = self.market_instruction_builder.build_place_order_instructions(
-                    desired_order.side, desired_order.order_type, desired_order.price, desired_order.quantity, desired_client_id)
+                    f"Placing {to_place_with_client_id.side} order for {to_place_with_client_id.quantity} at price {to_place_with_client_id.price} with client ID: {to_place_with_client_id.client_id}")
+                place_order = self.market_instruction_builder.build_place_order_instructions(to_place_with_client_id)
                 place_orders += place_order
 
             settle = self.market_instruction_builder.build_settle_instructions()
-
             crank = self.market_instruction_builder.build_crank_instructions()
             (payer + cancellations + place_orders + settle + crank).execute(context)
         except Exception as exception:
