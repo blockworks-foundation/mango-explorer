@@ -41,8 +41,8 @@ class FixedRatiosDesiredOrdersBuilder(DesiredOrdersBuilder):
     def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
         inventory: typing.Sequence[typing.Optional[mango.TokenValue]] = model_state.account.net_assets
-        base_tokens: typing.Optional[mango.TokenValue] = mango.TokenValue.find_by_token(inventory, price.market.base)
-        quote_tokens: typing.Optional[mango.TokenValue] = mango.TokenValue.find_by_token(inventory, price.market.quote)
+        base_tokens: mango.TokenValue = mango.TokenValue.find_by_token(inventory, price.market.base)
+        quote_tokens: mango.TokenValue = mango.TokenValue.find_by_token(inventory, price.market.quote)
 
         total = (base_tokens.value * price.mid_price) + quote_tokens.value
 
@@ -68,4 +68,4 @@ class FixedRatiosDesiredOrdersBuilder(DesiredOrdersBuilder):
         return orders
 
     def __str__(self) -> str:
-        return f"« 𝙵𝚒𝚡𝚎𝚍𝚁𝚊𝚝𝚒𝚘𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜𝙱𝚞𝚒𝚕𝚍𝚎𝚛 using ratios - spread: {self.spread_ratio}, position size: {self.position_size_ratio} »"
+        return f"« 𝙵𝚒𝚡𝚎𝚍𝚁𝚊𝚝𝚒𝚘𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜𝙱𝚞𝚒𝚕𝚍𝚎𝚛 using ratios - spread: {self.spread_ratios}, position size: {self.position_size_ratios} »"

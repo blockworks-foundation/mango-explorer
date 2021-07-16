@@ -48,8 +48,8 @@ def cleanup(context: mango.Context, wallet: mango.Wallet, dry_run: bool, market:
         market_operations.cancel_order(order)
 
 
-def add_file_health(name: str, event_source: mango.EventSource, disposer: mango.DisposePropagator):
-    perp_market_file_touch_disposer = event_source.subscribe(
+def add_file_health(name: str, observable: rx.core.typing.Observable[typing.Any], disposer: mango.DisposePropagator):
+    perp_market_file_touch_disposer = observable.subscribe(
         mango.FileToucherObserver(f"/var/tmp/mango_healthcheck_{name}"))
     disposer.add_disposable(perp_market_file_touch_disposer)
 

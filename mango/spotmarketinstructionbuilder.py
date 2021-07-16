@@ -23,9 +23,9 @@ from .account import Account
 from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import Group
-from .instructions import build_compound_spot_place_order_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions
+from .instructions import build_spot_place_order_instructions, build_cancel_spot_order_instructions
 from .marketinstructionbuilder import MarketInstructionBuilder
-from .orders import Order, Side
+from .orders import Order
 from .spotmarket import SpotMarket
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
