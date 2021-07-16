@@ -19,8 +19,11 @@ import mango
 import traceback
 import typing
 
+from datetime import datetime
+
 from .desiredordersbuilder import DesiredOrdersBuilder
 from .modelstate import ModelState
+from ..observables import EventSource
 from .orderreconciler import OrderReconciler
 from .ordertracker import OrderTracker
 
@@ -42,6 +45,9 @@ class MarketMaker:
         self.desired_orders_builder: DesiredOrdersBuilder = desired_orders_builder
         self.order_reconciler: OrderReconciler = order_reconciler
         self.order_tracker: OrderTracker = OrderTracker()
+
+        self.pulse_complete: EventSource[datetime] = EventSource[datetime]()
+        self.pulse_error: EventSource[Exception] = EventSource[Exception]()
 
         self.buy_client_ids: typing.List[int] = []
         self.sell_client_ids: typing.List[int] = []
@@ -73,8 +79,11 @@ class MarketMaker:
             settle = self.market_instruction_builder.build_settle_instructions()
             crank = self.market_instruction_builder.build_crank_instructions()
             (payer + cancellations + place_orders + settle + crank).execute(context)
+
+            self.pulse_complete.on_next(datetime.now())
         except Exception as exception:
             self.logger.error(f"Market-maker error on pulse: {exception} - {traceback.format_exc()}")
+            self.pulse_error.on_next(exception)
 
     def __str__(self) -> str:
         return f"""« 𝙼𝚊𝚛𝚔𝚎𝚝𝙼𝚊𝚔𝚎𝚛 for market '{self.market.symbol}' »"""
