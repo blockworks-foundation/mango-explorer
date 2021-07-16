@@ -15,7 +15,7 @@ from threading import Thread
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
-import mango.marketmaking.simplemarketmaker  # nopep8
+import mango.simplemarketmaking.simplemarketmaker  # nopep8
 
 parser = argparse.ArgumentParser(description="Runs a simple market-maker.")
 mango.Context.add_command_line_parameters(parser)
@@ -55,7 +55,7 @@ try:
         raise Exception(f"Could not find oracle for spot market {market_symbol}")
 
     pause_duration = timedelta(seconds=args.pause_duration)
-    market_maker = mango.marketmaking.simplemarketmaker.SimpleMarketMaker(
+    market_maker = mango.simplemarketmaking.simplemarketmaker.SimpleMarketMaker(
         context, wallet, market, market_operations, oracle, args.spread_ratio, args.position_size_ratio, args.existing_order_tolerance, pause_duration)
 
     print(f"Starting {market_maker} - use <Enter> to stop.")

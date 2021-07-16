@@ -9,7 +9,6 @@ import sys
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
-import mango.marketmaking.simplemarketmaker  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows all orders on the given market owned by the current wallet.")
 mango.Context.add_command_line_parameters(parser)
