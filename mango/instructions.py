@@ -28,7 +28,7 @@ from solana.system_program import CreateAccountParams, create_account
 from solana.sysvar import SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
-from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, initialize_account, transfer2
+from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, create_associated_token_account, initialize_account, transfer2
 
 from .account import Account
 from .combinableinstructions import CombinableInstructions
@@ -109,6 +109,9 @@ def build_create_solana_account_instructions(context: Context, wallet: Wallet, p
 # Creates and initializes an SPL token account. Can add additional lamports too but that's usually not
 # necesary.
 #
+# Prefer `build_create_spl_account_instructions()` over this function. This function should be
+# reserved for cases where you specifically don't want the associated token account.
+#
 
 def build_create_spl_account_instructions(context: Context, wallet: Wallet, token: Token, lamports: int = 0) -> CombinableInstructions:
     create_account_instructions = build_create_solana_account_instructions(
@@ -116,6 +119,18 @@ def build_create_spl_account_instructions(context: Context, wallet: Wallet, toke
     initialize_instruction = initialize_account(InitializeAccountParams(
         TOKEN_PROGRAM_ID, create_account_instructions.signers[0].public_key(), token.mint, wallet.address))
     return create_account_instructions + CombinableInstructions(signers=[], instructions=[initialize_instruction])
+
+
+# # 🥭 build_create_associated_spl_account_instructions function
+#
+# Creates and initializes an 'associated' SPL token account. This is the usual way of creating a
+# token account now. `build_create_spl_account_instructions()` should be reserved for cases where
+# you specifically don't want the associated token account.
+#
+
+def build_create_associated_spl_account_instructions(context: Context, wallet: Wallet, token: Token) -> CombinableInstructions:
+    create_account_instructions = create_associated_token_account(wallet.address, wallet.address, token.mint)
+    return CombinableInstructions(signers=[], instructions=[create_account_instructions])
 
 
 # # 🥭 build_transfer_spl_tokens_instructions function

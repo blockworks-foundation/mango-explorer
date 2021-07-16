@@ -40,7 +40,4 @@ print(f"Closing account: {args.address} with balance {token_account.value.value}
 
 all_instructions = signers + close_instruction
 transaction_id = all_instructions.execute_and_unwrap_transaction_ids(context)[0]
-print(f"Waiting on transaction ID: {transaction_id}")
-
-context.wait_for_confirmation(transaction_id)
-print("Account closed.")
+print(f"Transaction ID: {transaction_id}")

@@ -7,6 +7,8 @@ import sys
 
 from decimal import Decimal
 
+from solana.publickey import PublicKey
+
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
@@ -28,27 +30,29 @@ wrapped_sol = context.token_lookup.find_by_symbol_or_raise("SOL")
 amount_to_transfer = int(args.quantity * mango.SOL_DECIMAL_DIVISOR)
 
 signers: mango.CombinableInstructions = mango.CombinableInstructions.from_signers([wallet.account])
-
-create_instructions = mango.build_create_spl_account_instructions(context, wallet, wrapped_sol, amount_to_transfer)
-wrapped_sol_address = create_instructions.signers[0].public_key()
-all_instructions = signers + create_instructions
+all_instructions = signers
 
 token_accounts = mango.TokenAccount.fetch_all_for_owner_and_token(context, wallet.address, wrapped_sol)
 print("Wrapping SOL:")
 if len(token_accounts) == 0:
-    print(f"    Source: {wallet.address}")
-    print(f"    Destination: {wrapped_sol_address}")
+    create_instructions = mango.build_create_associated_spl_account_instructions(context, wallet, wrapped_sol)
+    destination_wrapped_sol_address: PublicKey = create_instructions.instructions[0].keys[1].pubkey
+    all_instructions += create_instructions
 else:
-    print(f"    Temporary account: {wrapped_sol_address}")
-    print(f"    Source: {wallet.address}")
-    print(f"    Destination: {token_accounts[0].address}")
-    wrap_instruction = mango.build_transfer_spl_tokens_instructions(
-        context, wallet, wrapped_sol, wrapped_sol_address, token_accounts[0].address, args.quantity)
-    close_instruction = mango.build_close_spl_account_instructions(context, wallet, wrapped_sol_address)
-    all_instructions = all_instructions + wrap_instruction + close_instruction
+    destination_wrapped_sol_address = token_accounts[0].address
+
+create_temporary_account_instructions = mango.build_create_spl_account_instructions(
+    context, wallet, wrapped_sol, amount_to_transfer)
+temporary_wrapped_sol_address = create_temporary_account_instructions.signers[0].public_key()
+all_instructions += create_temporary_account_instructions
+
+print(f"    Temporary account: {temporary_wrapped_sol_address}")
+print(f"    Source: {wallet.address}")
+print(f"    Destination: {destination_wrapped_sol_address}")
+wrap_instruction = mango.build_transfer_spl_tokens_instructions(
+    context, wallet, wrapped_sol, temporary_wrapped_sol_address, destination_wrapped_sol_address, args.quantity)
+close_instruction = mango.build_close_spl_account_instructions(context, wallet, temporary_wrapped_sol_address)
+all_instructions = all_instructions + wrap_instruction + close_instruction
 
 transaction_id = all_instructions.execute_and_unwrap_transaction_ids(context)[0]
-print(f"Waiting on transaction ID: {transaction_id}")
-
-context.wait_for_confirmation(transaction_id)
-print("Transaction confirmed.")
+print(f"Transaction ID: {transaction_id}")
