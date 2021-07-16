@@ -390,7 +390,7 @@ def build_mango_consume_events_instructions(context: Context, wallet: Wallet, gr
 
 def build_create_account_instructions(context: Context, wallet: Wallet, group: Group) -> CombinableInstructions:
     create_account_instructions = build_create_solana_account_instructions(
-        context, wallet, context.program_id, layouts.MANGO_ACCOUNT)
+        context, wallet, context.program_id, layouts.MANGO_ACCOUNT.sizeof())
     mango_account_address = create_account_instructions.signers[0].public_key()
 
     # /// 0. `[]` mango_group_ai - Group that this mango account is for
@@ -408,6 +408,45 @@ def build_create_account_instructions(context: Context, wallet: Wallet, group: G
         data=layouts.INIT_MANGO_ACCOUNT.build({})
     )
     return create_account_instructions + CombinableInstructions(signers=[], instructions=[init])
+
+
+# /// Deposit funds into mango account
+# ///
+# /// Accounts expected by this instruction (8):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[writable]` mango_account_ai - the mango account for this user
+# /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
+# /// 3. `[]` mango_cache_ai - MangoCache
+# /// 4. `[]` root_bank_ai - RootBank owned by MangoGroup
+# /// 5. `[writable]` node_bank_ai - NodeBank owned by RootBank
+# /// 6. `[writable]` vault_ai - TokenAccount owned by MangoGroup
+# /// 7. `[]` token_prog_ai - acc pointed to by SPL token program id
+# /// 8. `[writable]` owner_token_account_ai - TokenAccount owned by user which will be sending the funds
+# Deposit {
+#     quantity: u64,
+# },
+def build_deposit_instructions(context: Context, wallet: Wallet, group: Group, account: Account, root_bank: RootBank, node_bank: NodeBank, token_account: TokenAccount) -> CombinableInstructions:
+    value = token_account.value.shift_to_native().value
+    deposit = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=token_account.address)
+        ],
+        program_id=context.program_id,
+        data=layouts.DEPOSIT.build({
+            "quantity": value
+        })
+    )
+
+    return CombinableInstructions(signers=[], instructions=[deposit])
 
 
 # /// Withdraw funds that were deposited earlier.
@@ -430,6 +469,8 @@ def build_create_account_instructions(context: Context, wallet: Wallet, group: G
 #     quantity: u64,
 #     allow_borrow: bool,
 # },
+
+
 def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, account: Account, root_bank: RootBank, node_bank: NodeBank, token_account: TokenAccount, allow_borrow: bool) -> CombinableInstructions:
     value = token_account.value.shift_to_native().value
     withdraw = TransactionInstruction(

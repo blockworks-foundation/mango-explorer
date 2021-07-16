@@ -12,15 +12,13 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 import mango  # nopep8
 
-parser = argparse.ArgumentParser(description="Withdraw funds from a Mango account")
+parser = argparse.ArgumentParser(description="deposit funds into a Mango account")
 mango.Context.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--symbol", type=str, required=True, help="token symbol to withdraw (e.g. USDC)")
-parser.add_argument("--quantity", type=Decimal, required=True, help="quantity token to withdraw")
+parser.add_argument("--symbol", type=str, required=True, help="token symbol to deposit (e.g. USDC)")
+parser.add_argument("--quantity", type=Decimal, required=True, help="quantity token to deposit")
 parser.add_argument("--account-index", type=int, default=0,
                     help="index of the account to use, if more than one available")
-parser.add_argument("--allow-borrow", action="store_true", default=False,
-                    help="allow borrowing to fund the withdrawal")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -31,19 +29,20 @@ wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_id)
 accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
 if len(accounts) == 0:
-    raise Exception(f"Could not find any margin accounts for '{wallet.address}'.")
+    raise Exception(f"Could not find any Mango accounts for '{wallet.address}'.")
 account = accounts[args.account_index]
 
 token = context.token_lookup.find_by_symbol(args.symbol.upper())
 if token is None:
     raise Exception(f"Could not find token with symbol '{args.symbol}'.")
 
-token_account = mango.TokenAccount.fetch_or_create_largest_for_owner_and_token(
-    context, wallet.account.public_key(), token)
-withdrawal_value = mango.TokenValue(token, args.quantity)
-withdrawal_token_account = mango.TokenAccount(
-    token_account.account_info, token_account.version, token_account.owner, withdrawal_value)
+token_account = mango.TokenAccount.fetch_largest_for_owner_and_token(context, wallet.account.public_key(), token)
+if token_account is None:
+    raise Exception(f"Could not find token account for token {token} with owner {wallet.account}.")
 
+deposit_value = mango.TokenValue(token, args.quantity)
+deposit_token_account = mango.TokenAccount(
+    token_account.account_info, token_account.version, token_account.owner, deposit_value)
 
 root_bank = None
 for token_info in group.tokens:
@@ -52,12 +51,13 @@ for token_info in group.tokens:
 if root_bank is None:
     raise Exception(f"Could not find token root bank for symbol '{args.symbol}'.")
 
+print("root_bank", root_bank)
 node_bank = root_bank.pick_node_bank(context)
 
 signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
-withdraw = mango.build_withdraw_instructions(
-    context, wallet, group, account, root_bank, node_bank, withdrawal_token_account, args.allow_borrow)
-
-all_instructions = signers + withdraw
+deposit = mango.build_deposit_instructions(
+    context, wallet, group, account, root_bank, node_bank, deposit_token_account)
+print(deposit)
+all_instructions = signers + deposit
 transaction_id = all_instructions.execute_and_unwrap_transaction_ids(context)[0]
 print("Signature:", transaction_id)

@@ -1042,6 +1042,45 @@ CANCEL_PERP_ORDER = construct.Struct(
 )
 
 
+# /// Deposit funds into mango account
+# ///
+# /// Accounts expected by this instruction (8):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[writable]` mango_account_ai - the mango account for this user
+# /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
+# /// 3. `[]` mango_cache_ai - MangoCache
+# /// 4. `[]` root_bank_ai - RootBank owned by MangoGroup
+# /// 5. `[writable]` node_bank_ai - NodeBank owned by RootBank
+# /// 6. `[writable]` vault_ai - TokenAccount owned by MangoGroup
+# /// 7. `[]` token_prog_ai - acc pointed to by SPL token program id
+# /// 8. `[writable]` owner_token_account_ai - TokenAccount owned by user which will be sending the funds
+# Deposit {
+#     quantity: u64,
+# },
+DEPOSIT = construct.Struct(
+    "variant" / construct.Const(2, construct.BytesInteger(4, swapped=True)),
+
+    "quantity" / DecimalAdapter()
+)
+
+
+# /// Withdraw funds that were deposited earlier.
+# ///
+# /// Accounts expected by this instruction (10):
+# ///
+# /// 0. `[read]` mango_group_ai,   -
+# /// 1. `[write]` mango_account_ai, -
+# /// 2. `[read]` owner_ai,         -
+# /// 3. `[read]` mango_cache_ai,   -
+# /// 4. `[read]` root_bank_ai,     -
+# /// 5. `[write]` node_bank_ai,     -
+# /// 6. `[write]` vault_ai,         -
+# /// 7. `[write]` token_account_ai, -
+# /// 8. `[read]` signer_ai,        -
+# /// 9. `[read]` token_prog_ai,    -
+# /// 10. `[read]` clock_ai,         -
+# /// 11..+ `[]` open_orders_accs - open orders for each of the spot market
 # Withdraw {
 #     quantity: u64,
 #     allow_borrow: bool,
@@ -1142,7 +1181,7 @@ CONSUME_EVENTS = construct.Struct(
 InstructionParsersByVariant = {
     0: None,  # INIT_MANGO_GROUP,
     1: INIT_MANGO_ACCOUNT,  # INIT_MANGO_ACCOUNT,
-    2: None,  # DEPOSIT,
+    2: DEPOSIT,  # DEPOSIT,
     3: WITHDRAW,  # WITHDRAW,
     4: None,  # ADD_SPOT_MARKET,
     5: None,  # ADD_TO_BASKET,
