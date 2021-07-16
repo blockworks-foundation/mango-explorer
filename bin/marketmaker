@@ -141,7 +141,7 @@ if market is None:
 # The market index is also the index of the base token in the group's token list.
 if market.quote != group.shared_quote_token.token:
     raise Exception(
-        f"Group {group.name} uses quote token {group.shared_quote_token.token.symbol}, not use shared quote token {market.quote.symbol}.")
+        f"Group {group.name} uses shared quote token {group.shared_quote_token.token.symbol}/{group.shared_quote_token.token.mint}, but market {market.symbol} uses quote token {market.quote.symbol}/{market.quote.mint}.")
 
 cleanup(context, wallet, args.dry_run, market)
 
