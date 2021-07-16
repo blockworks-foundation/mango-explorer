@@ -34,7 +34,6 @@ wrapped_sol_address = create_instructions.signers[0].public_key()
 all_instructions = signers + create_instructions
 
 token_accounts = mango.TokenAccount.fetch_all_for_owner_and_token(context, wallet.address, wrapped_sol)
-print(token_accounts)
 print("Wrapping SOL:")
 if len(token_accounts) == 0:
     print(f"    Source: {wallet.address}")
