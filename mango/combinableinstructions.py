@@ -90,6 +90,11 @@ class CombinableInstructions():
         vetted_chunks: typing.List[typing.List[TransactionInstruction]] = []
         current_chunk: typing.List[TransactionInstruction] = []
         for instruction in self.instructions:
+            instruction_size_on_its_own = CombinableInstructions.transaction_size(self.signers, [instruction])
+            if instruction_size_on_its_own >= _MAXIMUM_TRANSACTION_LENGTH:
+                raise Exception(
+                    f"Instruction exceeds maximum size - creates a transaction {instruction_size_on_its_own} bytes long. {instruction}")
+
             in_progress_chunk = current_chunk + [instruction]
             transaction_size = CombinableInstructions.transaction_size(self.signers, in_progress_chunk)
             if transaction_size < _MAXIMUM_TRANSACTION_LENGTH:

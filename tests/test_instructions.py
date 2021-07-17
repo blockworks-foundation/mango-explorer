@@ -30,12 +30,10 @@ def test_build_create_associated_spl_account_instructions():
     token: mango.Token = fake_token()
     actual = mango.build_create_associated_spl_account_instructions(context, wallet, token)
     assert actual is not None
-    assert len(actual.signers) == 1
-    assert len(actual.instructions) == 2
+    assert len(actual.signers) == 0
+    assert len(actual.instructions) == 1
     assert actual.instructions[0] is not None
     assert isinstance(actual.instructions[0], TransactionInstruction)
-    assert actual.instructions[1] is not None
-    assert isinstance(actual.instructions[1], TransactionInstruction)
 
 
 def test_build_transfer_spl_tokens_instructions():
