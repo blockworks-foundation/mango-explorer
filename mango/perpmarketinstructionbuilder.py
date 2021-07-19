@@ -61,7 +61,8 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         return CombinableInstructions.empty()
 
     def build_crank_instructions(self, limit: Decimal = Decimal(32)) -> CombinableInstructions:
-        return build_mango_consume_events_instructions(self.context, self.wallet, self.group, self.account, self.perp_market, limit)
+        return CombinableInstructions.empty()
+        # return build_mango_consume_events_instructions(self.context, self.wallet, self.group, self.account, self.perp_market, limit)
 
     def __str__(self) -> str:
         return """« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝚜 »"""
