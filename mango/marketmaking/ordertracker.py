@@ -36,7 +36,6 @@ class OrderTracker:
         self.tracked += [order]
 
     def existing_orders(self, model_state: ModelState) -> typing.Sequence[mango.Order]:
-        print("Model State Orders", model_state.placed_orders)
         live_orders: typing.List[mango.Order] = []
         for placed_order in model_state.placed_orders:
             details = self._find_tracked(placed_order.client_id)

@@ -6,6 +6,7 @@ import os
 import os.path
 import rx
 import sys
+import threading
 import typing
 
 from decimal import Decimal
@@ -250,10 +251,13 @@ pulse_disposable = rx.interval(args.pulse_interval).subscribe(
     on_next=lambda _: market_maker.pulse(context, model_state))
 disposer.add_disposable(pulse_disposable)
 
-print("Press <ENTER> to quit.")
+# Wait - don't exit. Exiting will be handled by signals/interrupts.
+waiter = threading.Event()
+try:
+    waiter.wait()
+except:
+    pass
 
-# Wait - don't exit
-input()
 print("Shutting down...")
 ws.close()
 disposer.dispose()
