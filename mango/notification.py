@@ -287,6 +287,9 @@ class NotificationHandler(logging.StreamHandler):
         self.target = target
 
     def emit(self, record):
+        # Don't send error logging from solanaweb3
+        if record.name == "solanaweb3.rpc.httprpc.HTTPClient":
+            return
         message = self.format(record)
         self.target.send_notification(message)
 
