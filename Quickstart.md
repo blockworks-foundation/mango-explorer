@@ -73,7 +73,7 @@ _Alternatively_ if you're using `podman` instead of `docker`, run this:
 
 Run the following command to create your wallet:
 ```
-# solana-keygen new --force --outfile /var/mango-explorer/id.json
+# mango-explorer solana-keygen new --force --outfile /home/jovyan/work/id.json
 ```
 This will ask you for a passphrase to protect your wallet - just press ENTER for no passphrase (`mango-explorer` doesn't work with passphrases on key files yet and no-one has asked for it).
 
