@@ -23,7 +23,7 @@ from .addressableaccount import AddressableAccount
 from .context import Context
 from .layouts import layouts
 from .metadata import Metadata
-from .orders import Order, Side
+from .orders import Order, OrderType, Side
 from .perpmarket import PerpMarket
 from .version import Version
 
@@ -108,7 +108,8 @@ class OrderBookSide(AddressableAccount):
                             node.owner,
                             order_side,
                             actual_price,
-                            actual_quantity)
+                            actual_quantity,
+                            OrderType.UNKNOWN)
             elif node.type_name == "inner":
                 if order_side == Side.BUY:
                     stack = [node.children[0], node.children[1], *stack]

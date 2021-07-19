@@ -71,6 +71,14 @@ class MarketOperations(metaclass=abc.ABCMeta):
     def load_my_orders(self) -> typing.Sequence[Order]:
         raise NotImplementedError("MarketOperations.load_my_orders() is not implemented on the base type.")
 
+    @abc.abstractmethod
+    def settle(self) -> typing.Sequence[str]:
+        raise NotImplementedError("MarketOperations.settle() is not implemented on the base type.")
+
+    @abc.abstractmethod
+    def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
+        raise NotImplementedError("MarketOperations.crank() is not implemented on the base type.")
+
     def __repr__(self) -> str:
         return f"{self}"
 
@@ -100,6 +108,12 @@ class NullMarketOperations(MarketOperations):
         return []
 
     def load_my_orders(self) -> typing.Sequence[Order]:
+        return []
+
+    def settle(self) -> typing.Sequence[str]:
+        return []
+
+    def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
         return []
 
     def __str__(self) -> str:

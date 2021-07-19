@@ -23,7 +23,7 @@ from .account import Account
 from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import Group
-from .instructions import build_spot_place_order_instructions, build_cancel_spot_order_instructions
+from .instructions import build_serum_consume_events_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions, build_spot_settle_instructions
 from .marketinstructionbuilder import MarketInstructionBuilder
 from .orders import Order
 from .spotmarket import SpotMarket
@@ -53,6 +53,9 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         self.quote_token_account: TokenAccount = quote_token_account
         self.group_market_index: int = market_index
         self.fee_discount_token_address: typing.Optional[PublicKey] = fee_discount_token_address
+
+        self.market_index = group.find_spot_market_index(spot_market.address)
+        self.open_orders_address = self.account.spot_open_orders[self.market_index]
 
     @staticmethod
     def load(context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket) -> "SpotMarketInstructionBuilder":
@@ -91,10 +94,21 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
                                                    self.fee_discount_token_address)
 
     def build_settle_instructions(self) -> CombinableInstructions:
-        return CombinableInstructions.empty()
+        if self.open_orders_address is None:
+            return CombinableInstructions.empty()
+
+        base_rootbank = self.group.find_token_info_by_token(self.spot_market.base).root_bank
+        base_nodebank = base_rootbank.pick_node_bank(self.context)
+        quote_rootbank = self.group.find_token_info_by_token(self.spot_market.quote).root_bank
+        quote_nodebank = quote_rootbank.pick_node_bank(self.context)
+        return build_spot_settle_instructions(self.context, self.wallet, self.account,
+                                              self.raw_market, self.group, self.open_orders_address,
+                                              base_rootbank, base_nodebank, quote_rootbank, quote_nodebank)
 
     def build_crank_instructions(self, limit: Decimal = Decimal(32)) -> CombinableInstructions:
-        return CombinableInstructions.empty()
+        if self.open_orders_address is None:
+            return CombinableInstructions.empty()
+        return build_serum_consume_events_instructions(self.context, self.wallet, self.raw_market, [self.open_orders_address], int(limit))
 
     def __str__(self) -> str:
-        return """« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"""
+        return f"« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 [{self.spot_market.symbol}] »"

@@ -141,7 +141,7 @@ class Account(AddressableAccount):
             [f"{net_asset}" for net_asset in self.net_assets if net_asset is not None and net_asset.value != Decimal(0)] or ["None"])
         spot_open_orders = ", ".join([f"{oo}" for oo in self.spot_open_orders if oo is not None])
         perp_accounts = ", ".join(
-            [f"{perp}".replace("\n", "\n        ") for perp in self.perp_accounts if perp.open_orders.is_free_bits != 0xFFFFFFFF])
+            [f"{perp}".replace("\n", "\n        ") for perp in self.perp_accounts if perp.open_orders.free_slot_bits != 0xFFFFFFFF])
         group = f"{self.group}".replace("\n", "\n        ")
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {self.version} [{self.address}]
     {self.meta_data}

@@ -226,6 +226,7 @@ def build_serum_consume_events_instructions(context: Context, wallet: Wallet, ma
 #
 
 def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
+    print("OpenOrders", open_orders_address)
     vault_signer = PublicKey.create_program_address(
         [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
         market.state.program_id(),
@@ -245,6 +246,70 @@ def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Ma
     )
 
     return CombinableInstructions(signers=[], instructions=[instruction])
+
+# # 🥭 build_spot_settle_instructions function
+#
+# Creates a 'settle' instruction for spot markets.
+#
+# /// Settle all funds from serum dex open orders
+# ///
+# /// Accounts expected by this instruction (18):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[]` mango_cache_ai - MangoCache for this MangoGroup
+# /// 2. `[signer]` owner_ai - MangoAccount owner
+# /// 3. `[writable]` mango_account_ai - MangoAccount
+# /// 4. `[]` dex_prog_ai - program id of serum dex
+# /// 5.  `[writable]` spot_market_ai - dex MarketState account
+# /// 6.  `[writable]` open_orders_ai - open orders for this market for this MangoAccount
+# /// 7. `[]` signer_ai - MangoGroup signer key
+# /// 8. `[writable]` dex_base_ai - base vault for dex MarketState
+# /// 9. `[writable]` dex_quote_ai - quote vault for dex MarketState
+# /// 10. `[]` base_root_bank_ai - MangoGroup base vault acc
+# /// 11. `[writable]` base_node_bank_ai - MangoGroup quote vault acc
+# /// 12. `[]` quote_root_bank_ai - MangoGroup quote vault acc
+# /// 13. `[writable]` quote_node_bank_ai - MangoGroup quote vault acc
+# /// 14. `[writable]` base_vault_ai - MangoGroup base vault acc
+# /// 15. `[writable]` quote_vault_ai - MangoGroup quote vault acc
+# /// 16. `[]` dex_signer_ai - dex Market signer account
+# /// 17. `[]` spl token program
+
+
+def build_spot_settle_instructions(context: Context, wallet: Wallet, account: Account,
+                                   market: Market, group: Group, open_orders_address: PublicKey,
+                                   base_rootbank: RootBank, base_nodebank: NodeBank,
+                                   quote_rootbank: RootBank, quote_nodebank: NodeBank) -> CombinableInstructions:
+    vault_signer = PublicKey.create_program_address(
+        [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+        market.state.program_id(),
+    )
+
+    settle_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=group.cache),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=context.dex_program_id),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.public_key()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=open_orders_address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.base_vault()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.quote_vault()),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=base_rootbank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=base_nodebank.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=quote_rootbank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=quote_nodebank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=base_nodebank.vault),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=quote_nodebank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID)
+        ],
+        program_id=context.program_id,
+        data=layouts.SETTLE_FUNDS.build(dict())
+    )
+
+    return CombinableInstructions(signers=[], instructions=[settle_instruction])
 
 
 # # 🥭 build_compound_serum_place_order_instructions function
@@ -630,42 +695,6 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
     return instructions + CombinableInstructions(signers=[], instructions=[place_spot_instruction])
 
 
-def build_compound_spot_place_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account,
-                                                 market: Market, source: PublicKey, order_type: OrderType,
-                                                 side: Side, price: Decimal, quantity: Decimal, client_id: int,
-                                                 fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
-    _, create_open_orders = _ensure_openorders(context, wallet, group, account, market)
-
-    place_order = build_spot_place_order_instructions(context, wallet, group, account, market, order_type,
-                                                      side, price, quantity, client_id, fee_discount_address)
-
-    open_orders_addresses = list([oo for oo in account.spot_open_orders if oo is not None])
-
-    consume_events = build_serum_consume_events_instructions(context, wallet, market, open_orders_addresses)
-
-    # quote_token_info = group.shared_quote_token
-    # base_token_infos = [
-    #     token_info for token_info in group.base_tokens if token_info is not None and token_info.token.mint == market.state.base_mint()]
-    # if len(base_token_infos) != 1:
-    #     raise Exception(
-    #         f"Could not find base token info for group {group.address} - length was {len(base_token_infos)} when it should be 1.")
-    # base_token_info = base_token_infos[0]
-    # base_token_account = TokenAccount.fetch_largest_for_owner_and_token(context, wallet.address, base_token_info.token)
-    # quote_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-    #     context, wallet.address, quote_token_info.token)
-
-    # settle: CombinableInstructions = CombinableInstructions.empty()
-    # if base_token_account is not None and quote_token_account is not None:
-    #     open_order_accounts = market.find_open_orders_accounts_for_owner(wallet.address)
-    #     settlement_open_orders = [oo for oo in open_order_accounts if oo.market == market.state.public_key()]
-    #     if len(settlement_open_orders) > 0 and settlement_open_orders[0] is not None:
-    #         settle = build_serum_settle_instructions(
-    #             context, wallet, market, open_orders_address, base_token_account.address, quote_token_account.address)
-
-    combined = create_open_orders + place_order + consume_events  # + settle
-    return combined
-
-
 # # 🥭 build_cancel_spot_order_instruction function
 #
 # Builds the instructions necessary for cancelling a spot order.
@@ -711,3 +740,31 @@ def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group
         )
     ]
     return CombinableInstructions(signers=[], instructions=instructions)
+
+# # 🥭 build_mango_settle_instructions function
+#
+# Creates a 'settle' instruction for Mango accounts.
+#
+
+
+def build_mango_settle_instructions(context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
+    print("OpenOrders", open_orders_address)
+    vault_signer = PublicKey.create_program_address(
+        [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+        market.state.program_id(),
+    )
+    instruction = settle_funds(
+        SettleFundsParams(
+            market=market.state.public_key(),
+            open_orders=open_orders_address,
+            owner=wallet.address,
+            base_vault=market.state.base_vault(),
+            quote_vault=market.state.quote_vault(),
+            base_wallet=base_token_account_address,
+            quote_wallet=quote_token_account_address,
+            vault_signer=vault_signer,
+            program_id=market.state.program_id(),
+        )
+    )
+
+    return CombinableInstructions(signers=[], instructions=[instruction])

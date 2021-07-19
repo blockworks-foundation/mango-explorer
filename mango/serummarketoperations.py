@@ -74,6 +74,12 @@ class SerumMarketOperations(MarketOperations):
         (signers + place + crank + settle).execute(self.context)
         return order
 
+    def settle(self) -> typing.Sequence[str]:
+        return []
+
+    def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
+        return []
+
     def _load_serum_orders(self) -> typing.Sequence[SerumOrder]:
         raw_market = self.market_instruction_builder.raw_market
         [bids_info, asks_info] = AccountInfo.load_multiple(

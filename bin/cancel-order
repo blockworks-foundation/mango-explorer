@@ -13,8 +13,13 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Shows all orders on a market.")
 mango.Context.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--market", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)")
-parser.add_argument("--order-id", type=int, required=True, help="ID of the order to cancel")
+parser.add_argument("--market", type=str, required=True, help="market symbol to use (e.g. ETH/USDC)")
+parser.add_argument("--id", type=int,
+                    help="order ID of the order to cancel (either --client-id must be specified, or both --id and --side must be specified")
+parser.add_argument("--client-id", type=int,
+                    help="client ID of the order to cancel (either --client-id must be specified, or both --id and --side must be specified")
+parser.add_argument("--side", type=mango.Side, default=mango.Side.BUY, choices=list(mango.Side),
+                    help="whether the order to cancel is a BUY or a SELL (either --client-id must be specified, or both --id and --side must be specified")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -29,6 +34,7 @@ if market is None:
     raise Exception(f"Could not find market {market_symbol}")
 
 market_operations = mango.create_market_operations(context, wallet, False, market)
-order = mango.Order.from_ids(id=args.order_id, client_id=0)
+
+order = mango.Order.from_ids(id=args.id, client_id=args.client_id, side=args.side)
 cancellation = market_operations.cancel_order(order)
 print(cancellation)

@@ -68,6 +68,12 @@ class PerpMarketOperations(MarketOperations):
         (signers + place).execute(self.context)
         return order
 
+    def settle(self) -> typing.Sequence[str]:
+        return []
+
+    def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
+        return []
+
     def load_orders(self) -> typing.Sequence[Order]:
         bids_address: PublicKey = self.perp_market.bids
         asks_address: PublicKey = self.perp_market.asks

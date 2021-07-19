@@ -82,7 +82,6 @@ class SimpleMarketMaker:
                 price = self.oracle.fetch_price(self.context)
                 self.logger.info(f"Price is: {price}")
                 inventory = self.fetch_inventory()
-                print(inventory)
 
                 # Calculate what we want the orders to be.
                 bid, ask = self.calculate_order_prices(price)

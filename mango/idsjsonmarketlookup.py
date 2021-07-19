@@ -52,15 +52,8 @@ class IdsJsonMarketLookup(MarketLookup):
     @staticmethod
     def _from_dict(market_type: IdsJsonMarketType, group_address: PublicKey, data: typing.Dict, tokens: typing.Sequence[Token], quote_symbol: str) -> Market:
         base_symbol = data["baseSymbol"]
-        if tokens[0].symbol == quote_symbol and tokens[1].symbol == base_symbol:
-            quote = tokens[0]
-            base = tokens[1]
-        elif tokens[0].symbol == base_symbol and tokens[1].symbol == quote_symbol:
-            base = tokens[0]
-            quote = tokens[1]
-        else:
-            raise Exception(f"Could not find base ('{base_symbol}') or quote symbol ('{quote_symbol}') in tokens.")
-
+        base = Token.find_by_symbol(tokens, base_symbol)
+        quote = Token.find_by_symbol(tokens, quote_symbol)
         address = PublicKey(data["publicKey"])
         if market_type == IdsJsonMarketType.PERP:
             return PerpsMarket(base, quote, address)
@@ -77,17 +70,28 @@ class IdsJsonMarketLookup(MarketLookup):
         return tokens
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:
+        check_spots = True
+        check_perps = True
+        if symbol.startswith("SPOT:"):
+            symbol = symbol.split(":", 1)[1]
+            check_perps = False  # Skip perp markets because we're explicitly told it's a spot
+        elif symbol.startswith("PERP:"):
+            symbol = symbol.split(":", 1)[1]
+            check_spots = False  # Skip spot markets because we're explicitly told it's a perp
+
         for group in MangoConstants["groups"]:
             if group["cluster"] == self.cluster:
                 group_address: PublicKey = PublicKey(group["publicKey"])
-                for market_data in group["perpMarkets"]:
-                    if market_data["name"].upper() == symbol.upper():
-                        tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, group_address, market_data, tokens, group["quoteSymbol"])
-                for market_data in group["spotMarkets"]:
-                    if market_data["name"].upper() == symbol.upper():
-                        tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, group_address, market_data, tokens, group["quoteSymbol"])
+                if check_perps:
+                    for market_data in group["perpMarkets"]:
+                        if market_data["name"].upper() == symbol.upper():
+                            tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
+                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, group_address, market_data, tokens, group["quoteSymbol"])
+                if check_spots:
+                    for market_data in group["spotMarkets"]:
+                        if market_data["name"].upper() == symbol.upper():
+                            tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
+                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, group_address, market_data, tokens, group["quoteSymbol"])
         return None
 
     def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:

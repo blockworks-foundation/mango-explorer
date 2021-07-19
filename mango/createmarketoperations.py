@@ -54,9 +54,10 @@ def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, ma
         group = Group.load(context, context.group_id)
         accounts = Account.load_all_for_owner(context, wallet.address, group)
         account = accounts[0]
-        perp_market_info = group.perp_markets[0]
+        market_index = group.find_perp_market_index(market.address)
+        perp_market_info = group.perp_markets[market_index]
         if perp_market_info is None:
-            raise Exception("Perp market not found at index 0.")
+            raise Exception(f"No PerpMarketInfo in group {group.address} at index {market_index}")
         perp_market = PerpMarket.load(context, perp_market_info.address, group)
         perp_market_instruction_builder: PerpMarketInstructionBuilder = PerpMarketInstructionBuilder.load(
             context, wallet, group, account, perp_market)

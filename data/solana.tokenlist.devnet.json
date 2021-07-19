@@ -58,17 +58,17 @@
       "address": "So11111111111111111111111111111111111111112",
       "symbol": "SOL",
       "name": "Wrapped SOL",
-      "decimals": 9,
+      "decimals": 6,
       "logoURI": "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png",
       "tags": [],
       "extensions": {
         "website": "https://solana.com/",
-        "serumV3Usdc": "4Rf4qZYwBVo6RsxisBnm8RJCRMehiZ2TsDwfyoR9X4dF"
+        "serumV3Usdc": "uaajXobeb1hmTB6StRoa8Yqn6czjtWtFeVfZeJY6YFC"
       }
     },
     {
       "chainId": 901,
-      "address": "EMjjdsqERN4wJUR9jMBax2pzqQPeGLNn5NeucbHpDUZK",
+      "address": "8FRFC6MoGGkMFQwngccyu69VnYbzykGeez7ignHVAFSN",
       "symbol": "USDC",
       "name": "USD Coin",
       "decimals": 6,
@@ -83,7 +83,7 @@
     },
     {
       "chainId": 901,
-      "address": "bypQzRBaSDWiKhoAw3hNkf35eF3z3AZCU8Sxks6mTPP",
+      "address": "3UNBZ6o52WTWwjac2kPUb4FyodhU1vFkRJheu1Sh2TvU",
       "symbol": "BTC",
       "name": "Wrapped Bitcoin (Sollet)",
       "decimals": 6,
@@ -94,12 +94,12 @@
       ],
       "extensions": {
         "bridgeContract": "https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a",
-        "serumV3Usdc": "E1mfsnnCcL24JcDQxr7F2BpWjkyy5x2WHys8EL2pnCj9"
+        "serumV3Usdc": "9LBavtqDpEoX623j8z4sotHMDbv7PcTXUW3LQQtepKvR"
       }
     },
     {
       "chainId": 901,
-      "address": "ErWGBLBQMwdyC4H3MR8ef6pFK6gyHAyBxy4o1mHoqKzm",
+      "address": "Cu84KB3tDL6SbFgToHMLYVDJJXdJjenNzSKikeAvzmkA",
       "symbol": "ETH",
       "name": "Wrapped Ethereum (Sollet)",
       "decimals": 6,
@@ -110,12 +110,12 @@
       ],
       "extensions": {
         "bridgeContract": "https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a",
-        "serumV3Usdc": "9gStrbmhqCUmNsmH1Yjec4TiNXq1g6YQVAamWVhLNdaE"
+        "serumV3Usdc": "2n81EqJgsTE5PoPX5H8adQ4EaVe5kXnFuxwdCAYfaExH"
       }
     },
     {
       "chainId": 901,
-      "address": "9FbAMDvXqNjPqZSYt4EWTguJuDrGkfvwr3gSFpiSbX9S",
+      "address": "AvtB6w9xboLwA145E221vhof5TddhqsChYcx7Fy3xVMH",
       "symbol": "SRM",
       "name": "Serum",
       "decimals": 6,
@@ -123,7 +123,7 @@
       "tags": [],
       "extensions": {
         "website": "https://projectserum.com/",
-        "serumV3Usdc": "4SZ7MvMfW2fbEu5SgLMfRaeTR2bXhP6GGLMr1L6N9PeW"
+        "serumV3Usdc": "23tRuJ3zUvXYQEnTDAcWHPDfmYvrWanpM2sJnmhL53X5"
       }
     }
   ],

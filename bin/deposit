@@ -22,6 +22,7 @@ parser.add_argument("--account-index", type=int, default=0,
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 context = mango.Context.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
@@ -51,13 +52,12 @@ for token_info in group.tokens:
 if root_bank is None:
     raise Exception(f"Could not find token root bank for symbol '{args.symbol}'.")
 
-print("root_bank", root_bank)
 node_bank = root_bank.pick_node_bank(context)
 
 signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
 deposit = mango.build_deposit_instructions(
     context, wallet, group, account, root_bank, node_bank, deposit_token_account)
-print(deposit)
+
 all_instructions = signers + deposit
 transaction_id = all_instructions.execute_and_unwrap_transaction_ids(context)[0]
 print("Signature:", transaction_id)

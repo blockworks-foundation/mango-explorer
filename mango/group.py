@@ -27,7 +27,7 @@ from .metadata import Metadata
 from .perpmarketinfo import PerpMarketInfo
 from .rootbank import RootBank
 from .spotmarketinfo import SpotMarketInfo
-from .token import SolToken
+from .token import SolToken, Token
 from .tokeninfo import TokenInfo
 from .tokenlookup import TokenLookup
 from .tokenvalue import TokenValue
@@ -136,6 +136,13 @@ class Group(AddressableAccount):
                 return index
 
         raise Exception(f"Could not find perp market {perp_market_address} in group {self.address}")
+
+    def find_token_info_by_token(self, token: Token) -> TokenInfo:
+        for index, token_info in enumerate(self.tokens):
+            if token_info is not None and token_info.token == token:
+                return token_info
+
+        raise Exception(f"Could not find token info for mint {token.mint} in group {self.address}")
 
     def fetch_balances(self, context: Context, root_address: PublicKey) -> typing.Sequence[TokenValue]:
         balances: typing.List[TokenValue] = []

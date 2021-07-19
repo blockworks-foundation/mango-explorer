@@ -112,5 +112,5 @@ class Order(typing.NamedTuple):
         return order
 
     @staticmethod
-    def from_ids(id: int, client_id: int) -> "Order":
-        return Order(id=id, client_id=client_id, owner=SYSTEM_PROGRAM_ADDRESS, side=Side.BUY, price=Decimal(0), quantity=Decimal(0), order_type=OrderType.UNKNOWN)
+    def from_ids(id: int, client_id: int, side: Side = Side.BUY) -> "Order":
+        return Order(id=id, client_id=client_id, owner=SYSTEM_PROGRAM_ADDRESS, side=side, price=Decimal(0), quantity=Decimal(0), order_type=OrderType.UNKNOWN)

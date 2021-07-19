@@ -12,7 +12,6 @@ def test_constructor():
 
     flags = mango.AccountFlags(mango.Version.V1, True, False, True, False, False, False, False, False)
     actual = mango.OpenOrders(account_info, mango.Version.V1, program_id, flags, market,
-                              owner, Decimal(0), Decimal(0), Decimal(0), Decimal(0),
-                              Decimal(0), Decimal(0), [], [], Decimal(0))
+                              owner, Decimal(0), Decimal(0), Decimal(0), Decimal(0), [], Decimal(0))
     assert actual is not None
     assert actual.logger is not None

@@ -10,12 +10,10 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 import mango  # nopep8
 
-# We explicitly want argument parsing to be outside the main try-except block because some arguments
-# (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description="Settles all openorders transactions in the Group.")
+parser = argparse.ArgumentParser(description="Shows Mango open orders accounts.")
 mango.Context.add_command_line_parameters(parser)
+parser.add_argument("--market", type=str, required=True, help="market symbol (e.g. ETH/USDC)")
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--market", type=str, required=True, help="market symbol to make market upon (e.g. ETH/USDC)")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -24,16 +22,16 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 context = mango.Context.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-logging.info(f"Context: {context}")
-logging.info(f"Wallet address: {wallet.address}")
-
 market_symbol = args.market.upper()
 market = context.market_lookup.find_by_symbol(market_symbol)
 if market is None:
     raise Exception(f"Could not find market {market_symbol}")
 
-market_operations = mango.create_market_operations(context, wallet, False, market)
-settle = market_operations.settle()
-print(settle)
+if not isinstance(market, mango.SerumMarket):
+    raise Exception(f"Market {market_symbol} is not a Serum market: {market}")
 
-logging.info("Settlement completed.")
+all_open_orders_for_market = mango.OpenOrders.load_for_market_and_owner(
+    context, market.address, wallet.address, context.dex_program_id, market.base.decimals, market.quote.decimals)
+print(f"Found {len(all_open_orders_for_market)} OpenOrders account(s) for market {market.symbol}.")
+for open_orders in all_open_orders_for_market:
+    print(open_orders)

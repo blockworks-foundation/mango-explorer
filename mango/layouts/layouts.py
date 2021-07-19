@@ -554,7 +554,7 @@ NODE_BANK = construct.Struct(
 PERP_OPEN_ORDERS = construct.Struct(
     "bids_quantity" / SignedDecimalAdapter(),
     "asks_quantity" / SignedDecimalAdapter(),
-    "is_free_bits" / DecimalAdapter(4),
+    "free_slot_bits" / DecimalAdapter(4),
     "is_bid_bits" / DecimalAdapter(4),
     "orders" / construct.Array(MAX_TOKENS, SignedDecimalAdapter(16)),
     "client_order_ids" / construct.Array(MAX_TOKENS, SignedDecimalAdapter())
@@ -1177,6 +1177,31 @@ CONSUME_EVENTS = construct.Struct(
     "limit" / DecimalAdapter()
 )
 
+# /// Settle all funds from serum dex open orders
+# ///
+# /// Accounts expected by this instruction (18):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[]` mango_cache_ai - MangoCache for this MangoGroup
+# /// 2. `[signer]` owner_ai - MangoAccount owner
+# /// 3. `[writable]` mango_account_ai - MangoAccount
+# /// 4. `[]` dex_prog_ai - program id of serum dex
+# /// 5.  `[writable]` spot_market_ai - dex MarketState account
+# /// 6.  `[writable]` open_orders_ai - open orders for this market for this MangoAccount
+# /// 7. `[]` signer_ai - MangoGroup signer key
+# /// 8. `[writable]` dex_base_ai - base vault for dex MarketState
+# /// 9. `[writable]` dex_quote_ai - quote vault for dex MarketState
+# /// 10. `[]` base_root_bank_ai - MangoGroup base vault acc
+# /// 11. `[writable]` base_node_bank_ai - MangoGroup quote vault acc
+# /// 12. `[]` quote_root_bank_ai - MangoGroup quote vault acc
+# /// 13. `[writable]` quote_node_bank_ai - MangoGroup quote vault acc
+# /// 14. `[writable]` base_vault_ai - MangoGroup base vault acc
+# /// 15. `[writable]` quote_vault_ai - MangoGroup quote vault acc
+# /// 16. `[]` dex_signer_ai - dex Market signer account
+# /// 17. `[]` spl token program
+SETTLE_FUNDS = construct.Struct(
+    "variant" / construct.Const(19, construct.BytesInteger(4, swapped=True))
+)
 
 InstructionParsersByVariant = {
     0: None,  # INIT_MANGO_GROUP,
@@ -1198,7 +1223,7 @@ InstructionParsersByVariant = {
     16: None,  # CACHE_PERP_MARKETS,
     17: None,  # UPDATE_FUNDING,
     18: None,  # SET_ORACLE,
-    19: None,  # SETTLE_FUNDS,
+    19: SETTLE_FUNDS,  # SETTLE_FUNDS,
     20: CANCEL_SPOT_ORDER,  # CANCEL_SPOT_ORDER,
     21: None,  # UPDATE_ROOT_BANK,
     22: None,  # SETTLE_PNL,

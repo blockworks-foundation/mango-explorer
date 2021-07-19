@@ -36,17 +36,16 @@ class OrderTracker:
         self.tracked += [order]
 
     def existing_orders(self, model_state: ModelState) -> typing.Sequence[mango.Order]:
+        print("Model State Orders", model_state.placed_orders)
         live_orders: typing.List[mango.Order] = []
-        for order_id, client_id in model_state.placed_order_ids:
-            client_id_int = int(client_id)
-            details = self._find_tracked(client_id_int)
+        for placed_order in model_state.placed_orders:
+            details = self._find_tracked(placed_order.client_id)
             if details is None:
-                raise Exception(f"Could not find existing order with client ID {client_id_int}")
+                raise Exception(f"Could not find existing order with client ID {placed_order.client_id}")
 
-            order_id_int = int(order_id)
-            if details.id != order_id_int:
+            if details.id != placed_order.id:
                 self.tracked.remove(details)
-                details = details.with_id(order_id_int)
+                details = details.with_id(placed_order.id)
                 self.tracked += [details]
 
             live_orders += [details]

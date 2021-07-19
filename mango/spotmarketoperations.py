@@ -49,14 +49,17 @@ class SpotMarketOperations(MarketOperations):
         self.market_instruction_builder: SpotMarketInstructionBuilder = market_instruction_builder
 
         self.market_index = group.find_spot_market_index(spot_market.address)
-        self.open_orders = self.account.spot_open_orders[self.market_index]
+        self.open_orders_address = self.account.spot_open_orders[self.market_index]
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
         self.logger.info(
             f"Cancelling order {order.id} for quantity {order.quantity} at price {order.price} on market {self.spot_market.symbol} with client ID {order.client_id}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
-        return (signers + cancel).execute_and_unwrap_transaction_ids(self.context)
+        crank = self.market_instruction_builder.build_crank_instructions()
+        # settle = self.market_instruction_builder.build_settle_instructions()
+
+        return (signers + cancel + crank).execute(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
@@ -65,16 +68,24 @@ class SpotMarketOperations(MarketOperations):
 
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         order = Order(id=0, client_id=client_id, side=side, price=price,
-                      quantity=quantity, owner=self.open_orders, order_type=order_type)
+                      quantity=quantity, owner=self.open_orders_address, order_type=order_type)
         place = self.market_instruction_builder.build_place_order_instructions(order)
-
         crank = self.market_instruction_builder.build_crank_instructions()
+        # settle = self.market_instruction_builder.build_settle_instructions()
 
-        settle = self.market_instruction_builder.build_settle_instructions()
-
-        (signers + place + crank + settle).execute(self.context)
+        (signers + place + crank).execute(self.context)
 
         return order
+
+    def settle(self) -> typing.Sequence[str]:
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        settle = self.market_instruction_builder.build_settle_instructions()
+        return (signers + settle).execute(self.context)
+
+    def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        crank = self.market_instruction_builder.build_crank_instructions(limit)
+        return (signers + crank).execute(self.context)
 
     def _load_serum_orders(self) -> typing.Sequence[SerumOrder]:
         raw_market = self.market_instruction_builder.raw_market
@@ -94,11 +105,11 @@ class SpotMarketOperations(MarketOperations):
         return orders
 
     def load_my_orders(self) -> typing.Sequence[Order]:
-        if not self.open_orders:
+        if not self.open_orders_address:
             return []
 
         all_orders = self._load_serum_orders()
-        serum_orders = [o for o in all_orders if o.open_order_address == self.open_orders]
+        serum_orders = [o for o in all_orders if o.open_order_address == self.open_orders_address]
         orders: typing.List[Order] = []
         for serum_order in serum_orders:
             orders += [Order.from_serum_order(serum_order)]

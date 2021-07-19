@@ -60,5 +60,4 @@ def mock_open_orders(base_token_free: Decimal = Decimal(0), base_token_total: De
     flags = mango.AccountFlags(mango.Version.V1, True, False, True, False, False, False, False, False)
     return mango.OpenOrders(account_info, mango.Version.V1, program_id, flags, market,
                             owner, base_token_free, base_token_total, quote_token_free,
-                            quote_token_total, Decimal(0), Decimal(0), [], [],
-                            referrer_rebate_accrued)
+                            quote_token_total, [], referrer_rebate_accrued)

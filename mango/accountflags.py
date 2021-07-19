@@ -57,7 +57,7 @@ class AccountFlags:
         flags += ["asks" if self.asks else None]
         flags += ["disabled" if self.disabled else None]
         flag_text = " | ".join(flag for flag in flags if flag is not None) or "None"
-        return f"« AccountFlags: {flag_text} »"
+        return f"« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝙵𝚕𝚊𝚐𝚜: {flag_text} »"
 
     def __repr__(self) -> str:
         return f"{self}"
