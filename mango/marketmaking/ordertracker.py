@@ -40,14 +40,14 @@ class OrderTracker:
         for placed_order in model_state.placed_orders:
             details = self._find_tracked(placed_order.client_id)
             if details is None:
-                raise Exception(f"Could not find existing order with client ID {placed_order.client_id}")
+                self.logger.warning(f"Could not find existing order with client ID {placed_order.client_id}")
+            else:
+                if details.id != placed_order.id:
+                    self.tracked.remove(details)
+                    details = details.with_id(placed_order.id)
+                    self.tracked += [details]
 
-            if details.id != placed_order.id:
-                self.tracked.remove(details)
-                details = details.with_id(placed_order.id)
-                self.tracked += [details]
-
-            live_orders += [details]
+                live_orders += [details]
 
         return live_orders
 
