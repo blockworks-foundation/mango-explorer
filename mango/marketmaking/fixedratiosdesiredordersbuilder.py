@@ -30,13 +30,14 @@ from .modelstate import ModelState
 #
 
 class FixedRatiosDesiredOrdersBuilder(DesiredOrdersBuilder):
-    def __init__(self, spread_ratios: typing.Sequence[Decimal], position_size_ratios: typing.Sequence[Decimal]):
+    def __init__(self, spread_ratios: typing.Sequence[Decimal], position_size_ratios: typing.Sequence[Decimal], order_type: mango.OrderType = mango.OrderType.POST_ONLY):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         if len(spread_ratios) != len(position_size_ratios):
             raise Exception("List of spread ratios and position size ratios must be the same length.")
 
         self.spread_ratios: typing.Sequence[Decimal] = spread_ratios
         self.position_size_ratios: typing.Sequence[Decimal] = position_size_ratios
+        self.order_type: mango.OrderType = order_type
 
     def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
@@ -59,10 +60,10 @@ class FixedRatiosDesiredOrdersBuilder(DesiredOrdersBuilder):
             ask: Decimal = price.mid_price + (price.mid_price * spread_ratio)
 
             orders += [
-                mango.Order.from_basic_info(mango.Side.BUY, price=bid, quantity=buy_quantity,
-                                            order_type=mango.OrderType.POST_ONLY),
-                mango.Order.from_basic_info(mango.Side.SELL, price=ask, quantity=sell_quantity,
-                                            order_type=mango.OrderType.POST_ONLY)
+                mango.Order.from_basic_info(mango.Side.BUY, price=bid,
+                                            quantity=buy_quantity, order_type=self.order_type),
+                mango.Order.from_basic_info(mango.Side.SELL, price=ask,
+                                            quantity=sell_quantity, order_type=self.order_type)
             ]
 
         return orders

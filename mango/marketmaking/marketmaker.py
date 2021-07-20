@@ -72,13 +72,13 @@ class MarketMaker:
                 self.order_tracker.track(to_place_with_client_id)
 
                 self.logger.info(
-                    f"Placing {to_place_with_client_id.side} order for {to_place_with_client_id.quantity} at price {to_place_with_client_id.price} with client ID: {to_place_with_client_id.client_id}")
+                    f"Placing {to_place_with_client_id.side} {to_place_with_client_id.order_type} order for {to_place_with_client_id.quantity} at price {to_place_with_client_id.price} with client ID: {to_place_with_client_id.client_id}")
                 place_order = self.market_instruction_builder.build_place_order_instructions(to_place_with_client_id)
                 place_orders += place_order
 
-            # settle = self.market_instruction_builder.build_settle_instructions()
+            settle = self.market_instruction_builder.build_settle_instructions()
             crank = self.market_instruction_builder.build_crank_instructions()
-            (payer + cancellations + place_orders + crank).execute(context)
+            (payer + cancellations + place_orders + crank + settle).execute(context)
 
             self.pulse_complete.on_next(datetime.now())
         except Exception as exception:
