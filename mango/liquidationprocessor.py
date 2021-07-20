@@ -16,6 +16,7 @@
 import enum
 import logging
 import time
+import traceback
 import typing
 
 from datetime import datetime, timedelta
@@ -149,7 +150,7 @@ class LiquidationProcessor:
                     to_process += [updated_report]
             except Exception as exception:
                 self.logger.error(
-                    f"Liquidator '{self.name}' - failed to liquidate account '{highest.margin_account.address}' - {exception}.")
+                    f"Liquidator '{self.name}' - failed to liquidate account '{highest.margin_account.address}' - {exception} - {traceback.format_exc()}")
             finally:
                 # highest should always be in to_process, but we're outside the try-except block
                 # so let's be a little paranoid about it.
