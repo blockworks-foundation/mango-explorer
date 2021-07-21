@@ -41,6 +41,9 @@ class OrderTracker:
             details = self._find_tracked(placed_order.client_id)
             if details is None:
                 self.logger.warning(f"Could not find existing order with client ID {placed_order.client_id}")
+                # Return a stub order so that the Reconciler has the chance to cancel it.
+                stub = mango.Order.from_ids(placed_order.id, placed_order.client_id, placed_order.side)
+                live_orders += [stub]
             else:
                 if details.id != placed_order.id:
                     self.tracked.remove(details)
