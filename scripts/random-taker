@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+MARKET=${1:-BTC-PERP}
+FIXED_POSITION_SIZE=${2:-0.01}
+IMMEDIATE_BUY_ADJUSTMENT=${3:-100}
+ORACLE_MARKET=${MARKET//\-PERP/\/USDC}
+
+printf "Running on market %s with position size %f and IOC prices +/- %f from current price\nPress Control+C to stop...\n" $MARKET $FIXED_POSITION_SIZE $IMMEDIATE_BUY_ADJUSTMENT
+while :
+do
+    cancel-my-orders --market $MARKET --log-level ERROR
+
+    CURRENT_PRICE=$(fetch-price --provider serum --symbol $ORACLE_MARKET --log-level ERROR --cluster mainnet-beta | cut -d"'" -f 2 | sed 's/,//')
+    place-order --market $MARKET --order-type IOC --log-level ERROR \
+        --side BUY --quantity $FIXED_POSITION_SIZE --price $(echo "$CURRENT_PRICE + $IMMEDIATE_BUY_ADJUSTMENT" | bc)
+
+    PAUSE_FOR=$((1 + $RANDOM % 30))
+    printf "Pausing after BUY for %d seconds.\n" ${PAUSE_FOR}
+    sleep ${PAUSE_FOR}
+
+    CURRENT_PRICE=$(fetch-price --provider serum --symbol $ORACLE_MARKET --log-level ERROR --cluster mainnet-beta | cut -d"'" -f 2 | sed 's/,//')
+    place-order --market $MARKET --order-type IOC --log-level ERROR \
+        --side SELL --quantity $FIXED_POSITION_SIZE --price $(echo "$CURRENT_PRICE - $IMMEDIATE_BUY_ADJUSTMENT" | bc)
+
+    PAUSE_FOR=$((1 + $RANDOM % 30))
+    printf "Pausing after SELL for %d seconds.\n" ${PAUSE_FOR}
+    sleep ${PAUSE_FOR}
+
+    echo "Last ${MARKET} taker action: $(date)" > /var/tmp/mango_healthcheck_random_taker
+done
