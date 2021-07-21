@@ -8,6 +8,7 @@ import rx
 import rx.operators
 import sys
 import threading
+import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
@@ -62,7 +63,7 @@ def build_converter(context: mango.Context, account_type):
             def __init__(self):
                 self.seq_num = Decimal(0)
 
-            def split(self, item: mango.PerpEventQueue) -> None:
+            def split(self, item: mango.PerpEventQueue) -> typing.Sequence[mango.Event]:
                 events = item.events[int(self.seq_num):int(item.sequence_number)]
                 self.seq_num = item.sequence_number
                 return events
