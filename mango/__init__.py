@@ -31,6 +31,7 @@ from .orders import Order, OrderType, Side
 from .ownedtokenvalue import OwnedTokenValue
 from .oracle import OracleSource, Price, Oracle, OracleProvider
 from .oraclefactory import create_oracle_provider
+from .perpeventqueue import Event, PerpEventQueue
 from .perpmarket import PerpMarket
 from .perpmarketinfo import PerpMarketInfo
 from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder

@@ -29,7 +29,7 @@ from .version import Version
 
 # # 🥭 NodeBank class
 #
-# `NodeBank` stores details of how to reach `NodeBank```.
+# `NodeBank` stores details of deposits/borrows and vault.
 #
 
 

@@ -942,7 +942,7 @@ OUT_EVENT = construct.Struct(
 assert OUT_EVENT.sizeof() == _EVENT_SIZE
 
 UNKNOWN_EVENT = construct.Struct(
-    "flags" / construct.Bytes(1),
+    "event_type" / construct.Bytes(1),
     construct.Padding(7),
     "owner" / PublicKeyAdapter(),
     construct.Padding(_EVENT_SIZE - 40)
