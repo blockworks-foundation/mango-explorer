@@ -98,11 +98,12 @@ def test_build_serum_place_order_instructions():
 
 def test_build_serum_consume_events_instructions():
     context: mango.Context = fake_context()
-    wallet: mango.Wallet = fake_wallet()
-    market = fake_market()
+    market_address: PublicKey = fake_seeded_public_key("market address")
+    event_queue_address: PublicKey = fake_seeded_public_key("event queue address")
     open_orders_addresses: typing.Sequence[PublicKey] = [fake_seeded_public_key("open orders account")]
     limit: int = 64
-    actual = mango.build_serum_consume_events_instructions(context, wallet, market, open_orders_addresses, limit)
+    actual = mango.build_serum_consume_events_instructions(
+        context, market_address, event_queue_address, open_orders_addresses, limit)
     assert actual is not None
     assert len(actual.signers) == 0
     assert len(actual.instructions) == 1

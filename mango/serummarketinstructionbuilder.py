@@ -116,10 +116,13 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
             return CombinableInstructions.empty()
         return build_serum_settle_instructions(self.context, self.wallet, self.raw_market, self.open_orders_address, self.base_token_account.address, self.quote_token_account.address)
 
-    def build_crank_instructions(self, limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         if self.open_orders_address is None:
             return CombinableInstructions.empty()
-        return build_serum_consume_events_instructions(self.context, self.wallet, self.raw_market, [self.open_orders_address], int(limit))
+        all_open_orders_addresses: typing.List[PublicKey] = list(open_orders_addresses) + [self.open_orders_address]
+        all_open_orders_addresses.sort(key=lambda address: address._key or [0])
+
+        return build_serum_consume_events_instructions(self.context, self.serum_market.address, self.raw_market.state.event_queue(), all_open_orders_addresses, int(limit))
 
     def __str__(self) -> str:
         return """« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"""

@@ -13,8 +13,10 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import typing
 
 from decimal import Decimal
+from solana.publickey import PublicKey
 
 from .account import Account
 from .combinableinstructions import CombinableInstructions
@@ -60,7 +62,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
     def build_settle_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
-    def build_crank_instructions(self, limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         # return build_mango_consume_events_instructions(self.context, self.wallet, self.group, self.account, self.perp_market, limit)
         return CombinableInstructions.empty()
 

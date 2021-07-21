@@ -203,10 +203,10 @@ def build_serum_place_order_instructions(context: Context, wallet: Wallet, marke
 # Creates an event-consuming 'crank' instruction.
 #
 
-def build_serum_consume_events_instructions(context: Context, wallet: Wallet, market: Market, open_orders_addresses: typing.Sequence[PublicKey], limit: int = 32) -> CombinableInstructions:
+def build_serum_consume_events_instructions(context: Context, market_address: PublicKey, event_queue_address: PublicKey, open_orders_addresses: typing.Sequence[PublicKey], limit: int = 32) -> CombinableInstructions:
     instruction = consume_events(ConsumeEventsParams(
-        market=market.state.public_key(),
-        event_queue=market.state.event_queue(),
+        market=market_address,
+        event_queue=event_queue_address,
         open_orders_accounts=open_orders_addresses,
         program_id=context.dex_program_id,
         limit=limit
@@ -226,7 +226,6 @@ def build_serum_consume_events_instructions(context: Context, wallet: Wallet, ma
 #
 
 def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
-    print("OpenOrders", open_orders_address)
     vault_signer = PublicKey.create_program_address(
         [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
         market.state.program_id(),
@@ -336,7 +335,7 @@ def build_compound_serum_place_order_instructions(context: Context, wallet: Wall
     place_order = build_serum_place_order_instructions(
         context, wallet, market, source, open_orders_address, order_type, side, price, quantity, client_id, fee_discount_address)
     consume_events = build_serum_consume_events_instructions(
-        context, wallet, market, all_open_orders_addresses, consume_limit)
+        context, market.state.public_key(), market.state.event_queue(), all_open_orders_addresses, consume_limit)
     settle = build_serum_settle_instructions(
         context, wallet, market, open_orders_address, base_token_account_address, quote_token_account_address)
 
@@ -748,7 +747,6 @@ def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group
 
 
 def build_mango_settle_instructions(context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
-    print("OpenOrders", open_orders_address)
     vault_signer = PublicKey.create_program_address(
         [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
         market.state.program_id(),

@@ -18,8 +18,10 @@ import itertools
 import typing
 
 from decimal import Decimal
+from pyserum.market import Market as PySerumMarket
 from pyserum.market.orderbook import OrderBook as SerumOrderBook
 from pyserum.market.types import Order as SerumOrder
+from solana.publickey import PublicKey
 
 from .account import Account
 from .accountinfo import AccountInfo
@@ -28,6 +30,7 @@ from .context import Context
 from .group import Group
 from .marketoperations import MarketOperations
 from .orders import Order, OrderType, Side
+from .serummarketoperations import fetch_market_open_orders_addresses_to_crank
 from .spotmarket import SpotMarket
 from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
 from .wallet import Wallet
@@ -46,6 +49,7 @@ class SpotMarketOperations(MarketOperations):
         self.group: Group = group
         self.account: Account = account
         self.spot_market: SpotMarket = spot_market
+        self.raw_market: PySerumMarket = PySerumMarket.load(context.client, spot_market.address, context.dex_program_id)
         self.market_instruction_builder: SpotMarketInstructionBuilder = market_instruction_builder
 
         self.market_index = group.find_spot_market_index(spot_market.address)
@@ -56,7 +60,9 @@ class SpotMarketOperations(MarketOperations):
             f"Cancelling order {order.id} for quantity {order.quantity} at price {order.price} on market {self.spot_market.symbol} with client ID {order.client_id}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
-        crank = self.market_instruction_builder.build_crank_instructions()
+        open_orders_to_crank: typing.Sequence[PublicKey] = fetch_market_open_orders_addresses_to_crank(
+            self.context, self.raw_market)
+        crank = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank)
         # settle = self.market_instruction_builder.build_settle_instructions()
 
         return (signers + cancel + crank).execute(self.context)
@@ -70,7 +76,9 @@ class SpotMarketOperations(MarketOperations):
         order = Order(id=0, client_id=client_id, side=side, price=price,
                       quantity=quantity, owner=self.open_orders_address, order_type=order_type)
         place = self.market_instruction_builder.build_place_order_instructions(order)
-        crank = self.market_instruction_builder.build_crank_instructions()
+        open_orders_to_crank: typing.Sequence[PublicKey] = fetch_market_open_orders_addresses_to_crank(
+            self.context, self.raw_market)
+        crank = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank)
         # settle = self.market_instruction_builder.build_settle_instructions()
 
         (signers + place + crank).execute(self.context)
@@ -84,7 +92,9 @@ class SpotMarketOperations(MarketOperations):
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        crank = self.market_instruction_builder.build_crank_instructions(limit)
+        open_orders_to_crank: typing.Sequence[PublicKey] = fetch_market_open_orders_addresses_to_crank(
+            self.context, self.raw_market)
+        crank = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank, limit)
         return (signers + crank).execute(self.context)
 
     def _load_serum_orders(self) -> typing.Sequence[SerumOrder]:

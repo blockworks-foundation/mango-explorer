@@ -77,7 +77,8 @@ class MarketMaker:
                 place_orders += place_order
 
             settle = self.market_instruction_builder.build_settle_instructions()
-            crank = self.market_instruction_builder.build_crank_instructions()
+            # TODO - need to fetch OpenOrders addresses appropriate to market
+            crank = self.market_instruction_builder.build_crank_instructions([])
             (payer + cancellations + place_orders + crank + settle).execute(context)
 
             self.pulse_complete.on_next(datetime.now())

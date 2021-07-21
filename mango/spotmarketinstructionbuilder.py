@@ -105,10 +105,13 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
                                               self.raw_market, self.group, self.open_orders_address,
                                               base_rootbank, base_nodebank, quote_rootbank, quote_nodebank)
 
-    def build_crank_instructions(self, limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         if self.open_orders_address is None:
             return CombinableInstructions.empty()
-        return build_serum_consume_events_instructions(self.context, self.wallet, self.raw_market, [self.open_orders_address], int(limit))
+        all_open_orders_addresses: typing.List[PublicKey] = list(open_orders_addresses) + [self.open_orders_address]
+        all_open_orders_addresses.sort(key=lambda address: address._key or [0])
+
+        return build_serum_consume_events_instructions(self.context, self.spot_market.address, self.raw_market.state.event_queue(), all_open_orders_addresses, int(limit))
 
     def __str__(self) -> str:
         return f"« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 [{self.spot_market.symbol}] »"

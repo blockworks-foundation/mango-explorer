@@ -93,7 +93,7 @@ class WebSocketSubscriptionManager(Disposable):
         for subscription in self.subscriptions:
             if subscription.id == id:
                 self.logger.info(
-                    f"Setting ID {subscription_id} on subscription {subscription.address}/{subscription.id}.")
+                    f"Setting ID {subscription_id} on subscription {subscription.id} for {subscription.address}.")
                 subscription.subscription_id = subscription_id
                 return
         self.logger.error(f"Subscription ID {id} not found")
