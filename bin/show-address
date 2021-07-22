@@ -1,0 +1,32 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
+mango.Context.add_command_line_parameters(parser)
+parser.add_argument("--address", type=PublicKey, required=True, help="Address of the Solana account to watch")
+parser.add_argument("--account-type", type=str, required=True,
+                    help="Underlying object type of the data in the AccountInfo")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.Context.from_command_line_parameters(args)
+converter = mango.build_account_info_converter(context, args.account_type)
+
+account_info: mango.AccountInfo = mango.AccountInfo.load(context, args.address)
+if account_info is None:
+    raise Exception(f"No account found at address: {args.address}")
+
+print(converter(account_info))

@@ -39,52 +39,35 @@ disposer = mango.DisposePropagator()
 manager = mango.WebSocketSubscriptionManager()
 disposer.add_disposable(manager)
 
+if args.account_type.upper() == "PERPEVENTS":
+    class EventSplitter:
+        def __init__(self):
+            self.seq_num = Decimal(0)
 
-def build_converter(context: mango.Context, account_type):
-    account_type_upper = account_type.upper()
-    if account_type_upper == "ACCOUNTINFO":
-        return lambda account_info: account_info
-    elif account_type_upper == "GROUP":
-        return lambda account_info: mango.Group.parse(context, account_info)
-    elif account_type_upper == "ACCOUNT":
-        account_info = mango.AccountInfo.load(context, args.address)
-        if account_info is None:
-            raise Exception(f"No account at {args.address}.")
-        layout_account = mango.layouts.MANGO_ACCOUNT.parse(account_info.data)
-        group_address = layout_account.group
-        group: mango.Group = mango.Group.load(context, group_address)
-        return lambda account_info: mango.Account.parse(context, account_info, group)
-    elif account_type_upper == "OPENORDERS":
-        return lambda account_info: mango.OpenOrders.parse(account_info, Decimal(6), Decimal(6))
-    elif account_type_upper == "PERPEVENTQUEUE":
-        return lambda account_info: mango.PerpEventQueue.parse(account_info)
-    elif account_type_upper == "PERPEVENTS":
-        class EventSplitter:
-            def __init__(self):
-                self.seq_num = Decimal(0)
+        def split(self, item: mango.PerpEventQueue) -> typing.Sequence[mango.Event]:
+            events = item.events[int(self.seq_num):int(item.sequence_number)]
+            self.seq_num = item.sequence_number
+            return events
 
-            def split(self, item: mango.PerpEventQueue) -> typing.Sequence[mango.Event]:
-                events = item.events[int(self.seq_num):int(item.sequence_number)]
-                self.seq_num = item.sequence_number
-                return events
+    splitter: EventSplitter = EventSplitter()
 
-        splitter: EventSplitter = EventSplitter()
+    def _split_events(account_info: mango.AccountInfo):
+        perp_event_queue = mango.PerpEventQueue.parse(account_info)
+        return splitter.split(perp_event_queue)
 
-        def _split_events(account_info: mango.AccountInfo):
-            perp_event_queue = mango.PerpEventQueue.parse(account_info)
-            return splitter.split(perp_event_queue)
+    converter = _split_events
+    subscription = mango.WebSocketSubscription(
+        context, args.address, lambda acc: acc)
+    manager.add(subscription)
+    publisher = subscription.publisher.pipe(rx.operators.flat_map(_split_events))
+else:
+    converter = mango.build_account_info_converter(context, args.account_type)
+    subscription = mango.WebSocketSubscription(
+        context, args.address, converter)
+    manager.add(subscription)
+    publisher = subscription.publisher
 
-        return _split_events
-    raise Exception(f"Could not find AccountInfo converter for type {account_type}.")
-
-
-subscription = mango.WebSocketSubscription[mango.AccountInfo](
-    context, args.address, lambda account_info: account_info)
-manager.add(subscription)
-
-subscription.publisher.pipe(
-    rx.operators.flat_map(build_converter(context, args.account_type))
-).subscribe(mango.PrintingObserverSubscriber(False))
+publisher.subscribe(mango.PrintingObserverSubscriber(False))
 
 websocket_url = context.cluster_url.replace("https", "ws", 1)
 ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler, manager.on_item)

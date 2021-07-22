@@ -6,6 +6,8 @@ import os
 import os.path
 import sys
 
+from decimal import Decimal
+
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 import mango  # nopep8
@@ -14,6 +16,7 @@ parser = argparse.ArgumentParser(description="Cranks all openorders in the marke
 mango.Context.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--market", type=str, required=True, help="market symbol to make market upon (e.g. ETH/USDC)")
+parser.add_argument("--limit", type=Decimal, default=Decimal(32), help="maximum number of events to be processed")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -31,7 +34,7 @@ if market is None:
     raise Exception(f"Could not find market {market_symbol}")
 
 market_operations = mango.create_market_operations(context, wallet, False, market)
-crank = market_operations.crank()
+crank = market_operations.crank(args.limit)
 print(crank)
 
 logging.info("Crank completed.")

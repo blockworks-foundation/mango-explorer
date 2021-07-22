@@ -26,6 +26,7 @@ from .context import Context
 from .marketoperations import MarketOperations
 from .orderbookside import OrderBookSide
 from .orders import Order, OrderType, Side
+from .perpeventqueue import Event, PerpEventQueue
 from .perpmarket import PerpMarket
 from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .wallet import Wallet
@@ -69,10 +70,31 @@ class PerpMarketOperations(MarketOperations):
         return order
 
     def settle(self) -> typing.Sequence[str]:
-        return []
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        settle = self.market_instruction_builder.build_settle_instructions()
+        return (signers + settle).execute(self.context)
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
-        return []
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        event_queue: PerpEventQueue = PerpEventQueue.load(self.context, self.perp_market.event_queue)
+        accounts_to_crank: typing.List[PublicKey] = []
+        for index in range(int(event_queue.count)):
+            modulo_index = (event_queue.head + index) % event_queue.capacity
+            event: Event = event_queue.events[int(modulo_index)]
+            accounts_to_crank += event.accounts_to_crank
+
+        all_accounts_to_crank: typing.List[PublicKey] = accounts_to_crank + [self.account.address]
+        seen = []
+        distinct = []
+        for account in all_accounts_to_crank:
+            account_str = account.to_base58()
+            if account_str not in seen:
+                distinct += [account]
+                seen += [account_str]
+        distinct.sort(key=lambda address: address._key or [0])
+
+        crank = self.market_instruction_builder.build_crank_instructions(distinct, limit)
+        return (signers + crank).execute(self.context)
 
     def load_orders(self) -> typing.Sequence[Order]:
         bids_address: PublicKey = self.perp_market.bids

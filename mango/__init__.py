@@ -1,6 +1,7 @@
 from .account import Account
 from .accountflags import AccountFlags
 from .accountinfo import AccountInfo
+from .accountinfoconverter import build_account_info_converter
 from .accountliquidator import AccountLiquidator, NullAccountLiquidator
 from .accountscout import ScoutReport, AccountScout
 from .addressableaccount import AddressableAccount

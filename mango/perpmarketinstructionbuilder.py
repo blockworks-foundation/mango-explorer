@@ -23,7 +23,7 @@ from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import Group
 from .marketinstructionbuilder import MarketInstructionBuilder
-from .instructions import build_cancel_perp_order_instructions, build_place_perp_order_instructions
+from .instructions import build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_place_perp_order_instructions
 from .orders import Order
 from .perpmarket import PerpMarket
 from .wallet import Wallet
@@ -62,9 +62,8 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
     def build_settle_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
-    def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
-        # return build_mango_consume_events_instructions(self.context, self.wallet, self.group, self.account, self.perp_market, limit)
-        return CombinableInstructions.empty()
+    def build_crank_instructions(self, account_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+        return build_mango_consume_events_instructions(self.context, self.group, self.perp_market, account_addresses, limit)
 
     def __str__(self) -> str:
         return """« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝚜 »"""

@@ -442,20 +442,27 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
-def build_mango_consume_events_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket, limit: Decimal = Decimal(32)) -> CombinableInstructions:
-    # Accounts expected by this instruction (6):
-    # 0. `[]` mangoGroupPk
-    # 1. `[]` perpMarketPk
-    # 2. `[writable]` eventQueuePk
-    # 3+ `[writable]` mangoAccountPks...
+def build_mango_consume_events_instructions(context: Context, group: Group, perp_market: PerpMarket, account_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    # Accounts expected by this instruction:
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: false, isWritable: false, pubkey: mangoCachePk },
+    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: eventQueuePk },
+    # ...mangoAccountPks.sort().map((pubkey) => ({
+    #     isSigner: false,
+    #     isWritable: true,
+    #     pubkey,
+    # })),
 
     instructions = [
         TransactionInstruction(
             keys=[
                 AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.event_queue),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address)
+                *list([AccountMeta(is_signer=False, is_writable=True,
+                                   pubkey=account_address) for account_address in account_addresses])
             ],
             program_id=context.program_id,
             data=layouts.CONSUME_EVENTS.build(

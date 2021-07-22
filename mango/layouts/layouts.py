@@ -971,9 +971,7 @@ PERP_EVENT_QUEUE = construct.Struct(
     "head" / DecimalAdapter(),
     "count" / DecimalAdapter(),
     "seq_num" / DecimalAdapter(),
-    "events" / construct.RepeatUntil(lambda obj, lst, ctx: len(lst) == ctx["seq_num"],
-                                     construct.Select(FILL_EVENT, OUT_EVENT, UNKNOWN_EVENT))
-    # "events" / construct.GreedyRange(FILL_EVENT)
+    "events" / construct.GreedyRange(construct.Select(FILL_EVENT, OUT_EVENT, UNKNOWN_EVENT))
 )
 
 # # Instruction Structs
