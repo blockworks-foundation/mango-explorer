@@ -11,7 +11,7 @@ Run these notebooks on Binder: [![Binder](https://mybinder.org/badge_logo.svg)](
 
 **I am not yet confident in the figures and calculations. Please don't rely on this code yet!**
 
-This is the start of a project to explore and provide useful code for [Mango Markets](https://mango.markets/).
+This is a project to explore and provide useful code for [Mango Markets](https://mango.markets/).
 
 There are some notebook pages to explore Mango account structures for your own accounts.
 
@@ -41,8 +41,6 @@ Most notebooks are currently 'runnable' - if you open them in your browser and p
 
 Mango Markets should set up your account automatically for trading, but the requirements for running a liquidator can be a bit more extensive. For instance, for trading you need token accounts for both tokens in the trade but to run a liquidator you need token accounts for all tokens in the `Group`.
 
-The [AccountScout](AccountScout.ipynb) notebook can verify any user's root account to make sure it meets the requirements of the liquidator.
-
 
 ## Show your Mango margin accounts
 
@@ -51,7 +49,12 @@ To try this out, go to the [Show Account](ShowAccount.ipynb) page and enter your
 
 ## Show all Mango margin accounts
 
-To try this out, go to the [Show All Accounts](ShowAllAccounts.ipynb) page and run the code.
+To try this out, go to the [Show All Margin Accounts](ShowAllMarginAccounts.ipynb) page and run the code.
+
+
+## Show details of the current Mango gorup
+
+You can use the [Show Group](ShowGroup.ipynb) page to inspect the details of the current Mango group.
 
 
 ## Load all margin accounts into a Pandas `DataFrame`
@@ -65,20 +68,6 @@ The [Pandas](Pandas.ipynb) page can currently show you:
 * The top ten margin accounts with the most assets.
 * The top ten margin accounts with the most liabilities.
 * The top ten margin accounts with the lowest collateralisation.
-
-
-## Structure of this project
-
-The code is (nearly) all Python in Jupyter Notebooks.
-
-Some notebooks are more code files than useful notebooks themselves (although being able to easily run the code is still a boon):
-* The [Layouts](Layouts.ipynb) notebook contains the low-level Python data structures for interpreting raw Solana program data.
-* The [BaseModel](BaseModel.ipynb) notebook contains higher-level classes for loading and working with that data.
-
-Other notebooks are more user-oriented:
-* [Show Account](ShowAccount.ipynb) to show data pertaining to a single Mango Markets margin account.
-* [Show All Accounts](ShowAllAccounts.ipynb) to show data for all Mango Markets margin accounts.
-* [Pandas](Pandas.ipynb) to load data into a [Pandas](https://pandas.pydata.org/) `DataFrame` to allow for further manipulation and analysis.
 
 
 ## References
