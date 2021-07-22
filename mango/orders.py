@@ -116,7 +116,13 @@ class Order(typing.NamedTuple):
         return Order(id=id, client_id=client_id, owner=SYSTEM_PROGRAM_ADDRESS, side=side, price=Decimal(0), quantity=Decimal(0), order_type=OrderType.UNKNOWN)
 
     def __str__(self):
-        return f"« 𝙾𝚛𝚍𝚎𝚛 [{self.owner}] {self.side} for {self.quantity:,.8f} at {self.price:.8f} [ID: {self.id} / {self.client_id}] {self.order_type} »"
+        owner: str = ""
+        if self.owner != SYSTEM_PROGRAM_ADDRESS:
+            owner = f"[{self.owner}] "
+        order_type: str = ""
+        if self.order_type != OrderType.UNKNOWN:
+            order_type = f" {self.order_type}"
+        return f"« 𝙾𝚛𝚍𝚎𝚛 {owner}{self.side} for {self.quantity:,.8f} at {self.price:.8f} [ID: {self.id} / {self.client_id}]{order_type} »"
 
     def __repr__(self) -> str:
         return f"{self}"

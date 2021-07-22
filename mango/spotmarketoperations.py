@@ -56,32 +56,29 @@ class SpotMarketOperations(MarketOperations):
         self.open_orders_address = self.account.spot_open_orders[self.market_index]
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
-        self.logger.info(
-            f"Cancelling order {order.id} for quantity {order.quantity} at price {order.price} on market {self.spot_market.symbol} with client ID {order.client_id}.")
+        self.logger.info(f"Cancelling {self.spot_market.symbol} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
+        cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
         open_orders_to_crank: typing.Sequence[PublicKey] = fetch_market_open_orders_addresses_to_crank(
             self.context, self.raw_market)
-        crank = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank)
-        # settle = self.market_instruction_builder.build_settle_instructions()
+        crank: CombinableInstructions = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank)
+        settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
 
-        return (signers + cancel + crank).execute(self.context)
+        return (signers + cancel + crank + settle).execute(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
-        self.logger.info(
-            f"Placing {order_type} {side} order for quantity {quantity} at price {price} on market {self.spot_market.symbol} with ID {client_id}.")
-
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        order = Order(id=0, client_id=client_id, side=side, price=price,
-                      quantity=quantity, owner=self.open_orders_address, order_type=order_type)
-        place = self.market_instruction_builder.build_place_order_instructions(order)
+        order: Order = Order(id=0, client_id=client_id, side=side, price=price,
+                             quantity=quantity, owner=self.open_orders_address, order_type=order_type)
+        self.logger.info(f"Placing {self.spot_market.symbol} order {order}.")
+        place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(order)
         open_orders_to_crank: typing.Sequence[PublicKey] = fetch_market_open_orders_addresses_to_crank(
             self.context, self.raw_market)
-        crank = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank)
-        # settle = self.market_instruction_builder.build_settle_instructions()
+        crank: CombinableInstructions = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank)
+        settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
 
-        (signers + place + crank).execute(self.context)
+        (signers + place + crank + settle).execute(self.context)
 
         return order
 

@@ -62,7 +62,7 @@ class MarketMaker:
 
             cancellations = mango.CombinableInstructions.empty()
             for to_cancel in reconciled.to_cancel:
-                self.logger.info(f"Cancelling {to_cancel}")
+                self.logger.info(f"Cancelling {self.market.symbol} {to_cancel}")
                 cancel = self.market_instruction_builder.build_cancel_order_instructions(to_cancel)
                 cancellations += cancel
 
@@ -72,7 +72,7 @@ class MarketMaker:
                 to_place_with_client_id = to_place.with_client_id(desired_client_id)
                 self.order_tracker.track(to_place_with_client_id)
 
-                self.logger.info(f"Placing {to_place_with_client_id}")
+                self.logger.info(f"Placing {self.market.symbol} {to_place_with_client_id}")
                 place_order = self.market_instruction_builder.build_place_order_instructions(to_place_with_client_id)
                 place_orders += place_order
 

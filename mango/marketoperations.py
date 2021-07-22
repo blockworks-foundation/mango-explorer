@@ -95,14 +95,14 @@ class NullMarketOperations(MarketOperations):
         self.market_name: str = market_name
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
-        self.logger.info(
-            f"Cancelling order {order.id} for quantity {order.quantity} at price {order.price} on market {self.market_name} with client ID {order.client_id}.")
+        self.logger.info(f"Cancelling order {order}.")
         return [""]
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
-        self.logger.info(
-            f"Placing {order_type} {side} order for quantity {quantity} at price {price} on market {self.market_name}.")
-        return Order(id=0, side=side, price=price, quantity=quantity, client_id=0, owner=SYSTEM_PROGRAM_ADDRESS, order_type=order_type)
+        order: Order = Order(id=0, side=side, price=price, quantity=quantity, client_id=0,
+                             owner=SYSTEM_PROGRAM_ADDRESS, order_type=order_type)
+        self.logger.info(f"Placing order {order}.")
+        return order
 
     def load_orders(self) -> typing.Sequence[Order]:
         return []

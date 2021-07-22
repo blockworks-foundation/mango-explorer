@@ -51,21 +51,18 @@ class PerpMarketOperations(MarketOperations):
         self.perp_market: PerpMarket = perp_market
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
-        self.logger.info(
-            f"Cancelling order {order.id} for quantity {order.quantity} at price {order.price} on market {self.market_name} with client ID {order.client_id}.")
+        self.logger.info(f"Cancelling {self.market_name} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        cancel = self.market_instruction_builder.build_cancel_order_instructions(order)
+        cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
         return (signers + cancel).execute_and_unwrap_transaction_ids(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
-        self.logger.info(
-            f"Placing {order_type} {side} order for quantity {quantity} at price {price} on market {self.market_name} with ID {client_id}.")
-
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        order = Order(id=0, client_id=client_id, owner=self.account.address,
-                      side=side, price=price, quantity=quantity, order_type=order_type)
-        place = self.market_instruction_builder.build_place_order_instructions(order)
+        order: Order = Order(id=0, client_id=client_id, owner=self.account.address,
+                             side=side, price=price, quantity=quantity, order_type=order_type)
+        self.logger.info(f"Placing {self.market_name} order {order}.")
+        place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(order)
         (signers + place).execute(self.context)
         return order
 
