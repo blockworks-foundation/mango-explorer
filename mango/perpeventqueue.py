@@ -114,7 +114,7 @@ class UnknownEvent(Event):
         return f"« 𝚄𝚗𝚔𝚗𝚘𝚠𝚗𝙴𝚟𝚎𝚗𝚝 [{self.owner}] »"
 
 
-def event_builder(event_layout) -> Event:
+def event_builder(event_layout) -> typing.Optional[Event]:
     if event_layout.event_type == b'\x00':
         if event_layout.maker is None and event_layout.taker is None:
             return None
@@ -133,7 +133,7 @@ def event_builder(event_layout) -> Event:
 class PerpEventQueue(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
                  head: Decimal, count: Decimal, sequence_number: Decimal,
-                 events: typing.Sequence[Event]):
+                 events: typing.Sequence[typing.Optional[Event]]):
         super().__init__(account_info)
         self.version: Version = version
 
@@ -141,7 +141,7 @@ class PerpEventQueue(AddressableAccount):
         self.head: Decimal = head
         self.count: Decimal = count
         self.sequence_number: Decimal = sequence_number
-        self.events: typing.Sequence[Event] = events
+        self.events: typing.Sequence[typing.Optional[Event]] = events
 
     @staticmethod
     def from_layout(layout: layouts.PERP_EVENT_QUEUE, account_info: AccountInfo, version: Version, data_size: int) -> "PerpEventQueue":
@@ -149,7 +149,7 @@ class PerpEventQueue(AddressableAccount):
         head: Decimal = layout.head
         count: Decimal = layout.count
         seq_num: Decimal = layout.seq_num
-        events: typing.Sequence[Event] = list(map(event_builder, layout.events))
+        events: typing.Sequence[typing.Optional[Event]] = list(map(event_builder, layout.events))
 
         return PerpEventQueue(account_info, version, meta_data, head, count, seq_num, events)
 

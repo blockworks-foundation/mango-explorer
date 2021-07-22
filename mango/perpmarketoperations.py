@@ -80,7 +80,9 @@ class PerpMarketOperations(MarketOperations):
         accounts_to_crank: typing.List[PublicKey] = []
         for index in range(int(event_queue.count)):
             modulo_index = (event_queue.head + index) % event_queue.capacity
-            event: Event = event_queue.events[int(modulo_index)]
+            event: typing.Optional[Event] = event_queue.events[int(modulo_index)]
+            if event is None:
+                raise Exception(f"Event at index {index} in perp market {self.perp_market.address} should not be None.")
             accounts_to_crank += event.accounts_to_crank
 
         all_accounts_to_crank: typing.List[PublicKey] = accounts_to_crank + [self.account.address]

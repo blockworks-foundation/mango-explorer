@@ -39,33 +39,38 @@ disposer = mango.DisposePropagator()
 manager = mango.WebSocketSubscriptionManager()
 disposer.add_disposable(manager)
 
-if args.account_type.upper() == "PERPEVENTS":
+if args.account_type.upper() == "ACCOUNTINFO":
+    raw_subscription = mango.WebSocketSubscription(
+        context, args.address, lambda account_info: account_info)
+    manager.add(raw_subscription)
+    publisher: rx.Observable = raw_subscription.publisher
+elif args.account_type.upper() == "PERPEVENTS":
     class EventSplitter:
         def __init__(self):
             self.seq_num = Decimal(0)
 
-        def split(self, item: mango.PerpEventQueue) -> typing.Sequence[mango.Event]:
+        def split(self, item: mango.PerpEventQueue) -> typing.Sequence[typing.Optional[mango.Event]]:
             events = item.events[int(self.seq_num):int(item.sequence_number)]
             self.seq_num = item.sequence_number
             return events
 
     splitter: EventSplitter = EventSplitter()
 
-    def _split_events(account_info: mango.AccountInfo):
+    def _split_events(account_info: mango.AccountInfo) -> typing.Sequence[typing.Optional[mango.Event]]:
         perp_event_queue = mango.PerpEventQueue.parse(account_info)
         return splitter.split(perp_event_queue)
 
-    converter = _split_events
-    subscription = mango.WebSocketSubscription(
+    converter: typing.Callable[[mango.AccountInfo], typing.Any] = _split_events
+    event_splitting_subscription = mango.WebSocketSubscription(
         context, args.address, lambda acc: acc)
-    manager.add(subscription)
-    publisher = subscription.publisher.pipe(rx.operators.flat_map(_split_events))
+    manager.add(event_splitting_subscription)
+    publisher = event_splitting_subscription.publisher.pipe(rx.operators.flat_map(_split_events))
 else:
     converter = mango.build_account_info_converter(context, args.account_type)
-    subscription = mango.WebSocketSubscription(
+    converting_subscription = mango.WebSocketSubscription(
         context, args.address, converter)
-    manager.add(subscription)
-    publisher = subscription.publisher
+    manager.add(converting_subscription)
+    publisher = converting_subscription.publisher
 
 publisher.subscribe(mango.PrintingObserverSubscriber(False))
 

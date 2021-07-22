@@ -36,9 +36,7 @@ from .perpeventqueue import PerpEventQueue
 
 def build_account_info_converter(context: Context, account_type: str) -> typing.Callable[[AccountInfo], AddressableAccount]:
     account_type_upper = account_type.upper()
-    if account_type_upper == "ACCOUNTINFO":
-        return lambda account_info: account_info
-    elif account_type_upper == "GROUP":
+    if account_type_upper == "GROUP":
         return lambda account_info: Group.parse(context, account_info)
     elif account_type_upper == "ACCOUNT":
         def account_loader(account_info: AccountInfo) -> Account:
