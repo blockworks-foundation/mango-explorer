@@ -24,6 +24,7 @@ from datetime import datetime
 from solana.rpc.api import Client
 
 from ...context import Context
+from ...ensuremarketloaded import ensure_market_loaded
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import Oracle, OracleProvider, OracleSource, Price
@@ -31,7 +32,7 @@ from ...orders import Order, Side
 from ...serummarket import SerumMarket, SerumMarketStub
 from ...serummarketlookup import SerumMarketLookup
 from ...spltokenlookup import SplTokenLookup
-from ...spotmarket import SpotMarket
+from ...spotmarket import SpotMarket, SpotMarketStub
 
 
 # # 🥭 Serum
@@ -94,17 +95,19 @@ class SerumOracleProvider(OracleProvider):
         super().__init__("Serum Oracle Factory")
 
     def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
-        if isinstance(market, SpotMarket):
-            serum_market = SerumMarket(market.address, market.base, market.quote, market.underlying_serum_market)
+        loaded_market: Market = ensure_market_loaded(context, market)
+        if isinstance(loaded_market, SpotMarket):
+            serum_market = SerumMarket(loaded_market.address, loaded_market.base,
+                                       loaded_market.quote, loaded_market.underlying_serum_market)
             return SerumOracle(serum_market)
-        elif isinstance(market, SerumMarket):
-            return SerumOracle(market)
+        elif isinstance(loaded_market, SerumMarket):
+            return SerumOracle(loaded_market)
         else:
-            fixed_symbol = self._market_symbol_to_serum_symbol(market.symbol)
+            fixed_symbol = self._market_symbol_to_serum_symbol(loaded_market.symbol)
             underlying_market = context.market_lookup.find_by_symbol(fixed_symbol)
             if underlying_market is None:
                 return None
-            if isinstance(underlying_market, SpotMarket) or isinstance(underlying_market, SerumMarket):
+            if isinstance(underlying_market, SpotMarketStub) or isinstance(underlying_market, SpotMarket) or isinstance(underlying_market, SerumMarketStub) or isinstance(underlying_market, SerumMarket):
                 return self.oracle_for_market(context, underlying_market)
 
         return None

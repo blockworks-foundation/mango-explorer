@@ -13,128 +13,91 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-from datetime import datetime
-from decimal import Decimal
+import typing
+
 from solana.publickey import PublicKey
 
 from .accountinfo import AccountInfo
-from .addressableaccount import AddressableAccount
 from .context import Context
 from .group import Group
-from .layouts import layouts
-from .metadata import Metadata
-from .tokeninfo import TokenInfo
-from .version import Version
+from .market import Market, InventorySource
+from .orderbookside import OrderBookSide
+from .orders import Order
+from .perpeventqueue import PerpEvent, PerpEventQueue
+from .perpmarketdetails import PerpMarketDetails
+from .token import Token
+
 
 # # 🥭 PerpMarket class
 #
-# `PerpMarket` holds details of a particular perp market.
+# This class encapsulates our knowledge of a Mango perps market.
 #
 
+class PerpMarket(Market):
+    def __init__(self, address: PublicKey, base: Token, quote: Token, underlying_perp_market: PerpMarketDetails):
+        super().__init__(address, InventorySource.ACCOUNT, base, quote)
+        self.underlying_perp_market: PerpMarketDetails = underlying_perp_market
 
-class PerpMarket(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version,
-                 meta_data: Metadata, group: Group, bids: PublicKey, asks: PublicKey,
-                 event_queue: PublicKey, base_lot_size: Decimal, quote_lot_size: Decimal, long_funding: Decimal,
-                 short_funding: Decimal, open_interest: Decimal, last_updated: datetime, seq_num: Decimal,
-                 fees_accrued: Decimal, max_depth_bips: Decimal, scaler: PublicKey,
-                 total_liquidity_points: Decimal, points_per_mngo: Decimal, mngo_vault: PublicKey):
-        super().__init__(account_info)
-        self.version: Version = version
+    @property
+    def symbol(self) -> str:
+        return f"{self.base.symbol}-PERP"
 
-        self.meta_data: Metadata = meta_data
-        self.group: Group = group
-        self.bids: PublicKey = bids
-        self.asks: PublicKey = asks
-        self.event_queue: PublicKey = event_queue
-        self.base_lot_size: Decimal = base_lot_size
-        self.quote_lot_size: Decimal = quote_lot_size
-        self.long_funding: Decimal = long_funding
-        self.short_funding: Decimal = short_funding
-        self.open_interest: Decimal = open_interest
-        self.last_updated: datetime = last_updated
-        self.seq_num: Decimal = seq_num
-        self.fees_accrued: Decimal = fees_accrued
-        self.max_depth_bips: Decimal = max_depth_bips
-        self.scaler: PublicKey = scaler
-        self.total_liquidity_points: Decimal = total_liquidity_points
-        self.points_per_mngo: Decimal = points_per_mngo
-        self.mngo_vault: PublicKey = mngo_vault
+    @property
+    def group(self) -> Group:
+        return self.underlying_perp_market.group
 
-        self.market_index = group.find_perp_market_index(self.address)
+    def unprocessed_events(self, context: Context) -> typing.Sequence[PerpEvent]:
+        event_queue: PerpEventQueue = PerpEventQueue.load(context, self.underlying_perp_market.event_queue)
+        return event_queue.unprocessed_events()
 
-        base_token = group.tokens[self.market_index]
-        if base_token is None:
-            raise Exception(f"Could not find base token at index {self.market_index} for perp market {self.address}.")
-        self.base_token: TokenInfo = base_token
+    def accounts_to_crank(self, context: Context, additional_account_to_crank: typing.Optional[PublicKey]) -> typing.Sequence[PublicKey]:
+        accounts_to_crank: typing.List[PublicKey] = []
+        for event_to_crank in self.unprocessed_events(context):
+            accounts_to_crank += event_to_crank.accounts_to_crank
 
-        quote_token = group.tokens[-1]
-        if quote_token is None:
-            raise Exception(f"Could not find shared quote token for perp market {self.address}.")
-        self.quote_token: TokenInfo = quote_token
+        if additional_account_to_crank is not None:
+            accounts_to_crank += [additional_account_to_crank]
 
-    @staticmethod
-    def from_layout(layout: layouts.PERP_MARKET, account_info: AccountInfo, version: Version, group: Group) -> "PerpMarket":
-        meta_data = Metadata.from_layout(layout.meta_data)
-        bids: PublicKey = layout.bids
-        asks: PublicKey = layout.asks
-        event_queue: PublicKey = layout.event_queue
-        base_lot_size: Decimal = layout.base_lot_size
-        quote_lot_size: Decimal = layout.quote_lot_size
+        seen = []
+        distinct = []
+        for account in accounts_to_crank:
+            account_str = account.to_base58()
+            if account_str not in seen:
+                distinct += [account]
+                seen += [account_str]
+        distinct.sort(key=lambda address: address._key or [0])
+        return distinct
 
-        long_funding: Decimal = layout.long_funding
-        short_funding: Decimal = layout.short_funding
-        open_interest: Decimal = layout.open_interest
-        last_updated: datetime = layout.last_updated
-        seq_num: Decimal = layout.seq_num
+    def orders(self, context: Context) -> typing.Sequence[Order]:
+        bids_address: PublicKey = self.underlying_perp_market.bids
+        asks_address: PublicKey = self.underlying_perp_market.asks
+        [bids, asks] = AccountInfo.load_multiple(context, [bids_address, asks_address])
+        bid_side = OrderBookSide.parse(context, bids, self.underlying_perp_market)
+        ask_side = OrderBookSide.parse(context, asks, self.underlying_perp_market)
+        return [*bid_side.orders(), *ask_side.orders()]
 
-        fees_accrued: Decimal = layout.fees_accrued
-        max_depth_bips: Decimal = layout.max_depth_bips
-        scaler: PublicKey = layout.scaler
-        total_liquidity_points: Decimal = layout.total_liquidity_points
-        points_per_mngo: Decimal = layout.points_per_mngo
-        mngo_vault: PublicKey = layout.mngo_vault
+    def __str__(self) -> str:
+        return f"« 𝙿𝚎𝚛𝚙𝚜𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}] »"
 
-        return PerpMarket(account_info, version, meta_data, group, bids, asks, event_queue,
-                          base_lot_size, quote_lot_size, long_funding, short_funding, open_interest,
-                          last_updated, seq_num, fees_accrued, max_depth_bips, scaler, total_liquidity_points,
-                          points_per_mngo, mngo_vault)
 
-    @staticmethod
-    def parse(account_info: AccountInfo, group: Group) -> "PerpMarket":
-        data = account_info.data
-        if len(data) != layouts.PERP_MARKET.sizeof():
-            raise Exception(
-                f"PerpMarket data length ({len(data)}) does not match expected size ({layouts.PERP_MARKET.sizeof()})")
+# # 🥭 PerpMarketStub class
+#
+# This class holds information to load a `PerpMarket` object but doesn't automatically load it.
+#
 
-        layout = layouts.PERP_MARKET.parse(data)
-        return PerpMarket.from_layout(layout, account_info, Version.V1, group)
+class PerpMarketStub(Market):
+    def __init__(self, address: PublicKey, base: Token, quote: Token, group_address: PublicKey):
+        super().__init__(address, InventorySource.ACCOUNT, base, quote)
+        self.group_address: PublicKey = group_address
 
-    @staticmethod
-    def load(context: Context, address: PublicKey, group: Group) -> "PerpMarket":
-        account_info = AccountInfo.load(context, address)
-        if account_info is None:
-            raise Exception(f"PerpMarket account not found at address '{address}'")
-        return PerpMarket.parse(account_info, group)
+    def load(self, context: Context, group: typing.Optional[Group] = None) -> PerpMarket:
+        actual_group: Group = group or Group.load(context, self.group_address)
+        underlying_perp_market: PerpMarketDetails = PerpMarketDetails.load(context, self.address, actual_group)
+        return PerpMarket(self.address, self.base, self.quote, underlying_perp_market)
 
-    def __str__(self):
-        return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝 {self.version} [{self.address}]
-    {self.meta_data}
-    Group: {self.group.address}
-    Bids: {self.bids}
-    Asks: {self.asks}
-    Event Queue: {self.event_queue}
-    Long Funding: {self.long_funding}
-    Short Funding: {self.short_funding}
-    Open Interest: {self.open_interest}
-    Base Lot Size: {self.base_lot_size}
-    Quote Lot Size: {self.quote_lot_size}
-    Last Updated: {self.last_updated}
-    Seq Num: {self.seq_num}
-    Fees Accrued: {self.fees_accrued}
-    Max Depth Bips: {self.max_depth_bips}
-    Scaler: {self.scaler}
-    Total Liquidity Points: {self.total_liquidity_points}
-    Points Per MNGO: {self.points_per_mngo}
-    MNGO Vault: {self.mngo_vault}
-»"""
+    @property
+    def symbol(self) -> str:
+        return f"{self.base.symbol}-PERP"
+
+    def __str__(self) -> str:
+        return f"« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} [{self.address}] »"

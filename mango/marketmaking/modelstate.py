@@ -29,7 +29,7 @@ class ModelState:
                  account_watcher: mango.LatestItemObserverSubscriber[mango.Account],
                  group_watcher: mango.LatestItemObserverSubscriber[mango.Group],
                  price_watcher: mango.LatestItemObserverSubscriber[mango.Price],
-                 perp_market_watcher: typing.Optional[mango.LatestItemObserverSubscriber[mango.PerpMarket]],
+                 perp_market_watcher: typing.Optional[mango.LatestItemObserverSubscriber[mango.PerpMarketDetails]],
                  open_orders_watcher: mango.LatestItemObserverSubscriber[mango.OpenOrders]
                  ):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -37,7 +37,7 @@ class ModelState:
         self.account_watcher: mango.LatestItemObserverSubscriber[mango.Account] = account_watcher
         self.group_watcher: mango.LatestItemObserverSubscriber[mango.Group] = group_watcher
         self.price_watcher: mango.LatestItemObserverSubscriber[mango.Price] = price_watcher
-        self.perp_market_watcher: typing.Optional[mango.LatestItemObserverSubscriber[mango.PerpMarket]
+        self.perp_market_watcher: typing.Optional[mango.LatestItemObserverSubscriber[mango.PerpMarketDetails]
                                                   ] = perp_market_watcher
         self.open_orders_watcher: mango.LatestItemObserverSubscriber[mango.OpenOrders] = open_orders_watcher
 
@@ -50,7 +50,7 @@ class ModelState:
         return self.account_watcher.latest
 
     @property
-    def perp_market(self) -> typing.Optional[mango.PerpMarket]:
+    def perp_market(self) -> typing.Optional[mango.PerpMarketDetails]:
         if self.perp_market_watcher is None:
             return None
         return self.perp_market_watcher.latest

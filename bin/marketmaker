@@ -135,7 +135,7 @@ def build_latest_serum_open_orders_observer(manager: mango.WebSocketSubscription
     return latest_serum_open_orders_observer
 
 
-def build_latest_perp_open_orders_observer(disposer: mango.DisposePropagator, perp_market: mango.PerpsMarket, account: mango.Account, account_subscription: mango.WebSocketSubscription[mango.Account]) -> mango.LatestItemObserverSubscriber[mango.OpenOrders]:
+def build_latest_perp_open_orders_observer(disposer: mango.DisposePropagator, perp_market: mango.PerpMarket, account: mango.Account, account_subscription: mango.WebSocketSubscription[mango.Account]) -> mango.LatestItemObserverSubscriber[mango.OpenOrders]:
     index = group.find_perp_market_index(perp_market.address)
 
     def _build_open_orders_from_account(account: mango.Account) -> mango.OpenOrders:
@@ -151,11 +151,11 @@ def build_latest_perp_open_orders_observer(disposer: mango.DisposePropagator, pe
     return latest_open_orders_observer
 
 
-def build_latest_perp_market_observer(manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, perp_market_info: mango.PerpMarketInfo, initial_perp_market: mango.PerpMarket, group_observer: mango.LatestItemObserverSubscriber[mango.Group]) -> mango.LatestItemObserverSubscriber[mango.PerpMarket]:
-    perp_market_subscription = mango.WebSocketSubscription[mango.PerpMarket](
-        context, perp_market_info.address, lambda account_info: mango.PerpMarket.parse(account_info, group_observer.latest))
+def build_latest_perp_market_observer(manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, perp_market_info: mango.PerpMarketInfo, initial_perp_market_details: mango.PerpMarketDetails, group_observer: mango.LatestItemObserverSubscriber[mango.Group]) -> mango.LatestItemObserverSubscriber[mango.PerpMarketDetails]:
+    perp_market_subscription = mango.WebSocketSubscription[mango.PerpMarketDetails](
+        context, perp_market_info.address, lambda account_info: mango.PerpMarketDetails.parse(account_info, group_observer.latest))
     manager.add(perp_market_subscription)
-    latest_perp_market_observer = mango.LatestItemObserverSubscriber(initial_perp_market)
+    latest_perp_market_observer = mango.LatestItemObserverSubscriber(initial_perp_market_details)
     perp_market_subscription.publisher.subscribe(latest_perp_market_observer)
     add_file_health("perp_market_subscription", perp_market_subscription.publisher, disposer)
     return latest_perp_market_observer
@@ -207,30 +207,22 @@ account_subscription, latest_account_observer = build_latest_account_observer(
     context, account, manager, disposer, latest_group_observer)
 latest_price_observer = build_latest_price_observer(context, disposer, args.oracle_provider, market)
 
-market_instruction_builder: typing.Optional[mango.MarketInstructionBuilder] = None
+market = mango.ensure_market_loaded(context, market)
+market_instruction_builder: mango.MarketInstructionBuilder = mango.create_market_instruction_builder(
+    context, wallet, args.dry_run, market, account)
 if isinstance(market, mango.SerumMarket):
-    market_as_serum_market: mango.SerumMarket = typing.cast(mango.SerumMarket, market)
     latest_perp_market_observer = None
-    latest_open_orders_observer = build_latest_serum_open_orders_observer(
-        manager, disposer, market_as_serum_market, context, wallet)
-    market_instruction_builder = mango.SerumMarketInstructionBuilder.load(context, wallet, market)
+    latest_open_orders_observer = build_latest_serum_open_orders_observer(manager, disposer, market, context, wallet)
 elif isinstance(market, mango.SpotMarket):
-    market_as_spot_market: mango.SpotMarket = typing.cast(mango.SpotMarket, market)
-    market_instruction_builder = mango.SpotMarketInstructionBuilder.load(context, wallet, group, account, market)
-
     latest_perp_market_observer = None
-    latest_open_orders_observer = build_latest_spot_open_orders_observer(manager, disposer, market_as_spot_market)
-elif isinstance(market, mango.PerpsMarket):
-    market_as_perps_market: mango.PerpsMarket = typing.cast(mango.PerpsMarket, market)
+    latest_open_orders_observer = build_latest_spot_open_orders_observer(manager, disposer, market)
+elif isinstance(market, mango.PerpMarket):
     perp_market_info = mango.PerpMarketInfo.find_by_address(group.perp_markets, market.address)
-    initial_perp_market = mango.PerpMarket.load(context, perp_market_info.address, group)
-
+    initial_perp_market_details = mango.PerpMarketDetails.load(context, perp_market_info.address, group)
     latest_perp_market_observer = build_latest_perp_market_observer(
-        manager, disposer, perp_market_info, initial_perp_market, latest_group_observer)
-    market_instruction_builder = mango.PerpMarketInstructionBuilder.load(
-        context, wallet, group, account, market)
+        manager, disposer, perp_market_info, initial_perp_market_details, latest_group_observer)
     latest_open_orders_observer = build_latest_perp_open_orders_observer(
-        disposer, market_as_perps_market, account, account_subscription)
+        disposer, market, account, account_subscription)
 else:
     raise Exception(f"Could not determine type of market {market.symbol}")
 

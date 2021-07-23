@@ -37,7 +37,7 @@ from .context import Context
 from .group import Group
 from .layouts import layouts
 from .orders import Order, OrderType, Side
-from .perpmarket import PerpMarket
+from .perpmarketdetails import PerpMarketDetails
 from .rootbank import NodeBank, RootBank
 from .token import Token
 from .tokenaccount import TokenAccount
@@ -348,7 +348,7 @@ def build_compound_serum_place_order_instructions(context: Context, wallet: Wall
 #
 
 
-def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, account: Account, perp_market: PerpMarket, order: Order) -> CombinableInstructions:
+def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, account: Account, perp_market_details: PerpMarketDetails, order: Order) -> CombinableInstructions:
     # Prefer cancelling by client ID so we don't have to keep track of the order side.
     if order.client_id != 0:
         data: bytes = layouts.CANCEL_PERP_ORDER_BY_CLIENT_ID.build(
@@ -378,9 +378,9 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, accou
                 AccountMeta(is_signer=False, is_writable=False, pubkey=account.group.address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
                 AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=perp_market.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.bids),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.asks)
+                AccountMeta(is_signer=False, is_writable=False, pubkey=perp_market_details.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks)
             ],
             program_id=context.program_id,
             data=data
@@ -389,20 +389,21 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, accou
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
-def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType) -> CombinableInstructions:
+def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market_details: PerpMarketDetails, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType) -> CombinableInstructions:
     # { buy: 0, sell: 1 }
     raw_side: int = 1 if side == Side.SELL else 0
     # { limit: 0, ioc: 1, postOnly: 2 }
     raw_order_type: int = 2 if order_type == OrderType.POST_ONLY else 1 if order_type == OrderType.IOC else 0
 
-    base_decimals = perp_market.base_token.decimals
-    quote_decimals = perp_market.quote_token.decimals
+    base_decimals = perp_market_details.base_token.decimals
+    quote_decimals = perp_market_details.quote_token.decimals
 
     base_factor = Decimal(10) ** base_decimals
     quote_factor = Decimal(10) ** quote_decimals
 
-    native_price = ((price * quote_factor) * perp_market.base_lot_size) / (perp_market.quote_lot_size * base_factor)
-    native_quantity = (quantity * base_factor) / perp_market.base_lot_size
+    native_price = ((price * quote_factor) * perp_market_details.base_lot_size) / \
+        (perp_market_details.quote_lot_size * base_factor)
+    native_quantity = (quantity * base_factor) / perp_market_details.base_lot_size
 
     # /// Accounts expected by this instruction (6):
     # /// 0. `[]` mango_group_ai - TODO
@@ -421,10 +422,10 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
                 AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
                 AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
                 AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.bids),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.asks),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.event_queue),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue),
                 *list([AccountMeta(is_signer=False, is_writable=False,
                                    pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders])
             ],
@@ -442,7 +443,7 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
-def build_mango_consume_events_instructions(context: Context, group: Group, perp_market: PerpMarket, account_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+def build_mango_consume_events_instructions(context: Context, group: Group, perp_market_details: PerpMarketDetails, account_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
     # Accounts expected by this instruction:
     # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
     # { isSigner: false, isWritable: false, pubkey: mangoCachePk },
@@ -459,8 +460,8 @@ def build_mango_consume_events_instructions(context: Context, group: Group, perp
             keys=[
                 AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
                 AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.event_queue),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue),
                 *list([AccountMeta(is_signer=False, is_writable=True,
                                    pubkey=account_address) for account_address in account_addresses])
             ],

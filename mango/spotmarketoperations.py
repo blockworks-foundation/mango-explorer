@@ -91,24 +91,14 @@ class SpotMarketOperations(MarketOperations):
         return (signers + crank).execute(self.context)
 
     def load_orders(self) -> typing.Sequence[Order]:
-        all_orders = self.spot_market.orders(self.context)
-        orders: typing.List[Order] = []
-        for serum_order in all_orders:
-            orders += [Order.from_serum_order(serum_order)]
-
-        return orders
+        return self.spot_market.orders(self.context)
 
     def load_my_orders(self) -> typing.Sequence[Order]:
         if not self.open_orders_address:
             return []
 
         all_orders = self.spot_market.orders(self.context)
-        serum_orders = [o for o in all_orders if o.open_order_address == self.open_orders_address]
-        orders: typing.List[Order] = []
-        for serum_order in serum_orders:
-            orders += [Order.from_serum_order(serum_order)]
-
-        return orders
+        return list([o for o in all_orders if o.owner == self.open_orders_address])
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.spot_market.symbol}] »"""

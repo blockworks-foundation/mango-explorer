@@ -26,6 +26,7 @@ from .group import Group
 from .layouts import layouts
 from .openorders import OpenOrders
 from .perpeventqueue import PerpEventQueue
+from .perpmarketdetails import PerpMarketDetails
 from .serumeventqueue import SerumEventQueue
 
 
@@ -52,5 +53,12 @@ def build_account_info_converter(context: Context, account_type: str) -> typing.
         return lambda account_info: PerpEventQueue.parse(account_info)
     elif account_type_upper == "SERUMEVENTQUEUE":
         return lambda account_info: SerumEventQueue.parse(account_info)
+    elif account_type_upper == "PERPMARKETDETAILS":
+        def perp_market_details_loader(account_info: AccountInfo) -> PerpMarketDetails:
+            layout_perp_market_details = layouts.PERP_MARKET.parse(account_info.data)
+            group_address = layout_perp_market_details.group
+            group: Group = Group.load(context, group_address)
+            return PerpMarketDetails.parse(account_info, group)
+        return perp_market_details_loader
 
     raise Exception(f"Could not find AccountInfo converter for type {account_type}.")

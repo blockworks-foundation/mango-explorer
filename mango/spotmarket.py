@@ -18,13 +18,13 @@ import typing
 
 from pyserum.market import Market as PySerumMarket
 from pyserum.market.orderbook import OrderBook as SerumOrderBook
-from pyserum.market.types import Order as SerumOrder
 from solana.publickey import PublicKey
 
 from .accountinfo import AccountInfo
 from .context import Context
 from .group import Group
 from .market import Market, InventorySource
+from .orders import Order
 from .serumeventqueue import SerumEvent, SerumEventQueue
 from .token import Token
 
@@ -45,14 +45,14 @@ class SpotMarket(Market):
         event_queue: SerumEventQueue = SerumEventQueue.load(context, self.underlying_serum_market.state.event_queue())
         return event_queue.unprocessed_events()
 
-    def orders(self, context: Context) -> typing.Sequence[SerumOrder]:
+    def orders(self, context: Context) -> typing.Sequence[Order]:
         raw_market = self.underlying_serum_market
         [bids_info, asks_info] = AccountInfo.load_multiple(
             context, [raw_market.state.bids(), raw_market.state.asks()])
         bids_orderbook = SerumOrderBook.from_bytes(raw_market.state, bids_info.data)
         asks_orderbook = SerumOrderBook.from_bytes(raw_market.state, asks_info.data)
 
-        return list(itertools.chain(bids_orderbook.orders(), asks_orderbook.orders()))
+        return list(map(Order.from_serum_order, itertools.chain(bids_orderbook.orders(), asks_orderbook.orders())))
 
     def __str__(self) -> str:
         return f"« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}] »"
@@ -69,10 +69,11 @@ class SpotMarketStub(Market):
         super().__init__(address, InventorySource.ACCOUNT, base, quote)
         self.group_address: PublicKey = group_address
 
-    def load(self, context: Context, group: Group) -> SpotMarket:
+    def load(self, context: Context, group: typing.Optional[Group]) -> SpotMarket:
+        actual_group: Group = group or Group.load(context, self.group_address)
         underlying_serum_market: PySerumMarket = PySerumMarket.load(
             context.client, self.address, context.dex_program_id)
-        return SpotMarket(self.address, self.base, self.quote, group, underlying_serum_market)
+        return SpotMarket(self.address, self.base, self.quote, actual_group, underlying_serum_market)
 
     def __str__(self) -> str:
         return f"« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} [{self.address}] »"

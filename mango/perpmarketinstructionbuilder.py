@@ -25,7 +25,7 @@ from .group import Group
 from .marketinstructionbuilder import MarketInstructionBuilder
 from .instructions import build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_place_perp_order_instructions
 from .orders import Order
-from .perpsmarket import PerpsMarket
+from .perpmarket import PerpMarket
 from .wallet import Wallet
 
 
@@ -39,37 +39,37 @@ from .wallet import Wallet
 #
 
 class PerpMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, perps_market: PerpsMarket):
+    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket):
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.group: Group = group
         self.account: Account = account
-        self.perps_market: PerpsMarket = perps_market
+        self.perp_market: PerpMarket = perp_market
 
     @staticmethod
-    def load(context: Context, wallet: Wallet, group: Group, account: Account, perps_market: PerpsMarket) -> "PerpMarketInstructionBuilder":
-        return PerpMarketInstructionBuilder(context, wallet, group, account, perps_market)
+    def load(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket) -> "PerpMarketInstructionBuilder":
+        return PerpMarketInstructionBuilder(context, wallet, group, account, perp_market)
 
     def build_cancel_order_instructions(self, order: Order) -> CombinableInstructions:
-        if self.perps_market.underlying_perp_market is None:
-            raise Exception(f"PerpsMarket {self.perps_market.symbol} has not been loaded.")
+        if self.perp_market.underlying_perp_market is None:
+            raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
         return build_cancel_perp_order_instructions(
-            self.context, self.wallet, self.account, self.perps_market.underlying_perp_market, order)
+            self.context, self.wallet, self.account, self.perp_market.underlying_perp_market, order)
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
-        if self.perps_market.underlying_perp_market is None:
-            raise Exception(f"PerpsMarket {self.perps_market.symbol} has not been loaded.")
+        if self.perp_market.underlying_perp_market is None:
+            raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
         return build_place_perp_order_instructions(
-            self.context, self.wallet, self.perps_market.underlying_perp_market.group, self.account, self.perps_market.underlying_perp_market, order.price, order.quantity, order.client_id, order.side, order.order_type)
+            self.context, self.wallet, self.perp_market.underlying_perp_market.group, self.account, self.perp_market.underlying_perp_market, order.price, order.quantity, order.client_id, order.side, order.order_type)
 
     def build_settle_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
     def build_crank_instructions(self, account_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
-        if self.perps_market.underlying_perp_market is None:
-            raise Exception(f"PerpsMarket {self.perps_market.symbol} has not been loaded.")
-        return build_mango_consume_events_instructions(self.context, self.group, self.perps_market.underlying_perp_market, account_addresses, limit)
+        if self.perp_market.underlying_perp_market is None:
+            raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
+        return build_mango_consume_events_instructions(self.context, self.group, self.perp_market.underlying_perp_market, account_addresses, limit)
 
     def __str__(self) -> str:
         return """« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝚜 »"""

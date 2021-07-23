@@ -10,8 +10,10 @@ from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS, SOL_MINT_ADDRESS, SOL_DECIMALS, SOL_DECIMAL_DIVISOR, WARNING_DISCLAIMER_TEXT, MangoConstants
 from .context import Context
 from .contextbuilder import ContextBuilder, default_cluster, default_cluster_url, default_program_id, default_dex_program_id, default_group_name, default_group_id
+from .createmarketinstructionbuilder import create_market_instruction_builder
 from .createmarketoperations import create_market_operations
 from .encoding import decode_binary, encode_binary, encode_key, encode_int
+from .ensuremarketloaded import ensure_market_loaded
 from .group import Group
 from .idsjsontokenlookup import IdsJsonTokenLookup
 from .idsjsonmarketlookup import IdsJsonMarketLookup
@@ -34,11 +36,11 @@ from .ownedtokenvalue import OwnedTokenValue
 from .oracle import OracleSource, Price, Oracle, OracleProvider
 from .oraclefactory import create_oracle_provider
 from .perpeventqueue import PerpEvent, PerpFillEvent, PerpOutEvent, PerpUnknownEvent, PerpEventQueue
-from .perpmarket import PerpMarket
+from .perpmarket import PerpMarket, PerpMarketStub
+from .perpmarketdetails import PerpMarketDetails
 from .perpmarketinfo import PerpMarketInfo
 from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarketoperations import PerpMarketOperations
-from .perpsmarket import PerpsMarket, PerpsMarketStub
 from .reconnectingwebsocket import ReconnectingWebsocket
 from .retrier import RetryWithPauses, retry_context
 from .rootbank import NodeBank, RootBank

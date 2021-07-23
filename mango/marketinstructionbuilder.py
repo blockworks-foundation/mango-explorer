@@ -77,8 +77,9 @@ class MarketInstructionBuilder(metaclass=abc.ABCMeta):
 #
 
 class NullMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self):
+    def __init__(self, symbol: str):
         super().__init__()
+        self.symbol: str = symbol
 
     def build_cancel_order_instructions(self, order: Order) -> CombinableInstructions:
         return CombinableInstructions.empty()
@@ -89,8 +90,8 @@ class NullMarketInstructionBuilder(MarketInstructionBuilder):
     def build_settle_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
-    def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(self, addresses_to_crank: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
     def __str__(self) -> str:
-        return """« 𝙽𝚞𝚕𝚕𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"""
+        return f"« 𝙽𝚞𝚕𝚕𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 {self.symbol} »"

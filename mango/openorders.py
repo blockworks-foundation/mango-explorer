@@ -30,7 +30,7 @@ from .encoding import encode_key
 from .group import Group
 from .layouts import layouts
 from .orders import Side
-from .perpsmarket import PerpsMarket
+from .perpmarket import PerpMarket
 from .version import Version
 
 
@@ -108,7 +108,7 @@ class OpenOrders(AddressableAccount):
                           quote_token_total, placed_orders, layout.referrer_rebate_accrued)
 
     @staticmethod
-    def from_perps_account_layout(context: Context, account: Account, perp_market: PerpsMarket, perp_open_orders: layouts.PERP_OPEN_ORDERS) -> "OpenOrders":
+    def from_perps_account_layout(context: Context, account: Account, perp_market: PerpMarket, perp_open_orders: layouts.PERP_OPEN_ORDERS) -> "OpenOrders":
         account_flags = AccountFlags(Version.UNSPECIFIED, True, False,
                                      True, False, False, False, False, False)
         placed_orders = PlacedOrder.build_from_open_orders_data(

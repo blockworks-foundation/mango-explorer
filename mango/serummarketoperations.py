@@ -87,12 +87,7 @@ class SerumMarketOperations(MarketOperations):
         return (signers + crank).execute(self.context)
 
     def load_orders(self) -> typing.Sequence[Order]:
-        all_orders = self.serum_market.orders(self.context)
-        orders: typing.List[Order] = []
-        for serum_order in all_orders:
-            orders += [Order.from_serum_order(serum_order)]
-
-        return orders
+        return self.serum_market.orders(self.context)
 
     def load_my_orders(self) -> typing.Sequence[Order]:
         open_orders_address = self.market_instruction_builder.open_orders_address
@@ -100,12 +95,7 @@ class SerumMarketOperations(MarketOperations):
             return []
 
         all_orders = self.serum_market.orders(self.context)
-        serum_orders = [o for o in all_orders if o.open_order_address == open_orders_address]
-        orders: typing.List[Order] = []
-        for serum_order in serum_orders:
-            orders += [Order.from_serum_order(serum_order)]
-
-        return orders
+        return list([o for o in all_orders if o.owner == open_orders_address])
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.serum_market.symbol}] »"""
