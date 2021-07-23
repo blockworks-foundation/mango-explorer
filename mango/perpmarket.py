@@ -117,21 +117,6 @@ class PerpMarket(AddressableAccount):
             raise Exception(f"PerpMarket account not found at address '{address}'")
         return PerpMarket.parse(account_info, group)
 
-    @staticmethod
-    def load_with_group(context: Context, address: PublicKey) -> "PerpMarket":
-        account_info = AccountInfo.load(context, address)
-        if account_info is None:
-            raise Exception(f"PerpMarket account not found at address '{address}'")
-
-        data = account_info.data
-        if len(data) != layouts.PERP_MARKET.sizeof():
-            raise Exception(
-                f"PerpMarket data length ({len(data)}) does not match expected size ({layouts.PERP_MARKET.sizeof()})")
-
-        layout = layouts.PERP_MARKET.parse(data)
-        group = Group.load(context, layout.group)
-        return PerpMarket.from_layout(layout, account_info, Version.V1, group)
-
     def __str__(self):
         return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝 {self.version} [{self.address}]
     {self.meta_data}

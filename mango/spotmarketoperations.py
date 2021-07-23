@@ -48,8 +48,6 @@ class SpotMarketOperations(MarketOperations):
         self.market_index = group.find_spot_market_index(spot_market.address)
         self.open_orders_address = self.account.spot_open_orders[self.market_index]
 
-        self.spot_market.ensure_loaded(context)
-
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
         self.logger.info(f"Cancelling {self.spot_market.symbol} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)

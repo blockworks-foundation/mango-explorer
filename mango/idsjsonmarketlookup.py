@@ -22,8 +22,8 @@ from solana.publickey import PublicKey
 from .constants import MangoConstants
 from .market import Market
 from .marketlookup import MarketLookup
-from .perpsmarket import PerpsMarket
-from .spotmarket import SpotMarket
+from .perpsmarket import PerpsMarketStub
+from .spotmarket import SpotMarketStub
 from .token import Token
 
 
@@ -56,9 +56,9 @@ class IdsJsonMarketLookup(MarketLookup):
         quote = Token.find_by_symbol(tokens, quote_symbol)
         address = PublicKey(data["publicKey"])
         if market_type == IdsJsonMarketType.PERP:
-            return PerpsMarket(base, quote, address, group_address)
+            return PerpsMarketStub(address, base, quote, group_address)
         else:
-            return SpotMarket(base, quote, address, group_address)
+            return SpotMarketStub(address, base, quote, group_address)
 
     @staticmethod
     def _load_tokens(data: typing.Dict) -> typing.Sequence[Token]:

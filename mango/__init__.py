@@ -20,7 +20,7 @@ from .instructiontype import InstructionType
 from .liquidatablereport import LiquidatableState, LiquidatableReport
 from .liquidationevent import LiquidationEvent
 from .liquidationprocessor import LiquidationProcessor, LiquidationProcessorState
-from .market import AddressableMarket, InventorySource, Market
+from .market import InventorySource, Market
 from .marketinstructionbuilder import MarketInstructionBuilder, NullMarketInstructionBuilder
 from .marketlookup import MarketLookup, NullMarketLookup, CompoundMarketLookup
 from .marketoperations import MarketOperations, NullMarketOperations
@@ -38,16 +38,16 @@ from .perpmarket import PerpMarket
 from .perpmarketinfo import PerpMarketInfo
 from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarketoperations import PerpMarketOperations
-from .perpsmarket import PerpsMarket
+from .perpsmarket import PerpsMarket, PerpsMarketStub
 from .reconnectingwebsocket import ReconnectingWebsocket
 from .retrier import RetryWithPauses, retry_context
 from .rootbank import NodeBank, RootBank
-from .serummarket import SerumMarket
+from .serummarket import SerumMarket, SerumMarketStub
 from .serummarketlookup import SerumMarketLookup
 from .serummarketinstructionbuilder import SerumMarketInstructionBuilder
 from .serummarketoperations import SerumMarketOperations
 from .spltokenlookup import SplTokenLookup
-from .spotmarket import SpotMarket
+from .spotmarket import SpotMarket, SpotMarketStub
 from .spotmarketinfo import SpotMarketInfo
 from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
 from .token import Token, SolToken

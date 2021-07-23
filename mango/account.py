@@ -132,6 +132,11 @@ class Account(AddressableAccount):
             accounts += [account]
         return accounts
 
+    @staticmethod
+    def load_primary_for_owner(context: Context, owner: PublicKey, group: Group) -> "Account":
+        # Don't try to do anything smart (yet). Just return the first account. Might need to be smarter in the future.
+        return Account.load_all_for_owner(context, owner, group)[0]
+
     def __str__(self):
         deposits = "\n        ".join(
             [f"{deposit}" for deposit in self.deposits if deposit is not None and deposit.value != Decimal(0)] or ["None"])

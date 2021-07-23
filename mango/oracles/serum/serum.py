@@ -21,17 +21,14 @@ import rx.operators as ops
 import typing
 
 from datetime import datetime
-from decimal import Decimal
-from pyserum.market.orderbook import OrderBook
-from pyserum.market import Market as RawSerumMarket
 from solana.rpc.api import Client
 
-from ...accountinfo import AccountInfo
 from ...context import Context
-from ...market import AddressableMarket, Market
+from ...market import Market
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import Oracle, OracleProvider, OracleSource, Price
-from ...serummarket import SerumMarket
+from ...orders import Order, Side
+from ...serummarket import SerumMarket, SerumMarketStub
 from ...serummarketlookup import SerumMarketLookup
 from ...spltokenlookup import SplTokenLookup
 from ...spotmarket import SpotMarket
@@ -50,12 +47,11 @@ from ...spotmarket import SpotMarket
 
 
 class SerumOracle(Oracle):
-    def __init__(self, market: AddressableMarket):
+    def __init__(self, market: SerumMarket):
         name = f"Serum Oracle for {market.symbol}"
         super().__init__(name, market)
-        self.market: AddressableMarket = market
+        self.market: SerumMarket = market
         self.source: OracleSource = OracleSource("Serum", name, market)
-        self._serum_market: RawSerumMarket = None
 
     def fetch_price(self, context: Context) -> Price:
         # TODO: Do this right?
@@ -64,27 +60,19 @@ class SerumOracle(Oracle):
         context.cluster_url = "https://solana-api.projectserum.com"
         context.client = Client(context.cluster_url)
         mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(SplTokenLookup.DefaultDataFilepath)
-        mainnet_market = mainnet_serum_market_lookup.find_by_symbol(self.market.symbol) or self.market
-        adjusted_market: AddressableMarket = typing.cast(AddressableMarket, mainnet_market)
-        if self._serum_market is None:
-            self._serum_market = RawSerumMarket.load(context.client, adjusted_market.address, context.dex_program_id)
+        adjusted_market = self.market
+        mainnet_adjusted_market: typing.Optional[Market] = mainnet_serum_market_lookup.find_by_symbol(
+            self.market.symbol)
+        if mainnet_adjusted_market is not None:
+            adjusted_market_stub = typing.cast(SerumMarketStub, mainnet_adjusted_market)
+            adjusted_market = adjusted_market_stub.load(context)
 
-        bids_address = self._serum_market.state.bids()
-        asks_address = self._serum_market.state.asks()
-        bid_ask_account_infos = AccountInfo.load_multiple(context, [bids_address, asks_address])
-        if len(bid_ask_account_infos) != 2:
-            raise Exception(
-                f"Failed to get bid/ask data from Serum for market address {adjusted_market.address} (bids: {bids_address}, asks: {asks_address}).")
-        bids = OrderBook.from_bytes(self._serum_market.state, bid_ask_account_infos[0].data)
-        asks = OrderBook.from_bytes(self._serum_market.state, bid_ask_account_infos[1].data)
+        orders: typing.Sequence[Order] = adjusted_market.orders(context)
+        top_bid = max([order.price for order in orders if order.side == Side.BUY])
+        top_ask = min([order.price for order in orders if order.side == Side.SELL])
+        mid_price = (top_bid + top_ask) / 2
 
-        top_bid = list(bids.orders())[-1]
-        top_ask = list(asks.orders())[0]
-        top_bid_price = self.market.quote.round(Decimal(top_bid.info.price))
-        top_ask_price = self.market.quote.round(Decimal(top_ask.info.price))
-        mid_price = (top_bid_price + top_ask_price) / 2
-
-        return Price(self.source, datetime.now(), self.market, top_bid_price, mid_price, top_ask_price)
+        return Price(self.source, datetime.now(), self.market, top_bid, mid_price, top_ask)
 
     def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
         return rx.interval(1).pipe(
@@ -107,7 +95,8 @@ class SerumOracleProvider(OracleProvider):
 
     def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
         if isinstance(market, SpotMarket):
-            return SerumOracle(market)
+            serum_market = SerumMarket(market.address, market.base, market.quote, market.underlying_serum_market)
+            return SerumOracle(serum_market)
         elif isinstance(market, SerumMarket):
             return SerumOracle(market)
         else:
@@ -116,7 +105,7 @@ class SerumOracleProvider(OracleProvider):
             if underlying_market is None:
                 return None
             if isinstance(underlying_market, SpotMarket) or isinstance(underlying_market, SerumMarket):
-                return SerumOracle(underlying_market)
+                return self.oracle_for_market(context, underlying_market)
 
         return None
 

@@ -17,7 +17,6 @@
 import abc
 import enum
 import logging
-import typing
 
 from solana.publickey import PublicKey
 
@@ -37,12 +36,13 @@ class InventorySource(enum.Enum):
 
 # # 🥭 Market class
 #
-# This class describes a crypto market. It *must* have a base token and a quote token.
+# This class describes a crypto market. It *must* have an address, a base token and a quote token.
 #
 
 class Market(metaclass=abc.ABCMeta):
-    def __init__(self, inventory_source: InventorySource, base: Token, quote: Token):
+    def __init__(self, address: PublicKey, inventory_source: InventorySource, base: Token, quote: Token):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.address: PublicKey = address
         self.inventory_source: InventorySource = inventory_source
         self.base: Token = base
         self.quote: Token = quote
@@ -51,36 +51,8 @@ class Market(metaclass=abc.ABCMeta):
     def symbol(self) -> str:
         return f"{self.base.symbol}/{self.quote.symbol}"
 
-    @abc.abstractmethod
-    def load(self, context: typing.Any) -> None:
-        raise NotImplementedError("Market.load() is not implemented on the base type.")
-
-    @abc.abstractmethod
-    def ensure_loaded(self, context: typing.Any) -> None:
-        raise NotImplementedError("Market.ensure_loaded() is not implemented on the base type.")
-
     def __str__(self) -> str:
         return f"« 𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} »"
 
     def __repr__(self) -> str:
         return f"{self}"
-
-
-# # 🥭 AddressableMarket class
-#
-# This class describes a crypto market. It *must* have a base token and a quote token.
-#
-
-class AddressableMarket(Market):
-    def __init__(self, inventory_source: InventorySource, base: Token, quote: Token, address: PublicKey):
-        super().__init__(inventory_source, base, quote)
-        self.address: PublicKey = address
-
-    def load(self, _: typing.Any) -> None:
-        pass
-
-    def ensure_loaded(self, _: typing.Any) -> None:
-        pass
-
-    def __str__(self) -> str:
-        return f"« 𝙰𝚍𝚍𝚛𝚎𝚜𝚜𝚊𝚋𝚕𝚎𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}] »"

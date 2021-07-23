@@ -46,8 +46,6 @@ class PerpMarketOperations(MarketOperations):
         self.account: Account = account
         self.perps_market: PerpsMarket = perps_market
 
-        self.perps_market.ensure_loaded(context)
-
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
         self.logger.info(f"Cancelling {self.market_name} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)

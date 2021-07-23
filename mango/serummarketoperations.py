@@ -42,8 +42,6 @@ class SerumMarketOperations(MarketOperations):
         self.serum_market: SerumMarket = serum_market
         self.market_instruction_builder: SerumMarketInstructionBuilder = market_instruction_builder
 
-        self.serum_market.ensure_loaded(context)
-
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
         self.logger.info(f"Cancelling {self.serum_market.symbol} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)

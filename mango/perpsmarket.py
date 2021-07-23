@@ -19,7 +19,8 @@ from solana.publickey import PublicKey
 
 from .accountinfo import AccountInfo
 from .context import Context
-from .market import AddressableMarket, InventorySource
+from .group import Group
+from .market import Market, InventorySource
 from .orderbookside import OrderBookSide
 from .orders import Order
 from .perpeventqueue import PerpEvent, PerpEventQueue
@@ -32,29 +33,20 @@ from .token import Token
 # This class encapsulates our knowledge of a Mango perps market.
 #
 
-class PerpsMarket(AddressableMarket):
-    def __init__(self, base: Token, quote: Token, address: PublicKey, group_address: PublicKey):
-        super().__init__(InventorySource.ACCOUNT, base, quote, address)
-        self.group_address: PublicKey = group_address
-        self.underlying_perp_market: typing.Optional[PerpMarket] = None
-        self.loaded: bool = False
-
-    def load(self, context: Context) -> None:
-        self.underlying_perp_market = PerpMarket.load_with_group(context, self.address)
-        self.loaded = True
-
-    def ensure_loaded(self, context: Context) -> None:
-        if not self.loaded:
-            self.load(context)
+class PerpsMarket(Market):
+    def __init__(self, address: PublicKey, base: Token, quote: Token, underlying_perp_market: PerpMarket):
+        super().__init__(address, InventorySource.ACCOUNT, base, quote)
+        self.underlying_perp_market: PerpMarket = underlying_perp_market
 
     @property
     def symbol(self) -> str:
         return f"{self.base.symbol}-PERP"
 
-    def unprocessed_events(self, context: Context) -> typing.Sequence[PerpEvent]:
-        if self.underlying_perp_market is None:
-            raise Exception(f"PerpsMarket {self.symbol} has not been loaded.")
+    @property
+    def group(self) -> Group:
+        return self.underlying_perp_market.group
 
+    def unprocessed_events(self, context: Context) -> typing.Sequence[PerpEvent]:
         event_queue: PerpEventQueue = PerpEventQueue.load(context, self.underlying_perp_market.event_queue)
         return event_queue.unprocessed_events()
 
@@ -77,9 +69,6 @@ class PerpsMarket(AddressableMarket):
         return distinct
 
     def orders(self, context: Context) -> typing.Sequence[Order]:
-        if self.underlying_perp_market is None:
-            raise Exception(f"PerpsMarket {self.symbol} has not been loaded.")
-
         bids_address: PublicKey = self.underlying_perp_market.bids
         asks_address: PublicKey = self.underlying_perp_market.asks
         [bids, asks] = AccountInfo.load_multiple(context, [bids_address, asks_address])
@@ -89,3 +78,25 @@ class PerpsMarket(AddressableMarket):
 
     def __str__(self) -> str:
         return f"« 𝙿𝚎𝚛𝚙𝚜𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}] »"
+
+
+# # 🥭 PerpsMarketStub class
+#
+# This class holds information to load a `PerpsMarket` object but doesn't automatically load it.
+#
+
+class PerpsMarketStub(Market):
+    def __init__(self, address: PublicKey, base: Token, quote: Token, group_address: PublicKey):
+        super().__init__(address, InventorySource.ACCOUNT, base, quote)
+        self.group_address: PublicKey = group_address
+
+    def load(self, context: Context, group: Group) -> PerpsMarket:
+        underlying_perp_market: PerpMarket = PerpMarket.load(context, self.address, group)
+        return PerpsMarket(self.address, self.base, self.quote, underlying_perp_market)
+
+    @property
+    def symbol(self) -> str:
+        return f"{self.base.symbol}-PERP"
+
+    def __str__(self) -> str:
+        return f"« 𝙿𝚎𝚛𝚙𝚜𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} [{self.address}] »"

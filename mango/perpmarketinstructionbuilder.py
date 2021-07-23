@@ -47,8 +47,6 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         self.account: Account = account
         self.perps_market: PerpsMarket = perps_market
 
-        self.perps_market.ensure_loaded(context)
-
     @staticmethod
     def load(context: Context, wallet: Wallet, group: Group, account: Account, perps_market: PerpsMarket) -> "PerpMarketInstructionBuilder":
         return PerpMarketInstructionBuilder(context, wallet, group, account, perps_market)
