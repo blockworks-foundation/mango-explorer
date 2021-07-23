@@ -18,7 +18,7 @@ import mango  # nopep8
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
     description="Balance the value of tokens in a Mango Markets group to specific values or percentages.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--target", type=str, action="append", required=True,
                     help="token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5' or 'ETH:33%')")
@@ -34,7 +34,7 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
-    context = mango.Context.from_command_line_parameters(args)
+    context = mango.ContextBuilder.from_command_line_parameters(args)
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     action_threshold = args.action_threshold
     adjustment_factor = args.adjustment_factor

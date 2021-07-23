@@ -974,6 +974,44 @@ PERP_EVENT_QUEUE = construct.Struct(
     "events" / construct.GreedyRange(construct.Select(FILL_EVENT, OUT_EVENT, UNKNOWN_EVENT))
 )
 
+# # 🥭 SERUM_EVENT_QUEUE
+#
+# This is only here because there's a longstanding bug in the py-serum implementation that throws an exception
+# every now and then, making event queue processing unreliable.
+
+SERUM_EVENT_FLAGS = construct.BitsSwapped(
+    construct.BitStruct(
+        "fill" / construct.Flag,
+        "out" / construct.Flag,
+        "bid" / construct.Flag,
+        "maker" / construct.Flag,
+        construct.Padding(4)))
+
+SERUM_EVENT = construct.Struct(
+    "event_flags" / SERUM_EVENT_FLAGS,
+    "open_order_slot" / DecimalAdapter(1),
+    "fee_tier" / DecimalAdapter(1),
+    construct.Padding(5),
+    "native_quantity_released" / DecimalAdapter(),
+    "native_quantity_paid" / DecimalAdapter(),
+    "native_fee_or_rebate" / DecimalAdapter(),
+    "order_id" / DecimalAdapter(16),
+    "public_key" / PublicKeyAdapter(),
+    "client_order_id" / DecimalAdapter(),
+)
+
+SERUM_EVENT_QUEUE = construct.Struct(
+    construct.Padding(5),
+    "account_flags" / ACCOUNT_FLAGS,
+    "head" / DecimalAdapter(4),
+    construct.Padding(4),
+    "count" / DecimalAdapter(4),
+    construct.Padding(4),
+    "next_seq_num" / DecimalAdapter(4),
+    construct.Padding(4),
+    "events" / construct.GreedyRange(SERUM_EVENT)
+)
+
 # # Instruction Structs
 
 # ## MANGO_INSTRUCTION_VARIANT_FINDER

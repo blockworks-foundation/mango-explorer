@@ -26,6 +26,7 @@ from .group import Group
 from .layouts import layouts
 from .openorders import OpenOrders
 from .perpeventqueue import PerpEventQueue
+from .serumeventqueue import SerumEventQueue
 
 
 # # 🥭 build_account_info_converter function
@@ -49,5 +50,7 @@ def build_account_info_converter(context: Context, account_type: str) -> typing.
         return lambda account_info: OpenOrders.parse(account_info, Decimal(6), Decimal(6))
     elif account_type_upper == "PERPEVENTQUEUE":
         return lambda account_info: PerpEventQueue.parse(account_info)
+    elif account_type_upper == "SERUMEVENTQUEUE":
+        return lambda account_info: SerumEventQueue.parse(account_info)
 
     raise Exception(f"Could not find AccountInfo converter for type {account_type}.")

@@ -14,17 +14,11 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import itertools
 import typing
 
 from decimal import Decimal
-from pyserum.market import Market as PySerumMarket
-from pyserum.market._internal.queue import decode_event_queue
-from pyserum.market.orderbook import OrderBook as SerumOrderBook
-from pyserum.market.types import Order as SerumOrder
 from solana.publickey import PublicKey
 
-from .accountinfo import AccountInfo
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
@@ -46,16 +40,18 @@ class SerumMarketOperations(MarketOperations):
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.serum_market: SerumMarket = serum_market
-        self.raw_market: PySerumMarket = PySerumMarket.load(
-            context.client, serum_market.address, context.dex_program_id)
         self.market_instruction_builder: SerumMarketInstructionBuilder = market_instruction_builder
+
+        self.serum_market.ensure_loaded(context)
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
         self.logger.info(f"Cancelling {self.serum_market.symbol} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
-        open_orders_to_crank: typing.Sequence[PublicKey] = fetch_market_open_orders_addresses_to_crank(
-            self.context, self.raw_market)
+        open_orders_to_crank: typing.List[PublicKey] = []
+        for event in self.serum_market.unprocessed_events(self.context):
+            open_orders_to_crank += [event.public_key]
+
         crank: CombinableInstructions = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank)
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
         return (signers + cancel + crank + settle).execute_and_unwrap_transaction_ids(self.context)
@@ -69,8 +65,9 @@ class SerumMarketOperations(MarketOperations):
         self.logger.info(f"Placing {self.serum_market.symbol} order {order}.")
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(order)
 
-        open_orders_to_crank: typing.Sequence[PublicKey] = fetch_market_open_orders_addresses_to_crank(
-            self.context, self.raw_market)
+        open_orders_to_crank: typing.List[PublicKey] = []
+        for event in self.serum_market.unprocessed_events(self.context):
+            open_orders_to_crank += [event.public_key]
         crank: CombinableInstructions = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank)
 
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
@@ -85,22 +82,14 @@ class SerumMarketOperations(MarketOperations):
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        open_orders_to_crank: typing.Sequence[PublicKey] = fetch_market_open_orders_addresses_to_crank(
-            self.context, self.raw_market)
+        open_orders_to_crank: typing.List[PublicKey] = []
+        for event in self.serum_market.unprocessed_events(self.context):
+            open_orders_to_crank += [event.public_key]
         crank = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank, limit)
         return (signers + crank).execute(self.context)
 
-    def _load_serum_orders(self) -> typing.Sequence[SerumOrder]:
-        raw_market = self.market_instruction_builder.raw_market
-        [bids_info, asks_info] = AccountInfo.load_multiple(
-            self.context, [raw_market.state.bids(), raw_market.state.asks()])
-        bids_orderbook = SerumOrderBook.from_bytes(raw_market.state, bids_info.data)
-        asks_orderbook = SerumOrderBook.from_bytes(raw_market.state, asks_info.data)
-
-        return list(itertools.chain(bids_orderbook.orders(), asks_orderbook.orders()))
-
     def load_orders(self) -> typing.Sequence[Order]:
-        all_orders = self._load_serum_orders()
+        all_orders = self.serum_market.orders(self.context)
         orders: typing.List[Order] = []
         for serum_order in all_orders:
             orders += [Order.from_serum_order(serum_order)]
@@ -112,7 +101,7 @@ class SerumMarketOperations(MarketOperations):
         if not open_orders_address:
             return []
 
-        all_orders = self._load_serum_orders()
+        all_orders = self.serum_market.orders(self.context)
         serum_orders = [o for o in all_orders if o.open_order_address == open_orders_address]
         orders: typing.List[Order] = []
         for serum_order in serum_orders:
@@ -122,15 +111,3 @@ class SerumMarketOperations(MarketOperations):
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.serum_market.symbol}] »"""
-
-
-def fetch_market_open_orders_addresses_to_crank(context: Context, raw_market: PySerumMarket) -> typing.Sequence[PublicKey]:
-    event_queue_address: PublicKey = raw_market.state.event_queue()
-    open_orders_addresses: typing.List[PublicKey] = []
-    event_queue_account_info = AccountInfo.load(context, event_queue_address)
-    if event_queue_account_info is None:
-        raise Exception(
-            f"Could not load market {raw_market.state.public_key()} event queue from address {event_queue_address}.")
-    for event in decode_event_queue(event_queue_account_info.data):
-        open_orders_addresses += [event.public_key]
-    return open_orders_addresses

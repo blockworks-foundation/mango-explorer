@@ -17,7 +17,7 @@ import mango  # nopep8
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
     description="Run the Account Scout to display problems and information about an account.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey,
                     help="User's root address for the Account Scout to check (if not provided, the wallet address is used)")
@@ -32,7 +32,7 @@ try:
         wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
         address = wallet.address
 
-    context = mango.Context.from_command_line_parameters(args)
+    context = mango.ContextBuilder.from_command_line_parameters(args)
 
     logging.info(f"Context: {context}")
     logging.info(f"Address: {address}")

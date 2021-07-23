@@ -21,7 +21,7 @@ import mango  # nopep8
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
     description="Run the Transaction Scout to display information about a specific transaction.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 parser.add_argument("--since-state-filename", type=str, default="report.state",
                     help="The name of the state file containing the signature of the last transaction looked up")
 parser.add_argument("--instruction-type", type=lambda ins: mango.InstructionType[ins],
@@ -97,7 +97,7 @@ try:
     instruction_type = args.instruction_type
     sender = args.sender
 
-    context = mango.Context.from_command_line_parameters(args)
+    context = mango.ContextBuilder.from_command_line_parameters(args)
 
     logging.info(f"Context: {context}")
     logging.info(f"Since signature: {since_signature}")

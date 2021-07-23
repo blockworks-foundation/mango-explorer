@@ -19,7 +19,6 @@ from .context import Context
 from .group import Group
 from .market import Market
 from .marketoperations import MarketOperations, NullMarketOperations
-from .perpmarket import PerpMarket
 from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarketoperations import PerpMarketOperations
 from .perpsmarket import PerpsMarket
@@ -51,17 +50,15 @@ def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, ma
             context, wallet, group, account, market)
         return SpotMarketOperations(context, wallet, group, account, market, spot_market_instruction_builder)
     elif isinstance(market, PerpsMarket):
-        group = Group.load(context, context.group_id)
+        group = Group.load(context, market.group_address)
         accounts = Account.load_all_for_owner(context, wallet.address, group)
         account = accounts[0]
-        market_index = group.find_perp_market_index(market.address)
-        perp_market_info = group.perp_markets[market_index]
-        if perp_market_info is None:
-            raise Exception(f"No PerpMarketInfo in group {group.address} at index {market_index}")
-        perp_market = PerpMarket.load(context, perp_market_info.address, group)
+        market.ensure_loaded(context)
+        if market.underlying_perp_market is None:
+            raise Exception(f"PerpsMarket {market.symbol} has not been loaded.")
         perp_market_instruction_builder: PerpMarketInstructionBuilder = PerpMarketInstructionBuilder.load(
-            context, wallet, group, account, perp_market)
+            context, wallet, market.underlying_perp_market.group, account, market)
 
-        return PerpMarketOperations(market.symbol, context, wallet, perp_market_instruction_builder, account, perp_market)
+        return PerpMarketOperations(market.symbol, context, wallet, perp_market_instruction_builder, account, market)
     else:
         raise Exception(f"Could not find order placer for market {market.symbol}")

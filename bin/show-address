@@ -2,7 +2,6 @@
 
 import argparse
 import logging
-from mango.accountinfo import AccountInfo
 import os
 import os.path
 import sys
@@ -15,7 +14,7 @@ sys.path.insert(0, os.path.abspath(
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey, required=True, help="Address of the Solana account to watch")
 parser.add_argument("--account-type", type=str, default="AccountInfo",
                     help="Underlying object type of the data in the AccountInfo")
@@ -24,8 +23,8 @@ args = parser.parse_args()
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-context = mango.Context.from_command_line_parameters(args)
-converter: typing.Callable[[AccountInfo], typing.Any] = lambda account_info: account_info
+context = mango.ContextBuilder.from_command_line_parameters(args)
+converter: typing.Callable[[mango.AccountInfo], typing.Any] = lambda account_info: account_info
 if args.account_type.upper() != "ACCOUNTINFO":
     converter = mango.build_account_info_converter(context, args.account_type)
 

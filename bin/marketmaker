@@ -21,7 +21,7 @@ import mango.marketmaking.modelstate  # nopep8
 import mango.marketmaking.toleranceorderreconciler  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--market", type=str, required=True, help="market symbol to make market upon (e.g. ETH/USDC)")
 parser.add_argument("--account-index", type=int, default=0,
@@ -176,7 +176,7 @@ def build_latest_price_observer(context: mango.Context, disposer: mango.DisposeP
     return latest_price_observer
 
 
-context = mango.Context.from_command_line_parameters(args)
+context = mango.ContextBuilder.from_command_line_parameters(args)
 
 disposer = mango.DisposePropagator()
 manager = mango.WebSocketSubscriptionManager()
@@ -228,7 +228,7 @@ elif isinstance(market, mango.PerpsMarket):
     latest_perp_market_observer = build_latest_perp_market_observer(
         manager, disposer, perp_market_info, initial_perp_market, latest_group_observer)
     market_instruction_builder = mango.PerpMarketInstructionBuilder.load(
-        context, wallet, group, account, initial_perp_market)
+        context, wallet, group, account, market)
     latest_open_orders_observer = build_latest_perp_open_orders_observer(
         disposer, market_as_perps_market, account, account_subscription)
 else:

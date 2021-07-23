@@ -45,6 +45,25 @@ class MarketLookup(metaclass=abc.ABCMeta):
         raise NotImplementedError("MarketLookup.all_markets() is not implemented on the base type.")
 
 
+# # 🥭 NullMarketLookup class
+#
+# This class is a simple stub `MarketLookup` that never returns a `Market`.
+#
+
+class NullMarketLookup(MarketLookup):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:
+        return None
+
+    def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
+        return None
+
+    def all_markets(self) -> typing.Sequence[Market]:
+        return []
+
+
 # # 🥭 CompoundMarketLookup class
 #
 # This class allows multiple `MarketLookup` objects to be combined, returning the first valid lookup result

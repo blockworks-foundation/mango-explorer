@@ -15,7 +15,7 @@ import mango  # nopep8
 
 parser = argparse.ArgumentParser(
     description="Wraps Pure SOL to Wrapped SOL and adds it to the first Wrapped SOL account, creating that account if it doesn't exist.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of SOL to wrap")
 args = parser.parse_args()
@@ -23,7 +23,7 @@ args = parser.parse_args()
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-context = mango.Context.from_command_line_parameters(args)
+context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 wrapped_sol = context.token_lookup.find_by_symbol_or_raise("SOL")

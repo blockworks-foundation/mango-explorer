@@ -58,6 +58,22 @@ class TokenLookup(metaclass=abc.ABCMeta):
         return token
 
 
+# # 🥭 NullTokenLookup class
+#
+# This class is a simple stub `TokenLookup` that never returns a `Token`.
+#
+
+class NullTokenLookup(TokenLookup):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
+        return None
+
+    def find_by_mint(self, mint: PublicKey) -> typing.Optional[Token]:
+        return None
+
+
 # # 🥭 CompoundTokenLookup class
 #
 # This class allows multiple `TokenLookup` objects to be combined, returning the first valid lookup result

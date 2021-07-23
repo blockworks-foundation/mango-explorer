@@ -53,7 +53,9 @@ def fake_context() -> mango.Context:
                             program_id=fake_seeded_public_key("program ID"),
                             dex_program_id=fake_seeded_public_key("DEX program ID"),
                             group_name="TEST_GROUP",
-                            group_id=fake_seeded_public_key("group ID"))
+                            group_id=fake_seeded_public_key("group ID"),
+                            token_lookup=mango.NullTokenLookup(),
+                            market_lookup=mango.NullMarketLookup())
     context.client = MockClient()
     return context
 

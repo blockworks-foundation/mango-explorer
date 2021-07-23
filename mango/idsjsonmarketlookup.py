@@ -56,7 +56,7 @@ class IdsJsonMarketLookup(MarketLookup):
         quote = Token.find_by_symbol(tokens, quote_symbol)
         address = PublicKey(data["publicKey"])
         if market_type == IdsJsonMarketType.PERP:
-            return PerpsMarket(base, quote, address)
+            return PerpsMarket(base, quote, address, group_address)
         else:
             return SpotMarket(base, quote, address, group_address)
 

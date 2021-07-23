@@ -23,7 +23,7 @@ import mango.marketmaking.modelstate  # nopep8
 import mango.marketmaking.toleranceorderreconciler  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey, required=True, help="Address of the Solana account to watch")
 parser.add_argument("--account-type", type=str, required=True,
@@ -33,7 +33,7 @@ args = parser.parse_args()
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-context = mango.Context.from_command_line_parameters(args)
+context = mango.ContextBuilder.from_command_line_parameters(args)
 
 disposer = mango.DisposePropagator()
 manager = mango.WebSocketSubscriptionManager()
@@ -49,14 +49,14 @@ elif args.account_type.upper() == "PERPEVENTS":
         def __init__(self):
             self.seq_num = Decimal(0)
 
-        def split(self, item: mango.PerpEventQueue) -> typing.Sequence[typing.Optional[mango.Event]]:
+        def split(self, item: mango.PerpEventQueue) -> typing.Sequence[typing.Optional[mango.PerpEvent]]:
             events = item.events[int(self.seq_num):int(item.sequence_number)]
             self.seq_num = item.sequence_number
             return events
 
     splitter: EventSplitter = EventSplitter()
 
-    def _split_events(account_info: mango.AccountInfo) -> typing.Sequence[typing.Optional[mango.Event]]:
+    def _split_events(account_info: mango.AccountInfo) -> typing.Sequence[typing.Optional[mango.PerpEvent]]:
         perp_event_queue = mango.PerpEventQueue.parse(account_info)
         return splitter.split(perp_event_queue)
 

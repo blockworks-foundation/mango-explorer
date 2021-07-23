@@ -11,14 +11,14 @@ sys.path.insert(0, os.path.abspath(
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Initializes a Mango margin account")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-context = mango.Context.from_command_line_parameters(args).new_from_cluster("devnet")
+context = mango.ContextBuilder.from_command_line_parameters(args).new_from_cluster("devnet")
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 group = mango.Group.load(context, context.group_id)

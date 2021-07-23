@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath(
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows details of a Merps account.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey, required=False,
                     help="address of Merps account (defaults to the root address of the wallet)")
@@ -22,7 +22,7 @@ args = parser.parse_args()
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-context = mango.Context.from_command_line_parameters(args)
+context = mango.ContextBuilder.from_command_line_parameters(args)
 
 address = args.address
 if address is None:

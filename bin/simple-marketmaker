@@ -18,7 +18,7 @@ import mango  # nopep8
 import mango.simplemarketmaking.simplemarketmaker  # nopep8
 
 parser = argparse.ArgumentParser(description="Runs a simple market-maker.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--market", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)")
 parser.add_argument("--spread-ratio", type=Decimal, required=True,
@@ -39,7 +39,7 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
-    context = mango.Context.from_command_line_parameters(args)
+    context = mango.ContextBuilder.from_command_line_parameters(args)
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
     market_symbol = args.market.upper()

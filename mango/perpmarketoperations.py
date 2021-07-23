@@ -17,18 +17,14 @@
 import typing
 
 from decimal import Decimal
-from solana.publickey import PublicKey
 
 from .account import Account
-from .accountinfo import AccountInfo
 from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .marketoperations import MarketOperations
-from .orderbookside import OrderBookSide
 from .orders import Order, OrderType, Side
-from .perpeventqueue import Event, PerpEventQueue
-from .perpmarket import PerpMarket
 from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
+from .perpsmarket import PerpsMarket
 from .wallet import Wallet
 
 
@@ -41,20 +37,24 @@ from .wallet import Wallet
 class PerpMarketOperations(MarketOperations):
     def __init__(self, market_name: str, context: Context, wallet: Wallet,
                  market_instruction_builder: PerpMarketInstructionBuilder,
-                 account: Account, perp_market: PerpMarket):
+                 account: Account, perps_market: PerpsMarket):
         super().__init__()
         self.market_name: str = market_name
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.market_instruction_builder: PerpMarketInstructionBuilder = market_instruction_builder
         self.account: Account = account
-        self.perp_market: PerpMarket = perp_market
+        self.perps_market: PerpsMarket = perps_market
+
+        self.perps_market.ensure_loaded(context)
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
         self.logger.info(f"Cancelling {self.market_name} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
-        return (signers + cancel).execute_and_unwrap_transaction_ids(self.context)
+        accounts_to_crank = self.perps_market.accounts_to_crank(self.context, self.account.address)
+        crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank)
+        return (signers + cancel + crank).execute_and_unwrap_transaction_ids(self.context)
 
     def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
         client_id: int = self.context.random_client_id()
@@ -63,7 +63,9 @@ class PerpMarketOperations(MarketOperations):
                              side=side, price=price, quantity=quantity, order_type=order_type)
         self.logger.info(f"Placing {self.market_name} order {order}.")
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(order)
-        (signers + place).execute(self.context)
+        accounts_to_crank = self.perps_market.accounts_to_crank(self.context, self.account.address)
+        crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank)
+        (signers + place + crank).execute(self.context)
         return order
 
     def settle(self) -> typing.Sequence[str]:
@@ -73,36 +75,12 @@ class PerpMarketOperations(MarketOperations):
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        event_queue: PerpEventQueue = PerpEventQueue.load(self.context, self.perp_market.event_queue)
-        accounts_to_crank: typing.List[PublicKey] = []
-        for index in range(int(event_queue.count)):
-            modulo_index = (event_queue.head + index) % event_queue.capacity
-            event: typing.Optional[Event] = event_queue.events[int(modulo_index)]
-            if event is None:
-                raise Exception(f"Event at index {index} in perp market {self.perp_market.address} should not be None.")
-            accounts_to_crank += event.accounts_to_crank
-
-        all_accounts_to_crank: typing.List[PublicKey] = accounts_to_crank + [self.account.address]
-        seen = []
-        distinct = []
-        for account in all_accounts_to_crank:
-            account_str = account.to_base58()
-            if account_str not in seen:
-                distinct += [account]
-                seen += [account_str]
-        distinct.sort(key=lambda address: address._key or [0])
-
-        crank = self.market_instruction_builder.build_crank_instructions(distinct, limit)
+        accounts_to_crank = self.perps_market.accounts_to_crank(self.context, self.account.address)
+        crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank, limit)
         return (signers + crank).execute(self.context)
 
     def load_orders(self) -> typing.Sequence[Order]:
-        bids_address: PublicKey = self.perp_market.bids
-        asks_address: PublicKey = self.perp_market.asks
-        [bids, asks] = AccountInfo.load_multiple(self.context, [bids_address, asks_address])
-        bid_side = OrderBookSide.parse(self.context, bids, self.perp_market)
-        ask_side = OrderBookSide.parse(self.context, asks, self.perp_market)
-
-        return [*bid_side.orders(), *ask_side.orders()]
+        return self.perps_market.orders(self.context)
 
     def load_my_orders(self) -> typing.Sequence[Order]:
         orders = self.load_orders()

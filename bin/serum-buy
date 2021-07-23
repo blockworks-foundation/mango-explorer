@@ -16,7 +16,7 @@ import mango  # nopep8
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Buys an SPL token in a Serum market.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--symbol", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)")
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of token to buy")
@@ -32,7 +32,7 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
-    context = mango.Context.from_command_line_parameters(args)
+    context = mango.ContextBuilder.from_command_line_parameters(args)
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
     adjustment_factor = args.adjustment_factor

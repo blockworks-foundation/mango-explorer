@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath(
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Withdraw funds from a Mango account")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--symbol", type=str, required=True, help="token symbol to withdraw (e.g. USDC)")
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity token to withdraw")
@@ -26,7 +26,7 @@ args = parser.parse_args()
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-context = mango.Context.from_command_line_parameters(args)
+context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 group = mango.Group.load(context, context.group_id)

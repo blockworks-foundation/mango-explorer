@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath(
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Closes a Wrapped SOL account.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey,
                     help="Public key of the Wrapped SOL account to close")
@@ -22,7 +22,7 @@ args = parser.parse_args()
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-context = mango.Context.from_command_line_parameters(args)
+context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 wrapped_sol = context.token_lookup.find_by_symbol_or_raise("SOL")
