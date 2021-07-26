@@ -25,8 +25,6 @@ parser.add_argument("--account-index", type=int, default=0,
                     help="index of the account to use, if more than one available")
 parser.add_argument("--oracle-provider", type=str, required=True,
                     help="name of the price provider to use (e.g. pyth)")
-parser.add_argument("--spread-ratio", type=Decimal, action="append", default=[], required=True,
-                    help="fraction of the mid price to be added and subtracted to calculate buy and sell prices (can be specified multiple times)")
 parser.add_argument("--position-size-ratio", type=Decimal, required=True,
                     help="fraction of the token inventory to be bought or sold in each order (can be specified multiple times)")
 parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal("0.001"),
