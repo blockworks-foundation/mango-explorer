@@ -159,6 +159,16 @@ class Context:
                     return Context(self.cluster, self.cluster_url, program_id, dex_program_id, group_name, group_id, self.token_lookup, self.market_lookup)
         raise Exception(f"Could not find group with ID '{group_id}' in cluster '{self.cluster}'.")
 
+    def new_forced_to_devnet(self) -> "Context":
+        cluster: str = "devnet"
+        cluster_url: str = MangoConstants["cluster_urls"][cluster]
+        return Context(cluster, cluster_url, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
+
+    def new_forced_to_mainnet_beta(self) -> "Context":
+        cluster: str = "mainnet-beta"
+        cluster_url: str = MangoConstants["cluster_urls"][cluster]
+        return Context(cluster, cluster_url, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
+
     def __str__(self) -> str:
         return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝:
     Cluster: {self.cluster}

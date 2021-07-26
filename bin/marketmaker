@@ -153,7 +153,7 @@ def build_latest_perp_market_observer(manager: mango.WebSocketSubscriptionManage
 
 
 def build_latest_price_observer(context: mango.Context, disposer: mango.DisposePropagator, provider_name: str, market: mango.Market) -> mango.LatestItemObserverSubscriber[mango.Price]:
-    oracle_provider: mango.OracleProvider = mango.create_oracle_provider(provider_name)
+    oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, provider_name)
     oracle = oracle_provider.oracle_for_market(context, market)
     if oracle is None:
         raise Exception(f"Could not find oracle for market {market.symbol} from provider {provider_name}.")

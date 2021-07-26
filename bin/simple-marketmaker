@@ -49,7 +49,7 @@ try:
 
     market_operations: mango.MarketOperations = mango.create_market_operations(context, wallet, args.dry_run, market)
 
-    oracle_provider: mango.OracleProvider = mango.create_oracle_provider(args.oracle_provider)
+    oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, args.oracle_provider)
     oracle = oracle_provider.oracle_for_market(context, market)
     if oracle is None:
         raise Exception(f"Could not find oracle for spot market {market_symbol}")

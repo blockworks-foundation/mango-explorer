@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+from .context import Context
 from .oracle import OracleProvider
 from .oracles.ftx import ftx
 from .oracles.pythnetwork import pythnetwork
@@ -24,11 +25,17 @@ from .oracles.serum import serum
 # This file allows you to create a concreate OracleProvider for a specified provider name.
 #
 
-def create_oracle_provider(provider_name: str) -> OracleProvider:
+def create_oracle_provider(context: Context, provider_name: str) -> OracleProvider:
     if provider_name == "serum":
         return serum.SerumOracleProvider()
     elif provider_name == "ftx":
         return ftx.FtxOracleProvider()
     elif provider_name == "pyth":
-        return pythnetwork.PythOracleProvider()
+        return pythnetwork.PythOracleProvider(context)
+    elif provider_name == "pyth-mainnet-beta":
+        mainnet_beta_pyth_context: Context = context.new_forced_to_mainnet_beta()
+        return pythnetwork.PythOracleProvider(mainnet_beta_pyth_context)
+    elif provider_name == "pyth-devnet":
+        devnet_pyth_context: Context = context.new_forced_to_devnet()
+        return pythnetwork.PythOracleProvider(devnet_pyth_context)
     raise Exception(f"Unknown oracle provider '{provider_name}'.")
