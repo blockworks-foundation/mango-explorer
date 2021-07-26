@@ -27,18 +27,30 @@ from ...accountinfo import AccountInfo
 from ...context import Context
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
-from ...oracle import Oracle, OracleProvider, OracleSource, Price
+from ...oracle import Oracle, OracleProvider, OracleSource, Price, SupportedOracleFeature
 
-# Use this for Pyth V1.
-# from .layouts_v1 import MAGIC, MAPPING, PRICE, PRODUCT, PYTH_MAPPING_ROOT
-
-# Use this for Pyth V2.
 from .layouts import MAGIC, MAPPING, PRICE, PRODUCT, PYTH_MAPPING_ROOT
 
 
 # # 🥭 Pyth
 #
 # This file contains code specific to the [Pyth Network](https://pyth.network/).
+#
+# ## Pyth's Confidence Interval
+#
+# It seems to akin to a spread, and always specified in the quote currency.
+#
+# Pyth Medium article:
+# https://pythnetwork.medium.com/what-is-confidence-uncertainty-in-a-price-649583b598cf
+#
+# From Discord: https://discord.com/channels/826115122799837205/861627739975319602/861903479331880981
+# 6/ What does Pyth's confidence value mean when provided with the price?
+# → Confidence is a function of where one expects a trade to occur from the "true" price, i.e. what is the potential dispersion estimation?
+#
+# From Discord: https://discord.com/channels/826115122799837205/826115122799837208/858091212980092978
+# [T]he confidence value here is how far from the aggregate price we believe the true price might be. It
+# reflects a combination of the uncertainty of individual quoters and how well individual quoters agree
+# with each other
 #
 
 
@@ -54,7 +66,8 @@ class PythOracle(Oracle):
         self.market: Market = market
         self.product_data: PRODUCT = product_data
         self.address: PublicKey = product_data.address
-        self.source: OracleSource = OracleSource("Pyth", name, market)
+        features: SupportedOracleFeature = SupportedOracleFeature.MID_PRICE | SupportedOracleFeature.CONFIDENCE
+        self.source: OracleSource = OracleSource("Pyth", name, features, market)
 
     def fetch_price(self, context: Context) -> Price:
         pyth_context = context.new_from_cluster("devnet")
@@ -73,9 +86,10 @@ class PythOracle(Oracle):
 
         factor = Decimal(10) ** price_data.expo
         price = price_data.agg.price * factor
+        confidence = price_data.agg.conf * factor
 
         # Pyth has no notion of bids, asks, or spreads so just provide the single price.
-        return Price(self.source, datetime.now(), self.market, price, price, price)
+        return Price(self.source, datetime.now(), self.market, price, price, price, confidence)
 
     def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
         return rx.interval(1).pipe(

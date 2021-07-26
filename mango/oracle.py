@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import abc
+import enum
 import logging
 import rx
 import typing
@@ -30,21 +31,33 @@ from .market import Market
 # This file deals with fetching prices from exchanges and oracles.
 #
 
+# # 🥭 SupportedOracleFeature enum
+#
+# Some oracles provide a mid price. Some provide bid and ask but no mid price. Some provide a confidence score.
+# Some done. This enum allows an oracle to say which features it supports.
+#
+
+class SupportedOracleFeature(enum.Flag):
+    MID_PRICE = enum.auto()
+    TOP_BID_AND_OFFER = enum.auto()
+    CONFIDENCE = enum.auto()
+
 
 # # 🥭 OracleSource class
 #
-# This class describes an oracle and can be used to tell `Prices` from different `Oracle`s
+# This class describes an oracle and can be used to tell apart `Prices` from different `Oracle`s
 # apart.
 #
 
 class OracleSource():
-    def __init__(self, provider_name: str, source_name: str, market: Market) -> None:
+    def __init__(self, provider_name: str, source_name: str, supports: SupportedOracleFeature, market: Market) -> None:
         self.provider_name = provider_name
         self.source_name = source_name
+        self.supports: SupportedOracleFeature = supports
         self.market = market
 
     def __str__(self) -> str:
-        return f"« OracleSource '{self.source_name}' from '{self.provider_name}' for market '{self.market.symbol}' »"
+        return f"« OracleSource '{self.source_name}' from '{self.provider_name}' for market '{self.market.symbol}' [{self.supports}] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -57,20 +70,24 @@ class OracleSource():
 
 
 class Price():
-    def __init__(self, source: OracleSource, timestamp: datetime, market: Market, top_bid: Decimal, mid_price: Decimal, top_ask: Decimal) -> None:
-        self.source = source
-        self.timestamp = timestamp
-        self.market = market
-        self.top_bid = top_bid
-        self.mid_price = mid_price
-        self.top_ask = top_ask
+    def __init__(self, source: OracleSource, timestamp: datetime, market: Market, top_bid: Decimal, mid_price: Decimal, top_ask: Decimal, confidence: Decimal) -> None:
+        self.source: OracleSource = source
+        self.timestamp: datetime = timestamp
+        self.market: Market = market
+        self.top_bid: Decimal = top_bid
+        self.mid_price: Decimal = mid_price
+        self.top_ask: Decimal = top_ask
+        self.confidence: Decimal = confidence
 
     @property
     def spread(self) -> Decimal:
         return (self.top_ask - self.top_bid) / 2
 
     def __str__(self) -> str:
-        return f"{self.timestamp} [{self.source.provider_name}] {self.market.symbol}: {self.mid_price:,.8f}"
+        confidence = ""
+        if self.source.supports & SupportedOracleFeature.CONFIDENCE:
+            confidence = f" +/- {self.confidence:,.8f}"
+        return f"{self.timestamp} [{self.source.provider_name}] {self.market.symbol}: {self.mid_price:,.8f}{confidence}"
 
     def __repr__(self) -> str:
         return f"{self}"

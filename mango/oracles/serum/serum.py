@@ -21,13 +21,14 @@ import rx.operators as ops
 import typing
 
 from datetime import datetime
+from decimal import Decimal
 from solana.rpc.api import Client
 
 from ...context import Context
 from ...ensuremarketloaded import ensure_market_loaded
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
-from ...oracle import Oracle, OracleProvider, OracleSource, Price
+from ...oracle import Oracle, OracleProvider, OracleSource, Price, SupportedOracleFeature
 from ...orders import Order, Side
 from ...serummarket import SerumMarket, SerumMarketStub
 from ...serummarketlookup import SerumMarketLookup
@@ -41,6 +42,14 @@ from ...spotmarket import SpotMarket, SpotMarketStub
 #
 
 
+# # 🥭 FtxOracleConfidence constant
+#
+# FTX doesn't provide a confidence value.
+#
+
+SerumOracleConfidence: Decimal = Decimal(0)
+
+
 # # 🥭 SerumOracle class
 #
 # Implements the `Oracle` abstract base class specialised to the Serum DEX.
@@ -52,7 +61,8 @@ class SerumOracle(Oracle):
         name = f"Serum Oracle for {market.symbol}"
         super().__init__(name, market)
         self.market: SerumMarket = market
-        self.source: OracleSource = OracleSource("Serum", name, market)
+        features: SupportedOracleFeature = SupportedOracleFeature.TOP_BID_AND_OFFER
+        self.source: OracleSource = OracleSource("Serum", name, features, market)
 
     def fetch_price(self, context: Context) -> Price:
         # TODO: Do this right?
@@ -73,7 +83,7 @@ class SerumOracle(Oracle):
         top_ask = min([order.price for order in orders if order.side == Side.SELL])
         mid_price = (top_bid + top_ask) / 2
 
-        return Price(self.source, datetime.now(), self.market, top_bid, mid_price, top_ask)
+        return Price(self.source, datetime.now(), self.market, top_bid, mid_price, top_ask, SerumOracleConfidence)
 
     def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
         return rx.interval(1).pipe(

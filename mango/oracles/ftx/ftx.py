@@ -27,7 +27,7 @@ from rx.core import Observable
 from ...context import Context
 from ...market import Market
 from ...observables import DisposePropagator
-from ...oracle import Oracle, OracleProvider, OracleSource, Price
+from ...oracle import Oracle, OracleProvider, OracleSource, Price, SupportedOracleFeature
 from ...reconnectingwebsocket import ReconnectingWebsocket
 
 
@@ -44,11 +44,18 @@ def _ftx_get_from_url(url: str) -> typing.Dict:
     return response_values["result"]
 
 
+# # 🥭 FtxOracleConfidence constant
+#
+# FTX doesn't provide a confidence value.
+#
+
+FtxOracleConfidence: Decimal = Decimal(0)
+
+
 # # 🥭 FtxOracle class
 #
 # Implements the `Oracle` abstract base class specialised to the Ftx Network.
 #
-
 
 class FtxOracle(Oracle):
     def __init__(self, market: Market, ftx_symbol: str):
@@ -56,7 +63,8 @@ class FtxOracle(Oracle):
         super().__init__(name, market)
         self.market: Market = market
         self.ftx_symbol: str = ftx_symbol
-        self.source: OracleSource = OracleSource("FTX", name, market)
+        features: SupportedOracleFeature = SupportedOracleFeature.MID_PRICE | SupportedOracleFeature.TOP_BID_AND_OFFER
+        self.source: OracleSource = OracleSource("FTX", name, features, market)
 
     def fetch_price(self, context: Context) -> Price:
         result = _ftx_get_from_url(f"https://ftx.com/api/markets/{self.ftx_symbol}")
@@ -64,7 +72,7 @@ class FtxOracle(Oracle):
         ask = Decimal(result["ask"])
         price = Decimal(result["price"])
 
-        return Price(self.source, datetime.now(), self.market, bid, price, ask)
+        return Price(self.source, datetime.now(), self.market, bid, price, ask, FtxOracleConfidence)
 
     def to_streaming_observable(self, _: Context) -> rx.core.typing.Observable:
         subject = Subject()
@@ -76,7 +84,7 @@ class FtxOracle(Oracle):
                 mid = (bid + ask) / Decimal(2)
                 time = data["data"]["time"]
                 timestamp = datetime.fromtimestamp(time)
-                price = Price(self.source, timestamp, self.market, bid, mid, ask)
+                price = Price(self.source, timestamp, self.market, bid, mid, ask, FtxOracleConfidence)
                 subject.on_next(price)
 
         ws: ReconnectingWebsocket = ReconnectingWebsocket("wss://ftx.com/ws/",
