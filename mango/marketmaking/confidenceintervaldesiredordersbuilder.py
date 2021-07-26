@@ -47,7 +47,8 @@ class ConfidenceIntervalDesiredOrdersBuilder(DesiredOrdersBuilder):
         quote_tokens: mango.TokenValue = mango.TokenValue.find_by_token(inventory, price.market.quote)
 
         total = (base_tokens.value * price.mid_price) + quote_tokens.value
-        position_size = total * self.position_size_ratio
+        position_size_value = total * self.position_size_ratio
+        position_size = position_size_value / price.mid_price
 
         # From Daffy on 26th July 2021: max(pyth_conf * 2, price * min_charge)
         min_charge = max(price.confidence * 2, price.mid_price * self.min_price_ratio)
