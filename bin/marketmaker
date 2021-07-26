@@ -15,10 +15,7 @@ from pyserum.market import Market as PySerumMarket
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
-import mango.marketmaking.fixedratiosdesiredordersbuilder  # nopep8
-import mango.marketmaking.marketmaker  # nopep8
-import mango.marketmaking.modelstate  # nopep8
-import mango.marketmaking.toleranceorderreconciler  # nopep8
+import mango.marketmaking  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
 mango.ContextBuilder.add_command_line_parameters(parser)
@@ -30,7 +27,7 @@ parser.add_argument("--oracle-provider", type=str, required=True,
                     help="name of the price provider to use (e.g. pyth)")
 parser.add_argument("--spread-ratio", type=Decimal, action="append", default=[], required=True,
                     help="fraction of the mid price to be added and subtracted to calculate buy and sell prices (can be specified multiple times)")
-parser.add_argument("--position-size-ratio", type=Decimal, action="append", default=[], required=True,
+parser.add_argument("--position-size-ratio", type=Decimal, required=True,
                     help="fraction of the token inventory to be bought or sold in each order (can be specified multiple times)")
 parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal("0.001"),
                     help="tolerance in price and quantity when matching existing orders or cancelling/replacing")
@@ -41,10 +38,6 @@ parser.add_argument("--pulse-interval", type=int, default=10,
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
-
-if len(args.spread_ratio) != len(args.position_size_ratio):
-    raise Exception(
-        f"Number of spread ratio parameters ({len(args.spread_ratio)}) does not match number of position size ratio ({len(args.position_size_ratio)}).")
 
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
@@ -231,16 +224,16 @@ ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, man
 ws.ping_interval = 10
 ws.open()
 
-order_reconciler = mango.marketmaking.toleranceorderreconciler.ToleranceOrderReconciler(
+order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
     args.existing_order_tolerance, args.existing_order_tolerance)
-desired_orders_builder = mango.marketmaking.fixedratiosdesiredordersbuilder.FixedRatiosDesiredOrdersBuilder(
-    args.spread_ratio, args.position_size_ratio, args.order_type)
-market_maker = mango.marketmaking.marketmaker.MarketMaker(
+desired_orders_builder = mango.marketmaking.ConfidenceIntervalDesiredOrdersBuilder(
+    args.position_size_ratio, Decimal("0.0005"), Decimal("0.1"), args.order_type)
+market_maker = mango.marketmaking.MarketMaker(
     wallet, market, market_instruction_builder, desired_orders_builder, order_reconciler)
-model_state = mango.marketmaking.modelstate.ModelState(market, latest_account_observer,
-                                                       latest_group_observer, latest_price_observer,
-                                                       latest_perp_market_observer,
-                                                       latest_open_orders_observer)
+model_state = mango.marketmaking.ModelState(market, latest_account_observer,
+                                            latest_group_observer, latest_price_observer,
+                                            latest_perp_market_observer,
+                                            latest_open_orders_observer)
 
 add_file_health("marketmaker_pulse", market_maker.pulse_complete, disposer)
 
