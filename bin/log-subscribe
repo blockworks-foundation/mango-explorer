@@ -1,0 +1,52 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+import threading
+
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Show program logs for an account, as they arrive.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--address", type=PublicKey, required=True, help="Address of the Solana account to watch")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+
+disposer = mango.DisposePropagator()
+manager = mango.WebSocketSubscriptionManager()
+disposer.add_disposable(manager)
+
+log_subscription = mango.WebSocketLogSubscription(context, args.address)
+manager.add(log_subscription)
+publisher = log_subscription.publisher
+
+publisher.subscribe(mango.PrintingObserverSubscriber(False))
+
+websocket_url = context.cluster_url.replace("https", "wss", 1)
+ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler, manager.on_item)
+ws.ping_interval = 10
+ws.open()
+
+# Wait - don't exit. Exiting will be handled by signals/interrupts.
+waiter = threading.Event()
+try:
+    waiter.wait()
+except:
+    pass
+
+logging.info("Shutting down...")
+ws.close()
+disposer.dispose()
+logging.info("Shutdown complete.")

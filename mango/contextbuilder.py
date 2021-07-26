@@ -70,13 +70,13 @@ class ContextBuilder:
                             help="Solana RPC cluster name")
         parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
                             help="Solana RPC cluster URL")
-        parser.add_argument("--program-id", type=str, default=default_program_id,
+        parser.add_argument("--program-id", type=PublicKey, default=default_program_id,
                             help="Mango program ID/address")
-        parser.add_argument("--dex-program-id", type=str, default=default_dex_program_id,
+        parser.add_argument("--dex-program-id", type=PublicKey, default=default_dex_program_id,
                             help="DEX program ID/address")
         parser.add_argument("--group-name", type=str, default=default_group_name,
                             help="Mango group name")
-        parser.add_argument("--group-id", type=str, default=default_group_id,
+        parser.add_argument("--group-id", type=PublicKey, default=default_group_id,
                             help="Mango group ID/address")
 
         parser.add_argument("--token-data-file", type=str, default=SplTokenLookup.DefaultDataFilepath,

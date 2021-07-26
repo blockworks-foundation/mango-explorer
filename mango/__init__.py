@@ -62,7 +62,7 @@ from .transactionscout import MangoInstruction, TransactionScout, fetch_all_rece
 from .version import Version
 from .wallet import Wallet
 from .walletbalancer import TargetBalance, FixedTargetBalance, PercentageTargetBalance, TargetBalanceParser, sort_changes_for_trades, calculate_required_balance_changes, FilterSmallChanges, WalletBalancer, NullWalletBalancer, LiveWalletBalancer
-from .websocketsubscription import WebSocketSubscription, WebSocketSubscriptionManager
+from .websocketsubscription import WebSocketSubscription, WebSocketProgramSubscription, WebSocketAccountSubscription, WebSocketLogSubscription, WebSocketSubscriptionManager
 
 from .layouts import layouts
 

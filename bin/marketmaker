@@ -68,7 +68,7 @@ def add_file_health(name: str, observable: rx.core.typing.Observable[typing.Any]
 
 
 def build_latest_group_observer(context: mango.Context, manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, group: mango.Group) -> mango.LatestItemObserverSubscriber[mango.Group]:
-    group_subscription = mango.WebSocketSubscription[mango.Group](
+    group_subscription = mango.WebSocketAccountSubscription[mango.Group](
         context, group.address, lambda account_info: mango.Group.parse(context, account_info))
     manager.add(group_subscription)
     latest_group_observer = mango.LatestItemObserverSubscriber(group)
@@ -78,7 +78,7 @@ def build_latest_group_observer(context: mango.Context, manager: mango.WebSocket
 
 
 def build_latest_account_observer(context: mango.Context, account: mango.Account, manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, group_observer: mango.LatestItemObserverSubscriber[mango.Group]) -> typing.Tuple[mango.WebSocketSubscription[mango.Account], mango.LatestItemObserverSubscriber[mango.Account]]:
-    account_subscription = mango.WebSocketSubscription[mango.Account](
+    account_subscription = mango.WebSocketAccountSubscription[mango.Account](
         context, account.address, lambda account_info: mango.Account.parse(context, account_info, group_observer.latest))
     manager.add(account_subscription)
     latest_account_observer = mango.LatestItemObserverSubscriber(account)
@@ -93,7 +93,7 @@ def build_latest_spot_open_orders_observer(manager: mango.WebSocketSubscriptionM
     if spot_open_orders_address is None:
         raise Exception(f"No spot OpenOrders for market {spot_market.symbol}.")
 
-    spot_open_orders_subscription = mango.WebSocketSubscription[mango.OpenOrders](
+    spot_open_orders_subscription = mango.WebSocketAccountSubscription[mango.OpenOrders](
         context, spot_open_orders_address, lambda account_info: mango.OpenOrders.parse(account_info, spot_market.base.decimals, spot_market.quote.decimals))
     manager.add(spot_open_orders_subscription)
     initial_spot_open_orders = mango.OpenOrders.load(
@@ -124,7 +124,7 @@ def build_latest_serum_open_orders_observer(manager: mango.WebSocketSubscription
         initial_serum_open_orders = mango.OpenOrders.load(
             context, open_orders_address, serum_market.base.decimals, serum_market.quote.decimals)
 
-    serum_open_orders_subscription = mango.WebSocketSubscription[mango.OpenOrders](
+    serum_open_orders_subscription = mango.WebSocketAccountSubscription[mango.OpenOrders](
         context, open_orders_address, lambda account_info: mango.OpenOrders.parse(account_info, serum_market.base.decimals, serum_market.quote.decimals))
 
     manager.add(serum_open_orders_subscription)
@@ -152,7 +152,7 @@ def build_latest_perp_open_orders_observer(disposer: mango.DisposePropagator, pe
 
 
 def build_latest_perp_market_observer(manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, perp_market_info: mango.PerpMarketInfo, initial_perp_market_details: mango.PerpMarketDetails, group_observer: mango.LatestItemObserverSubscriber[mango.Group]) -> mango.LatestItemObserverSubscriber[mango.PerpMarketDetails]:
-    perp_market_subscription = mango.WebSocketSubscription[mango.PerpMarketDetails](
+    perp_market_subscription = mango.WebSocketAccountSubscription[mango.PerpMarketDetails](
         context, perp_market_info.address, lambda account_info: mango.PerpMarketDetails.parse(account_info, group_observer.latest))
     manager.add(perp_market_subscription)
     latest_perp_market_observer = mango.LatestItemObserverSubscriber(initial_perp_market_details)

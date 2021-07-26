@@ -9,7 +9,7 @@ import typing
 
 
 def test_transaction_instruction_constructor():
-    instruction_type: mango.InstructionType = mango.InstructionType.PartialLiquidate
+    instruction_type: mango.InstructionType = mango.InstructionType.Deposit
     instruction_data: typing.Dict[str, str] = {"key": "test value"}
     account1 = fake_seeded_public_key("account 1")
     account2 = fake_seeded_public_key("account 2")

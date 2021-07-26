@@ -16,6 +16,8 @@
 
 import base58
 import datetime
+import logging
+import traceback
 import typing
 
 from decimal import Decimal
@@ -61,23 +63,30 @@ from .tokenvalue import TokenValue
 
 # The index of the sender/signer depends on the instruction.
 _instruction_signer_indices: typing.Dict[InstructionType, int] = {
-    InstructionType.InitMangoGroup: 3,
+    InstructionType.InitMangoGroup: 1,
     InstructionType.InitMarginAccount: 2,
     InstructionType.Deposit: 2,
     InstructionType.Withdraw: 2,
+    InstructionType.AddSpotMarket: 7,
+    InstructionType.AddToBasket: 2,
     InstructionType.Borrow: 2,
-    InstructionType.SettleBorrow: 2,
-    InstructionType.Liquidate: 1,
-    InstructionType.DepositSrm: 2,
-    InstructionType.WithdrawSrm: 2,
-    InstructionType.PlaceOrder: 1,
-    InstructionType.SettleFunds: 1,
-    InstructionType.CancelOrder: 1,
-    InstructionType.CancelOrderByClientId: 1,
-    InstructionType.ChangeBorrowLimit: 1,
-    InstructionType.PlaceAndSettle: 1,
-    InstructionType.ForceCancelOrders: 1,
-    InstructionType.PartialLiquidate: 1
+    InstructionType.CachePrices: -1,  # No signer
+    InstructionType.CacheRootBanks: -1,  # No signer
+    InstructionType.PlaceSpotOrder: 2,
+    InstructionType.AddOracle: 2,
+    InstructionType.AddPerpMarket: 6,
+    InstructionType.PlacePerpOrder: 2,
+    InstructionType.CancelPerpOrderByClientId: 2,
+    InstructionType.CancelPerpOrder: 2,
+    InstructionType.ConsumeEvents: -1,  # No signer
+    InstructionType.CachePerpMarkets: -1,  # No signer
+    InstructionType.UpdateFunding: -1,  # No signer
+    InstructionType.SetOracle: -1,  # No signer
+    InstructionType.SettleFunds: 2,
+    InstructionType.CancelSpotOrder: 1,
+    InstructionType.UpdateRootBank: -1,  # No signer
+    InstructionType.SettlePnl: -1,  # No signer
+    InstructionType.SettleBorrow: -1  # No signer
 }
 
 # The index of the token IN account depends on the instruction, and for some instructions
@@ -85,21 +94,28 @@ _instruction_signer_indices: typing.Dict[InstructionType, int] = {
 _token_in_indices: typing.Dict[InstructionType, int] = {
     InstructionType.InitMangoGroup: -1,
     InstructionType.InitMarginAccount: -1,
-    InstructionType.Deposit: 3,  # token_account_acc - TokenAccount owned by user which will be sending the funds
-    InstructionType.Withdraw: 4,  # vault_acc - TokenAccount owned by MangoGroup which will be sending
+    InstructionType.Deposit: 8,
+    InstructionType.Withdraw: 7,
+    InstructionType.AddSpotMarket: -1,
+    InstructionType.AddToBasket: -1,
     InstructionType.Borrow: -1,
-    InstructionType.SettleBorrow: -1,
-    InstructionType.Liquidate: -1,
-    InstructionType.DepositSrm: 3,  # srm_account_acc - TokenAccount owned by user which will be sending the funds
-    InstructionType.WithdrawSrm: 4,  # vault_acc - SRM vault of MangoGroup
-    InstructionType.PlaceOrder: -1,
+    InstructionType.CachePrices: -1,
+    InstructionType.CacheRootBanks: -1,
+    InstructionType.PlaceSpotOrder: -1,
+    InstructionType.AddOracle: -1,
+    InstructionType.AddPerpMarket: -1,
+    InstructionType.PlacePerpOrder: -1,
+    InstructionType.CancelPerpOrderByClientId: -1,
+    InstructionType.CancelPerpOrder: -1,
+    InstructionType.ConsumeEvents: -1,
+    InstructionType.CachePerpMarkets: -1,
+    InstructionType.UpdateFunding: -1,
+    InstructionType.SetOracle: -1,
     InstructionType.SettleFunds: -1,
-    InstructionType.CancelOrder: -1,
-    InstructionType.CancelOrderByClientId: -1,
-    InstructionType.ChangeBorrowLimit: -1,
-    InstructionType.PlaceAndSettle: -1,
-    InstructionType.ForceCancelOrders: -1,
-    InstructionType.PartialLiquidate: 2  # liqor_in_token_acc - liquidator's token account to deposit
+    InstructionType.CancelSpotOrder: -1,
+    InstructionType.UpdateRootBank: -1,
+    InstructionType.SettlePnl: -1,
+    InstructionType.SettleBorrow: -1,
 }
 
 # The index of the token OUT account depends on the instruction, and for some instructions
@@ -107,21 +123,57 @@ _token_in_indices: typing.Dict[InstructionType, int] = {
 _token_out_indices: typing.Dict[InstructionType, int] = {
     InstructionType.InitMangoGroup: -1,
     InstructionType.InitMarginAccount: -1,
-    InstructionType.Deposit: 4,  # vault_acc - TokenAccount owned by MangoGroup
-    InstructionType.Withdraw: 3,  # token_account_acc - TokenAccount owned by user which will be receiving the funds
+    InstructionType.Deposit: 6,
+    InstructionType.Withdraw: 6,
+    InstructionType.AddSpotMarket: -1,
+    InstructionType.AddToBasket: -1,
     InstructionType.Borrow: -1,
-    InstructionType.SettleBorrow: -1,
-    InstructionType.Liquidate: -1,
-    InstructionType.DepositSrm: 4,  # vault_acc - SRM vault of MangoGroup
-    InstructionType.WithdrawSrm: 3,  # srm_account_acc - TokenAccount owned by user which will be receiving the funds
-    InstructionType.PlaceOrder: -1,
+    InstructionType.CachePrices: -1,
+    InstructionType.CacheRootBanks: -1,
+    InstructionType.PlaceSpotOrder: -1,
+    InstructionType.AddOracle: -1,
+    InstructionType.AddPerpMarket: -1,
+    InstructionType.PlacePerpOrder: -1,
+    InstructionType.CancelPerpOrderByClientId: -1,
+    InstructionType.CancelPerpOrder: -1,
+    InstructionType.ConsumeEvents: -1,
+    InstructionType.CachePerpMarkets: -1,
+    InstructionType.UpdateFunding: -1,
+    InstructionType.SetOracle: -1,
     InstructionType.SettleFunds: -1,
-    InstructionType.CancelOrder: -1,
-    InstructionType.CancelOrderByClientId: -1,
-    InstructionType.ChangeBorrowLimit: -1,
-    InstructionType.PlaceAndSettle: -1,
-    InstructionType.ForceCancelOrders: -1,
-    InstructionType.PartialLiquidate: 3  # liqor_out_token_acc - liquidator's token account to withdraw into
+    InstructionType.CancelSpotOrder: -1,
+    InstructionType.UpdateRootBank: -1,
+    InstructionType.SettlePnl: -1,
+    InstructionType.SettleBorrow: -1,
+}
+
+
+# Some instructions (like liqudate) have a 'target' account. Most don't.
+_target_indices: typing.Dict[InstructionType, int] = {
+    InstructionType.InitMangoGroup: -1,
+    InstructionType.InitMarginAccount: -1,
+    InstructionType.Deposit: -1,
+    InstructionType.Withdraw: -1,
+    InstructionType.AddSpotMarket: -1,
+    InstructionType.AddToBasket: -1,
+    InstructionType.Borrow: -1,
+    InstructionType.CachePrices: -1,
+    InstructionType.CacheRootBanks: -1,
+    InstructionType.PlaceSpotOrder: -1,
+    InstructionType.AddOracle: -1,
+    InstructionType.AddPerpMarket: -1,
+    InstructionType.PlacePerpOrder: -1,
+    InstructionType.CancelPerpOrderByClientId: -1,
+    InstructionType.CancelPerpOrder: -1,
+    InstructionType.ConsumeEvents: -1,
+    InstructionType.CachePerpMarkets: -1,
+    InstructionType.UpdateFunding: -1,
+    InstructionType.SetOracle: -1,
+    InstructionType.SettleFunds: -1,
+    InstructionType.CancelSpotOrder: -1,
+    InstructionType.UpdateRootBank: -1,
+    InstructionType.SettlePnl: -1,
+    InstructionType.SettleBorrow: -1,
 }
 
 
@@ -144,8 +196,10 @@ class MangoInstruction:
         return self.accounts[0]
 
     @property
-    def sender(self) -> PublicKey:
+    def sender(self) -> typing.Optional[PublicKey]:
         account_index = _instruction_signer_indices[self.instruction_type]
+        if account_index < 0:
+            return None
         return self.accounts[account_index]
 
     @property
@@ -162,6 +216,13 @@ class MangoInstruction:
             return None
         return self.accounts[account_index]
 
+    @property
+    def target_account(self) -> typing.Optional[PublicKey]:
+        account_index = _target_indices[self.instruction_type]
+        if account_index < 0:
+            return None
+        return self.accounts[account_index]
+
     def describe_parameters(self) -> str:
         instruction_type = self.instruction_type
         additional_data = ""
@@ -172,44 +233,49 @@ class MangoInstruction:
         elif instruction_type == InstructionType.Deposit:
             additional_data = f"quantity: {self.instruction_data.quantity}"
         elif instruction_type == InstructionType.Withdraw:
-            additional_data = f"quantity: {self.instruction_data.quantity}"
+            additional_data = f"quantity: {self.instruction_data.quantity}, allow_borrow: {self.instruction_data.allow_borrow}"
+        elif instruction_type == InstructionType.AddSpotMarket:
+            pass
+        elif instruction_type == InstructionType.AddToBasket:
+            pass
         elif instruction_type == InstructionType.Borrow:
-            additional_data = f"quantity: {self.instruction_data.quantity}, token index: {self.instruction_data.token_index}"
-        elif instruction_type == InstructionType.SettleBorrow:
-            additional_data = f"quantity: {self.instruction_data.quantity}, token index: {self.instruction_data.token_index}"
-        elif instruction_type == InstructionType.Liquidate:
-            additional_data = f"deposit quantities: {self.instruction_data.deposit_quantities}"
-        elif instruction_type == InstructionType.DepositSrm:
-            additional_data = f"quantity: {self.instruction_data.quantity}"
-        elif instruction_type == InstructionType.WithdrawSrm:
-            additional_data = f"quantity: {self.instruction_data.quantity}"
-        elif instruction_type == InstructionType.PlaceOrder:
+            pass
+        elif instruction_type == InstructionType.CachePrices:
+            pass
+        elif instruction_type == InstructionType.CacheRootBanks:
+            pass
+        elif instruction_type == InstructionType.PlaceSpotOrder:
+            additional_data = f"side: {self.instruction_data.side}, order_type: {self.instruction_data.order_type}, limit_price: {self.instruction_data.limit_price}, max_base_quantity: {self.instruction_data.max_base_quantity}, max_quote_quantity: {self.instruction_data.max_quote_quantity}, self_trade_behavior: {self.instruction_data.self_trade_behavior}, client_id: {self.instruction_data.client_id}, limit: {self.instruction_data.limit}"
+        elif instruction_type == InstructionType.AddOracle:
+            pass
+        elif instruction_type == InstructionType.AddPerpMarket:
+            pass
+        elif instruction_type == InstructionType.PlacePerpOrder:
+            additional_data = f"side: {self.instruction_data.side}, order_type: {self.instruction_data.order_type}, price: {self.instruction_data.price}, quantity: {self.instruction_data.quantity}, client_order_id: {self.instruction_data.client_order_id}"
+        elif instruction_type == InstructionType.CancelPerpOrderByClientId:
+            additional_data = f"client ID: {self.instruction_data.client_order_id}"
+        elif instruction_type == InstructionType.CancelPerpOrder:
+            additional_data = f"order ID: {self.instruction_data.order_id}, side: {self.instruction_data.side}"
+        elif instruction_type == InstructionType.ConsumeEvents:
+            additional_data = f"limit: {self.instruction_data.limit}"
+        elif instruction_type == InstructionType.CachePerpMarkets:
+            pass
+        elif instruction_type == InstructionType.UpdateFunding:
+            pass
+        elif instruction_type == InstructionType.SetOracle:
             pass
         elif instruction_type == InstructionType.SettleFunds:
             pass
-        elif instruction_type == InstructionType.CancelOrder:
+        elif instruction_type == InstructionType.CancelSpotOrder:
+            additional_data = f"order ID: {self.instruction_data.order_id}, side: {self.instruction_data.side}"
+        elif instruction_type == InstructionType.UpdateRootBank:
             pass
-        elif instruction_type == InstructionType.CancelOrderByClientId:
-            additional_data = f"client ID: {self.instruction_data.client_id}"
-        elif instruction_type == InstructionType.ChangeBorrowLimit:
-            additional_data = f"borrow limit: {self.instruction_data.borrow_limit}, token index: {self.instruction_data.token_index}"
-        elif instruction_type == InstructionType.PlaceAndSettle:
+        elif instruction_type == InstructionType.SettlePnl:
             pass
-        elif instruction_type == InstructionType.ForceCancelOrders:
-            additional_data = f"limit: {self.instruction_data.limit}"
-        elif instruction_type == InstructionType.PartialLiquidate:
-            additional_data = f"max deposit: {self.instruction_data.max_deposit}"
+        elif instruction_type == InstructionType.SettleBorrow:
+            pass
 
         return additional_data
-
-    # It'd be nice to be able to describe the target of some operations, like liquidations. So far
-    # only `PartialLiquidate` is handled in the code below but it could be extended if others also
-    # have a useful target.
-    def describe_target(self) -> typing.Optional[PublicKey]:
-        if self.instruction_type == InstructionType.PartialLiquidate:
-            return self.accounts[4]
-
-        return None
 
     @staticmethod
     def from_response(context: Context, all_accounts: typing.Sequence[PublicKey], instruction_data: typing.Dict) -> typing.Optional["MangoInstruction"]:
@@ -225,7 +291,9 @@ class MangoInstruction:
         initial = layouts.MANGO_INSTRUCTION_VARIANT_FINDER.parse(decoded)
         parser = layouts.InstructionParsersByVariant[initial.variant]
         if parser is None:
-            raise Exception(f"Could not find instruction parser for variant {initial.variant}.")
+            logging.warning(
+                f"Could not find instruction parser for variant {initial.variant} / {InstructionType(initial.variant)}.")
+            return None
 
         # A whole bunch of accounts are listed for a transaction. Some (or all) of them apply
         # to this instruction. The instruction data gives the index of each account it uses,
@@ -293,7 +361,7 @@ class TransactionScout:
         return f"« TransactionScout {result} {self.group_name} [{self.timestamp}] {instructions}: Token Changes: {changed_tokens_text}\n    {self.signatures} »"
 
     @property
-    def sender(self) -> PublicKey:
+    def sender(self) -> typing.Optional[PublicKey]:
         return self.instructions[0].sender
 
     @property
@@ -339,6 +407,7 @@ class TransactionScout:
                 if instruction is not None:
                     instructions += [instruction]
 
+            print("Instructions:", len(instructions))
             group_name = context.lookup_group_name(instructions[0].group)
             timestamp = datetime.datetime.fromtimestamp(response["blockTime"])
             signatures = response["transaction"]["signatures"]
@@ -360,7 +429,7 @@ class TransactionScout:
             signature = "Unknown"
             if response and ("transaction" in response) and ("signatures" in response["transaction"]) and len(response["transaction"]["signatures"]) > 0:
                 signature = ", ".join(response["transaction"]["signatures"])
-            raise Exception(f"Exception fetching transaction '{signature}'", exception)
+            raise Exception(f"Exception fetching transaction '{signature}' - {traceback.format_exc()}", exception)
 
     def __str__(self) -> str:
         def format_tokens(account_token_values: typing.Sequence[OwnedTokenValue]) -> str:

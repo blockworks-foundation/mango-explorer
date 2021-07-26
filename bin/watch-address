@@ -40,7 +40,7 @@ manager = mango.WebSocketSubscriptionManager()
 disposer.add_disposable(manager)
 
 if args.account_type.upper() == "ACCOUNTINFO":
-    raw_subscription = mango.WebSocketSubscription(
+    raw_subscription = mango.WebSocketAccountSubscription(
         context, args.address, lambda account_info: account_info)
     manager.add(raw_subscription)
     publisher: rx.Observable = raw_subscription.publisher
@@ -61,13 +61,13 @@ elif args.account_type.upper() == "PERPEVENTS":
         return splitter.split(perp_event_queue)
 
     converter: typing.Callable[[mango.AccountInfo], typing.Any] = _split_events
-    event_splitting_subscription = mango.WebSocketSubscription(
+    event_splitting_subscription = mango.WebSocketAccountSubscription(
         context, args.address, lambda acc: acc)
     manager.add(event_splitting_subscription)
     publisher = event_splitting_subscription.publisher.pipe(rx.operators.flat_map(_split_events))
 else:
     converter = mango.build_account_info_converter(context, args.account_type)
-    converting_subscription = mango.WebSocketSubscription(
+    converting_subscription = mango.WebSocketAccountSubscription(
         context, args.address, converter)
     manager.add(converting_subscription)
     publisher = converting_subscription.publisher

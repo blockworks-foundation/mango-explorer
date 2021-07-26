@@ -14,8 +14,12 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
+from datetime import datetime
 import json
 import logging
+import rx
+import rx.subject
+import rx.core.typing
 import typing
 import websocket  # type: ignore
 
@@ -38,6 +42,10 @@ class ReconnectingWebsocket:
         self._on_item = on_item
         self.reconnect_required: bool = True
         self.ping_interval: int = 0
+        self.ping: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
+            datetime.now())
+        self.pong: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
+            datetime.now())
 
     def close(self):
         self.logger.info(f"Closing WebSocket for {self.url}")
@@ -56,6 +64,12 @@ class ReconnectingWebsocket:
     def _on_error(self, *args):
         self.logger.warning(f"WebSocket for {self.url} has error {args}")
 
+    def _on_ping(self, *_):
+        self.ping.on_next(datetime.now())
+
+    def _on_pong(self, *_):
+        self.pong.on_next(datetime.now())
+
     def open(self):
         thread = Thread(target=self._run)
         thread.start()
@@ -71,5 +85,7 @@ class ReconnectingWebsocket:
                 on_open=self._on_open,
                 on_message=self._on_message,
                 on_error=self._on_error,
+                on_ping=self._on_ping,
+                on_pong=self._on_pong
             )
             self._ws.run_forever(ping_interval=self.ping_interval)

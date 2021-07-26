@@ -13,7 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
+import abc
 import logging
 import typing
 import websocket
@@ -37,29 +37,19 @@ from .observables import EventSource
 TSubscriptionInstance = typing.TypeVar('TSubscriptionInstance')
 
 
-class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance]):
+class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], metaclass=abc.ABCMeta):
     def __init__(self, context: Context, address: PublicKey, constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.address = address
-        self.id = context.random_client_id()
-        self.subscription_id = 0
+        self.context: Context = context
+        self.address: PublicKey = address
+        self.id: int = context.random_client_id()
+        self.subscription_id: int = 0
         self.from_account_info: typing.Callable[[AccountInfo], TSubscriptionInstance] = constructor
         self.publisher: EventSource[TSubscriptionInstance] = EventSource[TSubscriptionInstance]()
 
+    @abc.abstractmethod
     def build_request(self) -> str:
-        return """
-{
-    "jsonrpc": "2.0",
-    "id": \"""" + str(self.id) + """\",
-    "method": "accountSubscribe",
-    "params": [\"""" + str(self.address) + """\",
-        {
-            "encoding": "base64",
-            "commitment": "processed"
-        }
-    ]
-}
-"""
+        raise NotImplementedError("WebSocketSubscription.build_request() is not implemented on the base type.")
 
     def build_account_info(self, response: RPCResponse) -> AccountInfo:
         return AccountInfo.from_response(response, self.address)
@@ -74,12 +64,98 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance]):
         self.publisher.dispose()
 
 
+class WebSocketProgramSubscription(WebSocketSubscription[TSubscriptionInstance]):
+    def __init__(self, context: Context, address: PublicKey, constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]):
+        super().__init__(context, address, constructor)
+
+    def build_request(self) -> str:
+        return """
+{
+    "jsonrpc": "2.0",
+    "id": \"""" + str(self.id) + """\",
+    "method": "programSubscribe",
+    "params": [\"""" + str(self.address) + """\",
+        {
+            "encoding": "base64",
+            "commitment": \"""" + str(self.context.commitment) + """\"
+        }
+  ]
+}
+"""
+
+
+class WebSocketAccountSubscription(WebSocketSubscription[TSubscriptionInstance]):
+    def __init__(self, context: Context, address: PublicKey, constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]):
+        super().__init__(context, address, constructor)
+
+    def build_request(self) -> str:
+        return """
+{
+    "jsonrpc": "2.0",
+    "id": \"""" + str(self.id) + """\",
+    "method": "accountSubscribe",
+    "params": [\"""" + str(self.address) + """\",
+        {
+            "encoding": "base64",
+           "commitment": \"""" + str(self.context.commitment) + """\"
+        }
+    ]
+}
+"""
+
+
+class LogEvent:
+    def __init__(self, signatures: typing.Sequence[str], logs: typing.Sequence[str]):
+        self.signatures: typing.Sequence[str] = signatures
+        self.logs: typing.Sequence[str] = logs
+
+    @staticmethod
+    def from_response(response) -> "LogEvent":
+        signature_text: str = response["result"]["value"]["signature"]
+        signatures = signature_text.split(",")
+        logs = response["result"]["value"]["logs"]
+        return LogEvent(signatures, logs)
+
+    def __str__(self):
+        logs = "\n    ".join(self.logs)
+        return f"""« 𝙻𝚘𝚐𝙴𝚟𝚎𝚗𝚝 {self.signatures}
+    {logs}
+»"""
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+class WebSocketLogSubscription(WebSocketSubscription[LogEvent]):
+    def __init__(self, context: Context, address: PublicKey):
+        super().__init__(context, address, lambda _: LogEvent([""], []))
+
+    def build_request(self) -> str:
+        return """
+{
+    "jsonrpc": "2.0",
+    "id": \"""" + str(self.id) + """\",
+    "method": "logsSubscribe",
+    "params": [
+        {
+            "mentions": [ \"""" + str(self.address) + """\" ]
+        },
+        {
+            "commitment": \"""" + str(self.context.commitment) + """\"
+        }
+    ]
+}
+"""
+
+    def build(self, response: RPCResponse) -> LogEvent:
+        return LogEvent.from_response(response)
+
+
 # # 🥭 WebSocketSubscriptionManager class
 #
 # The `WebSocketSubscriptionManager` takes websocket account updates and sends them to the correct
 # `WebSocketSubscription`.
 #
-
 
 class WebSocketSubscriptionManager(Disposable):
     def __init__(self):
@@ -109,7 +185,7 @@ class WebSocketSubscriptionManager(Disposable):
             id: int = int(response["id"])
             subscription_id: int = int(response["result"])
             self.add_subscription_id(id, subscription_id)
-        elif response["method"] == "accountNotification":
+        elif (response["method"] == "accountNotification") or (response["method"] == "programNotification") or (response["method"] == "logsNotification"):
             subscription_id = response["params"]["subscription"]
             subscription = self.subscription_by_subscription_id(subscription_id)
             built = subscription.build(response["params"])
