@@ -29,12 +29,10 @@ from .orders import Side
 from .version import Version
 
 
-# # 🥭 PerpEventQueue class
+# # 🥭 PerpEvent class
 #
-# `PerpEventQueue` stores details of how to reach `PerpEventQueue```.
+# `PerpEvent` is the base class of all perp event objects.
 #
-
-
 class PerpEvent(metaclass=abc.ABCMeta):
     def __init__(self, event_type: int):
         self.event_type: int = event_type
@@ -48,6 +46,10 @@ class PerpEvent(metaclass=abc.ABCMeta):
         return f"{self}"
 
 
+# # 🥭 PerpFillEvent class
+#
+# `PerpOutEvent` stores details of a perp 'fill' event.
+#
 class PerpFillEvent(PerpEvent):
     def __init__(self, event_type: int, timestamp: datetime, side: Side, price: Decimal, quantity: Decimal,
                  best_initial: Decimal, maker_slot: Decimal, maker_out: bool,
@@ -85,6 +87,10 @@ class PerpFillEvent(PerpEvent):
 »"""
 
 
+# # 🥭 PerpOutEvent class
+#
+# `PerpOutEvent` stores details of a perp 'out' event.
+#
 class PerpOutEvent(PerpEvent):
     def __init__(self, event_type: int, owner: PublicKey, side: Side, quantity: Decimal, slot: Decimal):
         super().__init__(event_type)
@@ -101,6 +107,11 @@ class PerpOutEvent(PerpEvent):
         return f"""« 𝙾𝚞𝚝𝙴𝚟𝚎𝚗𝚝 [{self.owner}] {self.side} {self.quantity}, slot: {self.slot} »"""
 
 
+# # 🥭 PerpUnknownEvent class
+#
+# `PerpUnknownEvent` details an unknown `PerpEvent`. This should never be encountered, but might if
+# the event queue data is upgraded before this code.
+#
 class PerpUnknownEvent(PerpEvent):
     def __init__(self, event_type: int, owner: PublicKey):
         super().__init__(event_type)
@@ -114,6 +125,10 @@ class PerpUnknownEvent(PerpEvent):
         return f"« 𝚄𝚗𝚔𝚗𝚘𝚠𝚗𝙴𝚟𝚎𝚗𝚝 [{self.owner}] »"
 
 
+# # 🥭 event_builder function
+#
+# `event_builder()` takes an event layout and returns a typed `PerpEvent`.
+#
 def event_builder(event_layout) -> typing.Optional[PerpEvent]:
     if event_layout.event_type == b'\x00':
         if event_layout.maker is None and event_layout.taker is None:
@@ -130,6 +145,11 @@ def event_builder(event_layout) -> typing.Optional[PerpEvent]:
         return PerpUnknownEvent(event_layout.event_type, event_layout.owner)
 
 
+# # 🥭 PerpEventQueue class
+#
+# `PerpEventQueue` stores details of perp events in a ringbuffer, along with indices to track which events are
+# processed by 'consume events' and which are not.
+#
 class PerpEventQueue(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
                  head: Decimal, count: Decimal, sequence_number: Decimal,
@@ -192,3 +212,32 @@ class PerpEventQueue(AddressableAccount):
     Events:
         {events}
 »"""
+
+
+# # 🥭 UnseenPerpEventChangesTracker class
+#
+# `UnseenPerpEventChangesTracker` tracks changes to a specific `PerpEventQueue`. When an updated version of the
+# `PerpEventQueue` is passed to `unseen()`, any new events are returned.
+#
+# Seen events are tracked by keeping a 'head' index of the last event seen in the `PerpEventQueue` ringbuffer.
+# When a new `PerpEventQueue` appears, its head+count is used to calculate the new seen head, and events from
+# the old seen head to the new seen head are returned.
+#
+class UnseenPerpEventChangesTracker:
+    def __init__(self, initial: PerpEventQueue):
+        self.last_head: Decimal = initial.head
+
+    def unseen(self, event_queue: PerpEventQueue) -> typing.Sequence[typing.Optional[PerpEvent]]:
+        unseen: typing.List[PerpEvent] = []
+        new_head: Decimal = event_queue.head
+        if self.last_head != new_head:
+            to_process: int = int((event_queue.capacity + new_head - self.last_head) % event_queue.capacity)
+            for index in range(to_process):
+                modulo_index = (self.last_head + index) % event_queue.capacity
+                event: typing.Optional[PerpEvent] = event_queue.events[int(modulo_index)]
+                if event is None:
+                    raise Exception(f"Event at index {index} should not be None.")
+                unseen += [event]
+            self.last_head = new_head % event_queue.capacity
+
+        return unseen

@@ -8,9 +8,7 @@ import rx
 import rx.operators
 import sys
 import threading
-import typing
 
-from decimal import Decimal
 from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
@@ -45,26 +43,12 @@ if args.account_type.upper() == "ACCOUNTINFO":
     manager.add(raw_subscription)
     publisher: rx.Observable = raw_subscription.publisher
 elif args.account_type.upper() == "PERPEVENTS":
-    class EventSplitter:
-        def __init__(self):
-            self.seq_num = Decimal(0)
-
-        def split(self, item: mango.PerpEventQueue) -> typing.Sequence[typing.Optional[mango.PerpEvent]]:
-            events = item.events[int(self.seq_num):int(item.sequence_number)]
-            self.seq_num = item.sequence_number
-            return events
-
-    splitter: EventSplitter = EventSplitter()
-
-    def _split_events(account_info: mango.AccountInfo) -> typing.Sequence[typing.Optional[mango.PerpEvent]]:
-        perp_event_queue = mango.PerpEventQueue.parse(account_info)
-        return splitter.split(perp_event_queue)
-
-    converter: typing.Callable[[mango.AccountInfo], typing.Any] = _split_events
+    initial: mango.PerpEventQueue = mango.PerpEventQueue.load(context, args.address)
+    splitter: mango.UnseenPerpEventChangesTracker = mango.UnseenPerpEventChangesTracker(initial)
     event_splitting_subscription = mango.WebSocketAccountSubscription(
-        context, args.address, lambda acc: acc)
+        context, args.address, mango.PerpEventQueue.parse)
     manager.add(event_splitting_subscription)
-    publisher = event_splitting_subscription.publisher.pipe(rx.operators.flat_map(_split_events))
+    publisher = event_splitting_subscription.publisher.pipe(rx.operators.flat_map(splitter.unseen))
 else:
     converter = mango.build_account_info_converter(context, args.account_type)
     converting_subscription = mango.WebSocketAccountSubscription(
