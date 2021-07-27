@@ -1,0 +1,104 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import rx
+import rx.operators
+import rx.scheduler
+import sys
+import threading
+import typing
+
+from decimal import Decimal
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+import mango.layouts  # nopep8
+import mango.marketmaking.fixedratiosdesiredordersbuilder  # nopep8
+import mango.marketmaking.marketmaker  # nopep8
+import mango.marketmaking.modelstate  # nopep8
+import mango.marketmaking.toleranceorderreconciler  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--named-address", type=str, required=True, action="append", default=[],
+                    help="Name and address of the Solana account to watch, separated by a colon")
+parser.add_argument("--minimum-sol-balance", type=Decimal, default=Decimal("0.1"),
+                    help="the minimum SOL balance required for the alert. A SOL balance less than this value will trigger a nifitication.")
+parser.add_argument("--notify", type=mango.parse_subscription_target, action="append", default=[],
+                    help="The notification target for low balance events")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+# Don't just keep reporting it - pause after we get a positive before notifiying again.
+#
+# Time is in seconds, so this is an hour. Effectively this means we let through at most one
+# notifying event per hour per account.
+NOTIFY_AT_MOST_EVERY = 60 * 60
+
+
+def notifier(name: str) -> typing.Callable[[mango.AccountInfo], None]:
+    def notify(account_info: mango.AccountInfo) -> None:
+        account_sols = account_info.lamports / mango.SOL_DECIMAL_DIVISOR
+        report = f"Account \"{name} [{account_info.address}]\" on {context.cluster} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
+        for notify in args.notify:
+            notify.send(report)
+        print(f"Notification sent: {report}")
+    return notify
+
+
+def account_fails_balance_check(account_info: mango.AccountInfo) -> bool:
+    return (account_info.lamports / mango.SOL_DECIMAL_DIVISOR) < args.minimum_sol_balance
+
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+
+disposer = mango.DisposePropagator()
+manager = mango.WebSocketSubscriptionManager()
+disposer.add_disposable(manager)
+
+for name_and_address in args.named_address:
+    name, address_str = name_and_address.split(":")
+    address = PublicKey(address_str)
+
+    immediate = mango.AccountInfo.load(context, address)
+    if immediate is None:
+        raise Exception(f"No account '{name}' at {address_str}.")
+
+    account_subscription = mango.WebSocketAccountSubscription(context, address, lambda account_info: account_info)
+    manager.add(account_subscription)
+    account_subscription.publisher.pipe(
+        rx.operators.subscribe_on(context.pool_scheduler),
+        rx.operators.filter(account_fails_balance_check),
+        rx.operators.throttle_first(NOTIFY_AT_MOST_EVERY),
+        rx.operators.catch(mango.observable_pipeline_error_reporter),
+        rx.operators.retry()
+    ).subscribe(notifier(name))
+
+    # Don't just wait for a change - send the current state through to start the balance check in case there
+    # isn't a lot of activity on that account to trigger the websocket account change.
+    account_subscription.publisher.on_next(immediate)
+
+websocket_url = context.cluster_url.replace("https", "ws", 1)
+ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler, manager.on_item)
+ws.ping_interval = 10
+ws.open()
+
+# Wait - don't exit. Exiting will be handled by signals/interrupts.
+waiter = threading.Event()
+try:
+    waiter.wait()
+except:
+    pass
+
+logging.info("Shutting down...")
+ws.close()
+disposer.dispose()
+logging.info("Shutdown complete.")
