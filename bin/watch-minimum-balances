@@ -89,6 +89,10 @@ for name_and_address in args.named_address:
 websocket_url = context.cluster_url.replace("https", "ws", 1)
 ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler, manager.on_item)
 ws.ping_interval = 10
+
+ws_pong_disposable = ws.pong.subscribe(mango.FileToucherObserver("/var/tmp/mango_healthcheck_ws_pong"))
+disposer.add_disposable(ws_pong_disposable)
+
 ws.open()
 
 # Wait - don't exit. Exiting will be handled by signals/interrupts.
