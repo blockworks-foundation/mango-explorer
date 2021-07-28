@@ -63,7 +63,7 @@ def start_subscriptions(context: mango.Context, liquidation_processor: mango.Liq
 
     logging.info("Starting margin account fetcher subscription")
     account_subscription = rx.interval(float(throttle_reload_to_seconds)).pipe(
-        ops.subscribe_on(context.pool_scheduler),
+        ops.observe_on(context.pool_scheduler),
         ops.start_with(-1),
         ops.map(fetch_accounts(context)),
         ops.catch(mango.observable_pipeline_error_reporter),
@@ -72,7 +72,7 @@ def start_subscriptions(context: mango.Context, liquidation_processor: mango.Liq
 
     logging.info("Starting price fetcher subscription")
     price_subscription = rx.interval(float(throttle_ripe_update_to_seconds)).pipe(
-        ops.subscribe_on(context.pool_scheduler),
+        ops.observe_on(context.pool_scheduler),
         ops.map(fetch_prices(context)),
         ops.catch(mango.observable_pipeline_error_reporter),
         ops.retry()
