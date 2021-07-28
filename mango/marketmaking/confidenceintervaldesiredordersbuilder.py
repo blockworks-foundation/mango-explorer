@@ -30,11 +30,11 @@ from .modelstate import ModelState
 #
 
 class ConfidenceIntervalDesiredOrdersBuilder(DesiredOrdersBuilder):
-    def __init__(self, position_size_ratio: Decimal, min_price_ratio: Decimal, max_price_ratio: Decimal, order_type: mango.OrderType = mango.OrderType.POST_ONLY):
+    def __init__(self, position_size_ratio: Decimal, min_price_ratio: Decimal, confidence_weighting: Decimal = Decimal(2), order_type: mango.OrderType = mango.OrderType.POST_ONLY):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.position_size_ratio: Decimal = position_size_ratio
         self.min_price_ratio: Decimal = min_price_ratio
-        self.max_price_ratio: Decimal = max_price_ratio
+        self.confidence_weighting: Decimal = confidence_weighting
         self.order_type: mango.OrderType = order_type
 
     def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
@@ -51,8 +51,7 @@ class ConfidenceIntervalDesiredOrdersBuilder(DesiredOrdersBuilder):
         position_size = position_size_value / price.mid_price
 
         # From Daffy on 26th July 2021: max(pyth_conf * 2, price * min_charge)
-        min_charge = max(price.confidence * 2, price.mid_price * self.min_price_ratio)
-        charge = min(min_charge, price.mid_price * self.max_price_ratio)
+        charge = max(price.confidence * self.confidence_weighting, price.mid_price * self.min_price_ratio)
         bid: Decimal = price.mid_price - charge
         ask: Decimal = price.mid_price + charge
 
@@ -66,4 +65,4 @@ class ConfidenceIntervalDesiredOrdersBuilder(DesiredOrdersBuilder):
         return orders
 
     def __str__(self) -> str:
-        return f"« 𝙲𝚘𝚗𝚏𝚒𝚍𝚎𝚗𝚌𝚎𝙸𝚗𝚝𝚎𝚛𝚟𝚊𝚕𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜𝙱𝚞𝚒𝚕𝚍𝚎𝚛 {self.order_type} - position size: {self.position_size_ratio}, min charge: {self.min_price_ratio}, max charge: {self.max_price_ratio} »"
+        return f"« 𝙲𝚘𝚗𝚏𝚒𝚍𝚎𝚗𝚌𝚎𝙸𝚗𝚝𝚎𝚛𝚟𝚊𝚕𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜𝙱𝚞𝚒𝚕𝚍𝚎𝚛 {self.order_type} - position size: {self.position_size_ratio}, min charge: {self.min_price_ratio}, confidence weighting: {self.confidence_weighting} »"
