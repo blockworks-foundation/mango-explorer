@@ -109,7 +109,8 @@ def hedge(event: mango.PerpFillEvent) -> None:
     try:
         hedging_market_operations.place_order(order)
     except Exception as exception:
-        logger.error(f"Failed to hedge using order {order} - {exception} - {traceback.format_exc()}")
+        logger.error(
+            f"Failed to hedge {watched_market.symbol} on {hedging_market.symbol} using order {order} - {exception} - {traceback.format_exc()}")
 
 
 publisher.subscribe(on_next=hedge)
