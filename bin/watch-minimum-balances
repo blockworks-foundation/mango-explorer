@@ -30,6 +30,8 @@ parser.add_argument("--named-address", type=str, required=True, action="append",
                     help="Name and address of the Solana account to watch, separated by a colon")
 parser.add_argument("--minimum-sol-balance", type=Decimal, default=Decimal("0.1"),
                     help="the minimum SOL balance required for the alert. A SOL balance less than this value will trigger a nifitication.")
+parser.add_argument("--timer-limit", type=int, default=(60 * 60),
+                    help="notifications for an account will be sent at most once per timer-limit seconds, and accounts will be polled once per timer-limit seconds irrespective of websocket activity")
 parser.add_argument("--notify", type=mango.parse_subscription_target, action="append", default=[],
                     help="The notification target for low balance events")
 args = parser.parse_args()
@@ -37,16 +39,14 @@ args = parser.parse_args()
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-# Don't just keep reporting it - pause after we get a positive before notifiying again.
-#
-# Time is in seconds, so this is an hour. Effectively this means we let through at most one
-# notifying event per hour per account.
-NOTIFY_AT_MOST_EVERY = 60 * 60
+
+def sols_from_lamports(lamports: Decimal) -> Decimal:
+    return lamports / mango.SOL_DECIMAL_DIVISOR
 
 
 def notifier(name: str) -> typing.Callable[[mango.AccountInfo], None]:
     def notify(account_info: mango.AccountInfo) -> None:
-        account_sols = account_info.lamports / mango.SOL_DECIMAL_DIVISOR
+        account_sols = sols_from_lamports(account_info.lamports)
         report = f"Account \"{name} [{account_info.address}]\" on {context.cluster} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
         for notify in args.notify:
             notify.send(report)
@@ -55,7 +55,13 @@ def notifier(name: str) -> typing.Callable[[mango.AccountInfo], None]:
 
 
 def account_fails_balance_check(account_info: mango.AccountInfo) -> bool:
-    return (account_info.lamports / mango.SOL_DECIMAL_DIVISOR) < args.minimum_sol_balance
+    return sols_from_lamports(account_info.lamports) < args.minimum_sol_balance
+
+
+def log_account(account_info: mango.AccountInfo) -> mango.AccountInfo:
+    account_sols = sols_from_lamports(account_info.lamports)
+    logging.info(f"Checking account {account_info.address} - {account_sols} SOL.")
+    return account_info
 
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -74,17 +80,18 @@ for name_and_address in args.named_address:
 
     account_subscription = mango.WebSocketAccountSubscription(context, address, lambda account_info: account_info)
     manager.add(account_subscription)
-    account_subscription.publisher.pipe(
-        rx.operators.subscribe_on(context.pool_scheduler),
+
+    on_change = account_subscription.publisher.pipe(rx.operators.start_with(immediate))
+    on_timer = rx.interval(args.timer_limit).pipe(
+        rx.operators.map(lambda _: mango.AccountInfo.load(context, address)))
+    rx.merge(on_change, on_timer).pipe(
+        rx.operators.observe_on(context.pool_scheduler),
+        rx.operators.map(log_account),
         rx.operators.filter(account_fails_balance_check),
-        rx.operators.throttle_first(NOTIFY_AT_MOST_EVERY),
+        rx.operators.throttle_first(args.timer_limit),
         rx.operators.catch(mango.observable_pipeline_error_reporter),
         rx.operators.retry()
     ).subscribe(notifier(name))
-
-    # Don't just wait for a change - send the current state through to start the balance check in case there
-    # isn't a lot of activity on that account to trigger the websocket account change.
-    account_subscription.publisher.on_next(immediate)
 
 websocket_url = context.cluster_url.replace("https", "ws", 1)
 ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler, manager.on_item)
