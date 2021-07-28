@@ -20,6 +20,7 @@ from solana.publickey import PublicKey
 from .accountinfo import AccountInfo
 from .context import Context
 from .group import Group
+from .lotsizeconverter import LotSizeConverter
 from .market import Market, InventorySource
 from .orderbookside import OrderBookSide
 from .orders import Order
@@ -37,6 +38,8 @@ class PerpMarket(Market):
     def __init__(self, address: PublicKey, base: Token, quote: Token, underlying_perp_market: PerpMarketDetails):
         super().__init__(address, InventorySource.ACCOUNT, base, quote)
         self.underlying_perp_market: PerpMarketDetails = underlying_perp_market
+        self.lot_size_converter: LotSizeConverter = LotSizeConverter(
+            base, underlying_perp_market.base_lot_size, quote, underlying_perp_market.quote_lot_size)
 
     @property
     def symbol(self) -> str:
@@ -47,7 +50,8 @@ class PerpMarket(Market):
         return self.underlying_perp_market.group
 
     def unprocessed_events(self, context: Context) -> typing.Sequence[PerpEvent]:
-        event_queue: PerpEventQueue = PerpEventQueue.load(context, self.underlying_perp_market.event_queue)
+        event_queue: PerpEventQueue = PerpEventQueue.load(
+            context, self.underlying_perp_market.event_queue, self.lot_size_converter)
         return event_queue.unprocessed_events()
 
     def accounts_to_crank(self, context: Context, additional_account_to_crank: typing.Optional[PublicKey]) -> typing.Sequence[PublicKey]:
@@ -77,7 +81,10 @@ class PerpMarket(Market):
         return [*bid_side.orders(), *ask_side.orders()]
 
     def __str__(self) -> str:
-        return f"« 𝙿𝚎𝚛𝚙𝚜𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}] »"
+        underlying: str = f"{self.underlying_perp_market}".replace("\n", "\n    ")
+        return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}]
+    {underlying}
+»"""
 
 
 # # 🥭 PerpMarketStub class

@@ -43,10 +43,12 @@ if args.account_type.upper() == "ACCOUNTINFO":
     manager.add(raw_subscription)
     publisher: rx.Observable = raw_subscription.publisher
 elif args.account_type.upper() == "PERPEVENTS":
-    initial: mango.PerpEventQueue = mango.PerpEventQueue.load(context, args.address)
+    # It'd be nice to get the market's lot size converter, but we don't have its address yet.
+    lot_size_converter: mango.LotSizeConverter = mango.NullLotSizeConverter()
+    initial: mango.PerpEventQueue = mango.PerpEventQueue.load(context, args.address, lot_size_converter)
     splitter: mango.UnseenPerpEventChangesTracker = mango.UnseenPerpEventChangesTracker(initial)
     event_splitting_subscription = mango.WebSocketAccountSubscription(
-        context, args.address, mango.PerpEventQueue.parse)
+        context, args.address, lambda account_info: mango.PerpEventQueue.parse(account_info, lot_size_converter))
     manager.add(event_splitting_subscription)
     publisher = event_splitting_subscription.publisher.pipe(rx.operators.flat_map(splitter.unseen))
 else:

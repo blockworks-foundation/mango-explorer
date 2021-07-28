@@ -22,6 +22,7 @@ from .instructiontype import InstructionType
 from .liquidatablereport import LiquidatableState, LiquidatableReport
 from .liquidationevent import LiquidationEvent
 from .liquidationprocessor import LiquidationProcessor, LiquidationProcessorState
+from .lotsizeconverter import LotSizeConverter, NullLotSizeConverter
 from .market import InventorySource, Market
 from .marketinstructionbuilder import MarketInstructionBuilder, NullMarketInstructionBuilder
 from .marketlookup import MarketLookup, NullMarketLookup, CompoundMarketLookup

@@ -44,8 +44,8 @@ class Token:
         return round(shifted, int(self.decimals))
 
     def shift_to_native(self, value: Decimal) -> Decimal:
-        divisor = Decimal(10 ** self.decimals)
-        shifted = value * divisor
+        multiplier = Decimal(10 ** self.decimals)
+        shifted = value * multiplier
         return round(shifted, 0)
 
     def symbol_matches(self, symbol: str) -> bool:

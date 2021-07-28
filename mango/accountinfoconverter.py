@@ -24,6 +24,7 @@ from .addressableaccount import AddressableAccount
 from .context import Context
 from .group import Group
 from .layouts import layouts
+from .lotsizeconverter import NullLotSizeConverter
 from .openorders import OpenOrders
 from .perpeventqueue import PerpEventQueue
 from .perpmarketdetails import PerpMarketDetails
@@ -50,7 +51,7 @@ def build_account_info_converter(context: Context, account_type: str) -> typing.
     elif account_type_upper == "OPENORDERS":
         return lambda account_info: OpenOrders.parse(account_info, Decimal(6), Decimal(6))
     elif account_type_upper == "PERPEVENTQUEUE":
-        return lambda account_info: PerpEventQueue.parse(account_info)
+        return lambda account_info: PerpEventQueue.parse(account_info, NullLotSizeConverter())
     elif account_type_upper == "SERUMEVENTQUEUE":
         return lambda account_info: SerumEventQueue.parse(account_info)
     elif account_type_upper == "PERPMARKETDETAILS":

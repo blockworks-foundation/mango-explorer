@@ -25,6 +25,7 @@ from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
 from .layouts import layouts
+from .lotsizeconverter import LotSizeConverter
 from .metadata import Metadata
 from .orders import Side
 from .version import Version
@@ -130,13 +131,15 @@ class PerpUnknownEvent(PerpEvent):
 #
 # `event_builder()` takes an event layout and returns a typed `PerpEvent`.
 #
-def event_builder(event_layout) -> typing.Optional[PerpEvent]:
+def event_builder(lot_size_converter: LotSizeConverter, event_layout) -> typing.Optional[PerpEvent]:
     if event_layout.event_type == b'\x00':
         if event_layout.maker is None and event_layout.taker is None:
             return None
         side: Side = Side.BUY if event_layout.side == pyserum.enums.Side.BUY else Side.SELL
+        quantity: Decimal = lot_size_converter.quantity_lots_to_value(event_layout.quantity)
+        price: Decimal = lot_size_converter.price_lots_to_value(event_layout.price)
         return PerpFillEvent(event_layout.event_type, event_layout.timestamp, side,
-                             event_layout.price, event_layout.quantity, event_layout.best_initial,
+                             price, quantity, event_layout.best_initial,
                              event_layout.maker_slot, event_layout.maker_out, event_layout.maker,
                              event_layout.maker_order_id, event_layout.maker_client_order_id,
                              event_layout.taker, event_layout.taker_order_id,
@@ -166,27 +169,30 @@ class PerpEventQueue(AddressableAccount):
         self.events: typing.Sequence[typing.Optional[PerpEvent]] = events
 
     @staticmethod
-    def from_layout(layout: layouts.PERP_EVENT_QUEUE, account_info: AccountInfo, version: Version) -> "PerpEventQueue":
+    def from_layout(layout: layouts.PERP_EVENT_QUEUE, account_info: AccountInfo, version: Version, lot_size_converter: LotSizeConverter) -> "PerpEventQueue":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
         head: Decimal = layout.head
         count: Decimal = layout.count
         seq_num: Decimal = layout.seq_num
-        events: typing.Sequence[typing.Optional[PerpEvent]] = list(map(event_builder, layout.events))
+        events: typing.List[typing.Optional[PerpEvent]] = []
+        for raw_event in layout.events:
+            built_event = event_builder(lot_size_converter, raw_event)
+            events += [built_event]
 
         return PerpEventQueue(account_info, version, meta_data, head, count, seq_num, events)
 
     @ staticmethod
-    def parse(account_info: AccountInfo) -> "PerpEventQueue":
+    def parse(account_info: AccountInfo, lot_size_converter: LotSizeConverter) -> "PerpEventQueue":
         # Data length isn't fixed so can't check we get the right value the way we normally do.
         layout = layouts.PERP_EVENT_QUEUE.parse(account_info.data)
-        return PerpEventQueue.from_layout(layout, account_info, Version.V1)
+        return PerpEventQueue.from_layout(layout, account_info, Version.V1, lot_size_converter)
 
     @ staticmethod
-    def load(context: Context, address: PublicKey) -> "PerpEventQueue":
+    def load(context: Context, address: PublicKey, lot_size_converter: LotSizeConverter) -> "PerpEventQueue":
         account_info = AccountInfo.load(context, address)
         if account_info is None:
             raise Exception(f"PerpEventQueue account not found at address '{address}'")
-        return PerpEventQueue.parse(account_info)
+        return PerpEventQueue.parse(account_info, lot_size_converter)
 
     @property
     def capacity(self) -> int:
