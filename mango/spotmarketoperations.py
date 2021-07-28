@@ -24,7 +24,7 @@ from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import Group
 from .marketoperations import MarketOperations
-from .orders import Order, OrderType, Side
+from .orders import Order
 from .spotmarket import SpotMarket
 from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
 from .wallet import Wallet
@@ -60,13 +60,15 @@ class SpotMarketOperations(MarketOperations):
 
         return (signers + cancel + crank + settle).execute(self.context)
 
-    def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
+    def place_order(self, order: Order) -> Order:
         client_id: int = self.context.random_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        order: Order = Order(id=0, client_id=client_id, side=side, price=price,
-                             quantity=quantity, owner=self.open_orders_address, order_type=order_type)
+        order_with_client_id: Order = Order(id=0, client_id=client_id, side=order.side, price=order.price,
+                                            quantity=order.quantity, owner=self.open_orders_address,
+                                            order_type=order.order_type)
         self.logger.info(f"Placing {self.spot_market.symbol} order {order}.")
-        place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(order)
+        place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
+            order_with_client_id)
         open_orders_to_crank: typing.List[PublicKey] = []
         for event in self.spot_market.unprocessed_events(self.context):
             open_orders_to_crank += [event.public_key]
@@ -75,7 +77,7 @@ class SpotMarketOperations(MarketOperations):
 
         (signers + place + crank + settle).execute(self.context)
 
-        return order
+        return order_with_client_id
 
     def settle(self) -> typing.Sequence[str]:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)

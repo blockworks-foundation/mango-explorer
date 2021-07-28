@@ -20,16 +20,15 @@ import typing
 
 from decimal import Decimal
 
-from .constants import SYSTEM_PROGRAM_ADDRESS
-from .orders import Order, OrderType, Side
+from .orders import Order
 
 
 # # 🥭 MarketOperations
 #
 # This file deals with placing orders. We want the interface to be simple and basic:
 # ```
-# order_placer.cancel_order(context, market)
-# order_placer.place_order(context, market, side, order_type, price, quantity)
+# market_operations.cancel_order(old_order)
+# market_operations.place_order(new_order)
 # ```
 # This requires the `MarketOperations` already know a bit about the market it is placing the
 # order on, and the code in the `MarketOperations` be specialised for that market platform.
@@ -46,7 +45,7 @@ from .orders import Order, OrderType, Side
 # Whichever choice is made, the calling code shouldn't have to care. It should be able to
 # use its `MarketOperations` class as simply as:
 # ```
-# order_placer.place_order(context, side, order_type, price, quantity)
+# market_operations.place_order(order)
 # ```
 #
 
@@ -60,7 +59,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
         raise NotImplementedError("MarketOperations.cancel_order() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
+    def place_order(self, order: Order) -> Order:
         raise NotImplementedError("MarketOperations.place_order() is not implemented on the base type.")
 
     @abc.abstractmethod
@@ -98,9 +97,7 @@ class NullMarketOperations(MarketOperations):
         self.logger.info(f"Cancelling order {order}.")
         return [""]
 
-    def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
-        order: Order = Order(id=0, side=side, price=price, quantity=quantity, client_id=0,
-                             owner=SYSTEM_PROGRAM_ADDRESS, order_type=order_type)
+    def place_order(self, order: Order) -> Order:
         self.logger.info(f"Placing order {order}.")
         return order
 

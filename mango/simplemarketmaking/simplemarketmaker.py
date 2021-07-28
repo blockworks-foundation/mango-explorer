@@ -93,14 +93,18 @@ class SimpleMarketMaker:
                     self.logger.info("Cancelling BUY orders.")
                     for order in buy_orders:
                         self.market_operations.cancel_order(order)
-                    self.market_operations.place_order(mango.Side.BUY, mango.OrderType.POST_ONLY, bid, buy_quantity)
+                    buy_order: mango.Order = mango.Order.from_basic_info(
+                        mango.Side.BUY, bid, buy_quantity, mango.OrderType.POST_ONLY)
+                    self.market_operations.place_order(buy_order)
 
                 sell_orders = [order for order in current_orders if order.side == mango.Side.SELL]
                 if self.orders_require_action(sell_orders, ask, sell_quantity):
                     self.logger.info("Cancelling SELL orders.")
                     for order in sell_orders:
                         self.market_operations.cancel_order(order)
-                    self.market_operations.place_order(mango.Side.SELL, mango.OrderType.POST_ONLY, ask, sell_quantity)
+                    sell_order: mango.Order = mango.Order.from_basic_info(
+                        mango.Side.SELL, ask, sell_quantity, mango.OrderType.POST_ONLY)
+                    self.market_operations.place_order(sell_order)
 
                 self.update_health_on_successful_iteration()
             except Exception as exception:

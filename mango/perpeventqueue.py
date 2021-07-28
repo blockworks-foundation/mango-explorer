@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import abc
+import pyserum.enums
 import typing
 
 from datetime import datetime
@@ -78,7 +79,7 @@ class PerpFillEvent(PerpEvent):
         return [self.maker, self.taker]
 
     def __str__(self):
-        return f"""« 𝙵𝚒𝚕𝚕𝙴𝚟𝚎𝚗𝚝 [{self.timestamp}] {self.side} {self.quantity} at {self.price}
+        return f"""« 𝙿𝚎𝚛𝚙𝙵𝚒𝚕𝚕𝙴𝚟𝚎𝚗𝚝 [{self.timestamp}] {self.side} {self.quantity:,.8f} at {self.price:,.8f}
     Maker: {self.maker}, {self.maker_order_id} / {self.maker_client_order_id}
     Taker: {self.taker}, {self.taker_order_id} / {self.taker_client_order_id}
     Best Initial: {self.best_initial}
@@ -104,7 +105,7 @@ class PerpOutEvent(PerpEvent):
         return [self.owner]
 
     def __str__(self):
-        return f"""« 𝙾𝚞𝚝𝙴𝚟𝚎𝚗𝚝 [{self.owner}] {self.side} {self.quantity}, slot: {self.slot} »"""
+        return f"""« 𝙿𝚎𝚛𝚙𝙾𝚞𝚝𝙴𝚟𝚎𝚗𝚝 [{self.owner}] {self.side} {self.quantity}, slot: {self.slot} »"""
 
 
 # # 🥭 PerpUnknownEvent class
@@ -122,7 +123,7 @@ class PerpUnknownEvent(PerpEvent):
         return [self.owner]
 
     def __str__(self):
-        return f"« 𝚄𝚗𝚔𝚗𝚘𝚠𝚗𝙴𝚟𝚎𝚗𝚝 [{self.owner}] »"
+        return f"« 𝙿𝚎𝚛𝚙𝚄𝚗𝚔𝚗𝚘𝚠𝚗𝙴𝚟𝚎𝚗𝚝 [{self.owner}] »"
 
 
 # # 🥭 event_builder function
@@ -133,7 +134,8 @@ def event_builder(event_layout) -> typing.Optional[PerpEvent]:
     if event_layout.event_type == b'\x00':
         if event_layout.maker is None and event_layout.taker is None:
             return None
-        return PerpFillEvent(event_layout.event_type, event_layout.timestamp, event_layout.side,
+        side: Side = Side.BUY if event_layout.side == pyserum.enums.Side.BUY else Side.SELL
+        return PerpFillEvent(event_layout.event_type, event_layout.timestamp, side,
                              event_layout.price, event_layout.quantity, event_layout.best_initial,
                              event_layout.maker_slot, event_layout.maker_out, event_layout.maker,
                              event_layout.maker_order_id, event_layout.maker_client_order_id,

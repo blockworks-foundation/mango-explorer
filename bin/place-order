@@ -35,5 +35,6 @@ if market is None:
     raise Exception(f"Could not find market {market_symbol}")
 
 market_operations = mango.create_market_operations(context, wallet, False, market)
-placed = market_operations.place_order(args.side, args.order_type, args.price, args.quantity)
+order: mango.Order = mango.Order.from_basic_info(args.side, args.price, args.quantity, args.order_type)
+placed = market_operations.place_order(order)
 print(placed)

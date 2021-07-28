@@ -22,7 +22,7 @@ from .account import Account
 from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .marketoperations import MarketOperations
-from .orders import Order, OrderType, Side
+from .orders import Order
 from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarket import PerpMarket
 from .wallet import Wallet
@@ -54,17 +54,17 @@ class PerpMarketOperations(MarketOperations):
         crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank)
         return (signers + cancel + crank).execute_and_unwrap_transaction_ids(self.context)
 
-    def place_order(self, side: Side, order_type: OrderType, price: Decimal, quantity: Decimal) -> Order:
+    def place_order(self, order: Order) -> Order:
         client_id: int = self.context.random_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        order: Order = Order(id=0, client_id=client_id, owner=self.account.address,
-                             side=side, price=price, quantity=quantity, order_type=order_type)
-        self.logger.info(f"Placing {self.market_name} order {order}.")
-        place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(order)
+        order_with_client_id: Order = order.with_client_id(client_id)
+        self.logger.info(f"Placing {self.market_name} order {order_with_client_id}.")
+        place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
+            order_with_client_id)
         accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)
         crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank)
         (signers + place + crank).execute(self.context)
-        return order
+        return order_with_client_id
 
     def settle(self) -> typing.Sequence[str]:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
