@@ -30,7 +30,7 @@ class LotSizeConverter():
         self.quote_lot_size: Decimal = quote_lot_size
 
     def price_lots_to_native(self, price_lots: Decimal) -> Decimal:
-        return (self.quote_lot_size * price_lots) / self.base_lot_size
+        return (price_lots * self.quote_lot_size) / self.base_lot_size
 
     def quantity_lots_to_native(self, quantity_lots: Decimal) -> Decimal:
         return self.base_lot_size * quantity_lots
@@ -41,7 +41,7 @@ class LotSizeConverter():
         return (price_lots * lots_to_native) * native_to_ui
 
     def quantity_lots_to_value(self, quantity_lots: Decimal) -> Decimal:
-        return self.base.shift_to_native(quantity_lots * self.base_lot_size)
+        return (quantity_lots * self.base_lot_size) / (10 ** self.base.decimals)
 
     def __str__(self):
         return f"« 𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 [base lot size: {self.base_lot_size}, quote lot size: {self.quote_lot_size}] »"
