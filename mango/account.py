@@ -26,6 +26,7 @@ from .encoding import encode_key
 from .group import Group
 from .layouts import layouts
 from .metadata import Metadata
+from .perpaccount import PerpAccount
 from .tokenvalue import TokenValue
 from .version import Version
 
@@ -40,7 +41,7 @@ class Account(AddressableAccount):
                  meta_data: Metadata, group: Group, owner: PublicKey, in_margin_basket: typing.Sequence[Decimal],
                  deposits: typing.Sequence[typing.Optional[TokenValue]], borrows: typing.Sequence[typing.Optional[TokenValue]],
                  net_assets: typing.Sequence[typing.Optional[TokenValue]], spot_open_orders: typing.Sequence[PublicKey],
-                 perp_accounts: typing.Sequence[typing.Any], msrm_amount: Decimal, being_liquidated: bool,
+                 perp_accounts: typing.Sequence[PerpAccount], msrm_amount: Decimal, being_liquidated: bool,
                  is_bankrupt: bool):
         super().__init__(account_info)
         self.version: Version = version
@@ -53,7 +54,7 @@ class Account(AddressableAccount):
         self.borrows: typing.Sequence[typing.Optional[TokenValue]] = borrows
         self.net_assets: typing.Sequence[typing.Optional[TokenValue]] = net_assets
         self.spot_open_orders: typing.Sequence[PublicKey] = spot_open_orders
-        self.perp_accounts: typing.Sequence[layouts.PERP_ACCOUNT] = perp_accounts
+        self.perp_accounts: typing.Sequence[PerpAccount] = perp_accounts
         self.msrm_amount: Decimal = msrm_amount
         self.being_liquidated: bool = being_liquidated
         self.is_bankrupt: bool = is_bankrupt
@@ -81,10 +82,10 @@ class Account(AddressableAccount):
                 net_assets += [None]
 
         spot_open_orders: typing.Sequence[PublicKey] = layout.spot_open_orders
-        perp_accounts: typing.Sequence[typing.Any] = layout.perp_accounts
+        perp_accounts: typing.Sequence[PerpAccount] = list(map(PerpAccount.from_layout, layout.perp_accounts))
         msrm_amount: Decimal = layout.msrm_amount
-        being_liquidated: bool = layout.being_liquidated
-        is_bankrupt: bool = layout.is_bankrupt
+        being_liquidated: bool = bool(layout.being_liquidated)
+        is_bankrupt: bool = bool(layout.is_bankrupt)
 
         return Account(account_info, version, meta_data, group, owner, in_margin_basket, deposits, borrows, net_assets, spot_open_orders, perp_accounts, msrm_amount, being_liquidated, is_bankrupt)
 
@@ -96,7 +97,7 @@ class Account(AddressableAccount):
                 f"Account data length ({len(data)}) does not match expected size ({layouts.MANGO_ACCOUNT.sizeof()})")
 
         layout = layouts.MANGO_ACCOUNT.parse(data)
-        return Account.from_layout(layout, account_info, Version.V1, group)
+        return Account.from_layout(layout, account_info, Version.V3, group)
 
     @staticmethod
     def load(context: Context, address: PublicKey, group: Group) -> "Account":
@@ -138,24 +139,34 @@ class Account(AddressableAccount):
         return Account.load_all_for_owner(context, owner, group)[0]
 
     def __str__(self):
-        deposits = "\n        ".join(
-            [f"{deposit}" for deposit in self.deposits if deposit is not None and deposit.value != Decimal(0)] or ["None"])
-        borrows = "\n        ".join(
-            [f"{borrow}" for borrow in self.borrows if borrow is not None and borrow.value != Decimal(0)] or ["None"])
-        net_assets = "\n        ".join(
-            [f"{net_asset}" for net_asset in self.net_assets if net_asset is not None and net_asset.value != Decimal(0)] or ["None"])
+        def _render_list(items, stub):
+            rendered = []
+            for index, item in enumerate(items):
+                rendered += [f"{index}: {(item or stub)}".replace("\n", "\n        ")]
+            return rendered
+        available_deposit_count = len([deposit for deposit in self.deposits if deposit is not None])
+        deposits = "\n        ".join(_render_list(self.deposits, "« No Deposit »"))
+        available_borrow_count = len([borrow for borrow in self.borrows if borrow is not None])
+        borrows = "\n        ".join(_render_list(self.borrows, "« No Borrow »"))
+        net_assets = "\n        ".join(_render_list(self.net_assets, "« No Net Assets »"))
         spot_open_orders = ", ".join([f"{oo}" for oo in self.spot_open_orders if oo is not None])
         perp_accounts = ", ".join(
             [f"{perp}".replace("\n", "\n        ") for perp in self.perp_accounts if perp.open_orders.free_slot_bits != 0xFFFFFFFF])
+        indices_in_basket = []
+        for index, value in enumerate(self.in_margin_basket):
+            if value != 0:
+                indices_in_basket += [index]
+        in_margin_basket = ", ".join([f"{self.group.tokens[index].token.symbol}" for index in indices_in_basket])
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {self.version} [{self.address}]
     {self.meta_data}
-    Bankrupt? {self.is_bankrupt}
-    Being Liquidated? {self.being_liquidated}
     Owner: {self.owner}
     Group: « 𝙶𝚛𝚘𝚞𝚙 '{self.group.name}' {self.group.version} [{self.group.address}] »
-    Deposits:
+    In Basket: {in_margin_basket}
+    Bankrupt? {self.is_bankrupt}
+    Being Liquidated? {self.being_liquidated}
+    Deposits [{available_deposit_count} available]:
         {deposits}
-    Borrows:
+    Borrows [{available_borrow_count} available]:
         {borrows}
     Net Assets:
         {net_assets}

@@ -21,7 +21,6 @@ from pyserum.open_orders_account import OpenOrdersAccount
 from solana.publickey import PublicKey
 from solana.rpc.types import MemcmpOpts
 
-from .account import Account
 from .accountflags import AccountFlags
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
@@ -29,35 +28,8 @@ from .context import Context
 from .encoding import encode_key
 from .group import Group
 from .layouts import layouts
-from .orders import Side
-from .perpmarket import PerpMarket
+from .placedorder import PlacedOrder
 from .version import Version
-
-
-class PlacedOrder(typing.NamedTuple):
-    id: int
-    client_id: int
-    side: Side
-
-    @staticmethod
-    def build_from_open_orders_data(free_slot_bits: Decimal, is_bid_bits: Decimal, order_ids: typing.Sequence[Decimal], client_order_ids: typing.Sequence[Decimal]):
-        int_free_slot_bits = int(free_slot_bits)
-        int_is_bid_bits = int(is_bid_bits)
-        placed_orders: typing.List[PlacedOrder] = []
-        for index in range(len(order_ids)):
-            if not (int_free_slot_bits & (1 << index)):
-                order_id = int(order_ids[index])
-                client_id = int(client_order_ids[index])
-                side = Side.BUY if int_is_bid_bits & (1 << index) else Side.SELL
-                placed_orders += [PlacedOrder(id=order_id, client_id=client_id, side=side)]
-        return placed_orders
-
-    def __repr__(self) -> str:
-        return f"{self}"
-
-    def __str__(self) -> str:
-        return f"« 𝙿𝚕𝚊𝚌𝚎𝚍𝙾𝚛𝚍𝚎𝚛 {self.side} [{self.id}] {self.client_id} »"
-
 
 # # 🥭 OpenOrders class
 #
@@ -106,18 +78,6 @@ class OpenOrders(AddressableAccount):
         return OpenOrders(account_info, Version.UNSPECIFIED, program_id, account_flags, layout.market,
                           layout.owner, base_token_free, base_token_total, quote_token_free,
                           quote_token_total, placed_orders, layout.referrer_rebate_accrued)
-
-    @staticmethod
-    def from_perps_account_layout(context: Context, account: Account, perp_market: PerpMarket, perp_open_orders: layouts.PERP_OPEN_ORDERS) -> "OpenOrders":
-        account_flags = AccountFlags(Version.UNSPECIFIED, True, False,
-                                     True, False, False, False, False, False)
-        placed_orders = PlacedOrder.build_from_open_orders_data(
-            perp_open_orders.free_slot_bits, perp_open_orders.is_bid_bits, perp_open_orders.orders, perp_open_orders.client_order_ids)
-        open_orders = OpenOrders(account.account_info, Version.V1, context.program_id,
-                                 account_flags, perp_market.address, account.address,
-                                 Decimal(0), Decimal(0), Decimal(0), Decimal(0),
-                                 placed_orders, Decimal(0))
-        return open_orders
 
     @staticmethod
     def parse(account_info: AccountInfo, base_decimals: Decimal, quote_decimals: Decimal) -> "OpenOrders":

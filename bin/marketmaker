@@ -82,7 +82,7 @@ def build_latest_account_observer(context: mango.Context, account: mango.Account
     return account_subscription, latest_account_observer
 
 
-def build_latest_spot_open_orders_observer(manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, spot_market: mango.SpotMarket) -> mango.LatestItemObserverSubscriber[mango.OpenOrders]:
+def build_latest_spot_open_orders_observer(manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, spot_market: mango.SpotMarket) -> mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer]:
     market_index = group.find_spot_market_index(spot_market.address)
     spot_open_orders_address = account.spot_open_orders[market_index]
     if spot_open_orders_address is None:
@@ -93,13 +93,14 @@ def build_latest_spot_open_orders_observer(manager: mango.WebSocketSubscriptionM
     manager.add(spot_open_orders_subscription)
     initial_spot_open_orders = mango.OpenOrders.load(
         context, spot_open_orders_address, spot_market.base.decimals, spot_market.quote.decimals)
-    latest_open_orders_observer = mango.LatestItemObserverSubscriber(initial_spot_open_orders)
+    latest_open_orders_observer = mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer](
+        initial_spot_open_orders)
     spot_open_orders_subscription.publisher.subscribe(latest_open_orders_observer)
     add_file_health("open_orders_subscription", spot_open_orders_subscription.publisher, disposer)
     return latest_open_orders_observer
 
 
-def build_latest_serum_open_orders_observer(manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, serum_market: mango.SerumMarket, context: mango.Context, wallet: mango.Wallet) -> mango.LatestItemObserverSubscriber[mango.OpenOrders]:
+def build_latest_serum_open_orders_observer(manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, serum_market: mango.SerumMarket, context: mango.Context, wallet: mango.Wallet) -> mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer]:
     all_open_orders = mango.OpenOrders.load_for_market_and_owner(
         context, serum_market.address, wallet.address, context.dex_program_id, serum_market.base.decimals, serum_market.quote.decimals)
     if len(all_open_orders) > 0:
@@ -124,24 +125,19 @@ def build_latest_serum_open_orders_observer(manager: mango.WebSocketSubscription
 
     manager.add(serum_open_orders_subscription)
 
-    latest_serum_open_orders_observer = mango.LatestItemObserverSubscriber(initial_serum_open_orders)
+    latest_serum_open_orders_observer = mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer](
+        initial_serum_open_orders)
     serum_open_orders_subscription.publisher.subscribe(latest_serum_open_orders_observer)
     add_file_health("open_orders_subscription", serum_open_orders_subscription.publisher, disposer)
     return latest_serum_open_orders_observer
 
 
-def build_latest_perp_open_orders_observer(disposer: mango.DisposePropagator, perp_market: mango.PerpMarket, account: mango.Account, account_subscription: mango.WebSocketSubscription[mango.Account]) -> mango.LatestItemObserverSubscriber[mango.OpenOrders]:
+def build_latest_perp_open_orders_observer(disposer: mango.DisposePropagator, perp_market: mango.PerpMarket, account: mango.Account, account_subscription: mango.WebSocketSubscription[mango.Account]) -> mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer]:
     index = group.find_perp_market_index(perp_market.address)
-
-    def _build_open_orders_from_account(account: mango.Account) -> mango.OpenOrders:
-        perp_account = account.perp_accounts[index]
-        perp_open_orders = perp_account.open_orders
-        return mango.OpenOrders.from_perps_account_layout(context, account, perp_market, perp_open_orders)
-
-    initial_open_orders = _build_open_orders_from_account(account)
-    latest_open_orders_observer = mango.LatestItemObserverSubscriber(initial_open_orders)
+    initial_open_orders = account.perp_accounts[index].open_orders
+    latest_open_orders_observer = mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer](initial_open_orders)
     account_subscription.publisher.subscribe(
-        on_next=lambda account: latest_open_orders_observer.on_next(_build_open_orders_from_account(account)))
+        on_next=lambda updated_account: latest_open_orders_observer.on_next(updated_account.perp_accounts[index].open_orders))
     add_file_health("open_orders_subscription", account_subscription.publisher, disposer)
     return latest_open_orders_observer
 

@@ -646,10 +646,6 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             relevant_open_orders += [AccountMeta(is_signer=False, is_writable=False,
                                                  pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS)]
 
-    print("root_bank.address", root_bank.address)
-    print("node_bank.address", node_bank.address)
-    print("open_orders_address", open_orders_address)
-    print("account.address", account.address)
     fee_discount_address_meta: typing.List[AccountMeta] = []
     if fee_discount_address is not None:
         fee_discount_address_meta = [AccountMeta(is_signer=False, is_writable=False, pubkey=fee_discount_address)]

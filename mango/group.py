@@ -113,7 +113,7 @@ class Group(AddressableAccount):
 
         layout = layouts.GROUP.parse(data)
         name = context.lookup_group_name(account_info.address)
-        return Group.from_layout(context, layout, name, account_info, Version.V1, context.token_lookup, context.market_lookup)
+        return Group.from_layout(context, layout, name, account_info, Version.V3, context.token_lookup, context.market_lookup)
 
     @staticmethod
     def load(context: Context, address: typing.Optional[PublicKey] = None) -> "Group":
@@ -156,9 +156,6 @@ class Group(AddressableAccount):
         return balances
 
     def __str__(self):
-        print("Token 14", self.tokens[14])
-        print("Token 14 is None", self.tokens[14] is None)
-
         def _render_list(items, stub):
             rendered = []
             for index, item in enumerate(items):

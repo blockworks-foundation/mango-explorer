@@ -30,18 +30,21 @@ from .marketoperations import MarketOperations, NullMarketOperations
 from .metadata import Metadata
 from .notification import NotificationTarget, TelegramNotificationTarget, DiscordNotificationTarget, MailjetNotificationTarget, CsvFileNotificationTarget, FilteringNotificationTarget, NotificationHandler, parse_subscription_target
 from .observables import DisposePropagator, NullObserverSubscriber, PrintingObserverSubscriber, TimestampedPrintingObserverSubscriber, CollectingObserverSubscriber, LatestItemObserverSubscriber, CaptureFirstItem, FunctionObserver, create_backpressure_skipping_observer, debug_print_item, log_subscription_error, observable_pipeline_error_reporter, EventSource, FileToucherObserver
-from .openorders import OpenOrders, PlacedOrder
+from .openorders import OpenOrders
 from .oracle import OracleSource, Price, Oracle, OracleProvider, SupportedOracleFeature
 from .orderbookside import OrderBookSide
 from .orders import Order, OrderType, Side
 from .ownedtokenvalue import OwnedTokenValue
 from .oraclefactory import create_oracle_provider
+from .perpaccount import PerpAccount
 from .perpeventqueue import PerpEvent, PerpFillEvent, PerpOutEvent, PerpUnknownEvent, PerpEventQueue, UnseenPerpEventChangesTracker
 from .perpmarket import PerpMarket, PerpMarketStub
 from .perpmarketdetails import PerpMarketDetails
 from .perpmarketinfo import PerpMarketInfo
 from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarketoperations import PerpMarketOperations
+from .perpopenorders import PerpOpenOrders
+from .placedorder import PlacedOrder, PlacedOrdersContainer
 from .reconnectingwebsocket import ReconnectingWebsocket
 from .retrier import RetryWithPauses, retry_context
 from .rootbank import NodeBank, RootBank

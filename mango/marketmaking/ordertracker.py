@@ -37,17 +37,17 @@ class OrderTracker:
 
     def existing_orders(self, model_state: ModelState) -> typing.Sequence[mango.Order]:
         live_orders: typing.List[mango.Order] = []
-        for placed_order in model_state.placed_orders:
-            details = self._find_tracked(placed_order.client_id)
+        for existing_order in model_state.existing_orders:
+            details = self._find_tracked(existing_order.client_id)
             if details is None:
-                self.logger.warning(f"Could not find existing order with client ID {placed_order.client_id}")
+                self.logger.warning(f"Could not find existing order with client ID {existing_order.client_id}")
                 # Return a stub order so that the Reconciler has the chance to cancel it.
-                stub = mango.Order.from_ids(placed_order.id, placed_order.client_id, placed_order.side)
+                stub = mango.Order.from_ids(existing_order.id, existing_order.client_id, existing_order.side)
                 live_orders += [stub]
             else:
-                if details.id != placed_order.id:
+                if details.id != existing_order.id:
                     self.tracked.remove(details)
-                    details = details.with_id(placed_order.id)
+                    details = details.with_id(existing_order.id)
                     self.tracked += [details]
 
                 live_orders += [details]

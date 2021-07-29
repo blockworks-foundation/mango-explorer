@@ -30,7 +30,7 @@ class ModelState:
                  group_watcher: mango.LatestItemObserverSubscriber[mango.Group],
                  price_watcher: mango.LatestItemObserverSubscriber[mango.Price],
                  perp_market_watcher: typing.Optional[mango.LatestItemObserverSubscriber[mango.PerpMarketDetails]],
-                 open_orders_watcher: mango.LatestItemObserverSubscriber[mango.OpenOrders]
+                 placed_orders_container_watcher: mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer]
                  ):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.market: mango.Market = market
@@ -39,7 +39,8 @@ class ModelState:
         self.price_watcher: mango.LatestItemObserverSubscriber[mango.Price] = price_watcher
         self.perp_market_watcher: typing.Optional[mango.LatestItemObserverSubscriber[mango.PerpMarketDetails]
                                                   ] = perp_market_watcher
-        self.open_orders_watcher: mango.LatestItemObserverSubscriber[mango.OpenOrders] = open_orders_watcher
+        self.placed_orders_container_watcher: mango.LatestItemObserverSubscriber[
+            mango.PlacedOrdersContainer] = placed_orders_container_watcher
 
     @property
     def group(self) -> mango.Group:
@@ -56,16 +57,12 @@ class ModelState:
         return self.perp_market_watcher.latest
 
     @property
-    def open_orders(self) -> mango.OpenOrders:
-        return self.open_orders_watcher.latest
-
-    @property
     def price(self) -> mango.Price:
         return self.price_watcher.latest
 
     @property
-    def placed_orders(self) -> typing.Sequence[mango.PlacedOrder]:
-        return self.open_orders.placed_orders
+    def existing_orders(self) -> typing.Sequence[mango.PlacedOrder]:
+        return self.placed_orders_container_watcher.latest.placed_orders
 
     def __str__(self) -> str:
         return f"""« 𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎 for market '{self.market.symbol}' »"""
