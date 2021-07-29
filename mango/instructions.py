@@ -25,7 +25,7 @@ from pyserum.open_orders_account import make_create_account_instruction
 from solana.account import Account as SolanaAccount
 from solana.publickey import PublicKey
 from solana.system_program import CreateAccountParams, create_account
-from solana.sysvar import SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY
+from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
 from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, create_associated_token_account, initialize_account, transfer2
@@ -56,37 +56,6 @@ from .wallet import Wallet
 # instruction size limitiations, so all our functions are prepared for this without having to change
 # the function signature in future.
 #
-
-# # 🥭 _ensure_openorders function
-#
-# Unlike most functions in this file, `_ensure_openorders()` returns a tuple, not just an `CombinableInstructions`.
-#
-# The idea is: callers just want to know the OpenOrders address, but if it doesn't exist they may need to add
-# the instructions and signers for its creation before they try to use it.
-#
-# This function will always return the proper OpenOrders address, and will also return the `CombinableInstructions` to
-# create it (which will be empty of signers and instructions if the OpenOrders already exists).
-#
-
-
-def _ensure_openorders(context: Context, wallet: Wallet, group: Group, account: Account, market: Market) -> typing.Tuple[PublicKey, CombinableInstructions]:
-    spot_market_address = market.state.public_key()
-    market_index = group.find_spot_market_index(spot_market_address)
-
-    open_orders_address = account.spot_open_orders[market_index]
-    if open_orders_address is not None:
-        return open_orders_address, CombinableInstructions.empty()
-
-    creation = build_create_solana_account_instructions(
-        context, wallet, context.dex_program_id, layouts.OPEN_ORDERS.sizeof())
-
-    open_orders_address = creation.signers[0].public_key()
-
-    # This is maybe a little nasty - updating the existing structure with the new OO account.
-    account.spot_open_orders[market_index] = open_orders_address
-
-    return open_orders_address, creation
-
 
 # # 🥭 build_create_solana_account_instructions function
 #
@@ -368,7 +337,7 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, accou
     # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
     # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
     # { isSigner: true, isWritable: false, pubkey: ownerPk },
-    # { isSigner: false, isWritable: false, pubkey: perpMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
     # { isSigner: false, isWritable: true, pubkey: bidsPk },
     # { isSigner: false, isWritable: true, pubkey: asksPk },
 
@@ -378,7 +347,7 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, accou
                 AccountMeta(is_signer=False, is_writable=False, pubkey=account.group.address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
                 AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=perp_market_details.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks)
             ],
@@ -488,8 +457,7 @@ def build_create_account_instructions(context: Context, wallet: Wallet, group: G
         keys=[
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=mango_account_address),
-            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_CLOCK_PUBKEY)
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address)
         ],
         program_id=context.program_id,
         data=layouts.INIT_MANGO_ACCOUNT.build({})
@@ -587,8 +555,34 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
 
 # # 🥭 build_mango_place_order_instructions function
 #
-# Creates a Mango order-placing instruction using the Serum instruction as the inner instruction.
+# Creates a Mango order-placing instruction using the Serum instruction as the inner instruction. Will create
+# the necessary OpenOrders account if it doesn't already exist.
 #
+# /// Accounts expected by PLACE_SPOT_ORDER instruction (19+openorders):
+# { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+# { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
+# { isSigner: true, isWritable: false, pubkey: ownerPk },
+# { isSigner: false, isWritable: false, pubkey: mangoCachePk },
+# { isSigner: false, isWritable: false, pubkey: serumDexPk },
+# { isSigner: false, isWritable: true, pubkey: spotMarketPk },
+# { isSigner: false, isWritable: true, pubkey: bidsPk },
+# { isSigner: false, isWritable: true, pubkey: asksPk },
+# { isSigner: false, isWritable: true, pubkey: requestQueuePk },
+# { isSigner: false, isWritable: true, pubkey: eventQueuePk },
+# { isSigner: false, isWritable: true, pubkey: spotMktBaseVaultPk },
+# { isSigner: false, isWritable: true, pubkey: spotMktQuoteVaultPk },
+# { isSigner: false, isWritable: false, pubkey: rootBankPk },
+# { isSigner: false, isWritable: true, pubkey: nodeBankPk },
+# { isSigner: false, isWritable: true, pubkey: vaultPk },
+# { isSigner: false, isWritable: false, pubkey: TOKEN_PROGRAM_ID },
+# { isSigner: false, isWritable: false, pubkey: signerPk },
+# { isSigner: false, isWritable: false, pubkey: SYSVAR_RENT_PUBKEY },
+# { isSigner: false, isWritable: false, pubkey: msrmOrSrmVaultPk },
+# ...openOrders.map(({ pubkey, isWritable }) => ({
+#     isSigner: false,
+#     isWritable,
+#     pubkey,
+# })),
 
 def build_spot_place_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account,
                                         market: Market,
@@ -597,8 +591,33 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
                                         fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
     instructions: CombinableInstructions = CombinableInstructions.empty()
 
-    open_orders_address, create_open_orders = _ensure_openorders(context, wallet, group, account, market)
-    instructions += create_open_orders
+    spot_market_address = market.state.public_key()
+    market_index = group.find_spot_market_index(spot_market_address)
+
+    open_orders_address = account.spot_open_orders[market_index]
+    if open_orders_address is None:
+        oo_instructions = CombinableInstructions.from_wallet(wallet)
+        create_open_orders = build_create_solana_account_instructions(
+            context, wallet, context.dex_program_id, layouts.OPEN_ORDERS.sizeof())
+        oo_instructions += create_open_orders
+
+        open_orders_address = create_open_orders.signers[0].public_key()
+        initialise_open_orders_instruction = TransactionInstruction(
+            keys=[
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=context.dex_program_id),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=open_orders_address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=market.state.public_key()),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY)
+            ],
+            program_id=context.program_id,
+            data=layouts.INIT_SPOT_OPEN_ORDERS.build(dict())
+        )
+        oo_instructions += CombinableInstructions(signers=[], instructions=[initialise_open_orders_instruction])
+        oo_instructions.execute(context)
 
     serum_order_type = pyserum.enums.OrderType.POST_ONLY if order_type == OrderType.POST_ONLY else pyserum.enums.OrderType.IOC if order_type == OrderType.IOC else pyserum.enums.OrderType.LIMIT
     serum_side = pyserum.enums.Side.BUY if side == Side.BUY else pyserum.enums.Side.SELL
@@ -607,51 +626,30 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
     max_quote_quantity = market.state.base_size_number_to_lots(
         float(quantity)) * market.state.quote_lot_size() * market.state.price_number_to_lots(float(price))
 
-    quote_token_info = group.shared_quote_token
     base_token_infos = [
         token_info for token_info in group.base_tokens if token_info is not None and token_info.token.mint == market.state.base_mint()]
     if len(base_token_infos) != 1:
         raise Exception(
             f"Could not find base token info for group {group.address} - length was {len(base_token_infos)} when it should be 1.")
     base_token_info = base_token_infos[0]
+    print("base_token_info", base_token_info)
+    quote_token_info = group.shared_quote_token
 
-    vault_signer = PublicKey.create_program_address(
-        [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
-        market.state.program_id(),
-    )
+    root_bank: RootBank = quote_token_info.root_bank if side == Side.BUY else base_token_info.root_bank
+    node_bank: NodeBank = root_bank.pick_node_bank(context)
 
-    base_node_bank = base_token_info.root_bank.pick_node_bank(context)
-    quote_node_bank = quote_token_info.root_bank.pick_node_bank(context)
+    relevant_open_orders: typing.List[AccountMeta] = []
+    for oo_address in account.spot_open_orders:
+        if oo_address == open_orders_address:
+            relevant_open_orders += [AccountMeta(is_signer=False, is_writable=True, pubkey=oo_address)]
+        else:
+            relevant_open_orders += [AccountMeta(is_signer=False, is_writable=False,
+                                                 pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS)]
 
-    # /// Accounts expected by this instruction (22+openorders):
-    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
-    # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
-    # { isSigner: true, isWritable: false, pubkey: ownerPk },
-    # { isSigner: false, isWritable: false, pubkey: mangoCachePk },
-    # { isSigner: false, isWritable: false, pubkey: serumDexPk },
-    # { isSigner: false, isWritable: true, pubkey: spotMarketPk },
-    # { isSigner: false, isWritable: true, pubkey: bidsPk },
-    # { isSigner: false, isWritable: true, pubkey: asksPk },
-    # { isSigner: false, isWritable: true, pubkey: requestQueuePk },
-    # { isSigner: false, isWritable: true, pubkey: eventQueuePk },
-    # { isSigner: false, isWritable: true, pubkey: spotMktBaseVaultPk },
-    # { isSigner: false, isWritable: true, pubkey: spotMktQuoteVaultPk },
-    # { isSigner: false, isWritable: false, pubkey: baseRootBankPk },
-    # { isSigner: false, isWritable: true, pubkey: baseNodeBankPk },
-    # { isSigner: false, isWritable: true, pubkey: quoteRootBankPk },
-    # { isSigner: false, isWritable: true, pubkey: quoteNodeBankPk },
-    # { isSigner: false, isWritable: true, pubkey: quoteVaultPk },
-    # { isSigner: false, isWritable: true, pubkey: baseVaultPk },
-    # { isSigner: false, isWritable: false, pubkey: TOKEN_PROGRAM_ID },
-    # { isSigner: false, isWritable: false, pubkey: signerPk },
-    # { isSigner: false, isWritable: false, pubkey: SYSVAR_RENT_PUBKEY },
-    # { isSigner: false, isWritable: false, pubkey: dexSignerPk },
-    # { isSigner: false, isWritable: false, pubkey: msrmOrSrmVaultPk },
-    # ...openOrders.map(({ pubkey, isWritable }) => ({
-    #     isSigner: false,
-    #     isWritable,
-    #     pubkey,
-    # })),
+    print("root_bank.address", root_bank.address)
+    print("node_bank.address", node_bank.address)
+    print("open_orders_address", open_orders_address)
+    print("account.address", account.address)
     fee_discount_address_meta: typing.List[AccountMeta] = []
     if fee_discount_address is not None:
         fee_discount_address_meta = [AccountMeta(is_signer=False, is_writable=False, pubkey=fee_discount_address)]
@@ -669,19 +667,14 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.event_queue()),
             AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.base_vault()),
             AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.quote_vault()),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=base_token_info.root_bank.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=base_node_bank.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=quote_token_info.root_bank.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=quote_node_bank.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=quote_node_bank.vault),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=base_node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
             AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.srm_vault or SYSTEM_PROGRAM_ADDRESS),
-            *list([AccountMeta(is_signer=False, is_writable=(oo_address == open_orders_address),
-                               pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders]),
+            *relevant_open_orders,
             *fee_discount_address_meta
         ],
         program_id=context.program_id,

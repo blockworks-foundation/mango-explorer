@@ -8,6 +8,2653 @@
   "groups": [
     {
       "cluster": "devnet",
+      "name": "devnet.0",
+      "publicKey": "2prJmEP2AhdEYmNzG93MoTEqm8NAfsP5pJSaPnpA4JbH",
+      "quoteSymbol": "USDC",
+      "mangoProgramId": "5fP7Z7a87ZEVsKr2tQPApdtq83GcTW4kz919R6ou5h5E",
+      "serumProgramId": "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY",
+      "tokens": [
+        {
+          "symbol": "USDC",
+          "mintKey": "8FRFC6MoGGkMFQwngccyu69VnYbzykGeez7ignHVAFSN",
+          "decimals": 6,
+          "rootKey": "7nxF3Pm7sSQ1i7qzdnK2xCEtWHxfu43Rrtq9zL2uErzP",
+          "nodeKeys": [
+            "7znZVTCVNwLPXZMXB7KCoL1D2xWkrP5XbzCAMmBgqdai"
+          ]
+        },
+        {
+          "symbol": "MNGO",
+          "mintKey": "Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC",
+          "decimals": 6,
+          "rootKey": "GYPFJ6j4bPqHwZDwXhnRKBDEgckKk3iZb5DWyyRRfSCU",
+          "nodeKeys": [
+            "5cUb9D4eDhBPtKWsaR1v45YfS79CNKYC6VWwEXBRh2aL"
+          ]
+        },
+        {
+          "symbol": "BTC",
+          "mintKey": "3UNBZ6o52WTWwjac2kPUb4FyodhU1vFkRJheu1Sh2TvU",
+          "decimals": 6,
+          "rootKey": "9V7xf8AgzHejVYMmnHhxjBqphC1cAiNQDjjg7q6S6Edi",
+          "nodeKeys": [
+            "6mJQXgoWyimEpaZWD1DzoXKvKxNfRNH7PnJ33qGcgykW"
+          ]
+        },
+        {
+          "symbol": "ETH",
+          "mintKey": "Cu84KB3tDL6SbFgToHMLYVDJJXdJjenNzSKikeAvzmkA",
+          "decimals": 6,
+          "rootKey": "Hma8uMnPFWDB3FvYvHRfkdzCFjiD2LC2uedyXs2p6X7k",
+          "nodeKeys": [
+            "Hze1bAyZpeuJfwBj92oenP4MqjCjdi11v3dsVg8kt7Ya"
+          ]
+        },
+        {
+          "symbol": "SOL",
+          "mintKey": "So11111111111111111111111111111111111111112",
+          "decimals": 9,
+          "rootKey": "Ffq7Dyr91Pt8PXQ27c9FjVchkqTaJ1rFGMFzMyb2r1fK",
+          "nodeKeys": [
+            "DyVBZSUZyGjcb1zEwMJnMsn2CHKqwv7NEBn6Csbs11x9"
+          ]
+        },
+        {
+          "symbol": "SRM",
+          "mintKey": "AvtB6w9xboLwA145E221vhof5TddhqsChYcx7Fy3xVMH",
+          "decimals": 6,
+          "rootKey": "5bdAu8sNLdMrfGmi2JuJQwrknoEnv8mSjgMTJUcfMJEz",
+          "nodeKeys": [
+            "6PmmoZE7fqQxLKRyKUPbrxXKeDkj3pXfn9XKuRKZswWr"
+          ]
+        },
+        {
+          "symbol": "RAY",
+          "mintKey": "3YFQ7UYJ7sNGpXTKBxM3bYLVxKpzVudXAe4gLExh5b3n",
+          "decimals": 6,
+          "rootKey": "5vPfzYZo5V6zQoNsKszUvekYcSdXzNMmkjPJX5jzssYk",
+          "nodeKeys": [
+            "Bqdbs5m8gVmAYGwjYWbBpyP6SYBcF3BSD6qKrhDPbhJN"
+          ]
+        },
+        {
+          "symbol": "DOGE",
+          "mintKey": "6yr1xJP6Nfu8Bxp4L8WJQrtLqBGZrQm5n41PFm4ZmEyk",
+          "decimals": 6,
+          "rootKey": "AcixYMnjp1L1fmZt9ZrDquoWeqfYdhfNhXKKDCUwAaqn",
+          "nodeKeys": [
+            "7QFhowEbm2vz5C4zKvMya52oy86GErPwq4d348P9LrWK"
+          ]
+        },
+        {
+          "symbol": "SUSHI",
+          "mintKey": "Edi5KNs2LnonULNmoTQqSymJ7VuMC9amTjLN5RJ1YMcq",
+          "decimals": 6,
+          "rootKey": "9a2ApuhRqo2zgciNbcJu994iRd2kE3AxGenD3W5pbYzT",
+          "nodeKeys": [
+            "HXkZWwdun7asCZkz8SXeDyQAySFsuRPEyi7GHzGA5f1T"
+          ]
+        },
+        {
+          "symbol": "FTT",
+          "mintKey": "Fxh4bpZnRCnpg2vcH11ttmSTDSEeC5qWbPRZNZWnRnqY",
+          "decimals": 6,
+          "rootKey": "3Nz2jcFBUciCv7rKvYGCQVztsuL8Lj4WRnM2uaaVB1Tx",
+          "nodeKeys": [
+            "6PHjn6erFuQPUDZxTeeMt2zgds4Ae98xVifhidooqPeQ"
+          ]
+        },
+        {
+          "symbol": "USDT",
+          "mintKey": "7KBVenLz5WNH4PA5MdGkJNpDDyNKnBQTwnz1UqJv9GUm",
+          "decimals": 6,
+          "rootKey": "ojq4PphNweWpBpzYEnV5exka3BPUyUSuAdJiCrfheE8",
+          "nodeKeys": [
+            "AY2NuSrgu8i8DwAmdk44Rzkf2tUNV1RKTazgAqvYbcCw"
+          ]
+        }
+      ],
+      "oracles": [
+        {
+          "symbol": "MNGO",
+          "publicKey": "5mcAUWKEaz1esD8wywy7P79MtBpHKXGU8dvew1YYoPyG"
+        },
+        {
+          "symbol": "BTC",
+          "publicKey": "HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J"
+        },
+        {
+          "symbol": "ETH",
+          "publicKey": "EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw"
+        },
+        {
+          "symbol": "SOL",
+          "publicKey": "J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix"
+        },
+        {
+          "symbol": "SRM",
+          "publicKey": "992moaMQKs32GKZ9dxi8keyM2bUmbrwBZpK4p2K6X5Vs"
+        },
+        {
+          "symbol": "RAY",
+          "publicKey": "4zkiUfZiLHVfW8muQrmAggjVw8F54td6kv84DUhGeE2p"
+        },
+        {
+          "symbol": "DOGE",
+          "publicKey": "4L6YhY8VvUgmqG5MvJkUJATtzB2rFqdrJwQCmFLv4Jzy"
+        },
+        {
+          "symbol": "SUSHI",
+          "publicKey": "GuYD4scQujbbX7VKZUNXSFFp61HboD8fqrkjHdq8kQ3D"
+        },
+        {
+          "symbol": "FTT",
+          "publicKey": "23nn3Uu2UseWhBGNXZgWTRcS1UWz1V5UZJyLGhQrxQN1"
+        },
+        {
+          "symbol": "USDT",
+          "publicKey": "38xoQ4oeJCBrcVvca2cGk7iV1dAfrmTR1kmhSCJQ8Jto"
+        }
+      ],
+      "perpMarkets": [
+        {
+          "name": "MNGO-PERP",
+          "publicKey": "Gnd9WTaFjJwZU8XEpoB8EYfx5GryJ1dRDw9EzwLtX2b",
+          "baseSymbol": "MNGO",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 0,
+          "bidsKey": "Btwab499MBLjNbc4RbwL6U5qfEsKs6CUEmLQ5RfpZrRa",
+          "asksKey": "9swZyYuJqDJsajZc9HjrDBqQcd3GWRqCHPsNS3caXgBB",
+          "eventsKey": "7nbyGGRAishh6tarfzFKp7AH4Cc2XYcpsAeADHYhf74L"
+        },
+        {
+          "name": "BTC-PERP",
+          "publicKey": "2znyH2fqCGpcsEB83LCSEaUCuGHUzQNxVKHcd2Go56AR",
+          "baseSymbol": "BTC",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 1,
+          "bidsKey": "GHLm3dTjGxxRhZYqMk9snXWpQxGGByZxyixmRFJDBVmd",
+          "asksKey": "G2CBYsp61aNU7jYHC1rPjk4QaezCZLwuxHDpJzCqRYen",
+          "eventsKey": "6uhSThFsNDFzYrdBf7FuRs2vF1Gz28Xkj9MspATv1ffQ"
+        },
+        {
+          "name": "ETH-PERP",
+          "publicKey": "6y1yaEM16L5Fze6KWSBi9rke5RYBxdqKvSZBQ15Yasa7",
+          "baseSymbol": "ETH",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 2,
+          "bidsKey": "3khLvHuGa2rfVMGzREEuddZ5af8QLyFVdEXBJPHfoa2n",
+          "asksKey": "DgA6NUEcTqM2sHDruJ9VNebxGwf8JLuiwue2tBdGxTvt",
+          "eventsKey": "5TfR8GJ3PZ2dM84XBZpCtx8UQMZwquPDcpGM9oHtQXLM"
+        },
+        {
+          "name": "SOL-PERP",
+          "publicKey": "Dx4wGbjspJEVrcCwAer6NUGPYw7vhxcDoQSYLo7TwUwe",
+          "baseSymbol": "SOL",
+          "baseDecimals": 9,
+          "quoteDecimals": 6,
+          "marketIndex": 3,
+          "bidsKey": "54mgJtTX2yXL84A6KzwKeKwAkFs8UeAi2DKwmTntNns1",
+          "asksKey": "GWEVPLEWXph7iAbGshxkqvkbbuksFq7wPkGJWaUN1n58",
+          "eventsKey": "DwjRGaJ6rhS7eoVcTht2gQYb1oGm7Lzes7QrrKNu2yVy"
+        },
+        {
+          "name": "SRM-PERP",
+          "publicKey": "AYpeV8tdP1GxCGfmvGzskRHMfRgCPfAqoWd1mcP75ryN",
+          "baseSymbol": "SRM",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 4,
+          "bidsKey": "FgDDrAxdFE4xjqgQGjGRcJoZY1RMR7uinkonDdz9ZGy2",
+          "asksKey": "FvKxAb4UAG78xrfMM1VsSikHSVD1EsWaNSPXpYdpchhw",
+          "eventsKey": "9L5PfHwMpfb3RyaYWKqV7k9d9zJvY91gEuhUqLiBpfGv"
+        },
+        {
+          "name": "RAY-PERP",
+          "publicKey": "3qbyaxXE2ZCZhq9CmzLS64HEMwez8BmEheaRuFpEt3SC",
+          "baseSymbol": "RAY",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 5,
+          "bidsKey": "ArwRjct79KA3Mqi27KavLqBfSFzgd33Vg71jzTnknqm3",
+          "asksKey": "512gKLHyMB3ktNkkFjeH9boHasJVNcV7csptNPmPrYsA",
+          "eventsKey": "7xb9MpAKrnZg8AxFudFPTNUgW1yqjcZUF7kTF88wTeYT"
+        },
+        {
+          "name": "DOGE-PERP",
+          "publicKey": "D61skawA7Y5tFxQH3YSutqgM9BDwXMvYyhRtH3cawA8x",
+          "baseSymbol": "DOGE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 6,
+          "bidsKey": "2WmHPUSNqREJJGGQ1R7ZwXjRS7HwsPYZnxnNe7NNHwNu",
+          "asksKey": "DWH8d5CQybn1eXNHPULxNKL9ab56d3qwa9GqEDfp9EQM",
+          "eventsKey": "DVsujdQzxekG6FgNVVqu9PegFFiMNyEWQGsGjosm4Qgo"
+        },
+        {
+          "name": "SUSHI-PERP",
+          "publicKey": "9FkmPKJuksohYL4LKUQozVMzCgDrcX7erY9MozFzmYUa",
+          "baseSymbol": "SUSHI",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 7,
+          "bidsKey": "3WvkLHwdUjEc92EmVTNpeFiJkDDveEuDZ7Gk1UHZx6R2",
+          "asksKey": "8S99cKmoBZRVqHHA1LC2NFMBsC68a7SJnLt2EEGZHTkL",
+          "eventsKey": "4KsUrpNe8scq4gXW1tetfFjZ5LR9n4aG3Jwta2NoZQbn"
+        },
+        {
+          "name": "FTT-PERP",
+          "publicKey": "5w3rZ8jHJPWyvyhbNvVj3zjkYzcx1qSmaNv75Sn3jhnK",
+          "baseSymbol": "FTT",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 8,
+          "bidsKey": "DQamrDF1fXcNrzzSwqc5paSVfhz9AfixGZfUooB4jnSy",
+          "asksKey": "8ua3zVqV5NPjSbWqp8bKNzWgg7SWRqFdUhUihD8jRrkx",
+          "eventsKey": "2xeosiXyNofvkVXQCU83KgtXJzt1rZMYetZaDc1ENMib"
+        },
+        {
+          "name": "USDT-PERP",
+          "publicKey": "6JZZbRjmqCke4Nm9XkzsrXFzM7LdmFHndDA5gcdiRvEx",
+          "baseSymbol": "USDT",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 9,
+          "bidsKey": "AeSMvX85hVKcxEU3H5GxbWF9xwo9qFJPKAPzumXLdBpR",
+          "asksKey": "A4dZ3wAJRyTWXFrsFKfzH1f2RCydyH6YiKh4mY6ziZhE",
+          "eventsKey": "2fsPgGh9C4zEpNx7WyxsMTBJW4jcwQNfam9x1yXW1pjF"
+        }
+      ],
+      "spotMarkets": [
+        {
+          "name": "MNGO/USDC",
+          "publicKey": "BqAmk715myHomPTMtuSydqqntQ9PDnJ1WoXMc2oAUomj",
+          "baseSymbol": "MNGO",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 0,
+          "bidsKey": "7ZMK5AVM4rvKVqaCzypjnRgDyMzngUxt3P6e5W7BAtET",
+          "asksKey": "8HptGeemDT6VCBEovG58xKMuey78S5rufUbzn2h8HTai",
+          "eventsKey": "FNZzjFwMo7FTXbvXge8z8cyt3QHk4zphqtw4PHcUJMzt"
+        },
+        {
+          "name": "BTC/USDC",
+          "publicKey": "8zgbmnSx4YiHVBkXDSd7QoL9V3d6bEg5nHvH9YQDqwiL",
+          "baseSymbol": "BTC",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 1,
+          "bidsKey": "CgmftGQKXZmidsRT9tWeBz5rPu7w3j3rgmCjTY4eyxdK",
+          "asksKey": "2eF1T2o74cUAhz7HXYc3nocRboWmR6YKWfr1Zh7cgAKh",
+          "eventsKey": "CNVzebmfqMFih7eqbS3stoqWMA7vYjKq7MkcDdxXno4s"
+        },
+        {
+          "name": "ETH/USDC",
+          "publicKey": "2sN3TxKsWsJTuFfL53LktHMo8qP5bS6sggV24ZAdcYYW",
+          "baseSymbol": "ETH",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 2,
+          "bidsKey": "CRVhYdDomUPiYQWG2LLKodMeYubecAp34h5Mg2xSafGp",
+          "asksKey": "HUqw2sedX8dqXRTFWE6F7gVaUR761TDEbKrGJDMyTht",
+          "eventsKey": "odqVQYr7dwyAs9E15eTibQ3oRgnFCqsYA3uMh1jx8aD"
+        },
+        {
+          "name": "SOL/USDC",
+          "publicKey": "HReqhWz8M4Ygg8QE3jJTfUXYmE3vwyDaX6SWuDrZ7mvo",
+          "baseSymbol": "SOL",
+          "baseDecimals": 9,
+          "quoteDecimals": 6,
+          "marketIndex": 3,
+          "bidsKey": "EtKLSVbLqbCt17d73BEqZRAwf3e1TMhKbPb7pjh1ZNSW",
+          "asksKey": "3afjVDa7wTtbcsH918gNUnGV5BzXpLFvL4knjJ7cm1rf",
+          "eventsKey": "5zzBqJYab7eWbLxvEQasaYYwZ9hT2jnE9Q6PjC3APqdE"
+        },
+        {
+          "name": "SRM/USDC",
+          "publicKey": "EgDF8M7t7yVsTNX9U1x3DWvNpRgn9fDFLnmBeG3AEjEu",
+          "baseSymbol": "SRM",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 4,
+          "bidsKey": "97Psw4kTLUDojftysM284M1YDQWZCdH9Ck9v2m9aA7kt",
+          "asksKey": "F8V3AJNzuf9nN5VMrKHtLpzJVzc271mnmN8jrBBdn8yZ",
+          "eventsKey": "GoQGHFyrATraXW1D7ofwHGpRkuDv2Erbn2ZnNZTVxDrR"
+        },
+        {
+          "name": "RAY/USDC",
+          "publicKey": "2bjavs6QdyaMDsyot8Mm588Jdn5XJvpHMkErGb6utLqX",
+          "baseSymbol": "RAY",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 5,
+          "bidsKey": "F8KqTkpEjgGz9MTJx5ETED6EJHXbXiGh87qw8ZBmRfPA",
+          "asksKey": "H7ECfs9J4Nh3owckFfYXwHokL3KahBbiEsbT9PtU5E36",
+          "eventsKey": "Dde667wMu5A1ZUq9CbpLNgrR7Zwwj789v4bCRBk1gKSG"
+        },
+        {
+          "name": "DOGE/USDC",
+          "publicKey": "8x5hKR44NPT9QtQSkBAxCNrgvBPAcLJGzmts8bTuDCh8",
+          "baseSymbol": "DOGE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 6,
+          "bidsKey": "145Ua9i3NiFyU8HMGMYiNoxeVTBZ2ZJCwJMYWfMffpuc",
+          "asksKey": "FtnzAb63YBzj8iwuCLDeuvyWUkj3CbnyZS1HD6GfaT7M",
+          "eventsKey": "66pC7kLLJ1aWDCQaatdH3VtZfP8qm66cFA3xzAfooWAu"
+        },
+        {
+          "name": "SUSHI/USDC",
+          "publicKey": "F5Snfo2J9eWKVtAYBQcuAYUbzb6koYGNN2uhrjHXkDi7",
+          "baseSymbol": "SUSHI",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 7,
+          "bidsKey": "FQfpC9c4aT5tKop777EJCYjtXLQDxfXKcS9FAjSaYno8",
+          "asksKey": "3iLVW8JJuwZQPLnQ28ncxe3LFuxBFN8Xh8tJ9q3mUKBG",
+          "eventsKey": "3tkVmjwkYLQd7d1u1ATzdB1rEWc11WguGQo7hQei7MQ1"
+        },
+        {
+          "name": "FTT/USDC",
+          "publicKey": "F2k3c6RAmGuKSTvn1LncJRPHo3fN55ZXFUB45gPMkxvz",
+          "baseSymbol": "FTT",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 8,
+          "bidsKey": "gphnUyLBBJJH7asodYh3wx85LekRzoF5vzSybGr4xQF",
+          "asksKey": "9c1stEY8F3M2HYus2MBk5Kh4FU525722U4KWuAo447i2",
+          "eventsKey": "FkU35hpNVr3VgCZcSm7GreH8NLqbMRaffyqXTvxjvHVS"
+        },
+        {
+          "name": "USDT/USDC",
+          "publicKey": "Cyc11qk1FQTmQNFHMHEbwLsgdnHzFK2DrowiKwrGaHxC",
+          "baseSymbol": "USDT",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 9,
+          "bidsKey": "5hd5ua4xrp6ofu12Q2DwmjfytPgZksFtEpcJgtq21qnu",
+          "asksKey": "3thSQTLp4AMi2q2JBtVw6RbrUkwBsqEcgaQYKBzewaxd",
+          "eventsKey": "6rHM8nYBFBBSFnFRcAeUcT4nDSCy7L26ufiHZ1vE8RZB"
+        }
+      ]
+    },
+    {
+      "cluster": "devnet",
+      "name": "mango_test_v3.9",
+      "publicKey": "HfesaZBiD4ExJ7FLuttwSvZqSLGiWcv4MWyZJLyyWg3a",
+      "quoteSymbol": "USDC",
+      "mangoProgramId": "7TgHoQrdJkhMiJegHYtfsNwEmxTXuWB6oJBPnKgeMN6Y",
+      "serumProgramId": "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY",
+      "tokens": [
+        {
+          "symbol": "USDC",
+          "mintKey": "8FRFC6MoGGkMFQwngccyu69VnYbzykGeez7ignHVAFSN",
+          "decimals": 6,
+          "rootKey": "EDWzL8Nyo9ZEehAuJMnFzBiEpzmhM5zFyiP4jENmtwau",
+          "nodeKeys": [
+            "rQZfKvD16LqjhLFVEMS7kQR35bHt4CPKTf7gHj4okwV"
+          ]
+        },
+        {
+          "symbol": "BTC",
+          "mintKey": "3UNBZ6o52WTWwjac2kPUb4FyodhU1vFkRJheu1Sh2TvU",
+          "decimals": 6,
+          "rootKey": "GUqPeCWmQVcYDgNUx1achqYYzZr1bMYQGzoiUYuDz2Bq",
+          "nodeKeys": [
+            "9eSuufPqFQmqTox5zFu5GyuDUqnqapePVFrr7cx2ELB7"
+          ]
+        }
+      ],
+      "oracles": [
+        {
+          "symbol": "BTC",
+          "publicKey": "HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J"
+        },
+        {
+          "symbol": "ETH",
+          "publicKey": "EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw"
+        }
+      ],
+      "perpMarkets": [],
+      "spotMarkets": [
+        {
+          "name": "BTC/USDC",
+          "publicKey": "6z4g1wPZNMRs5P3PMMjwY6y7kR9SEUjpEwMYbJGvcQLS",
+          "baseSymbol": "BTC",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 0,
+          "bidsKey": "Af9hh7q6LrVA6GEC56NrRqSxEkMtW6KroAjYPUuVutNg",
+          "asksKey": "26yMX6B1MFmEj4ArZs2xZYu9Nq23htHEBS1xuQ7VgVSc",
+          "eventsKey": "D4w7PiL8e6YBH7R7mn6yKr5dFBum2BwP7abFSDwufH2s"
+        }
+      ]
+    },
+    {
+      "cluster": "devnet",
+      "name": "mango_test_v3.nightly",
+      "publicKey": "EcGH4SKMcRCS1vdteTPWzaFY5Gv5nqZFLp1uo9isvP5M",
+      "quoteSymbol": "USDC",
+      "mangoProgramId": "EwG6vXKHmTPAS3K17CPu62AK3bdrrDJS3DibwUjv5ayT",
+      "serumProgramId": "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY",
+      "tokens": [
+        {
+          "symbol": "USDC",
+          "mintKey": "8FRFC6MoGGkMFQwngccyu69VnYbzykGeez7ignHVAFSN",
+          "decimals": 6,
+          "rootKey": "FDTjEnf8STgGDTiCbJwaxYBE5yhi3eVjiiyWC1rdZf7E",
+          "nodeKeys": [
+            "6gE7KqYtRbUR1HEoy9puUxMy2mYEmHq4fthr6vr4JntJ"
+          ]
+        },
+        {
+          "symbol": "MNGO",
+          "mintKey": "Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC",
+          "decimals": 6,
+          "rootKey": "24Q7msv8cWXhf93yq2njJSMEmizVn41V62viFCwsGEkr",
+          "nodeKeys": [
+            "2VuYqJ2GAmzwywFgsq7ss7hcomhCCzkua9WWfvnnget1"
+          ]
+        },
+        {
+          "symbol": "SOL",
+          "mintKey": "So11111111111111111111111111111111111111112",
+          "decimals": 9,
+          "rootKey": "kxRFzibYoZprCgdS18NP43JZ6c9ezw8mHcTGivxF2f4",
+          "nodeKeys": [
+            "Bppotiv5BeT9JdU3xNYRqkuTyKKM72HeF6LrF4ALRg94"
+          ]
+        },
+        {
+          "symbol": "SRM",
+          "mintKey": "AvtB6w9xboLwA145E221vhof5TddhqsChYcx7Fy3xVMH",
+          "decimals": 6,
+          "rootKey": "7pBSHN95CDMeFzcn5K1nWyquvpFt9AqTJ4gyiLtz9j3h",
+          "nodeKeys": [
+            "FqEggby9YpqP6u1EU5Lqo4tK9KM2f2S4oG9vR1uErQ5e"
+          ]
+        },
+        {
+          "symbol": "BTC",
+          "mintKey": "3UNBZ6o52WTWwjac2kPUb4FyodhU1vFkRJheu1Sh2TvU",
+          "decimals": 6,
+          "rootKey": "4BQkwFtAZ2Joco1bubGuGKCtiunZdhVGy3VMMLiNEzyi",
+          "nodeKeys": [
+            "AoZF7T1DfN1jy7mtFUKLWwms9Mq1VhRrVYSVGmCZaRk4"
+          ]
+        },
+        {
+          "symbol": "ETH",
+          "mintKey": "Cu84KB3tDL6SbFgToHMLYVDJJXdJjenNzSKikeAvzmkA",
+          "decimals": 6,
+          "rootKey": "7yGjjNisn5BrNQggQnNQZo21yueqRAMitkWm5NHqjgT6",
+          "nodeKeys": [
+            "9rtoCfG6ja4Je3qCt9UoAhyAADcAxu2vWVz7c3DDWh9e"
+          ]
+        },
+        {
+          "symbol": "RAY",
+          "mintKey": "3YFQ7UYJ7sNGpXTKBxM3bYLVxKpzVudXAe4gLExh5b3n",
+          "decimals": 6,
+          "rootKey": "3AUVNAg7Tin5zgcuGLtDpy8jaeWpSMXVyLbugGvZWeXR",
+          "nodeKeys": [
+            "H82uysJG6oQoxsci1LDWwCbtRFdcmfuHEAUSYTFEn7FS"
+          ]
+        },
+        {
+          "symbol": "UNI",
+          "mintKey": "7vd84gXdjxRWjtwwkcxpzv1R8W9oCsADemNvRj3Cv5u2",
+          "decimals": 6,
+          "rootKey": "3tvABmuNWMpPGo69r6atdD3ixWkKo81CGLdc76uTTTzi",
+          "nodeKeys": [
+            "5uzKjgiApfJwvntDmhYAkGwFDJR9nKGe8nwVLykyKRFo"
+          ]
+        },
+        {
+          "symbol": "AAVE",
+          "mintKey": "3h7gNYC8aDJ5tGgDt6YKmvLJYT5LNcFb9yiVU1qirDWg",
+          "decimals": 6,
+          "rootKey": "EasFw9w3PQbUQqPx5NHfBRcsho3nHdazg3DffxGqEdSx",
+          "nodeKeys": [
+            "AbUZoVdAJ68QS8vm1GhtZfEwJGZMpBqWk1nqB32SfZxX"
+          ]
+        },
+        {
+          "symbol": "SUSHI",
+          "mintKey": "Edi5KNs2LnonULNmoTQqSymJ7VuMC9amTjLN5RJ1YMcq",
+          "decimals": 6,
+          "rootKey": "HAibBXkgFbLnqJgkKZBEMQqYeLFRzSdcGwELM3xrztqo",
+          "nodeKeys": [
+            "37EYHopNVCQH97QvwBPxRWz1d68afjGobnxLTqkF2EaA"
+          ]
+        },
+        {
+          "symbol": "STEP",
+          "mintKey": "62haNTBB4C3gESJyzAvQVAadNxN9zzVt39x5ep5wmaak",
+          "decimals": 6,
+          "rootKey": "31UDMHnnZiTnSSMwtcXEp4yTniFeMripbLPxbUwnSwda",
+          "nodeKeys": [
+            "C2SQoXaQGQfUPbrTLQjnHV6FYqHppPbdDPu5U95a5jUq"
+          ]
+        },
+        {
+          "symbol": "COPE",
+          "mintKey": "BxZBNjYtMgzSF57aiCwrBdLuEL5tSNcGrxQXj7Z7mZQW",
+          "decimals": 6,
+          "rootKey": "77Rg1Wyk4YTiWVyYHK4wySYCtdJtuTXZnqeMFQwRL2xu",
+          "nodeKeys": [
+            "Ba67JWVQp9ne7gcMP5nrf4EPEbrdbuT5vHAxGtDWCTFR"
+          ]
+        },
+        {
+          "symbol": "DOGE",
+          "mintKey": "6yr1xJP6Nfu8Bxp4L8WJQrtLqBGZrQm5n41PFm4ZmEyk",
+          "decimals": 6,
+          "rootKey": "GG4t2QfVTFfHBoJbRSEZCupsWnNoNk3iEYt2LvwQCZy2",
+          "nodeKeys": [
+            "4fhuXz1wjNbbVJo3L5m3yGtrjWXW5epuwKtMzV37LJ4z"
+          ]
+        },
+        {
+          "symbol": "FIDA",
+          "mintKey": "DRuM89e9xndaRJvjc41zcVWzEAjaytDWUHASydfEEHic",
+          "decimals": 6,
+          "rootKey": "Ji1EPCr8ZTkHi6kKYLaKtogFXbhsGGGLxA196tiRneg",
+          "nodeKeys": [
+            "DidAiTHvRpjNtRSxDK4YeYt1mKVt9EKiRpN34dJXP6ke"
+          ]
+        },
+        {
+          "symbol": "FTT",
+          "mintKey": "Fxh4bpZnRCnpg2vcH11ttmSTDSEeC5qWbPRZNZWnRnqY",
+          "decimals": 6,
+          "rootKey": "3CHQjmxxyrD2mpBmfKaJtW3TRKCMp2QTiQL5npXe2Vbr",
+          "nodeKeys": [
+            "7a4oBbeJkSQWTTfNzBNyPkh5CMWMsFHiqzmrm8rkQ3Qh"
+          ]
+        },
+        {
+          "symbol": "MEDIA",
+          "mintKey": "CU4LrEQChVcis3fsMRciKTgNZSV5A3bh3ftF3Gqnbe78",
+          "decimals": 6,
+          "rootKey": "sqbYudbcz4Y9UTTwbBhKFwPAzpYKJ9hKvz28iJLc5Lz",
+          "nodeKeys": [
+            "ECnoqeFZZgg7cmCvFLSLgox5x3stviin39tWQSY6qKXU"
+          ]
+        },
+        {
+          "symbol": "MER",
+          "mintKey": "3QAVaXixBUtHwjponbZZgNVSRqB8YiTqY59pGSWDVS7X",
+          "decimals": 6,
+          "rootKey": "GSrc9yRrUURUQuzbrWZKbwpcSkvUUxDTq5iVEEwAvWKK",
+          "nodeKeys": [
+            "3wR4cMYYaxc4rLPHXxGVKEkb7ix5uptky69aoAwrHJwx"
+          ]
+        },
+        {
+          "symbol": "AAX",
+          "mintKey": "HDY1CtDh4S5txV84yWfqrM6MuJ1rjCGa6RgV2aNkoq7T",
+          "decimals": 6,
+          "rootKey": "8SDVk1jZdpfuskV7SZr5ELgvsHtdCXz6SvUWGyTZsEaQ",
+          "nodeKeys": [
+            "BvgGXabtzZbqJmqzDE3KptvbrusaJEziQK1YSbje81X5"
+          ]
+        },
+        {
+          "symbol": "BBX",
+          "mintKey": "8S894Tytj7RY6gKcvHWvaR8cmrrbwwRQ3w5ufWKvGgBE",
+          "decimals": 6,
+          "rootKey": "Ag5W8BPYThWrrBEHaQLAq7aCJBNMYgcUDLQ3uvr9RZz",
+          "nodeKeys": [
+            "DEUejKqGZsq8y3Ty4bZDC7nxRo6XjAW9YJX1nPjNWWA1"
+          ]
+        },
+        {
+          "symbol": "CCX",
+          "mintKey": "C2a5sZB6ybhNVWmf3uwLhyszfD2NcndLcAaYTriASvWH",
+          "decimals": 6,
+          "rootKey": "Hp3rVQVhdjmc1HLSftUXU68da6WRnkk28kF9s3q6VGU2",
+          "nodeKeys": [
+            "9pBnVabtk5i6yhWwD1cQbYZyVjDyFRs3332AADA3ozV3"
+          ]
+        },
+        {
+          "symbol": "DDX",
+          "mintKey": "HqWwWZ6dxWWcMXdeYXAxnWYKB37fqEj2wxLwmuQsHwmP",
+          "decimals": 6,
+          "rootKey": "A6WS3nq3mKbFh2xmvJ3huPL8ToFLQEwcHTrXPtpYNYiZ",
+          "nodeKeys": [
+            "Er2MTSpkC3d5zxvQntMRjQv8MYr5QPfoihTz7c3H8UPt"
+          ]
+        },
+        {
+          "symbol": "EEX",
+          "mintKey": "jYmra5J9RCyEnb1D1ScSSLoXLW8j8GZxSFv8kToUUHB",
+          "decimals": 6,
+          "rootKey": "3qNWUXvKjygqXmoxPMGbS523jZNqEZgXV59UK7u6Rgvw",
+          "nodeKeys": [
+            "8Y18QYbXMoucEsSypUpf6GsrKxdy2NGYUgg9Bi5HQdRX"
+          ]
+        },
+        {
+          "symbol": "FFX",
+          "mintKey": "EsUAWWkLG2sE1RkBo74Ta4a7sjaj5JvM1y4Aj1tYXpx6",
+          "decimals": 6,
+          "rootKey": "3wFafBECd9FLHFW9XHcpjdgMWtjNNG45NgcJqt2ohYQ6",
+          "nodeKeys": [
+            "Cum5VM7xDPfq5vWgL9VDYccx8UdR9nLh1MG83CPtxL9f"
+          ]
+        },
+        {
+          "symbol": "GGX",
+          "mintKey": "6r1A4FQE58pxQubFTN3K8H5J8deNCwBwKReJFjWgV4fg",
+          "decimals": 6,
+          "rootKey": "mT5Tgur1f3j8bam5C94uimnaGknDPeaa9kCidXBnMvE",
+          "nodeKeys": [
+            "65JmsZYzxPZLCLgxytTtFCpH1NLCaMUGrJ895fxdpg7c"
+          ]
+        },
+        {
+          "symbol": "HHX",
+          "mintKey": "HNNjUMfUaLmh7yaTqxtz8rdaL2X789jLEqnVUDtqyEgx",
+          "decimals": 6,
+          "rootKey": "2zrvasTW6CfQsV3unnKSVBoEELs4Zmn3Lf3KPfzNF6ZK",
+          "nodeKeys": [
+            "WwzhoypLCy136cP53QDpbqjbDfhfWPBAyDjAvnMkmHb"
+          ]
+        },
+        {
+          "symbol": "IIX",
+          "mintKey": "BB4jPsmsZURcNkj7qANJcxADHH18aPEKK4J4kiubEWmx",
+          "decimals": 6,
+          "rootKey": "9BveX7qzJqHuyxdfVPWqFRSmTpVXu8PeHMsxyUu8A9ak",
+          "nodeKeys": [
+            "J3F8SM6BCCx27bh2VBYsUr4hKm15M45Fs25LHXA9wF2g"
+          ]
+        },
+        {
+          "symbol": "JJX",
+          "mintKey": "QCKeuUFC3kRhfpLR7HpyCUr5VEjJguuRhngioeaux8L",
+          "decimals": 6,
+          "rootKey": "2B4qNvrbt5WZ1iZuJxTdseegJyPJipGkvLppiUwCE5Ai",
+          "nodeKeys": [
+            "7Mjoczw8PsFoyDgG7qppbNhmJ6Zzvy7zWjY3taLzAnpR"
+          ]
+        },
+        {
+          "symbol": "KKX",
+          "mintKey": "5txPKV2L86yfqtR9WqmXLtaE2ZdoUuzpUNBmvsAExbu8",
+          "decimals": 6,
+          "rootKey": "EPpawd2Z9f7p8BSR1f4kp9okf12GaduAv5wp98MWerNd",
+          "nodeKeys": [
+            "GPASoaSzYG9u8QTmv8FVJaKFgCpZfD9CpbYK2EhhEPMR"
+          ]
+        },
+        {
+          "symbol": "LLX",
+          "mintKey": "FqEQxh7VLjPAYd5Y8ea2uwC6ut2tJ4fsim5Mwwb1DPh2",
+          "decimals": 6,
+          "rootKey": "3ZUYq8oBXNU8EvYjx5nqZzeGdJgjzhX2dVfkmdcPw1iG",
+          "nodeKeys": [
+            "Cbb8P3ft9ZyMjW2qTwyWD2E9f6j8t1Bs9hBqj3CNJ7va"
+          ]
+        },
+        {
+          "symbol": "MMX",
+          "mintKey": "ENWHT6aaCguz7FDw8v9FBfFAqS4saS4cR2gWje1vHrT9",
+          "decimals": 6,
+          "rootKey": "5jr9NQ9n9hHLb5yVtEUbMkHuENvHqHoMjxjEE7MThfZ8",
+          "nodeKeys": [
+            "7n1pHQAQPnR2THRNWr59UJNeAupLjGDBVNMHNMYnETGV"
+          ]
+        },
+        {
+          "symbol": "NNX",
+          "mintKey": "GunmC8Wr9s4AN6errMFQZicdpNUMVUEvAKyTYektXxGe",
+          "decimals": 6,
+          "rootKey": "BJK9UVTL4tACPpPNkuuPNjFi7xLXmvNC992LJpEHPhXS",
+          "nodeKeys": [
+            "dRP6urfMinP1uyVxyUQTNYhfVY66adUJBMCHStoCR89"
+          ]
+        },
+        {
+          "symbol": "OOX",
+          "mintKey": "6PTt8kHBncHTELnhJoKXAoU6e6fyETBNi7ojvggtJDK2",
+          "decimals": 6,
+          "rootKey": "3wjudWimeunWokNuBDjznPc74SJTtCpPnfSQAbnotgX4",
+          "nodeKeys": [
+            "kJK1R6jrMMkRR1oEnEapASN68iRYvGNJNfUbTZHYveL"
+          ]
+        }
+      ],
+      "oracles": [
+        {
+          "symbol": "MNGO",
+          "publicKey": "CBXbJLNkHw1aBoSUSMcaVjDqgpFnmnFPgoBNQUsWt9hJ"
+        },
+        {
+          "symbol": "SOL",
+          "publicKey": "228pZ2pMfQtesJkhHfXZP8d9zYsBu8Lh1B42R1hmKEez"
+        },
+        {
+          "symbol": "SRM",
+          "publicKey": "GpLpvmBVSos2iL8vqt9hgrd4cUhdRxzpJtWzpfTWyWR2"
+        },
+        {
+          "symbol": "BTC",
+          "publicKey": "Pet16diR7NHNgJG1pzEf6w2eceXVn7zd6BN9px7t1E9"
+        },
+        {
+          "symbol": "ETH",
+          "publicKey": "FW9aYcuKx7BiNr3hEGNpsfkp5Sva9ancPf9YL68aQnw5"
+        },
+        {
+          "symbol": "RAY",
+          "publicKey": "EfGxBb4YFWiiQWoUfJkVBc8rcWFYaN2MdN95vfBZXDGX"
+        },
+        {
+          "symbol": "UNI",
+          "publicKey": "FVj3sFRC9ZJXj9A2xxbMf95ciM6A6GtTyUWZueVLDeaN"
+        },
+        {
+          "symbol": "AAVE",
+          "publicKey": "DiFzjaSTEjfYL4nD35FxXCiDYMQqT8TXRdBYwtkDxhSX"
+        },
+        {
+          "symbol": "SUSHI",
+          "publicKey": "5WZmo5xcLvAe4wREguPVfyUWxLFhacgFPrUQ7UGGK6CC"
+        },
+        {
+          "symbol": "STEP",
+          "publicKey": "4wtpeD3JzD2wGkN7neYtppxZ8G5zZciqQtYhc5ad6MLC"
+        },
+        {
+          "symbol": "COPE",
+          "publicKey": "6qhbwo4Bj2Ry41eRkPjThPiZvsWo4MCTtYmmBrRm1ieg"
+        },
+        {
+          "symbol": "DOGE",
+          "publicKey": "6focUhhSgvGYN9KYcvkhCWe9X6azKXVYeMdTt5WS2HUn"
+        },
+        {
+          "symbol": "FIDA",
+          "publicKey": "BhXJvKgqBhL3uJgk9dQtnee1aP1DNEynqLL9aKXTK52h"
+        },
+        {
+          "symbol": "FTT",
+          "publicKey": "D9LKcLD1QCiFvF2roq1oD7PEgXEZc4aqytS1wJt1ppGr"
+        },
+        {
+          "symbol": "MEDIA",
+          "publicKey": "FurnTRbnSMMCPn8Zig5kt2tWw8xoWNV3QyaTH48hTMNg"
+        },
+        {
+          "symbol": "MER",
+          "publicKey": "CSCBZoQ8eLSNBK3VMs32C1XToqvpCp7z6tPq9SYXNo1B"
+        },
+        {
+          "symbol": "AAX",
+          "publicKey": "6Gd7KEf4p4ias6dcfoHEs6Y1GSQn6JxAfXmUKKzKLv2s"
+        },
+        {
+          "symbol": "BBX",
+          "publicKey": "8RXRMm1t6skwuTAZeZhh3sBg9t3Aj6wTaYjJrfHJgY1v"
+        },
+        {
+          "symbol": "CCX",
+          "publicKey": "GfzpGrGj2nGRhg6rNgCqx8r8bo6C4mb6Ye6bRSfi9RN9"
+        },
+        {
+          "symbol": "DDX",
+          "publicKey": "CanVFwAyfv8vKoY7CjrRD5XxNoeTJ5aGHh5eWbfPzw8g"
+        },
+        {
+          "symbol": "EEX",
+          "publicKey": "742RfMmc1u9gdYfe79ZLqVS54YwGac5vjR6kK7jsVBUh"
+        },
+        {
+          "symbol": "FFX",
+          "publicKey": "8az8aMQYTG4onLsHdPGAjZXVYEjBGkxSTRCdpjySRnwz"
+        },
+        {
+          "symbol": "GGX",
+          "publicKey": "ATNt6MCB3dgyXC8LQd3QZSEAeVxHYmYyxuyDFBS5nfKD"
+        },
+        {
+          "symbol": "HHX",
+          "publicKey": "BmsjbtCdQ1f7wX2kAN4UzarB2ffYG4ebcaw9uvq9rUHc"
+        },
+        {
+          "symbol": "IIX",
+          "publicKey": "BzurJM7UFtzypEXkUXR55a6JPLDEE4AXG1YksVMtKzH2"
+        },
+        {
+          "symbol": "JJX",
+          "publicKey": "F4DvNLtifUH9CLCZYo56XNGwGvYhKDVeCxD8AS6WuN55"
+        },
+        {
+          "symbol": "KKX",
+          "publicKey": "9TtfDPiLj1ByLSPAsVZLEdcVSQecjboZYUdYRZbZxqWS"
+        },
+        {
+          "symbol": "LLX",
+          "publicKey": "3VwydLs2FcWbqY6UqVhhTwu1yEBuwE2VHyABvt1hb8H1"
+        },
+        {
+          "symbol": "MMX",
+          "publicKey": "4C99578FRdiXKmnGvDN7TVPzCfNWNHFj8CQxBicXJcQ5"
+        },
+        {
+          "symbol": "NNX",
+          "publicKey": "42jGgXqiNQZzD2MgWjSuBmEHFEfmpximT1frwZZU7QAk"
+        },
+        {
+          "symbol": "OOX",
+          "publicKey": "4oEHmdtXkkxaGaeABX56oFP3Yb6LTmooz6QPKWJ7fQFz"
+        }
+      ],
+      "perpMarkets": [
+        {
+          "name": "MNGO-PERP",
+          "publicKey": "A9RRKDpJ617o2MRjYXQb8HejfXnJCDpCkBNkzGZGUn3j",
+          "baseSymbol": "MNGO",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 0,
+          "bidsKey": "Gx4smdkr9gD1z9m7xbSN2hP7mfLbfr44rhrBafVC16kW",
+          "asksKey": "65JioQV3Dt3fMNWp6ZWtoFhyVHiC8XJPuh8Qo2f9aiJ3",
+          "eventsKey": "5VYa71LGXVkJdgqkrGV5TECoEFQ6ZJdPC61NES2ubCsr"
+        },
+        {
+          "name": "SOL-PERP",
+          "publicKey": "1qYLyPWorNrV7C1Z4Eas6Gn7EYSkJ7eutAzzXPX4dqt",
+          "baseSymbol": "SOL",
+          "baseDecimals": 9,
+          "quoteDecimals": 6,
+          "marketIndex": 1,
+          "bidsKey": "4NHzRzbGWR1QALv87UodhU8PxzpMkwfiAe1zh4DGtsk9",
+          "asksKey": "6gi3YfK9Wpx2F3EZtY7qbmcP5ojgvZZXgjSWS7c5FLKy",
+          "eventsKey": "CMV9V2PbriciDcZmaqNFqAgsYSAJBpDF55v7prkikiBU"
+        },
+        {
+          "name": "SRM-PERP",
+          "publicKey": "7tKZRqCfZT4DBkc7EJKq8j4bVq2UdEHpKF8vTWbHzZDn",
+          "baseSymbol": "SRM",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 2,
+          "bidsKey": "4Jm3dv9iQGui6MDcRDK98CZAVPTTqhxwZfLBL4SmLykF",
+          "asksKey": "E6A96AbxjUNhBAJxxuwpQ8RzV3VTxSj6mqo6UyvFkigx",
+          "eventsKey": "ELbc22D38LxkQb92zgKFgGvmoj4DjVCXdhao6GEyqqpB"
+        },
+        {
+          "name": "BTC-PERP",
+          "publicKey": "6P5JQ8jTmK5MCrTH58dvkgdLdcw51LxWJ11NTofhUA8t",
+          "baseSymbol": "BTC",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 3,
+          "bidsKey": "HJxJ9SHma1HA2rUuSkpF8TiGwXdLsLKLHWmZrmsTmKi2",
+          "asksKey": "84YyATaFoV9JACs3VmWLBMMCpWP5JdzVp2cki35vjxEg",
+          "eventsKey": "AQtfd4w5HaGL8R1Y1RSCcqpx1TPHHEannna3TVMYcrRP"
+        },
+        {
+          "name": "ETH-PERP",
+          "publicKey": "K3y39zvaWQ3Aq91f9fwktFTpnLnvroUpiKvjNRQuz5G",
+          "baseSymbol": "ETH",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 4,
+          "bidsKey": "EP8UWxWbN7zLhWRR5g1Ec9o7rJUPKJTzF6AarLQ6SKRj",
+          "asksKey": "BTEWEfGRZL7S57VTRdo2dzbhpNDragepUdf1cAxJHWKQ",
+          "eventsKey": "AJVVCKraDc12e4MzGH7kou4NwCi6YSnchYK4VR315YkP"
+        },
+        {
+          "name": "RAY-PERP",
+          "publicKey": "5i1wdHoFXVHQSTXJWipSxoDZCcTdhuwvRj3Y4EYswbS5",
+          "baseSymbol": "RAY",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 5,
+          "bidsKey": "APW5ERcLb9L2NfGGf6ZkuSD3PNAuEkJff9VmYNWrzskz",
+          "asksKey": "KSLdQPDGenHNj9cGPd8hARNwcDoEfPTNJPkqB4UNbYg",
+          "eventsKey": "DfLrRkrun3yUFcaS3d2cHiv1EsGRQ9jxXXgGQkmHEfH9"
+        },
+        {
+          "name": "UNI-PERP",
+          "publicKey": "CAK6TtrucJsks99s7UJmahFgmKjg6fSsmRa2NKWoUvU2",
+          "baseSymbol": "UNI",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 6,
+          "bidsKey": "H7uoMWPwuL8ZeKpjWmb7kZD3giWAHGvwrEbqQ8DJKB6N",
+          "asksKey": "2j1Tcp41k5VgsYmCrefbkva7TR4Bkjao7YG5F3DsvEfE",
+          "eventsKey": "E8ccdkHwfZPQdoyN6XfoDyAhbqWYf2y8eACBayxUZKQr"
+        },
+        {
+          "name": "AAVE-PERP",
+          "publicKey": "HTUtbTTdv4wy7G2uBgkQZGNXNEgBALUPHnoYxSWN24xz",
+          "baseSymbol": "AAVE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 7,
+          "bidsKey": "EKkD8jLos9NrWVp8cVD7yeCxtPCsqM69U1HkcHoAsoYp",
+          "asksKey": "HAw3SCNzgTUyUw8it6WF6VoHjXDkX99S4eoo7LGauHY5",
+          "eventsKey": "2jBc6cbBrpbdUtNydSjz6h5pnR1tKk52X9S68gGwkxBw"
+        },
+        {
+          "name": "SUSHI-PERP",
+          "publicKey": "9uDCkAYKurmUSyfzdEp86g8DadCYb7wwT5Na3mjzyCwf",
+          "baseSymbol": "SUSHI",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 8,
+          "bidsKey": "J5Z3Nds9JAJj1fhQtSjJDb9yK4Ya4T2gwyNHf2eXGDih",
+          "asksKey": "5ChPxQWF21aShCDzjWoGBWpV6s8Lq43GFqtSmK9LxWD1",
+          "eventsKey": "8iZQBLYNJ7ZSDAEZtdNsMARJw4jb2PnCY4mvpdZdCyqh"
+        },
+        {
+          "name": "STEP-PERP",
+          "publicKey": "8G8dbwDD7ScRFeEh9mBRnfyftL83Q77CS54c4vFmu8MD",
+          "baseSymbol": "STEP",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 9,
+          "bidsKey": "9GLUYqXF6yciXkgf9XgvwZZciEvbBQgaEHbyJgq2Bhaw",
+          "asksKey": "3MYiEkyfr8uDZ2aqeB51UpQ6n9Vhi24AyLypiGsasYzV",
+          "eventsKey": "Ccv8kD2chT4dWKzDAbBgrQmZd2Xr4NxUxjAkKcEkwfJH"
+        },
+        {
+          "name": "COPE-PERP",
+          "publicKey": "9DpkLA83hF4jECWxdD7n47SNmPzGe6BQctrSxCp3CGmi",
+          "baseSymbol": "COPE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 10,
+          "bidsKey": "43AXSbdfpX6EpBbDhVx3TNERXFJW5Sgv1xFvSfAK9Jdr",
+          "asksKey": "4zKjM5QXL3SQixeLMu98QQxmDcA6gHhPjQtF4pBhpTbP",
+          "eventsKey": "GwGkQzzBJrg8tnfDhCvpEwjMjnf45HNncBTosasWAek1"
+        },
+        {
+          "name": "DOGE-PERP",
+          "publicKey": "998uQY4Bs4faEFjGbF2MUDX7ADesEKZEg5jvxg8ypMtj",
+          "baseSymbol": "DOGE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 11,
+          "bidsKey": "AtooFEEG2cKcD2gCLBMX3EEgnuijM7JGiz7P6u2gn7Nc",
+          "asksKey": "G7Wuz9cwtZo5EwX8zyqPqJnqVPDKX25spUrUKNktRPqT",
+          "eventsKey": "6zEpJYGPXp3WKWDAUHZTwfo7pRxx4iXP8tT1YuqcGZep"
+        },
+        {
+          "name": "FIDA-PERP",
+          "publicKey": "FqAYdw5X8zp9atKqzBpx3qAmu1ZgLUmZJuT1ZgN4iad9",
+          "baseSymbol": "FIDA",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 12,
+          "bidsKey": "DaiZLzqeotFKUYLXsVx8iKe1dnfdWs7nq4GcfRrGSkbk",
+          "asksKey": "4biHWooAbMh5tDmZ4e8esFBmzLPCqNKYd9KTt1Zqrtok",
+          "eventsKey": "EcwArhRx7yrceAAzpFvsdVEADTEcowVbKpW3oJfY1nN1"
+        },
+        {
+          "name": "FTT-PERP",
+          "publicKey": "JDp62qTZp4tNFtAHCWStqTpU3kq871ryTfCQCUsLE4f6",
+          "baseSymbol": "FTT",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 13,
+          "bidsKey": "FWByvFYUnkb97FHi57m4WKxqybL3tzDQAb6t4YMd7syv",
+          "asksKey": "A21pDZAQUfwx6Jj2ezmZXbju9cwMtKtw7XSs3eANCC5S",
+          "eventsKey": "FPfNiDR5STFTj9XxRBvqAV44FCNXyRNUKRa9nSi8mrY8"
+        },
+        {
+          "name": "MEDIA-PERP",
+          "publicKey": "FWADsn57raN8HRJsymuA87WT27iADxZ1K378LoQDk7a6",
+          "baseSymbol": "MEDIA",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 14,
+          "bidsKey": "Digo7ZroQ8fBXkiNH68oQ7YarrcH5Yzb8eKwnov8GJiq",
+          "asksKey": "8fyDFMTNvzxggxNTQznJBPnE535ekeiSx8iWbcBEa8oM",
+          "eventsKey": "AVzyyoGEarGeU83ZLUuuCPeCQavVa5iAhCMuBrujjLTa"
+        },
+        {
+          "name": "MER-PERP",
+          "publicKey": "8R4jtgieuZK1vBG8hR9DFkjGReHVckLN4PL7zipdT9Ta",
+          "baseSymbol": "MER",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 15,
+          "bidsKey": "9yCHYTWm4RP2UbgnbjkQCmvCuA7p4xt9nGzvUnmTFqHn",
+          "asksKey": "6oVwqg7e9LsnHgBZRff8UUFZBeUVQDesmL3rNgGUWEq4",
+          "eventsKey": "2cjxtb6joXVsD8RPynymeUL1EJqL7R4SkXfEJnnCNBjH"
+        },
+        {
+          "name": "AAX-PERP",
+          "publicKey": "EReA9RmDaej7ngkFL39u116bhGLm4DCFe6WHoTA3u2m8",
+          "baseSymbol": "AAX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 16,
+          "bidsKey": "DTsBtgoPthpGbXTKKMzt2cJArvimeiTKBqmNfeNLtP5w",
+          "asksKey": "6M7G62dvNpQjcHTrBte7SHm3TZSXHTBAmEipTEUjhKv1",
+          "eventsKey": "Xs2u6xZU8BsxZcbhMQjqf8jP6umFnXHNZ1Cxfsy4Efd"
+        },
+        {
+          "name": "BBX-PERP",
+          "publicKey": "Gs4NDpwRJ9Y555qgYbiK5QEWLJxhrKQPk5Fx29Q8o7Aj",
+          "baseSymbol": "BBX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 17,
+          "bidsKey": "GHk9Vk9ZseYoHa8WxdXCYsjYq6oc4drRhTS1B9sSGT2P",
+          "asksKey": "9niJbQXuzXMjLeJutY3px2LBcEyLzrGntz7vMLzamuWb",
+          "eventsKey": "49RzsrC2mizsNYwU4VLeFYk9FLEujpU2Bfzq9Vzk8Kun"
+        },
+        {
+          "name": "CCX-PERP",
+          "publicKey": "6ZntrX5f6w8pqM4e9cyyJUmcRdhMCFw2TqGjs7A9pM2r",
+          "baseSymbol": "CCX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 18,
+          "bidsKey": "24Brtp117fjvBgDCAv9ZmBTH6oZ9AespuiN8UXdANNic",
+          "asksKey": "BETLvWj6Vs9BLsoSwqeDttMPU5RMMCQLNwjw6h5X1oci",
+          "eventsKey": "G6GTL2NKRVxxNBMi6w19gChvFzdGAYTnM9ko3Dfv93Ss"
+        },
+        {
+          "name": "DDX-PERP",
+          "publicKey": "7wt4cs2ficPwzBA9apurwbmTpUqgDwJuh3Cch6GQheqE",
+          "baseSymbol": "DDX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 19,
+          "bidsKey": "2FCCWGNG9zEgg8zyUmXJiACkuf7F5AeHSeqUm5u1e2iC",
+          "asksKey": "CVxdEi9cSXTMSLbFL4CywphQpDqN5CwbLv4UcwbCvS5",
+          "eventsKey": "EjFGANPoUfu1GSPsqzdn5GDA7qaCgn1keEJt7zyEQ271"
+        },
+        {
+          "name": "EEX-PERP",
+          "publicKey": "DDRWQWbTQtNXKLbCHBkHgGprKvBFsCmJek1qj4V3Dpsy",
+          "baseSymbol": "EEX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 20,
+          "bidsKey": "4puHqrtHUZKddQbQoHWcnBsfXkAruwJbk8wdvfcAvSrg",
+          "asksKey": "GUdKHrNAxDPEJTpg8h6U6VDGJ9RV5foSNqo7zzDsXKR7",
+          "eventsKey": "A4JUecvqic9KRzxEuxXTfkBq9ewEMP1UECb9BbxhykTa"
+        },
+        {
+          "name": "FFX-PERP",
+          "publicKey": "6cAn4bhToHXGH8h5uMsqYAGQkm1QeYTAczbKbfSkfyQA",
+          "baseSymbol": "FFX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 21,
+          "bidsKey": "9oxzdgPjtEwKifyD8SoESMBCCBfT574p3KzYWmtZ5kUD",
+          "asksKey": "2aCemonwa4VnNKApSgYTFvAf6EBw7iTh6dG4Zss2dtJ2",
+          "eventsKey": "BoVSbeVqkrw7qKeechynoe93pVufYqEawo6bF2h77E2r"
+        },
+        {
+          "name": "GGX-PERP",
+          "publicKey": "7DycBeVjH6Bs6TmxL6SFGKAh6smdFmypTz5TBfekXmye",
+          "baseSymbol": "GGX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 22,
+          "bidsKey": "BCKyMVYGA6HYUsm1MpzoqDPHhZaZAahfoyuYrhZGJvp4",
+          "asksKey": "6Mpv2ppasAFXgSHSL2VL6mU4aiheDJZYuNJRUjQS5k5N",
+          "eventsKey": "CtPrnwNjXFVqsNH9vf6oiio4ym1avJgkMhPBP1kVt4B1"
+        },
+        {
+          "name": "HHX-PERP",
+          "publicKey": "Fzv8ES2Unq3QJFpXuP2qykcayGzVL9hWjGrUNbd89BrT",
+          "baseSymbol": "HHX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 23,
+          "bidsKey": "D8qXMPpobkR3wE4sUWu8FBhys5F7h8epcziCvXQQuMTq",
+          "asksKey": "EPCM7grmn25nWFMctY4Si1jgbWm65bQciG6aBJaFo2S8",
+          "eventsKey": "5P1fx5dtfJEsyEyXKjcTRABfm94jmvi7rQQXbdc6cTGk"
+        },
+        {
+          "name": "IIX-PERP",
+          "publicKey": "5EuDnbaS5XWhNyd9poJdhbALnvmzdRKfQayyuMU8ruxC",
+          "baseSymbol": "IIX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 24,
+          "bidsKey": "359b5r7epYfgJ97LFd7iq3hebs1PbuLLfRPATLhh16yN",
+          "asksKey": "EQdXbnw5vHdEDkuWZjqJU3Pt4AjjqoYKXWS1dY3iZsKF",
+          "eventsKey": "9B1RjZgVCo9FUyStTzMGo2QxoxVQfjb1uGi3GuPEbmY1"
+        },
+        {
+          "name": "JJX-PERP",
+          "publicKey": "7PdjenDUHVvLG5UkdadxuCUFRo9Qk9v1HUqUk9HbzjkX",
+          "baseSymbol": "JJX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 25,
+          "bidsKey": "CUcScH5ZXCFK8k6EbEnHZk1TgmNqWyNaUrZHhFeXwhL7",
+          "asksKey": "ana47fuZXHuFF9UVujYBLU9EdBKKNj4b3AY3nZ9jD5L",
+          "eventsKey": "2E1wwY2752RK7seLZh7bjJYVohGx57HCqsmjC6wA5wFM"
+        },
+        {
+          "name": "KKX-PERP",
+          "publicKey": "5frV7oSpkvLv5iTr1chx4b1AJK53NGeq1hnc3so1BwCJ",
+          "baseSymbol": "KKX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 26,
+          "bidsKey": "CpJKuuoHW2xoGPP1LQyFS5qvmd462djbTzuck54UfSnb",
+          "asksKey": "7fFzC9M4qrxuBPzphBbUxa72Ysz4n3LPnhsuFYcjbgGK",
+          "eventsKey": "ArfejFQBFa1evHW3veZZgtnBeZWsWYoo9P8pcBLrzcya"
+        },
+        {
+          "name": "LLX-PERP",
+          "publicKey": "GMgpbh7YRtraRprkaeP7omRC6ytv7AyhQwWpWntqmtG4",
+          "baseSymbol": "LLX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 27,
+          "bidsKey": "CV1kPsNrn7aGB92rZMnVbfuF2YNpZkbqPgnhCDkVUeDX",
+          "asksKey": "Gfv6NUuu2d7Fq6imsLmhiMGArYiURkjFE5wHBnzppgfg",
+          "eventsKey": "J6Q5Btzppnhfxqkkkr77h1fWQ9SvK3Voay2fRw9VuVG5"
+        },
+        {
+          "name": "MMX-PERP",
+          "publicKey": "4xgMmrpLPoZAQmmGwDEwwcnFDvXPTjTqm58jge9sGNCL",
+          "baseSymbol": "MMX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 28,
+          "bidsKey": "7iYkZxjJY97j9CLfmQwT6CoD9VPGC2QvHWfWy513P2A",
+          "asksKey": "7Pw54QQhxgcAPtwcLEhBbZqmnCuTggvEBcuQuAYqsRk9",
+          "eventsKey": "5z1ziD389Tgh6nAMdpxv4YpbaC7TY9owtBrrSWz6k8mh"
+        },
+        {
+          "name": "NNX-PERP",
+          "publicKey": "G67vPN66YBYBghbTaqMhD8R2LbizazZnMXCDtox7gAQ6",
+          "baseSymbol": "NNX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 29,
+          "bidsKey": "4GhpBXeCHydRXSMMWeQwLqNCVC7YuRhpP8uj5X4mY9E6",
+          "asksKey": "9pkEHVmRaAGUBeApEp2gRmd4tKxrHAUTRMB2sG8F7oLZ",
+          "eventsKey": "CBrcJpZoN5FAhD5kZvtZT3BxivhPe8t1icNQja614cbu"
+        },
+        {
+          "name": "OOX-PERP",
+          "publicKey": "9aWXmDaa7qs2FYBREYcxE2ReqSsb3ppjCnN88V856tuj",
+          "baseSymbol": "OOX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 30,
+          "bidsKey": "8TmhUGXEYHPRdq6NDxEQboGU3EgeMgdjoNEViGsgH6N7",
+          "asksKey": "FGfpAbACdYd5kT5HzFEsCtcXNpDmb4v2BZFrC8GYbNTV",
+          "eventsKey": "C7DYMPPtwWiiZzgDcVjG4mpZZ8VzKTCsAUcdPL3ueZst"
+        }
+      ],
+      "spotMarkets": [
+        {
+          "name": "MNGO/USDC",
+          "publicKey": "Aph31hoXRjhk1QgCmRvs7WAWGdpRoaESMoqzjoFkL5mE",
+          "baseSymbol": "MNGO",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 0,
+          "bidsKey": "8tgNAdQRdtiJzYbi7z3Q1FoFcxFmYxm4fvnAv4SUfM8e",
+          "asksKey": "FGAJUWsfZUax14AL56mekc2mZoJtFaRxqWqH4PwKb1UL",
+          "eventsKey": "CK9LPN8RGvAa3yZaEdMo2RRZrTF7ZTWb1ayY7u4je8DY"
+        },
+        {
+          "name": "SOL/USDC",
+          "publicKey": "uaajXobeb1hmTB6StRoa8Yqn6czjtWtFeVfZeJY6YFC",
+          "baseSymbol": "SOL",
+          "baseDecimals": 9,
+          "quoteDecimals": 6,
+          "marketIndex": 1,
+          "bidsKey": "Ajo2GfCUErwAWRW9Km1f333hv61qwJoF54a62spjQugX",
+          "asksKey": "7JFH89Hw5NpRSyVRSb931hvAzpYMNNgpfgVCWRWgkzuT",
+          "eventsKey": "4EMXcMjCDSPpUygdQF93xM2kxQJoU3658GPr4pg4X6zc"
+        },
+        {
+          "name": "SRM/USDC",
+          "publicKey": "23tRuJ3zUvXYQEnTDAcWHPDfmYvrWanpM2sJnmhL53X5",
+          "baseSymbol": "SRM",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 2,
+          "bidsKey": "Ghg9soNGpZQeU28uM9o2bsgnAjn9eib9FcGt8UTsFCck",
+          "asksKey": "AqbpvqdR2Pr4C1nFgY26Xo5z6WnGXwPV5ACBPStyHjgQ",
+          "eventsKey": "HopzAhNVt4TbeVq47t2ahHwVUsUTZagXkcZxcWYtzhAW"
+        },
+        {
+          "name": "BTC/USDC",
+          "publicKey": "9LBavtqDpEoX623j8z4sotHMDbv7PcTXUW3LQQtepKvR",
+          "baseSymbol": "BTC",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 3,
+          "bidsKey": "AqJtf3kP1yazQiKggfHXaQ3wUkmGRASwf94mj6zSpUsm",
+          "asksKey": "AtZ6BxVzQR1CTxyzm5aMcBpqvy89R1MM3UidjgPewhLJ",
+          "eventsKey": "GzXjJp2LiarMnPh2xGzqUkZEo7gchgUP5bTshd6TuTVF"
+        },
+        {
+          "name": "ETH/USDC",
+          "publicKey": "2n81EqJgsTE5PoPX5H8adQ4EaVe5kXnFuxwdCAYfaExH",
+          "baseSymbol": "ETH",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 4,
+          "bidsKey": "9qNtJWBev3Y1rgj7wmzBqDnkWaCFKi6ahVy38quBWhPJ",
+          "asksKey": "8tKBs4qgvnn7ws5uCLkBGJp2A916fBwNQF5WTfRKewn",
+          "eventsKey": "C9Lh2EurT1t9QgXKKFFY2jfEVHCyUxxfCvr34L8u1h9J"
+        },
+        {
+          "name": "RAY/USDC",
+          "publicKey": "3e7V65UdApsyCMLuALCoQwD9pKDCkozSUrsJx4XMJAnD",
+          "baseSymbol": "RAY",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 5,
+          "bidsKey": "2WkjNRM3edGFr8LHE2JUdHRyaHAxKBfsaLgP3iQ21jF8",
+          "asksKey": "J4y2EwM4HwtKgxzAEtSkesKMUED7L4mREExSo2fu3qjg",
+          "eventsKey": "GAnmCYogy468QxNV22TMKvNP8qki9J8Dg2ZE4wyouGvW"
+        },
+        {
+          "name": "UNI/USDC",
+          "publicKey": "4e9bt9ySh9i6Fks2R3KsWTBgJcEDNX6zM4RXHCcWDF3N",
+          "baseSymbol": "UNI",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 6,
+          "bidsKey": "9ZdrM7EUwTsYdN3fZAN7Nrvk1DtddCPazg4Ct21DNNre",
+          "asksKey": "H31KS2CoK9FXugSWpxjv2zknU7WeDWD4owgiShPkdX31",
+          "eventsKey": "2L2n928CrYa3uoTqPYDfPSfpBaD55uLa2dquLJh1Ee4J"
+        },
+        {
+          "name": "AAVE/USDC",
+          "publicKey": "BMigUjf6kDNtNDMCsBvPCwegbL45oLT7rtu1y36vAD1L",
+          "baseSymbol": "AAVE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 7,
+          "bidsKey": "4evEKb2hxuThEMcdyERJow8E55mdPu5Gngcc8zt5hoqg",
+          "asksKey": "3eokNWZWvv666Lti8RNTNk6JbpY1g8P3u3pJeeXM5bCh",
+          "eventsKey": "GhvX7McikTv3HkoM15xmji8y96YLDkXzXrcRFdQUBtXJ"
+        },
+        {
+          "name": "SUSHI/USDC",
+          "publicKey": "J9aow2hcq6YMJGw7fAprGitP68crYa36r7yJYe5huFv4",
+          "baseSymbol": "SUSHI",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 8,
+          "bidsKey": "7DPYMzY6Yc3JuL2WSb4ZNYcsFDfZxTkbsoBWovBmReG7",
+          "asksKey": "Guyo1ynPgX654aTZSjx74enygwSQZS8mKwqivcYpB1xi",
+          "eventsKey": "9jebNJyjHD8doZmBQKUiVaWiWmNEWwvwLG8GSsVHnBkp"
+        },
+        {
+          "name": "STEP/USDC",
+          "publicKey": "8P4kZg2c8pAUC6yLv289fR83LJ2wze1ZT247Fw6MhEiC",
+          "baseSymbol": "STEP",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 9,
+          "bidsKey": "ELX77vN1dUZcEwYc9EAmoaNiEFw233pmVbNXZ5suTHBz",
+          "asksKey": "6weBk5uWrkp1DYKoC95T6sgd44UJbhnfTfxnMv2bPn6v",
+          "eventsKey": "AZrszAhYF4XUYeMGuqFX742465fVnuZGdMC1HU5YbjWq"
+        },
+        {
+          "name": "COPE/USDC",
+          "publicKey": "Dzc5eZEGHoYEmrYDGWspWcHQw6FG67N6t8NiLhgsLRbi",
+          "baseSymbol": "COPE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 10,
+          "bidsKey": "CRTA8KQTuhYtJd2mzeH4scscWfYpXNmNnxT5Wbvtj1q4",
+          "asksKey": "8s2sDLvmdoiictqo6wo6jMmtTK9EkdQmsNPwRTjkZ49c",
+          "eventsKey": "8XkziYz4arsFGgTPn3Vby7MKCE83GGRVmbyVu73Hb4FM"
+        },
+        {
+          "name": "DOGE/USDC",
+          "publicKey": "CrMr521AhZE1FQ9dtBQZczd6SKMpthJMTeQ8WGGRooQ3",
+          "baseSymbol": "DOGE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 11,
+          "bidsKey": "BT4XXsWWQ73ZLSMKYj4P5HkTNFCYVsh2z7sKDSQ3x1pF",
+          "asksKey": "776t4LBGnucpv3RaFc6acZTtEH5c63QZgWKiMq9dyxfo",
+          "eventsKey": "3PeGLRf3224QmeWDTrzMrsARpFgtjKreok2DhAT1Ykzw"
+        },
+        {
+          "name": "FIDA/USDC",
+          "publicKey": "D3P93bKtRzzrJXtBwLcNrswJ3cei1qcrXM9jK6emWZJx",
+          "baseSymbol": "FIDA",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 12,
+          "bidsKey": "9yZ6CtMsLrayhAnBwom9PKnnRkxgeqSCs6TjrFiGuL59",
+          "asksKey": "3KSUUoaysKjusA5uAGvdRxoGGP95Csg1zEE9yoPJZizF",
+          "eventsKey": "ESBR3Dz7gboZCjPF2B3T6HfyFCYhW5XhTNvzUq35HUfk"
+        },
+        {
+          "name": "FTT/USDC",
+          "publicKey": "CiN2BzCaThxLRDALeMq3GJGR24MQhdBWmHHjitW74oST",
+          "baseSymbol": "FTT",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 13,
+          "bidsKey": "JCkuoUPnVAvXKySpcJVm8PDR1KUm45njKPuPg8w1ePo1",
+          "asksKey": "GoUZsqQRMvkkNTJ4EgjzjUamWc9ayd3ztkjv5GeWoG4Q",
+          "eventsKey": "Fh4JNfLpNRDDYnNBPUUHjQLYih6hFcP4wwMQNQz3tBiD"
+        },
+        {
+          "name": "MEDIA/USDC",
+          "publicKey": "t6Q9ADDNsaQspD4u111fkq8qBzgy1MWoyzX8mDKVbws",
+          "baseSymbol": "MEDIA",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 14,
+          "bidsKey": "EQdUCPhYpiLSb6R7oJBzxNExe5LnaYzrVSRuEn6ozcsq",
+          "asksKey": "A3viz8PCHgHp8RbW7HF4bBVvk4fEFkrr1MnBvBbYHndH",
+          "eventsKey": "AoJYhnPQyvSPgcnnXsTQAYRBhjJSg8Dw1YBNvTC954wi"
+        },
+        {
+          "name": "MER/USDC",
+          "publicKey": "D9Rc98dPsmkfi9wv9yQLKXXu86MZut5jWZSYVCRu51ay",
+          "baseSymbol": "MER",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 15,
+          "bidsKey": "GAtAcjHF9sXrkyBLDiLsTMDufbroxwNXkJSPQC1kDDE5",
+          "asksKey": "C2qdvu1CTTVmtbZWMF9KNhHBZ3C92xb3g5BeBJcYabKi",
+          "eventsKey": "C3NVpXopybj1MUvXwmmnELUUKkKi7KtBEjF8tGhTnUiv"
+        },
+        {
+          "name": "AAX/USDC",
+          "publicKey": "9wursY6Ekmephdczc6dmCmhQ9e7Lh7Xbz16fTP4h6KJt",
+          "baseSymbol": "AAX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 16,
+          "bidsKey": "He8Qu1KeN5k8hNGDbmzJyjR4wZDhJ9oHLxPFjYxQhLFj",
+          "asksKey": "BvaWzabyLzdvW6i8SLh61rsV5qLd6FVNjS1KDpn5K2Aq",
+          "eventsKey": "GthdjUBYySAp3NuzLommEd4P22hMJiML8G4iwU9CLR1V"
+        },
+        {
+          "name": "BBX/USDC",
+          "publicKey": "FWEHRHn4TLZTvqZSsN8gmpAHzVuDsNcADVieH7gsqy8D",
+          "baseSymbol": "BBX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 17,
+          "bidsKey": "65qd5uKKjEK36QGbw8rF6mNrPZ2oCTdzLBmMdwJB6e8i",
+          "asksKey": "EdRinewyZGC4G5DDwJcT2eCkHNh8rCicDJ21ihHMzJPy",
+          "eventsKey": "51Z95D3acYdRHKhhd9jRxTkbnbrj1UkGiyD9vJSJm5up"
+        },
+        {
+          "name": "CCX/USDC",
+          "publicKey": "HXxay4VBTXkgkpyresugRdfnnG7j6SzvbmiZvFHjcDhe",
+          "baseSymbol": "CCX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 18,
+          "bidsKey": "AhbRJmZxyJhG7qz3XXKAGaTAupmV4qWhbeJYjmpF5nmj",
+          "asksKey": "BqWqZ9akWbEYL99WtvpZVjvNyB5rTMvhrsYopji6Gkcn",
+          "eventsKey": "H2LHJDXmgb26J25F6g5HZsdf3c3yMKyFGQwMzHtX9ETz"
+        },
+        {
+          "name": "DDX/USDC",
+          "publicKey": "HfPxSpeBJ7tyFVDh2YNMcadX1LUGqcynXiz2cDMqzHCr",
+          "baseSymbol": "DDX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 19,
+          "bidsKey": "G37jyonjVnapiT5cpup8Lh5MTpBFCtQFRA9Vj2NtNcth",
+          "asksKey": "3kHKvAKdnbDBQKQNKj6b49iRo9s3v5q7Uix75Rru5BHH",
+          "eventsKey": "9UV79NA36EM11yByjVVcVe5Bitqb2U6FZxZ9Nmg6Mvz8"
+        },
+        {
+          "name": "EEX/USDC",
+          "publicKey": "6JXADoVE1nWjd2UkpJqU4PLZAj1urqvuZqnrw9dLKonq",
+          "baseSymbol": "EEX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 20,
+          "bidsKey": "BKadMsHAXf2b8doc6rh8LfQTjjMwcbYiZJkG5aSzJo5a",
+          "asksKey": "2cy39XEdNKm6TtRmfntcLtAHYToCwuo8eQ4po5BQSSwn",
+          "eventsKey": "GZo3s6TcR11o6Rs12XE4nxh9Snb7MaNgBQuipEbVyqr7"
+        },
+        {
+          "name": "FFX/USDC",
+          "publicKey": "AU4zXmTdwUgzLW5yWB8qtuPaVqnvLoUXKot6KVdbidPa",
+          "baseSymbol": "FFX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 21,
+          "bidsKey": "HLHftcscNLVt2TcWJHsGjPt7gkbQDhQKQULSAy8qeZii",
+          "asksKey": "HB6QZUkw2wNNUEkvJajz3zmyxJA9ZrQpy3gsf3A8VmUx",
+          "eventsKey": "D8cWA82i9EoXMmGPWJEtBYvJwYvTzxoAPKSJ2g3KC94u"
+        },
+        {
+          "name": "GGX/USDC",
+          "publicKey": "ETh2Qqrtp53F3BhbXteemWLsjkRiabEnwjoh8TyPLF72",
+          "baseSymbol": "GGX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 22,
+          "bidsKey": "7vSrqV6RWWwDx1sjPAYNSRZYE3fGHBcBMt4eBvLfno6B",
+          "asksKey": "BpEhxroAgEAVauP1VyFv3XzkSHRxRwDFxSLnvrJrqD8b",
+          "eventsKey": "H1Xmkzaj8SuyGQpPmvnAEjjGDb6uZUjzznFkyHPeUpNT"
+        },
+        {
+          "name": "HHX/USDC",
+          "publicKey": "BxQAZsUievWE6JyNVJcFsTLqLqahQF7LhM75qXf26Nr7",
+          "baseSymbol": "HHX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 23,
+          "bidsKey": "CZ9EcaihrMBa7GUcGSicMYVt63ka3DP3kmWjEuffzFPc",
+          "asksKey": "689WKqtHXCKbsMeLEdAAv4PpJavmXuwemxxFYV2U8LhF",
+          "eventsKey": "9ZqHtfMr3Na2xqVzZPm5HHWftVJiHjA3WaLCEeTGPRni"
+        },
+        {
+          "name": "IIX/USDC",
+          "publicKey": "EDJqNqTcojU65uLCMZHb1HjxPuWAAhMahsfGju2SBqsn",
+          "baseSymbol": "IIX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 24,
+          "bidsKey": "GQkcA5rKXrQcNSH71EYYQewmfUxMeACCvHmMXYFsSzeu",
+          "asksKey": "2B3mJ7t5NeWVWbXyx8sqjayPNGLwBbPnViUvWk1rg2cn",
+          "eventsKey": "FaZRbv19iVYh1WQzemz88jWzwphkBb6Gpnda7eMQ459S"
+        },
+        {
+          "name": "JJX/USDC",
+          "publicKey": "ugv31rcerPotv8iMXrWDyEjf5TokZWegzDoSK1xL8s9",
+          "baseSymbol": "JJX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 25,
+          "bidsKey": "F7UCznWNBELD1hsE6jKsmT8aFrL3t8RXGigoGxqzDixU",
+          "asksKey": "FBuwhgdraXfVrtMPHXL1qnQwTxdQavs3mBexK7n98ZvE",
+          "eventsKey": "JB85ijU2jqymXWFXWcbSZNd4ajZXjJ9b6WxegTs2TbiN"
+        },
+        {
+          "name": "KKX/USDC",
+          "publicKey": "C8GiLqrKW3KNfB6y72jSF7WPYCHWkpgbkX48vsPpzxsU",
+          "baseSymbol": "KKX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 26,
+          "bidsKey": "GNntBS8sHrwkq7QdRc9xRzAds94yoDtuESZB4t4gCeNz",
+          "asksKey": "FC6dHFia436ZhcvDAB2WLaxStSjUwGiZCA4JKVytHUuE",
+          "eventsKey": "5erMNVkQWzTcnToWKrnThTHer84hAyVyCiKaV8BZ1iuw"
+        },
+        {
+          "name": "LLX/USDC",
+          "publicKey": "4KoZwJizkVaZhAY2Ud9tt3yqUxZrJnEgPTe8dDtM399G",
+          "baseSymbol": "LLX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 27,
+          "bidsKey": "J6e24gcMhHzakjY4kGceVgFmPh7CHzKipry6A9QrEbSm",
+          "asksKey": "HCffgLhuHUKXdSzUovuJaDcEJTkK6DZCvNuovn46weDL",
+          "eventsKey": "81KsVf6Tz5irWM97ZxereLV1ZDGK6BHs9r9VrVHBvm3d"
+        },
+        {
+          "name": "MMX/USDC",
+          "publicKey": "937mGkTYcqGcHoD2UReiC2FJD4DU42rkJciQZ7tQz5H4",
+          "baseSymbol": "MMX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 28,
+          "bidsKey": "GcTgp4U2kPSevL7yc65DBd3DWtEdVu1bATvJyB9wzgNw",
+          "asksKey": "7XBvMRfGRueMRdegPvmzcVEcS9CLDb8rVYMD76qwNj7S",
+          "eventsKey": "HLaPxBL8yqeTjMQCqju4fDmzHb1tkxkKbFVNNajs6rNd"
+        },
+        {
+          "name": "NNX/USDC",
+          "publicKey": "4my2SByxetXARLxpkDG5iV88AVqqsJzUy88CzyjvKvp8",
+          "baseSymbol": "NNX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 29,
+          "bidsKey": "DEM5LgHP5UGSCRgwfEg7Q43JasqDYHbYTSYUMuz2ZURQ",
+          "asksKey": "EXvnPNpjWmnLKNHvSir9fkY7ickzbnoak5xAHeCJKrgb",
+          "eventsKey": "TphuGAytFADgqUpDVp9jNTh9jX85iPm1N9b23UrvWuE"
+        },
+        {
+          "name": "OOX/USDC",
+          "publicKey": "GhPwZExZ7uT72n5SdWNMxwddxQ8eG7tuEvX2iSUK4MEY",
+          "baseSymbol": "OOX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 30,
+          "bidsKey": "5NLB65Mtmq1urV8ejnzzEKK98dBn3dWVQSNHJFhLXiig",
+          "asksKey": "7WfvdXwBs7Fk3meQhWauxTek8mfc2g6TLvmfJm3MQH6H",
+          "eventsKey": "BFsA1VUzhtfuVzJ9NGC5Y7zSRxDfNKuSKUwJ342yEjXr"
+        }
+      ]
+    },
+    {
+      "cluster": "devnet",
+      "name": "mango_test_v3.max",
+      "publicKey": "DVgF1dvD9uPsrmTshhyDSJ92zno4xBwFaqr9G9S7PQC6",
+      "quoteSymbol": "USDC",
+      "mangoProgramId": "32WeJ46tuY6QEkgydqzHYU5j85UT9m1cPJwFxPjuSVCt",
+      "serumProgramId": "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY",
+      "tokens": [
+        {
+          "symbol": "USDC",
+          "mintKey": "8FRFC6MoGGkMFQwngccyu69VnYbzykGeez7ignHVAFSN",
+          "decimals": 6,
+          "rootKey": "5tobNdg2PXbEgu1qPDNfkZEpQEDHkWGbq5reJy7BsvAL",
+          "nodeKeys": [
+            "tVMsibEAgnJwMit2BHUgZpRwTUXX43eG38mahNoMaAm"
+          ]
+        },
+        {
+          "symbol": "MNGO",
+          "mintKey": "Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC",
+          "decimals": 6,
+          "rootKey": "6qXzFKnfEdGUozqJtm89u7g64ubzLst83WDrs5sAPhMj",
+          "nodeKeys": [
+            "GDj73mZGeuoWX1eUkLYRC4cvqKuFR8umH7PiKEyPw7mF"
+          ]
+        },
+        {
+          "symbol": "SOL",
+          "mintKey": "So11111111111111111111111111111111111111112",
+          "decimals": 9,
+          "rootKey": "qPQ1qDtK4b2zPLTtweBnfbJuLDj5H3exhGkjPV6ey4y",
+          "nodeKeys": [
+            "3YudvokVpAYwvwP3MYQWjJrRobYCJnkYSCPPkesExEtH"
+          ]
+        },
+        {
+          "symbol": "SRM",
+          "mintKey": "AvtB6w9xboLwA145E221vhof5TddhqsChYcx7Fy3xVMH",
+          "decimals": 6,
+          "rootKey": "9RvpnrgPagDsrN2aQceFoidNdWXjNMUDtoPA3AxjuH15",
+          "nodeKeys": [
+            "ChTwTozvLfrzpb51jKVbHT3BwwrX5NT6Euw94hrmWaV"
+          ]
+        },
+        {
+          "symbol": "BTC",
+          "mintKey": "3UNBZ6o52WTWwjac2kPUb4FyodhU1vFkRJheu1Sh2TvU",
+          "decimals": 6,
+          "rootKey": "61CfoQSADAHttqR97EbrqiDXfMQTKEYNTg3GJjfwDHF9",
+          "nodeKeys": [
+            "4JxXRCsGNGrMUogDwVmbx1scsaV9PJoqpUz4yfYYm6YT"
+          ]
+        },
+        {
+          "symbol": "ETH",
+          "mintKey": "Cu84KB3tDL6SbFgToHMLYVDJJXdJjenNzSKikeAvzmkA",
+          "decimals": 6,
+          "rootKey": "5WuvejX6w9Tr9NhAnKzwHeWUTJHuqoPfU7iVzp3H3n14",
+          "nodeKeys": [
+            "BaqK6uvUrA2H3XwTJdLHYfiXTvTQ4vMH42d4x1EGXMqb"
+          ]
+        },
+        {
+          "symbol": "RAY",
+          "mintKey": "3YFQ7UYJ7sNGpXTKBxM3bYLVxKpzVudXAe4gLExh5b3n",
+          "decimals": 6,
+          "rootKey": "5nBcj7RBHWWpUEPusmR7aL7Rqz3679R7iPVSfuDgoUGC",
+          "nodeKeys": [
+            "UzsvJCoBbW8qz7oCWLsj1VumHeN1tVmU7PFnikgYPPT"
+          ]
+        },
+        {
+          "symbol": "UNI",
+          "mintKey": "7vd84gXdjxRWjtwwkcxpzv1R8W9oCsADemNvRj3Cv5u2",
+          "decimals": 6,
+          "rootKey": "G1ydVe9Bno7KKQjp5KxDipr9JmQFkCPgp5ZnKAVyom54",
+          "nodeKeys": [
+            "8dQX9tmpurK5R8d4J2aYLpjbUPNUEjZ2bNsV3FVtAS2V"
+          ]
+        },
+        {
+          "symbol": "AAVE",
+          "mintKey": "3h7gNYC8aDJ5tGgDt6YKmvLJYT5LNcFb9yiVU1qirDWg",
+          "decimals": 6,
+          "rootKey": "AKqU2m4J9s6XPBVci397FmpxgejkaM4JdQmC3MagMyF",
+          "nodeKeys": [
+            "2Tm4vuGhpU6JicSrQMxPGLisqvBvVRwRXtj87oWbCEWS"
+          ]
+        },
+        {
+          "symbol": "SUSHI",
+          "mintKey": "Edi5KNs2LnonULNmoTQqSymJ7VuMC9amTjLN5RJ1YMcq",
+          "decimals": 6,
+          "rootKey": "6exwRphHAxkYWRo2QRq4pfMJbiZJaD3TCqWKEQHVzL5n",
+          "nodeKeys": [
+            "9syUxdpZU9WamryUDaFF77kWYDvizsCNPd2ZyRg4PHxY"
+          ]
+        },
+        {
+          "symbol": "STEP",
+          "mintKey": "62haNTBB4C3gESJyzAvQVAadNxN9zzVt39x5ep5wmaak",
+          "decimals": 6,
+          "rootKey": "7xfh3Ut5hDjJEByzMnm334jKeDPfXhFUcBN84Rvq3pmq",
+          "nodeKeys": [
+            "AsBcyN8fzvvVpXXNUPVkq1Uj7k5noY6sK7s96PmAEmTn"
+          ]
+        },
+        {
+          "symbol": "COPE",
+          "mintKey": "BxZBNjYtMgzSF57aiCwrBdLuEL5tSNcGrxQXj7Z7mZQW",
+          "decimals": 6,
+          "rootKey": "CSyRvspTf1WwdGhQHGXVuF4LdV3e2tBDoUbHMuSgcene",
+          "nodeKeys": [
+            "E4qWyTvq7ABXjPyUgFvRuQW19rzYrsVcsdSgXKWg9VrE"
+          ]
+        },
+        {
+          "symbol": "DOGE",
+          "mintKey": "6yr1xJP6Nfu8Bxp4L8WJQrtLqBGZrQm5n41PFm4ZmEyk",
+          "decimals": 6,
+          "rootKey": "JAWF1vHHWkeAJMCWamES11oiYFTmJb6Q7CWwCbAqTbdt",
+          "nodeKeys": [
+            "7giQLm4hynB3y4Zuv9BgJGW18wjYKTL8XT57cEsCAUJh"
+          ]
+        },
+        {
+          "symbol": "FIDA",
+          "mintKey": "DRuM89e9xndaRJvjc41zcVWzEAjaytDWUHASydfEEHic",
+          "decimals": 6,
+          "rootKey": "9M2uFp3Z5JSnqARBHdFbxBgNcSwdZSFKFvorUUtqWFfD",
+          "nodeKeys": [
+            "79dFUJKpARCXbyhWESfqHi4sDC5kuxmFDFXF7kRqJkdp"
+          ]
+        },
+        {
+          "symbol": "FTT",
+          "mintKey": "Fxh4bpZnRCnpg2vcH11ttmSTDSEeC5qWbPRZNZWnRnqY",
+          "decimals": 6,
+          "rootKey": "qixe4PYAisi2sAtErqxyEHUeApGrLtx5kBhZLCbBEnY",
+          "nodeKeys": [
+            "3Vriyis5oS3hbFN2eDoyEi2PsLbwtCMQxW56LmijXDG5"
+          ]
+        },
+        {
+          "symbol": "MEDIA",
+          "mintKey": "CU4LrEQChVcis3fsMRciKTgNZSV5A3bh3ftF3Gqnbe78",
+          "decimals": 6,
+          "rootKey": "C7hq2XdrDSp5osBjT8zb6QanV1uxfbFXPkszrN8wSfGG",
+          "nodeKeys": [
+            "8ckBxgjYDmGNpLU3fK8tDmTEKTEeMNpXDZuaYhFZG63J"
+          ]
+        },
+        {
+          "symbol": "MER",
+          "mintKey": "3QAVaXixBUtHwjponbZZgNVSRqB8YiTqY59pGSWDVS7X",
+          "decimals": 6,
+          "rootKey": "HFDnkg48QWvsSFk96wdj8wKdML9aVNLXz5iTw7vVYe2h",
+          "nodeKeys": [
+            "BoZmaKaTRgkjX1UMnmn7VvR9fnTASYfmAn8DCnKVmfMU"
+          ]
+        },
+        {
+          "symbol": "AAX",
+          "mintKey": "HDY1CtDh4S5txV84yWfqrM6MuJ1rjCGa6RgV2aNkoq7T",
+          "decimals": 6,
+          "rootKey": "7BDYi9cQcY1xS49BEhxhq1nH6iuPdyDoaR38KNhLaE7F",
+          "nodeKeys": [
+            "2gWThzs489LCou18qJb22M9ixh6Jax6wJZ1JLG2wntp7"
+          ]
+        },
+        {
+          "symbol": "BBX",
+          "mintKey": "8S894Tytj7RY6gKcvHWvaR8cmrrbwwRQ3w5ufWKvGgBE",
+          "decimals": 6,
+          "rootKey": "3ctYAgLrkkCLDJ2ZQmu4g3hHsRLsdJE6UmHitt2Vjd8F",
+          "nodeKeys": [
+            "83fBhNz2HiS7GLSuGJnJ5xbXR2pA4Te5NjANM1YuZFnV"
+          ]
+        },
+        {
+          "symbol": "CCX",
+          "mintKey": "C2a5sZB6ybhNVWmf3uwLhyszfD2NcndLcAaYTriASvWH",
+          "decimals": 6,
+          "rootKey": "8bfjREt93DdDCYT3RGTPwBLF6UCQJBDjReRBmAwu1XxN",
+          "nodeKeys": [
+            "F1V2HWQwvQfWvsgifga4cCRegDehTRzTaU9Bxk3BA5jf"
+          ]
+        },
+        {
+          "symbol": "DDX",
+          "mintKey": "HqWwWZ6dxWWcMXdeYXAxnWYKB37fqEj2wxLwmuQsHwmP",
+          "decimals": 6,
+          "rootKey": "7ULhcgsXUHvGsZEaLKJT529mp6BihaZ2MbpE54gz15DJ",
+          "nodeKeys": [
+            "5fisJ9eL2RraWdT7xebSTHfE5BwJZMW52fnVwWFZEXxX"
+          ]
+        },
+        {
+          "symbol": "EEX",
+          "mintKey": "jYmra5J9RCyEnb1D1ScSSLoXLW8j8GZxSFv8kToUUHB",
+          "decimals": 6,
+          "rootKey": "CvzoquhkM4C3eNydoziG3LrnoDZfwjFuf5RQAJmasVPV",
+          "nodeKeys": [
+            "DHXHJiD72r5adAX8HwuGuecnR68HYipuT4uqAnbzetwQ"
+          ]
+        },
+        {
+          "symbol": "FFX",
+          "mintKey": "EsUAWWkLG2sE1RkBo74Ta4a7sjaj5JvM1y4Aj1tYXpx6",
+          "decimals": 6,
+          "rootKey": "DF1wvKiry7y3NbRqksAac27PsMFUzpuqgM7jCDfeRV1R",
+          "nodeKeys": [
+            "5Yc6AWqRJtEajoszknUyqgXd7eCi3bv7frit68GMrJ3b"
+          ]
+        },
+        {
+          "symbol": "GGX",
+          "mintKey": "6r1A4FQE58pxQubFTN3K8H5J8deNCwBwKReJFjWgV4fg",
+          "decimals": 6,
+          "rootKey": "7ZY7WRxNxhDx54fv9mtdBCfJruTLbYh4X7x72h6qLYUj",
+          "nodeKeys": [
+            "FJR42RXug6GZm1sUUCAR5uwxxkePaed6PXVdG5Wu4eh7"
+          ]
+        },
+        {
+          "symbol": "HHX",
+          "mintKey": "HNNjUMfUaLmh7yaTqxtz8rdaL2X789jLEqnVUDtqyEgx",
+          "decimals": 6,
+          "rootKey": "ZPBc9b6SJq8uce4vX2vG7NQhEYeHfMcgHjPA6qXAU98",
+          "nodeKeys": [
+            "EomHAQpGAL8fZF1YXzRpT6UWZB2zAZXZMejz5QbBJQwp"
+          ]
+        },
+        {
+          "symbol": "IIX",
+          "mintKey": "BB4jPsmsZURcNkj7qANJcxADHH18aPEKK4J4kiubEWmx",
+          "decimals": 6,
+          "rootKey": "HHwqgWwNmVBYRQ9qv8BNgnRckdvdYWjD92Fd2jBsjHqy",
+          "nodeKeys": [
+            "FLpwX5dm6D2iB8g2WNCe8sZE42SDqvj5DxYFwTe9vdR"
+          ]
+        },
+        {
+          "symbol": "JJX",
+          "mintKey": "QCKeuUFC3kRhfpLR7HpyCUr5VEjJguuRhngioeaux8L",
+          "decimals": 6,
+          "rootKey": "HM8zW2wmtSxTajtsRT9joQrw4pwHq4u9jdTw3qALYExc",
+          "nodeKeys": [
+            "xzvn1PT3JFsTc3e5LUzqB4e9eoXvwWDV8ggH7LMXYvk"
+          ]
+        },
+        {
+          "symbol": "KKX",
+          "mintKey": "5txPKV2L86yfqtR9WqmXLtaE2ZdoUuzpUNBmvsAExbu8",
+          "decimals": 6,
+          "rootKey": "7vRBFEhVVb3uRMjVJBNPmUUfA9qLEi47P2T8ouLkuJdh",
+          "nodeKeys": [
+            "3etxKoTRaZt31rcmX3CF2amVuzkCMPYP9hQq1hhwJNfk"
+          ]
+        },
+        {
+          "symbol": "LLX",
+          "mintKey": "FqEQxh7VLjPAYd5Y8ea2uwC6ut2tJ4fsim5Mwwb1DPh2",
+          "decimals": 6,
+          "rootKey": "H1tufnNggNBFsK9M3Q2igdj7NZ54aQPPsDKeXatLvQHU",
+          "nodeKeys": [
+            "CeyVEQNzAS93HoVq8jtQHbdVPJExy3pVzJkUgZ7Fiq5W"
+          ]
+        },
+        {
+          "symbol": "MMX",
+          "mintKey": "ENWHT6aaCguz7FDw8v9FBfFAqS4saS4cR2gWje1vHrT9",
+          "decimals": 6,
+          "rootKey": "2Zo3wasqhLtGCCk3pXBe2r4kYANfcX5n1SCFog6Z7LSL",
+          "nodeKeys": [
+            "8W97LLQXckjSWTsgGvjKswVnXMtaPHw8iFGhiwT3QSmx"
+          ]
+        },
+        {
+          "symbol": "NNX",
+          "mintKey": "GunmC8Wr9s4AN6errMFQZicdpNUMVUEvAKyTYektXxGe",
+          "decimals": 6,
+          "rootKey": "8R4DyMpXyArDJKTvQydWZmSkKZAK14XkprrEMvN51fCb",
+          "nodeKeys": [
+            "FFxjyo3usip9hYTYUdvz4cAU9DDthU86nDkBJZ2cYdrF"
+          ]
+        },
+        {
+          "symbol": "OOX",
+          "mintKey": "6PTt8kHBncHTELnhJoKXAoU6e6fyETBNi7ojvggtJDK2",
+          "decimals": 6,
+          "rootKey": "DdDPbehnQS814sHioSrmsbZsp6wUip94Ni1VhoU6zcM1",
+          "nodeKeys": [
+            "8zvTJ3arwvMXFaNw6PBmyyn2g9LoWibYXtrmrw17x7wh"
+          ]
+        }
+      ],
+      "oracles": [
+        {
+          "symbol": "MNGO",
+          "publicKey": "Fr4w6vJFy9U5T6wDL45y4ugumxwCMbf9PtoLnQFn9SDN"
+        },
+        {
+          "symbol": "SOL",
+          "publicKey": "Cuhzrz2paM2jLHFHazpe1xrVsNmxUUf5bWTEFRNjJoUZ"
+        },
+        {
+          "symbol": "SRM",
+          "publicKey": "AjQuJTCB8oH5q6dPqc9Y4oVTPAU84yG2b4AUPsx3g9bb"
+        },
+        {
+          "symbol": "BTC",
+          "publicKey": "HkKCYBwnbsuHtweywnM2EBDuL2Wo5WrntAb5RWsAhjM1"
+        },
+        {
+          "symbol": "ETH",
+          "publicKey": "ETeDPryprVTTMRVR3JQKq5zTcaMEN8YNZHpP3MgRzvwB"
+        },
+        {
+          "symbol": "RAY",
+          "publicKey": "BrAt2n6XhxoaTXWgPHXsHNgUcoMLB4wsbgRqs6AWBBeR"
+        },
+        {
+          "symbol": "UNI",
+          "publicKey": "D75iEyhHqtQcZR8V9PKA2n9EMxDwD2rWDoLTJxHC6TUw"
+        },
+        {
+          "symbol": "AAVE",
+          "publicKey": "C21CGeRG7jLBFfTMawY9pZ2HZhsJ8ypEiUvCGPqWZiM5"
+        },
+        {
+          "symbol": "SUSHI",
+          "publicKey": "4ANmgi7Rk1Sz5ryah1gSao9theyN4Tt6ihuTkq2CrSKf"
+        },
+        {
+          "symbol": "STEP",
+          "publicKey": "G7L57gaDQ429Da64y8pFGAM6KMT2wyYBpFTvG6nSRLCM"
+        },
+        {
+          "symbol": "COPE",
+          "publicKey": "D6b8mY6hCvtW59vngh89nQeCAh83c45yq8khJcLZcCSa"
+        },
+        {
+          "symbol": "DOGE",
+          "publicKey": "DUF5PoHmhPGib1tdeQKSSU4q8NomWtEHiMJxHPh1xnLo"
+        },
+        {
+          "symbol": "FIDA",
+          "publicKey": "6vBVdvV9whh7qRoDUSp9j9mWTmXFgMLwFJ9sBhQZGJ2F"
+        },
+        {
+          "symbol": "FTT",
+          "publicKey": "Hr3kwBTgLucJHQYG4cDn2DCNGdL9JSgTijCCnSn3wBSE"
+        },
+        {
+          "symbol": "MEDIA",
+          "publicKey": "6oaApRAeSsQvHkJ9rqGBGCdTpZbVPXyg2JPMpuWxK23o"
+        },
+        {
+          "symbol": "MER",
+          "publicKey": "7pKpPz2DSyhfLu5WLZVXqX6q1GYFYGYhnvjpXVZCa6R1"
+        },
+        {
+          "symbol": "AAX",
+          "publicKey": "EDiC3cc9iPqFS2xntZynaPB6LMyJuY7Gfv3m35N7bxDi"
+        },
+        {
+          "symbol": "BBX",
+          "publicKey": "6cQi98Z94CyQTrA47JGdJeKTv8fi2ctS3U5sgMBRiqS5"
+        },
+        {
+          "symbol": "CCX",
+          "publicKey": "3bZyTDAoWsyxNXQw5SEvz3yLh9dSMntcs1Q88Q1ViqyW"
+        },
+        {
+          "symbol": "DDX",
+          "publicKey": "8CEJQGwPwqUYLmAf8Yq9oGsqbemNWZAjJnhkf8m23e3Q"
+        },
+        {
+          "symbol": "EEX",
+          "publicKey": "7BMypYShHnW8ja1G99igJueBAsY2xYhCYktu59N3KaUa"
+        },
+        {
+          "symbol": "FFX",
+          "publicKey": "BntC3q4a5DMfcDKmWdmW8HCKDG3ytZahC325tTNdMYHM"
+        },
+        {
+          "symbol": "GGX",
+          "publicKey": "6hHLxpdAUYkFY4nMPc32kP5uzjyz8vP45ZAij4LFjbQs"
+        },
+        {
+          "symbol": "HHX",
+          "publicKey": "23XScyUZjEDGe6wzpYv8t4xfpC47VEUmbVmshhLjdknF"
+        },
+        {
+          "symbol": "IIX",
+          "publicKey": "m3Zo6yQuMNTmz2BsbYwcAjh8WyZB75CFxy15zsPJJBA"
+        },
+        {
+          "symbol": "JJX",
+          "publicKey": "WhKtGawhSXsPtuDdh77EcCGUguKeDRz3GLFYUsdgzSw"
+        },
+        {
+          "symbol": "KKX",
+          "publicKey": "2nxviiquRaSRQj7mRbXkSKuoMPM5f8RzgvQ9jcTKfwP3"
+        },
+        {
+          "symbol": "LLX",
+          "publicKey": "Gdx59eHYEskVP5xQUKSUZmhNPshYjqPvvimGzFYzSRqa"
+        },
+        {
+          "symbol": "MMX",
+          "publicKey": "8qzG5hKY3PniJEmM1WyJH2x7y3ocxDNuVPjQXSFwZr2n"
+        },
+        {
+          "symbol": "NNX",
+          "publicKey": "F8Nsb4uKZDY3mBvyQLVvTiHo129mWhfkJbzGyXSzk6Jd"
+        },
+        {
+          "symbol": "OOX",
+          "publicKey": "86XXedVGCuNYh7iG6nTy1XdYLAoZG6dp5yTYTzMmiUXq"
+        }
+      ],
+      "perpMarkets": [
+        {
+          "name": "MNGO-PERP",
+          "publicKey": "AFdkTeKjKxFm2LSRurSQvgMwuzihAGqM5AeYMkR9Rd3B",
+          "baseSymbol": "MNGO",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 0,
+          "bidsKey": "bH1U33miqeFdkuZDJcLqezc3PnrUHEmykMEM8MYRyPJ",
+          "asksKey": "4dmXfWmu5rmFAy3Wwq2sEcgESu5PE2tFBqAkbHC2Ag1C",
+          "eventsKey": "FdMHh7CyrqKTKSbH7UQjKXN4UNh57ZowsGJG1uvr7gBD"
+        },
+        {
+          "name": "SOL-PERP",
+          "publicKey": "ArWKB62NcEwuA9LkWrz1wyNj2H44HN2sV7RrxvwhWTp4",
+          "baseSymbol": "SOL",
+          "baseDecimals": 9,
+          "quoteDecimals": 6,
+          "marketIndex": 1,
+          "bidsKey": "Cvt9rX7dDRGAe6YLrZqR88Rx2X3Q9YVG3p2pL8eJNQbZ",
+          "asksKey": "GY7DeUz1PJYRv9ZXsDcU24v36fUSBExBvy5NQWAGjEA4",
+          "eventsKey": "4RUjz9f9knpJW44mfqYF91HLsRxnYZZcdFtguyzi1ccv"
+        },
+        {
+          "name": "SRM-PERP",
+          "publicKey": "FSWgF9C1Usf85ht9mBKy86jNUt9pDdPfToiv4iGuHGM",
+          "baseSymbol": "SRM",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 2,
+          "bidsKey": "HevEMm8rwXJjtL6i65g6qUkw44GLnhYbFZHAYMevwFsx",
+          "asksKey": "68rJZGsxaDJ5bgguME2rXYB75kbUt3cYnS3qCCwtRF3r",
+          "eventsKey": "63cqrqLundDCX1gALSGaB8nPuuC1N7Y3BMyo44G1tdr6"
+        },
+        {
+          "name": "BTC-PERP",
+          "publicKey": "6zh7jJYJ8r7CnuYqLSAsCEUCERsd9WW2m6ZW53M4n3AD",
+          "baseSymbol": "BTC",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 3,
+          "bidsKey": "594vBkHZwx6exm8qdBK6vgdfnhxSYwjAGPecHtbg8t7a",
+          "asksKey": "G6UUaHZNtWGZAnj1TpDEq12Teem8VRgGCZMv1wnS9sZy",
+          "eventsKey": "4KwrfugbHCDinGctgf6uAa5MybJ6Ys6CfYXythBQ3FZH"
+        },
+        {
+          "name": "ETH-PERP",
+          "publicKey": "9wU2P28vFmF1pG8GZ2CA7tDDVbqxfWAgxPSRbaFSxndN",
+          "baseSymbol": "ETH",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 4,
+          "bidsKey": "CXqGnc7HRdMGRarX7caTivC6XD7nhK5yCinPQ6eFdrjm",
+          "asksKey": "Fze8tTW9mMKD4xh8A4TaEunH648oq7itmixYzvZuFEfH",
+          "eventsKey": "8GkY8WLWT3f3ghPKvUqytzSzPPqqxQwivGpb8BGBozWM"
+        },
+        {
+          "name": "RAY-PERP",
+          "publicKey": "Hc6weu2YWAidrRAoXgr3un7Zss952ZZX1DhwiDDLaLwE",
+          "baseSymbol": "RAY",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 5,
+          "bidsKey": "AsFzyCUY85sYcCwWB9eUkDDjDyfjTjRMSqvBKxCvj6mh",
+          "asksKey": "2huzrzU1X6aU6ZrLiUkP5d7Yb8j1ks61NhkbcvpvLvot",
+          "eventsKey": "5GBHdYZXxodBtu8Xrag7NoeEFUUwbpL2dpXd9TNeCLhz"
+        },
+        {
+          "name": "UNI-PERP",
+          "publicKey": "ABP8RDSErLhjzNXtDTey31Ga3FNmuc49cU7X5vyvKA32",
+          "baseSymbol": "UNI",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 6,
+          "bidsKey": "Dh64i34Lcig4ctFSJZKcuFhSXR3a6PbYzrkj37yCKHVA",
+          "asksKey": "8ZudKM3hdihACihHuzqE13F4oEanpmkYB8tty47s665g",
+          "eventsKey": "2HdPLnQKnCkgBzGVn8DfwGXHwRCT3o5KsnmBYfHT76Kc"
+        },
+        {
+          "name": "AAVE-PERP",
+          "publicKey": "GgRNhGT4njz2RMm1igt5tFztG9Ky4nSZQetmj8FinRCM",
+          "baseSymbol": "AAVE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 7,
+          "bidsKey": "CCwbYuKDCuk33qnWeqYPFKzkN8XXL1wmzi1QeypZtL4T",
+          "asksKey": "5UEBrS7u1DE1LMZ9MSMiC63a7H4B8w7e88UBbWfxgoUu",
+          "eventsKey": "866CdMym2B4f7F27JtiKmVSNeuv9h9QePxGXcX8uRnVC"
+        },
+        {
+          "name": "SUSHI-PERP",
+          "publicKey": "5JWFajeYX435nKTaZFRUUJwxH9oqvBdT5goxXQjQpcpK",
+          "baseSymbol": "SUSHI",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 8,
+          "bidsKey": "F5rDKEJNM72UzjNfLmuWmYUZBPdHrGZwBRc6jvGAG1KE",
+          "asksKey": "XQ99cNo3Kv1bmjMP6hbWzwXCiruDFHht3k1uVDie2B9",
+          "eventsKey": "39ge47B61rA9qKbGDPYtNshA7LVg8F99KKyw23o3k2aW"
+        },
+        {
+          "name": "STEP-PERP",
+          "publicKey": "Hc1Rb5ubUsf2ZnjjakmTCdUvJMHn2Nuqs8CbEfh22obR",
+          "baseSymbol": "STEP",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 9,
+          "bidsKey": "5a1giZnVemFSjwmobMasQtx1HVXPqQ7NHKqhke68qBic",
+          "asksKey": "DNiuRDk9Ga3n1jHmLjSeQ9nCY2AAHda3hDyKwe9FLMrY",
+          "eventsKey": "9tDknhQSVrxkr2hJVeUdopRy1wJwpiDH8FA5TYqj5ZFs"
+        },
+        {
+          "name": "COPE-PERP",
+          "publicKey": "Dd1gPt3Xt3rVPZLb6uSNk5YdCW77CSug22txtkKX4vuY",
+          "baseSymbol": "COPE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 10,
+          "bidsKey": "EhKQKT2qFqYP94GTRL6N5wQb8WAShueixVWCLJWM9JvY",
+          "asksKey": "DdX6G63UWcMqbSFcPpK2mTVPJ9t7Gup4MvvTyJ1r7Qu8",
+          "eventsKey": "GnU9zN9onSSftc99i8NyAmBQ7YK8UdTEys8DFNxBqFmj"
+        },
+        {
+          "name": "DOGE-PERP",
+          "publicKey": "BH14Ek9RofGGi923YRDRiWjk36eEUrgAq1GVRtJGNNZx",
+          "baseSymbol": "DOGE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 11,
+          "bidsKey": "Tovq9BmQuJtm6p8nSCNNsCpxivRYCcRwBZSd6MJ5PnT",
+          "asksKey": "7DdecnJ2AQrEAKMTdJf8UFCgYUvjUjyeVqarXUJ6LF9d",
+          "eventsKey": "5zP4G8oaHd7Z5Zof7KQEW616cM1LJW4fQNDo3uAr7NfN"
+        },
+        {
+          "name": "FIDA-PERP",
+          "publicKey": "CXfEzSUoEoJMqdygYgM81JeBHRd7JcjW75b2XXkSYR62",
+          "baseSymbol": "FIDA",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 12,
+          "bidsKey": "CYkGW2e3E2DVVqU2XmRb95b22LZpACKw2d6L1xpxDFhK",
+          "asksKey": "A43FUk13bp1LxWBJs5Gja5hSPmiMNYMJD1dKkrz3bKeb",
+          "eventsKey": "CcJJ8BRMkyWYTgGhL7eNg6ceMuQXC3DXEdHMM3qYT1us"
+        },
+        {
+          "name": "FTT-PERP",
+          "publicKey": "Hfev3iGqsVyU3WK1eyvbTnLfsfooodDyfcZWSAzxGcej",
+          "baseSymbol": "FTT",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 13,
+          "bidsKey": "8JbQN8NERYnwNm2SA2rwGqhEDv9ZbUvQ9EqDzTZhmiGN",
+          "asksKey": "DHYJwvd27qV6viAc9187rTzYrTT2eiR4rddw1HDNrfex",
+          "eventsKey": "GpRNhZyaXXzWzGBtWrzMDzMXYmUJtN8Q7TKn8a4f3cmQ"
+        },
+        {
+          "name": "MEDIA-PERP",
+          "publicKey": "BhYNwXQWNnmK5MjTokNKPgqLUfhKeHCoK9NqHVZr3s22",
+          "baseSymbol": "MEDIA",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 14,
+          "bidsKey": "C6QJ4yXKTG2niSVzcYPGfZhEE4pekRQ9nH2dav9epRyD",
+          "asksKey": "2jN43zCof7HeRLYYutyPJokVBh8e7NUir395CgkvQb4L",
+          "eventsKey": "5o8yXWDjPRPRyzavaTFMmT4eR5k7bDJb3nNELkiSoK5s"
+        },
+        {
+          "name": "MER-PERP",
+          "publicKey": "4sLPu66XexpwF448pEGDi62vn5qAWsvpxmd3ePqPd4pF",
+          "baseSymbol": "MER",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 15,
+          "bidsKey": "Cdvoy2GwfdMQVXAQweCsK5yu6rSGfKQrVxaw4ofpDoY8",
+          "asksKey": "gCysVxp3srcnArDAXS6zcVWB8w8pY9um48xRTnxc5bq",
+          "eventsKey": "HnPFbwHBRQyULYW9nFKpb4MQ5wh37zkEzEEiDDL7zKu"
+        },
+        {
+          "name": "AAX-PERP",
+          "publicKey": "58oohXHwthpsQh5FWc1Uu6H6Nqc5p6dXU2JiRHU6oFHC",
+          "baseSymbol": "AAX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 16,
+          "bidsKey": "4kaiYDBFmVetrErfsWUEb8Td3o3RUvSYAQtqayY9B2RN",
+          "asksKey": "2SfQ8Wfvi49Ezo3AoPfK87c7aEUcXBwiVh5HkLPnoRQn",
+          "eventsKey": "HzNjNQWmgCW8FmRr7Qx7AFKRJL6U26Pkf5gbg4st7C7c"
+        },
+        {
+          "name": "BBX-PERP",
+          "publicKey": "GWRcGrKHvjrMBdKRZpDnFWrsUzKzuQTWUsrkoTfdk7sB",
+          "baseSymbol": "BBX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 17,
+          "bidsKey": "HhmnqLmykvodXG1KuJkzHkUyuh93uUzawNB3hTFYsPbZ",
+          "asksKey": "B6UcTwWXjPfTFBqKiyDyxoJLpbGqMpEgiVMh5tysoHfk",
+          "eventsKey": "EBmDcGxnruKarmCn9Pn2sPdtT2k5yygsx2VPZx4u1F2t"
+        },
+        {
+          "name": "CCX-PERP",
+          "publicKey": "AetYznJJQc1b5QtEDaNxsPBf272qefEN9iwhTZG8Nv4f",
+          "baseSymbol": "CCX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 18,
+          "bidsKey": "9Gat5T77UJr6bEH1Lj9br3oNt7HhjB9qR4P2kmkTJ8Kn",
+          "asksKey": "84CtWjZ7sMiRknDoqtQZh1VcUy72G5758C4jty3RXrMw",
+          "eventsKey": "AVk81pWhc85oCtbz65LUfXL6GDNypwEUHo3sRbbNGReQ"
+        },
+        {
+          "name": "DDX-PERP",
+          "publicKey": "5iYXJ9V8CNYkFzbTi7bUaNunQw9sDnaWuhXJoFztvoDp",
+          "baseSymbol": "DDX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 19,
+          "bidsKey": "EEhkNbukeoNAz2GymocJkk1r16Keg925PhvMqS6vwMW6",
+          "asksKey": "FzETCA5V8pXZ2EzKmzFCePaHvDMHaG5udJBAYeBQ48B4",
+          "eventsKey": "3cF21C8DCSLkA6cU5EvMLg8L1BCaP6QumVzP3uG112oK"
+        },
+        {
+          "name": "EEX-PERP",
+          "publicKey": "DKeYAqpNhDe9T9MTF15tpXttwQ2qpMbpHVvfuc7sqqxu",
+          "baseSymbol": "EEX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 20,
+          "bidsKey": "XdPGYBtXxv3g8btY6CoR9LnDvCaem36vyruHUC7ENAs",
+          "asksKey": "E8iorTE2LoHRTqgDHsX6WqU1Pp4jFYYsayi32b6xZtji",
+          "eventsKey": "B3wcbpk5y38ULaEQ2P2ejFL4cGnqFkiTzM2sSsjEAkRK"
+        },
+        {
+          "name": "FFX-PERP",
+          "publicKey": "2q4rYXx64Xi2KQEG8NdpuaSBkTrdode1aBTa6DSe1aKZ",
+          "baseSymbol": "FFX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 21,
+          "bidsKey": "P1QjcmGEhVqU5xqTAnB7KkyUg9ejHqKd5YigACFVdzg",
+          "asksKey": "F3KSLYPYEV1LJpbexfdcVMRpCqxRMBimeCHx9FctN37z",
+          "eventsKey": "4MLPUqzCaPqBdCSLh2tpnZQ2R4F2CGZKT2q63GXcFs7i"
+        },
+        {
+          "name": "GGX-PERP",
+          "publicKey": "2382EvUn2WUMZhPH3qCyCk5gNVzM9GnNv53S8ZJfGDBN",
+          "baseSymbol": "GGX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 22,
+          "bidsKey": "auuJHGCNdR3ebXzGUugUbhBu4NMiT7zqXNq1Moxp1F6",
+          "asksKey": "F6y2vtZPmAYV5o7X8Z9wyQKVoj7nvAX2kDuFgttWLCWn",
+          "eventsKey": "AjbMMsax1pkAMWWkk4E2gK4oVYo4X5mQFhLFLjsjJya9"
+        },
+        {
+          "name": "HHX-PERP",
+          "publicKey": "3beCLdfbLuoRqDLuREegxM3Nwixp15wxyw2eepbmjg56",
+          "baseSymbol": "HHX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 23,
+          "bidsKey": "76foR52MUmDC2MRDoV58CfQjNvdsyCK1BXWU4sDmvocc",
+          "asksKey": "2KsZBfDLQWbkG7gmY1DBRnYF3ecwrXnnESyhXzhXTb8j",
+          "eventsKey": "5c8E117kyfprxKHCwj7hj8BHUJ2DwwG6iYw4uMeUNSV3"
+        },
+        {
+          "name": "IIX-PERP",
+          "publicKey": "3UHTUrsCPiySa3k3vfE9VLGVnpkDLExs4JUKzqqKaAj3",
+          "baseSymbol": "IIX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 24,
+          "bidsKey": "5Qwz9EwRvDUxLPRG8NMHa3n94fCyfLHXouw63Yof1Nin",
+          "asksKey": "B1QH1nboFaFgcs5N1jGMxvKBPetRvkYP7MZuM5tdYFkW",
+          "eventsKey": "Bmvs2ZZrdaoCYsKN1EjJHPSZyZXZt9xLCdSzWUxNVwE9"
+        },
+        {
+          "name": "JJX-PERP",
+          "publicKey": "8gzbL6kmb4rxQ5K2UPtVpHRkkaFqpdecN4fHTbuhtuZx",
+          "baseSymbol": "JJX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 25,
+          "bidsKey": "bJ55MYE74W7uyvKfnbqptcfxCTgSSjtjqFXFzHnxWEE",
+          "asksKey": "DxQvTuC57zofS5Ed4pYyATsVBqkQDTR1YkgDSwPvpNH4",
+          "eventsKey": "EveMfZ298SwtLMLwBcSQShskAic7wmZK6BBB8aayqVhC"
+        },
+        {
+          "name": "KKX-PERP",
+          "publicKey": "DhUXwQArmESF1Nm2FZjhbkxiqfD2NEnC3dn811Vxavux",
+          "baseSymbol": "KKX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 26,
+          "bidsKey": "FJshhscye7R4bhjrczH6xdcsTG2KDpmqoF9hgk82Nb68",
+          "asksKey": "4mrWHRaj54A1qsmiCSr95JG69tEYL9KWBhPcaeSgYrXW",
+          "eventsKey": "BtJaYtNcpHaiJuL8aqKm9xXeYG5etpoCnUqeFh6d56tk"
+        },
+        {
+          "name": "LLX-PERP",
+          "publicKey": "AN1kyZTscmC71hCaMTSyEtrwE98EpNu7Eht3ysrTBdZR",
+          "baseSymbol": "LLX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 27,
+          "bidsKey": "4dv7ezV9tWAeUffg1ouHXaCT54AksDCxuEeJHnpgfqE5",
+          "asksKey": "7zKM7ygS8vU1QZ9q4ZMfZqCxLZwLtLaGMKuz6SDKoxNc",
+          "eventsKey": "HcHoKCQAWWdmhXU7jqjfrwvB1Dimg12LdMSd3cjsMHdU"
+        },
+        {
+          "name": "MMX-PERP",
+          "publicKey": "CpeSWNEoBMGuZCjmbHScGtMdzko1DyErjT8EuaPqyMZE",
+          "baseSymbol": "MMX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 28,
+          "bidsKey": "9StrcgX9JDiwBJWzTGbXrDV8WTdZEnb2AeX8suRVmPGh",
+          "asksKey": "FyjnhqkT5323GzDuFfJMeqUqcLSWbN9cp717oZ1nF1Xc",
+          "eventsKey": "71WqPBwKZkLftYw8WcnydEdThj52LHErZgM5BqsB1fP8"
+        },
+        {
+          "name": "NNX-PERP",
+          "publicKey": "FkwjnE8M9fnvzgJ9jbL5rFZBXvzKKfyf749ywv4TYnvz",
+          "baseSymbol": "NNX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 29,
+          "bidsKey": "84KCF1nLKUco1HDbke7Dt66wHxpwb1xrup5yH2xahmW2",
+          "asksKey": "GdeGJRnaqGRrAB1YAyqjentnBs8DRcocDqTWmpyxCH8U",
+          "eventsKey": "FMHoDTrE9KdNaxgf6tKJTVaaXByeFs5rTC5ppFDHyZjL"
+        },
+        {
+          "name": "OOX-PERP",
+          "publicKey": "5JbcWZs52ttNwD9QF1frhsVSFeMUCN1jfZNRAoaAtuPT",
+          "baseSymbol": "OOX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 30,
+          "bidsKey": "BCVFRCqahV8hmgvqJEE2vbh5wpmxtMCAiz9JmKMZ3Nh8",
+          "asksKey": "3vCpTMN5pk5SRJUGoi9vysY3WdamucwmS5ja9RFu8D9D",
+          "eventsKey": "CAKfigDf8VbTwPJZ4jZuHVpxdoWYFUMZFAS88TbFJUAH"
+        }
+      ],
+      "spotMarkets": [
+        {
+          "name": "MNGO/USDC",
+          "publicKey": "Aph31hoXRjhk1QgCmRvs7WAWGdpRoaESMoqzjoFkL5mE",
+          "baseSymbol": "MNGO",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 0,
+          "bidsKey": "8tgNAdQRdtiJzYbi7z3Q1FoFcxFmYxm4fvnAv4SUfM8e",
+          "asksKey": "FGAJUWsfZUax14AL56mekc2mZoJtFaRxqWqH4PwKb1UL",
+          "eventsKey": "CK9LPN8RGvAa3yZaEdMo2RRZrTF7ZTWb1ayY7u4je8DY"
+        },
+        {
+          "name": "SOL/USDC",
+          "publicKey": "uaajXobeb1hmTB6StRoa8Yqn6czjtWtFeVfZeJY6YFC",
+          "baseSymbol": "SOL",
+          "baseDecimals": 9,
+          "quoteDecimals": 6,
+          "marketIndex": 1,
+          "bidsKey": "Ajo2GfCUErwAWRW9Km1f333hv61qwJoF54a62spjQugX",
+          "asksKey": "7JFH89Hw5NpRSyVRSb931hvAzpYMNNgpfgVCWRWgkzuT",
+          "eventsKey": "4EMXcMjCDSPpUygdQF93xM2kxQJoU3658GPr4pg4X6zc"
+        },
+        {
+          "name": "SRM/USDC",
+          "publicKey": "23tRuJ3zUvXYQEnTDAcWHPDfmYvrWanpM2sJnmhL53X5",
+          "baseSymbol": "SRM",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 2,
+          "bidsKey": "Ghg9soNGpZQeU28uM9o2bsgnAjn9eib9FcGt8UTsFCck",
+          "asksKey": "AqbpvqdR2Pr4C1nFgY26Xo5z6WnGXwPV5ACBPStyHjgQ",
+          "eventsKey": "HopzAhNVt4TbeVq47t2ahHwVUsUTZagXkcZxcWYtzhAW"
+        },
+        {
+          "name": "BTC/USDC",
+          "publicKey": "9LBavtqDpEoX623j8z4sotHMDbv7PcTXUW3LQQtepKvR",
+          "baseSymbol": "BTC",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 3,
+          "bidsKey": "AqJtf3kP1yazQiKggfHXaQ3wUkmGRASwf94mj6zSpUsm",
+          "asksKey": "AtZ6BxVzQR1CTxyzm5aMcBpqvy89R1MM3UidjgPewhLJ",
+          "eventsKey": "GzXjJp2LiarMnPh2xGzqUkZEo7gchgUP5bTshd6TuTVF"
+        },
+        {
+          "name": "ETH/USDC",
+          "publicKey": "2n81EqJgsTE5PoPX5H8adQ4EaVe5kXnFuxwdCAYfaExH",
+          "baseSymbol": "ETH",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 4,
+          "bidsKey": "9qNtJWBev3Y1rgj7wmzBqDnkWaCFKi6ahVy38quBWhPJ",
+          "asksKey": "8tKBs4qgvnn7ws5uCLkBGJp2A916fBwNQF5WTfRKewn",
+          "eventsKey": "C9Lh2EurT1t9QgXKKFFY2jfEVHCyUxxfCvr34L8u1h9J"
+        },
+        {
+          "name": "RAY/USDC",
+          "publicKey": "3e7V65UdApsyCMLuALCoQwD9pKDCkozSUrsJx4XMJAnD",
+          "baseSymbol": "RAY",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 5,
+          "bidsKey": "2WkjNRM3edGFr8LHE2JUdHRyaHAxKBfsaLgP3iQ21jF8",
+          "asksKey": "J4y2EwM4HwtKgxzAEtSkesKMUED7L4mREExSo2fu3qjg",
+          "eventsKey": "GAnmCYogy468QxNV22TMKvNP8qki9J8Dg2ZE4wyouGvW"
+        },
+        {
+          "name": "UNI/USDC",
+          "publicKey": "4e9bt9ySh9i6Fks2R3KsWTBgJcEDNX6zM4RXHCcWDF3N",
+          "baseSymbol": "UNI",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 6,
+          "bidsKey": "9ZdrM7EUwTsYdN3fZAN7Nrvk1DtddCPazg4Ct21DNNre",
+          "asksKey": "H31KS2CoK9FXugSWpxjv2zknU7WeDWD4owgiShPkdX31",
+          "eventsKey": "2L2n928CrYa3uoTqPYDfPSfpBaD55uLa2dquLJh1Ee4J"
+        },
+        {
+          "name": "AAVE/USDC",
+          "publicKey": "BMigUjf6kDNtNDMCsBvPCwegbL45oLT7rtu1y36vAD1L",
+          "baseSymbol": "AAVE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 7,
+          "bidsKey": "4evEKb2hxuThEMcdyERJow8E55mdPu5Gngcc8zt5hoqg",
+          "asksKey": "3eokNWZWvv666Lti8RNTNk6JbpY1g8P3u3pJeeXM5bCh",
+          "eventsKey": "GhvX7McikTv3HkoM15xmji8y96YLDkXzXrcRFdQUBtXJ"
+        },
+        {
+          "name": "SUSHI/USDC",
+          "publicKey": "J9aow2hcq6YMJGw7fAprGitP68crYa36r7yJYe5huFv4",
+          "baseSymbol": "SUSHI",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 8,
+          "bidsKey": "7DPYMzY6Yc3JuL2WSb4ZNYcsFDfZxTkbsoBWovBmReG7",
+          "asksKey": "Guyo1ynPgX654aTZSjx74enygwSQZS8mKwqivcYpB1xi",
+          "eventsKey": "9jebNJyjHD8doZmBQKUiVaWiWmNEWwvwLG8GSsVHnBkp"
+        },
+        {
+          "name": "STEP/USDC",
+          "publicKey": "8P4kZg2c8pAUC6yLv289fR83LJ2wze1ZT247Fw6MhEiC",
+          "baseSymbol": "STEP",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 9,
+          "bidsKey": "ELX77vN1dUZcEwYc9EAmoaNiEFw233pmVbNXZ5suTHBz",
+          "asksKey": "6weBk5uWrkp1DYKoC95T6sgd44UJbhnfTfxnMv2bPn6v",
+          "eventsKey": "AZrszAhYF4XUYeMGuqFX742465fVnuZGdMC1HU5YbjWq"
+        },
+        {
+          "name": "COPE/USDC",
+          "publicKey": "Dzc5eZEGHoYEmrYDGWspWcHQw6FG67N6t8NiLhgsLRbi",
+          "baseSymbol": "COPE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 10,
+          "bidsKey": "CRTA8KQTuhYtJd2mzeH4scscWfYpXNmNnxT5Wbvtj1q4",
+          "asksKey": "8s2sDLvmdoiictqo6wo6jMmtTK9EkdQmsNPwRTjkZ49c",
+          "eventsKey": "8XkziYz4arsFGgTPn3Vby7MKCE83GGRVmbyVu73Hb4FM"
+        },
+        {
+          "name": "DOGE/USDC",
+          "publicKey": "CrMr521AhZE1FQ9dtBQZczd6SKMpthJMTeQ8WGGRooQ3",
+          "baseSymbol": "DOGE",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 11,
+          "bidsKey": "BT4XXsWWQ73ZLSMKYj4P5HkTNFCYVsh2z7sKDSQ3x1pF",
+          "asksKey": "776t4LBGnucpv3RaFc6acZTtEH5c63QZgWKiMq9dyxfo",
+          "eventsKey": "3PeGLRf3224QmeWDTrzMrsARpFgtjKreok2DhAT1Ykzw"
+        },
+        {
+          "name": "FIDA/USDC",
+          "publicKey": "D3P93bKtRzzrJXtBwLcNrswJ3cei1qcrXM9jK6emWZJx",
+          "baseSymbol": "FIDA",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 12,
+          "bidsKey": "9yZ6CtMsLrayhAnBwom9PKnnRkxgeqSCs6TjrFiGuL59",
+          "asksKey": "3KSUUoaysKjusA5uAGvdRxoGGP95Csg1zEE9yoPJZizF",
+          "eventsKey": "ESBR3Dz7gboZCjPF2B3T6HfyFCYhW5XhTNvzUq35HUfk"
+        },
+        {
+          "name": "FTT/USDC",
+          "publicKey": "CiN2BzCaThxLRDALeMq3GJGR24MQhdBWmHHjitW74oST",
+          "baseSymbol": "FTT",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 13,
+          "bidsKey": "JCkuoUPnVAvXKySpcJVm8PDR1KUm45njKPuPg8w1ePo1",
+          "asksKey": "GoUZsqQRMvkkNTJ4EgjzjUamWc9ayd3ztkjv5GeWoG4Q",
+          "eventsKey": "Fh4JNfLpNRDDYnNBPUUHjQLYih6hFcP4wwMQNQz3tBiD"
+        },
+        {
+          "name": "MEDIA/USDC",
+          "publicKey": "t6Q9ADDNsaQspD4u111fkq8qBzgy1MWoyzX8mDKVbws",
+          "baseSymbol": "MEDIA",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 14,
+          "bidsKey": "EQdUCPhYpiLSb6R7oJBzxNExe5LnaYzrVSRuEn6ozcsq",
+          "asksKey": "A3viz8PCHgHp8RbW7HF4bBVvk4fEFkrr1MnBvBbYHndH",
+          "eventsKey": "AoJYhnPQyvSPgcnnXsTQAYRBhjJSg8Dw1YBNvTC954wi"
+        },
+        {
+          "name": "MER/USDC",
+          "publicKey": "D9Rc98dPsmkfi9wv9yQLKXXu86MZut5jWZSYVCRu51ay",
+          "baseSymbol": "MER",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 15,
+          "bidsKey": "GAtAcjHF9sXrkyBLDiLsTMDufbroxwNXkJSPQC1kDDE5",
+          "asksKey": "C2qdvu1CTTVmtbZWMF9KNhHBZ3C92xb3g5BeBJcYabKi",
+          "eventsKey": "C3NVpXopybj1MUvXwmmnELUUKkKi7KtBEjF8tGhTnUiv"
+        },
+        {
+          "name": "AAX/USDC",
+          "publicKey": "9wursY6Ekmephdczc6dmCmhQ9e7Lh7Xbz16fTP4h6KJt",
+          "baseSymbol": "AAX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 16,
+          "bidsKey": "He8Qu1KeN5k8hNGDbmzJyjR4wZDhJ9oHLxPFjYxQhLFj",
+          "asksKey": "BvaWzabyLzdvW6i8SLh61rsV5qLd6FVNjS1KDpn5K2Aq",
+          "eventsKey": "GthdjUBYySAp3NuzLommEd4P22hMJiML8G4iwU9CLR1V"
+        },
+        {
+          "name": "BBX/USDC",
+          "publicKey": "FWEHRHn4TLZTvqZSsN8gmpAHzVuDsNcADVieH7gsqy8D",
+          "baseSymbol": "BBX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 17,
+          "bidsKey": "65qd5uKKjEK36QGbw8rF6mNrPZ2oCTdzLBmMdwJB6e8i",
+          "asksKey": "EdRinewyZGC4G5DDwJcT2eCkHNh8rCicDJ21ihHMzJPy",
+          "eventsKey": "51Z95D3acYdRHKhhd9jRxTkbnbrj1UkGiyD9vJSJm5up"
+        },
+        {
+          "name": "CCX/USDC",
+          "publicKey": "HXxay4VBTXkgkpyresugRdfnnG7j6SzvbmiZvFHjcDhe",
+          "baseSymbol": "CCX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 18,
+          "bidsKey": "AhbRJmZxyJhG7qz3XXKAGaTAupmV4qWhbeJYjmpF5nmj",
+          "asksKey": "BqWqZ9akWbEYL99WtvpZVjvNyB5rTMvhrsYopji6Gkcn",
+          "eventsKey": "H2LHJDXmgb26J25F6g5HZsdf3c3yMKyFGQwMzHtX9ETz"
+        },
+        {
+          "name": "DDX/USDC",
+          "publicKey": "HfPxSpeBJ7tyFVDh2YNMcadX1LUGqcynXiz2cDMqzHCr",
+          "baseSymbol": "DDX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 19,
+          "bidsKey": "G37jyonjVnapiT5cpup8Lh5MTpBFCtQFRA9Vj2NtNcth",
+          "asksKey": "3kHKvAKdnbDBQKQNKj6b49iRo9s3v5q7Uix75Rru5BHH",
+          "eventsKey": "9UV79NA36EM11yByjVVcVe5Bitqb2U6FZxZ9Nmg6Mvz8"
+        },
+        {
+          "name": "EEX/USDC",
+          "publicKey": "6JXADoVE1nWjd2UkpJqU4PLZAj1urqvuZqnrw9dLKonq",
+          "baseSymbol": "EEX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 20,
+          "bidsKey": "BKadMsHAXf2b8doc6rh8LfQTjjMwcbYiZJkG5aSzJo5a",
+          "asksKey": "2cy39XEdNKm6TtRmfntcLtAHYToCwuo8eQ4po5BQSSwn",
+          "eventsKey": "GZo3s6TcR11o6Rs12XE4nxh9Snb7MaNgBQuipEbVyqr7"
+        },
+        {
+          "name": "FFX/USDC",
+          "publicKey": "AU4zXmTdwUgzLW5yWB8qtuPaVqnvLoUXKot6KVdbidPa",
+          "baseSymbol": "FFX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 21,
+          "bidsKey": "HLHftcscNLVt2TcWJHsGjPt7gkbQDhQKQULSAy8qeZii",
+          "asksKey": "HB6QZUkw2wNNUEkvJajz3zmyxJA9ZrQpy3gsf3A8VmUx",
+          "eventsKey": "D8cWA82i9EoXMmGPWJEtBYvJwYvTzxoAPKSJ2g3KC94u"
+        },
+        {
+          "name": "GGX/USDC",
+          "publicKey": "ETh2Qqrtp53F3BhbXteemWLsjkRiabEnwjoh8TyPLF72",
+          "baseSymbol": "GGX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 22,
+          "bidsKey": "7vSrqV6RWWwDx1sjPAYNSRZYE3fGHBcBMt4eBvLfno6B",
+          "asksKey": "BpEhxroAgEAVauP1VyFv3XzkSHRxRwDFxSLnvrJrqD8b",
+          "eventsKey": "H1Xmkzaj8SuyGQpPmvnAEjjGDb6uZUjzznFkyHPeUpNT"
+        },
+        {
+          "name": "HHX/USDC",
+          "publicKey": "BxQAZsUievWE6JyNVJcFsTLqLqahQF7LhM75qXf26Nr7",
+          "baseSymbol": "HHX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 23,
+          "bidsKey": "CZ9EcaihrMBa7GUcGSicMYVt63ka3DP3kmWjEuffzFPc",
+          "asksKey": "689WKqtHXCKbsMeLEdAAv4PpJavmXuwemxxFYV2U8LhF",
+          "eventsKey": "9ZqHtfMr3Na2xqVzZPm5HHWftVJiHjA3WaLCEeTGPRni"
+        },
+        {
+          "name": "IIX/USDC",
+          "publicKey": "EDJqNqTcojU65uLCMZHb1HjxPuWAAhMahsfGju2SBqsn",
+          "baseSymbol": "IIX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 24,
+          "bidsKey": "GQkcA5rKXrQcNSH71EYYQewmfUxMeACCvHmMXYFsSzeu",
+          "asksKey": "2B3mJ7t5NeWVWbXyx8sqjayPNGLwBbPnViUvWk1rg2cn",
+          "eventsKey": "FaZRbv19iVYh1WQzemz88jWzwphkBb6Gpnda7eMQ459S"
+        },
+        {
+          "name": "JJX/USDC",
+          "publicKey": "ugv31rcerPotv8iMXrWDyEjf5TokZWegzDoSK1xL8s9",
+          "baseSymbol": "JJX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 25,
+          "bidsKey": "F7UCznWNBELD1hsE6jKsmT8aFrL3t8RXGigoGxqzDixU",
+          "asksKey": "FBuwhgdraXfVrtMPHXL1qnQwTxdQavs3mBexK7n98ZvE",
+          "eventsKey": "JB85ijU2jqymXWFXWcbSZNd4ajZXjJ9b6WxegTs2TbiN"
+        },
+        {
+          "name": "KKX/USDC",
+          "publicKey": "C8GiLqrKW3KNfB6y72jSF7WPYCHWkpgbkX48vsPpzxsU",
+          "baseSymbol": "KKX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 26,
+          "bidsKey": "GNntBS8sHrwkq7QdRc9xRzAds94yoDtuESZB4t4gCeNz",
+          "asksKey": "FC6dHFia436ZhcvDAB2WLaxStSjUwGiZCA4JKVytHUuE",
+          "eventsKey": "5erMNVkQWzTcnToWKrnThTHer84hAyVyCiKaV8BZ1iuw"
+        },
+        {
+          "name": "LLX/USDC",
+          "publicKey": "4KoZwJizkVaZhAY2Ud9tt3yqUxZrJnEgPTe8dDtM399G",
+          "baseSymbol": "LLX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 27,
+          "bidsKey": "J6e24gcMhHzakjY4kGceVgFmPh7CHzKipry6A9QrEbSm",
+          "asksKey": "HCffgLhuHUKXdSzUovuJaDcEJTkK6DZCvNuovn46weDL",
+          "eventsKey": "81KsVf6Tz5irWM97ZxereLV1ZDGK6BHs9r9VrVHBvm3d"
+        },
+        {
+          "name": "MMX/USDC",
+          "publicKey": "937mGkTYcqGcHoD2UReiC2FJD4DU42rkJciQZ7tQz5H4",
+          "baseSymbol": "MMX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 28,
+          "bidsKey": "GcTgp4U2kPSevL7yc65DBd3DWtEdVu1bATvJyB9wzgNw",
+          "asksKey": "7XBvMRfGRueMRdegPvmzcVEcS9CLDb8rVYMD76qwNj7S",
+          "eventsKey": "HLaPxBL8yqeTjMQCqju4fDmzHb1tkxkKbFVNNajs6rNd"
+        },
+        {
+          "name": "NNX/USDC",
+          "publicKey": "4my2SByxetXARLxpkDG5iV88AVqqsJzUy88CzyjvKvp8",
+          "baseSymbol": "NNX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 29,
+          "bidsKey": "DEM5LgHP5UGSCRgwfEg7Q43JasqDYHbYTSYUMuz2ZURQ",
+          "asksKey": "EXvnPNpjWmnLKNHvSir9fkY7ickzbnoak5xAHeCJKrgb",
+          "eventsKey": "TphuGAytFADgqUpDVp9jNTh9jX85iPm1N9b23UrvWuE"
+        },
+        {
+          "name": "OOX/USDC",
+          "publicKey": "GhPwZExZ7uT72n5SdWNMxwddxQ8eG7tuEvX2iSUK4MEY",
+          "baseSymbol": "OOX",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 30,
+          "bidsKey": "5NLB65Mtmq1urV8ejnzzEKK98dBn3dWVQSNHJFhLXiig",
+          "asksKey": "7WfvdXwBs7Fk3meQhWauxTek8mfc2g6TLvmfJm3MQH6H",
+          "eventsKey": "BFsA1VUzhtfuVzJ9NGC5Y7zSRxDfNKuSKUwJ342yEjXr"
+        }
+      ]
+    },
+    {
+      "cluster": "devnet",
       "name": "mango_test_v3.8",
       "publicKey": "DutK2FvJgjufCwsZQPQn8NgfaaQcLVhhxPiEEzaTJL1H",
       "quoteSymbol": "USDC",
@@ -588,1905 +3235,6 @@
           "bidsKey": "GAtAcjHF9sXrkyBLDiLsTMDufbroxwNXkJSPQC1kDDE5",
           "asksKey": "C2qdvu1CTTVmtbZWMF9KNhHBZ3C92xb3g5BeBJcYabKi",
           "eventsKey": "C3NVpXopybj1MUvXwmmnELUUKkKi7KtBEjF8tGhTnUiv"
-        }
-      ]
-    },
-    {
-      "cluster": "devnet",
-      "name": "mango_test_v3.7",
-      "publicKey": "4WEPeu1jp6M4yGGyfZE3ve4bX5wcYLLr8qLpc1guxsZE",
-      "quoteSymbol": "USDC",
-      "mangoProgramId": "32WeJ46tuY6QEkgydqzHYU5j85UT9m1cPJwFxPjuSVCt",
-      "serumProgramId": "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY",
-      "tokens": [
-        {
-          "symbol": "USDC",
-          "mintKey": "8FRFC6MoGGkMFQwngccyu69VnYbzykGeez7ignHVAFSN",
-          "decimals": 6,
-          "rootKey": "H2TsU7HdJnPXF1mfTQMAHSSBvz2UeJmsSCxUBvwBxYwJ",
-          "nodeKeys": [
-            "GwwFnht3JYoQhHfMwGQBG3bFENC2gQjnCr7tz74SGKsS"
-          ]
-        },
-        {
-          "symbol": "MNGO",
-          "mintKey": "Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC",
-          "decimals": 6,
-          "rootKey": "HGsg3qNo5pnjKbDdSDFqdiX7kPE3pmiSwdzKCUt3xHZV",
-          "nodeKeys": [
-            "5gNfpgVRMD5U9TherTfn1hD2fjUfUp7hWb4zn5TFtcZi"
-          ]
-        },
-        {
-          "symbol": "SOL",
-          "mintKey": "So11111111111111111111111111111111111111112",
-          "decimals": 9,
-          "rootKey": "Ahhm54nvx4swe4V3Jwq2c6XTJMv9W6meN6tfNc2AGvXY",
-          "nodeKeys": [
-            "2vSPZS5feniCktaVrCcsawrvszJVKY9enTviVUzDc6wD"
-          ]
-        },
-        {
-          "symbol": "SRM",
-          "mintKey": "AvtB6w9xboLwA145E221vhof5TddhqsChYcx7Fy3xVMH",
-          "decimals": 6,
-          "rootKey": "ATqku46bmkzTjFLEYtPnMhzezDsT9AFCUjr97c5ScXox",
-          "nodeKeys": [
-            "DxzkCNdkaZvc47jY3ZfX3ZDNBDj18XxnZMuBK1SaZ3iU"
-          ]
-        },
-        {
-          "symbol": "BTC",
-          "mintKey": "9EkC2nQZ4UTwUCP4dzAi3VxfeMYD87ZpqfZfhygGeR1P",
-          "decimals": 6,
-          "rootKey": "Hff9RJ3uRbNXkvj9zPXPji87HFYwH2Ang8NbkztB1e1z",
-          "nodeKeys": [
-            "G3vMDQ4qwrxP6aypobx9a9t4KZRPb2kq4otjRDM1w8uG"
-          ]
-        },
-        {
-          "symbol": "ETH",
-          "mintKey": "Cu84KB3tDL6SbFgToHMLYVDJJXdJjenNzSKikeAvzmkA",
-          "decimals": 6,
-          "rootKey": "5JjehYByrsLJd8tw458i5jNfF4LnfFKdXo6LpANjFokc",
-          "nodeKeys": [
-            "8vhZWcxaCBD7iVP95mfbUMerfdCKQzbWbMjPt2uPEet7"
-          ]
-        },
-        {
-          "symbol": "RAY",
-          "mintKey": "3YFQ7UYJ7sNGpXTKBxM3bYLVxKpzVudXAe4gLExh5b3n",
-          "decimals": 6,
-          "rootKey": "FpYT4VSDK9dRAzH4pqrxPCP7gKhGXQQi22CXeMKDeJjS",
-          "nodeKeys": [
-            "4eCpjtYoGCt6gDv4Nfv7YWTHerqGaFMt2K3uBfw2SZMd"
-          ]
-        },
-        {
-          "symbol": "UNI",
-          "mintKey": "7vd84gXdjxRWjtwwkcxpzv1R8W9oCsADemNvRj3Cv5u2",
-          "decimals": 6,
-          "rootKey": "DCnLXa3wHrQZUmJcWkz5GYSpCbXpq7UFRnJxeJ9aMxCK",
-          "nodeKeys": [
-            "G7RU3i8LmbbFaba63TvnkBhGyJH8QQte4yQ4EpXYNL2y"
-          ]
-        },
-        {
-          "symbol": "AAVE",
-          "mintKey": "3h7gNYC8aDJ5tGgDt6YKmvLJYT5LNcFb9yiVU1qirDWg",
-          "decimals": 6,
-          "rootKey": "3yLh9otsKvs6JdFU3vax1iRy463omR5CddqTEGLNfyfy",
-          "nodeKeys": [
-            "Cm2DuKwHatUQ4DXtjMYaX4zCkKZfyiQy9oAKC14UGKeS"
-          ]
-        },
-        {
-          "symbol": "SUSHI",
-          "mintKey": "Edi5KNs2LnonULNmoTQqSymJ7VuMC9amTjLN5RJ1YMcq",
-          "decimals": 6,
-          "rootKey": "2pQ5mocS1JMuV2PiUeSA8kY3KmFs5ZthFhEGPEXt4KWq",
-          "nodeKeys": [
-            "1MM3T5dwvYyuK7EaReKQwEd6zaBANFf4S2zc7hJmVN4"
-          ]
-        },
-        {
-          "symbol": "STEP",
-          "mintKey": "62haNTBB4C3gESJyzAvQVAadNxN9zzVt39x5ep5wmaak",
-          "decimals": 6,
-          "rootKey": "GnqinGo3wu2eCcJvVZh7STGAYKqkPjZsDP5rKByZ73Vx",
-          "nodeKeys": [
-            "2rHrJLoyXrVVvMtcFLKuyB2mMnMy5rNmHnampSVd12sp"
-          ]
-        },
-        {
-          "symbol": "COPE",
-          "mintKey": "BxZBNjYtMgzSF57aiCwrBdLuEL5tSNcGrxQXj7Z7mZQW",
-          "decimals": 6,
-          "rootKey": "BMBaNRdP7ze65D7jahzuY6mXfVQF7MWe2njjSrYV2zyt",
-          "nodeKeys": [
-            "FxhRLS9SAFuiiK6gYibdn9ZwP3GFDUrLHQH7psVmoZ22"
-          ]
-        },
-        {
-          "symbol": "DOGE",
-          "mintKey": "6yr1xJP6Nfu8Bxp4L8WJQrtLqBGZrQm5n41PFm4ZmEyk",
-          "decimals": 6,
-          "rootKey": "3n7PBBuD7JhwZjDvQ1K5oT6i65exoP71pG4nnvPoHnYA",
-          "nodeKeys": [
-            "ASwrjbX5zXxd2aTppiwK9yvkFhKV6Cy8G5zpbPEQxry7"
-          ]
-        },
-        {
-          "symbol": "FIDA",
-          "mintKey": "DRuM89e9xndaRJvjc41zcVWzEAjaytDWUHASydfEEHic",
-          "decimals": 6,
-          "rootKey": "4cmRvuQMmWRyL2MNktT4cpPnfYeH9paf8pYtopDkRPGm",
-          "nodeKeys": [
-            "FMCbbQMMNNihha9ne8435Gz8MTYA7Uhk1Yz55GryFD7"
-          ]
-        },
-        {
-          "symbol": "FTT",
-          "mintKey": "Fxh4bpZnRCnpg2vcH11ttmSTDSEeC5qWbPRZNZWnRnqY",
-          "decimals": 6,
-          "rootKey": "66RZDmbsU2rCuoNbfZKpWd6Ynttcx2wqvnRa8AXWrSRV",
-          "nodeKeys": [
-            "CA5xrikvCwuajemkGXYtBc1V74T6B999HctqsRiJ4XM2"
-          ]
-        },
-        {
-          "symbol": "MEDIA",
-          "mintKey": "CU4LrEQChVcis3fsMRciKTgNZSV5A3bh3ftF3Gqnbe78",
-          "decimals": 6,
-          "rootKey": "5TQzGpiGJxDW2MDoW1mMMJ9uDTnKn7zoUnbJFE8NLuSY",
-          "nodeKeys": [
-            "EZbaUbRJ2yfo88LuETx4jMeNuKYNjMaUK9JT9MBANkYB"
-          ]
-        },
-        {
-          "symbol": "MER",
-          "mintKey": "3QAVaXixBUtHwjponbZZgNVSRqB8YiTqY59pGSWDVS7X",
-          "decimals": 6,
-          "rootKey": "DrtTx3tut7DYvec8hG6ry2uFLFghynosiwYb9o27dhJ1",
-          "nodeKeys": [
-            "ELyvx7C7bMta2Uf8jf3coJHQL5kaFukyv3CVngzYQ9Rq"
-          ]
-        }
-      ],
-      "oracles": [
-        {
-          "symbol": "MNGO",
-          "publicKey": "6tdDJgJa1bEGN3JRuz6sbzAahCPBSQFG71yUhUq7tBJq"
-        },
-        {
-          "symbol": "SOL",
-          "publicKey": "HbXoE6maUSK56AqQ4dmvYFivUy45YRE7MkRigtB61yYQ"
-        },
-        {
-          "symbol": "SRM",
-          "publicKey": "H19eFrXT7WkE313DCYHYj2y8eqCLedAYwwRKY3e4AC7R"
-        },
-        {
-          "symbol": "BTC",
-          "publicKey": "BJYqG8EKAgJYepuQpt2RZQ8Fi3Abk2ZLWqXfrZpc2mS5"
-        },
-        {
-          "symbol": "ETH",
-          "publicKey": "28juBtwGMnuXpm9bxCQE62apbQGuNucBHE9mM1JPB3vo"
-        },
-        {
-          "symbol": "RAY",
-          "publicKey": "GdgbnmiuSyYJB1ByRbMfmhpgNq1K17QVFvk3iAJwkUEC"
-        },
-        {
-          "symbol": "UNI",
-          "publicKey": "B8VuF4jzLZLJEeYq262KYchs86dbGPfQapyZXxwnNa8d"
-        },
-        {
-          "symbol": "AAVE",
-          "publicKey": "LasZWQqcqhnndUEz4UUcLfFeyLf6iRNi4aEkHxeeWL6"
-        },
-        {
-          "symbol": "SUSHI",
-          "publicKey": "4kwzAxyGS44FvEW98J7s83ehLhxK8j8AK1aowgrZrhWG"
-        },
-        {
-          "symbol": "STEP",
-          "publicKey": "2GavHASurD4qgdbvNJo9p4WN67c2tbuRnnj9mwNntBvf"
-        },
-        {
-          "symbol": "COPE",
-          "publicKey": "HnTY5G72yDyboFL1vKDuvyZU1uuxGV7zot8LErjoFkYv"
-        },
-        {
-          "symbol": "DOGE",
-          "publicKey": "FQKBVRBohtKLoB8bAM8A7d85DdiUiH4Wg3my1jgUM6UP"
-        },
-        {
-          "symbol": "FIDA",
-          "publicKey": "Gb1F1d8jBH34yNJZCPfiRqLrDuYn4dakVBxkSnUuRd5M"
-        },
-        {
-          "symbol": "FTT",
-          "publicKey": "BCtG3FiLRcmeyW4Vc5ioUebyanoBzpuNC6wPZQ7kzAVf"
-        },
-        {
-          "symbol": "MEDIA",
-          "publicKey": "AjMzw5cvkDCLbGeycm4qfUz385dq3ET3JroJzFc34afW"
-        },
-        {
-          "symbol": "MER",
-          "publicKey": "G2Jttbz5YqNPWrCU3aqsiaWt9uX269rRtE54QwdpMBL8"
-        }
-      ],
-      "perpMarkets": [
-        {
-          "name": "MNGO-PERP",
-          "publicKey": "AJtYMniRGshfoiSdTWSU41sJuuAeJGgjst39MWnuPwLD",
-          "baseSymbol": "MNGO",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 0,
-          "bidsKey": "AauxhZZeB92CfN6NLGFtee9sxMoD5BxqtD5gjTGFB39m",
-          "asksKey": "F1ciqUUZ8uPbuQ9XjGyZTF93WUiU9u5hj3SWtTyxzznX",
-          "eventsKey": "Fwy3UzmuKTeUvAUdoP2WcxCQVgXNztHatbTeKHbmQNYU"
-        },
-        {
-          "name": "SOL-PERP",
-          "publicKey": "8hUn4ScDf9Qy1EwZ7W9Kk5CFH3PktMaHqfWtUcJPKuhn",
-          "baseSymbol": "SOL",
-          "baseDecimals": 9,
-          "quoteDecimals": 6,
-          "marketIndex": 1,
-          "bidsKey": "6xgZP7kYB8UJaruUWf3PpQ1JiAXJTS2zUmRcYJQRrLw7",
-          "asksKey": "4S6PywyekdWW9wj1MZDTy2TCGFMm6zkgcqEBdUQP8LEX",
-          "eventsKey": "HNicvJWk3YuvtjHqtBCKxejjbJQgQY2gYZoNetjsNe47"
-        },
-        {
-          "name": "SRM-PERP",
-          "publicKey": "CUaNA3QYLE9yb6HBNCrrLa9613Tptg6diAHNVBuk8VKK",
-          "baseSymbol": "SRM",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 2,
-          "bidsKey": "4go52vhbXkLZufoUvyNCGQ4teP48dmTQzzUqkPVLsiCY",
-          "asksKey": "38Rugsv4gYFCmkCm8pXRSMnu1hcHvRJzHD5dBsc3F685",
-          "eventsKey": "2bKjvrvLLHBBJMGx5DsbBQbsHgEhtGRPvAxZbZpPYH8P"
-        },
-        {
-          "name": "BTC-PERP",
-          "publicKey": "4Wn6Dmfc7W1qJ5v5SwfccEQtAydJ15X2U6x3UVYfzueq",
-          "baseSymbol": "BTC",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 3,
-          "bidsKey": "6mrqEVc1J6dez83paRbByqaMmss3J5E5q5sxY4fLunPA",
-          "asksKey": "2CYZAJ2JDtQQ2FPchaLTnAgAQnqTNmX8ScuQocJH6AuM",
-          "eventsKey": "Dqs9xEBfz8wy88hUgj6MgpJWkwYctuTXJbKMAfGhaDH8"
-        },
-        {
-          "name": "ETH-PERP",
-          "publicKey": "BSDzcu8ngoqgEkDKKNbZKdJYqeGd7yJ5e4H7uQjuDAP7",
-          "baseSymbol": "ETH",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 4,
-          "bidsKey": "Gyn3fqhDJGLNbp6BgGDPn4fDM73mPKBs5fGrHFKGbuWq",
-          "asksKey": "FY5sQGhWQxiLEAADqWP9x8nV3AjACQbpqeYAHrUPLtE6",
-          "eventsKey": "5RLbEVam89eNQ2Ab9EBXp7mtBxMqohS2jZU5X7sRgvfS"
-        },
-        {
-          "name": "RAY-PERP",
-          "publicKey": "FyAW4Kk3Xj24zucZEeZCkK4Ash7pXXcCcWduBveXU6cC",
-          "baseSymbol": "RAY",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 5,
-          "bidsKey": "9vQZRnJUxu8Z8Aycapv6iFHMWS5Kao61NVTwW9fRF2j7",
-          "asksKey": "94rH4c2N56TY4wN9LPAifsr9B5p4zWvctgokpgKmcjP3",
-          "eventsKey": "52gD8J4ehfRKWt3vREdQ2wFHsua8Ggdu4ZqBdgR2d7JD"
-        },
-        {
-          "name": "UNI-PERP",
-          "publicKey": "1S763Ha6gcpbbvSEhtfDcc4uSWm16etAHUngSnLhi9Q",
-          "baseSymbol": "UNI",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 6,
-          "bidsKey": "4FaQx96GXACsq7JUMJJ7bKKxPjSrcEp8YnkDeq5BQgjZ",
-          "asksKey": "DjWGx7zLYXCXjDbrkbmwfBtLpossYDjtQfv18HjZErvH",
-          "eventsKey": "4dARyoFqA8uWhKTxho7r84RMbniSphisoeTHzJUDnqzf"
-        },
-        {
-          "name": "AAVE-PERP",
-          "publicKey": "2LEEpUuPBeSeyxWsiWJGQzsdVp5TnewdN2UwzgYDkg2Z",
-          "baseSymbol": "AAVE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 7,
-          "bidsKey": "DWeaf6Zbbw3M4hSsL3TY8nCo2jb8whPDkgbBd9cUf421",
-          "asksKey": "AxQs8HaK3M2QLbz7x6tpmdtSJmRvyEWoPx1377u5rMLD",
-          "eventsKey": "5hNMizCrrdF5gZnpVHBDtRYZHrv13bYiLVyNVbNe44hU"
-        },
-        {
-          "name": "SUSHI-PERP",
-          "publicKey": "B9MPLcDaXAzNmNJ4fZbDxTexTGXFb7bjveFhtSjZANqJ",
-          "baseSymbol": "SUSHI",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 8,
-          "bidsKey": "EEbZC7RdBo3bsGAFXCwNAjJMPQ4D4BzsRR369tfmCKqP",
-          "asksKey": "pron9dXk1tkgiuPVKCL8eYY2AMiWh4RdrTpsidFkc9p",
-          "eventsKey": "6o5oxdsu5wzdVVUUomUAf2RzTAtfAXxr7mgsQYzywQeb"
-        },
-        {
-          "name": "STEP-PERP",
-          "publicKey": "J8tCBDnuaPCkpGEspLHbsiC4SisEJGmgWgwdwFC5Y4Dc",
-          "baseSymbol": "STEP",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 9,
-          "bidsKey": "J18RdgSNtMczHjw1tusuApiq6dvgY82yKZQ28TPPTMRQ",
-          "asksKey": "7V63JmtVezrpm5QeU7PHS2kfRJ2HxUCzRGeEMfbNtfUq",
-          "eventsKey": "82uTtHrmHyUFwYrWcazZgjxLmyRRnmvVPys6K5M6iUyS"
-        },
-        {
-          "name": "COPE-PERP",
-          "publicKey": "G49Q6URsX7btbrFhbqGLTCHnt6UtBzJ9KbzwKdty6qPv",
-          "baseSymbol": "COPE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 10,
-          "bidsKey": "CL6nhaXk9a5dhGXgT5tHUzjgCEHVneLEPU4wHztBFJoN",
-          "asksKey": "CBCtUcDFh5Po1NLx8RW4z15XPNmAUThttoMoqF79fRq9",
-          "eventsKey": "F3aAzcQwrYqKgghGBwzEHu9HfVXsDkbGN5CSikNkFZiK"
-        },
-        {
-          "name": "DOGE-PERP",
-          "publicKey": "DoJG2LimF4FPiGAVjHWhCd95pBpnT7quNd6j8b4BUo1",
-          "baseSymbol": "DOGE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 11,
-          "bidsKey": "DqCKWPFKccsRuJbwVduGJ7BnrkP2AQkw8LTnndbFcwpG",
-          "asksKey": "6jMJVsnTGBT29iprCuXk2dTNnH8M8qHARd4A6EsPHPVg",
-          "eventsKey": "CJjvtzpCDCVhd1QDkoUtq7azmKxd4Y65MezKFwg4gnKG"
-        },
-        {
-          "name": "FIDA-PERP",
-          "publicKey": "FZM2xxczjGkkvBAzmriu9gks7E5XtD9vM3gx39Yh4DHk",
-          "baseSymbol": "FIDA",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 12,
-          "bidsKey": "5MwBNZggmreV77biQTpB32hvAiAHWnSz62auQMC4NW5T",
-          "asksKey": "XLjofQg6FYT4j2Bwzpmdnc86toAAuCTSMPGQnWPp26s",
-          "eventsKey": "BU6BaXn9XoMWduGymC53CUNr9KtjpuedYFN48LYPM9cQ"
-        },
-        {
-          "name": "FTT-PERP",
-          "publicKey": "EgybhVWYsR9dFdmdoWHqsEWKGkYm8khLFkjaEAHU7keU",
-          "baseSymbol": "FTT",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 13,
-          "bidsKey": "7xU6vnWjuZ6F9ALjBLMVG52cHJCaYxegEwRV66puKvZg",
-          "asksKey": "6AuYU8U5BcF1iC6VY4Nk6doRBQWkPCvsvRVhvvyDpGVF",
-          "eventsKey": "81dUvAzZgeeaAFfrD3xF3P68mewApk4W1b8Bmhebo9QD"
-        },
-        {
-          "name": "MEDIA-PERP",
-          "publicKey": "8ykjfmfXRLxZjjYRQ7eFT8N3AL5d5QBtdr3w1eVA9UfL",
-          "baseSymbol": "MEDIA",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 14,
-          "bidsKey": "CSYeGfQrMxtC2qyMkamH4KjsBGzyc3hTcyRNRvRk8Wei",
-          "asksKey": "7JkhSHo4CmLc2dZLuRLEvf28f9T7FTxJwhG8hG5P288j",
-          "eventsKey": "CzqHU2ASNmY6PWdmbgexzdHrGGuaMKcvFjMH3YL2QNuh"
-        },
-        {
-          "name": "MER-PERP",
-          "publicKey": "1gKmsXiL9CiVxdL9RLYddZN42pfrjhz2fJiMUccz573",
-          "baseSymbol": "MER",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 15,
-          "bidsKey": "eh4soDLu1bHFpYUQmnajJxeA8WnetnRSocUkeVjG8on",
-          "asksKey": "2uQ8jRP59XuaXhYGWHtpw4Tbuocjoch4ZG2mFgyh79Gx",
-          "eventsKey": "FZ5f71PTYigamUjhHNRhitm7GeQR7TknyzFmizgXgovY"
-        }
-      ],
-      "spotMarkets": [
-        {
-          "name": "MNGO/USDC",
-          "publicKey": "Aph31hoXRjhk1QgCmRvs7WAWGdpRoaESMoqzjoFkL5mE",
-          "baseSymbol": "MNGO",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 0,
-          "bidsKey": "8tgNAdQRdtiJzYbi7z3Q1FoFcxFmYxm4fvnAv4SUfM8e",
-          "asksKey": "FGAJUWsfZUax14AL56mekc2mZoJtFaRxqWqH4PwKb1UL",
-          "eventsKey": "CK9LPN8RGvAa3yZaEdMo2RRZrTF7ZTWb1ayY7u4je8DY"
-        },
-        {
-          "name": "SOL/USDC",
-          "publicKey": "uaajXobeb1hmTB6StRoa8Yqn6czjtWtFeVfZeJY6YFC",
-          "baseSymbol": "SOL",
-          "baseDecimals": 9,
-          "quoteDecimals": 6,
-          "marketIndex": 1,
-          "bidsKey": "Ajo2GfCUErwAWRW9Km1f333hv61qwJoF54a62spjQugX",
-          "asksKey": "7JFH89Hw5NpRSyVRSb931hvAzpYMNNgpfgVCWRWgkzuT",
-          "eventsKey": "4EMXcMjCDSPpUygdQF93xM2kxQJoU3658GPr4pg4X6zc"
-        },
-        {
-          "name": "SRM/USDC",
-          "publicKey": "23tRuJ3zUvXYQEnTDAcWHPDfmYvrWanpM2sJnmhL53X5",
-          "baseSymbol": "SRM",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 2,
-          "bidsKey": "Ghg9soNGpZQeU28uM9o2bsgnAjn9eib9FcGt8UTsFCck",
-          "asksKey": "AqbpvqdR2Pr4C1nFgY26Xo5z6WnGXwPV5ACBPStyHjgQ",
-          "eventsKey": "HopzAhNVt4TbeVq47t2ahHwVUsUTZagXkcZxcWYtzhAW"
-        },
-        {
-          "name": "BTC/USDC",
-          "publicKey": "6TwwNrueBAHe6VHwDYMhfTtkb7oP2vUnkun5yK8VzBbE",
-          "baseSymbol": "BTC",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 3,
-          "bidsKey": "Dnufk2pBjXGp1mqU5xLrw7YEH1Uj2xg2Rhjmxb6t1NrH",
-          "asksKey": "EDMas3xuXxh4WYJhUA7pZPJTuXvTDc4q2DP7prvpj3Hv",
-          "eventsKey": "FpeniiTZE2Am4U9Pp5prU8XNp1qx547eKm41yoT8uaQJ"
-        },
-        {
-          "name": "ETH/USDC",
-          "publicKey": "2n81EqJgsTE5PoPX5H8adQ4EaVe5kXnFuxwdCAYfaExH",
-          "baseSymbol": "ETH",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 4,
-          "bidsKey": "9qNtJWBev3Y1rgj7wmzBqDnkWaCFKi6ahVy38quBWhPJ",
-          "asksKey": "8tKBs4qgvnn7ws5uCLkBGJp2A916fBwNQF5WTfRKewn",
-          "eventsKey": "C9Lh2EurT1t9QgXKKFFY2jfEVHCyUxxfCvr34L8u1h9J"
-        },
-        {
-          "name": "RAY/USDC",
-          "publicKey": "3e7V65UdApsyCMLuALCoQwD9pKDCkozSUrsJx4XMJAnD",
-          "baseSymbol": "RAY",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 5,
-          "bidsKey": "2WkjNRM3edGFr8LHE2JUdHRyaHAxKBfsaLgP3iQ21jF8",
-          "asksKey": "J4y2EwM4HwtKgxzAEtSkesKMUED7L4mREExSo2fu3qjg",
-          "eventsKey": "GAnmCYogy468QxNV22TMKvNP8qki9J8Dg2ZE4wyouGvW"
-        },
-        {
-          "name": "UNI/USDC",
-          "publicKey": "4e9bt9ySh9i6Fks2R3KsWTBgJcEDNX6zM4RXHCcWDF3N",
-          "baseSymbol": "UNI",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 6,
-          "bidsKey": "9ZdrM7EUwTsYdN3fZAN7Nrvk1DtddCPazg4Ct21DNNre",
-          "asksKey": "H31KS2CoK9FXugSWpxjv2zknU7WeDWD4owgiShPkdX31",
-          "eventsKey": "2L2n928CrYa3uoTqPYDfPSfpBaD55uLa2dquLJh1Ee4J"
-        },
-        {
-          "name": "AAVE/USDC",
-          "publicKey": "BMigUjf6kDNtNDMCsBvPCwegbL45oLT7rtu1y36vAD1L",
-          "baseSymbol": "AAVE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 7,
-          "bidsKey": "4evEKb2hxuThEMcdyERJow8E55mdPu5Gngcc8zt5hoqg",
-          "asksKey": "3eokNWZWvv666Lti8RNTNk6JbpY1g8P3u3pJeeXM5bCh",
-          "eventsKey": "GhvX7McikTv3HkoM15xmji8y96YLDkXzXrcRFdQUBtXJ"
-        },
-        {
-          "name": "SUSHI/USDC",
-          "publicKey": "J9aow2hcq6YMJGw7fAprGitP68crYa36r7yJYe5huFv4",
-          "baseSymbol": "SUSHI",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 8,
-          "bidsKey": "7DPYMzY6Yc3JuL2WSb4ZNYcsFDfZxTkbsoBWovBmReG7",
-          "asksKey": "Guyo1ynPgX654aTZSjx74enygwSQZS8mKwqivcYpB1xi",
-          "eventsKey": "9jebNJyjHD8doZmBQKUiVaWiWmNEWwvwLG8GSsVHnBkp"
-        },
-        {
-          "name": "STEP/USDC",
-          "publicKey": "8P4kZg2c8pAUC6yLv289fR83LJ2wze1ZT247Fw6MhEiC",
-          "baseSymbol": "STEP",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 9,
-          "bidsKey": "ELX77vN1dUZcEwYc9EAmoaNiEFw233pmVbNXZ5suTHBz",
-          "asksKey": "6weBk5uWrkp1DYKoC95T6sgd44UJbhnfTfxnMv2bPn6v",
-          "eventsKey": "AZrszAhYF4XUYeMGuqFX742465fVnuZGdMC1HU5YbjWq"
-        },
-        {
-          "name": "COPE/USDC",
-          "publicKey": "Dzc5eZEGHoYEmrYDGWspWcHQw6FG67N6t8NiLhgsLRbi",
-          "baseSymbol": "COPE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 10,
-          "bidsKey": "CRTA8KQTuhYtJd2mzeH4scscWfYpXNmNnxT5Wbvtj1q4",
-          "asksKey": "8s2sDLvmdoiictqo6wo6jMmtTK9EkdQmsNPwRTjkZ49c",
-          "eventsKey": "8XkziYz4arsFGgTPn3Vby7MKCE83GGRVmbyVu73Hb4FM"
-        },
-        {
-          "name": "DOGE/USDC",
-          "publicKey": "CrMr521AhZE1FQ9dtBQZczd6SKMpthJMTeQ8WGGRooQ3",
-          "baseSymbol": "DOGE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 11,
-          "bidsKey": "BT4XXsWWQ73ZLSMKYj4P5HkTNFCYVsh2z7sKDSQ3x1pF",
-          "asksKey": "776t4LBGnucpv3RaFc6acZTtEH5c63QZgWKiMq9dyxfo",
-          "eventsKey": "3PeGLRf3224QmeWDTrzMrsARpFgtjKreok2DhAT1Ykzw"
-        },
-        {
-          "name": "FIDA/USDC",
-          "publicKey": "D3P93bKtRzzrJXtBwLcNrswJ3cei1qcrXM9jK6emWZJx",
-          "baseSymbol": "FIDA",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 12,
-          "bidsKey": "9yZ6CtMsLrayhAnBwom9PKnnRkxgeqSCs6TjrFiGuL59",
-          "asksKey": "3KSUUoaysKjusA5uAGvdRxoGGP95Csg1zEE9yoPJZizF",
-          "eventsKey": "ESBR3Dz7gboZCjPF2B3T6HfyFCYhW5XhTNvzUq35HUfk"
-        },
-        {
-          "name": "FTT/USDC",
-          "publicKey": "CiN2BzCaThxLRDALeMq3GJGR24MQhdBWmHHjitW74oST",
-          "baseSymbol": "FTT",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 13,
-          "bidsKey": "JCkuoUPnVAvXKySpcJVm8PDR1KUm45njKPuPg8w1ePo1",
-          "asksKey": "GoUZsqQRMvkkNTJ4EgjzjUamWc9ayd3ztkjv5GeWoG4Q",
-          "eventsKey": "Fh4JNfLpNRDDYnNBPUUHjQLYih6hFcP4wwMQNQz3tBiD"
-        },
-        {
-          "name": "MEDIA/USDC",
-          "publicKey": "t6Q9ADDNsaQspD4u111fkq8qBzgy1MWoyzX8mDKVbws",
-          "baseSymbol": "MEDIA",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 14,
-          "bidsKey": "EQdUCPhYpiLSb6R7oJBzxNExe5LnaYzrVSRuEn6ozcsq",
-          "asksKey": "A3viz8PCHgHp8RbW7HF4bBVvk4fEFkrr1MnBvBbYHndH",
-          "eventsKey": "AoJYhnPQyvSPgcnnXsTQAYRBhjJSg8Dw1YBNvTC954wi"
-        },
-        {
-          "name": "MER/USDC",
-          "publicKey": "D9Rc98dPsmkfi9wv9yQLKXXu86MZut5jWZSYVCRu51ay",
-          "baseSymbol": "MER",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 15,
-          "bidsKey": "GAtAcjHF9sXrkyBLDiLsTMDufbroxwNXkJSPQC1kDDE5",
-          "asksKey": "C2qdvu1CTTVmtbZWMF9KNhHBZ3C92xb3g5BeBJcYabKi",
-          "eventsKey": "C3NVpXopybj1MUvXwmmnELUUKkKi7KtBEjF8tGhTnUiv"
-        }
-      ]
-    },
-    {
-      "cluster": "devnet",
-      "name": "mango_test_v3.6",
-      "publicKey": "GsB8a98e1UEQ7KwJYMDwdbDyH86YoHjk81xP7LrsNhpc",
-      "quoteSymbol": "USDC",
-      "mangoProgramId": "32WeJ46tuY6QEkgydqzHYU5j85UT9m1cPJwFxPjuSVCt",
-      "serumProgramId": "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY",
-      "tokens": [
-        {
-          "symbol": "MNGO",
-          "mintKey": "Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC",
-          "decimals": 6,
-          "rootKey": "BdyA55FZYkhvW3viabqCaZtPgwhY3Bn3K3HSsnNwc89i",
-          "nodeKeys": [
-            "5n4JJNK2BQv8E8aG887SKdWTqCe2Ca6dM92KHHQwvf7n"
-          ]
-        },
-        {
-          "symbol": "SOL",
-          "mintKey": "So11111111111111111111111111111111111111112",
-          "decimals": 9,
-          "rootKey": "4fNunaKahQfqxa965Yb7u1JMx5ews6sPVFhd63ZwAVDg",
-          "nodeKeys": [
-            "3rNH79xAzyS1bc3Dduj7xokaFZ86ZHwj2Zqv4JXPpw9d"
-          ]
-        },
-        {
-          "symbol": "SRM",
-          "mintKey": "AvtB6w9xboLwA145E221vhof5TddhqsChYcx7Fy3xVMH",
-          "decimals": 6,
-          "rootKey": "BnXtdp1vBZCsBPEwrS7fuxXq84dNsc4cWdx39bqSBymM",
-          "nodeKeys": [
-            "9Uw1uW9EHa4Swmx5STgsXwnVFPRcGgZ4JMofodTcgicZ"
-          ]
-        },
-        {
-          "symbol": "BTC",
-          "mintKey": "9EkC2nQZ4UTwUCP4dzAi3VxfeMYD87ZpqfZfhygGeR1P",
-          "decimals": 6,
-          "rootKey": "Hj8ej6hk3ieMEskVqnARATGbFTbQhSWkj7ntEf57wkb1",
-          "nodeKeys": [
-            "FLwWs1iXhkVGndBY8udGWSxqHpvWCFyoXBcCtkXodHkU"
-          ]
-        },
-        {
-          "symbol": "ETH",
-          "mintKey": "Cu84KB3tDL6SbFgToHMLYVDJJXdJjenNzSKikeAvzmkA",
-          "decimals": 6,
-          "rootKey": "kcHbDSVZqWedtavnHPDcPtKe3PkLSvEJi7smfdMFQpx",
-          "nodeKeys": [
-            "2y4cJy3KJ2DrFprtG3cTmUDP41V92UCUnXJpTvfA8Q2r"
-          ]
-        },
-        {
-          "symbol": "RAY",
-          "mintKey": "3YFQ7UYJ7sNGpXTKBxM3bYLVxKpzVudXAe4gLExh5b3n",
-          "decimals": 6,
-          "rootKey": "AfbTdeWSJNwcs6CbbhN6TXerz2eh248M2wk1bfsxr4fr",
-          "nodeKeys": [
-            "37xBAXG7WG6NivNWHsvz9b2hLYTDF2fC54H3PtCi5wWQ"
-          ]
-        },
-        {
-          "symbol": "UNI",
-          "mintKey": "7vd84gXdjxRWjtwwkcxpzv1R8W9oCsADemNvRj3Cv5u2",
-          "decimals": 6,
-          "rootKey": "2uDfB1vpuetVNNqhURAmZ9CzMcZM6d6UJqSZmzcdZ3DW",
-          "nodeKeys": [
-            "Ca9RQTwrx3cv2RVjKzNY2eC1q5SVDj7BZsEnGyBcdyqA"
-          ]
-        },
-        {
-          "symbol": "AAVE",
-          "mintKey": "3h7gNYC8aDJ5tGgDt6YKmvLJYT5LNcFb9yiVU1qirDWg",
-          "decimals": 6,
-          "rootKey": "BPyerHqw7iH9qwSTnLu5SpDJVMM5QwHrpk1FGN9qLugv",
-          "nodeKeys": [
-            "B1DZ99wJRu6A9kj2F2nYNLQLU7auUpAM9wwZjYtQNMZt"
-          ]
-        },
-        {
-          "symbol": "SUSHI",
-          "mintKey": "Edi5KNs2LnonULNmoTQqSymJ7VuMC9amTjLN5RJ1YMcq",
-          "decimals": 6,
-          "rootKey": "6tZ21fn6E552CkQCuRo36aozaJaBGsk7UdMmo1Ai5uyc",
-          "nodeKeys": [
-            "9BEZfCeNj6FdSLQJXWZdEUStfdWeSNmGiNhdy7gFneGC"
-          ]
-        },
-        {
-          "symbol": "STEP",
-          "mintKey": "62haNTBB4C3gESJyzAvQVAadNxN9zzVt39x5ep5wmaak",
-          "decimals": 6,
-          "rootKey": "4HzQcpBzgj65fFMNHMqVCVzxA5gn9d24XQkKTwFQR2ZF",
-          "nodeKeys": [
-            "C2t7isn5jGZAAAPX6SwzUJiFjgioLtdLccrvCyVtrrqh"
-          ]
-        },
-        {
-          "symbol": "COPE",
-          "mintKey": "BxZBNjYtMgzSF57aiCwrBdLuEL5tSNcGrxQXj7Z7mZQW",
-          "decimals": 6,
-          "rootKey": "GpKcLyuCwkSHyZQRxUQSEG75VfNhJPH3XtCEqPdNGXet",
-          "nodeKeys": [
-            "FkDbbVtPTwxER3SJzcWv7RYA3gbt9jGuU2ov9t32yamG"
-          ]
-        },
-        {
-          "symbol": "DOGE",
-          "mintKey": "6yr1xJP6Nfu8Bxp4L8WJQrtLqBGZrQm5n41PFm4ZmEyk",
-          "decimals": 6,
-          "rootKey": "FJiqx7cwG5mpKAx3ykC6sRumyuSA9ierappoJWEu3axg",
-          "nodeKeys": [
-            "7tGzpHc97TVSdrX15F3nBQFxrFv6RR9EmNUtfxQrb8hz"
-          ]
-        },
-        {
-          "symbol": "FIDA",
-          "mintKey": "DRuM89e9xndaRJvjc41zcVWzEAjaytDWUHASydfEEHic",
-          "decimals": 6,
-          "rootKey": "CfSjNDhE5nnasfcBywVcpjNSQaMtdJtAgUQs6VSbqkLt",
-          "nodeKeys": [
-            "J7uKPvcGmBb4w6WkSbktZgJJpLWrkmhhkm9EJvm9Lc3L"
-          ]
-        },
-        {
-          "symbol": "FTT",
-          "mintKey": "Fxh4bpZnRCnpg2vcH11ttmSTDSEeC5qWbPRZNZWnRnqY",
-          "decimals": 6,
-          "rootKey": "2KUZ227fLYVzGJt3FRixrR2AYceu1EZDng9A24d6kncf",
-          "nodeKeys": [
-            "6H9skTdReEHEzsb5p7NXjy6SS2gByGTLsAJZQocNMwhD"
-          ]
-        },
-        {
-          "symbol": "MEDIA",
-          "mintKey": "CU4LrEQChVcis3fsMRciKTgNZSV5A3bh3ftF3Gqnbe78",
-          "decimals": 6,
-          "rootKey": "BvMjxfGNiXSQ6nWmBknziA73CfRHxeiQByHfcgXWqNEu",
-          "nodeKeys": [
-            "A3h3FtgPLW6NKdQCS1UUS26QTp9Msasj1oorA1vVBNUk"
-          ]
-        },
-        {
-          "symbol": "MER",
-          "mintKey": "3QAVaXixBUtHwjponbZZgNVSRqB8YiTqY59pGSWDVS7X",
-          "decimals": 6,
-          "rootKey": "4UZqHrZddFxXiPxKotW5isL9UUsshMbeSeEfT5qhTk2H",
-          "nodeKeys": [
-            "2zkETuDa7mEmqD5g7bH81mBKWKPVPkck6ZE2S6AUFzsL"
-          ]
-        },
-        {
-          "symbol": "AAX",
-          "mintKey": "HDY1CtDh4S5txV84yWfqrM6MuJ1rjCGa6RgV2aNkoq7T",
-          "decimals": 6,
-          "rootKey": "41mpCSWjwHdpd3W7HJuHEQUY9Ahus77aeyFZ57ZPY5pn",
-          "nodeKeys": [
-            "9m3UUzRjukMfzqEmKVfyqoPJvKH5FsEjhypXHjG69Y5g"
-          ]
-        },
-        {
-          "symbol": "BBX",
-          "mintKey": "8S894Tytj7RY6gKcvHWvaR8cmrrbwwRQ3w5ufWKvGgBE",
-          "decimals": 6,
-          "rootKey": "AGBGZUw3R6TUtdJTtUnZAYEhnR5pqJZH7g86SmPc92mT",
-          "nodeKeys": [
-            "J3R8SLY5LjUiLqMEWkrp4hbFmnRjfdSmy6SeCsFSp4Ad"
-          ]
-        },
-        {
-          "symbol": "CCX",
-          "mintKey": "C2a5sZB6ybhNVWmf3uwLhyszfD2NcndLcAaYTriASvWH",
-          "decimals": 6,
-          "rootKey": "4w7LeaiFAew9u8s24mofeExemJULanUeskNgKsKgmn4G",
-          "nodeKeys": [
-            "BaPvsbAYBBFFnkhkLmUMKk6qS2FRWcTDgjj9UJwVgDnB"
-          ]
-        },
-        {
-          "symbol": "DDX",
-          "mintKey": "HqWwWZ6dxWWcMXdeYXAxnWYKB37fqEj2wxLwmuQsHwmP",
-          "decimals": 6,
-          "rootKey": "76EKuWZtJ6Ybbduj7ByEsdR2qGteDpAERNh2D6pej8K8",
-          "nodeKeys": [
-            "7XJ5aoDzmbkQx4v6iLCYDdnkT32rZm6o3CrcMsdCdMrV"
-          ]
-        },
-        {
-          "symbol": "EEX",
-          "mintKey": "jYmra5J9RCyEnb1D1ScSSLoXLW8j8GZxSFv8kToUUHB",
-          "decimals": 6,
-          "rootKey": "8CU9rvCXSnLNr8aspequcMqQQSP8b1qEL7macFWgPFb6",
-          "nodeKeys": [
-            "4UsJEVh4fxGhDJ2Jv2DCBVxGdPWgJhdiKrXwwucwrYnF"
-          ]
-        },
-        {
-          "symbol": "FFX",
-          "mintKey": "EsUAWWkLG2sE1RkBo74Ta4a7sjaj5JvM1y4Aj1tYXpx6",
-          "decimals": 6,
-          "rootKey": "dJVkYVFPqPk4o7suThSmZ9sbYtXKJUWdhXZgrrvj42M",
-          "nodeKeys": [
-            "txMMH9r8My35c62x4LoqyM6d8KDsFovF8hWadgpATYL"
-          ]
-        },
-        {
-          "symbol": "GGX",
-          "mintKey": "6r1A4FQE58pxQubFTN3K8H5J8deNCwBwKReJFjWgV4fg",
-          "decimals": 6,
-          "rootKey": "FTRzYxHYnnRkSgD1WzqenhHZbDhb97MQRGE3LqybcQa5",
-          "nodeKeys": [
-            "DiCRVpscSfwi8AxgLMY9ck4sb8Ztrc9Bbh1abCHKRgHL"
-          ]
-        },
-        {
-          "symbol": "HHX",
-          "mintKey": "HNNjUMfUaLmh7yaTqxtz8rdaL2X789jLEqnVUDtqyEgx",
-          "decimals": 6,
-          "rootKey": "A1g2LmJNjKYQB8nYUk8zD39Z5p5NhCbVXiXaPQhxvXxY",
-          "nodeKeys": [
-            "EmLotCE1gQ3qtB4v6uBbdsV9Dp4EoqwBGPBjh1x7TYWm"
-          ]
-        },
-        {
-          "symbol": "IIX",
-          "mintKey": "BB4jPsmsZURcNkj7qANJcxADHH18aPEKK4J4kiubEWmx",
-          "decimals": 6,
-          "rootKey": "7wm1ytboWYtv8df7PJXKjwopgy7E2NkZSpY7RYVGjGkf",
-          "nodeKeys": [
-            "6auheK6Na5MSjbYQPyhtgcrZbWozmNkv4KL5ghSvhNnK"
-          ]
-        },
-        {
-          "symbol": "JJX",
-          "mintKey": "QCKeuUFC3kRhfpLR7HpyCUr5VEjJguuRhngioeaux8L",
-          "decimals": 6,
-          "rootKey": "5yxWPFPza85BspCvzCxVrRX24r1mksYpFDRcMtPi9fTR",
-          "nodeKeys": [
-            "7Vv6E8z5uXsoHMsHM559GqVhX4GHGk9BfdDWSWBJyGrZ"
-          ]
-        },
-        {
-          "symbol": "KKX",
-          "mintKey": "5txPKV2L86yfqtR9WqmXLtaE2ZdoUuzpUNBmvsAExbu8",
-          "decimals": 6,
-          "rootKey": "2d3U5k1zGoJQ7pVS1kXmduUxtUYWeN3L4zXVcBxGMPRB",
-          "nodeKeys": [
-            "C4YcXw9jWeAXym46a1FuggD183PNFvCNFN8vXbrjj6vp"
-          ]
-        },
-        {
-          "symbol": "LLX",
-          "mintKey": "FqEQxh7VLjPAYd5Y8ea2uwC6ut2tJ4fsim5Mwwb1DPh2",
-          "decimals": 6,
-          "rootKey": "3UA7vLDZqxBrVn7Hf1jWaPeQygMmCs391GweZ7Yyhp2L",
-          "nodeKeys": [
-            "F2tzDphMVvkEWro6mYeiTtvVPhtnr6kC3AigR7YvfVBX"
-          ]
-        },
-        {
-          "symbol": "MMX",
-          "mintKey": "ENWHT6aaCguz7FDw8v9FBfFAqS4saS4cR2gWje1vHrT9",
-          "decimals": 6,
-          "rootKey": "6RxTzmZg6K774dwcTKr6vg4QHztBsCjFLaoHDccQUDod",
-          "nodeKeys": [
-            "Dnqdw5ZLMjdctydzkgPVP3e8pAvvYht5JrERRXUredV3"
-          ]
-        },
-        {
-          "symbol": "NNX",
-          "mintKey": "GunmC8Wr9s4AN6errMFQZicdpNUMVUEvAKyTYektXxGe",
-          "decimals": 6,
-          "rootKey": "AeVPxnm9Nu1rkYtdcp22UKbFTNHVvQuhw3hadGvo6kMT",
-          "nodeKeys": [
-            "2E3WUWJVoctAy5udUFwkLaMTxspME6184djkVXA5EPNc"
-          ]
-        },
-        {
-          "symbol": "OOX",
-          "mintKey": "6PTt8kHBncHTELnhJoKXAoU6e6fyETBNi7ojvggtJDK2",
-          "decimals": 6,
-          "rootKey": "GhU9gvSmbDKguZuh6wm8pjbuPNjWPAvk2eFHzqQzrp7N",
-          "nodeKeys": [
-            "6Assf5DK3GVzrT57UqftWPEUf4jYumrW4g2RSYicGxUH"
-          ]
-        },
-        {
-          "symbol": "USDC",
-          "mintKey": "8FRFC6MoGGkMFQwngccyu69VnYbzykGeez7ignHVAFSN",
-          "decimals": 6,
-          "rootKey": "6baotVqAJRvB5Me17J1qfv699n4dPv9499um23FLKVnS",
-          "nodeKeys": [
-            "2mB2sBBwZP9BiCi4NpCVk49cmBYamWu7DNfNQsSsWTzb"
-          ]
-        }
-      ],
-      "oracles": [
-        {
-          "symbol": "MNGO",
-          "publicKey": "3PEkS52c13xcPuh5gizfex7RxK1vVWet1YD1pJB6zLhh"
-        },
-        {
-          "symbol": "SOL",
-          "publicKey": "6fv2ffkoeBQ7fjVGX2YPhWeSQxvgebDpZASC5ZWkGMQH"
-        },
-        {
-          "symbol": "SRM",
-          "publicKey": "6J6yok3T6zaXcchPWjsSxr7Nd6FwJPftMJqUm5CNdTAc"
-        },
-        {
-          "symbol": "BTC",
-          "publicKey": "4sLK3NcMJyTUMPXLwoT72qFjcEsGB7LfTD1qcHfZXynv"
-        },
-        {
-          "symbol": "ETH",
-          "publicKey": "7Ct8p51rz1xL6BudK88Q8tzPCR8W9FPxppYRfipuTeTW"
-        },
-        {
-          "symbol": "RAY",
-          "publicKey": "6iXLFeFHmMjbDtty95bGi4Vak94N3mbRZMiuvLhnBPUR"
-        },
-        {
-          "symbol": "UNI",
-          "publicKey": "32vYMUREmQJipMT7wVrTMQGZx7FxR4f5yNQ1KjE3csaE"
-        },
-        {
-          "symbol": "AAVE",
-          "publicKey": "DZtdYDA94vsKECap4Jc7sKKtKvFm5kUk5HbPZ7kRrAVe"
-        },
-        {
-          "symbol": "SUSHI",
-          "publicKey": "7ZQcCPSYNssqisd76qpPRvvusZJZdSwJx3YP7joZze9V"
-        },
-        {
-          "symbol": "STEP",
-          "publicKey": "H5JoqargPxyTt4EFvZX1dCiiaNadGEHYwTV2GwWJa63d"
-        },
-        {
-          "symbol": "COPE",
-          "publicKey": "HrMaMibFRApYwAjnyfWEcvWnqu1KG4m74gWLus9U8aEn"
-        },
-        {
-          "symbol": "DOGE",
-          "publicKey": "mogRjeshkJWesgwBu835qZ2j21kEsqN3JZ5ZuSy17BC"
-        },
-        {
-          "symbol": "FIDA",
-          "publicKey": "FLJWn8jjW1SJNCSGEoy8DjdpVL52z9ZdyAtzHcPwD1xA"
-        },
-        {
-          "symbol": "FTT",
-          "publicKey": "9GYyWqBBc9zgf2HUj569YiHGNd89LPg13jSjUfT8KFyu"
-        },
-        {
-          "symbol": "MEDIA",
-          "publicKey": "3HozNFFopvKKqo5Vte3FgRz7ipxFicU7mEPHaiZW3346"
-        },
-        {
-          "symbol": "MER",
-          "publicKey": "6tC4pAq7msTVK9VZzTDLdP9LYUEbq9E3HYYnahut4vG9"
-        },
-        {
-          "symbol": "AAX",
-          "publicKey": "E6KnEB2urTx7oX68fK9YsNMAYzmHegD9xz4ccctP96iN"
-        },
-        {
-          "symbol": "BBX",
-          "publicKey": "65BznntVGHkgCLfTfFaVynLkRK62tK92bWrRZ5YwGmx2"
-        },
-        {
-          "symbol": "CCX",
-          "publicKey": "H6CPEgiL4NUYamGghikFUbuqh5h2dqAZUxHfM1ED7gxV"
-        },
-        {
-          "symbol": "DDX",
-          "publicKey": "4JdrirhD4zyQZRTxwPDVYAULz94YEYpB8j9wM1Y5yQGU"
-        },
-        {
-          "symbol": "EEX",
-          "publicKey": "7DV46G8Y1jimFD7LTbcD4BpHgrfT4DNKMeuj4JuzV6ec"
-        },
-        {
-          "symbol": "FFX",
-          "publicKey": "6wym9WKXrNXZhCWitepMxSxrkpXpz8XfBidEBQDH4Esw"
-        },
-        {
-          "symbol": "GGX",
-          "publicKey": "GJuU3WexSCGgcnRMA6rFK2ohbATq4ADpaiudhSgPBTfi"
-        },
-        {
-          "symbol": "HHX",
-          "publicKey": "DnExCcRE6KZxRnMWXXd4BFRdaPhdUxiDquRSEdHGByrD"
-        },
-        {
-          "symbol": "IIX",
-          "publicKey": "Ay8kDgFPHDiqNbFxSoTh2qFC3fTN9uwHYd5hAR4NQcL8"
-        },
-        {
-          "symbol": "JJX",
-          "publicKey": "H9CYfQDhRmki5MJ2F79Pbk83A6TJXz1tQiG9i9L1YMJU"
-        },
-        {
-          "symbol": "KKX",
-          "publicKey": "FWHGL4gRSF1AcLsCNf5pLPBUZm9CBc4bC9EKBKCQjhaA"
-        },
-        {
-          "symbol": "LLX",
-          "publicKey": "CFghb5qL7zGpPd4twfGVMFbcTaFyj5R96sf7XrZxd34o"
-        },
-        {
-          "symbol": "MMX",
-          "publicKey": "6PFQ1vyWW5vz5NNmBVkRaqNNGuG26brQBvpyjTNGrCUi"
-        },
-        {
-          "symbol": "NNX",
-          "publicKey": "3F6MsqvsggPMZkGZ95AoGxu86Sbn8suDmeYBSiP5Kdoz"
-        },
-        {
-          "symbol": "OOX",
-          "publicKey": "3izXrwzfM5hwJVnK55ktXmHqnS3C4ikzTnWbco4UHfYm"
-        }
-      ],
-      "perpMarkets": [
-        {
-          "name": "MNGO-PERP",
-          "publicKey": "Au9TqPhfAHkE9wbzqTjzAJ8Ln5GzNAQhyZQzNZwETaDa",
-          "baseSymbol": "MNGO",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 0,
-          "bidsKey": "2x4CginxoNAiZkAZaadTwizkvGtwYbaakLGFCFtSkePe",
-          "asksKey": "FKmzgnM9KkqRTpzXyyTPT5oymn2cNSMQ835Fxpd89XLV",
-          "eventsKey": "6FuUy2eJBo2sHHP9votvAwWrmGvyKfDwLKtoh9EhsvTY"
-        },
-        {
-          "name": "SOL-PERP",
-          "publicKey": "7QSWgj43UpFcjCEbRBKVEyueU4esZbRjTXFwd7A4y8j7",
-          "baseSymbol": "SOL",
-          "baseDecimals": 9,
-          "quoteDecimals": 6,
-          "marketIndex": 1,
-          "bidsKey": "ELoeNDvpgibuBTupjD7bNJQSpFzzAuFoJK4PNvu5uxMF",
-          "asksKey": "3FgpA4zRC1J6bGTSdcmEa9dFCMT32phSjkVKBb7vgkiC",
-          "eventsKey": "7JLoSZ161ipmNXUhWuS1gZp3NVKSSxr3GAwuPKo1vJio"
-        },
-        {
-          "name": "SRM-PERP",
-          "publicKey": "CgfkN6tvPjdxc9nFNihSL9wR6NfwbjKU5rJCVRqpM9xW",
-          "baseSymbol": "SRM",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 2,
-          "bidsKey": "2YSMJ3XRoRBvfGQcj6mxDmD4wavigdomEagztSHjXJkh",
-          "asksKey": "B9iPKDmZMSRfKinkzvbpPLLhgaVDp1NwYKtAdZFE2Cxy",
-          "eventsKey": "7bgvD3WnWhpkiRzz6mrZbVYAekKmJFVmHLeMkVdcwK2J"
-        },
-        {
-          "name": "BTC-PERP",
-          "publicKey": "3Y79P2tTSjwjkxzoRpEwmScHXkNkzczRqm4346vfBT8S",
-          "baseSymbol": "BTC",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 3,
-          "bidsKey": "2u3aStwQ6zt7yVF3VgJyS8FRiQAjhTJkocUw1sBG38db",
-          "asksKey": "EPKr2nxpvqfUAudbCyEoc1KjKrDiCuF16ASxQVwxbHkd",
-          "eventsKey": "7g8FuajbBmUAXQE6g9vhWvP4JXuxfxFXz9inkvrNcVWj"
-        },
-        {
-          "name": "ETH-PERP",
-          "publicKey": "HH32J3ETi1U29xjU17z38p2v1dqXtT2RVB9V9a7iZTvS",
-          "baseSymbol": "ETH",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 4,
-          "bidsKey": "5DeZ41p95J6pZcKD3LkeHMntmLdQcdbHruy8wduHbnCd",
-          "asksKey": "CQ72fHjLxLZ7KajPdTh9KPjZwNYfyidXyNHfTvaxKk5N",
-          "eventsKey": "FZfGzpNX3GoBJ4JWb66QNrvgT5UBnTa6yT8YCSKbh6pu"
-        },
-        {
-          "name": "RAY-PERP",
-          "publicKey": "8wW9RbTp6JL6T7xTGaSj7CPNFQWJcxuUK1ikLY49jdD4",
-          "baseSymbol": "RAY",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 5,
-          "bidsKey": "GTNA7uzsU3BBsAXbFGjhnbEeVhYstPfNwvfBV1ZpzTge",
-          "asksKey": "5gVCkg9PqPFEQY2CPWAUzrAdjnpkkMTq5MUBqzggJ61M",
-          "eventsKey": "6ZiUroGqWmWCedi8hdPsuutwajVmp7DjZ4AjamK4b7dB"
-        },
-        {
-          "name": "UNI-PERP",
-          "publicKey": "6vRAD8N4QHSM81kibeg7zMqX6J8XshnudncgqCK3PRzD",
-          "baseSymbol": "UNI",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 6,
-          "bidsKey": "E4Yycvhp1LRvNRBSj4SuwCumzRpa95PtrfmhpMKA8S3v",
-          "asksKey": "7bXbfV7njy9gnCy2KLLzTD5R3Ahd9Mdkkmjg2HbtGUMk",
-          "eventsKey": "3ByGmfw8pDQwc6c7AnENp2T9phQFyW8Pv28QWtguW4W5"
-        },
-        {
-          "name": "AAVE-PERP",
-          "publicKey": "6SrZz4XzgCNY6wRfr4caTBvubPQTsA35v4XyfbPiZXBK",
-          "baseSymbol": "AAVE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 7,
-          "bidsKey": "GfyD8BhCm5KYwNVWepTtkJUeygpNxgchWUWNuq8AxrNr",
-          "asksKey": "CakT6AdnWCn2CkPcUgHT727vnURdt7bzkPsbjzZKQBvv",
-          "eventsKey": "Ca2Eq7rRsoBYe4r1LzJU9cvXPiAnTF9Cz95a4yRgQXpq"
-        },
-        {
-          "name": "SUSHI-PERP",
-          "publicKey": "CewZSwVJXqp2dDmTMG7hGB7P67mnyunyDaWoVKwDzeh9",
-          "baseSymbol": "SUSHI",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 8,
-          "bidsKey": "87EXGK74qUVxBtV8R3A98eKNwnn5NHsjmEHTic595zoA",
-          "asksKey": "AihRutuhxqBS1ri6Ro84ZQzmNF2PNNLEg5ukDBUABBgR",
-          "eventsKey": "8fy8SSUXEmy6UWHYgzELfJKhZxNLC7oJAKLBPBgoTo6t"
-        },
-        {
-          "name": "STEP-PERP",
-          "publicKey": "3Q1YZRKWVMBGFYgg5Rt1gz85LDF7a9w5fFvATew5n3sD",
-          "baseSymbol": "STEP",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 9,
-          "bidsKey": "EicC7ygPoGgEjTrChjUEgoG6CFR7F3hW1wYQw4USi6m1",
-          "asksKey": "EaoxmLSJn7WGCptHBNz8ruZqNgx7bET96PXewSHzyWY9",
-          "eventsKey": "9iaT9uNcALgWtXUfUvrpYELLhTqFAgdmh6V8URaEpy3e"
-        },
-        {
-          "name": "COPE-PERP",
-          "publicKey": "EojQowLaH4oNDHrFfgAt5j8HevpL7rzhJBGbk5aEKq4S",
-          "baseSymbol": "COPE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 10,
-          "bidsKey": "9m3JbcFozD6QPzeDaNkpsDA2Xs3Tw8Sa9gWkutQbcCr7",
-          "asksKey": "7531QcRF6eq26UooyWwSzdrN3Y72RPe7DCS4wAzf8use",
-          "eventsKey": "4tDhxkFffn6cQsmDRBbt9kadJHEBguYVRx58iiygfxbo"
-        },
-        {
-          "name": "DOGE-PERP",
-          "publicKey": "5Uu5YW1qBCJi7B9hyJfmAH38bXeVzB86JfNSHp7SM9DF",
-          "baseSymbol": "DOGE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 11,
-          "bidsKey": "AcbYQrrHnG8SJoworQuJsmXhZoaUxC2phKu3oEAp5b1w",
-          "asksKey": "FPxSByVkrDsEjJoV7cagzoaE9dTviYMoNNDifHSFfJiJ",
-          "eventsKey": "DeH5uY7nbPsuGh8qX1XCiqbUdq4k7wHgB7x1fzAoySzN"
-        },
-        {
-          "name": "FIDA-PERP",
-          "publicKey": "5yG6mhPGZ4Ka9UycHgFGCqsC3BBPZxkw1vqDXuyXVg4i",
-          "baseSymbol": "FIDA",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 12,
-          "bidsKey": "EcJ42XvahtZt4QSVwrPrKJu7wtr2GqbnXXkJoTAWE3Bx",
-          "asksKey": "DHpvBwsWbMCvnZTjSsu8FrhsiAghyYUn8pvC2VwgXTag",
-          "eventsKey": "BxXdez38utrzeEenr6TjwNLQisKdBtNsAXYwCUFZPiTX"
-        },
-        {
-          "name": "FTT-PERP",
-          "publicKey": "3i3GnzUj42RwdGse6wp4FCcGzGcXGbG3R3XQjQZ7U9dK",
-          "baseSymbol": "FTT",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 13,
-          "bidsKey": "2SmpAwBVeRt8GuWepzc7rkgx3m8xG4994aardmH4xZCA",
-          "asksKey": "AtCVzH9aGQM6yvmGDgiDBYhkaJ7vRV3MQTxFbf8BHXaC",
-          "eventsKey": "GkTxy7nkPYPEmpM4GPNeVvN7suapbaKo1x88hpP4s8re"
-        },
-        {
-          "name": "MEDIA-PERP",
-          "publicKey": "3kCWAnfBEo3gqi2usDHHLnqbei2WC2LhwGDXCb9EqGpZ",
-          "baseSymbol": "MEDIA",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 14,
-          "bidsKey": "G6eLTQzEWdMXYtXrQynZBGsxiJDvae6Xuyo4x9YXBEDU",
-          "asksKey": "GTuJ4uc3Vxu7mLbFZvwuViS1Zr5AMq5UwYo6kbKtdvD6",
-          "eventsKey": "6qRJBhySEYWMWTRcGrY7auPEQiATmEW6Uxy78nRaZUmy"
-        },
-        {
-          "name": "MER-PERP",
-          "publicKey": "ABQEdYXARbBxDT1i2RW8S14imiPzBCUbBDuniupxNvcw",
-          "baseSymbol": "MER",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 15,
-          "bidsKey": "FiXo8WdPWwdcrTXpb2j7652DN9Y9WLZn8P52ke59gbGD",
-          "asksKey": "6aR3oS5NDDig7rPv2o2yMzsJz2VNBLZqZqYSdf9ZWEYy",
-          "eventsKey": "78p62S9iejTNXLm3E2ehQsLo7kvFRURqsiFqzqCBzpku"
-        },
-        {
-          "name": "AAX-PERP",
-          "publicKey": "C7MKg1zjWjFdaANmpSosPKFRaeVB6ye1ZUzJbehxByjt",
-          "baseSymbol": "AAX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 16,
-          "bidsKey": "9iD2qY1hRWFdVLLw7Um9rxYzqEp2EL14arY6giAdNDR2",
-          "asksKey": "CAMJQk5mBAKVucCSJw84TAZ2rA51hmFArh6nGTFTYfFy",
-          "eventsKey": "6qD3MUKe4FcwQJgMGH9qnafW58Fu94taaDvrXA2VECeu"
-        },
-        {
-          "name": "BBX-PERP",
-          "publicKey": "7vE1eJpmZUFBwGFzfV6PqseNozXs8J2QiXUuVt6EFGSX",
-          "baseSymbol": "BBX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 17,
-          "bidsKey": "FiPzPk29TMs4MhBy7xLefBnWrATtfQnM98NqdacPBtpM",
-          "asksKey": "2YuETugirpMjx3L4vN72inzvBBqderpbEbB6Ch9yTj67",
-          "eventsKey": "dx35MjhqsBLhk5E7A3WiDSB4KQTbYWa2tBv78QxU9GB"
-        },
-        {
-          "name": "CCX-PERP",
-          "publicKey": "EnvhLFURTfmE4MmhfaZHRYZknLTiB9vvPPq36Vzg66bV",
-          "baseSymbol": "CCX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 18,
-          "bidsKey": "GUvTjLbyoWWUEZuR9171ZtYAhY4ESq1AR91h5dNzSwWJ",
-          "asksKey": "8PeozT6KBaXcJm5bghmPvCPLDwSoded5uwJDwKuXag6A",
-          "eventsKey": "BebMGpwSTwKyXDELt5bjbDZ3RWvgtzbDSeL7o4ASbrAZ"
-        },
-        {
-          "name": "DDX-PERP",
-          "publicKey": "Ch1zWhrkM8jYajCUpoTNUazDzFDaffNJewyQRJeMFr9f",
-          "baseSymbol": "DDX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 19,
-          "bidsKey": "EqY1qJtm5B2BLGZdynTCybbfiKUiS5GA8adxoCXDQxFL",
-          "asksKey": "GNCAvHYd9rKD4j3sCJMhUTfGZsVmQoJ4CwHaBzF954ug",
-          "eventsKey": "DmEYx4aPg1ppkrmL9bs8ev31ApKfYhFQuaWCkPt8eA7r"
-        },
-        {
-          "name": "EEX-PERP",
-          "publicKey": "5XEVbTLfrkEveJa7tjQm4bXZbReVdxoYjQenAAKZPGVS",
-          "baseSymbol": "EEX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 20,
-          "bidsKey": "59gNkMajehfLPa7hyc3UUcYAV5GH3MgXLYaFG1QRu4P7",
-          "asksKey": "BDvUDC1pBYhRGkaKHmwFVgWyNdtuj8YF3tSDVMuTcGXW",
-          "eventsKey": "BjiZSCsLwFG3z3ZLH7UX4phUcQ3AJepqaAh1AzVPkm9Y"
-        },
-        {
-          "name": "FFX-PERP",
-          "publicKey": "J6GrqStu36rJ9WSKxAzbxjMCVw5CFEAe3HHgNUGTAhVa",
-          "baseSymbol": "FFX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 21,
-          "bidsKey": "5JJ6PjpjfRqHg71Wtm3HSTBEETZ5nGCUEGMd4QzH25fp",
-          "asksKey": "5WgXLSnFDvBtHa3sHAPee7JaSfB5pLi1hTrL8aAwLYss",
-          "eventsKey": "DFjT1aoDnKggYn9uaZbQR4qz5dpyoFZbFJ4L3f5J6UAP"
-        },
-        {
-          "name": "GGX-PERP",
-          "publicKey": "D5cRmqfETGfHyC9jYQ6jutFXTZ7iPMwFBoQSMnV8cM9Q",
-          "baseSymbol": "GGX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 22,
-          "bidsKey": "GefshwdycV13ocVnGPymLykopbY8RaGg7BqYCovykXYc",
-          "asksKey": "DmgGrWaLEEueRysGyXKdqxF32C7EdubVwgUGyk7Xqq6J",
-          "eventsKey": "6WdwmcuZrwHzyaetabque66icFKESihkyegJenk5suNE"
-        },
-        {
-          "name": "HHX-PERP",
-          "publicKey": "B2aTtjuQWa4uxeQBCx5p6oitZwjnJaf3AtK7p75xJDCz",
-          "baseSymbol": "HHX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 23,
-          "bidsKey": "4UB3uHm14x5HoJovTFnaBpbCFVHb5ahRCxHvWdhh7XNR",
-          "asksKey": "DCHaTawUpjvQBeH51ypzsB7ZombN6FTUsRojvc7pT2cE",
-          "eventsKey": "8sKqTUVcz66PtaFdgeb4JYnrUss5Sa6Mw3rfFQ5hugjk"
-        },
-        {
-          "name": "IIX-PERP",
-          "publicKey": "JE3KXaE2Lcc5dX9AVbFVXBFFqax5DzmiyJzdWxApo6Fm",
-          "baseSymbol": "IIX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 24,
-          "bidsKey": "C66xvwzKZKiLaUA9YWAzbNzihrGnxD2dVx9uZxYedpQm",
-          "asksKey": "Gn2PpQBTDY4T3cJna72Jv2dszoAc1FedfnBUDDpeYHSC",
-          "eventsKey": "HBhLBRV6DDLBgpceCHxFE7Vj1pmXJ1TmWKdycaeqnAws"
-        },
-        {
-          "name": "JJX-PERP",
-          "publicKey": "39iNnVeB7a9A29tJ9HdVxqDR8GKmNmLShqgLkqum11Ry",
-          "baseSymbol": "JJX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 25,
-          "bidsKey": "2pUvspEMeYWKY5gog2ibZ68uFkesmDWmgry5dTAnwyqi",
-          "asksKey": "ELDWkDvYbhgRmaFt7tRGsu5qS2n6Ju3UWgC7F1p1hZsR",
-          "eventsKey": "9R9BtgvshQM2gX4Zwqq79bG7iT1Yp8VdeZRV9TyoS5zZ"
-        },
-        {
-          "name": "KKX-PERP",
-          "publicKey": "5wFGS36QYidjx6ZGeciLbqHGRXoRWiiw5jemwopsUZsU",
-          "baseSymbol": "KKX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 26,
-          "bidsKey": "GwHwjbiNtTHZZBAsxartkRMEAFw4p7bFSJNaD4fQBfho",
-          "asksKey": "ARHBU26yhJhcHvFTU9E7QCoNPwcvZmUMzdt8APg2XWQQ",
-          "eventsKey": "iNEM9KjxiYdGqHeX3291mF472EzRTfeTiHsCKX4JL7Y"
-        },
-        {
-          "name": "LLX-PERP",
-          "publicKey": "5SZ4uVLYVEds1khURguJZWbR1AWBcu84NhpJ2Z7axMRN",
-          "baseSymbol": "LLX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 27,
-          "bidsKey": "7EN9CfjHC2T7PVTMHAWPtQErYheW7ppSrew1R7QZ8rvf",
-          "asksKey": "7EJCQarEbetzB73wq44RDZ3T5bo55nYELqXKnp8AHeA6",
-          "eventsKey": "C4W5BWkXCVHUzDC5nvKDqEe7WBT2KK8XZJFYdtQ82HjJ"
-        },
-        {
-          "name": "MMX-PERP",
-          "publicKey": "g7bcjCXGFoN7JFHNrXsX4d6sk28oTk2kBe9JYHYDMFH",
-          "baseSymbol": "MMX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 28,
-          "bidsKey": "DQNVuKp8rjcmmbm6Ce3DeVVRLZfaTLyZRsVRwa2fnDsM",
-          "asksKey": "5hAEnqk5QJWLQBckkGgBJ8s1Hhv4zdZHZhHcBPP5pKeG",
-          "eventsKey": "3UYo9ywxZSxcSn78aPFHYCkoKnN4H2yYtH88o7MgkiFY"
-        },
-        {
-          "name": "NNX-PERP",
-          "publicKey": "ActBQiVwW2PDfVmaip5qoPkjNLcz7fdUP7XnSkAEf6jR",
-          "baseSymbol": "NNX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 29,
-          "bidsKey": "8Hu9L9pzpoaKfwnE1MAi7WzfFPCWZLb5uHhUyk2KUTt2",
-          "asksKey": "2QZmti2bwg9m5rmKRbo6Yd3QqYxAFs4ePhYegtUspR2Y",
-          "eventsKey": "3AY3uXehvefwsNUfubVWWsBVVdPr6U4EdqJxw8nLzFUG"
-        },
-        {
-          "name": "OOX-PERP",
-          "publicKey": "FKehyswNMDeSxivj32x42ABGCawbfQkstMNDo7dnRnyQ",
-          "baseSymbol": "OOX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 30,
-          "bidsKey": "7JWxUUBs7Fm2V7D25gGsPGseLB6yJe7qBzMGZbe7TaL3",
-          "asksKey": "7AxiHbViUKvEwNFsdihxtxAi4tEEaLAbSNHsyeZyXpn2",
-          "eventsKey": "Dq68Wf4yJd5F5DKgiXoPuhSaNBTnjc6BrQ7psCpHNc6"
-        }
-      ],
-      "spotMarkets": [
-        {
-          "name": "MNGO/USDC",
-          "publicKey": "Aph31hoXRjhk1QgCmRvs7WAWGdpRoaESMoqzjoFkL5mE",
-          "baseSymbol": "MNGO",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 0,
-          "bidsKey": "8tgNAdQRdtiJzYbi7z3Q1FoFcxFmYxm4fvnAv4SUfM8e",
-          "asksKey": "FGAJUWsfZUax14AL56mekc2mZoJtFaRxqWqH4PwKb1UL",
-          "eventsKey": "CK9LPN8RGvAa3yZaEdMo2RRZrTF7ZTWb1ayY7u4je8DY"
-        },
-        {
-          "name": "SOL/USDC",
-          "publicKey": "uaajXobeb1hmTB6StRoa8Yqn6czjtWtFeVfZeJY6YFC",
-          "baseSymbol": "SOL",
-          "baseDecimals": 9,
-          "quoteDecimals": 6,
-          "marketIndex": 1,
-          "bidsKey": "Ajo2GfCUErwAWRW9Km1f333hv61qwJoF54a62spjQugX",
-          "asksKey": "7JFH89Hw5NpRSyVRSb931hvAzpYMNNgpfgVCWRWgkzuT",
-          "eventsKey": "4EMXcMjCDSPpUygdQF93xM2kxQJoU3658GPr4pg4X6zc"
-        },
-        {
-          "name": "SRM/USDC",
-          "publicKey": "23tRuJ3zUvXYQEnTDAcWHPDfmYvrWanpM2sJnmhL53X5",
-          "baseSymbol": "SRM",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 2,
-          "bidsKey": "Ghg9soNGpZQeU28uM9o2bsgnAjn9eib9FcGt8UTsFCck",
-          "asksKey": "AqbpvqdR2Pr4C1nFgY26Xo5z6WnGXwPV5ACBPStyHjgQ",
-          "eventsKey": "HopzAhNVt4TbeVq47t2ahHwVUsUTZagXkcZxcWYtzhAW"
-        },
-        {
-          "name": "BTC/USDC",
-          "publicKey": "6TwwNrueBAHe6VHwDYMhfTtkb7oP2vUnkun5yK8VzBbE",
-          "baseSymbol": "BTC",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 3,
-          "bidsKey": "Dnufk2pBjXGp1mqU5xLrw7YEH1Uj2xg2Rhjmxb6t1NrH",
-          "asksKey": "EDMas3xuXxh4WYJhUA7pZPJTuXvTDc4q2DP7prvpj3Hv",
-          "eventsKey": "FpeniiTZE2Am4U9Pp5prU8XNp1qx547eKm41yoT8uaQJ"
-        },
-        {
-          "name": "ETH/USDC",
-          "publicKey": "2n81EqJgsTE5PoPX5H8adQ4EaVe5kXnFuxwdCAYfaExH",
-          "baseSymbol": "ETH",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 4,
-          "bidsKey": "9qNtJWBev3Y1rgj7wmzBqDnkWaCFKi6ahVy38quBWhPJ",
-          "asksKey": "8tKBs4qgvnn7ws5uCLkBGJp2A916fBwNQF5WTfRKewn",
-          "eventsKey": "C9Lh2EurT1t9QgXKKFFY2jfEVHCyUxxfCvr34L8u1h9J"
-        },
-        {
-          "name": "RAY/USDC",
-          "publicKey": "3e7V65UdApsyCMLuALCoQwD9pKDCkozSUrsJx4XMJAnD",
-          "baseSymbol": "RAY",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 5,
-          "bidsKey": "2WkjNRM3edGFr8LHE2JUdHRyaHAxKBfsaLgP3iQ21jF8",
-          "asksKey": "J4y2EwM4HwtKgxzAEtSkesKMUED7L4mREExSo2fu3qjg",
-          "eventsKey": "GAnmCYogy468QxNV22TMKvNP8qki9J8Dg2ZE4wyouGvW"
-        },
-        {
-          "name": "UNI/USDC",
-          "publicKey": "4e9bt9ySh9i6Fks2R3KsWTBgJcEDNX6zM4RXHCcWDF3N",
-          "baseSymbol": "UNI",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 6,
-          "bidsKey": "9ZdrM7EUwTsYdN3fZAN7Nrvk1DtddCPazg4Ct21DNNre",
-          "asksKey": "H31KS2CoK9FXugSWpxjv2zknU7WeDWD4owgiShPkdX31",
-          "eventsKey": "2L2n928CrYa3uoTqPYDfPSfpBaD55uLa2dquLJh1Ee4J"
-        },
-        {
-          "name": "AAVE/USDC",
-          "publicKey": "BMigUjf6kDNtNDMCsBvPCwegbL45oLT7rtu1y36vAD1L",
-          "baseSymbol": "AAVE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 7,
-          "bidsKey": "4evEKb2hxuThEMcdyERJow8E55mdPu5Gngcc8zt5hoqg",
-          "asksKey": "3eokNWZWvv666Lti8RNTNk6JbpY1g8P3u3pJeeXM5bCh",
-          "eventsKey": "GhvX7McikTv3HkoM15xmji8y96YLDkXzXrcRFdQUBtXJ"
-        },
-        {
-          "name": "SUSHI/USDC",
-          "publicKey": "J9aow2hcq6YMJGw7fAprGitP68crYa36r7yJYe5huFv4",
-          "baseSymbol": "SUSHI",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 8,
-          "bidsKey": "7DPYMzY6Yc3JuL2WSb4ZNYcsFDfZxTkbsoBWovBmReG7",
-          "asksKey": "Guyo1ynPgX654aTZSjx74enygwSQZS8mKwqivcYpB1xi",
-          "eventsKey": "9jebNJyjHD8doZmBQKUiVaWiWmNEWwvwLG8GSsVHnBkp"
-        },
-        {
-          "name": "STEP/USDC",
-          "publicKey": "8P4kZg2c8pAUC6yLv289fR83LJ2wze1ZT247Fw6MhEiC",
-          "baseSymbol": "STEP",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 9,
-          "bidsKey": "ELX77vN1dUZcEwYc9EAmoaNiEFw233pmVbNXZ5suTHBz",
-          "asksKey": "6weBk5uWrkp1DYKoC95T6sgd44UJbhnfTfxnMv2bPn6v",
-          "eventsKey": "AZrszAhYF4XUYeMGuqFX742465fVnuZGdMC1HU5YbjWq"
-        },
-        {
-          "name": "COPE/USDC",
-          "publicKey": "Dzc5eZEGHoYEmrYDGWspWcHQw6FG67N6t8NiLhgsLRbi",
-          "baseSymbol": "COPE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 10,
-          "bidsKey": "CRTA8KQTuhYtJd2mzeH4scscWfYpXNmNnxT5Wbvtj1q4",
-          "asksKey": "8s2sDLvmdoiictqo6wo6jMmtTK9EkdQmsNPwRTjkZ49c",
-          "eventsKey": "8XkziYz4arsFGgTPn3Vby7MKCE83GGRVmbyVu73Hb4FM"
-        },
-        {
-          "name": "DOGE/USDC",
-          "publicKey": "CrMr521AhZE1FQ9dtBQZczd6SKMpthJMTeQ8WGGRooQ3",
-          "baseSymbol": "DOGE",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 11,
-          "bidsKey": "BT4XXsWWQ73ZLSMKYj4P5HkTNFCYVsh2z7sKDSQ3x1pF",
-          "asksKey": "776t4LBGnucpv3RaFc6acZTtEH5c63QZgWKiMq9dyxfo",
-          "eventsKey": "3PeGLRf3224QmeWDTrzMrsARpFgtjKreok2DhAT1Ykzw"
-        },
-        {
-          "name": "FIDA/USDC",
-          "publicKey": "D3P93bKtRzzrJXtBwLcNrswJ3cei1qcrXM9jK6emWZJx",
-          "baseSymbol": "FIDA",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 12,
-          "bidsKey": "9yZ6CtMsLrayhAnBwom9PKnnRkxgeqSCs6TjrFiGuL59",
-          "asksKey": "3KSUUoaysKjusA5uAGvdRxoGGP95Csg1zEE9yoPJZizF",
-          "eventsKey": "ESBR3Dz7gboZCjPF2B3T6HfyFCYhW5XhTNvzUq35HUfk"
-        },
-        {
-          "name": "FTT/USDC",
-          "publicKey": "CiN2BzCaThxLRDALeMq3GJGR24MQhdBWmHHjitW74oST",
-          "baseSymbol": "FTT",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 13,
-          "bidsKey": "JCkuoUPnVAvXKySpcJVm8PDR1KUm45njKPuPg8w1ePo1",
-          "asksKey": "GoUZsqQRMvkkNTJ4EgjzjUamWc9ayd3ztkjv5GeWoG4Q",
-          "eventsKey": "Fh4JNfLpNRDDYnNBPUUHjQLYih6hFcP4wwMQNQz3tBiD"
-        },
-        {
-          "name": "MEDIA/USDC",
-          "publicKey": "t6Q9ADDNsaQspD4u111fkq8qBzgy1MWoyzX8mDKVbws",
-          "baseSymbol": "MEDIA",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 14,
-          "bidsKey": "EQdUCPhYpiLSb6R7oJBzxNExe5LnaYzrVSRuEn6ozcsq",
-          "asksKey": "A3viz8PCHgHp8RbW7HF4bBVvk4fEFkrr1MnBvBbYHndH",
-          "eventsKey": "AoJYhnPQyvSPgcnnXsTQAYRBhjJSg8Dw1YBNvTC954wi"
-        },
-        {
-          "name": "MER/USDC",
-          "publicKey": "D9Rc98dPsmkfi9wv9yQLKXXu86MZut5jWZSYVCRu51ay",
-          "baseSymbol": "MER",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 15,
-          "bidsKey": "GAtAcjHF9sXrkyBLDiLsTMDufbroxwNXkJSPQC1kDDE5",
-          "asksKey": "C2qdvu1CTTVmtbZWMF9KNhHBZ3C92xb3g5BeBJcYabKi",
-          "eventsKey": "C3NVpXopybj1MUvXwmmnELUUKkKi7KtBEjF8tGhTnUiv"
-        },
-        {
-          "name": "AAX/USDC",
-          "publicKey": "9wursY6Ekmephdczc6dmCmhQ9e7Lh7Xbz16fTP4h6KJt",
-          "baseSymbol": "AAX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 16,
-          "bidsKey": "He8Qu1KeN5k8hNGDbmzJyjR4wZDhJ9oHLxPFjYxQhLFj",
-          "asksKey": "BvaWzabyLzdvW6i8SLh61rsV5qLd6FVNjS1KDpn5K2Aq",
-          "eventsKey": "GthdjUBYySAp3NuzLommEd4P22hMJiML8G4iwU9CLR1V"
-        },
-        {
-          "name": "BBX/USDC",
-          "publicKey": "FWEHRHn4TLZTvqZSsN8gmpAHzVuDsNcADVieH7gsqy8D",
-          "baseSymbol": "BBX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 17,
-          "bidsKey": "65qd5uKKjEK36QGbw8rF6mNrPZ2oCTdzLBmMdwJB6e8i",
-          "asksKey": "EdRinewyZGC4G5DDwJcT2eCkHNh8rCicDJ21ihHMzJPy",
-          "eventsKey": "51Z95D3acYdRHKhhd9jRxTkbnbrj1UkGiyD9vJSJm5up"
-        },
-        {
-          "name": "CCX/USDC",
-          "publicKey": "HXxay4VBTXkgkpyresugRdfnnG7j6SzvbmiZvFHjcDhe",
-          "baseSymbol": "CCX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 18,
-          "bidsKey": "AhbRJmZxyJhG7qz3XXKAGaTAupmV4qWhbeJYjmpF5nmj",
-          "asksKey": "BqWqZ9akWbEYL99WtvpZVjvNyB5rTMvhrsYopji6Gkcn",
-          "eventsKey": "H2LHJDXmgb26J25F6g5HZsdf3c3yMKyFGQwMzHtX9ETz"
-        },
-        {
-          "name": "DDX/USDC",
-          "publicKey": "HfPxSpeBJ7tyFVDh2YNMcadX1LUGqcynXiz2cDMqzHCr",
-          "baseSymbol": "DDX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 19,
-          "bidsKey": "G37jyonjVnapiT5cpup8Lh5MTpBFCtQFRA9Vj2NtNcth",
-          "asksKey": "3kHKvAKdnbDBQKQNKj6b49iRo9s3v5q7Uix75Rru5BHH",
-          "eventsKey": "9UV79NA36EM11yByjVVcVe5Bitqb2U6FZxZ9Nmg6Mvz8"
-        },
-        {
-          "name": "EEX/USDC",
-          "publicKey": "6JXADoVE1nWjd2UkpJqU4PLZAj1urqvuZqnrw9dLKonq",
-          "baseSymbol": "EEX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 20,
-          "bidsKey": "BKadMsHAXf2b8doc6rh8LfQTjjMwcbYiZJkG5aSzJo5a",
-          "asksKey": "2cy39XEdNKm6TtRmfntcLtAHYToCwuo8eQ4po5BQSSwn",
-          "eventsKey": "GZo3s6TcR11o6Rs12XE4nxh9Snb7MaNgBQuipEbVyqr7"
-        },
-        {
-          "name": "FFX/USDC",
-          "publicKey": "AU4zXmTdwUgzLW5yWB8qtuPaVqnvLoUXKot6KVdbidPa",
-          "baseSymbol": "FFX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 21,
-          "bidsKey": "HLHftcscNLVt2TcWJHsGjPt7gkbQDhQKQULSAy8qeZii",
-          "asksKey": "HB6QZUkw2wNNUEkvJajz3zmyxJA9ZrQpy3gsf3A8VmUx",
-          "eventsKey": "D8cWA82i9EoXMmGPWJEtBYvJwYvTzxoAPKSJ2g3KC94u"
-        },
-        {
-          "name": "GGX/USDC",
-          "publicKey": "ETh2Qqrtp53F3BhbXteemWLsjkRiabEnwjoh8TyPLF72",
-          "baseSymbol": "GGX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 22,
-          "bidsKey": "7vSrqV6RWWwDx1sjPAYNSRZYE3fGHBcBMt4eBvLfno6B",
-          "asksKey": "BpEhxroAgEAVauP1VyFv3XzkSHRxRwDFxSLnvrJrqD8b",
-          "eventsKey": "H1Xmkzaj8SuyGQpPmvnAEjjGDb6uZUjzznFkyHPeUpNT"
-        },
-        {
-          "name": "HHX/USDC",
-          "publicKey": "BxQAZsUievWE6JyNVJcFsTLqLqahQF7LhM75qXf26Nr7",
-          "baseSymbol": "HHX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 23,
-          "bidsKey": "CZ9EcaihrMBa7GUcGSicMYVt63ka3DP3kmWjEuffzFPc",
-          "asksKey": "689WKqtHXCKbsMeLEdAAv4PpJavmXuwemxxFYV2U8LhF",
-          "eventsKey": "9ZqHtfMr3Na2xqVzZPm5HHWftVJiHjA3WaLCEeTGPRni"
-        },
-        {
-          "name": "IIX/USDC",
-          "publicKey": "EDJqNqTcojU65uLCMZHb1HjxPuWAAhMahsfGju2SBqsn",
-          "baseSymbol": "IIX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 24,
-          "bidsKey": "GQkcA5rKXrQcNSH71EYYQewmfUxMeACCvHmMXYFsSzeu",
-          "asksKey": "2B3mJ7t5NeWVWbXyx8sqjayPNGLwBbPnViUvWk1rg2cn",
-          "eventsKey": "FaZRbv19iVYh1WQzemz88jWzwphkBb6Gpnda7eMQ459S"
-        },
-        {
-          "name": "JJX/USDC",
-          "publicKey": "ugv31rcerPotv8iMXrWDyEjf5TokZWegzDoSK1xL8s9",
-          "baseSymbol": "JJX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 25,
-          "bidsKey": "F7UCznWNBELD1hsE6jKsmT8aFrL3t8RXGigoGxqzDixU",
-          "asksKey": "FBuwhgdraXfVrtMPHXL1qnQwTxdQavs3mBexK7n98ZvE",
-          "eventsKey": "JB85ijU2jqymXWFXWcbSZNd4ajZXjJ9b6WxegTs2TbiN"
-        },
-        {
-          "name": "KKX/USDC",
-          "publicKey": "C8GiLqrKW3KNfB6y72jSF7WPYCHWkpgbkX48vsPpzxsU",
-          "baseSymbol": "KKX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 26,
-          "bidsKey": "GNntBS8sHrwkq7QdRc9xRzAds94yoDtuESZB4t4gCeNz",
-          "asksKey": "FC6dHFia436ZhcvDAB2WLaxStSjUwGiZCA4JKVytHUuE",
-          "eventsKey": "5erMNVkQWzTcnToWKrnThTHer84hAyVyCiKaV8BZ1iuw"
-        },
-        {
-          "name": "LLX/USDC",
-          "publicKey": "4KoZwJizkVaZhAY2Ud9tt3yqUxZrJnEgPTe8dDtM399G",
-          "baseSymbol": "LLX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 27,
-          "bidsKey": "J6e24gcMhHzakjY4kGceVgFmPh7CHzKipry6A9QrEbSm",
-          "asksKey": "HCffgLhuHUKXdSzUovuJaDcEJTkK6DZCvNuovn46weDL",
-          "eventsKey": "81KsVf6Tz5irWM97ZxereLV1ZDGK6BHs9r9VrVHBvm3d"
-        },
-        {
-          "name": "MMX/USDC",
-          "publicKey": "937mGkTYcqGcHoD2UReiC2FJD4DU42rkJciQZ7tQz5H4",
-          "baseSymbol": "MMX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 28,
-          "bidsKey": "GcTgp4U2kPSevL7yc65DBd3DWtEdVu1bATvJyB9wzgNw",
-          "asksKey": "7XBvMRfGRueMRdegPvmzcVEcS9CLDb8rVYMD76qwNj7S",
-          "eventsKey": "HLaPxBL8yqeTjMQCqju4fDmzHb1tkxkKbFVNNajs6rNd"
-        },
-        {
-          "name": "NNX/USDC",
-          "publicKey": "4my2SByxetXARLxpkDG5iV88AVqqsJzUy88CzyjvKvp8",
-          "baseSymbol": "NNX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 29,
-          "bidsKey": "DEM5LgHP5UGSCRgwfEg7Q43JasqDYHbYTSYUMuz2ZURQ",
-          "asksKey": "EXvnPNpjWmnLKNHvSir9fkY7ickzbnoak5xAHeCJKrgb",
-          "eventsKey": "TphuGAytFADgqUpDVp9jNTh9jX85iPm1N9b23UrvWuE"
-        },
-        {
-          "name": "OOX/USDC",
-          "publicKey": "GhPwZExZ7uT72n5SdWNMxwddxQ8eG7tuEvX2iSUK4MEY",
-          "baseSymbol": "OOX",
-          "baseDecimals": 6,
-          "quoteDecimals": 6,
-          "marketIndex": 30,
-          "bidsKey": "5NLB65Mtmq1urV8ejnzzEKK98dBn3dWVQSNHJFhLXiig",
-          "asksKey": "7WfvdXwBs7Fk3meQhWauxTek8mfc2g6TLvmfJm3MQH6H",
-          "eventsKey": "BFsA1VUzhtfuVzJ9NGC5Y7zSRxDfNKuSKUwJ342yEjXr"
-        }
-      ]
-    },
-    {
-      "cluster": "devnet",
-      "name": "mango_test_v3.4",
-      "publicKey": "CNd6bmeM1q7yS1C54xwT4fKpF3EquLWhFmF9xVweGjrM",
-      "quoteSymbol": "USDC",
-      "mangoProgramId": "32WeJ46tuY6QEkgydqzHYU5j85UT9m1cPJwFxPjuSVCt",
-      "serumProgramId": "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY",
-      "tokens": [
-        {
-          "symbol": "USDC",
-          "mintKey": "EMjjdsqERN4wJUR9jMBax2pzqQPeGLNn5NeucbHpDUZK",
-          "decimals": 9,
-          "rootKey": "313wvMRvKN4BphP1qP3RG854KDzhu5Gg8wvi6VVsWp43",
-          "nodeKeys": [
-            "BXNs5nSef9eo16Sxxth5ed9WFjPBqkibxwdRmQVHPK4x"
-          ]
-        },
-        {
-          "symbol": "BTC",
-          "mintKey": "bypQzRBaSDWiKhoAw3hNkf35eF3z3AZCU8Sxks6mTPP",
-          "decimals": 6,
-          "rootKey": "6b54SUFyXxnTUF9iQDDGQeB3m3F3vctkojwD2J4N3Gae",
-          "nodeKeys": [
-            "Drvtng3669H9F2KhmNbg8sB5SEnrBYo2L9t6Dug7JdZg"
-          ]
-        },
-        {
-          "symbol": "ETH",
-          "mintKey": "ErWGBLBQMwdyC4H3MR8ef6pFK6gyHAyBxy4o1mHoqKzm",
-          "decimals": 6,
-          "rootKey": "1nkhZVypbGxDruBoTAmZnGoRWSneydfDhvzhH7jDohv",
-          "nodeKeys": [
-            "78DD9QAh6BwYBqGrpTKNK2tzS3Ca5tq1v92gu8hQFaiA"
-          ]
-        }
-      ],
-      "oracles": [
-        {
-          "symbol": "BTC",
-          "publicKey": "5c5T9996DKTqNcjFczz9MRASGubpxY2WfmCdpFdd5Di1"
-        },
-        {
-          "symbol": "ETH",
-          "publicKey": "8PabqAPykA5JNgCyMgwmsVHN3yCS4Z672oUM7RgnVVbv"
-        }
-      ],
-      "perpMarkets": [
-        {
-          "name": "BTC-PERP",
-          "publicKey": "Dgr3VDcjvwMoMPXw2Dqz3vuudGDCSwMM9vaV8LVnMYtk",
-          "baseSymbol": "BTC",
-          "baseDecimals": 6,
-          "quoteDecimals": 9,
-          "marketIndex": 0,
-          "bidsKey": "2mJw42YxF6bSi7NxgP1wLbc9J1NybX8Ms88xYiXAEQyc",
-          "asksKey": "FSczMHXhsorbiMXuGAhiY6yo2shRTFgbsmYMvZ8VCJPm",
-          "eventsKey": "41iaEsaJrcC5CDJJU85AvqMdrvASGgnCdHUs43gKCcoX"
-        }
-      ],
-      "spotMarkets": [
-        {
-          "name": "BTC/USDC",
-          "publicKey": "E1mfsnnCcL24JcDQxr7F2BpWjkyy5x2WHys8EL2pnCj9",
-          "baseSymbol": "BTC",
-          "baseDecimals": 6,
-          "quoteDecimals": 9,
-          "marketIndex": 0,
-          "bidsKey": "8ovMqp4Tb7xe4r3bXdeyzzucMQfemcn2Wi2j55aYS2rR",
-          "asksKey": "GJ5PKrUkGrjHRhP1kNztgfHixYXyNpsRy8S2StBQ171n",
-          "eventsKey": "4xJ5T9c7m5wyt9Xw4PnP6yAU1sdqaegsiyGC6CvG2mUJ"
-        },
-        {
-          "name": "ETH/USDC",
-          "publicKey": "9gStrbmhqCUmNsmH1Yjec4TiNXq1g6YQVAamWVhLNdaE",
-          "baseSymbol": "ETH",
-          "baseDecimals": 6,
-          "quoteDecimals": 9,
-          "marketIndex": 1,
-          "bidsKey": "5CWf78MERQPosZy2Q9UTsr5xfUNvfc2ooTcUfFcULUqJ",
-          "asksKey": "FNh2WHQjd4PjTHoa3vdLRXUEdxQtLGagJcoDBtrizmmS",
-          "eventsKey": "8MYDK5y2RUzMzhMd88cEZQHRQH9Xkke6uqqmNnDTy13V"
-        }
-      ]
-    },
-    {
-      "cluster": "devnet",
-      "name": "mango_test_v3.3",
-      "publicKey": "Bio3MdqCwpEJ3rgCumci1h8WcMFFcwU6UMBsKcuT5kJp",
-      "quoteSymbol": "USDC",
-      "mangoProgramId": "32WeJ46tuY6QEkgydqzHYU5j85UT9m1cPJwFxPjuSVCt",
-      "serumProgramId": "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY",
-      "tokens": [
-        {
-          "symbol": "USDC",
-          "mintKey": "EMjjdsqERN4wJUR9jMBax2pzqQPeGLNn5NeucbHpDUZK",
-          "decimals": 9,
-          "rootKey": "75FL4Bhmz2sRGzTP2amZMUayZecMQUfCHzstQy1taqrN",
-          "nodeKeys": [
-            "DQoGTNw3PGTp7mdjAuoEW2fYruDJ3vGTo1XHT17jzi5S"
-          ]
-        },
-        {
-          "symbol": "BTC",
-          "mintKey": "bypQzRBaSDWiKhoAw3hNkf35eF3z3AZCU8Sxks6mTPP",
-          "decimals": 6,
-          "rootKey": "GPt7YntFwhZZ4hc4GGESyW4wfnSw3iEUxxvMuHBBzpzG",
-          "nodeKeys": [
-            "CjpRjn3uyJyzuBDcUKTJJbtgUEX4WKKLrTGF4YHFeUWr"
-          ]
-        }
-      ],
-      "oracles": [
-        {
-          "symbol": "BTC",
-          "publicKey": "EFAo16g6vKBjNgfRhsz1C4w5x9TW6hyQcSf3pKKGxf5x"
-        }
-      ],
-      "perpMarkets": [
-        {
-          "name": "BTC-PERP",
-          "publicKey": "2qCnz8qWu3mSouLFxNMDu2BuCHPVCgB5XLjASFroenyD",
-          "baseSymbol": "BTC",
-          "baseDecimals": 6,
-          "quoteDecimals": 9,
-          "marketIndex": 0,
-          "bidsKey": "2M2xfpEuLCUNZuhH2AE1X3tkgXw23mXZCLthdeKzRxG3",
-          "asksKey": "FRwNfXGSwY2tJFtWELCngZAyn8F9nJfcmVyBAzqmC45m",
-          "eventsKey": "9axZMRwsKxZmNiAwhVK2b6MDXX7kvgyrq9FEaiQVopAT"
-        }
-      ],
-      "spotMarkets": [
-        {
-          "name": "BTC/USDC",
-          "publicKey": "E1mfsnnCcL24JcDQxr7F2BpWjkyy5x2WHys8EL2pnCj9",
-          "baseSymbol": "BTC",
-          "baseDecimals": 6,
-          "quoteDecimals": 9,
-          "marketIndex": 0,
-          "bidsKey": "8ovMqp4Tb7xe4r3bXdeyzzucMQfemcn2Wi2j55aYS2rR",
-          "asksKey": "GJ5PKrUkGrjHRhP1kNztgfHixYXyNpsRy8S2StBQ171n",
-          "eventsKey": "4xJ5T9c7m5wyt9Xw4PnP6yAU1sdqaegsiyGC6CvG2mUJ"
-        }
-      ]
-    },
-    {
-      "cluster": "devnet",
-      "name": "mango_test_v3.2",
-      "publicKey": "77ugj68pn6jWknjronKUd6CBPtefwFy87s6d3GNGNLfp",
-      "quoteSymbol": "USDC",
-      "mangoProgramId": "32WeJ46tuY6QEkgydqzHYU5j85UT9m1cPJwFxPjuSVCt",
-      "serumProgramId": "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY",
-      "tokens": [
-        {
-          "symbol": "USDC",
-          "mintKey": "EMjjdsqERN4wJUR9jMBax2pzqQPeGLNn5NeucbHpDUZK",
-          "decimals": 9,
-          "rootKey": "AHgiF2d5Fz7CcFsDSc7b8t2p2fKnZKgUuFi2rnC5nc98",
-          "nodeKeys": [
-            "6JaqZ77iFfo7Nya73k2APzAvpwUne6EftqpUchSYLDt8"
-          ]
-        },
-        {
-          "symbol": "BTC",
-          "mintKey": "bypQzRBaSDWiKhoAw3hNkf35eF3z3AZCU8Sxks6mTPP",
-          "decimals": 6,
-          "rootKey": "E8tT2k6bH7VhM9VYmicrBwTfTV5pFB2BBV3ze3aVaM4B",
-          "nodeKeys": [
-            "EuL9HCDcWC7DmFKVi1X4b1XB3L7r9kWqGg7y9Z6oeRvN"
-          ]
-        }
-      ],
-      "oracles": [
-        {
-          "symbol": "BTC",
-          "publicKey": "En6zcdvZL7rAW3CBsVLWkEZa55sNoNhLtdoozLpP8aQs"
-        }
-      ],
-      "perpMarkets": [
-        {
-          "name": "BTC-PERP",
-          "publicKey": "7hei6GvQPpkPcJGjELXKZP5fpZSdKbfFMFWN43zi76V9",
-          "baseSymbol": "BTC",
-          "baseDecimals": 6,
-          "quoteDecimals": 9,
-          "marketIndex": 0,
-          "bidsKey": "5yzvc5oNWsRWj6aaGzMmtdDSxtD6upfkX67NtE59HrVn",
-          "asksKey": "EGGcHgSJgXkcfxz9BPy7hTfgPue4m23nQqF4iLYGCTne",
-          "eventsKey": "4Q9j3cZN4y8vaZJ5b6WiCceati7RE4ymmLbzz1ZqWaKr"
-        }
-      ],
-      "spotMarkets": [
-        {
-          "name": "BTC/USDC",
-          "publicKey": "E1mfsnnCcL24JcDQxr7F2BpWjkyy5x2WHys8EL2pnCj9",
-          "baseSymbol": "BTC",
-          "baseDecimals": 6,
-          "quoteDecimals": 9,
-          "marketIndex": 0,
-          "bidsKey": "8ovMqp4Tb7xe4r3bXdeyzzucMQfemcn2Wi2j55aYS2rR",
-          "asksKey": "GJ5PKrUkGrjHRhP1kNztgfHixYXyNpsRy8S2StBQ171n",
-          "eventsKey": "4xJ5T9c7m5wyt9Xw4PnP6yAU1sdqaegsiyGC6CvG2mUJ"
         }
       ]
     }

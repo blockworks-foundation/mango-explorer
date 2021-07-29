@@ -27,18 +27,52 @@ from .tokeninfo import TokenInfo
 from .version import Version
 
 
+class LiquidityMiningInfo:
+    def __init__(self, version: Version, rate: Decimal, max_depth_bps: Decimal, period_start: Decimal,
+                 target_period_length: Decimal, mngo_left: Decimal, mngo_per_period: Decimal):
+        self.version: Version = version
+
+        self.rate: Decimal = rate
+        self.max_depth_bps: Decimal = max_depth_bps
+        self.period_start: Decimal = period_start
+        self.target_period_length: Decimal = target_period_length
+        self.mngo_left: Decimal = mngo_left
+        self.mngo_per_period: Decimal = mngo_per_period
+
+    @staticmethod
+    def from_layout(layout: layouts.LIQUIDITY_MINING_INFO, version: Version) -> "LiquidityMiningInfo":
+        rate: Decimal = layout.rate
+        max_depth_bps: Decimal = layout.max_depth_bps
+        period_start: Decimal = layout.period_start
+        target_period_length: Decimal = layout.target_period_length
+        mngo_left: Decimal = layout.mngo_left
+        mngo_per_period: Decimal = layout.mngo_per_period
+
+        return LiquidityMiningInfo(version, rate, max_depth_bps, period_start, target_period_length,
+                                   mngo_left, mngo_per_period)
+
+    def __str__(self):
+        return f"""« 𝙻𝚒𝚚𝚞𝚒𝚍𝚒𝚝𝚢𝙼𝚒𝚗𝚒𝚗𝚐𝙸𝚗𝚏𝚘 {self.version}
+    Rate: {self.rate}
+    Max Depth Bps: {self.max_depth_bps}
+    Period Start: {self.period_start}
+    Target Period Length: {self.target_period_length}
+    MNGO Left: {self.mngo_left}
+    MNGO Per Period: {self.mngo_per_period}
+»"""
+
 # # 🥭 PerpMarketDetails class
 #
 # `PerpMarketDetails` holds details of a particular perp market.
 #
+
 
 class PerpMarketDetails(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
                  meta_data: Metadata, group: Group, bids: PublicKey, asks: PublicKey,
                  event_queue: PublicKey, base_lot_size: Decimal, quote_lot_size: Decimal, long_funding: Decimal,
                  short_funding: Decimal, open_interest: Decimal, last_updated: datetime, seq_num: Decimal,
-                 fees_accrued: Decimal, max_depth_bips: Decimal, scaler: PublicKey,
-                 total_liquidity_points: Decimal, points_per_mngo: Decimal, mngo_vault: PublicKey):
+                 fees_accrued: Decimal, liquidity_mining_info: LiquidityMiningInfo, mngo_vault: PublicKey):
         super().__init__(account_info)
         self.version: Version = version
 
@@ -55,10 +89,7 @@ class PerpMarketDetails(AddressableAccount):
         self.last_updated: datetime = last_updated
         self.seq_num: Decimal = seq_num
         self.fees_accrued: Decimal = fees_accrued
-        self.max_depth_bips: Decimal = max_depth_bips
-        self.scaler: PublicKey = scaler
-        self.total_liquidity_points: Decimal = total_liquidity_points
-        self.points_per_mngo: Decimal = points_per_mngo
+        self.liquidity_mining_info: LiquidityMiningInfo = liquidity_mining_info
         self.mngo_vault: PublicKey = mngo_vault
 
         self.market_index = group.find_perp_market_index(self.address)
@@ -89,16 +120,14 @@ class PerpMarketDetails(AddressableAccount):
         seq_num: Decimal = layout.seq_num
 
         fees_accrued: Decimal = layout.fees_accrued
-        max_depth_bips: Decimal = layout.max_depth_bips
-        scaler: PublicKey = layout.scaler
-        total_liquidity_points: Decimal = layout.total_liquidity_points
-        points_per_mngo: Decimal = layout.points_per_mngo
+        liquidity_mining_info: LiquidityMiningInfo = LiquidityMiningInfo.from_layout(
+            layout.liquidity_mining_info, Version.V1)
         mngo_vault: PublicKey = layout.mngo_vault
 
         return PerpMarketDetails(account_info, version, meta_data, group, bids, asks, event_queue,
                                  base_lot_size, quote_lot_size, long_funding, short_funding, open_interest,
-                                 last_updated, seq_num, fees_accrued, max_depth_bips, scaler, total_liquidity_points,
-                                 points_per_mngo, mngo_vault)
+                                 last_updated, seq_num, fees_accrued, liquidity_mining_info,
+                                 mngo_vault)
 
     @staticmethod
     def parse(account_info: AccountInfo, group: Group) -> "PerpMarketDetails":
@@ -118,6 +147,7 @@ class PerpMarketDetails(AddressableAccount):
         return PerpMarketDetails.parse(account_info, group)
 
     def __str__(self):
+        liquidity_mining_info: str = f"{self.liquidity_mining_info}".replace("\n", "\n        ")
         return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙳𝚎𝚝𝚊𝚒𝚕𝚜 {self.version} [{self.address}]
     {self.meta_data}
     Group: {self.group.address}
@@ -132,9 +162,6 @@ class PerpMarketDetails(AddressableAccount):
     Last Updated: {self.last_updated}
     Seq Num: {self.seq_num}
     Fees Accrued: {self.fees_accrued}
-    Max Depth Bips: {self.max_depth_bips}
-    Scaler: {self.scaler}
-    Total Liquidity Points: {self.total_liquidity_points}
-    Points Per MNGO: {self.points_per_mngo}
     MNGO Vault: {self.mngo_vault}
+        {liquidity_mining_info}
 »"""

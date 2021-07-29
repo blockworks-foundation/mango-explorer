@@ -147,13 +147,12 @@ class Account(AddressableAccount):
         spot_open_orders = ", ".join([f"{oo}" for oo in self.spot_open_orders if oo is not None])
         perp_accounts = ", ".join(
             [f"{perp}".replace("\n", "\n        ") for perp in self.perp_accounts if perp.open_orders.free_slot_bits != 0xFFFFFFFF])
-        group = f"{self.group}".replace("\n", "\n        ")
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {self.version} [{self.address}]
     {self.meta_data}
     Bankrupt? {self.is_bankrupt}
     Being Liquidated? {self.being_liquidated}
     Owner: {self.owner}
-        {group}
+    Group: « 𝙶𝚛𝚘𝚞𝚙 '{self.group.name}' {self.group.version} [{self.group.address}] »
     Deposits:
         {deposits}
     Borrows:

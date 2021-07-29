@@ -138,7 +138,7 @@ class Group(AddressableAccount):
         raise Exception(f"Could not find perp market {perp_market_address} in group {self.address}")
 
     def find_token_info_by_token(self, token: Token) -> TokenInfo:
-        for index, token_info in enumerate(self.tokens):
+        for token_info in self.tokens:
             if token_info is not None and token_info.token == token:
                 return token_info
 
@@ -156,13 +156,22 @@ class Group(AddressableAccount):
         return balances
 
     def __str__(self):
-        tokens = "\n        ".join([f"{token}".replace("\n", "\n        ")
-                                   for token in self.tokens if token is not None])
-        spot_markets = "\n        ".join([f"{spot_market}".replace("\n", "\n        ")
-                                         for spot_market in self.spot_markets if spot_market is not None])
-        perp_markets = "\n        ".join([f"{perp_market}".replace("\n", "\n        ")
-                                         for perp_market in self.perp_markets if perp_market is not None])
-        oracles = "\n        ".join([f"{oracle}" for oracle in self.oracles])
+        print("Token 14", self.tokens[14])
+        print("Token 14 is None", self.tokens[14] is None)
+
+        def _render_list(items, stub):
+            rendered = []
+            for index, item in enumerate(items):
+                rendered += [f"{index}: {(item or stub)}".replace("\n", "\n            ")]
+            return rendered
+        available_token_count = len([token for token in self.tokens if token is not None])
+        tokens = "\n        ".join(_render_list(self.tokens, "« No Token »"))
+        available_spot_market_count = len([spot_market for spot_market in self.spot_markets if spot_market is not None])
+        spot_markets = "\n        ".join(_render_list(self.spot_markets, "« No Spot Market »"))
+        available_perp_market_count = len([perp_market for perp_market in self.perp_markets if perp_market is not None])
+        perp_markets = "\n        ".join(_render_list(self.perp_markets, "« No Perp Market »"))
+        available_oracle_count = len([oracle for oracle in self.oracles if oracle is not None])
+        oracles = "\n        ".join(_render_list(self.oracles, "« No Oracle »"))
         return f"""« 𝙶𝚛𝚘𝚞𝚙 {self.version} [{self.address}]
     {self.meta_data}
     Name: {self.name}
@@ -174,12 +183,12 @@ class Group(AddressableAccount):
     SRM Vault: {self.srm_vault}
     MSRM Vault: {self.msrm_vault}
     Valid Interval: {self.valid_interval}
-    Tokens:
+    Tokens [{available_token_count} available]:
         {tokens}
-    Spot Markets:
+    Spot Markets [{available_spot_market_count} available]:
         {spot_markets}
-    Perp Markets:
+    Perp Markets [{available_perp_market_count} available]:
         {perp_markets}
-    Oracles:
+    Oracles [{available_oracle_count} available]:
         {oracles}
 »"""

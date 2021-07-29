@@ -320,11 +320,12 @@ OPEN_ORDERS = construct.Struct(
 )
 
 
-MAX_TOKENS: int = 32
+MAX_TOKENS: int = 16
 MAX_PAIRS: int = MAX_TOKENS - 1
 MAX_NODE_BANKS: int = 8
 QUOTE_INDEX: int = MAX_TOKENS - 1
 MAX_BOOK_NODES: int = 1024
+MAX_ORDERS: int = 32
 
 DATA_TYPE = construct.Enum(construct.Int8ul, Group=0, Account=1, RootBank=2,
                            NodeBank=3, PerpMarket=4, Bids=5, Asks=6, Cache=7, EventQueue=8)
@@ -456,6 +457,9 @@ PERP_MARKET_INFO = construct.Struct(
 #     pub dao_vault: Pubkey,
 #     pub srm_vault: Pubkey,
 #     pub msrm_vault: Pubkey,
+#
+#     pub padding: [u8; 64], // padding used for future expansions
+#
 # }
 # ```
 GROUP = construct.Struct(
@@ -473,7 +477,8 @@ GROUP = construct.Struct(
     "valid_interval" / DecimalAdapter(),
     "dao_vault" / PublicKeyAdapter(),
     "srm_vault" / PublicKeyAdapter(),
-    "msrm_vault" / PublicKeyAdapter()
+    "msrm_vault" / PublicKeyAdapter(),
+    construct.Padding(64)
 )
 
 # # 🥭 ROOT_BANK
@@ -556,8 +561,8 @@ PERP_OPEN_ORDERS = construct.Struct(
     "asks_quantity" / SignedDecimalAdapter(),
     "free_slot_bits" / DecimalAdapter(4),
     "is_bid_bits" / DecimalAdapter(4),
-    "orders" / construct.Array(MAX_TOKENS, SignedDecimalAdapter(16)),
-    "client_order_ids" / construct.Array(MAX_TOKENS, SignedDecimalAdapter())
+    "orders" / construct.Array(MAX_ORDERS, SignedDecimalAdapter(16)),
+    "client_order_ids" / construct.Array(MAX_ORDERS, DecimalAdapter())
 )
 
 # # 🥭 PERP_ACCOUNT
@@ -582,13 +587,14 @@ PERP_ACCOUNT = construct.Struct(
     "long_settled_funding" / FloatI80F48Adapter(),
     "short_settled_funding" / FloatI80F48Adapter(),
     "open_orders" / PERP_OPEN_ORDERS,
-    "liquidity_points" / FloatI80F48Adapter(),
+    "mngo_accrued" / DecimalAdapter(),
 )
 
 # # 🥭 MANGO_ACCOUNT
 #
 # Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
 # ```
+# pub const INFO_LEN: usize = 32;
 # pub const MAX_NUM_IN_MARGIN_BASKET: u8 = 10;
 # #[derive(Copy, Clone, Pod, Loadable)]
 # #[repr(C)]
@@ -615,7 +621,9 @@ PERP_ACCOUNT = construct.Struct(
 #
 #     /// This account cannot do anything except go through `resolve_bankruptcy`
 #     pub is_bankrupt: bool,
-#     pub padding: [u8; 6],
+#     pub info: [u8; INFO_LEN],
+#     /// padding for expansions
+#     pub padding: [u8; 70],
 # }
 # ```
 MANGO_ACCOUNT = construct.Struct(
@@ -631,7 +639,48 @@ MANGO_ACCOUNT = construct.Struct(
     "msrm_amount" / DecimalAdapter(),
     "being_liquidated" / DecimalAdapter(1),
     "is_bankrupt" / DecimalAdapter(1),
-    construct.Padding(6)
+    "info" / construct.Padding(32),
+    construct.Padding(70)
+)
+
+# # 🥭 LIQUIDITY_MINING_INFO
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
+# ```
+# #[derive(Copy, Clone, Pod)]
+# #[repr(C)]
+# /// Information regarding market maker incentives for a perp market
+# pub struct LiquidityMiningInfo {
+#     /// Used to convert liquidity points to MNGO
+#     pub rate: I80F48,
+#
+#     pub max_depth_bps: I80F48,
+#
+#     /// start timestamp of current liquidity incentive period; gets updated when mngo_left goes to 0
+#     pub period_start: u64,
+#
+#     /// Target time length of a period in seconds
+#     pub target_period_length: u64,
+#
+#     /// Paper MNGO left for this period
+#     pub mngo_left: u64,
+#
+#     /// Total amount of MNGO allocated for current period
+#     pub mngo_per_period: u64,
+# }
+# ```
+LIQUIDITY_MINING_INFO = construct.Struct(
+    "rate" / FloatI80F48Adapter(),
+
+    "max_depth_bps" / FloatI80F48Adapter(),
+
+    "period_start" / DecimalAdapter(),
+
+    "target_period_length" / DecimalAdapter(),
+
+    "mngo_left" / DecimalAdapter(),
+
+    "mngo_per_period" / DecimalAdapter()
 )
 
 
@@ -641,7 +690,7 @@ MANGO_ACCOUNT = construct.Struct(
 # ```
 # /// This will hold top level info about the perps market
 # /// Likely all perps transactions on a market will be locked on this one because this will be passed in as writable
-# #[derive(Copy, Clone, Pod, Loadable, Default)]
+# #[derive(Copy, Clone, Pod, Loadable)]
 # #[repr(C)]
 # pub struct PerpMarket {
 #     pub meta_data: MetaData,
@@ -663,11 +712,7 @@ MANGO_ACCOUNT = construct.Struct(
 #     pub seq_num: u64,
 #     pub fees_accrued: I80F48, // native quote currency
 #
-#     // Liquidity incentive params
-#     pub max_depth_bps: I80F48,
-#     pub scaler: I80F48,
-#     pub total_liquidity_points: I80F48,
-#     pub points_per_mngo: I80F48, // how many points equal 1 native MNGO
+#     pub liquidity_mining_info: LiquidityMiningInfo,
 #
 #     // mngo_vault holds mango tokens to be disbursed as liquidity incentives for this perp market
 #     pub mngo_vault: Pubkey,
@@ -691,10 +736,7 @@ PERP_MARKET = construct.Struct(
     "seq_num" / DecimalAdapter(),
     "fees_accrued" / FloatI80F48Adapter(),
 
-    "max_depth_bips" / FloatI80F48Adapter(),
-    "scaler" / FloatI80F48Adapter(),
-    "total_liquidity_points" / FloatI80F48Adapter(),
-    "points_per_mngo" / FloatI80F48Adapter(),
+    "liquidity_mining_info" / LIQUIDITY_MINING_INFO,
 
     "mngo_vault" / PublicKeyAdapter()
 )
@@ -957,13 +999,17 @@ assert UNKNOWN_EVENT.sizeof() == _EVENT_SIZE
 #
 # Here's some of the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/queue.rs):
 # ```
-# # #[derive(Copy, Clone, Pod)]
+# #[derive(Copy, Clone, Pod)]
 # #[repr(C)]
 # pub struct EventQueueHeader {
 #     pub meta_data: MetaData,
 #     head: usize,
 #     count: usize,
 #     seq_num: usize,
+#
+#     // Added here for record-keeping
+#     pub maker_fee: I80F48,
+#     pub taker_fee: I80F48,
 # }
 # ```
 PERP_EVENT_QUEUE = construct.Struct(
@@ -971,6 +1017,8 @@ PERP_EVENT_QUEUE = construct.Struct(
     "head" / DecimalAdapter(),
     "count" / DecimalAdapter(),
     "seq_num" / DecimalAdapter(),
+    "maker_fee" / FloatI80F48Adapter(),
+    "taker_fee" / FloatI80F48Adapter(),
     "events" / construct.GreedyRange(construct.Select(FILL_EVENT, OUT_EVENT, UNKNOWN_EVENT))
 )
 
@@ -1239,6 +1287,22 @@ SETTLE_FUNDS = construct.Struct(
     "variant" / construct.Const(19, construct.BytesInteger(4, swapped=True))
 )
 
+# /// Initialize open orders
+# ///
+# /// Accounts expected by this instruction (8):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[writable]` mango_account_ai - MangoAccount
+# /// 2. `[signer]` owner_ai - MangoAccount owner
+# /// 3. `[]` dex_prog_ai - program id of serum dex
+# /// 4. `[writable]` open_orders_ai - open orders for this market for this MangoAccount
+# /// 5. `[]` spot_market_ai - dex MarketState account
+# /// 6. `[]` signer_ai - Group Signer Account
+# /// 7. `[]` rent_ai - Rent sysvar account
+INIT_SPOT_OPEN_ORDERS = construct.Struct(
+    "variant" / construct.Const(32, construct.BytesInteger(4, swapped=True))
+)
+
 UNSPECIFIED = construct.Struct(
     "variant" / DecimalAdapter(4)
 )
@@ -1267,5 +1331,18 @@ InstructionParsersByVariant = {
     20: CANCEL_SPOT_ORDER,  # CANCEL_SPOT_ORDER,
     21: UNSPECIFIED,  # UPDATE_ROOT_BANK,
     22: UNSPECIFIED,  # SETTLE_PNL,
-    23: UNSPECIFIED  # SETTLE_BORROW,
+    23: UNSPECIFIED,  # SETTLE_BORROW,
+    24: UNSPECIFIED,  # FORCE_CANCEL_SPOT_ORDERS,
+    25: UNSPECIFIED,  # FORCE_CANCEL_PERP_ORDERS,
+    26: UNSPECIFIED,  # LIQUIDATE_TOKEN_AND_TOKEN,
+    27: UNSPECIFIED,  # LIQUIDATE_TOKEN_AND_PERP,
+    28: UNSPECIFIED,  # LIQUIDATE_PERP_MARKET,
+    29: UNSPECIFIED,  # SETTLE_FEES,
+    30: UNSPECIFIED,  # RESOLVE_PERP_BANKRUPTCY,
+    31: UNSPECIFIED,  # RESOLVE_TOKEN_BANKRUPTCY,
+    32: INIT_SPOT_OPEN_ORDERS,  # INIT_SPOT_OPEN_ORDERS,
+    33: UNSPECIFIED,  # REDEEM_MNGO,
+    34: UNSPECIFIED,  # ADD_MANGO_ACCOUNT_INFO,
+    35: UNSPECIFIED,  # DEPOSIT_MSRM,
+    36: UNSPECIFIED,  # WITHDRAW_MSRM
 }
