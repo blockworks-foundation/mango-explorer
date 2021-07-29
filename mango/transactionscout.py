@@ -407,7 +407,6 @@ class TransactionScout:
                 if instruction is not None:
                     instructions += [instruction]
 
-            print("Instructions:", len(instructions))
             group_name = context.lookup_group_name(instructions[0].group)
             timestamp = datetime.datetime.fromtimestamp(response["blockTime"])
             signatures = response["transaction"]["signatures"]

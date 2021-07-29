@@ -632,7 +632,6 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
         raise Exception(
             f"Could not find base token info for group {group.address} - length was {len(base_token_infos)} when it should be 1.")
     base_token_info = base_token_infos[0]
-    print("base_token_info", base_token_info)
     quote_token_info = group.shared_quote_token
 
     root_bank: RootBank = quote_token_info.root_bank if side == Side.BUY else base_token_info.root_bank
