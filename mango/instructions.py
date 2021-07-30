@@ -596,12 +596,16 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
 
     open_orders_address = account.spot_open_orders[market_index]
     if open_orders_address is None:
-        oo_instructions = CombinableInstructions.from_wallet(wallet)
         create_open_orders = build_create_solana_account_instructions(
             context, wallet, context.dex_program_id, layouts.OPEN_ORDERS.sizeof())
-        oo_instructions += create_open_orders
+        instructions += create_open_orders
 
         open_orders_address = create_open_orders.signers[0].public_key()
+
+        # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
+        # the Account so that future uses (like later in this method) have access to it in the right place.
+        account.spot_open_orders[market_index] = open_orders_address
+
         initialise_open_orders_instruction = TransactionInstruction(
             keys=[
                 AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
@@ -616,8 +620,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             program_id=context.program_id,
             data=layouts.INIT_SPOT_OPEN_ORDERS.build(dict())
         )
-        oo_instructions += CombinableInstructions(signers=[], instructions=[initialise_open_orders_instruction])
-        oo_instructions.execute(context)
+        instructions += CombinableInstructions(signers=[], instructions=[initialise_open_orders_instruction])
 
     serum_order_type = pyserum.enums.OrderType.POST_ONLY if order_type == OrderType.POST_ONLY else pyserum.enums.OrderType.IOC if order_type == OrderType.IOC else pyserum.enums.OrderType.LIMIT
     serum_side = pyserum.enums.Side.BUY if side == Side.BUY else pyserum.enums.Side.SELL
@@ -636,14 +639,6 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
 
     root_bank: RootBank = quote_token_info.root_bank if side == Side.BUY else base_token_info.root_bank
     node_bank: NodeBank = root_bank.pick_node_bank(context)
-
-    relevant_open_orders: typing.List[AccountMeta] = []
-    for oo_address in account.spot_open_orders:
-        if oo_address == open_orders_address:
-            relevant_open_orders += [AccountMeta(is_signer=False, is_writable=True, pubkey=oo_address)]
-        else:
-            relevant_open_orders += [AccountMeta(is_signer=False, is_writable=False,
-                                                 pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS)]
 
     fee_discount_address_meta: typing.List[AccountMeta] = []
     if fee_discount_address is not None:
@@ -669,7 +664,8 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
             AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.srm_vault or SYSTEM_PROGRAM_ADDRESS),
-            *relevant_open_orders,
+            *list([AccountMeta(is_signer=False, is_writable=(oo_address == open_orders_address),
+                               pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders]),
             *fee_discount_address_meta
         ],
         program_id=context.program_id,
