@@ -21,6 +21,7 @@ from decimal import Decimal
 from .account import Account
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
+from .cache import Cache
 from .context import Context
 from .group import Group
 from .layouts import layouts
@@ -54,6 +55,8 @@ def build_account_info_converter(context: Context, account_type: str) -> typing.
         return lambda account_info: PerpEventQueue.parse(account_info, NullLotSizeConverter())
     elif account_type_upper == "SERUMEVENTQUEUE":
         return lambda account_info: SerumEventQueue.parse(account_info)
+    elif account_type_upper == "CACHE":
+        return lambda account_info: Cache.parse(account_info)
     elif account_type_upper == "PERPMARKETDETAILS":
         def perp_market_details_loader(account_info: AccountInfo) -> PerpMarketDetails:
             layout_perp_market_details = layouts.PERP_MARKET.parse(account_info.data)

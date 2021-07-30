@@ -18,6 +18,7 @@ from .oracle import OracleProvider
 from .oracles.ftx import ftx
 from .oracles.pythnetwork import pythnetwork
 from .oracles.serum import serum
+from .oracles.stub import stub
 
 
 # # 🥭 Oracle Factory
@@ -38,4 +39,6 @@ def create_oracle_provider(context: Context, provider_name: str) -> OracleProvid
     elif provider_name == "pyth-devnet":
         devnet_pyth_context: Context = context.new_forced_to_devnet()
         return pythnetwork.PythOracleProvider(devnet_pyth_context)
+    elif provider_name == "stub":
+        return stub.StubOracleProvider()
     raise Exception(f"Unknown oracle provider '{provider_name}'.")

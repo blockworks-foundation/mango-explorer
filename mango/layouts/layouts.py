@@ -1060,6 +1060,32 @@ SERUM_EVENT_QUEUE = construct.Struct(
     "events" / construct.GreedyRange(SERUM_EVENT)
 )
 
+
+PRICE_CACHE = construct.Struct(
+    "price" / FloatI80F48Adapter(),
+    "last_update" / DatetimeAdapter()
+)
+
+ROOT_BANK_CACHE = construct.Struct(
+    "deposit_index" / FloatI80F48Adapter(),
+    "borrow_index" / FloatI80F48Adapter(),
+    "last_update" / DatetimeAdapter()
+)
+
+PERP_MARKET_CACHE = construct.Struct(
+    "long_funding" / FloatI80F48Adapter(),
+    "short_funding" / FloatI80F48Adapter(),
+    "last_update" / DatetimeAdapter()
+)
+
+CACHE = construct.Struct(
+    "meta_data" / METADATA,
+    "price_cache" / construct.Array(MAX_PAIRS, PRICE_CACHE),
+    "root_bank_cache" / construct.Array(MAX_TOKENS, ROOT_BANK_CACHE),
+    "perp_market_cache" / construct.Array(MAX_PAIRS, PERP_MARKET_CACHE)
+)
+
+
 # # Instruction Structs
 
 # ## MANGO_INSTRUCTION_VARIANT_FINDER

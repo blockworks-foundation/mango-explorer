@@ -84,7 +84,7 @@ class NodeBank(AddressableAccount):
 
 # # 🥭 RootBank class
 #
-# `RootBank` stores details of how to reach `NodeBank```.
+# `RootBank` stores details of how to reach `NodeBank`.
 #
 
 
