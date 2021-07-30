@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+#
+# Before running this script, deposit 3600 SOL and run `yarn mint-devnet`
+# to add all the required devnet tokens.
+#
+
+set -e
+
+printf "Balances:\n"
+group-balances --log-level ERROR
+
+printf "Creating Mango Account...\n"
+init-account --log-level ERROR
+
+printf "Wrapping SOL...\n"
+wrap-sol --quantity 3500 --log-level ERROR
+
+printf "Depositing USDC...\n"
+deposit --symbol USDC --quantity 1000000 --log-level ERROR
+
+printf "Depositing BTC...\n"
+deposit --symbol BTC --quantity 3 --log-level ERROR
+
+printf "Depositing DOGE...\n"
+deposit --symbol DOGE --quantity 500000 --log-level ERROR
+
+printf "Depositing ETH...\n"
+deposit --symbol ETH --quantity 40 --log-level ERROR
+
+printf "Depositing FTT...\n"
+deposit --symbol FTT --quantity 3125 --log-level ERROR
+
+printf "Depositing MNGO...\n"
+deposit --symbol MNGO --quantity 1000000 --log-level ERROR
+
+printf "Depositing RAY...\n"
+deposit --symbol RAY --quantity 30000 --log-level ERROR
+
+printf "Depositing SOL...\n"
+deposit --symbol SOL --quantity 3500 --log-level ERROR
+
+printf "Depositing SRM...\n"
+deposit --symbol SRM --quantity 30000 --log-level ERROR
+
+printf "Depositing SUSHI...\n"
+deposit --symbol SUSHI --quantity 12500 --log-level ERROR
+
+printf "Depositing USDT...\n"
+deposit --symbol USDT --quantity 100000 --log-level ERROR
+
+printf "Balances now:\n"
+group-balances --log-level ERROR
