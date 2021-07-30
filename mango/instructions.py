@@ -579,7 +579,7 @@ def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: 
     return instructions
 
 
-# # 🥭 build_mango_place_order_instructions function
+# # 🥭 build_spot_place_order_instructions function
 #
 # Creates a Mango order-placing instruction using the Serum instruction as the inner instruction. Will create
 # the necessary OpenOrders account if it doesn't already exist.
