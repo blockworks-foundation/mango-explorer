@@ -42,6 +42,8 @@ class ReconnectingWebsocket:
         self._on_item = on_item
         self.reconnect_required: bool = True
         self.ping_interval: int = 0
+        self.connecting: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
+            datetime.now())
         self.ping: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
             datetime.now())
         self.pong: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
@@ -80,6 +82,7 @@ class ReconnectingWebsocket:
     def _run(self):
         while self.reconnect_required:
             self.logger.info(f"WebSocket connecting to: {self.url}")
+            self.connecting.on_next(datetime.now())
             self._ws = websocket.WebSocketApp(
                 self.url,
                 on_open=self._on_open,

@@ -40,6 +40,11 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 
+def send_notification(message: str) -> None:
+    for notify in args.notify:
+        notify.send(f"[watch-minimum-balances] {message}")
+
+
 def sols_from_lamports(lamports: Decimal) -> Decimal:
     return lamports / mango.SOL_DECIMAL_DIVISOR
 
@@ -48,8 +53,7 @@ def notifier(name: str) -> typing.Callable[[mango.AccountInfo], None]:
     def notify(account_info: mango.AccountInfo) -> None:
         account_sols = sols_from_lamports(account_info.lamports)
         report = f"Account \"{name} [{account_info.address}]\" on {context.cluster} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
-        for notify in args.notify:
-            notify.send(report)
+        send_notification(report)
         print(f"Notification sent: {report}")
     return notify
 
@@ -82,7 +86,7 @@ def add_subscription_for_parameter(context: mango.Context, manager: mango.WebSoc
         rx.operators.observe_on(context.pool_scheduler),
         rx.operators.map(log_account),
         rx.operators.filter(account_fails_balance_check),
-        rx.operators.throttle_first(timer_limit),
+        rx.operators.throttle_first(20),
         rx.operators.catch(mango.observable_pipeline_error_reporter),
         rx.operators.retry()
     ).subscribe(notifier(name))
@@ -103,8 +107,14 @@ ws.ping_interval = 10
 
 ws_pong_disposable = ws.pong.subscribe(mango.FileToucherObserver("/var/tmp/mango_healthcheck_ws_pong"))
 disposer.add_disposable(ws_pong_disposable)
+ws_pong_log_disposable = ws.pong.subscribe(on_next=lambda _: logging.info("Pong"))
+disposer.add_disposable(ws_pong_log_disposable)
+ws_connecting_log_disposable = ws.connecting.subscribe(on_next=lambda _: send_notification("Re-connecting websocket"))
+disposer.add_disposable(ws_connecting_log_disposable)
 
 ws.open()
+
+send_notification(f"Starting using context:\n{context}")
 
 # Wait - don't exit. Exiting will be handled by signals/interrupts.
 waiter = threading.Event()
