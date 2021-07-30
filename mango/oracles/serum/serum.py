@@ -42,7 +42,7 @@ from ...spotmarket import SpotMarket, SpotMarketStub
 #
 
 
-# # 🥭 FtxOracleConfidence constant
+# # 🥭 SerumOracleConfidence constant
 #
 # FTX doesn't provide a confidence value.
 #
