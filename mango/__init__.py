@@ -56,6 +56,7 @@ from .spltokenlookup import SplTokenLookup
 from .spotmarket import SpotMarket, SpotMarketStub
 from .spotmarketinfo import SpotMarketInfo
 from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
+from .spotmarketoperations import SpotMarketOperations
 from .token import Token, SolToken
 from .tokenaccount import TokenAccount
 from .tokeninfo import TokenInfo

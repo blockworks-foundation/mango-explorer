@@ -553,6 +553,32 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
     return CombinableInstructions(signers=[], instructions=[withdraw])
 
 
+def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: Market) -> CombinableInstructions:
+    instructions: CombinableInstructions = CombinableInstructions.empty()
+    create_open_orders = build_create_solana_account_instructions(
+        context, wallet, context.dex_program_id, layouts.OPEN_ORDERS.sizeof())
+    instructions += create_open_orders
+
+    open_orders_address = create_open_orders.signers[0].public_key()
+
+    initialise_open_orders_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=context.dex_program_id),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=open_orders_address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=market.state.public_key()),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY)
+        ],
+        program_id=context.program_id,
+        data=layouts.INIT_SPOT_OPEN_ORDERS.build(dict())
+    )
+    instructions += CombinableInstructions(signers=[], instructions=[initialise_open_orders_instruction])
+    return instructions
+
+
 # # 🥭 build_mango_place_order_instructions function
 #
 # Creates a Mango order-placing instruction using the Serum instruction as the inner instruction. Will create
@@ -596,8 +622,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
 
     open_orders_address = account.spot_open_orders[market_index]
     if open_orders_address is None:
-        create_open_orders = build_create_solana_account_instructions(
-            context, wallet, context.dex_program_id, layouts.OPEN_ORDERS.sizeof())
+        create_open_orders = build_spot_openorders_instructions(context, wallet, group, account, market)
         instructions += create_open_orders
 
         open_orders_address = create_open_orders.signers[0].public_key()
@@ -605,22 +630,6 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
         # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
         # the Account so that future uses (like later in this method) have access to it in the right place.
         account.spot_open_orders[market_index] = open_orders_address
-
-        initialise_open_orders_instruction = TransactionInstruction(
-            keys=[
-                AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
-                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=context.dex_program_id),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=open_orders_address),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=market.state.public_key()),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY)
-            ],
-            program_id=context.program_id,
-            data=layouts.INIT_SPOT_OPEN_ORDERS.build(dict())
-        )
-        instructions += CombinableInstructions(signers=[], instructions=[initialise_open_orders_instruction])
 
     serum_order_type = pyserum.enums.OrderType.POST_ONLY if order_type == OrderType.POST_ONLY else pyserum.enums.OrderType.IOC if order_type == OrderType.IOC else pyserum.enums.OrderType.LIMIT
     serum_side = pyserum.enums.Side.BUY if side == Side.BUY else pyserum.enums.Side.SELL

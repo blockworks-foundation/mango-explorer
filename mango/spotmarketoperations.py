@@ -102,5 +102,13 @@ class SpotMarketOperations(MarketOperations):
         all_orders = self.spot_market.orders(self.context)
         return list([o for o in all_orders if o.owner == self.open_orders_address])
 
+    def create_openorders_for_market(self) -> PublicKey:
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        create_open_orders = self.market_instruction_builder.build_create_openorders_instructions()
+        open_orders_address = create_open_orders.signers[0].public_key()
+        (signers + create_open_orders).execute(self.context)
+
+        return open_orders_address
+
     def __str__(self) -> str:
         return f"""« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.spot_market.symbol}] »"""

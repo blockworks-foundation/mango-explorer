@@ -23,7 +23,7 @@ from .account import Account
 from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import Group
-from .instructions import build_serum_consume_events_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions, build_spot_settle_instructions
+from .instructions import build_serum_consume_events_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions, build_spot_settle_instructions, build_spot_openorders_instructions
 from .marketinstructionbuilder import MarketInstructionBuilder
 from .orders import Order
 from .spotmarket import SpotMarket
@@ -112,6 +112,9 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         all_open_orders_addresses.sort(key=lambda address: address._key or [0])
 
         return build_serum_consume_events_instructions(self.context, self.spot_market.address, self.raw_market.state.event_queue(), all_open_orders_addresses, int(limit))
+
+    def build_create_openorders_instructions(self) -> CombinableInstructions:
+        return build_spot_openorders_instructions(self.context, self.wallet, self.group, self.account, self.raw_market)
 
     def __str__(self) -> str:
         return f"« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 [{self.spot_market.symbol}] »"
