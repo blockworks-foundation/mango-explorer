@@ -14,8 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import copy
-import re
 import rx
 import rx.operators as ops
 import typing
@@ -23,7 +21,6 @@ import typing
 from datetime import datetime
 from decimal import Decimal
 from solana.publickey import PublicKey
-from solana.rpc.api import Client
 
 from ...cache import Cache
 from ...context import Context
@@ -31,12 +28,8 @@ from ...ensuremarketloaded import ensure_market_loaded
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import Oracle, OracleProvider, OracleSource, Price, SupportedOracleFeature
-from ...orders import Order, Side
 from ...perpmarket import PerpMarket
-from ...serummarket import SerumMarket, SerumMarketStub
-from ...serummarketlookup import SerumMarketLookup
-from ...spltokenlookup import SplTokenLookup
-from ...spotmarket import SpotMarket, SpotMarketStub
+from ...spotmarket import SpotMarket
 
 
 # # 🥭 Stub
@@ -71,6 +64,8 @@ class StubOracle(Oracle):
     def fetch_price(self, context: Context) -> Price:
         cache: Cache = Cache.load(context, self.cache_address)
         raw_price = cache.price_cache[self.index]
+        if raw_price is None:
+            raise Exception(f"Stub Oracle does not contain a price for market {self.symbol} at index {self.index}.")
         price = self.market.base.shift_to_decimals(raw_price.price)
         return Price(self.source, datetime.now(), self.market, price, price, price, StubOracleConfidence)
 
