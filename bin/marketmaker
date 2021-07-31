@@ -37,12 +37,18 @@ parser.add_argument("--pulse-interval", type=int, default=10,
                     help="number of seconds between each 'pulse' of the market maker")
 parser.add_argument("--account-index", type=int, default=0,
                     help="index of the account to use, if more than one available")
+parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
+                    help="The notification target for error events")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+for notify in args.notify_errors:
+    handler = mango.NotificationHandler(notify)
+    handler.setLevel(logging.ERROR)
+    logging.getLogger().addHandler(handler)
 
 
 def cleanup(context: mango.Context, wallet: mango.Wallet, account: mango.Account, market: mango.Market, dry_run: bool):
