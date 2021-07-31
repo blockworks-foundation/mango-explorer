@@ -134,9 +134,13 @@ class Account(AddressableAccount):
         return accounts
 
     @staticmethod
-    def load_primary_for_owner(context: Context, owner: PublicKey, group: Group) -> "Account":
-        # Don't try to do anything smart (yet). Just return the first account. Might need to be smarter in the future.
-        return Account.load_all_for_owner(context, owner, group)[0]
+    def load_for_owner_by_index(context: Context, owner: PublicKey, group: Group, account_index: int) -> "Account":
+        accounts: typing.Sequence[Account] = Account.load_all_for_owner(context, owner, group)
+        if len(accounts) == 0:
+            raise Exception(f"Could not find any Mango accounts for owner '{owner}'.")
+        if account_index >= len(accounts):
+            raise Exception(f"Could not find Mango account at index {account_index} for owner '{owner}'.")
+        return accounts[account_index]
 
     def __str__(self):
         def _render_list(items, stub):

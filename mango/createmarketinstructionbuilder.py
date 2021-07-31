@@ -14,8 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import typing
-
 from .account import Account
 from .context import Context
 from .ensuremarketloaded import ensure_market_loaded
@@ -34,7 +32,7 @@ from .wallet import Wallet
 # This function deals with the creation of a `MarketInstructionBuilder` object for a given `Market`.
 
 
-def create_market_instruction_builder(context: Context, wallet: Wallet, dry_run: bool, market: Market, account: typing.Optional[Account] = None) -> MarketInstructionBuilder:
+def create_market_instruction_builder(context: Context, wallet: Wallet, account: Account, market: Market, dry_run: bool = False) -> MarketInstructionBuilder:
     if dry_run:
         return NullMarketInstructionBuilder(market.symbol)
 
@@ -42,11 +40,9 @@ def create_market_instruction_builder(context: Context, wallet: Wallet, dry_run:
     if isinstance(loaded_market, SerumMarket):
         return SerumMarketInstructionBuilder.load(context, wallet, loaded_market)
     elif isinstance(loaded_market, SpotMarket):
-        spot_account: Account = account or Account.load_primary_for_owner(context, wallet.address, loaded_market.group)
-        return SpotMarketInstructionBuilder.load(context, wallet, loaded_market.group, spot_account, loaded_market)
+        return SpotMarketInstructionBuilder.load(context, wallet, loaded_market.group, account, loaded_market)
     elif isinstance(loaded_market, PerpMarket):
-        perp_account = account or Account.load_primary_for_owner(context, wallet.address, loaded_market.group)
         return PerpMarketInstructionBuilder.load(
-            context, wallet, loaded_market.group, perp_account, loaded_market)
+            context, wallet, loaded_market.group, account, loaded_market)
     else:
         raise Exception(f"Could not find market instructions builder for market {market.symbol}")

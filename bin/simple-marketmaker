@@ -31,6 +31,8 @@ parser.add_argument("--pause-duration", type=int, default=10,
                     help="number of seconds to pause between placing orders and cancelling them")
 parser.add_argument("--oracle-provider", type=str, default="serum",
                     help="name of the oracle service providing the prices")
+parser.add_argument("--account-index", type=int, default=0,
+                    help="index of the account to use, if more than one available")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
@@ -41,13 +43,16 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 try:
     context = mango.ContextBuilder.from_command_line_parameters(args)
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    group = mango.Group.load(context, context.group_id)
+    account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
 
     market_symbol = args.market.upper()
     market = context.market_lookup.find_by_symbol(market_symbol)
     if market is None:
         raise Exception(f"Could not find spot market {market_symbol}")
 
-    market_operations: mango.MarketOperations = mango.create_market_operations(context, wallet, args.dry_run, market)
+    market_operations: mango.MarketOperations = mango.create_market_operations(
+        context, wallet, account, market, args.dry_run)
 
     oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, args.oracle_provider)
     oracle = oracle_provider.oracle_for_market(context, market)

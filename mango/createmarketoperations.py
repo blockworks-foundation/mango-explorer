@@ -35,7 +35,7 @@ from .wallet import Wallet
 # This function deals with the creation of a `MarketOperations` object for a given `Market`.
 
 
-def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, market: Market) -> MarketOperations:
+def create_market_operations(context: Context, wallet: Wallet, account: Account, market: Market, dry_run: bool = False) -> MarketOperations:
     if dry_run:
         return NullMarketOperations(market.symbol)
 
@@ -45,12 +45,10 @@ def create_market_operations(context: Context, wallet: Wallet, dry_run: bool, ma
             context, wallet, loaded_market)
         return SerumMarketOperations(context, wallet, loaded_market, serum_market_instruction_builder)
     elif isinstance(loaded_market, SpotMarket):
-        account: Account = Account.load_primary_for_owner(context, wallet.address, loaded_market.group)
         spot_market_instruction_builder: SpotMarketInstructionBuilder = SpotMarketInstructionBuilder.load(
             context, wallet, loaded_market.group, account, loaded_market)
         return SpotMarketOperations(context, wallet, loaded_market.group, account, loaded_market, spot_market_instruction_builder)
     elif isinstance(loaded_market, PerpMarket):
-        account = Account.load_primary_for_owner(context, wallet.address, loaded_market.group)
         perp_market_instruction_builder: PerpMarketInstructionBuilder = PerpMarketInstructionBuilder.load(
             context, wallet, loaded_market.underlying_perp_market.group, account, loaded_market)
         return PerpMarketOperations(loaded_market.symbol, context, wallet, perp_market_instruction_builder, account, loaded_market)

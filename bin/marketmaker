@@ -21,8 +21,6 @@ parser = argparse.ArgumentParser(description="Shows the on-chain data of a parti
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--market", type=str, required=True, help="market symbol to make market upon (e.g. ETH/USDC)")
-parser.add_argument("--account-index", type=int, default=0,
-                    help="index of the account to use, if more than one available")
 parser.add_argument("--oracle-provider", type=str, required=True,
                     help="name of the price provider to use (e.g. pyth)")
 parser.add_argument("--position-size-ratio", type=Decimal, required=True,
@@ -37,6 +35,8 @@ parser.add_argument("--order-type", type=mango.OrderType, default=mango.OrderTyp
                     choices=list(mango.OrderType), help="Order type: LIMIT, IOC or POST_ONLY")
 parser.add_argument("--pulse-interval", type=int, default=10,
                     help="number of seconds between each 'pulse' of the market maker")
+parser.add_argument("--account-index", type=int, default=0,
+                    help="index of the account to use, if more than one available")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
@@ -45,9 +45,10 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 
-def cleanup(context: mango.Context, wallet: mango.Wallet, dry_run: bool, market: mango.Market):
+def cleanup(context: mango.Context, wallet: mango.Wallet, account: mango.Account, market: mango.Market, dry_run: bool):
     logging.info("Cleaning up.")
-    market_operations: mango.MarketOperations = mango.create_market_operations(context, wallet, dry_run, market)
+    market_operations: mango.MarketOperations = mango.create_market_operations(
+        context, wallet, account, market, dry_run)
     orders = market_operations.load_my_orders()
     for order in orders:
         market_operations.cancel_order(order)
@@ -184,10 +185,7 @@ disposer.add_disposable(manager)
 
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_id)
-accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
-if len(accounts) == 0:
-    raise Exception(f"No mango account found for root address '{wallet.address}'.")
-account = accounts[args.account_index]
+account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
 
 market_symbol = args.market.upper()
 market = context.market_lookup.find_by_symbol(market_symbol)
@@ -199,7 +197,7 @@ if market.quote != group.shared_quote_token.token:
     raise Exception(
         f"Group {group.name} uses shared quote token {group.shared_quote_token.token.symbol}/{group.shared_quote_token.token.mint}, but market {market.symbol} uses quote token {market.quote.symbol}/{market.quote.mint}.")
 
-cleanup(context, wallet, args.dry_run, market)
+cleanup(context, wallet, account, market, args.dry_run)
 
 latest_group_observer = build_latest_group_observer(context, manager, disposer, group)
 account_subscription, latest_account_observer = build_latest_account_observer(
@@ -208,7 +206,7 @@ latest_price_observer = build_latest_price_observer(context, disposer, args.orac
 
 market = mango.ensure_market_loaded(context, market)
 market_instruction_builder: mango.MarketInstructionBuilder = mango.create_market_instruction_builder(
-    context, wallet, args.dry_run, market, account)
+    context, wallet, account, market, args.dry_run)
 if isinstance(market, mango.SerumMarket):
     latest_perp_market_observer = None
     latest_open_orders_observer = build_latest_serum_open_orders_observer(manager, disposer, market, context, wallet)
@@ -260,5 +258,5 @@ except:
 logging.info("Shutting down...")
 ws.close()
 disposer.dispose()
-cleanup(context, wallet, args.dry_run, market)
+cleanup(context, wallet, account, market, args.dry_run)
 logging.info("Shutdown complete.")

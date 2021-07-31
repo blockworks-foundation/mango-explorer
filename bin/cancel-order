@@ -20,6 +20,10 @@ parser.add_argument("--client-id", type=int,
                     help="client ID of the order to cancel (either --client-id must be specified, or both --id and --side must be specified")
 parser.add_argument("--side", type=mango.Side, default=mango.Side.BUY, choices=list(mango.Side),
                     help="whether the order to cancel is a BUY or a SELL (either --client-id must be specified, or both --id and --side must be specified")
+parser.add_argument("--account-index", type=int, default=0,
+                    help="index of the account to use, if more than one available")
+parser.add_argument("--dry-run", action="store_true", default=False,
+                    help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -27,13 +31,15 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+group = mango.Group.load(context, context.group_id)
+account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
 
 market_symbol = args.market.upper()
 market = context.market_lookup.find_by_symbol(market_symbol)
 if market is None:
     raise Exception(f"Could not find market {market_symbol}")
 
-market_operations = mango.create_market_operations(context, wallet, False, market)
+market_operations = mango.create_market_operations(context, wallet, account, market, args.dry_run)
 
 order = mango.Order.from_ids(id=args.id, client_id=args.client_id, side=args.side)
 cancellation = market_operations.cancel_order(order)
