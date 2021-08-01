@@ -19,7 +19,7 @@ import typing
 
 from decimal import Decimal
 from pyserum.enums import OrderType as SerumOrderType, Side as SerumSide
-from pyserum.instructions import ConsumeEventsParams, consume_events, settle_funds, SettleFundsParams
+from pyserum.instructions import settle_funds, SettleFundsParams
 from pyserum.market import Market
 from pyserum.open_orders_account import make_create_account_instruction
 from solana.account import Account as SolanaAccount
@@ -29,6 +29,7 @@ from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
 from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, create_associated_token_account, initialize_account, transfer2
+from pyserum._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 
 from .account import Account
 from .combinableinstructions import CombinableInstructions
@@ -173,19 +174,22 @@ def build_serum_place_order_instructions(context: Context, wallet: Wallet, marke
 #
 
 def build_serum_consume_events_instructions(context: Context, market_address: PublicKey, event_queue_address: PublicKey, open_orders_addresses: typing.Sequence[PublicKey], limit: int = 32) -> CombinableInstructions:
-    instruction = consume_events(ConsumeEventsParams(
-        market=market_address,
-        event_queue=event_queue_address,
-        open_orders_accounts=open_orders_addresses,
+    instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=pubkey, is_signer=False, is_writable=True)
+            for pubkey in [*open_orders_addresses, market_address, event_queue_address]
+        ],
         program_id=context.dex_program_id,
-        limit=limit
-    ))
+        data=INSTRUCTIONS_LAYOUT.build(
+            dict(instruction_type=InstructionType.CONSUME_EVENTS, args=dict(limit=limit))
+        ),
+    )
 
     # The interface accepts (and currently requires) two accounts at the end, but
     # it doesn't actually use them.
     random_account = SolanaAccount().public_key()
-    instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=False))
-    instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=False))
+    instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=True))
+    instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=True))
     return CombinableInstructions(signers=[], instructions=[instruction])
 
 

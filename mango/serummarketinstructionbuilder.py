@@ -27,6 +27,7 @@ from .instructions import build_create_serum_open_orders_instructions, build_ser
 from .marketinstructionbuilder import MarketInstructionBuilder
 from .openorders import OpenOrders
 from .orders import Order, OrderType, Side
+from .publickey import encode_public_key_for_sorting
 from .serummarket import SerumMarket
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
@@ -119,10 +120,18 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
     def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         if self.open_orders_address is None:
             return CombinableInstructions.empty()
-        all_open_orders_addresses: typing.List[PublicKey] = list(open_orders_addresses) + [self.open_orders_address]
-        all_open_orders_addresses.sort(key=lambda address: address._key or [0])
 
-        return build_serum_consume_events_instructions(self.context, self.serum_market.address, self.raw_market.state.event_queue(), all_open_orders_addresses, int(limit))
+        distinct_open_orders_addresses: typing.List[PublicKey] = []
+        for oo in open_orders_addresses:
+            if oo not in distinct_open_orders_addresses:
+                distinct_open_orders_addresses += [oo]
+
+        limited_open_orders_addresses = distinct_open_orders_addresses[0:min(
+            int(limit), len(distinct_open_orders_addresses))]
+
+        limited_open_orders_addresses.sort(key=encode_public_key_for_sorting)
+
+        return build_serum_consume_events_instructions(self.context, self.serum_market.address, self.raw_market.state.event_queue(), limited_open_orders_addresses, int(limit))
 
     def __str__(self) -> str:
         return """« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"""

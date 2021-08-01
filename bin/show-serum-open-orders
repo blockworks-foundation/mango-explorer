@@ -27,6 +27,7 @@ market = context.market_lookup.find_by_symbol(market_symbol)
 if market is None:
     raise Exception(f"Could not find market {market_symbol}")
 
+market = mango.ensure_market_loaded(context, market)
 if not isinstance(market, mango.SerumMarket):
     raise Exception(f"Market {market_symbol} is not a Serum market: {market}")
 

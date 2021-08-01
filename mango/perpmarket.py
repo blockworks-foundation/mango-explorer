@@ -52,7 +52,7 @@ class PerpMarket(Market):
     def unprocessed_events(self, context: Context) -> typing.Sequence[PerpEvent]:
         event_queue: PerpEventQueue = PerpEventQueue.load(
             context, self.underlying_perp_market.event_queue, self.lot_size_converter)
-        return event_queue.unprocessed_events()
+        return event_queue.unprocessed_events
 
     def accounts_to_crank(self, context: Context, additional_account_to_crank: typing.Optional[PublicKey]) -> typing.Sequence[PublicKey]:
         accounts_to_crank: typing.List[PublicKey] = []

@@ -56,7 +56,7 @@ class LotSizeConverter():
 
 class NullLotSizeConverter(LotSizeConverter):
     def __init__(self):
-        super().__init__(Decimal(1), Decimal(1))
+        super().__init__(None, Decimal(1), None, Decimal(1))
 
     def price_lots_to_native(self, price_lots: Decimal) -> Decimal:
         return price_lots

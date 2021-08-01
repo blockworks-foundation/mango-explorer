@@ -42,15 +42,24 @@ if args.account_type.upper() == "ACCOUNTINFO":
         context, args.address, lambda account_info: account_info)
     manager.add(raw_subscription)
     publisher: rx.Observable = raw_subscription.publisher
+elif args.account_type.upper() == "SERUMEVENTS":
+    initial_serum_event_queue: mango.SerumEventQueue = mango.SerumEventQueue.load(context, args.address)
+    serum_splitter: mango.UnseenSerumEventChangesTracker = mango.UnseenSerumEventChangesTracker(
+        initial_serum_event_queue)
+    serum_event_splitting_subscription = mango.WebSocketAccountSubscription(
+        context, args.address, lambda account_info: mango.SerumEventQueue.parse(account_info))
+    manager.add(serum_event_splitting_subscription)
+    publisher = serum_event_splitting_subscription.publisher.pipe(rx.operators.flat_map(serum_splitter.unseen))
 elif args.account_type.upper() == "PERPEVENTS":
     # It'd be nice to get the market's lot size converter, but we don't have its address yet.
     lot_size_converter: mango.LotSizeConverter = mango.NullLotSizeConverter()
-    initial: mango.PerpEventQueue = mango.PerpEventQueue.load(context, args.address, lot_size_converter)
-    splitter: mango.UnseenPerpEventChangesTracker = mango.UnseenPerpEventChangesTracker(initial)
-    event_splitting_subscription = mango.WebSocketAccountSubscription(
+    initial_perp_event_queue: mango.PerpEventQueue = mango.PerpEventQueue.load(
+        context, args.address, lot_size_converter)
+    perp_splitter: mango.UnseenPerpEventChangesTracker = mango.UnseenPerpEventChangesTracker(initial_perp_event_queue)
+    perp_event_splitting_subscription = mango.WebSocketAccountSubscription(
         context, args.address, lambda account_info: mango.PerpEventQueue.parse(account_info, lot_size_converter))
-    manager.add(event_splitting_subscription)
-    publisher = event_splitting_subscription.publisher.pipe(rx.operators.flat_map(splitter.unseen))
+    manager.add(perp_event_splitting_subscription)
+    publisher = perp_event_splitting_subscription.publisher.pipe(rx.operators.flat_map(perp_splitter.unseen))
 else:
     converter = mango.build_account_info_converter(context, args.account_type)
     converting_subscription = mango.WebSocketAccountSubscription(

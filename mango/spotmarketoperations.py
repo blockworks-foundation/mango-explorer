@@ -89,6 +89,13 @@ class SpotMarketOperations(MarketOperations):
         open_orders_to_crank: typing.List[PublicKey] = []
         for event in self.spot_market.unprocessed_events(self.context):
             open_orders_to_crank += [event.public_key]
+
+        if len(open_orders_to_crank) == 0:
+            return []
+
+        if self.market_instruction_builder.open_orders_address is not None:
+            open_orders_to_crank += [self.market_instruction_builder.open_orders_address]
+
         crank = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank, limit)
         return (signers + crank).execute(self.context)
 

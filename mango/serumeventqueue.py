@@ -26,9 +26,9 @@ from .layouts import layouts
 from .version import Version
 
 
-# # 🥭 SerumEventQueue class
+# # 🥭 SerumEventFlags class
 #
-# `SerumEventQueue` stores details of how to reach `SerumEventQueue```.
+# `SerumEventFlags` stores flags describing a `SerumEvent`.
 #
 
 
@@ -57,6 +57,11 @@ class SerumEventFlags:
         return f"{self}"
 
 
+# # 🥭 SerumEvent class
+#
+# `SerumEvent` stores details of an actual event in Serum.
+#
+
 class SerumEvent:
     def __init__(self, version: Version, event_flags: SerumEventFlags, open_order_slot: Decimal, fee_tier: Decimal,
                  native_quantity_released: Decimal, native_quantity_paid: Decimal, native_fee_or_rebate: Decimal,
@@ -71,6 +76,7 @@ class SerumEvent:
         self.order_id: Decimal = order_id
         self.public_key: PublicKey = public_key
         self.client_order_id: Decimal = client_order_id
+        self.original_index: Decimal = Decimal(0)
 
     @staticmethod
     def from_layout(layout: layouts.SERUM_EVENT) -> "SerumEvent":
@@ -81,6 +87,7 @@ class SerumEvent:
 
     def __str__(self):
         return f"""« 𝚂𝚎𝚛𝚞𝚖𝙴𝚟𝚎𝚗𝚝 {self.event_flags}
+    Original Index: {self.original_index}
     Order ID: {self.order_id}
     Client Order ID: {self.client_order_id}
     Public Key: {self.public_key}
@@ -91,11 +98,25 @@ class SerumEvent:
     Fee Tier: {self.fee_tier}
 »"""
 
+    def __repr__(self) -> str:
+        return f"{self}"
 
+
+# # 🥭 SerumEventQueue class
+#
+# `SerumEventQueue` stores details of recent Serum events.
+#
+# This implementation is a little different to other implementations, to make it easier to use.
+#
+# Events are split into two buckets - processed and unprocessed. Both are sorted from oldest to newest.
+# Unprocessed may be empty, if there is nothing for the crank to do. Processed may be empty if the
+# market is new and there hasn't been a trade on it yet.
+#
 class SerumEventQueue(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, account_flags: AccountFlags,
                  head: Decimal, count: Decimal, sequence_number: Decimal,
-                 events: typing.Sequence[typing.Optional[SerumEvent]]):
+                 unprocessed_events: typing.Sequence[SerumEvent],
+                 processed_events: typing.Sequence[SerumEvent]):
         super().__init__(account_info)
         self.version: Version = version
 
@@ -103,7 +124,8 @@ class SerumEventQueue(AddressableAccount):
         self.head: Decimal = head
         self.count: Decimal = count
         self.sequence_number: Decimal = sequence_number
-        self.events: typing.Sequence[typing.Optional[SerumEvent]] = events
+        self.unprocessed_events: typing.Sequence[SerumEvent] = unprocessed_events
+        self.processed_events: typing.Sequence[SerumEvent] = processed_events
 
     @staticmethod
     def from_layout(layout: layouts.SERUM_EVENT_QUEUE, account_info: AccountInfo, version: Version) -> "SerumEventQueue":
@@ -111,9 +133,22 @@ class SerumEventQueue(AddressableAccount):
         head: Decimal = layout.head
         count: Decimal = layout.count
         seq_num: Decimal = layout.next_seq_num
-        events: typing.Sequence[typing.Optional[SerumEvent]] = list(map(SerumEvent.from_layout, layout.events))
+        events: typing.List[SerumEvent] = list(
+            map(SerumEvent.from_layout, [evt for evt in layout.events if evt is not None]))
+        for index, event in enumerate(events):
+            event.original_index = Decimal(index)
 
-        return SerumEventQueue(account_info, version, account_flags, head, count, seq_num, events)
+        # Events are stored in a ringbuffer, and the oldest is overwritten when a new event arrives.
+        # Make it a bit simpler to use by splitting at the insertion point and swapping the two pieces
+        # around so that users don't have to do modulo arithmetic on the capacity.
+        ordered_events = events[int(head):] + events[0:int(head)]
+
+        # Now chop the oldest-to-newest list of events into processed and unprocessed. The `count`
+        # property holds the number of unprocessed events.
+        unprocessed_events = ordered_events[0:int(count)]
+        processed_events = ordered_events[int(count):]
+
+        return SerumEventQueue(account_info, version, account_flags, head, count, seq_num, unprocessed_events, processed_events)
 
     @ staticmethod
     def parse(account_info: AccountInfo) -> "SerumEventQueue":
@@ -130,27 +165,46 @@ class SerumEventQueue(AddressableAccount):
 
     @property
     def capacity(self) -> int:
-        return len(self.events)
+        return len(self.unprocessed_events) + len(self.processed_events)
 
-    def unprocessed_events(self) -> typing.Sequence[SerumEvent]:
-        unprocessed: typing.List[SerumEvent] = []
-        for index in range(int(self.count)):
-            modulo_index = (self.head + index) % self.capacity
-            event: typing.Optional[SerumEvent] = self.events[int(modulo_index)]
-            if event is None:
-                raise Exception(f"Event at index {index} should not be None.")
-            unprocessed += [event]
-        return unprocessed
-
-    def __str__(self):
-        events = "\n        ".join([f"{event}".replace("\n", "\n        ")
-                                    for event in self.events if event is not None]) or "None"
+    def __str__(self) -> str:
+        unprocessed_events = "\n        ".join([f"{event}".replace("\n", "\n        ")
+                                                for event in self.unprocessed_events if event is not None]) or "None"
+        processed_events = "\n        ".join([f"{event}".replace("\n", "\n        ")
+                                              for event in self.processed_events if event is not None]) or "None"
         return f"""« 𝚂𝚎𝚛𝚞𝚖𝙴𝚟𝚎𝚗𝚝𝚀𝚞𝚎𝚞𝚎 [{self.version}] {self.address}
     {self.account_flags}
     Head: {self.head}
     Count: {self.count}
     Sequence Number: {self.sequence_number}
     Capacity: {self.capacity}
-    Events:
-        {events}
+    Unprocessed Events:
+        {unprocessed_events}
+    Processed Events:
+        {processed_events}
 »"""
+
+
+# # 🥭 UnseenSerumEventChangesTracker class
+#
+# `UnseenSerumEventChangesTracker` tracks changes to a specific `SerumEventQueue`. When an updated
+# version of the `SerumEventQueue` is passed to `unseen()`, any new events are returned.
+#
+# Seen events are tracked by keeping a 'sequence_number' index of the last event seen in the
+# `SerumEventQueue` ringbuffer. When a new `SerumEventQueue` appears, the difference between its
+# sequence_number and the stored sequence_number is used to calculate the number of new events
+# to return.
+#
+class UnseenSerumEventChangesTracker:
+    def __init__(self, initial: SerumEventQueue):
+        self.last_sequence_number: Decimal = initial.sequence_number
+
+    def unseen(self, event_queue: SerumEventQueue) -> typing.Sequence[SerumEvent]:
+        unseen: typing.List[SerumEvent] = []
+        new_sequence_number: Decimal = event_queue.sequence_number
+        if self.last_sequence_number != new_sequence_number:
+            number_of_changes: Decimal = new_sequence_number - self.last_sequence_number
+            unseen = [*event_queue.processed_events, *event_queue.unprocessed_events][0 - int(number_of_changes):]
+            self.last_sequence_number = new_sequence_number
+
+        return unseen

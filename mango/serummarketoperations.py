@@ -46,11 +46,7 @@ class SerumMarketOperations(MarketOperations):
         self.logger.info(f"Cancelling {self.serum_market.symbol} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
-        open_orders_to_crank: typing.List[PublicKey] = []
-        for event in self.serum_market.unprocessed_events(self.context):
-            open_orders_to_crank += [event.public_key]
-
-        crank: CombinableInstructions = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank)
+        crank: CombinableInstructions = self._build_crank()
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
         return (signers + cancel + crank + settle).execute_and_unwrap_transaction_ids(self.context)
 
@@ -65,11 +61,7 @@ class SerumMarketOperations(MarketOperations):
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
             order_with_client_id)
 
-        open_orders_to_crank: typing.List[PublicKey] = []
-        for event in self.serum_market.unprocessed_events(self.context):
-            open_orders_to_crank += [event.public_key]
-        crank: CombinableInstructions = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank)
-
+        crank: CombinableInstructions = self._build_crank()
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
 
         (signers + place + crank + settle).execute(self.context)
@@ -82,10 +74,7 @@ class SerumMarketOperations(MarketOperations):
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        open_orders_to_crank: typing.List[PublicKey] = []
-        for event in self.serum_market.unprocessed_events(self.context):
-            open_orders_to_crank += [event.public_key]
-        crank = self.market_instruction_builder.build_crank_instructions(open_orders_to_crank, limit)
+        crank = self._build_crank(limit)
         return (signers + crank).execute(self.context)
 
     def load_orders(self) -> typing.Sequence[Order]:
@@ -98,6 +87,19 @@ class SerumMarketOperations(MarketOperations):
 
         all_orders = self.serum_market.orders(self.context)
         return list([o for o in all_orders if o.owner == open_orders_address])
+
+    def _build_crank(self, limit: Decimal = Decimal(32)) -> CombinableInstructions:
+        open_orders_to_crank: typing.List[PublicKey] = []
+        for event in self.serum_market.unprocessed_events(self.context):
+            open_orders_to_crank += [event.public_key]
+
+        if len(open_orders_to_crank) == 0:
+            return CombinableInstructions.empty()
+
+        if self.market_instruction_builder.open_orders_address is not None:
+            open_orders_to_crank += [self.market_instruction_builder.open_orders_address]
+
+        return self.market_instruction_builder.build_crank_instructions(open_orders_to_crank, limit)
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.serum_market.symbol}] »"""

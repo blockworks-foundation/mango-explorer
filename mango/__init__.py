@@ -46,9 +46,11 @@ from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarketoperations import PerpMarketOperations
 from .perpopenorders import PerpOpenOrders
 from .placedorder import PlacedOrder, PlacedOrdersContainer
+from .publickey import encode_public_key_for_sorting
 from .reconnectingwebsocket import ReconnectingWebsocket
 from .retrier import RetryWithPauses, retry_context
 from .rootbank import NodeBank, RootBank
+from .serumeventqueue import SerumEventQueue, UnseenSerumEventChangesTracker
 from .serummarket import SerumMarket, SerumMarketStub
 from .serummarketlookup import SerumMarketLookup
 from .serummarketinstructionbuilder import SerumMarketInstructionBuilder

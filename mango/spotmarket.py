@@ -43,7 +43,7 @@ class SpotMarket(Market):
 
     def unprocessed_events(self, context: Context) -> typing.Sequence[SerumEvent]:
         event_queue: SerumEventQueue = SerumEventQueue.load(context, self.underlying_serum_market.state.event_queue())
-        return event_queue.unprocessed_events()
+        return event_queue.unprocessed_events
 
     def orders(self, context: Context) -> typing.Sequence[Order]:
         raw_market = self.underlying_serum_market

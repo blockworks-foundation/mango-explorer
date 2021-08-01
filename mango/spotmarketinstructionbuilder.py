@@ -26,6 +26,7 @@ from .group import Group
 from .instructions import build_serum_consume_events_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions, build_spot_settle_instructions, build_spot_openorders_instructions
 from .marketinstructionbuilder import MarketInstructionBuilder
 from .orders import Order
+from .publickey import encode_public_key_for_sorting
 from .spotmarket import SpotMarket
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
@@ -108,10 +109,18 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
     def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         if self.open_orders_address is None:
             return CombinableInstructions.empty()
-        all_open_orders_addresses: typing.List[PublicKey] = list(open_orders_addresses) + [self.open_orders_address]
-        all_open_orders_addresses.sort(key=lambda address: address._key or [0])
 
-        return build_serum_consume_events_instructions(self.context, self.spot_market.address, self.raw_market.state.event_queue(), all_open_orders_addresses, int(limit))
+        distinct_open_orders_addresses: typing.List[PublicKey] = []
+        for oo in open_orders_addresses:
+            if oo not in distinct_open_orders_addresses:
+                distinct_open_orders_addresses += [oo]
+
+        limited_open_orders_addresses = distinct_open_orders_addresses[0:min(
+            int(limit), len(distinct_open_orders_addresses))]
+
+        limited_open_orders_addresses.sort(key=encode_public_key_for_sorting)
+
+        return build_serum_consume_events_instructions(self.context, self.spot_market.address, self.raw_market.state.event_queue(), limited_open_orders_addresses, int(limit))
 
     def build_create_openorders_instructions(self) -> CombinableInstructions:
         return build_spot_openorders_instructions(self.context, self.wallet, self.group, self.account, self.raw_market)
