@@ -47,7 +47,7 @@ class TstPE(mango.PerpEvent):
     def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
         return []
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"« TstPE [{self.event_type}] »"
 
 

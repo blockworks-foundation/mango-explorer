@@ -49,5 +49,5 @@ class InstructionType(enum.IntEnum):
     SettlePnl = 22
     SettleBorrow = 23
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name

@@ -48,7 +48,7 @@ class LiquidationProcessorState(enum.Enum):
     HEALTHY = enum.auto()
     UNHEALTHY = enum.auto()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 

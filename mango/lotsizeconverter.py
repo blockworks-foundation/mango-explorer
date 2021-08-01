@@ -43,7 +43,7 @@ class LotSizeConverter():
     def quantity_lots_to_value(self, quantity_lots: Decimal) -> Decimal:
         return (quantity_lots * self.base_lot_size) / (10 ** self.base.decimals)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"« 𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 [base lot size: {self.base_lot_size}, quote lot size: {self.quote_lot_size}] »"
 
     def __repr__(self) -> str:
@@ -70,5 +70,5 @@ class NullLotSizeConverter(LotSizeConverter):
     def quantity_lots_to_value(self, quantity_lots: Decimal) -> Decimal:
         return quantity_lots
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "« 𝙽𝚞𝚕𝚕𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 »"

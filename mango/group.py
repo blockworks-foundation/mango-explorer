@@ -155,7 +155,7 @@ class Group(AddressableAccount):
                 balances += [balance]
         return balances
 
-    def __str__(self):
+    def __str__(self) -> str:
         def _render_list(items, stub):
             rendered = []
             for index, item in enumerate(items):

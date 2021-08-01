@@ -118,7 +118,7 @@ class OrderBookSide(AddressableAccount):
                 else:
                     stack = [node.children[1], node.children[0], *stack]
 
-    def __str__(self):
+    def __str__(self) -> str:
         nodes = "\n        ".join([str(node).replace("\n", "\n        ") for node in self.orders()])
         return f"""« 𝙾𝚛𝚍𝚎𝚛𝙱𝚘𝚘𝚔𝚂𝚒𝚍𝚎 {self.version} [{self.address}]
     {self.meta_data}

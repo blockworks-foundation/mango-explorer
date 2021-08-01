@@ -54,7 +54,7 @@ class TokenInfo():
 
         return TokenInfo.from_layout(layout, token_lookup, root_banks)
 
-    def __str__(self):
+    def __str__(self) -> str:
         root_bank = f"{self.root_bank}".replace("\n", "\n    ")
         return f"""« 𝚃𝚘𝚔𝚎𝚗𝙸𝚗𝚏𝚘 {self.token}
     {root_bank}

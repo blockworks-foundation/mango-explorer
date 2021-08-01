@@ -85,7 +85,7 @@ class SerumEvent:
                           layout.native_quantity_released, layout.native_quantity_paid, layout.native_fee_or_rebate,
                           layout.order_id, layout.public_key, layout.client_order_id)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""« 𝚂𝚎𝚛𝚞𝚖𝙴𝚟𝚎𝚗𝚝 {self.event_flags}
     Original Index: {self.original_index}
     Order ID: {self.order_id}

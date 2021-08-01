@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+from mango.tokeninfo import TokenInfo
 import typing
 
 from decimal import Decimal
@@ -142,7 +143,7 @@ class Account(AddressableAccount):
             raise Exception(f"Could not find Mango account at index {account_index} for owner '{owner}'.")
         return accounts[account_index]
 
-    def __str__(self):
+    def __str__(self) -> str:
         def _render_list(items, stub):
             rendered = []
             for index, item in enumerate(items):
@@ -153,14 +154,18 @@ class Account(AddressableAccount):
         available_borrow_count = len([borrow for borrow in self.borrows if borrow is not None])
         borrows = "\n        ".join(_render_list(self.borrows, "« No Borrow »"))
         net_assets = "\n        ".join(_render_list(self.net_assets, "« No Net Assets »"))
-        spot_open_orders = ", ".join([f"{oo}" for oo in self.spot_open_orders if oo is not None])
+        spot_open_orders = ", ".join([f"{oo}" for oo in self.spot_open_orders if oo is not None]) or "None"
         perp_accounts = ", ".join(
-            [f"{perp}".replace("\n", "\n        ") for perp in self.perp_accounts if perp.open_orders.free_slot_bits != 0xFFFFFFFF])
-        indices_in_basket = []
+            [f"{perp}".replace("\n", "\n        ") for perp in self.perp_accounts if perp.open_orders.free_slot_bits != 0xFFFFFFFF]) or "None"
+        symbols_in_basket: typing.List[str] = []
         for index, value in enumerate(self.in_margin_basket):
             if value != 0:
-                indices_in_basket += [index]
-        in_margin_basket = ", ".join([f"{self.group.tokens[index].token.symbol}" for index in indices_in_basket])
+                token_info: typing.Optional[TokenInfo] = self.group.tokens[index]
+                if token_info is None:
+                    symbols_in_basket += ["UNKNOWN"]
+                else:
+                    symbols_in_basket += [token_info.token.symbol]
+        in_margin_basket = ", ".join(symbols_in_basket) or "None"
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {self.version} [{self.address}]
     {self.meta_data}
     Owner: {self.owner}

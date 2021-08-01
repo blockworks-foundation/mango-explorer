@@ -115,7 +115,7 @@ class Order(typing.NamedTuple):
     def from_ids(id: int, client_id: int, side: Side = Side.BUY) -> "Order":
         return Order(id=id, client_id=client_id, owner=SYSTEM_PROGRAM_ADDRESS, side=side, price=Decimal(0), quantity=Decimal(0), order_type=OrderType.UNKNOWN)
 
-    def __str__(self):
+    def __str__(self) -> str:
         owner: str = ""
         if self.owner != SYSTEM_PROGRAM_ADDRESS:
             owner = f"[{self.owner}] "

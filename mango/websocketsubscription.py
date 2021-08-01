@@ -116,7 +116,7 @@ class LogEvent:
         logs = response["result"]["value"]["logs"]
         return LogEvent(signatures, logs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         logs = "\n    ".join(self.logs)
         return f"""« 𝙻𝚘𝚐𝙴𝚟𝚎𝚗𝚝 {self.signatures}
     {logs}

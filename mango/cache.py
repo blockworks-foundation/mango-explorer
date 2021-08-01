@@ -44,7 +44,7 @@ class PriceCache:
             return None
         return PriceCache(layout.price, layout.last_update)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"« 𝙿𝚛𝚒𝚌𝚎𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.price:,.8f} »"
 
     def __repr__(self) -> str:
@@ -63,7 +63,7 @@ class RootBankCache:
             return None
         return RootBankCache(layout.deposit_index, layout.borrow_index, layout.last_update)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"« 𝚁𝚘𝚘𝚝𝙱𝚊𝚗𝚔𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.deposit_index:,.8f} / {self.borrow_index:,.8f} »"
 
     def __repr__(self) -> str:
@@ -82,7 +82,7 @@ class PerpMarketCache:
             return None
         return PerpMarketCache(layout.long_funding, layout.short_funding, layout.last_update)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.long_funding:,.8f} / {self.short_funding:,.8f} »"
 
     def __repr__(self) -> str:
@@ -136,7 +136,7 @@ class Cache(AddressableAccount):
             raise Exception(f"Cache account not found at address '{address}'")
         return Cache.parse(account_info)
 
-    def __str__(self):
+    def __str__(self) -> str:
         def _render_list(items, stub):
             rendered = []
             for index, item in enumerate(items):

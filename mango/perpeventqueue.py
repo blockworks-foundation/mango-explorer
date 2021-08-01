@@ -81,7 +81,7 @@ class PerpFillEvent(PerpEvent):
     def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
         return [self.maker, self.taker]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""« 𝙿𝚎𝚛𝚙𝙵𝚒𝚕𝚕𝙴𝚟𝚎𝚗𝚝 [{self.original_index}] [{self.timestamp}] {self.side} {self.quantity:,.8f} at {self.price:,.8f}
     Maker: {self.maker}, {self.maker_order_id} / {self.maker_client_order_id}
     Taker: {self.taker}, {self.taker_order_id} / {self.taker_client_order_id}
@@ -108,7 +108,7 @@ class PerpOutEvent(PerpEvent):
     def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
         return [self.owner]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""« 𝙿𝚎𝚛𝚙𝙾𝚞𝚝𝙴𝚟𝚎𝚗𝚝 [{self.original_index}] [{self.owner}] {self.side} {self.quantity}, slot: {self.slot} »"""
 
 
@@ -126,7 +126,7 @@ class PerpUnknownEvent(PerpEvent):
     def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
         return [self.owner]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"« 𝙿𝚎𝚛𝚙𝚄𝚗𝚔𝚗𝚘𝚠𝚗𝙴𝚟𝚎𝚗𝚝 [{self.original_index}] [{self.owner}] »"
 
 

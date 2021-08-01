@@ -70,11 +70,11 @@ class NodeBank(AddressableAccount):
             raise Exception(f"NodeBank account not found at address '{address}'")
         return NodeBank.parse(account_info)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""« 𝙽𝚘𝚍𝚎𝙱𝚊𝚗𝚔 [{self.version}] {self.address}
     {self.meta_data}
-    Deposit: {self.deposit}
-    Borrow: {self.borrow}
+    Deposit: {self.deposits}
+    Borrow: {self.borrows}
     Vault: {self.vault}
 »"""
 
@@ -154,7 +154,7 @@ class RootBank(AddressableAccount):
 
         return found[0]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""« 𝚁𝚘𝚘𝚝𝙱𝚊𝚗𝚔 [{self.version}] {self.address}
     {self.meta_data}
     Node Banks:

@@ -37,7 +37,7 @@ class Metadata():
         is_initialized = bool(layout.is_initialized)
         return Metadata(layout.data_type, version, is_initialized)
 
-    def __str__(self):
+    def __str__(self) -> str:
         init = "Initialized" if self.is_initialized else "Not Initialized"
         return f"« 𝙼𝚎𝚝𝚊𝚍𝚊𝚝𝚊 {self.version} - {self.data_type}: {init} »"
 

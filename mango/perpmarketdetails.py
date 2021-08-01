@@ -51,7 +51,7 @@ class LiquidityMiningInfo:
         return LiquidityMiningInfo(version, rate, max_depth_bps, period_start, target_period_length,
                                    mngo_left, mngo_per_period)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""« 𝙻𝚒𝚚𝚞𝚒𝚍𝚒𝚝𝚢𝙼𝚒𝚗𝚒𝚗𝚐𝙸𝚗𝚏𝚘 {self.version}
     Rate: {self.rate}
     Max Depth Bps: {self.max_depth_bps}
@@ -146,7 +146,7 @@ class PerpMarketDetails(AddressableAccount):
             raise Exception(f"PerpMarketDetails account not found at address '{address}'")
         return PerpMarketDetails.parse(account_info, group)
 
-    def __str__(self):
+    def __str__(self) -> str:
         liquidity_mining_info: str = f"{self.liquidity_mining_info}".replace("\n", "\n        ")
         return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙳𝚎𝚝𝚊𝚒𝚕𝚜 {self.version} [{self.address}]
     {self.meta_data}

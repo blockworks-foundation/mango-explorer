@@ -45,7 +45,7 @@ class PerpMarketInfo():
 
         return PerpMarketInfo.from_layout(layout)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚏𝚘 [{self.address}]
     Asset Weights: {self.init_asset_weight} / {self.maint_asset_weight}
     Liability Weights: {self.init_liab_weight} / {self.maint_liab_weight}
