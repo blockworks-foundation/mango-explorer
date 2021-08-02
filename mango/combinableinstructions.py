@@ -133,6 +133,19 @@ class CombinableInstructions():
 
         return results
 
+    def execute_individually_and_continue_on_failures(self, context: Context) -> typing.Any:
+        results = []
+        for instruction in self.instructions:
+            transaction = Transaction()
+            transaction.instructions += [instruction]
+            try:
+                response = context.client.send_transaction(transaction, *self.signers, opts=context.transaction_options)
+                results += [context.unwrap_or_raise_exception(response)]
+            except:
+                self.logger.error(f"Error executing individual instruction {instruction}")
+
+        return results
+
     def execute_and_continue_on_failures(self, context: Context) -> typing.Any:
         chunks: typing.Sequence[typing.Sequence[TransactionInstruction]
                                 ] = _split_instructions_into_chunks(self.signers, self.instructions)
