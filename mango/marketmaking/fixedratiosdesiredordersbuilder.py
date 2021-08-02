@@ -41,29 +41,26 @@ class FixedRatiosDesiredOrdersBuilder(DesiredOrdersBuilder):
 
     def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
-        inventory: typing.Sequence[typing.Optional[mango.TokenValue]] = model_state.account.net_assets
-        base_tokens: mango.TokenValue = mango.TokenValue.find_by_token(inventory, price.market.base)
-        quote_tokens: mango.TokenValue = mango.TokenValue.find_by_token(inventory, price.market.quote)
+        base_tokens: mango.TokenValue = model_state.inventory.base
+        quote_tokens: mango.TokenValue = model_state.inventory.quote
 
         total = (base_tokens.value * price.mid_price) + quote_tokens.value
 
         orders: typing.List[mango.Order] = []
         for counter in range(len(self.spread_ratios)):
             position_size_ratio = self.position_size_ratios[counter]
+            quote_value_to_risk = total * position_size_ratio
+            base_position_size = quote_value_to_risk / price.mid_price
+
             spread_ratio = self.spread_ratios[counter]
-
-            position_size = total * position_size_ratio
-            buy_quantity: Decimal = position_size / price.mid_price
-            sell_quantity: Decimal = position_size / price.mid_price
-
             bid: Decimal = price.mid_price - (price.mid_price * spread_ratio)
             ask: Decimal = price.mid_price + (price.mid_price * spread_ratio)
 
             orders += [
                 mango.Order.from_basic_info(mango.Side.BUY, price=bid,
-                                            quantity=buy_quantity, order_type=self.order_type),
+                                            quantity=base_position_size, order_type=self.order_type),
                 mango.Order.from_basic_info(mango.Side.SELL, price=ask,
-                                            quantity=sell_quantity, order_type=self.order_type)
+                                            quantity=base_position_size, order_type=self.order_type)
             ]
 
         return orders

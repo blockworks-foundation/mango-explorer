@@ -42,24 +42,24 @@ class ConfidenceIntervalDesiredOrdersBuilder(DesiredOrdersBuilder):
         if price.source.supports & mango.SupportedOracleFeature.CONFIDENCE == 0:
             raise Exception(f"Price does not support confidence interval: {price}")
 
-        inventory: typing.Sequence[typing.Optional[mango.TokenValue]] = model_state.account.net_assets
-        base_tokens: mango.TokenValue = mango.TokenValue.find_by_token(inventory, price.market.base)
-        quote_tokens: mango.TokenValue = mango.TokenValue.find_by_token(inventory, price.market.quote)
+        base_tokens: mango.TokenValue = model_state.inventory.base
+        quote_tokens: mango.TokenValue = model_state.inventory.quote
 
         total = (base_tokens.value * price.mid_price) + quote_tokens.value
-        position_size_value = total * self.position_size_ratio
-        position_size = position_size_value / price.mid_price
+        quote_value_to_risk = total * self.position_size_ratio
+        base_position_size = quote_value_to_risk / price.mid_price
 
         # From Daffy on 26th July 2021: max(pyth_conf * 2, price * min_charge)
+        # (Private chat link: https://discord.com/channels/@me/832570058861314048/869208592648134666)
         charge = max(price.confidence * self.confidence_weighting, price.mid_price * self.min_price_ratio)
         bid: Decimal = price.mid_price - charge
         ask: Decimal = price.mid_price + charge
 
         orders: typing.List[mango.Order] = [
             mango.Order.from_basic_info(mango.Side.BUY, price=bid,
-                                        quantity=position_size, order_type=self.order_type),
+                                        quantity=base_position_size, order_type=self.order_type),
             mango.Order.from_basic_info(mango.Side.SELL, price=ask,
-                                        quantity=position_size, order_type=self.order_type)
+                                        quantity=base_position_size, order_type=self.order_type)
         ]
 
         return orders

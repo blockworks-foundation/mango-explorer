@@ -18,29 +18,28 @@ import logging
 import mango
 import typing
 
+
 # # 🥭 ModelState class
 #
 # Provides simple access to the latest state of market and account data.
 #
-
-
 class ModelState:
     def __init__(self, market: mango.Market,
-                 account_watcher: mango.LatestItemObserverSubscriber[mango.Account],
-                 group_watcher: mango.LatestItemObserverSubscriber[mango.Group],
-                 price_watcher: mango.LatestItemObserverSubscriber[mango.Price],
-                 perp_market_watcher: typing.Optional[mango.LatestItemObserverSubscriber[mango.PerpMarketDetails]],
-                 placed_orders_container_watcher: mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer]
+                 account_watcher: mango.Watcher[mango.Account],
+                 group_watcher: mango.Watcher[mango.Group],
+                 price_watcher: mango.Watcher[mango.Price],
+                 placed_orders_container_watcher: mango.Watcher[mango.PlacedOrdersContainer],
+                 inventory_watcher: mango.Watcher[mango.Inventory]
                  ):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.market: mango.Market = market
-        self.account_watcher: mango.LatestItemObserverSubscriber[mango.Account] = account_watcher
-        self.group_watcher: mango.LatestItemObserverSubscriber[mango.Group] = group_watcher
-        self.price_watcher: mango.LatestItemObserverSubscriber[mango.Price] = price_watcher
-        self.perp_market_watcher: typing.Optional[mango.LatestItemObserverSubscriber[mango.PerpMarketDetails]
-                                                  ] = perp_market_watcher
-        self.placed_orders_container_watcher: mango.LatestItemObserverSubscriber[
+        self.account_watcher: mango.Watcher[mango.Account] = account_watcher
+        self.group_watcher: mango.Watcher[mango.Group] = group_watcher
+        self.price_watcher: mango.Watcher[mango.Price] = price_watcher
+        self.placed_orders_container_watcher: mango.Watcher[
             mango.PlacedOrdersContainer] = placed_orders_container_watcher
+        self.inventory_watcher: mango.Watcher[
+            mango.Inventory] = inventory_watcher
 
     @property
     def group(self) -> mango.Group:
@@ -51,14 +50,16 @@ class ModelState:
         return self.account_watcher.latest
 
     @property
-    def perp_market(self) -> typing.Optional[mango.PerpMarketDetails]:
-        if self.perp_market_watcher is None:
-            return None
-        return self.perp_market_watcher.latest
-
-    @property
     def price(self) -> mango.Price:
         return self.price_watcher.latest
+
+    @property
+    def placed_orders_container(self) -> mango.PlacedOrdersContainer:
+        return self.placed_orders_container_watcher.latest
+
+    @property
+    def inventory(self) -> mango.Inventory:
+        return self.inventory_watcher.latest
 
     @property
     def existing_orders(self) -> typing.Sequence[mango.PlacedOrder]:
