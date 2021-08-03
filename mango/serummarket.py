@@ -53,7 +53,14 @@ class SerumMarket(Market):
         return list(map(Order.from_serum_order, itertools.chain(bids_orderbook.orders(), asks_orderbook.orders())))
 
     def __str__(self) -> str:
-        return f"« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}] »"
+        return f"""« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}]
+    Event Queue: {self.underlying_serum_market.state.event_queue()}
+    Request Queue: {self.underlying_serum_market.state.request_queue()}
+    Bids: {self.underlying_serum_market.state.bids()}
+    Asks: {self.underlying_serum_market.state.asks()}
+    Base: [lot size: {self.underlying_serum_market.state.base_lot_size()}] {self.underlying_serum_market.state.base_mint()}
+    Quote: [lot size: {self.underlying_serum_market.state.quote_lot_size()}] {self.underlying_serum_market.state.quote_mint()}
+»"""
 
 
 # # 🥭 SerumMarketStub class

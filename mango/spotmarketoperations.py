@@ -52,9 +52,6 @@ class SpotMarketOperations(MarketOperations):
         self.logger.info(f"Cancelling {self.spot_market.symbol} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
-        open_orders_to_crank: typing.List[PublicKey] = []
-        for event in self.spot_market.unprocessed_events(self.context):
-            open_orders_to_crank += [event.public_key]
         crank: CombinableInstructions = self._build_crank()
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
 
@@ -69,13 +66,10 @@ class SpotMarketOperations(MarketOperations):
         self.logger.info(f"Placing {self.spot_market.symbol} order {order}.")
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
             order_with_client_id)
-        open_orders_to_crank: typing.List[PublicKey] = []
-        for event in self.spot_market.unprocessed_events(self.context):
-            open_orders_to_crank += [event.public_key]
         crank: CombinableInstructions = self._build_crank()
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
 
-        (signers + place + crank + settle).execute(self.context)
+        (signers + place + crank + settle).execute_individually_and_continue_on_failures(self.context)
 
         return order_with_client_id
 
