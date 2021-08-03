@@ -121,8 +121,9 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         if self.open_orders_address is None:
             return CombinableInstructions.empty()
 
+        open_orders_to_crank: typing.Sequence[PublicKey] = [*open_orders_addresses, self.open_orders_address]
         distinct_open_orders_addresses: typing.List[PublicKey] = []
-        for oo in open_orders_addresses:
+        for oo in open_orders_to_crank:
             if oo not in distinct_open_orders_addresses:
                 distinct_open_orders_addresses += [oo]
 

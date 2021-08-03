@@ -109,9 +109,6 @@ class SpotMarketOperations(MarketOperations):
         if len(open_orders_to_crank) == 0:
             return CombinableInstructions.empty()
 
-        if self.market_instruction_builder.open_orders_address is not None:
-            open_orders_to_crank += [self.market_instruction_builder.open_orders_address]
-
         return self.market_instruction_builder.build_crank_instructions(open_orders_to_crank, limit)
 
     def __str__(self) -> str:
