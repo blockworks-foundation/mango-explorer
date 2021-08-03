@@ -54,7 +54,7 @@ class Context:
         self.group_name: str = group_name
         self.group_id: PublicKey = group_id
         self.commitment: Commitment = Commitment("processed")
-        self.transaction_options: TxOpts = TxOpts(preflight_commitment=self.commitment)
+        self.skip_preflight: bool = False
         self.encoding: str = "base64"
         self.token_lookup: TokenLookup = token_lookup
         self.market_lookup: MarketLookup = market_lookup
@@ -67,6 +67,13 @@ class Context:
     @property
     def pool_scheduler(self) -> ThreadPoolScheduler:
         return _pool_scheduler
+
+    @property
+    def transaction_options(self) -> TxOpts:
+        # Make this a property rather than a member so that folks can update
+        # `commitment` and `skip_preflight` values in the `Context` they have
+        # and the changed values take effect in the next API call.
+        return TxOpts(preflight_commitment=self.commitment, skip_preflight=self.skip_preflight)
 
     def fetch_sol_balance(self, account_public_key: PublicKey) -> Decimal:
         result = self.client.get_balance(account_public_key, commitment=self.commitment)

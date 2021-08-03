@@ -28,6 +28,15 @@ _MAXIMUM_TRANSACTION_LENGTH = 1280 - 40 - 8
 _SIGNATURE_LENGTH = 64
 
 
+def _instruction_to_str(instruction: TransactionInstruction) -> str:
+    report: typing.List[str] = []
+    for index, key in enumerate(instruction.keys):
+        report += [f"Key[{index}]: {key.pubkey} {key.is_signer: <5} {key.is_writable: <5}"]
+    report += [f"Program ID: {instruction.program_id}"]
+    report += ["Data: " + "".join("{:02x}".format(x) for x in instruction.data)]
+    return "\n".join(report)
+
+
 def _split_instructions_into_chunks(signers: typing.Sequence[SolanaAccount], instructions: typing.Sequence[TransactionInstruction]) -> typing.Sequence[typing.Sequence[TransactionInstruction]]:
     vetted_chunks: typing.List[typing.List[TransactionInstruction]] = []
     current_chunk: typing.List[TransactionInstruction] = []
@@ -137,12 +146,14 @@ class CombinableInstructions():
         results = []
         for instruction in self.instructions:
             transaction = Transaction()
-            transaction.instructions += [instruction]
+            transaction.instructions = [instruction]
             try:
                 response = context.client.send_transaction(transaction, *self.signers, opts=context.transaction_options)
                 results += [context.unwrap_or_raise_exception(response)]
-            except:
-                self.logger.error(f"Error executing individual instruction {instruction}")
+            except Exception as exception:
+                instruction_str: str = _instruction_to_str(instruction)
+                self.logger.error(f"""Error executing individual instruction: {exception}
+{instruction_str}""")
 
         return results
 
@@ -166,8 +177,9 @@ class CombinableInstructions():
                 results += [context.unwrap_or_raise_exception(response)]
             except:
                 starts_at = sum(len(ch) for ch in chunks[0:index])
-                self.logger.error(f"""Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction:
-{self}""")
+                instruction_text = list(map(_instruction_to_str, chunk))
+                self.logger.error(f"""Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction. Failing instruction(s):
+{instruction_text}""")
 
         return results
 
@@ -179,11 +191,8 @@ class CombinableInstructions():
         for index, signer in enumerate(self.signers):
             report += [f"Signer[{index}]: {signer.public_key()}"]
 
-        for index, instruction in enumerate(self.instructions):
-            for index, key in enumerate(instruction.keys):
-                report += [f"Key[{index}]: {key.pubkey} {key.is_signer: <5} {key.is_writable: <5}"]
-            report += [f"Program ID: {instruction.program_id}"]
-            report += ["Data: " + "".join("{:02x}".format(x) for x in instruction.data)]
+        for instruction in self.instructions:
+            report += _instruction_to_str(instruction)
 
         return "\n".join(report)
 
