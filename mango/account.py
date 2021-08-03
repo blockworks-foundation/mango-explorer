@@ -32,12 +32,16 @@ from .tokenvalue import TokenValue
 from .version import Version
 
 
+# # 🥭 AccountBasketToken class
+#
+# `AccountBasketToken` gathers basket items together instead of separate arrays.
+#
 class AccountBasketToken:
-    def __init__(self, token_info: TokenInfo, deposit: TokenValue, borrow: TokenValue, spot_open_orders: PublicKey, perp_account: PerpAccount):
+    def __init__(self, token_info: TokenInfo, deposit: TokenValue, borrow: TokenValue, spot_open_orders: typing.Optional[PublicKey], perp_account: PerpAccount):
         self.token_info: TokenInfo = token_info
         self.deposit: TokenValue = deposit
         self.borrow: TokenValue = borrow
-        self.spot_open_orders: PublicKey = spot_open_orders
+        self.spot_open_orders: typing.Optional[PublicKey] = spot_open_orders
         self.perp_account: PerpAccount = perp_account
 
     @property
@@ -59,6 +63,7 @@ class AccountBasketToken:
 
     def __repr__(self) -> str:
         return f"{self}"
+
 
 # # 🥭 Account class
 #

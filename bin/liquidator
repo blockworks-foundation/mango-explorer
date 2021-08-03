@@ -143,7 +143,8 @@ try:
     oracle_addresses = group.oracles
 
     def load_updated_price_details() -> typing.Tuple[mango.Group, typing.Sequence[mango.TokenValue]]:
-        all_addresses = [group_address, *oracle_addresses]
+        oracles = [oracle_address for oracle_address in oracle_addresses if oracle_address is not None]
+        all_addresses = [group_address, *oracles]
         all_account_infos = mango.AccountInfo.load_multiple(context, all_addresses)
         group_account_info = all_account_infos[0]
         group = mango.Group.parse(context, group_account_info)

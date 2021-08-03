@@ -107,7 +107,7 @@ class RootBank(AddressableAccount):
 
     @staticmethod
     def from_layout(layout: layouts.ROOT_BANK, account_info: AccountInfo, version: Version) -> "RootBank":
-        meta_data: Metadata = layout.meta_data
+        meta_data: Metadata = Metadata.from_layout(layout.meta_data)
         num_node_banks: Decimal = layout.num_node_banks
         node_banks: typing.Sequence[PublicKey] = layout.node_banks[0:int(num_node_banks)]
         deposit_index: Decimal = layout.deposit_index

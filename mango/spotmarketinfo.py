@@ -19,7 +19,6 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .layouts import layouts
-from .marketlookup import MarketLookup
 
 
 # # 🥭 SpotMarketInfo class
@@ -34,19 +33,28 @@ class SpotMarketInfo():
         self.maint_liab_weight: Decimal = maint_liab_weight
         self.init_liab_weight: Decimal = init_liab_weight
 
-    def from_layout(layout: layouts.SPOT_MARKET_INFO, market_lookup: MarketLookup) -> "SpotMarketInfo":
-        return SpotMarketInfo(layout.spot_market, layout.maint_asset_weight, layout.init_asset_weight, layout.maint_liab_weight, layout.init_liab_weight)
+    def from_layout(layout: layouts.SPOT_MARKET_INFO) -> "SpotMarketInfo":
+        spot_market: PublicKey = layout.spot_market
+        maint_asset_weight: Decimal = round(layout.maint_asset_weight, 8)
+        init_asset_weight: Decimal = round(layout.init_asset_weight, 8)
+        maint_liab_weight: Decimal = round(layout.maint_liab_weight, 8)
+        init_liab_weight: Decimal = round(layout.init_liab_weight, 8)
+        return SpotMarketInfo(spot_market, maint_asset_weight, init_asset_weight, maint_liab_weight, init_liab_weight)
 
-    def from_layout_or_none(layout: layouts.SPOT_MARKET_INFO, market_lookup: MarketLookup) -> typing.Optional["SpotMarketInfo"]:
+    def from_layout_or_none(layout: layouts.SPOT_MARKET_INFO) -> typing.Optional["SpotMarketInfo"]:
         if layout.spot_market is None:
             return None
 
-        return SpotMarketInfo.from_layout(layout, market_lookup)
+        return SpotMarketInfo.from_layout(layout)
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚏𝚘 [{self.address}]
-    Asset Weights: {self.init_asset_weight} / {self.maint_asset_weight}
-    Liability Weights: {self.init_liab_weight} / {self.maint_liab_weight}
+    Asset Weights:
+        Initial: {self.init_asset_weight}
+        Maintenance: {self.maint_asset_weight}
+    Liability Weights:
+        Initial: {self.init_liab_weight}
+        Maintenance: {self.maint_liab_weight}
 »"""
 
     def __repr__(self) -> str:

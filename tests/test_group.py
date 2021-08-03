@@ -9,10 +9,9 @@ def test_construction():
     account_info = fake_account_info()
     name = "FAKE_GROUP"
     meta_data = mango.Metadata(layouts.DATA_TYPE.Group, mango.Version.V1, True)
-    token_infos = [fake_token_info(), fake_token_info(), fake_token_info()]
-    spot_markets = []
-    perp_markets = []
-    oracles = []
+    shared_quote_token = fake_token_info()
+    in_basket = []
+    basket_markets = []
     signer_nonce = Decimal(1)
     signer_key = fake_seeded_public_key("signer key")
     admin_key = fake_seeded_public_key("admin key")
@@ -23,19 +22,17 @@ def test_construction():
     srm_vault = fake_seeded_public_key("SRM vault")
     msrm_vault = fake_seeded_public_key("MSRM vault")
 
-    actual = mango.Group(account_info, mango.Version.V1, name, meta_data, token_infos,
-                         spot_markets, perp_markets, oracles, signer_nonce, signer_key,
-                         admin_key, dex_program_id, cache_key, valid_interval, dao_vault,
-                         srm_vault, msrm_vault)
+    actual = mango.Group(account_info, mango.Version.V1, name, meta_data, shared_quote_token,
+                         in_basket, basket_markets, signer_nonce, signer_key, admin_key,
+                         dex_program_id, cache_key, valid_interval, dao_vault, srm_vault, msrm_vault)
 
     assert actual is not None
     assert actual.logger is not None
     assert actual.name == name
     assert actual.meta_data == meta_data
-    assert actual.tokens == token_infos
-    assert actual.spot_markets == spot_markets
-    assert actual.perp_markets == perp_markets
-    assert actual.oracles == oracles
+    assert actual.shared_quote_token == shared_quote_token
+    assert actual.basket_indices == in_basket
+    assert actual.basket == basket_markets
     assert actual.signer_nonce == signer_nonce
     assert actual.signer_key == signer_key
     assert actual.admin == admin_key

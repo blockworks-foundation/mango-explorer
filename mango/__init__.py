@@ -15,7 +15,7 @@ from .createmarketinstructionbuilder import create_market_instruction_builder
 from .createmarketoperations import create_market_operations
 from .encoding import decode_binary, encode_binary, encode_key, encode_int
 from .ensuremarketloaded import ensure_market_loaded
-from .group import Group
+from .group import GroupBasketMarket, Group
 from .idsjsontokenlookup import IdsJsonTokenLookup
 from .idsjsonmarketlookup import IdsJsonMarketLookup
 from .inventory import Inventory, InventoryAccountWatcher, spl_token_inventory_loader, account_inventory_loader

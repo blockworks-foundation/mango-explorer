@@ -37,7 +37,15 @@ class PerpMarketInfo():
         self.quote_lot_size: Decimal = quote_lot_size
 
     def from_layout(layout: layouts.PERP_MARKET_INFO) -> "PerpMarketInfo":
-        return PerpMarketInfo(layout.perp_market, layout.maint_asset_weight, layout.init_asset_weight, layout.maint_liab_weight, layout.init_liab_weight, layout.liquidation_fee, layout.base_lot_size, layout.quote_lot_size)
+        perp_market: PublicKey = layout.perp_market
+        maint_asset_weight: Decimal = round(layout.maint_asset_weight, 8)
+        init_asset_weight: Decimal = round(layout.init_asset_weight, 8)
+        maint_liab_weight: Decimal = round(layout.maint_liab_weight, 8)
+        init_liab_weight: Decimal = round(layout.init_liab_weight, 8)
+        liquidation_fee: Decimal = round(layout.liquidation_fee, 8)
+        base_lot_size: Decimal = layout.base_lot_size
+        quote_lot_size: Decimal = layout.quote_lot_size
+        return PerpMarketInfo(perp_market, maint_asset_weight, init_asset_weight, maint_liab_weight, init_liab_weight, liquidation_fee, base_lot_size, quote_lot_size)
 
     def from_layout_or_none(layout: layouts.PERP_MARKET_INFO) -> typing.Optional["PerpMarketInfo"]:
         if layout.perp_market is None:
@@ -47,8 +55,12 @@ class PerpMarketInfo():
 
     def __str__(self) -> str:
         return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚏𝚘 [{self.address}]
-    Asset Weights: {self.init_asset_weight} / {self.maint_asset_weight}
-    Liability Weights: {self.init_liab_weight} / {self.maint_liab_weight}
+    Asset Weights:
+        Initial: {self.init_asset_weight}
+        Maintenance: {self.maint_asset_weight}
+    Liability Weights:
+        Initial: {self.init_liab_weight}
+        Maintenance: {self.maint_liab_weight}
     Liquidation Fee: {self.liquidation_fee}
     Base Lot Size: {self.base_lot_size}
     Quote Lot Size: {self.quote_lot_size}

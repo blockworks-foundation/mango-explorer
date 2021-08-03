@@ -34,6 +34,42 @@ from .tokenvalue import TokenValue
 from .version import Version
 
 
+# # 🥭 GroupBasketMarket class
+#
+# `GroupBasketMarket` gathers basket items together instead of separate arrays.
+#
+class GroupBasketMarket:
+    def __init__(self, base_token_info: TokenInfo, quote_token_info: TokenInfo, spot_market_info: SpotMarketInfo, perp_market_info: PerpMarketInfo, oracle: PublicKey):
+        self.base_token_info: TokenInfo = base_token_info
+        self.quote_token_info: TokenInfo = quote_token_info
+        self.spot_market_info: SpotMarketInfo = spot_market_info
+        self.perp_market_info: PerpMarketInfo = perp_market_info
+        self.oracle: PublicKey = oracle
+
+    def __str__(self) -> str:
+        base_token_info = f"{self.base_token_info}".replace("\n", "\n        ")
+        quote_token_info = f"{self.quote_token_info}".replace("\n", "\n        ")
+        spot_market_info = f"{self.spot_market_info}".replace("\n", "\n        ")
+        perp_market_info = f"{self.perp_market_info}".replace("\n", "\n        ")
+        return f"""« 𝙶𝚛𝚘𝚞𝚙𝙱𝚊𝚜𝚔𝚎𝚝𝙼𝚊𝚛𝚔𝚎𝚝 {self.base_token_info.token.symbol}
+    Base Token:
+        {base_token_info}
+    Quote Token:
+        {quote_token_info}
+    Oracle: {self.oracle}
+    Spot Market:
+        {spot_market_info}
+    Perp Market:
+        {perp_market_info}
+»"""
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+TMappedBasketValue = typing.TypeVar("TMappedBasketValue")
+
+
 # # 🥭 Group class
 #
 # `Group` defines root functionality for Mango Markets.
@@ -41,10 +77,11 @@ from .version import Version
 
 class Group(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, name: str,
-                 meta_data: Metadata, tokens: typing.Sequence[typing.Optional[TokenInfo]],
-                 spot_markets: typing.Sequence[typing.Optional[SpotMarketInfo]],
-                 perp_markets: typing.Sequence[typing.Optional[PerpMarketInfo]],
-                 oracles: typing.Sequence[PublicKey], signer_nonce: Decimal, signer_key: PublicKey,
+                 meta_data: Metadata,
+                 shared_quote_token: TokenInfo,
+                 basket_indices: typing.Sequence[bool],
+                 basket: typing.Sequence[GroupBasketMarket],
+                 signer_nonce: Decimal, signer_key: PublicKey,
                  admin: PublicKey, dex_program_id: PublicKey, cache: PublicKey, valid_interval: Decimal,
                  dao_vault: PublicKey, srm_vault: PublicKey, msrm_vault: PublicKey):
         super().__init__(account_info)
@@ -52,10 +89,9 @@ class Group(AddressableAccount):
         self.name: str = name
 
         self.meta_data: Metadata = meta_data
-        self.tokens: typing.Sequence[typing.Optional[TokenInfo]] = tokens
-        self.spot_markets: typing.Sequence[typing.Optional[SpotMarketInfo]] = spot_markets
-        self.perp_markets: typing.Sequence[typing.Optional[PerpMarketInfo]] = perp_markets
-        self.oracles: typing.Sequence[PublicKey] = oracles
+        self.shared_quote_token: TokenInfo = shared_quote_token
+        self.basket_indices: typing.Sequence[bool] = basket_indices
+        self.basket: typing.Sequence[GroupBasketMarket] = basket
         self.signer_nonce: Decimal = signer_nonce
         self.signer_key: PublicKey = signer_key
         self.admin: PublicKey = admin
@@ -67,31 +103,51 @@ class Group(AddressableAccount):
         self.msrm_vault: PublicKey = msrm_vault
 
     @property
-    def shared_quote_token(self) -> TokenInfo:
-        quote = self.tokens[-1]
-        if quote is None:
-            raise Exception(f"Could not find shared quote token for group '{self.name}'.")
-        return quote
+    def base_tokens(self) -> typing.Sequence[typing.Optional[TokenInfo]]:
+        return Group._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item.base_token_info)
 
     @property
-    def base_tokens(self) -> typing.Sequence[typing.Optional[TokenInfo]]:
-        return self.tokens[:-1]
+    def tokens(self) -> typing.Sequence[typing.Optional[TokenInfo]]:
+        return [*self.base_tokens, self.shared_quote_token]
+
+    @property
+    def oracles(self) -> typing.Sequence[typing.Optional[PublicKey]]:
+        return Group._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item.oracle)
+
+    @property
+    def spot_markets(self) -> typing.Sequence[typing.Optional[SpotMarketInfo]]:
+        return Group._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item.spot_market_info)
+
+    @property
+    def perp_markets(self) -> typing.Sequence[typing.Optional[PerpMarketInfo]]:
+        return Group._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item.perp_market_info)
 
     @staticmethod
     def from_layout(context: Context, layout: layouts.GROUP, name: str, account_info: AccountInfo, version: Version, token_lookup: TokenLookup, market_lookup: MarketLookup) -> "Group":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
-        num_oracles: Decimal = layout.num_oracles
 
         root_bank_addresses = [ti.root_bank for ti in layout.tokens if ti is not None and ti.root_bank is not None]
         root_banks = RootBank.load_multiple(context, root_bank_addresses)
         tokens: typing.List[typing.Optional[TokenInfo]] = [
             TokenInfo.from_layout_or_none(t, token_lookup, root_banks) for t in layout.tokens]
 
-        spot_markets: typing.List[typing.Optional[SpotMarketInfo]] = [
-            SpotMarketInfo.from_layout_or_none(m, market_lookup) for m in layout.spot_markets]
-        perp_markets: typing.List[typing.Optional[PerpMarketInfo]] = [
-            PerpMarketInfo.from_layout_or_none(p) for p in layout.perp_markets]
-        oracles: typing.List[PublicKey] = list(layout.oracles)[:int(num_oracles)]
+        quote_token_info: typing.Optional[TokenInfo] = tokens[-1]
+        if quote_token_info is None:
+            raise Exception("Could not find quote token info at end of group tokens.")
+        basket: typing.List[GroupBasketMarket] = []
+        in_basket: typing.List[bool] = []
+        for index, base_token_info in enumerate(tokens[:-1]):
+            if base_token_info is not None:
+                spot_market_info: SpotMarketInfo = SpotMarketInfo.from_layout(layout.spot_markets[index])
+                perp_market_info: PerpMarketInfo = PerpMarketInfo.from_layout(layout.perp_markets[index])
+                oracle: PublicKey = layout.oracles[index]
+                item: GroupBasketMarket = GroupBasketMarket(
+                    base_token_info, quote_token_info, spot_market_info, perp_market_info, oracle)
+                basket += [item]
+                in_basket += [True]
+            else:
+                in_basket += [False]
+
         signer_nonce: Decimal = layout.signer_nonce
         signer_key: PublicKey = layout.signer_key
         admin: PublicKey = layout.admin
@@ -102,7 +158,7 @@ class Group(AddressableAccount):
         srm_vault: PublicKey = layout.srm_vault
         msrm_vault: PublicKey = layout.msrm_vault
 
-        return Group(account_info, version, name, meta_data, tokens, spot_markets, perp_markets, oracles, signer_nonce, signer_key, admin, dex_program_id, cache, valid_interval, dao_vault, srm_vault, msrm_vault)
+        return Group(account_info, version, name, meta_data, quote_token_info, in_basket, basket, signer_nonce, signer_key, admin, dex_program_id, cache, valid_interval, dao_vault, srm_vault, msrm_vault)
 
     @staticmethod
     def parse(context: Context, account_info: AccountInfo) -> "Group":
@@ -114,6 +170,19 @@ class Group(AddressableAccount):
         layout = layouts.GROUP.parse(data)
         name = context.lookup_group_name(account_info.address)
         return Group.from_layout(context, layout, name, account_info, Version.V3, context.token_lookup, context.market_lookup)
+
+    @staticmethod
+    def _map_sequence_to_basket_indices(items: typing.Sequence[GroupBasketMarket], in_basket: typing.Sequence[bool], selector: typing.Callable[[typing.Any], TMappedBasketValue]) -> typing.Sequence[typing.Optional[TMappedBasketValue]]:
+        mapped_items: typing.List[typing.Optional[TMappedBasketValue]] = []
+        basket_counter = 0
+        for available in in_basket:
+            if available:
+                mapped_items += [selector(items[basket_counter])]
+                basket_counter += 1
+            else:
+                mapped_items += [None]
+
+        return mapped_items
 
     @staticmethod
     def load(context: Context, address: typing.Optional[PublicKey] = None) -> "Group":
@@ -156,19 +225,8 @@ class Group(AddressableAccount):
         return balances
 
     def __str__(self) -> str:
-        def _render_list(items, stub):
-            rendered = []
-            for index, item in enumerate(items):
-                rendered += [f"{index}: {(item or stub)}".replace("\n", "\n            ")]
-            return rendered
-        available_token_count = len([token for token in self.tokens if token is not None])
-        tokens = "\n        ".join(_render_list(self.tokens, "« No Token »"))
-        available_spot_market_count = len([spot_market for spot_market in self.spot_markets if spot_market is not None])
-        spot_markets = "\n        ".join(_render_list(self.spot_markets, "« No Spot Market »"))
-        available_perp_market_count = len([perp_market for perp_market in self.perp_markets if perp_market is not None])
-        perp_markets = "\n        ".join(_render_list(self.perp_markets, "« No Perp Market »"))
-        available_oracle_count = len([oracle for oracle in self.oracles if oracle is not None])
-        oracles = "\n        ".join(_render_list(self.oracles, "« No Oracle »"))
+        basket_count = len(self.basket)
+        basket = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.basket])
         return f"""« 𝙶𝚛𝚘𝚞𝚙 {self.version} [{self.address}]
     {self.meta_data}
     Name: {self.name}
@@ -180,12 +238,6 @@ class Group(AddressableAccount):
     SRM Vault: {self.srm_vault}
     MSRM Vault: {self.msrm_vault}
     Valid Interval: {self.valid_interval}
-    Tokens [{available_token_count} available]:
-        {tokens}
-    Spot Markets [{available_spot_market_count} available]:
-        {spot_markets}
-    Perp Markets [{available_perp_market_count} available]:
-        {perp_markets}
-    Oracles [{available_oracle_count} available]:
-        {oracles}
+    Basket [{basket_count} markets]:
+        {basket}
 »"""
