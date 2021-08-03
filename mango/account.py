@@ -31,6 +31,35 @@ from .perpaccount import PerpAccount
 from .tokenvalue import TokenValue
 from .version import Version
 
+
+class AccountBasketToken:
+    def __init__(self, token_info: TokenInfo, deposit: TokenValue, borrow: TokenValue, spot_open_orders: PublicKey, perp_account: PerpAccount):
+        self.token_info: TokenInfo = token_info
+        self.deposit: TokenValue = deposit
+        self.borrow: TokenValue = borrow
+        self.spot_open_orders: PublicKey = spot_open_orders
+        self.perp_account: PerpAccount = perp_account
+
+    @property
+    def net_value(self) -> TokenValue:
+        return TokenValue(self.deposit.token, self.deposit.value - self.borrow.value)
+
+    def __str__(self) -> str:
+        perp_account: str = "None"
+        if self.perp_account is not None:
+            perp_account = f"{self.perp_account}".replace("\n", "\n        ")
+        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝙱𝚊𝚜𝚔𝚎𝚝𝚃𝚘𝚔𝚎𝚗 {self.token_info.token.symbol}
+    Net Value:     {self.net_value}
+        Deposited: {self.deposit}
+        Borrowed:  {self.borrow}
+    Spot OpenOrders: {self.spot_open_orders or "None"}
+    Perp Account:
+        {perp_account}
+»"""
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
 # # 🥭 Account class
 #
 # `Account` holds information about the account for a particular user/wallet for a particualr `Group`.
@@ -41,7 +70,7 @@ class Account(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
                  meta_data: Metadata, group: Group, owner: PublicKey, in_margin_basket: typing.Sequence[Decimal],
                  deposits: typing.Sequence[typing.Optional[TokenValue]], borrows: typing.Sequence[typing.Optional[TokenValue]],
-                 net_assets: typing.Sequence[typing.Optional[TokenValue]], spot_open_orders: typing.Sequence[PublicKey],
+                 basket: typing.Sequence[AccountBasketToken], spot_open_orders: typing.Sequence[PublicKey],
                  perp_accounts: typing.Sequence[PerpAccount], msrm_amount: Decimal, being_liquidated: bool,
                  is_bankrupt: bool):
         super().__init__(account_info)
@@ -53,7 +82,7 @@ class Account(AddressableAccount):
         self.in_margin_basket: typing.Sequence[Decimal] = in_margin_basket
         self.deposits: typing.Sequence[typing.Optional[TokenValue]] = deposits
         self.borrows: typing.Sequence[typing.Optional[TokenValue]] = borrows
-        self.net_assets: typing.Sequence[typing.Optional[TokenValue]] = net_assets
+        self.basket: typing.Sequence[AccountBasketToken] = basket
         self.spot_open_orders: typing.Sequence[PublicKey] = spot_open_orders
         self.perp_accounts: typing.Sequence[PerpAccount] = perp_accounts
         self.msrm_amount: Decimal = msrm_amount
@@ -67,28 +96,31 @@ class Account(AddressableAccount):
         in_margin_basket: typing.Sequence[Decimal] = layout.in_margin_basket
         deposits: typing.List[typing.Optional[TokenValue]] = []
         borrows: typing.List[typing.Optional[TokenValue]] = []
-        net_assets: typing.List[typing.Optional[TokenValue]] = []
-        for index, token_info in enumerate(group.tokens):
+        basket: typing.List[AccountBasketToken] = []
+        for index, token_info in enumerate(group.tokens[0:-1]):
             if token_info:
                 intrinsic_deposit = token_info.root_bank.deposit_index * layout.deposits[index]
-                deposit = token_info.token.shift_to_decimals(intrinsic_deposit)
-                deposits += [TokenValue(token_info.token, deposit)]
+                deposit = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_deposit))
+                deposits += [deposit]
                 intrinsic_borrow = token_info.root_bank.borrow_index * layout.borrows[index]
-                borrow = token_info.token.shift_to_decimals(intrinsic_borrow)
-                borrows += [TokenValue(token_info.token, borrow)]
-                net_assets += [TokenValue(token_info.token, deposit - borrow)]
+                borrow = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_borrow))
+                borrows += [borrow]
+                perp_account = PerpAccount.from_layout(layout.perp_accounts[index])
+                spot_open_orders = layout.spot_open_orders[index]
+                basket_item: AccountBasketToken = AccountBasketToken(
+                    token_info, deposit, borrow, spot_open_orders, perp_account)
+                basket += [basket_item]
             else:
                 deposits += [None]
                 borrows += [None]
-                net_assets += [None]
 
-        spot_open_orders: typing.Sequence[PublicKey] = layout.spot_open_orders
-        perp_accounts: typing.Sequence[PerpAccount] = list(map(PerpAccount.from_layout, layout.perp_accounts))
+        all_spot_open_orders: typing.Sequence[PublicKey] = layout.spot_open_orders
+        all_perp_accounts: typing.Sequence[PerpAccount] = list(map(PerpAccount.from_layout, layout.perp_accounts))
         msrm_amount: Decimal = layout.msrm_amount
         being_liquidated: bool = bool(layout.being_liquidated)
         is_bankrupt: bool = bool(layout.is_bankrupt)
 
-        return Account(account_info, version, meta_data, group, owner, in_margin_basket, deposits, borrows, net_assets, spot_open_orders, perp_accounts, msrm_amount, being_liquidated, is_bankrupt)
+        return Account(account_info, version, meta_data, group, owner, in_margin_basket, deposits, borrows, basket, all_spot_open_orders, all_perp_accounts, msrm_amount, being_liquidated, is_bankrupt)
 
     @staticmethod
     def parse(context: Context, account_info: AccountInfo, group: Group) -> "Account":
@@ -143,20 +175,14 @@ class Account(AddressableAccount):
             raise Exception(f"Could not find Mango account at index {account_index} for owner '{owner}'.")
         return accounts[account_index]
 
+    @property
+    def net_assets(self) -> typing.Sequence[TokenValue]:
+        return list(map(lambda item: item.net_value, self.basket))
+
     def __str__(self) -> str:
-        def _render_list(items, stub):
-            rendered = []
-            for index, item in enumerate(items):
-                rendered += [f"{index}: {(item or stub)}".replace("\n", "\n        ")]
-            return rendered
-        available_deposit_count = len([deposit for deposit in self.deposits if deposit is not None])
-        deposits = "\n        ".join(_render_list(self.deposits, "« No Deposit »"))
-        available_borrow_count = len([borrow for borrow in self.borrows if borrow is not None])
-        borrows = "\n        ".join(_render_list(self.borrows, "« No Borrow »"))
-        net_assets = "\n        ".join(_render_list(self.net_assets, "« No Net Assets »"))
-        spot_open_orders = ", ".join([f"{oo}" for oo in self.spot_open_orders if oo is not None]) or "None"
-        perp_accounts = ", ".join(
-            [f"{perp}".replace("\n", "\n        ") for perp in self.perp_accounts if perp.open_orders.free_slot_bits != 0xFFFFFFFF]) or "None"
+        basket_count = len(self.basket)
+        basket = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.basket])
+
         symbols_in_basket: typing.List[str] = []
         for index, value in enumerate(self.in_margin_basket):
             if value != 0:
@@ -170,20 +196,12 @@ class Account(AddressableAccount):
     {self.meta_data}
     Owner: {self.owner}
     Group: « 𝙶𝚛𝚘𝚞𝚙 '{self.group.name}' {self.group.version} [{self.group.address}] »
-    In Basket: {in_margin_basket}
+    MSRM: {self.msrm_amount}
     Bankrupt? {self.is_bankrupt}
     Being Liquidated? {self.being_liquidated}
-    Deposits [{available_deposit_count} available]:
-        {deposits}
-    Borrows [{available_borrow_count} available]:
-        {borrows}
-    Net Assets:
-        {net_assets}
-    Spot Open Orders:
-        {spot_open_orders}
-    Perp Accounts:
-        {perp_accounts}
-    MSRM: {self.msrm_amount}
+    In Basket: {in_margin_basket}
+    Basket [{basket_count} in basket]:
+        {basket}
 »"""
 
     def __repr__(self) -> str:

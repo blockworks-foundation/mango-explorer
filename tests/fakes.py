@@ -86,6 +86,10 @@ def fake_token_account() -> mango.TokenAccount:
     return mango.TokenAccount(token_account_info, mango.Version.V1, fake_seeded_public_key("owner"), token_value)
 
 
+def fake_token_value(value: Decimal = Decimal(100)) -> mango.TokenValue:
+    return mango.TokenValue(fake_token(), value)
+
+
 def fake_wallet() -> mango.Wallet:
     wallet = mango.Wallet([1] * 64)
     wallet.account = Account()
