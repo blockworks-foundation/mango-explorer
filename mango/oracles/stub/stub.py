@@ -66,8 +66,14 @@ class StubOracle(Oracle):
         raw_price = cache.price_cache[self.index]
         if raw_price is None:
             raise Exception(f"Stub Oracle does not contain a price for market {self.symbol} at index {self.index}.")
-        price = self.market.base.shift_to_decimals(raw_price.price)
-        return Price(self.source, datetime.now(), self.market, price, price, price, StubOracleConfidence)
+        # Should convert raw_price to actual price.
+        # Discord on stub price from lagzda:
+        #   https://discord.com/channels/791995070613159966/853370356244152360/871871877382033478
+        # "Hey, related to the conversation above since we should be reporting native quote per native
+        # base I did the incorrect change. Instead of adjusting RAY etc stub oracles prices from 2 to
+        # 2_000_000, I should've adjusted the Pyth oracles prices which soon will be deployed. That
+        # will give you the consistent results, but you'll need to adjust your code"
+        return Price(self.source, datetime.now(), self.market, raw_price.price, raw_price.price, raw_price.price, StubOracleConfidence)
 
     def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
         return rx.interval(1).pipe(
