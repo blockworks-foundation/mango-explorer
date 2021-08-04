@@ -96,7 +96,9 @@ class Account(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
                  meta_data: Metadata, group: Group, owner: PublicKey,
                  shared_quote_token: AccountBasketToken,
-                 basket_indices: typing.Sequence[bool], basket: typing.Sequence[AccountBasketBaseToken],
+                 in_margin_basket: typing.Sequence[bool],
+                 basket_indices: typing.Sequence[bool],
+                 basket: typing.Sequence[AccountBasketBaseToken],
                  msrm_amount: Decimal, being_liquidated: bool, is_bankrupt: bool):
         super().__init__(account_info)
         self.version: Version = version
@@ -105,6 +107,7 @@ class Account(AddressableAccount):
         self.group: Group = group
         self.owner: PublicKey = owner
         self.shared_quote_token: AccountBasketToken = shared_quote_token
+        self.in_margin_basket: typing.Sequence[bool] = in_margin_basket
         self.basket_indices: typing.Sequence[bool] = basket_indices
         self.basket: typing.Sequence[AccountBasketBaseToken] = basket
         self.msrm_amount: Decimal = msrm_amount
@@ -116,9 +119,10 @@ class Account(AddressableAccount):
         meta_data = Metadata.from_layout(layout.meta_data)
         owner: PublicKey = layout.owner
         in_margin_basket: typing.Sequence[bool] = list([bool(in_basket) for in_basket in layout.in_margin_basket])
+        active_in_basket: typing.List[bool] = []
         basket: typing.List[AccountBasketBaseToken] = []
         for index, token_info in enumerate(group.tokens[:-1]):
-            if token_info and in_margin_basket[index]:
+            if token_info:
                 intrinsic_deposit = token_info.root_bank.deposit_index * layout.deposits[index]
                 deposit = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_deposit))
                 intrinsic_borrow = token_info.root_bank.borrow_index * layout.borrows[index]
@@ -128,6 +132,9 @@ class Account(AddressableAccount):
                 basket_item: AccountBasketBaseToken = AccountBasketBaseToken(
                     token_info, deposit, borrow, spot_open_orders, perp_account)
                 basket += [basket_item]
+                active_in_basket += [True]
+            else:
+                active_in_basket += [False]
 
         quote_token_info: typing.Optional[TokenInfo] = group.tokens[-1]
         if quote_token_info is None:
@@ -145,7 +152,7 @@ class Account(AddressableAccount):
         being_liquidated: bool = bool(layout.being_liquidated)
         is_bankrupt: bool = bool(layout.is_bankrupt)
 
-        return Account(account_info, version, meta_data, group, owner, quote, in_margin_basket, basket, msrm_amount, being_liquidated, is_bankrupt)
+        return Account(account_info, version, meta_data, group, owner, quote, in_margin_basket, active_in_basket, basket, msrm_amount, being_liquidated, is_bankrupt)
 
     @staticmethod
     def parse(account_info: AccountInfo, group: Group) -> "Account":

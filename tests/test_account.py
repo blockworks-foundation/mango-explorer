@@ -10,7 +10,8 @@ def test_construction():
     meta_data = mango.Metadata(layouts.DATA_TYPE.Group, mango.Version.V1, True)
     group = fake_seeded_public_key("group")
     owner = fake_seeded_public_key("owner")
-    in_margin_basket = [False, True, False, True, True]
+    in_margin_basket = [False, False, False, False, False]
+    active_in_basket = [False, True, False, True, True]
     quote_deposit = fake_token_value(Decimal(50))
     quote_borrow = fake_token_value(Decimal(5))
     quote = mango.AccountBasketToken(fake_token_info(), quote_deposit, quote_borrow)
@@ -33,7 +34,8 @@ def test_construction():
     is_bankrupt = False
 
     actual = mango.Account(account_info, mango.Version.V1, meta_data, group, owner, quote,
-                           in_margin_basket, basket, msrm_amount, being_liquidated, is_bankrupt)
+                           in_margin_basket, active_in_basket, basket, msrm_amount, being_liquidated,
+                           is_bankrupt)
 
     assert actual is not None
     assert actual.logger is not None
@@ -41,7 +43,8 @@ def test_construction():
     assert actual.meta_data == meta_data
     assert actual.group == group
     assert actual.owner == owner
-    assert actual.basket_indices == in_margin_basket
+    assert actual.basket_indices == active_in_basket
+    assert actual.in_margin_basket == in_margin_basket
     assert actual.deposits == [None, deposit1, None, deposit2, deposit3, quote_deposit]
     assert actual.borrows == [None, borrow1, None, borrow2, borrow3, quote_borrow]
     assert actual.net_assets == [None, deposit1 - borrow1, None,

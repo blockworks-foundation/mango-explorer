@@ -41,6 +41,11 @@ class Side(enum.Enum):
     BUY = "BUY"
     SELL = "SELL"
 
+    @staticmethod
+    def from_value(value: Decimal) -> "Side":
+        converted: pyserum.enums.Side = pyserum.enums.Side(int(value))
+        return Side.BUY if converted == pyserum.enums.Side.BUY else Side.SELL
+
     def __str__(self) -> str:
         return self.value
 
@@ -62,6 +67,17 @@ class OrderType(enum.Enum):
     LIMIT = "LIMIT"
     IOC = "IOC"
     POST_ONLY = "POST_ONLY"
+
+    @staticmethod
+    def from_value(value: Decimal) -> "OrderType":
+        converted: pyserum.enums.OrderType = pyserum.enums.OrderType(int(value))
+        if converted == pyserum.enums.OrderType.IOC:
+            return OrderType.IOC
+        elif converted == pyserum.enums.OrderType.POST_ONLY:
+            return OrderType.POST_ONLY
+        elif converted == pyserum.enums.OrderType.LIMIT:
+            return OrderType.LIMIT
+        return OrderType.UNKNOWN
 
     def __str__(self) -> str:
         return self.value
@@ -99,7 +115,7 @@ class Order(typing.NamedTuple):
     def from_serum_order(serum_order: SerumOrder) -> "Order":
         price = Decimal(serum_order.info.price)
         quantity = Decimal(serum_order.info.size)
-        side = Side.BUY if serum_order.side == pyserum.enums.Side.BUY else Side.SELL
+        side = Side.from_value(serum_order.side)
         order = Order(id=serum_order.order_id, side=side, price=price, quantity=quantity,
                       client_id=serum_order.client_id, owner=serum_order.open_order_address,
                       order_type=OrderType.UNKNOWN)

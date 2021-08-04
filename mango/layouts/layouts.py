@@ -1101,6 +1101,12 @@ MANGO_INSTRUCTION_VARIANT_FINDER = construct.Struct(
     "variant" / construct.BytesInteger(4, swapped=True)
 )
 
+
+SERUM_INSTRUCTION_VARIANT_FINDER = construct.Struct(
+    "version" / construct.BytesInteger(1, swapped=True),
+    "variant" / construct.BytesInteger(4, swapped=True)
+)
+
 # /// Place an order on a perp market
 # /// Accounts expected by this instruction (6):
 # /// 0. `[]` mango_group_ai - TODO

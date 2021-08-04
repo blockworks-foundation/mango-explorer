@@ -77,12 +77,8 @@ class InventoryAccountWatcher:
         self.account_watcher: Watcher[Account] = account_watcher
         account: Account = account_watcher.latest
         base_value = TokenValue.find_by_symbol(account.net_assets, market.base.symbol)
-        if base_value is None:
-            raise Exception(f"Could not find net assets in account {account.address} for base token {market.base}.")
         self.base_index: int = account.net_assets.index(base_value)
         quote_value = TokenValue.find_by_symbol(account.net_assets, market.quote.symbol)
-        if quote_value is None:
-            raise Exception(f"Could not find net assets in account {account.address} for quote token {market.quote}.")
         self.quote_index: int = account.net_assets.index(quote_value)
 
     @property

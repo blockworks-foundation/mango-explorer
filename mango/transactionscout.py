@@ -26,6 +26,7 @@ from solana.publickey import PublicKey
 from .context import Context
 from .instructiontype import InstructionType
 from .layouts import layouts
+from .orders import OrderType, Side
 from .ownedtokenvalue import OwnedTokenValue
 from .tokenvalue import TokenValue
 
@@ -182,8 +183,6 @@ _target_indices: typing.Dict[InstructionType, int] = {
 # This class packages up Mango instruction data, which can come from disparate parts of the
 # transaction. Keeping it all together here makes many things simpler.
 #
-
-
 class MangoInstruction:
     def __init__(self, instruction_type: InstructionType, instruction_data: typing.Any, accounts: typing.Sequence[PublicKey]):
         self.instruction_type = instruction_type
@@ -245,17 +244,17 @@ class MangoInstruction:
         elif instruction_type == InstructionType.CacheRootBanks:
             pass
         elif instruction_type == InstructionType.PlaceSpotOrder:
-            additional_data = f"side: {self.instruction_data.side}, order_type: {self.instruction_data.order_type}, limit_price: {self.instruction_data.limit_price}, max_base_quantity: {self.instruction_data.max_base_quantity}, max_quote_quantity: {self.instruction_data.max_quote_quantity}, self_trade_behavior: {self.instruction_data.self_trade_behavior}, client_id: {self.instruction_data.client_id}, limit: {self.instruction_data.limit}"
+            additional_data = f"side: {Side.from_value(self.instruction_data.side)}, order_type: {OrderType.from_value(self.instruction_data.order_type)}, limit_price: {self.instruction_data.limit_price}, max_base_quantity: {self.instruction_data.max_base_quantity}, max_quote_quantity: {self.instruction_data.max_quote_quantity}, self_trade_behavior: {self.instruction_data.self_trade_behavior}, client_id: {self.instruction_data.client_id}, limit: {self.instruction_data.limit}"
         elif instruction_type == InstructionType.AddOracle:
             pass
         elif instruction_type == InstructionType.AddPerpMarket:
             pass
         elif instruction_type == InstructionType.PlacePerpOrder:
-            additional_data = f"side: {self.instruction_data.side}, order_type: {self.instruction_data.order_type}, price: {self.instruction_data.price}, quantity: {self.instruction_data.quantity}, client_order_id: {self.instruction_data.client_order_id}"
+            additional_data = f"side: {Side.from_value(self.instruction_data.side)}, order_type: {OrderType.from_value(self.instruction_data.order_type)}, price: {self.instruction_data.price}, quantity: {self.instruction_data.quantity}, client_order_id: {self.instruction_data.client_order_id}"
         elif instruction_type == InstructionType.CancelPerpOrderByClientId:
             additional_data = f"client ID: {self.instruction_data.client_order_id}"
         elif instruction_type == InstructionType.CancelPerpOrder:
-            additional_data = f"order ID: {self.instruction_data.order_id}, side: {self.instruction_data.side}"
+            additional_data = f"order ID: {self.instruction_data.order_id}, side: {Side.from_value(self.instruction_data.side)}"
         elif instruction_type == InstructionType.ConsumeEvents:
             additional_data = f"limit: {self.instruction_data.limit}"
         elif instruction_type == InstructionType.CachePerpMarkets:
@@ -267,7 +266,7 @@ class MangoInstruction:
         elif instruction_type == InstructionType.SettleFunds:
             pass
         elif instruction_type == InstructionType.CancelSpotOrder:
-            additional_data = f"order ID: {self.instruction_data.order_id}, side: {self.instruction_data.side}"
+            additional_data = f"order ID: {self.instruction_data.order_id}, side: {Side.from_value(self.instruction_data.side)}"
         elif instruction_type == InstructionType.UpdateRootBank:
             pass
         elif instruction_type == InstructionType.SettlePnl:
@@ -309,6 +308,10 @@ class MangoInstruction:
         instruction_type = InstructionType(int(parsed.variant))
 
         return MangoInstruction(instruction_type, parsed, accounts)
+
+    @staticmethod
+    def _order_type_enum(side: Decimal):
+        return Side.BUY if side == Decimal(0) else Side.SELL
 
     def __str__(self) -> str:
         parameters = self.describe_parameters() or "None"
