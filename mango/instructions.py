@@ -633,7 +633,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
 
         # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
         # the Account so that future uses (like later in this method) have access to it in the right place.
-        account.spot_open_orders[market_index] = open_orders_address
+        account.update_spot_open_orders_for_market(market_index, open_orders_address)
 
     serum_order_type = pyserum.enums.OrderType.POST_ONLY if order_type == OrderType.POST_ONLY else pyserum.enums.OrderType.IOC if order_type == OrderType.IOC else pyserum.enums.OrderType.LIMIT
     serum_side = pyserum.enums.Side.BUY if side == Side.BUY else pyserum.enums.Side.SELL

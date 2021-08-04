@@ -1,4 +1,4 @@
-from .account import AccountBasketToken, Account
+from .account import AccountBasketToken, AccountBasketBaseToken, Account
 from .accountflags import AccountFlags
 from .accountinfo import AccountInfo
 from .accountinfoconverter import build_account_info_converter

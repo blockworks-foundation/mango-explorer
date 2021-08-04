@@ -37,22 +37,42 @@ from .version import Version
 # `AccountBasketToken` gathers basket items together instead of separate arrays.
 #
 class AccountBasketToken:
-    def __init__(self, token_info: TokenInfo, deposit: TokenValue, borrow: TokenValue, spot_open_orders: typing.Optional[PublicKey], perp_account: PerpAccount):
+    def __init__(self, token_info: TokenInfo, deposit: TokenValue, borrow: TokenValue):
         self.token_info: TokenInfo = token_info
         self.deposit: TokenValue = deposit
         self.borrow: TokenValue = borrow
-        self.spot_open_orders: typing.Optional[PublicKey] = spot_open_orders
-        self.perp_account: PerpAccount = perp_account
 
     @property
     def net_value(self) -> TokenValue:
-        return TokenValue(self.deposit.token, self.deposit.value - self.borrow.value)
+        return self.deposit - self.borrow
+
+    def __str__(self) -> str:
+        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝙱𝚊𝚜𝚔𝚎𝚝𝚃𝚘𝚔𝚎𝚗 {self.token_info.token.symbol}
+    Net Value:     {self.net_value}
+        Deposited: {self.deposit}
+        Borrowed:  {self.borrow}
+»"""
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+# # 🥭 AccountBasketBaseToken class
+#
+# `AccountBasketBaseToken` is a more specialised `AccountBasketToken` for all the base tokens in the
+# account.
+#
+class AccountBasketBaseToken(AccountBasketToken):
+    def __init__(self, token_info: TokenInfo, deposit: TokenValue, borrow: TokenValue, spot_open_orders: typing.Optional[PublicKey], perp_account: PerpAccount):
+        super().__init__(token_info, deposit, borrow)
+        self.spot_open_orders: typing.Optional[PublicKey] = spot_open_orders
+        self.perp_account: PerpAccount = perp_account
 
     def __str__(self) -> str:
         perp_account: str = "None"
         if self.perp_account is not None:
             perp_account = f"{self.perp_account}".replace("\n", "\n        ")
-        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝙱𝚊𝚜𝚔𝚎𝚝𝚃𝚘𝚔𝚎𝚗 {self.token_info.token.symbol}
+        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝙱𝚊𝚜𝚔𝚎𝚝𝙱𝚊𝚜𝚎𝚃𝚘𝚔𝚎𝚗 {self.token_info.token.symbol}
     Net Value:     {self.net_value}
         Deposited: {self.deposit}
         Borrowed:  {self.borrow}
@@ -65,31 +85,28 @@ class AccountBasketToken:
         return f"{self}"
 
 
+TMappedAccountBasketValue = typing.TypeVar("TMappedAccountBasketValue")
+
+
 # # 🥭 Account class
 #
 # `Account` holds information about the account for a particular user/wallet for a particualr `Group`.
 #
-
-
 class Account(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
-                 meta_data: Metadata, group: Group, owner: PublicKey, in_margin_basket: typing.Sequence[Decimal],
-                 deposits: typing.Sequence[typing.Optional[TokenValue]], borrows: typing.Sequence[typing.Optional[TokenValue]],
-                 basket: typing.Sequence[AccountBasketToken], spot_open_orders: typing.Sequence[PublicKey],
-                 perp_accounts: typing.Sequence[PerpAccount], msrm_amount: Decimal, being_liquidated: bool,
-                 is_bankrupt: bool):
+                 meta_data: Metadata, group: Group, owner: PublicKey,
+                 shared_quote_token: AccountBasketToken,
+                 basket_indices: typing.Sequence[bool], basket: typing.Sequence[AccountBasketBaseToken],
+                 msrm_amount: Decimal, being_liquidated: bool, is_bankrupt: bool):
         super().__init__(account_info)
         self.version: Version = version
 
         self.meta_data: Metadata = meta_data
         self.group: Group = group
         self.owner: PublicKey = owner
-        self.in_margin_basket: typing.Sequence[Decimal] = in_margin_basket
-        self.deposits: typing.Sequence[typing.Optional[TokenValue]] = deposits
-        self.borrows: typing.Sequence[typing.Optional[TokenValue]] = borrows
-        self.basket: typing.Sequence[AccountBasketToken] = basket
-        self.spot_open_orders: typing.Sequence[PublicKey] = spot_open_orders
-        self.perp_accounts: typing.Sequence[PerpAccount] = perp_accounts
+        self.shared_quote_token: AccountBasketToken = shared_quote_token
+        self.basket_indices: typing.Sequence[bool] = basket_indices
+        self.basket: typing.Sequence[AccountBasketBaseToken] = basket
         self.msrm_amount: Decimal = msrm_amount
         self.being_liquidated: bool = being_liquidated
         self.is_bankrupt: bool = is_bankrupt
@@ -98,37 +115,40 @@ class Account(AddressableAccount):
     def from_layout(layout: layouts.MANGO_ACCOUNT, account_info: AccountInfo, version: Version, group: Group) -> "Account":
         meta_data = Metadata.from_layout(layout.meta_data)
         owner: PublicKey = layout.owner
-        in_margin_basket: typing.Sequence[Decimal] = layout.in_margin_basket
-        deposits: typing.List[typing.Optional[TokenValue]] = []
-        borrows: typing.List[typing.Optional[TokenValue]] = []
-        basket: typing.List[AccountBasketToken] = []
-        for index, token_info in enumerate(group.tokens[0:-1]):
-            if token_info:
+        in_margin_basket: typing.Sequence[bool] = list([bool(in_basket) for in_basket in layout.in_margin_basket])
+        basket: typing.List[AccountBasketBaseToken] = []
+        for index, token_info in enumerate(group.tokens[:-1]):
+            if token_info and in_margin_basket[index]:
                 intrinsic_deposit = token_info.root_bank.deposit_index * layout.deposits[index]
                 deposit = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_deposit))
-                deposits += [deposit]
                 intrinsic_borrow = token_info.root_bank.borrow_index * layout.borrows[index]
                 borrow = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_borrow))
-                borrows += [borrow]
                 perp_account = PerpAccount.from_layout(layout.perp_accounts[index])
                 spot_open_orders = layout.spot_open_orders[index]
-                basket_item: AccountBasketToken = AccountBasketToken(
+                basket_item: AccountBasketBaseToken = AccountBasketBaseToken(
                     token_info, deposit, borrow, spot_open_orders, perp_account)
                 basket += [basket_item]
-            else:
-                deposits += [None]
-                borrows += [None]
 
-        all_spot_open_orders: typing.Sequence[PublicKey] = layout.spot_open_orders
-        all_perp_accounts: typing.Sequence[PerpAccount] = list(map(PerpAccount.from_layout, layout.perp_accounts))
+        quote_token_info: typing.Optional[TokenInfo] = group.tokens[-1]
+        if quote_token_info is None:
+            raise Exception(f"Could not determine quote token in group {group.address}")
+
+        intrinsic_quote_deposit = quote_token_info.root_bank.deposit_index * layout.deposits[-1]
+        quote_deposit = TokenValue(quote_token_info.token,
+                                   quote_token_info.token.shift_to_decimals(intrinsic_quote_deposit))
+        intrinsic_quote_borrow = quote_token_info.root_bank.borrow_index * layout.borrows[-1]
+        quote_borrow = TokenValue(quote_token_info.token,
+                                  quote_token_info.token.shift_to_decimals(intrinsic_quote_borrow))
+        quote: AccountBasketToken = AccountBasketToken(quote_token_info, quote_deposit, quote_borrow)
+
         msrm_amount: Decimal = layout.msrm_amount
         being_liquidated: bool = bool(layout.being_liquidated)
         is_bankrupt: bool = bool(layout.is_bankrupt)
 
-        return Account(account_info, version, meta_data, group, owner, in_margin_basket, deposits, borrows, basket, all_spot_open_orders, all_perp_accounts, msrm_amount, being_liquidated, is_bankrupt)
+        return Account(account_info, version, meta_data, group, owner, quote, in_margin_basket, basket, msrm_amount, being_liquidated, is_bankrupt)
 
     @staticmethod
-    def parse(context: Context, account_info: AccountInfo, group: Group) -> "Account":
+    def parse(account_info: AccountInfo, group: Group) -> "Account":
         data = account_info.data
         if len(data) != layouts.MANGO_ACCOUNT.sizeof():
             raise Exception(
@@ -142,7 +162,7 @@ class Account(AddressableAccount):
         account_info = AccountInfo.load(context, address)
         if account_info is None:
             raise Exception(f"Account account not found at address '{address}'")
-        return Account.parse(context, account_info, group)
+        return Account.parse(account_info, group)
 
     @staticmethod
     def load_all_for_owner(context: Context, owner: PublicKey, group: Group) -> typing.Sequence["Account"]:
@@ -167,7 +187,7 @@ class Account(AddressableAccount):
         for account_data in response["result"]:
             address = PublicKey(account_data["pubkey"])
             account_info = AccountInfo._from_response_values(account_data["account"], address)
-            account = Account.parse(context, account_info, group)
+            account = Account.parse(account_info, group)
             accounts += [account]
         return accounts
 
@@ -180,22 +200,61 @@ class Account(AddressableAccount):
             raise Exception(f"Could not find Mango account at index {account_index} for owner '{owner}'.")
         return accounts[account_index]
 
+    @staticmethod
+    def _map_sequence_to_basket_indices(items: typing.Sequence[AccountBasketBaseToken], in_basket: typing.Sequence[bool], selector: typing.Callable[[typing.Any], TMappedAccountBasketValue]) -> typing.Sequence[typing.Optional[TMappedAccountBasketValue]]:
+        mapped_items: typing.List[typing.Optional[TMappedAccountBasketValue]] = []
+        basket_counter = 0
+        for available in in_basket:
+            if available:
+                mapped_items += [selector(items[basket_counter])]
+                basket_counter += 1
+            else:
+                mapped_items += [None]
+
+        return mapped_items
+
     @property
-    def net_assets(self) -> typing.Sequence[TokenValue]:
-        return list(map(lambda item: item.net_value, self.basket))
+    def basket_tokens(self) -> typing.Sequence[typing.Optional[AccountBasketToken]]:
+        return [
+            *Account._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item),
+            self.shared_quote_token
+        ]
+
+    @property
+    def deposits(self) -> typing.Sequence[typing.Optional[TokenValue]]:
+        return list(map(lambda basket_token: basket_token.deposit if basket_token else None, self.basket_tokens))
+
+    @property
+    def borrows(self) -> typing.Sequence[typing.Optional[TokenValue]]:
+        return list(map(lambda basket_token: basket_token.borrow if basket_token else None, self.basket_tokens))
+
+    @property
+    def net_assets(self) -> typing.Sequence[typing.Optional[TokenValue]]:
+        return list(map(lambda basket_token: basket_token.net_value if basket_token else None, self.basket_tokens))
+
+    @property
+    def spot_open_orders(self) -> typing.Sequence[typing.Optional[PublicKey]]:
+        return Account._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item.spot_open_orders)
+
+    @property
+    def perp_accounts(self) -> typing.Sequence[typing.Optional[PerpAccount]]:
+        return Account._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item.perp_account)
+
+    def update_spot_open_orders_for_market(self, spot_market_index: int, spot_open_orders: PublicKey) -> None:
+        indexable_basket: typing.Sequence[typing.Optional[AccountBasketBaseToken]] = Account._map_sequence_to_basket_indices(
+            self.basket, self.basket_indices, lambda item: item)
+        item_to_update = indexable_basket[spot_market_index]
+        if item_to_update is None:
+            raise Exception(f"Could not find AccountBasketItem in Account {self.address} at index {spot_market_index}.")
+        item_to_update.spot_open_orders = spot_open_orders
 
     def __str__(self) -> str:
         basket_count = len(self.basket)
         basket = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.basket])
 
-        symbols_in_basket: typing.List[str] = []
-        for index, value in enumerate(self.in_margin_basket):
-            if value != 0:
-                token_info: typing.Optional[TokenInfo] = self.group.tokens[index]
-                if token_info is None:
-                    symbols_in_basket += ["UNKNOWN"]
-                else:
-                    symbols_in_basket += [token_info.token.symbol]
+        tokens_in_basket = Account._map_sequence_to_basket_indices(
+            self.basket, self.basket_indices, lambda item: item.token_info.token)
+        symbols_in_basket = list([tok.symbol for tok in tokens_in_basket if tok is not None])
         in_margin_basket = ", ".join(symbols_in_basket) or "None"
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {self.version} [{self.address}]
     {self.meta_data}

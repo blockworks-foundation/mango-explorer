@@ -73,7 +73,7 @@ class Token:
 
         return found[0]
 
-    # TokenMetadatas are equal if they have the same mint address.
+    # Tokens are equal if they have the same mint address.
     def __eq__(self, other):
         if hasattr(other, 'mint'):
             return self.mint == other.mint

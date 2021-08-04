@@ -21,6 +21,7 @@ from solana.publickey import PublicKey
 
 from .account import Account
 from .combinableinstructions import CombinableInstructions
+from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import Group
 from .marketoperations import MarketOperations
@@ -45,8 +46,8 @@ class SpotMarketOperations(MarketOperations):
         self.spot_market: SpotMarket = spot_market
         self.market_instruction_builder: SpotMarketInstructionBuilder = market_instruction_builder
 
-        self.market_index = group.find_spot_market_index(spot_market.address)
-        self.open_orders_address = self.account.spot_open_orders[self.market_index]
+        self.market_index: int = group.find_spot_market_index(spot_market.address)
+        self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders[self.market_index]
 
     def cancel_order(self, order: Order) -> typing.Sequence[str]:
         self.logger.info(f"Cancelling {self.spot_market.symbol} order {order}.")
@@ -61,7 +62,7 @@ class SpotMarketOperations(MarketOperations):
         client_id: int = self.context.random_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         order_with_client_id: Order = Order(id=0, client_id=client_id, side=order.side, price=order.price,
-                                            quantity=order.quantity, owner=self.open_orders_address,
+                                            quantity=order.quantity, owner=self.open_orders_address or SYSTEM_PROGRAM_ADDRESS,
                                             order_type=order.order_type)
         self.logger.info(f"Placing {self.spot_market.symbol} order {order}.")
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(

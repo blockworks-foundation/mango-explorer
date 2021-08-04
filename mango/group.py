@@ -67,7 +67,7 @@ class GroupBasketMarket:
         return f"{self}"
 
 
-TMappedBasketValue = typing.TypeVar("TMappedBasketValue")
+TMappedGroupBasketValue = typing.TypeVar("TMappedGroupBasketValue")
 
 
 # # 🥭 Group class
@@ -172,8 +172,8 @@ class Group(AddressableAccount):
         return Group.from_layout(context, layout, name, account_info, Version.V3, context.token_lookup, context.market_lookup)
 
     @staticmethod
-    def _map_sequence_to_basket_indices(items: typing.Sequence[GroupBasketMarket], in_basket: typing.Sequence[bool], selector: typing.Callable[[typing.Any], TMappedBasketValue]) -> typing.Sequence[typing.Optional[TMappedBasketValue]]:
-        mapped_items: typing.List[typing.Optional[TMappedBasketValue]] = []
+    def _map_sequence_to_basket_indices(items: typing.Sequence[GroupBasketMarket], in_basket: typing.Sequence[bool], selector: typing.Callable[[typing.Any], TMappedGroupBasketValue]) -> typing.Sequence[typing.Optional[TMappedGroupBasketValue]]:
+        mapped_items: typing.List[typing.Optional[TMappedGroupBasketValue]] = []
         basket_counter = 0
         for available in in_basket:
             if available:

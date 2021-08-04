@@ -55,8 +55,8 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         self.group_market_index: int = market_index
         self.fee_discount_token_address: typing.Optional[PublicKey] = fee_discount_token_address
 
-        self.market_index = group.find_spot_market_index(spot_market.address)
-        self.open_orders_address = self.account.spot_open_orders[self.market_index]
+        self.market_index: int = group.find_spot_market_index(spot_market.address)
+        self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders[self.market_index]
 
     @staticmethod
     def load(context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket) -> "SpotMarketInstructionBuilder":
@@ -84,9 +84,11 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         return SpotMarketInstructionBuilder(context, wallet, group, account, spot_market, raw_market, base_token_account, quote_token_account, market_index, fee_discount_token_address)
 
     def build_cancel_order_instructions(self, order: Order) -> CombinableInstructions:
-        open_orders = self.account.spot_open_orders[self.group_market_index]
+        if self.open_orders_address is None:
+            return CombinableInstructions.empty()
+
         return build_cancel_spot_order_instructions(
-            self.context, self.wallet, self.group, self.account, self.raw_market, order, open_orders)
+            self.context, self.wallet, self.group, self.account, self.raw_market, order, self.open_orders_address)
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
         return build_spot_place_order_instructions(self.context, self.wallet, self.group, self.account,

@@ -110,6 +110,23 @@ class TokenValue:
 
         return changes
 
+    def __add__(self, token_value_to_add: "TokenValue") -> "TokenValue":
+        if self.token != token_value_to_add.token:
+            raise Exception(
+                f"Cannot add TokenValues from different tokens ({self.token} and {token_value_to_add.token}).")
+        return TokenValue(self.token, self.value + token_value_to_add.value)
+
+    def __sub__(self, token_value_to_subtract: "TokenValue") -> "TokenValue":
+        if self.token != token_value_to_subtract.token:
+            raise Exception(
+                f"Cannot subtract TokenValues from different tokens ({self.token} and {token_value_to_subtract.token}).")
+        return TokenValue(self.token, self.value - token_value_to_subtract.value)
+
+    def __eq__(self, other: typing.Any) -> bool:
+        if isinstance(other, TokenValue) and self.token == other.token and self.value == other.value:
+            return True
+        return False
+
     def __str__(self) -> str:
         name = "« 𝚄𝚗-𝙽𝚊𝚖𝚎𝚍 𝚃𝚘𝚔𝚎𝚗 »"
         if self.token and self.token.name:

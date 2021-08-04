@@ -47,7 +47,7 @@ def build_account_info_converter(context: Context, account_type: str) -> typing.
             layout_account = layouts.MANGO_ACCOUNT.parse(account_info.data)
             group_address = layout_account.group
             group: Group = Group.load(context, group_address)
-            return Account.parse(context, account_info, group)
+            return Account.parse(account_info, group)
         return account_loader
     elif account_type_upper == "OPENORDERS":
         return lambda account_info: OpenOrders.parse(account_info, Decimal(6), Decimal(6))
