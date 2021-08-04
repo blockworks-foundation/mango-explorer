@@ -20,7 +20,7 @@ printf "Depositing USDC...\n"
 deposit --symbol USDC --quantity 1000000 --log-level ERROR
 
 printf "Depositing BTC...\n"
-deposit --symbol BTC --quantity 3 --log-level ERROR
+deposit --symbol BTC --quantity 100 --log-level ERROR
 
 printf "Depositing DOGE...\n"
 deposit --symbol DOGE --quantity 500000 --log-level ERROR
@@ -47,7 +47,7 @@ printf "Depositing SUSHI...\n"
 deposit --symbol SUSHI --quantity 12500 --log-level ERROR
 
 printf "Depositing USDT...\n"
-deposit --symbol USDT --quantity 100000 --log-level ERROR
+deposit --symbol USDT --quantity 4000000 --log-level ERROR
 
 printf "Balances now:\n"
 group-balances --log-level ERROR
