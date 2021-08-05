@@ -118,6 +118,7 @@ class Account(AddressableAccount):
     def from_layout(layout: layouts.MANGO_ACCOUNT, account_info: AccountInfo, version: Version, group: Group) -> "Account":
         meta_data = Metadata.from_layout(layout.meta_data)
         owner: PublicKey = layout.owner
+        mngo_token_info = TokenInfo.find_by_symbol(group.tokens, "MNGO")
         in_margin_basket: typing.Sequence[bool] = list([bool(in_basket) for in_basket in layout.in_margin_basket])
         active_in_basket: typing.List[bool] = []
         basket: typing.List[AccountBasketBaseToken] = []
@@ -127,7 +128,7 @@ class Account(AddressableAccount):
                 deposit = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_deposit))
                 intrinsic_borrow = token_info.root_bank.borrow_index * layout.borrows[index]
                 borrow = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_borrow))
-                perp_account = PerpAccount.from_layout(layout.perp_accounts[index])
+                perp_account = PerpAccount.from_layout(layout.perp_accounts[index], mngo_token_info.token)
                 spot_open_orders = layout.spot_open_orders[index]
                 basket_item: AccountBasketBaseToken = AccountBasketBaseToken(
                     token_info, deposit, borrow, spot_open_orders, perp_account)

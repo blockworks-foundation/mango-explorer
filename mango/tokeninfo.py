@@ -18,6 +18,8 @@ import typing
 
 from decimal import Decimal
 
+from solana.publickey import PublicKey
+
 from .layouts import layouts
 from .rootbank import RootBank
 from .token import Token
@@ -53,6 +55,29 @@ class TokenInfo():
             return None
 
         return TokenInfo.from_layout(layout, token_lookup, root_banks)
+
+    @staticmethod
+    def find_by_symbol(values: typing.Sequence[typing.Optional["TokenInfo"]], symbol: str) -> "TokenInfo":
+        found = [
+            value for value in values if value is not None and value.token is not None and value.token.symbol_matches(symbol)]
+        if len(found) == 0:
+            raise Exception(f"Token '{symbol}' not found in token infos: {values}")
+
+        if len(found) > 1:
+            raise Exception(f"Token '{symbol}' matched multiple tokens in infos: {values}")
+
+        return found[0]
+
+    @staticmethod
+    def find_by_mint(values: typing.Sequence[typing.Optional["TokenInfo"]], mint: PublicKey) -> "TokenInfo":
+        found = [value for value in values if value is not None and value.token is not None and value.token.mint == mint]
+        if len(found) == 0:
+            raise Exception(f"Token '{mint}' not found in token infos: {values}")
+
+        if len(found) > 1:
+            raise Exception(f"Token '{mint}' matched multiple tokens in infos: {values}")
+
+        return found[0]
 
     def __str__(self) -> str:
         root_bank = f"{self.root_bank}".replace("\n", "\n    ")

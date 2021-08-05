@@ -18,6 +18,8 @@ from decimal import Decimal
 
 from .layouts import layouts
 from .perpopenorders import PerpOpenOrders
+from .token import Token
+from .tokenvalue import TokenValue
 
 
 # # 🥭 PerpAccount class
@@ -26,28 +28,29 @@ from .perpopenorders import PerpOpenOrders
 #
 class PerpAccount:
     def __init__(self, base_position: Decimal, quote_position: Decimal, long_settled_funding: Decimal,
-                 short_settled_funding: Decimal, mngo_accrued: Decimal, open_orders: PerpOpenOrders):
+                 short_settled_funding: Decimal, mngo_accrued: TokenValue, open_orders: PerpOpenOrders):
         self.base_position: Decimal = base_position
         self.quote_position: Decimal = quote_position
         self.long_settled_funding: Decimal = long_settled_funding
         self.short_settled_funding: Decimal = short_settled_funding
-        self.mngo_accrued: Decimal = mngo_accrued
+        self.mngo_accrued: TokenValue = mngo_accrued
         self.open_orders: PerpOpenOrders = open_orders
 
     @staticmethod
-    def from_layout(layout: layouts.PERP_ACCOUNT) -> "PerpAccount":
+    def from_layout(layout: layouts.PERP_ACCOUNT, mngo_token: Token) -> "PerpAccount":
         base_position: Decimal = layout.base_position
         quote_position: Decimal = layout.quote_position
         long_settled_funding: Decimal = layout.long_settled_funding
         short_settled_funding: Decimal = layout.short_settled_funding
-        mngo_accrued: Decimal = layout.mngo_accrued
+        mngo_accrued_raw: Decimal = layout.mngo_accrued
+        mngo_accrued: TokenValue = TokenValue(mngo_token, mngo_token.shift_to_decimals(mngo_accrued_raw))
 
         open_orders: PerpOpenOrders = PerpOpenOrders.from_layout(layout.open_orders)
 
         return PerpAccount(base_position, quote_position, long_settled_funding, short_settled_funding, mngo_accrued, open_orders)
 
     def __str__(self) -> str:
-        if self.open_orders.free_slot_bits == 0xFFFFFFFF:
+        if self.base_position == Decimal(0) and self.quote_position == Decimal(0) and self.long_settled_funding == Decimal(0) and self.short_settled_funding == Decimal(0) and self.mngo_accrued == Decimal(0) and self.open_orders.free_slot_bits == 0xFFFFFFFF:
             return "« 𝙿𝚎𝚛𝚙𝙰𝚌𝚌𝚘𝚞𝚗𝚝 (empty) »"
         open_orders = f"{self.open_orders}".replace("\n", "\n        ")
         return f"""« 𝙿𝚎𝚛𝚙𝙰𝚌𝚌𝚘𝚞𝚗𝚝
