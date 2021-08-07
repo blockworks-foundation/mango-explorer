@@ -38,7 +38,7 @@ try:
     logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
 
-    sol_balance = context.fetch_sol_balance(wallet.address)
+    sol_balance = context.client.get_balance(wallet.address)
     print(f"Balance: {sol_balance} SOL")
 
     # "A lamport has a value of 0.000000001 SOL." from https://docs.solana.com/introduction
@@ -58,13 +58,11 @@ try:
         params = TransferParams(from_pubkey=source, to_pubkey=destination, lamports=lamports)
         transaction.add(transfer(params))
 
-        transfer_response = context.client.send_transaction(
-            transaction, wallet.account, opts=context.transaction_options)
-        transaction_id = context.unwrap_transaction_id_or_raise_exception(transfer_response)
+        transaction_id = context.client.send_transaction(transaction, wallet.account)
         print(f"Waiting on transaction ID: {transaction_id}")
-        context.wait_for_confirmation(transaction_id)
+        context.client.wait_for_confirmation([transaction_id])
 
-    updated_balance = context.fetch_sol_balance(wallet.address)
+    updated_balance = context.client.get_balance(wallet.address)
     print(f"{text_amount} sent. Balance now: {updated_balance} SOL")
 except Exception as exception:
     logging.critical(f"send-sols stopped because of exception: {exception} - {traceback.format_exc()}")

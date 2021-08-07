@@ -4,8 +4,6 @@ from solana.publickey import PublicKey
 
 
 def context_has_default_values(ctx):
-    assert ctx.cluster == "devnet"
-    assert ctx.cluster_url == "https://api.devnet.solana.com"
     assert ctx.program_id == PublicKey("5fP7Z7a87ZEVsKr2tQPApdtq83GcTW4kz919R6ou5h5E")
     assert ctx.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
     assert ctx.group_name == "devnet.0"
@@ -36,8 +34,6 @@ def test_context_default_values():
 def test_new_from_cluster_url():
     context_has_default_values(mango.ContextBuilder.default())
     derived = mango.ContextBuilder.default().new_from_cluster_url("https://some-dev-host")
-    assert derived.cluster == "devnet"
-    assert derived.cluster_url == "https://some-dev-host"
     assert derived.program_id == PublicKey("5fP7Z7a87ZEVsKr2tQPApdtq83GcTW4kz919R6ou5h5E")
     assert derived.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
     assert derived.group_name == "devnet.0"
@@ -48,8 +44,6 @@ def test_new_from_cluster_url():
 def test_new_from_group_name():
     context_has_default_values(mango.ContextBuilder.default())
     derived = mango.ContextBuilder.default().new_from_group_name("devnet.0")
-    assert derived.cluster == "devnet"
-    assert derived.cluster_url == "https://api.devnet.solana.com"
     assert derived.program_id == PublicKey("5fP7Z7a87ZEVsKr2tQPApdtq83GcTW4kz919R6ou5h5E")
     assert derived.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
 
@@ -62,8 +56,6 @@ def test_new_from_group_name():
 def test_new_from_group_id():
     context_has_default_values(mango.ContextBuilder.default())
     derived = mango.ContextBuilder.default().new_from_group_id(PublicKey("ENALFdayYzkpkKoz3JBk33HchJ3wrEuEuEkPowRhnEu1"))
-    assert derived.cluster == "devnet"
-    assert derived.cluster_url == "https://api.devnet.solana.com"
     assert derived.program_id == PublicKey("5fP7Z7a87ZEVsKr2tQPApdtq83GcTW4kz919R6ou5h5E")
     assert derived.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
 

@@ -18,19 +18,14 @@ import abc
 import logging
 import typing
 
-import spl.token.instructions as spl_token
-
 from decimal import Decimal
-from pyserum.enums import OrderType, Side
-from pyserum.market import Market
 from solana.publickey import PublicKey
 
-from .combinableinstructions import CombinableInstructions
+from .account import Account
 from .context import Context
-from .instructions import build_compound_serum_place_order_instructions, build_create_serum_open_orders_instructions
-from .retrier import retry_context
-from .spotmarket import SpotMarket
-from .tokenaccount import TokenAccount
+from .createmarketoperations import create_market_operations
+from .marketoperations import MarketOperations
+from .orders import Order, OrderType, Side
 from .wallet import Wallet
 
 
@@ -64,11 +59,11 @@ class TradeExecutor(metaclass=abc.ABCMeta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def buy(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
+    def buy(self, symbol: str, quantity: Decimal) -> Order:
         raise NotImplementedError("TradeExecutor.buy() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def sell(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
+    def sell(self, symbol: str, quantity: Decimal) -> Order:
         raise NotImplementedError("TradeExecutor.sell() is not implemented on the base type.")
 
 
@@ -92,19 +87,15 @@ class NullTradeExecutor(TradeExecutor):
         self.reporter(f"Skipping SELL trade of {quantity:,.8f} of '{symbol}'.")
 
 
-# # 🥭 SerumImmediateTradeExecutor class
+# # 🥭 ImmediateTradeExecutor class
 #
-# This class puts an IOC trade on the Serum orderbook with the expectation it will be filled
-# immediately. It uses the build_compound_serum_place_order_instructions function which follows
-# the pattern described here:
+# This class puts an IOC trade on the orderbook with the expectation it will be filled
+# immediately. It follows the pattern described here:
 #   https://solanadev.blogspot.com/2021/05/order-techniques-with-project-serum.html
 #
-# Basically, it tries to send to a 'market buy/sell' and settle all in one transaction.
+# Basically, it tries to send a 'market buy/sell' and settle all in one transaction.
 #
-# It also creates the Serum OpenOrders account for the transaction if it doesn't
-# already exist.
-#
-# The SerumImmediateTradeExecutor constructor takes a `price_adjustment_factor` to allow
+# The ImmediateTradeExecutor constructor takes a `price_adjustment_factor` to allow
 # moving the price it is willing to pay away from the mid-price. Testing shows the price is
 # filled at the orderbook price if the price we specify is worse, so it looks like it's
 # possible to be quite liberal with this adjustment. In a live test:
@@ -122,13 +113,12 @@ class NullTradeExecutor(TradeExecutor):
 # from the orderbook starting at the current cheapest, until the order was filled or (I'm
 # assuming) the price exceeded the price specified.
 #
-
-
-class SerumImmediateTradeExecutor(TradeExecutor):
-    def __init__(self, context: Context, wallet: Wallet, price_adjustment_factor: Decimal = Decimal(0), reporter: typing.Callable[[str], None] = None):
+class ImmediateTradeExecutor(TradeExecutor):
+    def __init__(self, context: Context, wallet: Wallet, account: typing.Optional[Account], price_adjustment_factor: Decimal = Decimal(0), reporter: typing.Callable[[str], None] = None):
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
+        self.account: typing.Optional[Account] = account
         self.price_adjustment_factor: Decimal = price_adjustment_factor
         self._serum_fee_discount_token_address: typing.Optional[PublicKey] = None
         self._serum_fee_discount_token_address_loaded: bool = False
@@ -145,127 +135,41 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         else:
             self.reporter = just_log
 
-    @property
-    def serum_fee_discount_token_address(self) -> typing.Optional[PublicKey]:
-        if self._serum_fee_discount_token_address_loaded:
-            return self._serum_fee_discount_token_address
+    def buy(self, symbol: str, quantity: Decimal) -> Order:
+        market_operations: MarketOperations = self._build_market_operations(symbol)
+        orders = market_operations.load_orders()
 
-        # SRM is always the token Serum uses for fee discounts
-        token = self.context.token_lookup.find_by_symbol("SRM")
-        if token is None:
-            raise Exception("Could not load token details for SRM")
+        top_ask = min([order.price for order in orders if order.side == Side.SELL])
 
-        fee_discount_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-            self.context, self.wallet.address, token)
-        if fee_discount_token_account is not None:
-            self._serum_fee_discount_token_address = fee_discount_token_account.address
-
-        self._serum_fee_discount_token_address_loaded = True
-        return self._serum_fee_discount_token_address
-
-    def buy(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
-        spot_market = self._lookup_spot_market(symbol)
-        market = Market.load(self.context.client, spot_market.address)
-        self.reporter(f"BUY order market: {spot_market.address} {market}")
-
-        asks = market.load_asks()
-        top_ask = next(asks.orders())
-        top_price = Decimal(top_ask.info.price)
         increase_factor = Decimal(1) + self.price_adjustment_factor
-        price = top_price * increase_factor
-        self.reporter(f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_price}")
+        price = top_ask * increase_factor
+        self.reporter(f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_ask}")
 
-        return self._execute(
-            spot_market,
-            market,
-            Side.BUY,
-            price,
-            quantity
-        )
+        order = Order.from_basic_info(Side.BUY, price, quantity, OrderType.IOC)
+        return market_operations.place_order(order)
 
-    def sell(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
-        spot_market = self._lookup_spot_market(symbol)
-        market = Market.load(self.context.client, spot_market.address)
-        self.reporter(f"SELL order market: {spot_market.address} {market}")
+    def sell(self, symbol: str, quantity: Decimal) -> Order:
+        market_operations: MarketOperations = self._build_market_operations(symbol)
+        orders = market_operations.load_orders()
 
-        bids = market.load_bids()
-        bid_orders = list(bids.orders())
-        top_bid = bid_orders[len(bid_orders) - 1]
-        top_price = Decimal(top_bid.info.price)
+        top_bid = max([order.price for order in orders if order.side == Side.BUY])
+
         decrease_factor = Decimal(1) - self.price_adjustment_factor
-        price = top_price * decrease_factor
-        self.reporter(f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_price}")
+        price = top_bid * decrease_factor
+        self.reporter(f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_bid}")
 
-        return self._execute(
-            spot_market,
-            market,
-            Side.SELL,
-            price,
-            quantity
-        )
+        order = Order.from_basic_info(Side.SELL, price, quantity, OrderType.IOC)
+        return market_operations.place_order(order)
 
-    def _execute(self, spot_market: SpotMarket, market: Market, side: Side, price: Decimal, quantity: Decimal) -> typing.Sequence[str]:
-        all_instructions: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+    def _build_market_operations(self, symbol: str) -> MarketOperations:
+        market = self.context.market_lookup.find_by_symbol(symbol)
+        if market is None:
+            raise Exception(f"Market '{symbol}' could not be found.")
 
-        base_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-            self.context, self.wallet.address, spot_market.base)
-        if base_token_account is None:
-            create_base_token_account = spl_token.create_associated_token_account(
-                payer=self.wallet.address, owner=self.wallet.address, mint=spot_market.base.mint
-            )
-            all_instructions += CombinableInstructions.from_instruction(create_base_token_account)
-            base_token_account_address = create_base_token_account.keys[1].pubkey
-        else:
-            base_token_account_address = base_token_account.address
-
-        quote_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-            self.context, self.wallet.address, spot_market.quote)
-        if quote_token_account is None:
-            create_quote_token_account = spl_token.create_associated_token_account(
-                payer=self.wallet.address, owner=self.wallet.address, mint=spot_market.quote.mint
-            )
-            all_instructions += CombinableInstructions.from_instruction(create_quote_token_account)
-            quote_token_account_address = create_quote_token_account.keys[1].pubkey
-        else:
-            quote_token_account_address = quote_token_account.address
-
-        if side == Side.BUY:
-            source_token_account_address = quote_token_account_address
-        else:
-            source_token_account_address = base_token_account_address
-
-        open_order_accounts = market.find_open_orders_accounts_for_owner(self.wallet.address)
-        if not open_order_accounts:
-            create_open_orders = build_create_serum_open_orders_instructions(self.context, self.wallet, market)
-            all_instructions += create_open_orders
-            open_orders_address: PublicKey = create_open_orders.signers[0].public_key()
-            open_orders_addresses: typing.List[PublicKey] = [open_orders_address]
-        else:
-            open_orders_address = open_order_accounts[0].address
-            open_orders_addresses = list(oo.address for oo in open_order_accounts)
-
-        client_id = self.context.random_client_id()
-        place_order_instructions = build_compound_serum_place_order_instructions(self.context, self.wallet, market, source_token_account_address, open_orders_address,
-                                                                                 open_orders_addresses, OrderType.IOC, side, price, quantity, client_id, base_token_account_address, quote_token_account_address, self.serum_fee_discount_token_address)
-        all_instructions += place_order_instructions
-        with retry_context("Place Serum Order And Settle", all_instructions.execute_and_unwrap_transaction_ids, self.context.retry_pauses) as retrier:
-            return retrier.run(self.context)
-
-    def _lookup_spot_market(self, symbol: str) -> SpotMarket:
-        spot_market = self.context.market_lookup.find_by_symbol(symbol)
-        if spot_market is None:
-            raise Exception(f"Spot market '{symbol}' could not be found.")
-
-        if not isinstance(spot_market, SpotMarket):
-            raise Exception(f"Spot market '{symbol}' is not a Serum market.")
-
-        self.logger.info(f"Base token: {spot_market.base}")
-        self.logger.info(f"Quote token: {spot_market.quote}")
-
-        return spot_market
+        return create_market_operations(self.context, self.wallet, self.account, market)
 
     def __str__(self) -> str:
-        return f"""« SerumImmediateTradeExecutor [{self.price_adjustment_factor}] »"""
+        return f"""« 𝙸𝚖𝚖𝚎𝚍𝚒𝚊𝚝𝚎𝚃𝚛𝚊𝚍𝚎𝙴𝚡𝚎𝚌𝚞𝚝𝚘𝚛 [{self.price_adjustment_factor}] »"""
 
     def __repr__(self) -> str:
         return f"{self}"

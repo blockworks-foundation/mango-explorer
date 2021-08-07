@@ -14,7 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import abc
-import pyserum.enums
 import typing
 
 from datetime import datetime
@@ -138,7 +137,7 @@ def event_builder(lot_size_converter: LotSizeConverter, event_layout, original_i
     if event_layout.event_type == b'\x00':
         if event_layout.maker is None and event_layout.taker is None:
             return None
-        side: Side = Side.BUY if event_layout.side == pyserum.enums.Side.BUY else Side.SELL
+        side: Side = Side.from_value(event_layout.side)
         quantity: Decimal = lot_size_converter.quantity_lots_to_value(event_layout.quantity)
         price: Decimal = lot_size_converter.price_lots_to_value(event_layout.price)
         return PerpFillEvent(event_layout.event_type, original_index, event_layout.timestamp, side,

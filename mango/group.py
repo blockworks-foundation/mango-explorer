@@ -215,7 +215,7 @@ class Group(AddressableAccount):
 
     def fetch_balances(self, context: Context, root_address: PublicKey) -> typing.Sequence[TokenValue]:
         balances: typing.List[TokenValue] = []
-        sol_balance = context.fetch_sol_balance(root_address)
+        sol_balance = context.client.get_balance(root_address)
         balances += [TokenValue(SolToken, sol_balance)]
 
         for basket_token in self.tokens:

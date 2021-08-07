@@ -75,7 +75,7 @@ class SerumMarketStub(Market):
 
     def load(self, context: Context) -> SerumMarket:
         underlying_serum_market: PySerumMarket = PySerumMarket.load(
-            context.client, self.address, context.dex_program_id)
+            context.client.compatible_client, self.address, context.dex_program_id)
         return SerumMarket(self.address, self.base, self.quote, underlying_serum_market)
 
     def __str__(self) -> str:

@@ -34,7 +34,7 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
-context.commitment = Max
+context.client.commitment = Max
 print(context)
 
 disposer = mango.DisposePropagator()
@@ -61,7 +61,7 @@ publisher.pipe(
     rx.operators.retry()
 ).subscribe(mango.PrintingObserverSubscriber(False))
 
-websocket_url = context.cluster_url.replace("https", "wss", 1)
+websocket_url = context.client.cluster_url.replace("https", "wss", 1)
 ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler, manager.on_item)
 ws.ping_interval = 10
 

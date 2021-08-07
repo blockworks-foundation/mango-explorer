@@ -153,7 +153,7 @@ class CombinableInstructions():
         all_instructions = [*self.instructions, *new_instruction_data.instructions]
         return CombinableInstructions(signers=all_signers, instructions=all_instructions)
 
-    def execute(self, context: Context) -> typing.Any:
+    def execute(self, context: Context, on_exception_continue: bool = False) -> typing.Sequence[str]:
         chunks: typing.Sequence[typing.Sequence[TransactionInstruction]
                                 ] = _split_instructions_into_chunks(self.signers, self.instructions)
 
@@ -164,48 +164,13 @@ class CombinableInstructions():
         if len(chunks) > 1:
             self.logger.info(f"Running instructions in {len(chunks)} transactions.")
 
-        results = []
-        for chunk in chunks:
-            transaction = Transaction()
-            transaction.instructions.extend(chunk)
-            response = context.client.send_transaction(transaction, *self.signers, opts=context.transaction_options)
-            results += [context.unwrap_or_raise_exception(response)]
-
-        return results
-
-    def execute_individually_and_continue_on_failures(self, context: Context) -> typing.Any:
-        results = []
-        for instruction in self.instructions:
-            transaction = Transaction()
-            transaction.instructions = [instruction]
-            try:
-                response = context.client.send_transaction(transaction, *self.signers, opts=context.transaction_options)
-                results += [context.unwrap_or_raise_exception(response)]
-            except Exception as exception:
-                instruction_str: str = _instruction_to_str(context, instruction)
-                self.logger.error(f"""Error executing individual instruction: {exception}
-{instruction_str}""")
-
-        return results
-
-    def execute_and_continue_on_failures(self, context: Context) -> typing.Any:
-        chunks: typing.Sequence[typing.Sequence[TransactionInstruction]
-                                ] = _split_instructions_into_chunks(self.signers, self.instructions)
-
-        if len(chunks) == 1 and len(chunks[0]) == 0:
-            self.logger.info("No instructions to run.")
-            return []
-
-        if len(chunks) > 1:
-            self.logger.info(f"Running instructions in {len(chunks)} transactions.")
-
-        results = []
+        results: typing.List[str] = []
         for index, chunk in enumerate(chunks):
             transaction = Transaction()
             transaction.instructions.extend(chunk)
             try:
-                response = context.client.send_transaction(transaction, *self.signers, opts=context.transaction_options)
-                results += [context.unwrap_or_raise_exception(response)]
+                response = context.client.send_transaction(transaction, *self.signers)
+                results += [response]
             except Exception as exception:
                 starts_at = sum(len(ch) for ch in chunks[0:index])
                 instruction_text = "\n".join(list(map(lambda ins: _instruction_to_str(context, ins), chunk)))
@@ -213,11 +178,10 @@ class CombinableInstructions():
 Exception: {exception}
 Failing instruction(s):
 {instruction_text}""")
+                if not on_exception_continue:
+                    raise exception
 
         return results
-
-    def execute_and_unwrap_transaction_ids(self, context: Context) -> typing.Sequence[str]:
-        return typing.cast(typing.Sequence[str], self.execute(context))
 
     def __str__(self) -> str:
         report: typing.List[str] = []

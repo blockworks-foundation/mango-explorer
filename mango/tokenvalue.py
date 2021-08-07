@@ -45,17 +45,15 @@ class TokenValue:
     def fetch_total_value_or_none(context: Context, account_public_key: PublicKey, token: Token) -> typing.Optional["TokenValue"]:
         opts = TokenAccountOpts(mint=token.mint)
 
-        token_accounts_response = context.client.get_token_accounts_by_owner(
-            account_public_key, opts, commitment=context.commitment)
-        token_accounts = token_accounts_response["result"]["value"]
+        token_accounts = context.client.get_token_accounts_by_owner(account_public_key, opts)
         if len(token_accounts) == 0:
             return None
 
         total_value = Decimal(0)
         for token_account in token_accounts:
-            result = context.client.get_token_account_balance(token_account["pubkey"], commitment=context.commitment)
-            value = Decimal(result["result"]["value"]["amount"])
-            decimal_places = result["result"]["value"]["decimals"]
+            result = context.client.get_token_account_balance(token_account["pubkey"])
+            value = Decimal(result["amount"])
+            decimal_places = result["decimals"]
             divisor = Decimal(10 ** decimal_places)
             total_value += value / divisor
 

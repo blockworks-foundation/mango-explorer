@@ -26,7 +26,7 @@ from rx.core import Observable
 
 from ...context import Context
 from ...market import Market
-from ...observables import DisposePropagator
+from ...observables import DisposePropagator, DisposeWrapper
 from ...oracle import Oracle, OracleProvider, OracleSource, Price, SupportedOracleFeature
 from ...reconnectingwebsocket import ReconnectingWebsocket
 
@@ -96,8 +96,8 @@ class FtxOracle(Oracle):
             subject.subscribe(observer, scheduler_)
 
             disposable = DisposePropagator()
-            disposable.add_disposable(lambda: ws.close())
-            disposable.add_disposable(lambda: subject.dispose())
+            disposable.add_disposable(DisposeWrapper(lambda: ws.close()))
+            disposable.add_disposable(DisposeWrapper(lambda: subject.dispose()))
 
             return disposable
 

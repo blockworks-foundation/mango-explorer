@@ -53,12 +53,10 @@ class TokenAccount(AddressableAccount):
     def fetch_all_for_owner_and_token(context: Context, owner_public_key: PublicKey, token: Token) -> typing.List["TokenAccount"]:
         opts = TokenAccountOpts(mint=token.mint)
 
-        token_accounts_response = context.client.get_token_accounts_by_owner(
-            owner_public_key, opts, commitment=context.commitment)
-        token_accounts = context.unwrap_or_raise_exception(token_accounts_response)
+        token_accounts = context.client.get_token_accounts_by_owner(owner_public_key, opts)
 
         all_accounts: typing.List[TokenAccount] = []
-        for token_account_response in token_accounts["value"]:
+        for token_account_response in token_accounts:
             account_info = AccountInfo._from_response_values(
                 token_account_response["account"], PublicKey(token_account_response["pubkey"]))
             token_account = TokenAccount.parse(account_info, token)

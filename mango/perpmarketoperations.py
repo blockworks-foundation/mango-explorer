@@ -52,7 +52,7 @@ class PerpMarketOperations(MarketOperations):
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
         accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)
         crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank)
-        return (signers + cancel + crank).execute_and_unwrap_transaction_ids(self.context)
+        return (signers + cancel + crank).execute(self.context)
 
     def place_order(self, order: Order) -> Order:
         client_id: int = self.context.random_client_id()

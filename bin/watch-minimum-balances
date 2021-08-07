@@ -62,7 +62,7 @@ def sols_from_lamports(lamports: Decimal) -> Decimal:
 def notifier(name: str) -> typing.Callable[[mango.AccountInfo], None]:
     def notify(account_info: mango.AccountInfo) -> None:
         account_sols = sols_from_lamports(account_info.lamports)
-        report = f"Account \"{name} [{account_info.address}]\" on {context.cluster} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
+        report = f"Account \"{name} [{account_info.address}]\" on {context.client.cluster} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
         send_balance_notification(report)
         print(f"Notification sent: {report}")
     return notify
@@ -111,7 +111,7 @@ disposer.add_disposable(manager)
 for name_and_address in args.named_address:
     add_subscription_for_parameter(context, manager, args.timer_limit, name_and_address)
 
-websocket_url = context.cluster_url.replace("https", "ws", 1)
+websocket_url = context.client.cluster_url.replace("https", "ws", 1)
 ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler, manager.on_item)
 ws.ping_interval = 10
 

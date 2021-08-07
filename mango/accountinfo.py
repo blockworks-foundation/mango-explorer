@@ -20,7 +20,7 @@ import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
-from solana.rpc.types import RPCMethod, RPCResponse
+from solana.rpc.types import RPCResponse
 
 from .context import Context
 from .encoding import decode_binary, encode_binary
@@ -56,8 +56,7 @@ class AccountInfo:
 
     @staticmethod
     def load(context: Context, address: PublicKey) -> typing.Optional["AccountInfo"]:
-        response: RPCResponse = context.client.get_account_info(address, commitment=context.commitment)
-        result = context.unwrap_or_raise_exception(response)
+        result = context.client.get_account_info(address)
         if result["value"] is None:
             return None
 
@@ -73,13 +72,8 @@ class AccountInfo:
         multiple: typing.List[AccountInfo] = []
         chunks = AccountInfo._split_list_into_chunks(address_strings, chunk_size)
         for counter, chunk in enumerate(chunks):
-            response = context.client._provider.make_request(
-                RPCMethod("getMultipleAccounts"),
-                [*chunk],
-                {"commitment": context.commitment, "encoding": "base64"}
-            )
-            result = context.unwrap_or_raise_exception(response)
-            response_value_list = zip(result["value"], addresses)
+            results = context.client.get_multiple_accounts([*chunk])
+            response_value_list = zip(results, addresses)
             multiple += list(map(lambda pair: AccountInfo._from_response_values(pair[0], pair[1]), response_value_list))
             if (sleep_between_calls > 0.0) and (counter < (len(chunks) - 1)):
                 time.sleep(sleep_between_calls)

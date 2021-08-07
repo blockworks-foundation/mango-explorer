@@ -77,7 +77,7 @@ class WebSocketProgramSubscription(WebSocketSubscription[TSubscriptionInstance])
     "params": [\"""" + str(self.address) + """\",
         {
             "encoding": "base64",
-            "commitment": \"""" + str(self.context.commitment) + """\"
+            "commitment": \"""" + str(self.context.client.commitment) + """\"
         }
   ]
 }
@@ -97,7 +97,7 @@ class WebSocketAccountSubscription(WebSocketSubscription[TSubscriptionInstance])
     "params": [\"""" + str(self.address) + """\",
         {
             "encoding": "base64",
-           "commitment": \"""" + str(self.context.commitment) + """\"
+           "commitment": \"""" + str(self.context.client.commitment) + """\"
         }
     ]
 }
@@ -141,7 +141,7 @@ class WebSocketLogSubscription(WebSocketSubscription[LogEvent]):
             "mentions": [ \"""" + str(self.address) + """\" ]
         },
         {
-            "commitment": \"""" + str(self.context.commitment) + """\"
+            "commitment": \"""" + str(self.context.client.commitment) + """\"
         }
     ]
 }

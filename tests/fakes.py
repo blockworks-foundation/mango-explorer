@@ -6,14 +6,13 @@ from pyserum import market
 from pyserum.market.state import MarketState
 from solana.account import Account
 from solana.publickey import PublicKey
-from solana.rpc.api import Client
 from solana.rpc.types import RPCResponse
 from typing import NamedTuple
 
 
-class MockClient(Client):
+class MockCompatibleClient(mango.CompatibleClient):
     def __init__(self):
-        super().__init__("http://localhost")
+        super().__init__("local", "http://localhost", "processed", "base64")
         self.token_accounts_by_owner = []
 
     def get_token_accounts_by_owner(self, *args, **kwargs) -> RPCResponse:
@@ -21,6 +20,11 @@ class MockClient(Client):
 
     def get_minimum_balance_for_rent_exemption(size, *args, **kwargs) -> RPCResponse:
         return RPCResponse(result=27)
+
+
+class MockClient(mango.BetterClient):
+    def __init__(self):
+        super().__init__(MockCompatibleClient())
 
 
 def fake_public_key() -> PublicKey:

@@ -46,6 +46,9 @@ class Side(enum.Enum):
         converted: pyserum.enums.Side = pyserum.enums.Side(int(value))
         return Side.BUY if converted == pyserum.enums.Side.BUY else Side.SELL
 
+    def to_serum(self) -> pyserum.enums.Side:
+        return pyserum.enums.Side.BUY if self == Side.BUY else pyserum.enums.Side.SELL
+
     def __str__(self) -> str:
         return self.value
 
@@ -78,6 +81,14 @@ class OrderType(enum.Enum):
         elif converted == pyserum.enums.OrderType.LIMIT:
             return OrderType.LIMIT
         return OrderType.UNKNOWN
+
+    def to_serum(self) -> "Side":
+        if self == OrderType.IOC:
+            return pyserum.enums.OrderType.IOC
+        elif self == OrderType.POST_ONLY:
+            return pyserum.enums.OrderType.POST_ONLY
+        else:
+            return pyserum.enums.OrderType.LIMIT
 
     def __str__(self) -> str:
         return self.value

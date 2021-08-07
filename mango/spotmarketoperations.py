@@ -70,7 +70,7 @@ class SpotMarketOperations(MarketOperations):
         crank: CombinableInstructions = self._build_crank()
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
 
-        (signers + place + crank + settle).execute_individually_and_continue_on_failures(self.context)
+        (signers + place + crank + settle).execute(self.context)
 
         return order_with_client_id
 

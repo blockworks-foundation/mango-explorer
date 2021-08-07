@@ -48,7 +48,7 @@ class SerumMarketOperations(MarketOperations):
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
         crank: CombinableInstructions = self._build_crank()
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
-        return (signers + cancel + crank + settle).execute_and_unwrap_transaction_ids(self.context)
+        return (signers + cancel + crank + settle).execute(self.context)
 
     def place_order(self, order: Order) -> Order:
         client_id: int = self.context.random_client_id()

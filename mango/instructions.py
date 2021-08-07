@@ -65,9 +65,7 @@ from .wallet import Wallet
 #
 
 def build_create_solana_account_instructions(context: Context, wallet: Wallet, program_id: PublicKey, size: int, lamports: int = 0) -> CombinableInstructions:
-    minimum_balance_response = context.client.get_minimum_balance_for_rent_exemption(
-        size, commitment=context.commitment)
-    minimum_balance = context.unwrap_or_raise_exception(minimum_balance_response)
+    minimum_balance = context.client.get_minimum_balance_for_rent_exemption(size)
     account = SolanaAccount()
     create_instruction = create_account(
         CreateAccountParams(wallet.address, account.public_key(), lamports + minimum_balance, size, program_id))
@@ -131,13 +129,11 @@ def build_close_spl_account_instructions(context: Context, wallet: Wallet, addre
 
 def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet, market: Market) -> CombinableInstructions:
     new_open_orders_account = SolanaAccount()
-    response = context.client.get_minimum_balance_for_rent_exemption(
-        layouts.OPEN_ORDERS.sizeof(), commitment=context.commitment)
-    balanced_needed = context.unwrap_or_raise_exception(response)
+    minimum_balance = context.client.get_minimum_balance_for_rent_exemption(layouts.OPEN_ORDERS.sizeof())
     instruction = make_create_account_instruction(
         owner_address=wallet.address,
         new_account_address=new_open_orders_account.public_key(),
-        lamports=balanced_needed,
+        lamports=minimum_balance,
         program_id=market.state.program_id(),
     )
 
@@ -635,8 +631,8 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
         # the Account so that future uses (like later in this method) have access to it in the right place.
         account.update_spot_open_orders_for_market(market_index, open_orders_address)
 
-    serum_order_type = pyserum.enums.OrderType.POST_ONLY if order_type == OrderType.POST_ONLY else pyserum.enums.OrderType.IOC if order_type == OrderType.IOC else pyserum.enums.OrderType.LIMIT
-    serum_side = pyserum.enums.Side.BUY if side == Side.BUY else pyserum.enums.Side.SELL
+    serum_order_type: pyserum.enums.OrderType = order_type.to_serum()
+    serum_side: pyserum.enums.Side = side.to_serum()
     intrinsic_price = market.state.price_number_to_lots(float(price))
     max_base_quantity = market.state.base_size_number_to_lots(float(quantity))
     max_quote_quantity = market.state.base_size_number_to_lots(

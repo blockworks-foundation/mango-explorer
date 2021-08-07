@@ -324,6 +324,18 @@ class DisposePropagator(Disposable):
             disposable.dispose()
 
 
+# # 🥭 DisposeWrapper class
+#
+# A `Disposable` class that wraps a lambda to perform some cleanup actions when it is disposed.
+#
+class DisposeWrapper(Disposable):
+    def __init__(self, callable):
+        self.callable: typing.Callable[[], None] = callable
+
+    def dispose(self):
+        self.callable()
+
+
 # # 🥭 FileToucherObserver class
 #
 # An `Observer` that touches a file every time an item is observed, and deletes that file when the

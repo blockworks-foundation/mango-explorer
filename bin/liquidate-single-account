@@ -96,7 +96,7 @@ try:
         print("Transaction ID:", transaction_id)
         print("Waiting for confirmation...")
 
-        context.wait_for_confirmation(transaction_id)
+        context.client.wait_for_confirmation([transaction_id])
 
         transaction_scout = mango.TransactionScout.load(context, transaction_id)
         print(str(transaction_scout))

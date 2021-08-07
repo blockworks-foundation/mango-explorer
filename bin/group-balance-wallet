@@ -57,7 +57,7 @@ try:
     if args.dry_run:
         trade_executor: mango.TradeExecutor = mango.NullTradeExecutor(print)
     else:
-        trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, adjustment_factor, print)
+        trade_executor = mango.ImmediateTradeExecutor(context, wallet, None, adjustment_factor, print)
 
     wallet_balancer = mango.LiveWalletBalancer(
         context, wallet, group, trade_executor, action_threshold, tokens, targets)

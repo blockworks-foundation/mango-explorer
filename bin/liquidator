@@ -134,7 +134,7 @@ try:
     else:
         balance_parser = mango.TargetBalanceParser(tokens)
         targets = list(map(balance_parser.parse, args.target))
-        trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, adjustment_factor)
+        trade_executor = mango.ImmediateTradeExecutor(context, wallet, None, adjustment_factor)
         wallet_balancer = mango.LiveWalletBalancer(
             context, wallet, group, trade_executor, action_threshold, tokens, targets)
 

@@ -45,14 +45,10 @@ try:
     if args.dry_run:
         trade_executor: mango.TradeExecutor = mango.NullTradeExecutor()
     else:
-        trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, adjustment_factor)
+        trade_executor = mango.ImmediateTradeExecutor(context, wallet, None, adjustment_factor)
 
-    transaction_id = trade_executor.buy(symbol, args.quantity)[0]
-    if args.wait:
-        logging.info(f"Waiting on {transaction_id}")
-        context.wait_for_confirmation(transaction_id)
-
-    logging.info("Buy completed.")
+    order = trade_executor.buy(symbol, args.quantity)
+    logging.info(f"Buy completed for {order}")
 except Exception as exception:
     logging.critical(f"Buy stopped because of exception: {exception} - {traceback.format_exc()}")
 except:

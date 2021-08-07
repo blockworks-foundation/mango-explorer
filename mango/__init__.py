@@ -7,6 +7,7 @@ from .accountscout import ScoutReport, AccountScout
 from .addressableaccount import AddressableAccount
 from .balancesheet import BalanceSheet
 from .cache import PriceCache, RootBankCache, PerpMarketCache, Cache
+from .client import CompatibleClient, BetterClient
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS, SOL_MINT_ADDRESS, SOL_DECIMALS, SOL_DECIMAL_DIVISOR, WARNING_DISCLAIMER_TEXT, MangoConstants
 from .context import Context
@@ -31,7 +32,7 @@ from .marketlookup import MarketLookup, NullMarketLookup, CompoundMarketLookup
 from .marketoperations import MarketOperations, NullMarketOperations
 from .metadata import Metadata
 from .notification import NotificationTarget, TelegramNotificationTarget, DiscordNotificationTarget, MailjetNotificationTarget, CsvFileNotificationTarget, FilteringNotificationTarget, NotificationHandler, parse_subscription_target
-from .observables import DisposePropagator, NullObserverSubscriber, PrintingObserverSubscriber, TimestampedPrintingObserverSubscriber, CollectingObserverSubscriber, LatestItemObserverSubscriber, CaptureFirstItem, FunctionObserver, create_backpressure_skipping_observer, debug_print_item, log_subscription_error, observable_pipeline_error_reporter, EventSource, FileToucherObserver
+from .observables import DisposePropagator, DisposeWrapper, NullObserverSubscriber, PrintingObserverSubscriber, TimestampedPrintingObserverSubscriber, CollectingObserverSubscriber, LatestItemObserverSubscriber, CaptureFirstItem, FunctionObserver, create_backpressure_skipping_observer, debug_print_item, log_subscription_error, observable_pipeline_error_reporter, EventSource, FileToucherObserver
 from .openorders import OpenOrders
 from .oracle import OracleSource, Price, Oracle, OracleProvider, SupportedOracleFeature
 from .orderbookside import OrderBookSide
@@ -66,7 +67,7 @@ from .tokenaccount import TokenAccount
 from .tokeninfo import TokenInfo
 from .tokenlookup import TokenLookup, NullTokenLookup, CompoundTokenLookup
 from .tokenvalue import TokenValue
-from .tradeexecutor import TradeExecutor, NullTradeExecutor, SerumImmediateTradeExecutor
+from .tradeexecutor import TradeExecutor, NullTradeExecutor, ImmediateTradeExecutor
 from .transactionscout import MangoInstruction, TransactionScout, fetch_all_recent_transaction_signatures
 from .version import Version
 from .wallet import Wallet

@@ -26,7 +26,7 @@ from .context import Context
 from .instructions import build_create_serum_open_orders_instructions, build_serum_consume_events_instructions, build_serum_settle_instructions
 from .marketinstructionbuilder import MarketInstructionBuilder
 from .openorders import OpenOrders
-from .orders import Order, OrderType, Side
+from .orders import Order, Side
 from .publickey import encode_public_key_for_sorting
 from .serummarket import SerumMarket
 from .tokenaccount import TokenAccount
@@ -56,7 +56,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
 
     @staticmethod
     def load(context: Context, wallet: Wallet, serum_market: SerumMarket) -> "SerumMarketInstructionBuilder":
-        raw_market: Market = Market.load(context.client, serum_market.address, context.dex_program_id)
+        raw_market: Market = Market.load(context.client.compatible_client, serum_market.address, context.dex_program_id)
 
         fee_discount_token_address: typing.Optional[PublicKey] = None
         srm_token = context.token_lookup.find_by_symbol("SRM")
@@ -101,8 +101,8 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
 
             self.open_orders_address = ensure_open_orders.signers[0].public_key()
 
-        serum_order_type = pyserum.enums.OrderType.POST_ONLY if order.order_type == OrderType.POST_ONLY else pyserum.enums.OrderType.IOC if order.order_type == OrderType.IOC else pyserum.enums.OrderType.LIMIT
-        serum_side = pyserum.enums.Side.BUY if order.side == Side.BUY else pyserum.enums.Side.SELL
+        serum_order_type: pyserum.enums.OrderType = order.order_type.to_serum()
+        serum_side: pyserum.enums.Side = order.side.to_serum()
         payer_token_account = self.quote_token_account if order.side == Side.BUY else self.base_token_account
 
         raw_instruction = self.raw_market.make_place_order_instruction(payer_token_account.address, self.wallet.account, serum_order_type, serum_side, float(

@@ -79,7 +79,7 @@ class SpotMarketStub(Market):
     def load(self, context: Context, group: typing.Optional[Group]) -> SpotMarket:
         actual_group: Group = group or Group.load(context, self.group_address)
         underlying_serum_market: PySerumMarket = PySerumMarket.load(
-            context.client, self.address, context.dex_program_id)
+            context.client.compatible_client, self.address, context.dex_program_id)
         return SpotMarket(self.address, self.base, self.quote, actual_group, underlying_serum_market)
 
     def __str__(self) -> str:

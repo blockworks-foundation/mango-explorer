@@ -22,8 +22,8 @@ import typing
 
 from datetime import datetime
 from decimal import Decimal
-from solana.rpc.api import Client
 
+from ...client import BetterClient
 from ...context import Context
 from ...ensuremarketloaded import ensure_market_loaded
 from ...market import Market
@@ -67,9 +67,10 @@ class SerumOracle(Oracle):
     def fetch_price(self, context: Context) -> Price:
         # TODO: Do this right?
         context = copy.copy(context)
-        context.cluster = "mainnet-beta"
-        context.cluster_url = "https://solana-api.projectserum.com"
-        context.client = Client(context.cluster_url)
+        context.client = BetterClient.from_configuration("mainnet-beta",
+                                                         "https://solana-api.projectserum.com",
+                                                         context.client.commitment,
+                                                         context.client.skip_preflight)
         mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(SplTokenLookup.DefaultDataFilepath)
         adjusted_market = self.market
         mainnet_adjusted_market: typing.Optional[Market] = mainnet_serum_market_lookup.find_by_symbol(

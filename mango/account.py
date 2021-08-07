@@ -189,10 +189,9 @@ class Account(AddressableAccount):
             )
         ]
 
-        response = context.client.get_program_accounts(
-            context.program_id, memcmp_opts=filters, commitment=context.commitment, encoding="base64")
+        results = context.client.get_program_accounts(context.program_id, memcmp_opts=filters)
         accounts = []
-        for account_data in response["result"]:
+        for account_data in results:
             address = PublicKey(account_data["pubkey"])
             account_info = AccountInfo._from_response_values(account_data["account"], address)
             account = Account.parse(account_info, group)

@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import typing
 
 from .account import Account
 from .context import Context
@@ -35,7 +36,7 @@ from .wallet import Wallet
 # This function deals with the creation of a `MarketOperations` object for a given `Market`.
 
 
-def create_market_operations(context: Context, wallet: Wallet, account: Account, market: Market, dry_run: bool = False) -> MarketOperations:
+def create_market_operations(context: Context, wallet: Wallet, account: typing.Optional[Account], market: Market, dry_run: bool = False) -> MarketOperations:
     if dry_run:
         return NullMarketOperations(market.symbol)
 
@@ -45,10 +46,14 @@ def create_market_operations(context: Context, wallet: Wallet, account: Account,
             context, wallet, loaded_market)
         return SerumMarketOperations(context, wallet, loaded_market, serum_market_instruction_builder)
     elif isinstance(loaded_market, SpotMarket):
+        if account is None:
+            raise Exception("Account is required for SpotMarket operations.")
         spot_market_instruction_builder: SpotMarketInstructionBuilder = SpotMarketInstructionBuilder.load(
             context, wallet, loaded_market.group, account, loaded_market)
         return SpotMarketOperations(context, wallet, loaded_market.group, account, loaded_market, spot_market_instruction_builder)
     elif isinstance(loaded_market, PerpMarket):
+        if account is None:
+            raise Exception("Account is required for PerpMarket operations.")
         perp_market_instruction_builder: PerpMarketInstructionBuilder = PerpMarketInstructionBuilder.load(
             context, wallet, loaded_market.underlying_perp_market.group, account, loaded_market)
         return PerpMarketOperations(loaded_market.symbol, context, wallet, perp_market_instruction_builder, account, loaded_market)

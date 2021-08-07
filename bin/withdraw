@@ -60,5 +60,5 @@ withdraw = mango.build_withdraw_instructions(
     context, wallet, group, account, root_bank, node_bank, withdrawal_token_account, args.allow_borrow)
 
 all_instructions = signers + withdraw
-transaction_id = all_instructions.execute_and_unwrap_transaction_ids(context)[0]
-print("Signature:", transaction_id)
+transaction_ids = all_instructions.execute(context)
+print("Transaction IDs:", transaction_ids)

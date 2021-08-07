@@ -69,7 +69,7 @@ else:
 
 publisher.subscribe(mango.PrintingObserverSubscriber(False))
 
-websocket_url = context.cluster_url.replace("https", "ws", 1)
+websocket_url = context.client.cluster_url.replace("https", "ws", 1)
 ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler, manager.on_item)
 ws.ping_interval = 10
 ws.open()

@@ -54,5 +54,5 @@ wrap_instruction = mango.build_transfer_spl_tokens_instructions(
 close_instruction = mango.build_close_spl_account_instructions(context, wallet, temporary_wrapped_sol_address)
 all_instructions = all_instructions + wrap_instruction + close_instruction
 
-transaction_id = all_instructions.execute_and_unwrap_transaction_ids(context)[0]
-print(f"Transaction ID: {transaction_id}")
+transaction_ids = all_instructions.execute(context)
+print(f"Transaction ID: {transaction_ids}")
