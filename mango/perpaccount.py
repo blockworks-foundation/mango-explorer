@@ -50,7 +50,7 @@ class PerpAccount:
         return PerpAccount(base_position, quote_position, long_settled_funding, short_settled_funding, mngo_accrued, open_orders)
 
     def __str__(self) -> str:
-        if self.base_position == Decimal(0) and self.quote_position == Decimal(0) and self.long_settled_funding == Decimal(0) and self.short_settled_funding == Decimal(0) and self.mngo_accrued == Decimal(0) and self.open_orders.free_slot_bits == 0xFFFFFFFF:
+        if self.base_position == Decimal(0) and self.quote_position == Decimal(0) and self.long_settled_funding == Decimal(0) and self.short_settled_funding == Decimal(0) and self.mngo_accrued.value == Decimal(0) and self.open_orders.free_slot_bits == 0xFFFFFFFF:
             return "« 𝙿𝚎𝚛𝚙𝙰𝚌𝚌𝚘𝚞𝚗𝚝 (empty) »"
         open_orders = f"{self.open_orders}".replace("\n", "\n        ")
         return f"""« 𝙿𝚎𝚛𝚙𝙰𝚌𝚌𝚘𝚞𝚗𝚝

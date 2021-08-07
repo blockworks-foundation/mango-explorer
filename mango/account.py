@@ -28,6 +28,7 @@ from .group import Group
 from .layouts import layouts
 from .metadata import Metadata
 from .perpaccount import PerpAccount
+from .token import Token
 from .tokenvalue import TokenValue
 from .version import Version
 
@@ -256,10 +257,11 @@ class Account(AddressableAccount):
         item_to_update.spot_open_orders = spot_open_orders
 
     def __str__(self) -> str:
+        shared_quote_token: str = f"{self.shared_quote_token}".replace("\n", "\n        ")
         basket_count = len(self.basket)
         basket = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.basket])
 
-        tokens_in_basket = Account._map_sequence_to_basket_indices(
+        tokens_in_basket: typing.Sequence[typing.Optional[Token]] = Account._map_sequence_to_basket_indices(
             self.basket, self.basket_indices, lambda item: item.token_info.token)
         symbols_in_basket = list([tok.symbol for tok in tokens_in_basket if tok is not None])
         in_margin_basket = ", ".join(symbols_in_basket) or "None"
@@ -270,6 +272,8 @@ class Account(AddressableAccount):
     MSRM: {self.msrm_amount}
     Bankrupt? {self.is_bankrupt}
     Being Liquidated? {self.being_liquidated}
+    Shared Quote Token:
+        {shared_quote_token}
     In Basket: {in_margin_basket}
     Basket [{basket_count} in basket]:
         {basket}

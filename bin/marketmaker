@@ -271,7 +271,7 @@ model_state = mango.marketmaking.ModelState(market, latest_account_observer,
 
 add_file_health("marketmaker_pulse", market_maker.pulse_complete, disposer)
 
-logging.info("Current assets in account:")
+logging.info(f"Current assets in account {account.address} (owner: {account.owner}):")
 mango.TokenValue.report([asset for asset in account.net_assets if asset is not None], logging.info)
 
 pulse_disposable = rx.interval(args.pulse_interval).subscribe(
