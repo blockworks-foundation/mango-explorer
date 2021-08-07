@@ -6,15 +6,14 @@ from pyserum import market
 from pyserum.market.state import MarketState
 from solana.account import Account
 from solana.publickey import PublicKey
-from solana.rpc.api import Client
 from solana.rpc.types import RPCResponse
 
 import mango
 
 
-class MockClient(Client):
+class MockClient(mango.Client):
     def __init__(self):
-        super().__init__("http://localhost")
+        super().__init__("local", "http://localhost", "processed", False)
         self.token_accounts_by_owner = []
 
     def get_token_accounts_by_owner(self, *args, **kwargs) -> RPCResponse:

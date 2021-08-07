@@ -24,10 +24,10 @@ import typing
 from decimal import Decimal
 from rx.scheduler import ThreadPoolScheduler
 from solana.publickey import PublicKey
-from solana.rpc.api import Client
 from solana.rpc.commitment import Commitment
 from solana.rpc.types import MemcmpOpts, RPCError, RPCResponse, TxOpts
 
+from .client import Client
 from .constants import MangoConstants, SOL_DECIMAL_DIVISOR
 from .market import CompoundMarketLookup, MarketLookup
 from .spotmarket import SpotMarketLookup
@@ -84,12 +84,12 @@ class Context:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.cluster: str = cluster
         self.cluster_url: str = cluster_url
-        self.client: Client = Client(cluster_url)
         self.program_id: PublicKey = configured_program_id
         self.dex_program_id: PublicKey = dex_program_id
         self.group_name: str = group_name
         self.group_id: PublicKey = group_id
         self.commitment: Commitment = Commitment("processed")
+        self.client: Client = Client(self.cluster, self.cluster_url, self.commitment, False)
         self.transaction_options: TxOpts = TxOpts(preflight_commitment=self.commitment)
         self.encoding: str = "base64"
         self.token_lookup: TokenLookup = TokenLookup.load(token_filename)
