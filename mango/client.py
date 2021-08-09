@@ -281,7 +281,9 @@ class CompatibleClient:
                 error_code: int = response["error"]["code"] if "code" in response["error"] else -1
                 error_data: typing.Dict = response["error"]["data"] if "data" in response["error"] else {}
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
-                error_err = error_data["err"] if "err" in error_data else "No err"
+                error_err = error_data["err"] if "err" in error_data else "No error text returned"
+                if isinstance(error_err, str):
+                    error_err = [error_err]
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
                 raise TransactionException(exception_message, error_code, self.name,
                                            error_accounts, error_err, error_logs)
