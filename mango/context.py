@@ -23,7 +23,7 @@ from rx.scheduler import ThreadPoolScheduler
 from solana.publickey import PublicKey
 from solana.rpc.commitment import Commitment
 
-from .client import CompatibleClient, BetterClient
+from .client import BetterClient
 from .constants import MangoConstants
 from .marketlookup import MarketLookup
 from .tokenlookup import TokenLookup
@@ -41,10 +41,12 @@ _pool_scheduler = ThreadPoolScheduler(multiprocessing.cpu_count())
 
 
 class Context:
-    def __init__(self, cluster: str, cluster_url: str, program_id: PublicKey, dex_program_id: PublicKey,
+    def __init__(self, name: str, cluster: str, cluster_url: str, program_id: PublicKey, dex_program_id: PublicKey,
                  group_name: str, group_id: PublicKey, token_lookup: TokenLookup, market_lookup: MarketLookup):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.client: BetterClient = BetterClient(CompatibleClient(cluster, cluster_url, Commitment("processed"), False))
+        self.name: str = name
+        self.client: BetterClient = BetterClient.from_configuration(
+            name, cluster, cluster_url, Commitment("processed"), False)
         self.program_id: PublicKey = program_id
         self.dex_program_id: PublicKey = dex_program_id
         self.group_name: str = group_name
@@ -83,11 +85,11 @@ class Context:
                     program_id = PublicKey(group_data["mangoProgramId"])
                     dex_program_id = PublicKey(group_data["serumProgramId"])
                     group_id = PublicKey(_default_group_data["publicKey"])
-                    return Context(cluster, cluster_url, program_id, dex_program_id, self.group_name, group_id, self.token_lookup, self.market_lookup)
+                    return Context(self.name, cluster, cluster_url, program_id, dex_program_id, self.group_name, group_id, self.token_lookup, self.market_lookup)
         raise Exception(f"Could not find group name '{self.group_name}' in cluster '{cluster}'.")
 
     def new_from_cluster_url(self, cluster_url: str) -> "Context":
-        return Context(self.client.cluster, cluster_url, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
+        return Context(self.name, self.client.cluster, cluster_url, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
 
     def new_from_group_name(self, group_name: str) -> "Context":
         for group_data in MangoConstants["groups"]:
@@ -96,7 +98,7 @@ class Context:
                     program_id = PublicKey(group_data["mangoProgramId"])
                     dex_program_id = PublicKey(group_data["serumProgramId"])
                     group_id = PublicKey(_default_group_data["publicKey"])
-                    return Context(self.client.cluster, self.client.cluster_url, program_id, dex_program_id, group_name, group_id, self.token_lookup, self.market_lookup)
+                    return Context(self.name, self.client.cluster, self.client.cluster_url, program_id, dex_program_id, group_name, group_id, self.token_lookup, self.market_lookup)
         raise Exception(f"Could not find group name '{group_name}' in cluster '{self.client.cluster}'.")
 
     def new_from_group_id(self, group_id: PublicKey) -> "Context":
@@ -108,21 +110,21 @@ class Context:
                     dex_program_id = PublicKey(group_data["serumProgramId"])
                     group_id = PublicKey(_default_group_data["publicKey"])
                     group_name = _default_group_data["name"]
-                    return Context(self.client.cluster, self.client.cluster_url, program_id, dex_program_id, group_name, group_id, self.token_lookup, self.market_lookup)
+                    return Context(self.name, self.client.cluster, self.client.cluster_url, program_id, dex_program_id, group_name, group_id, self.token_lookup, self.market_lookup)
         raise Exception(f"Could not find group with ID '{group_id}' in cluster '{self.client.cluster}'.")
 
     def new_forced_to_devnet(self) -> "Context":
         cluster: str = "devnet"
         cluster_url: str = MangoConstants["cluster_urls"][cluster]
-        return Context(cluster, cluster_url, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
+        return Context(self.name, cluster, cluster_url, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
 
     def new_forced_to_mainnet_beta(self) -> "Context":
         cluster: str = "mainnet-beta"
         cluster_url: str = MangoConstants["cluster_urls"][cluster]
-        return Context(cluster, cluster_url, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
+        return Context(self.name, cluster, cluster_url, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
 
     def __str__(self) -> str:
-        return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝:
+        return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝 '{self.name}':
     Cluster: {self.client.cluster}
     Cluster URL: {self.client.cluster_url}
     Program ID: {self.program_id}

@@ -174,7 +174,7 @@ class CombinableInstructions():
             except Exception as exception:
                 starts_at = sum(len(ch) for ch in chunks[0:index])
                 instruction_text = "\n".join(list(map(lambda ins: _instruction_to_str(context, ins), chunk)))
-                self.logger.error(f"""Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction.
+                self.logger.error(f"""[{context.name}] Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction.
 Exception: {exception}
 Failing instruction(s):
 {instruction_text}""")

@@ -212,7 +212,7 @@ def build_serum_inventory_observer(context: mango.Context, disposer: mango.Dispo
 context = mango.ContextBuilder.from_command_line_parameters(args)
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager()
+manager = mango.WebSocketSubscriptionManager(context.name)
 disposer.add_disposable(manager)
 
 

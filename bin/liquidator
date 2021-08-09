@@ -23,8 +23,6 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Run a liquidator for a Mango Markets group.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--name", type=str, default="Mango Markets Liquidator",
-                    help="Name of the liquidator (used in reports and alerts)")
 parser.add_argument("--throttle-reload-to-seconds", type=Decimal, default=Decimal(60),
                     help="minimum number of seconds between each full margin account reload loop (including time taken processing accounts)")
 parser.add_argument("--throttle-ripe-update-to-seconds", type=Decimal, default=Decimal(5),

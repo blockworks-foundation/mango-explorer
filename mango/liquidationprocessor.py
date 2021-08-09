@@ -151,7 +151,7 @@ class LiquidationProcessor:
                     to_process += [updated_report]
             except Exception as exception:
                 self.logger.error(
-                    f"Liquidator '{self.name}' - failed to liquidate account '{highest.account.address}' - {exception}.")
+                    f"[{self.name}] Failed to liquidate account '{highest.account.address}' - {exception}.")
             finally:
                 # highest should always be in to_process, but we're outside the try-except block
                 # so let's be a little paranoid about it.
@@ -164,7 +164,7 @@ class LiquidationProcessor:
             self.state = LiquidationProcessorState.UNHEALTHY
             self.state_change.on_next(self)
             self.logger.error(
-                f"Liquidator '{self.name}' - last {name} update was {how_long_ago_was_last_update} ago - more than error threshold {LiquidationProcessor._AGE_ERROR_THRESHOLD}")
+                f"[{self.name}] Liquidator - last {name} update was {how_long_ago_was_last_update} ago - more than error threshold {LiquidationProcessor._AGE_ERROR_THRESHOLD}")
         elif how_long_ago_was_last_update > LiquidationProcessor._AGE_WARNING_THRESHOLD:
             self.logger.warning(
-                f"Liquidator '{self.name}' - last {name} update was {how_long_ago_was_last_update} ago - more than warning threshold {LiquidationProcessor._AGE_WARNING_THRESHOLD}")
+                f"[{self.name}] Liquidator - last {name} update was {how_long_ago_was_last_update} ago - more than warning threshold {LiquidationProcessor._AGE_WARNING_THRESHOLD}")

@@ -17,8 +17,6 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Run a single pass of the liquidator for a Mango Markets group.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--name", type=str, default="Mango Markets Liquidator",
-                    help="Name of the liquidator (used in reports and alerts)")
 parser.add_argument("--notify-liquidations", type=mango.parse_subscription_target, action="append", default=[],
                     help="The notification target for liquidation events")
 parser.add_argument("--notify-successful-liquidations", type=mango.parse_subscription_target,

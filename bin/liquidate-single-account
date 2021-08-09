@@ -19,8 +19,6 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Liquidate a single margin account.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--name", type=str, default="Mango Markets Liquidator",
-                    help="Name of the liquidator (used in reports and alerts)")
 parser.add_argument("--address", type=PublicKey,
                     help="Solana address of the Mango Markets margin account to be liquidated")
 parser.add_argument("--notify-liquidations", type=mango.parse_subscription_target, action="append", default=[],

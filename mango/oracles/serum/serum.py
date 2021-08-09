@@ -67,7 +67,8 @@ class SerumOracle(Oracle):
     def fetch_price(self, context: Context) -> Price:
         # TODO: Do this right?
         context = copy.copy(context)
-        context.client = BetterClient.from_configuration("mainnet-beta",
+        context.client = BetterClient.from_configuration(self.name,
+                                                         "mainnet-beta",
                                                          "https://solana-api.projectserum.com",
                                                          context.client.commitment,
                                                          context.client.skip_preflight)

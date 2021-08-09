@@ -42,6 +42,8 @@ from .tokenlookup import TokenLookup, CompoundTokenLookup
 # * GROUP_NAME (defaults to: BTC_ETH_USDT)
 #
 
+default_name = os.environ.get("NAME") or "Mango Explorer"
+
 _default_group_data = MangoConstants["groups"][0]
 default_cluster = os.environ.get("CLUSTER") or _default_group_data["cluster"]
 default_cluster_url = os.environ.get("CLUSTER_URL") or MangoConstants["cluster_urls"][default_cluster]
@@ -66,6 +68,8 @@ class ContextBuilder:
     #
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser, logging_default=logging.INFO) -> None:
+        parser.add_argument("--name", type=str, default=default_name,
+                            help="Name of the program (used in reports and alerts)")
         parser.add_argument("--cluster", type=str, default=default_cluster,
                             help="Solana RPC cluster name")
         parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
@@ -103,6 +107,7 @@ class ContextBuilder:
         # In that situation, the group_name will not be default_group_name but the group_id will
         # still be default_group_id. In that situation we want to override what we were passed
         # as the group_id.
+        name: str = args.name
         group_name: str = args.group_name
         cluster: str = args.cluster
         cluster_url: str = args.cluster_url
@@ -111,11 +116,11 @@ class ContextBuilder:
         program_id: PublicKey = args.program_id
         dex_program_id: PublicKey = args.dex_program_id
 
-        return ContextBuilder._build(cluster, cluster_url, group_name, group_id, program_id, dex_program_id, token_filename)
+        return ContextBuilder._build(name, cluster, cluster_url, group_name, group_id, program_id, dex_program_id, token_filename)
 
     @staticmethod
     def default():
-        return ContextBuilder._build(default_cluster, default_cluster_url, default_group_name, default_group_id,
+        return ContextBuilder._build(default_name, default_cluster, default_cluster_url, default_group_name, default_group_id,
                                      default_program_id, default_dex_program_id, SplTokenLookup.DefaultDataFilepath)
 
     # This function is the converse of `add_command_line_parameters()` - it takes
@@ -125,7 +130,7 @@ class ContextBuilder:
     # It then uses those parameters to create a properly-configured `Context` object.
     #
     @staticmethod
-    def _build(cluster: str, cluster_url: str, group_name: str, group_id: PublicKey, program_id: PublicKey, dex_program_id: PublicKey, token_filename: str) -> "Context":
+    def _build(name: str, cluster: str, cluster_url: str, group_name: str, group_id: PublicKey, program_id: PublicKey, dex_program_id: PublicKey, token_filename: str) -> "Context":
         ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(cluster, group_name)
         all_token_lookup = ids_json_token_lookup
         if cluster == "mainnet-beta":
@@ -162,4 +167,4 @@ class ContextBuilder:
         if (cluster != default_cluster) and (cluster_url == default_cluster_url):
             cluster_url = MangoConstants["cluster_urls"][cluster]
 
-        return Context(cluster, cluster_url, program_id, dex_program_id, group_name, group_id, token_lookup, market_lookup)
+        return Context(name, cluster, cluster_url, program_id, dex_program_id, group_name, group_id, token_lookup, market_lookup)

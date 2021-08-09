@@ -47,7 +47,7 @@ group = mango.Group.load(context, context.group_id)
 account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager()
+manager = mango.WebSocketSubscriptionManager(context.name)
 disposer.add_disposable(manager)
 
 buy_price_adjustment_factor: Decimal = Decimal("1") + args.max_price_slippage_factor
@@ -107,7 +107,7 @@ def hedge(event: mango.PerpFillEvent) -> None:
         hedging_market_operations.place_order(order)
     except Exception as exception:
         logger.error(
-            f"Failed to hedge {watched_market.symbol} on {hedging_market.symbol} using order {order} - {exception} - {traceback.format_exc()}")
+            f"[{context.name}] Failed to hedge {watched_market.symbol} on {hedging_market.symbol} using order {order} - {exception} - {traceback.format_exc()}")
 
 
 publisher.subscribe(on_next=hedge)

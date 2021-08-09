@@ -27,8 +27,6 @@ parser = argparse.ArgumentParser(
     description="Watches one or many accounts (via a websocket) and sends a notification if the SOL balance falls below the --minimum-sol-balance threshold.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--name", type=str, required=True, default="watch-minimum-balances",
-                    help="Name oh this instance (to appear in notifications)")
 parser.add_argument("--named-address", type=str, required=True, action="append", default=[],
                     help="Name and address of the Solana account to watch, separated by a colon")
 parser.add_argument("--minimum-sol-balance", type=Decimal, default=Decimal("0.1"),
@@ -105,7 +103,7 @@ def add_subscription_for_parameter(context: mango.Context, manager: mango.WebSoc
 context = mango.ContextBuilder.from_command_line_parameters(args)
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager()
+manager = mango.WebSocketSubscriptionManager(context.name)
 disposer.add_disposable(manager)
 
 for name_and_address in args.named_address:

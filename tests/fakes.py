@@ -12,7 +12,7 @@ from typing import NamedTuple
 
 class MockCompatibleClient(mango.CompatibleClient):
     def __init__(self):
-        super().__init__("local", "http://localhost", "processed", "base64")
+        super().__init__("test", "local", "http://localhost", "processed", "base64")
         self.token_accounts_by_owner = []
 
     def get_token_accounts_by_owner(self, *args, **kwargs) -> RPCResponse:
@@ -52,7 +52,8 @@ def fake_token_info() -> mango.TokenInfo:
 
 
 def fake_context() -> mango.Context:
-    context = mango.Context(cluster="test",
+    context = mango.Context(name="Mango Test",
+                            cluster="test",
                             cluster_url="http://localhost",
                             program_id=fake_seeded_public_key("program ID"),
                             dex_program_id=fake_seeded_public_key("DEX program ID"),

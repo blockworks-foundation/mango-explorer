@@ -16,8 +16,6 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(
     description="Sends a notification if an account's SOL balance is below the '--minimum-sol-balance' parameter threshold.")
 mango.ContextBuilder.add_command_line_parameters(parser)
-parser.add_argument("--name", type=str, required=True,
-                    help="name of the account")
 parser.add_argument("--address", type=PublicKey, required=True,
                     help="address of the account")
 parser.add_argument("--minimum-sol-balance", type=Decimal, default=Decimal("0.1"),

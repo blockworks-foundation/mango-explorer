@@ -38,7 +38,7 @@ context.client.commitment = Max
 print(context)
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager()
+manager = mango.WebSocketSubscriptionManager(context.name)
 disposer.add_disposable(manager)
 
 publishers = []

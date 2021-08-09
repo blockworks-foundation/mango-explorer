@@ -156,10 +156,10 @@ class WebSocketLogSubscription(WebSocketSubscription[LogEvent]):
 # The `WebSocketSubscriptionManager` takes websocket account updates and sends them to the correct
 # `WebSocketSubscription`.
 #
-
 class WebSocketSubscriptionManager(Disposable):
-    def __init__(self):
+    def __init__(self, program_name: str):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.program_name: str = program_name
         self.subscriptions: typing.List[WebSocketSubscription] = []
 
     def add(self, subscription: WebSocketSubscription) -> None:
@@ -172,13 +172,13 @@ class WebSocketSubscriptionManager(Disposable):
                     f"Setting ID {subscription_id} on subscription {subscription.id} for {subscription.address}.")
                 subscription.subscription_id = subscription_id
                 return
-        self.logger.error(f"Subscription ID {id} not found")
+        self.logger.error(f"[{self.program_name}] Subscription ID {id} not found")
 
     def subscription_by_subscription_id(self, subscription_id) -> WebSocketSubscription:
         for subscription in self.subscriptions:
             if subscription.subscription_id == subscription_id:
                 return subscription
-        raise Exception(f"No subscription with subscription ID {subscription_id} could be found.")
+        raise Exception(f"[{self.program_name}] No subscription with subscription ID {subscription_id} could be found.")
 
     def on_item(self, response) -> None:
         if "method" not in response:
@@ -191,7 +191,7 @@ class WebSocketSubscriptionManager(Disposable):
             built = subscription.build(response["params"])
             subscription.publisher.publish(built)
         else:
-            self.logger.error(f"Unknown response: {response}")
+            self.logger.error(f"[{self.program_name}] Unknown response: {response}")
 
     def open_handler(self, ws: websocket.WebSocketApp):
         for subscription in self.subscriptions:

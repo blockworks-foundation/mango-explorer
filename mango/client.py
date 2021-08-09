@@ -66,10 +66,11 @@ class TooManyRequestsRateLimitException(RateLimitException):
 # of problems at the right place.
 #
 class TransactionException(Exception):
-    def __init__(self, message: str, code: int, accounts: typing.Optional[typing.List[str]], errors: typing.Optional[typing.List[str]], logs: typing.Optional[typing.List[str]]):
+    def __init__(self, message: str, code: int, name: str, accounts: typing.Optional[typing.List[str]], errors: typing.Optional[typing.List[str]], logs: typing.Optional[typing.List[str]]):
         super().__init__(message)
         self.message: str = message
         self.code: int = code
+        self.name: str = name
         self.accounts: typing.Optional[typing.List[str]] = accounts
         self.errors: typing.Optional[typing.List[str]] = errors
         self.logs: typing.Optional[typing.List[str]] = logs
@@ -84,7 +85,7 @@ class TransactionException(Exception):
         logs = "No Logs"
         if self.logs:
             logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
-        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.code}] {self.message}
+        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.name}] {self.code}: {self.message}
     Accounts:
         {accounts}
     Errors:
@@ -116,8 +117,9 @@ UnspecifiedEncoding = "unspecified"
 # some common operations better from our point of view.
 #
 class CompatibleClient:
-    def __init__(self, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool):
+    def __init__(self, name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.name: str = name
         self.cluster: str = cluster
         self.cluster_url: str = cluster_url
 
@@ -132,7 +134,7 @@ class CompatibleClient:
             response = requests.get(f"{self.cluster_url}/health")
             response.raise_for_status()
         except (IOError, requests.HTTPError) as err:
-            self.logger.warning("Health check failed with error: %s", str(err))
+            self.logger.warning(f"[{self.name}] Health check failed with error: {err}")
             return False
 
         return response.ok
@@ -223,10 +225,10 @@ class CompatibleClient:
         try:
             blockhash_resp = self.get_recent_blockhash()
             if not blockhash_resp["result"]:
-                raise RuntimeError("failed to get recent blockhash")
+                raise RuntimeError("Failed to get recent blockhash")
             transaction.recent_blockhash = Blockhash(blockhash_resp["result"]["value"]["blockhash"])
         except Exception as err:
-            raise RuntimeError("failed to get recent blockhash") from err
+            raise RuntimeError("Failed to get recent blockhash") from err
 
         transaction.sign(*signers)
 
@@ -281,7 +283,8 @@ class CompatibleClient:
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
                 error_err = error_data["err"] if "err" in error_data else "No err"
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
-                raise TransactionException(exception_message, error_code, error_accounts, error_err, error_logs)
+                raise TransactionException(exception_message, error_code, self.name,
+                                           error_accounts, error_err, error_logs)
 
         # The call succeeded.
         return typing.cast(RPCResponse, response)
@@ -365,8 +368,8 @@ class BetterClient:
         self.compatible_client.skip_preflight = value
 
     @staticmethod
-    def from_configuration(cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool) -> "BetterClient":
-        compatible = CompatibleClient(cluster, cluster_url, commitment, skip_preflight)
+    def from_configuration(name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool) -> "BetterClient":
+        compatible = CompatibleClient(name, cluster, cluster_url, commitment, skip_preflight)
         return BetterClient(compatible)
 
     def is_node_healthy(self) -> bool:
