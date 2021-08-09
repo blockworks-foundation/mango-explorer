@@ -197,6 +197,9 @@ class WebSocketSubscriptionManager(Disposable):
         for subscription in self.subscriptions:
             ws.send(subscription.build_request())
 
+    def on_disconnected(self, ws: websocket.WebSocketApp):
+        self.subscriptions = []
+
     def dispose(self):
         for subscription in self.subscriptions:
             subscription.dispose()

@@ -62,7 +62,8 @@ publisher.pipe(
 ).subscribe(mango.PrintingObserverSubscriber(False))
 
 websocket_url = context.client.cluster_url.replace("https", "wss", 1)
-ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler, manager.on_item)
+ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler)
+ws.item.subscribe(on_next=manager.on_item)
 ws.ping_interval = 10
 
 ws_pong_disposable = ws.pong.subscribe(mango.FileToucherObserver("/var/tmp/mango_healthcheck_ws_pong"))

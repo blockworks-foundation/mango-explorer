@@ -89,8 +89,8 @@ class FtxOracle(Oracle):
 
         ws: ReconnectingWebsocket = ReconnectingWebsocket("wss://ftx.com/ws/",
                                                           lambda ws: ws.send(
-                                                              f"""{{"op": "subscribe", "channel": "ticker", "market": "{self.ftx_symbol}"}}"""),
-                                                          _on_item)
+                                                              f"""{{"op": "subscribe", "channel": "ticker", "market": "{self.ftx_symbol}"}}"""))
+        ws.item.subscribe(on_next=_on_item)
 
         def subscribe(observer, scheduler_=None):
             subject.subscribe(observer, scheduler_)

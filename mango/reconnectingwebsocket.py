@@ -14,7 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-from datetime import datetime
 import json
 import logging
 import rx
@@ -23,6 +22,7 @@ import rx.core.typing
 import typing
 import websocket  # type: ignore
 
+from datetime import datetime
 from threading import Thread
 
 
@@ -32,26 +32,28 @@ from threading import Thread
 # mechanism. If an error disconnects the websocket, it will automatically reconnect. It
 # will continue to automatically reconnect, until it is explicitly closed.
 #
-
-
 class ReconnectingWebsocket:
-    def __init__(self, url: str, on_open_call: typing.Callable[[websocket.WebSocketApp], None], on_item: typing.Callable[[typing.Any], typing.Any]):
+    def __init__(self,
+                 url: str,
+                 on_open_call: typing.Callable[[websocket.WebSocketApp], None]):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.url = url
         self.on_open_call = on_open_call
-        self._on_item = on_item
         self.reconnect_required: bool = True
         self.ping_interval: int = 0
-        self.connecting: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
-            datetime.now())
-        self.ping: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
-            datetime.now())
-        self.pong: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
-            datetime.now())
+        self.connecting: rx.subject.BehaviorSubject = rx.subject.BehaviorSubject(datetime.now())
+        self.disconnected: rx.subject.BehaviorSubject = rx.subject.BehaviorSubject(datetime.now())
+        self.ping: rx.subject.BehaviorSubject = rx.subject.BehaviorSubject(datetime.now())
+        self.pong: rx.subject.BehaviorSubject = rx.subject.BehaviorSubject(datetime.now())
+        self.item: rx.subject.Subject = rx.subject.Subject()
 
     def close(self):
         self.logger.info(f"Closing WebSocket for {self.url}")
         self.reconnect_required = False
+        self._ws.close()
+
+    def force_reconnect(self):
+        self.logger.info(f"Forcing a reconnect on WebSocket for {self.url}")
         self._ws.close()
 
     def _on_open(self, ws: websocket.WebSocketApp):
@@ -61,7 +63,7 @@ class ReconnectingWebsocket:
 
     def _on_message(self, _, message):
         data = json.loads(message)
-        self._on_item(data)
+        self.item.on_next(data)
 
     def _on_error(self, *args):
         self.logger.warning(f"WebSocket for {self.url} has error {args}")
@@ -92,3 +94,4 @@ class ReconnectingWebsocket:
                 on_pong=self._on_pong
             )
             self._ws.run_forever(ping_interval=self.ping_interval)
+            self.disconnected.on_next(datetime.now())
