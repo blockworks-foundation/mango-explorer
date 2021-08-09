@@ -118,6 +118,9 @@ ws.ping_interval = 10
 ws_pong_disposable = ws.pong.subscribe(mango.FileToucherObserver("/var/tmp/mango_healthcheck_ws_pong"))
 ws.open()
 
+logging.info(f"Current assets in account {account.address} (owner: {account.owner}):")
+mango.TokenValue.report([asset for asset in account.net_assets if asset is not None], logging.info)
+
 # Wait - don't exit. Exiting will be handled by signals/interrupts.
 waiter = threading.Event()
 try:
