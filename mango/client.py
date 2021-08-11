@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import datetime
 import itertools
 import json
 import logging
@@ -434,16 +435,20 @@ class BetterClient:
     def wait_for_confirmation(self, transaction_ids: typing.Sequence[str], max_wait_in_seconds: int = 60) -> typing.Sequence[str]:
         self.logger.info(f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}.")
         all_confirmed: typing.List[str] = []
-        for wait in range(0, max_wait_in_seconds):
-            for transaction_id in transaction_ids:
+        start_time: datetime.datetime = datetime.datetime.now()
+        cutoff: datetime.datetime = start_time + datetime.timedelta(seconds=max_wait_in_seconds)
+        for transaction_id in transaction_ids:
+            while datetime.datetime.now() < cutoff:
                 time.sleep(1)
                 confirmed = self.get_confirmed_transaction(transaction_id)
                 if confirmed is not None:
-                    self.logger.info(f"Confirmed {transaction_id} after {wait} seconds.")
+                    self.logger.info(
+                        f"Confirmed {transaction_id} after {datetime.datetime.now() - start_time} seconds.")
                     all_confirmed += [transaction_id]
+                    break
 
         if len(all_confirmed) != len(transaction_ids):
-            self.logger.info(f"Timed out after {wait} seconds waiting on transaction {transaction_id}.")
+            self.logger.info(f"Timed out after {max_wait_in_seconds} seconds waiting on transaction {transaction_id}.")
         return all_confirmed
 
     def __str__(self) -> str:

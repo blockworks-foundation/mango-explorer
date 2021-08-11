@@ -15,7 +15,7 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Cranks all openorders in the market.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--market", type=str, required=True, help="market symbol to make market upon (e.g. ETH/USDC)")
+parser.add_argument("--market", type=str, required=True, help="market symbol to crank (e.g. ETH/USDC)")
 parser.add_argument("--limit", type=Decimal, default=Decimal(32), help="maximum number of events to be processed")
 parser.add_argument("--account-index", type=int, default=0,
                     help="index of the account to use, if more than one available")

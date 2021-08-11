@@ -1335,6 +1335,24 @@ INIT_SPOT_OPEN_ORDERS = construct.Struct(
     "variant" / construct.Const(32, construct.BytesInteger(4, swapped=True))
 )
 
+# /// Redeem the mngo_accrued in a PerpAccount for MNGO in MangoAccount deposits
+# ///
+# /// Accounts expected by this instruction (11):
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[]` mango_cache_ai - MangoCache
+# /// 2. `[writable]` mango_account_ai - MangoAccount
+# /// 3. `[signer]` owner_ai - MangoAccount owner
+# /// 4. `[]` perp_market_ai - PerpMarket
+# /// 5. `[writable]` mngo_perp_vault_ai
+# /// 6. `[]` mngo_root_bank_ai
+# /// 7. `[writable]` mngo_node_bank_ai
+# /// 8. `[writable]` mngo_bank_vault_ai
+# /// 9. `[]` signer_ai - Group Signer Account
+# /// 10. `[]` token_prog_ai - SPL Token program id
+REDEEM_MNGO = construct.Struct(
+    "variant" / construct.Const(33, construct.BytesInteger(4, swapped=True))
+)
+
 UNSPECIFIED = construct.Struct(
     "variant" / DecimalAdapter(4)
 )
@@ -1373,7 +1391,7 @@ InstructionParsersByVariant = {
     30: UNSPECIFIED,  # RESOLVE_PERP_BANKRUPTCY,
     31: UNSPECIFIED,  # RESOLVE_TOKEN_BANKRUPTCY,
     32: INIT_SPOT_OPEN_ORDERS,  # INIT_SPOT_OPEN_ORDERS,
-    33: UNSPECIFIED,  # REDEEM_MNGO,
+    33: REDEEM_MNGO,  # REDEEM_MNGO,
     34: UNSPECIFIED,  # ADD_MANGO_ACCOUNT_INFO,
     35: UNSPECIFIED,  # DEPOSIT_MSRM,
     36: UNSPECIFIED,  # WITHDRAW_MSRM

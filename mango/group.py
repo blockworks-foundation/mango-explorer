@@ -213,6 +213,13 @@ class Group(AddressableAccount):
 
         raise Exception(f"Could not find token info for mint {token.mint} in group {self.address}")
 
+    def find_token_info_by_symbol(self, symbol: str) -> TokenInfo:
+        for token_info in self.tokens:
+            if token_info is not None and token_info.token.symbol_matches(symbol):
+                return token_info
+
+        raise Exception(f"Could not find token info for symbol '{symbol}' in group {self.address}")
+
     def fetch_balances(self, context: Context, root_address: PublicKey) -> typing.Sequence[TokenValue]:
         balances: typing.List[TokenValue] = []
         sol_balance = context.client.get_balance(root_address)

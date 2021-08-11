@@ -20,7 +20,7 @@ import typing
 from decimal import Decimal
 from pyserum.enums import OrderType as SerumOrderType, Side as SerumSide
 from pyserum.instructions import settle_funds, SettleFundsParams
-from pyserum.market import Market
+from pyserum.market import Market as PySerumMarket
 from pyserum.open_orders_account import make_create_account_instruction
 from solana.account import Account as SolanaAccount
 from solana.publickey import PublicKey
@@ -38,10 +38,12 @@ from .context import Context
 from .group import Group
 from .layouts import layouts
 from .orders import Order, OrderType, Side
+from .perpmarket import PerpMarket
 from .perpmarketdetails import PerpMarketDetails
 from .rootbank import NodeBank, RootBank
 from .token import Token
 from .tokenaccount import TokenAccount
+from .tokeninfo import TokenInfo
 from .wallet import Wallet
 
 
@@ -127,7 +129,7 @@ def build_close_spl_account_instructions(context: Context, wallet: Wallet, addre
 # Creates a Serum openorders-creating instruction.
 #
 
-def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet, market: Market) -> CombinableInstructions:
+def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet, market: PySerumMarket) -> CombinableInstructions:
     new_open_orders_account = SolanaAccount()
     minimum_balance = context.client.get_minimum_balance_for_rent_exemption(layouts.OPEN_ORDERS.sizeof())
     instruction = make_create_account_instruction(
@@ -145,7 +147,7 @@ def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet
 # Creates a Serum order-placing instruction using V3 of the NewOrder instruction.
 #
 
-def build_serum_place_order_instructions(context: Context, wallet: Wallet, market: Market, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
+def build_serum_place_order_instructions(context: Context, wallet: Wallet, market: PySerumMarket, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
     serum_order_type: SerumOrderType = SerumOrderType.POST_ONLY if order_type == OrderType.POST_ONLY else SerumOrderType.IOC if order_type == OrderType.IOC else SerumOrderType.LIMIT
     serum_side: SerumSide = SerumSide.SELL if side == Side.SELL else SerumSide.BUY
 
@@ -194,7 +196,7 @@ def build_serum_consume_events_instructions(context: Context, market_address: Pu
 # Creates a 'settle' instruction.
 #
 
-def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
+def build_serum_settle_instructions(context: Context, wallet: Wallet, market: PySerumMarket, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
     vault_signer = PublicKey.create_program_address(
         [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
         market.state.program_id(),
@@ -239,12 +241,12 @@ def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Ma
 # /// 13. `[writable]` quote_node_bank_ai - MangoGroup quote vault acc
 # /// 14. `[writable]` base_vault_ai - MangoGroup base vault acc
 # /// 15. `[writable]` quote_vault_ai - MangoGroup quote vault acc
-# /// 16. `[]` dex_signer_ai - dex Market signer account
+# /// 16. `[]` dex_signer_ai - dex PySerumMarket signer account
 # /// 17. `[]` spl token program
 
 
 def build_spot_settle_instructions(context: Context, wallet: Wallet, account: Account,
-                                   market: Market, group: Group, open_orders_address: PublicKey,
+                                   market: PySerumMarket, group: Group, open_orders_address: PublicKey,
                                    base_rootbank: RootBank, base_nodebank: NodeBank,
                                    quote_rootbank: RootBank, quote_nodebank: NodeBank) -> CombinableInstructions:
     vault_signer = PublicKey.create_program_address(
@@ -300,7 +302,7 @@ def build_spot_settle_instructions(context: Context, wallet: Wallet, account: Ac
 # orderbook).
 #
 
-def build_compound_serum_place_order_instructions(context: Context, wallet: Wallet, market: Market, source: PublicKey, open_orders_address: PublicKey, all_open_orders_addresses: typing.Sequence[PublicKey], order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, base_token_account_address: PublicKey, quote_token_account_address: PublicKey, fee_discount_address: typing.Optional[PublicKey], consume_limit: int = 32) -> CombinableInstructions:
+def build_compound_serum_place_order_instructions(context: Context, wallet: Wallet, market: PySerumMarket, source: PublicKey, open_orders_address: PublicKey, all_open_orders_addresses: typing.Sequence[PublicKey], order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, base_token_account_address: PublicKey, quote_token_account_address: PublicKey, fee_discount_address: typing.Optional[PublicKey], consume_limit: int = 32) -> CombinableInstructions:
     place_order = build_serum_place_order_instructions(
         context, wallet, market, source, open_orders_address, order_type, side, price, quantity, client_id, fee_discount_address)
     consume_events = build_serum_consume_events_instructions(
@@ -553,7 +555,7 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
     return CombinableInstructions(signers=[], instructions=[withdraw])
 
 
-def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: Market) -> CombinableInstructions:
+def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: PySerumMarket) -> CombinableInstructions:
     instructions: CombinableInstructions = CombinableInstructions.empty()
     create_open_orders = build_create_solana_account_instructions(
         context, wallet, context.dex_program_id, layouts.OPEN_ORDERS.sizeof())
@@ -611,7 +613,7 @@ def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: 
 # })),
 
 def build_spot_place_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account,
-                                        market: Market,
+                                        market: PySerumMarket,
                                         order_type: OrderType, side: Side, price: Decimal,
                                         quantity: Decimal, client_id: int,
                                         fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
@@ -701,7 +703,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
 #
 
 
-def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: Market, order: Order, open_orders_address: PublicKey) -> CombinableInstructions:
+def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: PySerumMarket, order: Order, open_orders_address: PublicKey) -> CombinableInstructions:
     # { buy: 0, sell: 1 }
     raw_side: int = 1 if order.side == Side.SELL else 0
 
@@ -741,13 +743,12 @@ def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group
     ]
     return CombinableInstructions(signers=[], instructions=instructions)
 
+
 # # 🥭 build_mango_settle_instructions function
 #
 # Creates a 'settle' instruction for Mango accounts.
 #
-
-
-def build_mango_settle_instructions(context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
+def build_mango_settle_instructions(context: Context, wallet: Wallet, market: PySerumMarket, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
     vault_signer = PublicKey.create_program_address(
         [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
         market.state.program_id(),
@@ -767,3 +768,43 @@ def build_mango_settle_instructions(context: Context, wallet: Wallet, market: Ma
     )
 
     return CombinableInstructions(signers=[], instructions=[instruction])
+
+
+# # 🥭 build_redeem_accrued_mango_instructions function
+#
+# Creates a 'RedeemMngo' instruction for Mango accounts.
+#
+def build_redeem_accrued_mango_instructions(context: Context, wallet: Wallet, perp_market: PerpMarket, group: Group, account: Account, mngo: TokenInfo) -> CombinableInstructions:
+    node_bank: NodeBank = mngo.root_bank.pick_node_bank(context)
+    # /// Redeem the mngo_accrued in a PerpAccount for MNGO in MangoAccount deposits
+    # ///
+    # /// Accounts expected by this instruction (11):
+    # /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+    # /// 1. `[]` mango_cache_ai - MangoCache
+    # /// 2. `[writable]` mango_account_ai - MangoAccount
+    # /// 3. `[signer]` owner_ai - MangoAccount owner
+    # /// 4. `[]` perp_market_ai - PerpMarket
+    # /// 5. `[writable]` mngo_perp_vault_ai
+    # /// 6. `[]` mngo_root_bank_ai
+    # /// 7. `[writable]` mngo_node_bank_ai
+    # /// 8. `[writable]` mngo_bank_vault_ai
+    # /// 9. `[]` signer_ai - Group Signer Account
+    # /// 10. `[]` token_prog_ai - SPL Token program id
+    redeem_accrued_mango_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=perp_market.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.underlying_perp_market.mngo_vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=mngo.root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID)
+        ],
+        program_id=context.program_id,
+        data=layouts.REDEEM_MNGO.build(dict())
+    )
+    return CombinableInstructions(signers=[], instructions=[redeem_accrued_mango_instruction])
