@@ -8,7 +8,7 @@
 set -e
 
 printf "Balances:\n"
-group-balances --log-level ERROR
+show-account-balances --log-level ERROR
 
 printf "Creating Mango Account...\n"
 init-account --log-level ERROR
@@ -31,9 +31,6 @@ deposit --symbol ETH --quantity 40 --log-level ERROR
 printf "Depositing FTT...\n"
 deposit --symbol FTT --quantity 3125 --log-level ERROR
 
-printf "Depositing MNGO...\n"
-deposit --symbol MNGO --quantity 1000000 --log-level ERROR
-
 printf "Depositing RAY...\n"
 deposit --symbol RAY --quantity 30000 --log-level ERROR
 
@@ -50,4 +47,4 @@ printf "Depositing USDT...\n"
 deposit --symbol USDT --quantity 4000000 --log-level ERROR
 
 printf "Balances now:\n"
-group-balances --log-level ERROR
+show-account-balances --log-level ERROR
