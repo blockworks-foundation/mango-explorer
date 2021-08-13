@@ -133,7 +133,7 @@ class PerpLiquidateEvent(PerpEvent):
         return [self.liquidatee, self.liquidator]
 
     def __str__(self) -> str:
-        return f"""« 𝙿𝚎𝚛𝚙𝙻𝚒𝚚𝚞𝚒𝚍𝚊𝚝𝚎𝙴𝚟𝚎𝚗𝚝 [{self.original_index}] [{self.owner}] {self.side} {self.quantity}, slot: {self.slot} »"""
+        return f"""« 𝙿𝚎𝚛𝚙𝙻𝚒𝚚𝚞𝚒𝚍𝚊𝚝𝚎𝙴𝚟𝚎𝚗𝚝 Liquidator {self.liquidator} liquidated {self.liquidatee} with {self.quantity} at {self.price} »"""
 
 
 # # 🥭 PerpUnknownEvent class
