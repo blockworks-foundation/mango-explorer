@@ -44,7 +44,7 @@ class TokenAccount(AddressableAccount):
 
     @staticmethod
     def create(context: Context, account: Account, token: Token):
-        spl_token = SplToken(context.client, token.mint, TOKEN_PROGRAM_ID, account)
+        spl_token = SplToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, account)
         owner = account.public_key()
         new_account_address = spl_token.create_account(owner)
         return TokenAccount.load(context, new_account_address)

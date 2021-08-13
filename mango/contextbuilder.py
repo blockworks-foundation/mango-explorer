@@ -42,17 +42,18 @@ from .tokenlookup import TokenLookup, CompoundTokenLookup
 # * GROUP_NAME (defaults to: BTC_ETH_USDT)
 #
 
-default_name = os.environ.get("NAME") or "Mango Explorer"
+default_name: str = os.environ.get("NAME") or "Mango Explorer"
+default_skip_preflight: bool = False
 
 _default_group_data = MangoConstants["groups"][0]
-default_cluster = os.environ.get("CLUSTER") or _default_group_data["cluster"]
-default_cluster_url = os.environ.get("CLUSTER_URL") or MangoConstants["cluster_urls"][default_cluster]
+default_cluster: str = os.environ.get("CLUSTER") or _default_group_data["cluster"]
+default_cluster_url: str = os.environ.get("CLUSTER_URL") or MangoConstants["cluster_urls"][default_cluster]
 
-default_program_id = PublicKey(_default_group_data["mangoProgramId"])
-default_dex_program_id = PublicKey(_default_group_data["serumProgramId"])
+default_program_id: PublicKey = PublicKey(_default_group_data["mangoProgramId"])
+default_dex_program_id: PublicKey = PublicKey(_default_group_data["serumProgramId"])
 
-default_group_name = os.environ.get("GROUP_NAME") or _default_group_data["name"]
-default_group_id = PublicKey(_default_group_data["publicKey"])
+default_group_name: str = os.environ.get("GROUP_NAME") or _default_group_data["name"]
+default_group_id: PublicKey = PublicKey(_default_group_data["publicKey"])
 
 # # 🥭 ContextBuilder class
 #
@@ -74,6 +75,8 @@ class ContextBuilder:
                             help="Solana RPC cluster name")
         parser.add_argument("--cluster-url", type=str, default=default_cluster_url,
                             help="Solana RPC cluster URL")
+        parser.add_argument("--skip-preflight", default=default_skip_preflight, action="store_true",
+                            help="Skip Solana pre-flight checks")
         parser.add_argument("--program-id", type=PublicKey, default=default_program_id,
                             help="Mango program ID/address")
         parser.add_argument("--dex-program-id", type=PublicKey, default=default_dex_program_id,
@@ -111,17 +114,20 @@ class ContextBuilder:
         group_name: str = args.group_name
         cluster: str = args.cluster
         cluster_url: str = args.cluster_url
+        skip_preflight: bool = args.skip_preflight
         token_filename: str = args.token_data_file
         group_id: PublicKey = args.group_id
         program_id: PublicKey = args.program_id
         dex_program_id: PublicKey = args.dex_program_id
 
-        return ContextBuilder._build(name, cluster, cluster_url, group_name, group_id, program_id, dex_program_id, token_filename)
+        return ContextBuilder._build(name, cluster, cluster_url, skip_preflight, group_name, group_id, program_id, dex_program_id, token_filename)
 
     @staticmethod
     def default():
-        return ContextBuilder._build(default_name, default_cluster, default_cluster_url, default_group_name, default_group_id,
-                                     default_program_id, default_dex_program_id, SplTokenLookup.DefaultDataFilepath)
+        return ContextBuilder._build(default_name, default_cluster, default_cluster_url,
+                                     default_skip_preflight, default_group_name, default_group_id,
+                                     default_program_id, default_dex_program_id,
+                                     SplTokenLookup.DefaultDataFilepath)
 
     # This function is the converse of `add_command_line_parameters()` - it takes
     # an argument of parsed command-line parameters and expects to see the ones it added
@@ -130,7 +136,7 @@ class ContextBuilder:
     # It then uses those parameters to create a properly-configured `Context` object.
     #
     @staticmethod
-    def _build(name: str, cluster: str, cluster_url: str, group_name: str, group_id: PublicKey, program_id: PublicKey, dex_program_id: PublicKey, token_filename: str) -> "Context":
+    def _build(name: str, cluster: str, cluster_url: str, skip_preflight: bool, group_name: str, group_id: PublicKey, program_id: PublicKey, dex_program_id: PublicKey, token_filename: str) -> "Context":
         ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(cluster, group_name)
         all_token_lookup = ids_json_token_lookup
         if cluster == "mainnet-beta":
@@ -167,4 +173,4 @@ class ContextBuilder:
         if (cluster != default_cluster) and (cluster_url == default_cluster_url):
             cluster_url = MangoConstants["cluster_urls"][cluster]
 
-        return Context(name, cluster, cluster_url, program_id, dex_program_id, group_name, group_id, token_lookup, market_lookup)
+        return Context(name, cluster, cluster_url, skip_preflight, program_id, dex_program_id, group_name, group_id, token_lookup, market_lookup)

@@ -55,6 +55,7 @@ def fake_context() -> mango.Context:
     context = mango.Context(name="Mango Test",
                             cluster="test",
                             cluster_url="http://localhost",
+                            skip_preflight=False,
                             program_id=fake_seeded_public_key("program ID"),
                             dex_program_id=fake_seeded_public_key("DEX program ID"),
                             group_name="TEST_GROUP",

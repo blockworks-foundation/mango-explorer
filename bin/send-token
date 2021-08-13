@@ -19,7 +19,7 @@ import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description="Sends an SPL tokens to a different address.")
+parser = argparse.ArgumentParser(description="Sends SPL tokens to a different address.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--symbol", type=str, required=True, help="token symbol to send (e.g. ETH)")
@@ -44,7 +44,7 @@ try:
     if token is None:
         raise Exception(f"Could not find details of token with symbol {args.symbol}.")
 
-    spl_token = Token(context.client, token.mint, TOKEN_PROGRAM_ID, wallet.account)
+    spl_token = Token(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.account)
     source_accounts = spl_token.get_accounts(wallet.address)
     source_account = source_accounts["result"]["value"][0]
     source = PublicKey(source_account["pubkey"])
