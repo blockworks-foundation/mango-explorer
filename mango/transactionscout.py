@@ -87,7 +87,20 @@ _instruction_signer_indices: typing.Dict[InstructionType, int] = {
     InstructionType.CancelSpotOrder: 1,
     InstructionType.UpdateRootBank: -1,  # No signer
     InstructionType.SettlePnl: -1,  # No signer
-    InstructionType.SettleBorrow: -1  # No signer
+    InstructionType.SettleBorrow: -1,  # No signer
+    InstructionType.ForceCancelSpotOrders: -1,
+    InstructionType.ForceCancelPerpOrders: -1,
+    InstructionType.LiquidateTokenAndToken: -1,
+    InstructionType.LiquidateTokenAndPerp: -1,
+    InstructionType.LiquidatePerpMarket: -1,
+    InstructionType.SettleFees: -1,
+    InstructionType.ResolvePerpBankruptcy: -1,
+    InstructionType.ResolveTokenBankruptcy: -1,
+    InstructionType.InitSpotOpenOrders: -1,
+    InstructionType.RedeemMngo: -1,
+    InstructionType.AddMangoAccountInfo: -1,
+    InstructionType.DepositMsrm: -1,
+    InstructionType.WithdrawMsrm: -1,
 }
 
 # The index of the token IN account depends on the instruction, and for some instructions
@@ -117,6 +130,19 @@ _token_in_indices: typing.Dict[InstructionType, int] = {
     InstructionType.UpdateRootBank: -1,
     InstructionType.SettlePnl: -1,
     InstructionType.SettleBorrow: -1,
+    InstructionType.ForceCancelSpotOrders: -1,
+    InstructionType.ForceCancelPerpOrders: -1,
+    InstructionType.LiquidateTokenAndToken: -1,
+    InstructionType.LiquidateTokenAndPerp: -1,
+    InstructionType.LiquidatePerpMarket: -1,
+    InstructionType.SettleFees: -1,
+    InstructionType.ResolvePerpBankruptcy: -1,
+    InstructionType.ResolveTokenBankruptcy: -1,
+    InstructionType.InitSpotOpenOrders: -1,
+    InstructionType.RedeemMngo: -1,
+    InstructionType.AddMangoAccountInfo: -1,
+    InstructionType.DepositMsrm: -1,
+    InstructionType.WithdrawMsrm: -1,
 }
 
 # The index of the token OUT account depends on the instruction, and for some instructions
@@ -146,6 +172,19 @@ _token_out_indices: typing.Dict[InstructionType, int] = {
     InstructionType.UpdateRootBank: -1,
     InstructionType.SettlePnl: -1,
     InstructionType.SettleBorrow: -1,
+    InstructionType.ForceCancelSpotOrders: -1,
+    InstructionType.ForceCancelPerpOrders: -1,
+    InstructionType.LiquidateTokenAndToken: -1,
+    InstructionType.LiquidateTokenAndPerp: -1,
+    InstructionType.LiquidatePerpMarket: -1,
+    InstructionType.SettleFees: -1,
+    InstructionType.ResolvePerpBankruptcy: -1,
+    InstructionType.ResolveTokenBankruptcy: -1,
+    InstructionType.InitSpotOpenOrders: -1,
+    InstructionType.RedeemMngo: -1,
+    InstructionType.AddMangoAccountInfo: -1,
+    InstructionType.DepositMsrm: -1,
+    InstructionType.WithdrawMsrm: -1,
 }
 
 
@@ -175,6 +214,19 @@ _target_indices: typing.Dict[InstructionType, int] = {
     InstructionType.UpdateRootBank: -1,
     InstructionType.SettlePnl: -1,
     InstructionType.SettleBorrow: -1,
+    InstructionType.ForceCancelSpotOrders: -1,
+    InstructionType.ForceCancelPerpOrders: -1,
+    InstructionType.LiquidateTokenAndToken: -1,
+    InstructionType.LiquidateTokenAndPerp: -1,
+    InstructionType.LiquidatePerpMarket: -1,
+    InstructionType.SettleFees: -1,
+    InstructionType.ResolvePerpBankruptcy: -1,
+    InstructionType.ResolveTokenBankruptcy: -1,
+    InstructionType.InitSpotOpenOrders: -1,
+    InstructionType.RedeemMngo: -1,
+    InstructionType.AddMangoAccountInfo: -1,
+    InstructionType.DepositMsrm: -1,
+    InstructionType.WithdrawMsrm: -1,
 }
 
 

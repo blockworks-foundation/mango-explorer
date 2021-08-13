@@ -111,6 +111,31 @@ class PerpOutEvent(PerpEvent):
         return f"""« 𝙿𝚎𝚛𝚙𝙾𝚞𝚝𝙴𝚟𝚎𝚗𝚝 [{self.original_index}] [{self.owner}] {self.side} {self.quantity}, slot: {self.slot} »"""
 
 
+# # 🥭 PerpLiquidateEvent class
+#
+# `PerpLiquidateEvent` stores details of a perp 'liquidate' event.
+#
+class PerpLiquidateEvent(PerpEvent):
+    def __init__(self, event_type: int, original_index: Decimal, timestamp: datetime, seq_num: Decimal,
+                 liquidatee: PublicKey, liquidator: PublicKey, price: Decimal, quantity: Decimal,
+                 liquidation_fee: Decimal):
+        super().__init__(event_type, original_index)
+        self.timestamp: datetime = timestamp
+        self.seq_num: Decimal = seq_num
+        self.liquidatee: PublicKey = liquidatee
+        self.liquidator: PublicKey = liquidator
+        self.price: Decimal = price
+        self.quantity: Decimal = quantity
+        self.liquidation_fee: Decimal = liquidation_fee
+
+    @property
+    def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
+        return [self.liquidatee, self.liquidator]
+
+    def __str__(self) -> str:
+        return f"""« 𝙿𝚎𝚛𝚙𝙻𝚒𝚚𝚞𝚒𝚍𝚊𝚝𝚎𝙴𝚟𝚎𝚗𝚝 [{self.original_index}] [{self.owner}] {self.side} {self.quantity}, slot: {self.slot} »"""
+
+
 # # 🥭 PerpUnknownEvent class
 #
 # `PerpUnknownEvent` details an unknown `PerpEvent`. This should never be encountered, but might if
@@ -137,7 +162,7 @@ def event_builder(lot_size_converter: LotSizeConverter, event_layout, original_i
     if event_layout.event_type == b'\x00':
         if event_layout.maker is None and event_layout.taker is None:
             return None
-        side: Side = Side.from_value(event_layout.side)
+        side: Side = Side.from_value(event_layout.taker_side)
         quantity: Decimal = lot_size_converter.quantity_lots_to_value(event_layout.quantity)
         price: Decimal = lot_size_converter.price_lots_to_value(event_layout.price)
         return PerpFillEvent(event_layout.event_type, original_index, event_layout.timestamp, side,
@@ -148,6 +173,8 @@ def event_builder(lot_size_converter: LotSizeConverter, event_layout, original_i
                              event_layout.taker_client_order_id)
     elif event_layout.event_type == b'\x01':
         return PerpOutEvent(event_layout.event_type, original_index, event_layout.owner, event_layout.side, event_layout.quantity, event_layout.slot)
+    elif event_layout.event_type == b'\x02':
+        return PerpLiquidateEvent(event_layout.event_type, original_index, event_layout.timestamp, event_layout.seq_num, event_layout.liquidatee, event_layout.liquidator, event_layout.price, event_layout.quantity, event_layout.liquidation_fee)
     else:
         return PerpUnknownEvent(event_layout.event_type, original_index, event_layout.owner)
 

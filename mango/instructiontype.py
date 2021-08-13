@@ -48,6 +48,19 @@ class InstructionType(enum.IntEnum):
     UpdateRootBank = 21
     SettlePnl = 22
     SettleBorrow = 23
+    ForceCancelSpotOrders = 24
+    ForceCancelPerpOrders = 25
+    LiquidateTokenAndToken = 26
+    LiquidateTokenAndPerp = 27
+    LiquidatePerpMarket = 28
+    SettleFees = 29
+    ResolvePerpBankruptcy = 30
+    ResolveTokenBankruptcy = 31
+    InitSpotOpenOrders = 32
+    RedeemMngo = 33
+    AddMangoAccountInfo = 34
+    DepositMsrm = 35
+    WithdrawMsrm = 36
 
     def __str__(self) -> str:
         return self.name

@@ -905,28 +905,33 @@ ORDERBOOK_SIDE = construct.Struct(
 #
 # Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/queue.rs):
 # ```
-# const EVENT_SIZE: usize = 152;
-# #[derive(Copy, Clone, Debug, Pod)]
-# #[repr(C)]
+# const EVENT_SIZE: usize = 200;
+# [derive(Copy, Clone, Debug, Pod)]
+# [repr(C)]
 # pub struct FillEvent {
 #     pub event_type: u8,
-#     pub side: Side, // side from the taker's POV
+#     pub taker_side: Side, // side from the taker's POV
 #     pub maker_slot: u8,
 #     pub maker_out: bool, // true if maker order quantity == 0
 #     pub padding: [u8; 4],
+#     pub timestamp: u64,
+#     pub seq_num: usize, // note: usize same as u64
+#
 #     pub maker: Pubkey,
 #     pub maker_order_id: i128,
 #     pub maker_client_order_id: u64,
+#     pub maker_fee: I80F48,
 #
 #     // The best bid/ask at the time the maker order was placed. Used for liquidity incentives
 #     pub best_initial: i64,
 #
 #     // Timestamp of when the maker order was placed; copied over from the LeafNode
-#     pub timestamp: u64,
+#     pub maker_timestamp: u64,
 #
 #     pub taker: Pubkey,
 #     pub taker_order_id: i128,
 #     pub taker_client_order_id: u64,
+#     pub taker_fee: I80F48,
 #
 #     pub price: i64,
 #     pub quantity: i64, // number of quote lots
@@ -934,27 +939,31 @@ ORDERBOOK_SIDE = construct.Struct(
 # ```
 FILL_EVENT = construct.Struct(
     "event_type" / construct.Const(b'\x00'),
-    "side" / DecimalAdapter(1),
+    "taker_side" / DecimalAdapter(1),
     "maker_slot" / DecimalAdapter(1),
     "maker_out" / construct.Flag,
     construct.Padding(4),
+    "timestamp" / DatetimeAdapter(),
+    "seq_num" / DecimalAdapter(),
+
     "maker" / PublicKeyAdapter(),
     "maker_order_id" / SignedDecimalAdapter(16),
     "maker_client_order_id" / DecimalAdapter(),
+    "maker_fee" / FloatI80F48Adapter(),
 
     "best_initial" / SignedDecimalAdapter(),
-
-    "timestamp" / DatetimeAdapter(),
+    "maker_timestamp" / DatetimeAdapter(),
 
     "taker" / PublicKeyAdapter(),
     "taker_order_id" / SignedDecimalAdapter(16),
     "taker_client_order_id" / DecimalAdapter(),
+    "taker_fee" / FloatI80F48Adapter(),
 
     "price" / SignedDecimalAdapter(),
     "quantity" / SignedDecimalAdapter()
 )
-_EVENT_SIZE = 152
-assert FILL_EVENT.sizeof() == _EVENT_SIZE
+_EVENT_SIZE = 200
+assert FILL_EVENT.sizeof() == _EVENT_SIZE, f"Fill event size is {FILL_EVENT.sizeof()} when it should be {_EVENT_SIZE}."
 
 # # 🥭 OUT_EVENT
 #
@@ -967,9 +976,11 @@ assert FILL_EVENT.sizeof() == _EVENT_SIZE
 #     pub side: Side,
 #     pub slot: u8,
 #     padding0: [u8; 5],
+#     pub timestamp: u64,
+#     pub seq_num: usize,
 #     pub owner: Pubkey,
 #     pub quantity: i64,
-#     padding1: [u8; EVENT_SIZE - 48],
+#     padding1: [u8; EVENT_SIZE - 64],
 # }
 # ```
 OUT_EVENT = construct.Struct(
@@ -977,11 +988,48 @@ OUT_EVENT = construct.Struct(
     "side" / DecimalAdapter(1),
     "slot" / DecimalAdapter(1),
     construct.Padding(5),
+    "timestamp" / DatetimeAdapter(),
+    "seq_num" / DecimalAdapter(),
     "owner" / PublicKeyAdapter(),
     "quantity" / SignedDecimalAdapter(),
-    construct.Padding(_EVENT_SIZE - 48)
+    construct.Padding(_EVENT_SIZE - 64)
 )
-assert OUT_EVENT.sizeof() == _EVENT_SIZE
+assert OUT_EVENT.sizeof() == _EVENT_SIZE, f"Out event size is {OUT_EVENT.sizeof()} when it should be {_EVENT_SIZE}."
+
+# # 🥭 LIQUIDATE_EVENT
+#
+# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/queue.rs):
+# ```
+# #[derive(Copy, Clone, Debug, Pod)]
+# #[repr(C)]
+# /// Liquidation for the PerpMarket this EventQueue is for
+# pub struct LiquidateEvent {
+#     pub event_type: u8,
+#     padding0: [u8; 7],
+#     pub timestamp: u64,
+#     pub seq_num: usize,
+#     pub liqee: Pubkey,
+#     pub liqor: Pubkey,
+#     pub price: I80F48,           // oracle price at the time of liquidation
+#     pub quantity: i64,           // number of contracts that were moved from liqee to liqor
+#     pub liquidation_fee: I80F48, // liq fee for this earned for this market
+#     padding1: [u8; EVENT_SIZE - 128],
+# }
+# ```
+LIQUIDATE_EVENT = construct.Struct(
+    "event_type" / construct.Const(b'\x02'),
+    construct.Padding(7),
+    "timestamp" / DatetimeAdapter(),
+    "seq_num" / DecimalAdapter(),
+    "liquidatee" / PublicKeyAdapter(),
+    "liquidator" / PublicKeyAdapter(),
+    "price" / FloatI80F48Adapter(),
+    "quantity" / SignedDecimalAdapter(),
+    "liquidation_fee" / FloatI80F48Adapter(),
+    construct.Padding(_EVENT_SIZE - 128)
+)
+assert LIQUIDATE_EVENT.sizeof(
+) == _EVENT_SIZE, f"Liquidate event size is {LIQUIDATE_EVENT.sizeof()} when it should be {_EVENT_SIZE}."
 
 UNKNOWN_EVENT = construct.Struct(
     "event_type" / construct.Bytes(1),
@@ -989,7 +1037,8 @@ UNKNOWN_EVENT = construct.Struct(
     "owner" / PublicKeyAdapter(),
     construct.Padding(_EVENT_SIZE - 40)
 )
-assert UNKNOWN_EVENT.sizeof() == _EVENT_SIZE
+assert UNKNOWN_EVENT.sizeof(
+) == _EVENT_SIZE, f"Unknown event size is {UNKNOWN_EVENT.sizeof()} when it should be {_EVENT_SIZE}."
 
 # # 🥭 PERP_EVENT_QUEUE
 #
@@ -1017,9 +1066,9 @@ PERP_EVENT_QUEUE = construct.Struct(
     "head" / DecimalAdapter(),
     "count" / DecimalAdapter(),
     "seq_num" / DecimalAdapter(),
-    "maker_fee" / FloatI80F48Adapter(),
-    "taker_fee" / FloatI80F48Adapter(),
-    "events" / construct.GreedyRange(construct.Select(FILL_EVENT, OUT_EVENT, UNKNOWN_EVENT))
+    # "maker_fee" / FloatI80F48Adapter(),
+    # "taker_fee" / FloatI80F48Adapter(),
+    "events" / construct.GreedyRange(construct.Select(FILL_EVENT, OUT_EVENT, LIQUIDATE_EVENT, UNKNOWN_EVENT))
 )
 
 # # 🥭 SERUM_EVENT_QUEUE
