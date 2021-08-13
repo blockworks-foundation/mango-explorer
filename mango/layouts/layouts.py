@@ -639,7 +639,7 @@ MANGO_ACCOUNT = construct.Struct(
     "msrm_amount" / DecimalAdapter(),
     "being_liquidated" / DecimalAdapter(1),
     "is_bankrupt" / DecimalAdapter(1),
-    "info" / construct.Padding(32),
+    "info" / construct.PaddedString(32, "utf8"),
     construct.Padding(70)
 )
 

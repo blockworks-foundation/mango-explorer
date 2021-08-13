@@ -95,7 +95,7 @@ TMappedAccountBasketValue = typing.TypeVar("TMappedAccountBasketValue")
 #
 class Account(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
-                 meta_data: Metadata, group: Group, owner: PublicKey,
+                 meta_data: Metadata, group: Group, owner: PublicKey, info: str,
                  shared_quote_token: AccountBasketToken,
                  in_margin_basket: typing.Sequence[bool],
                  basket_indices: typing.Sequence[bool],
@@ -107,6 +107,7 @@ class Account(AddressableAccount):
         self.meta_data: Metadata = meta_data
         self.group: Group = group
         self.owner: PublicKey = owner
+        self.info: str = info
         self.shared_quote_token: AccountBasketToken = shared_quote_token
         self.in_margin_basket: typing.Sequence[bool] = in_margin_basket
         self.basket_indices: typing.Sequence[bool] = basket_indices
@@ -119,6 +120,7 @@ class Account(AddressableAccount):
     def from_layout(layout: layouts.MANGO_ACCOUNT, account_info: AccountInfo, version: Version, group: Group) -> "Account":
         meta_data = Metadata.from_layout(layout.meta_data)
         owner: PublicKey = layout.owner
+        info: str = layout.info
         mngo_token_info = TokenInfo.find_by_symbol(group.tokens, "MNGO")
         in_margin_basket: typing.Sequence[bool] = list([bool(in_basket) for in_basket in layout.in_margin_basket])
         active_in_basket: typing.List[bool] = []
@@ -154,7 +156,7 @@ class Account(AddressableAccount):
         being_liquidated: bool = bool(layout.being_liquidated)
         is_bankrupt: bool = bool(layout.is_bankrupt)
 
-        return Account(account_info, version, meta_data, group, owner, quote, in_margin_basket, active_in_basket, basket, msrm_amount, being_liquidated, is_bankrupt)
+        return Account(account_info, version, meta_data, group, owner, info, quote, in_margin_basket, active_in_basket, basket, msrm_amount, being_liquidated, is_bankrupt)
 
     @staticmethod
     def parse(account_info: AccountInfo, group: Group) -> "Account":
@@ -257,6 +259,7 @@ class Account(AddressableAccount):
         item_to_update.spot_open_orders = spot_open_orders
 
     def __str__(self) -> str:
+        info = f"'{self.info}'" if self.info else "(𝑢𝑛-𝑛𝑎𝑚𝑒𝑑)"
         shared_quote_token: str = f"{self.shared_quote_token}".replace("\n", "\n        ")
         basket_count = len(self.basket)
         basket = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.basket])
@@ -265,7 +268,7 @@ class Account(AddressableAccount):
             self.basket, self.basket_indices, lambda item: item.token_info.token)
         symbols_in_basket = list([tok.symbol for tok in tokens_in_basket if tok is not None])
         in_margin_basket = ", ".join(symbols_in_basket) or "None"
-        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {self.version} [{self.address}]
+        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {info}, {self.version} [{self.address}]
     {self.meta_data}
     Owner: {self.owner}
     Group: « 𝙶𝚛𝚘𝚞𝚙 '{self.group.name}' {self.group.version} [{self.group.address}] »

@@ -10,6 +10,7 @@ def test_construction():
     meta_data = mango.Metadata(layouts.DATA_TYPE.Group, mango.Version.V1, True)
     group = fake_seeded_public_key("group")
     owner = fake_seeded_public_key("owner")
+    info = "some name"
     in_margin_basket = [False, False, False, False, False]
     active_in_basket = [False, True, False, True, True]
     quote_deposit = fake_token_value(Decimal(50))
@@ -33,7 +34,7 @@ def test_construction():
     being_liquidated = False
     is_bankrupt = False
 
-    actual = mango.Account(account_info, mango.Version.V1, meta_data, group, owner, quote,
+    actual = mango.Account(account_info, mango.Version.V1, meta_data, group, owner, info, quote,
                            in_margin_basket, active_in_basket, basket, msrm_amount, being_liquidated,
                            is_bankrupt)
 
