@@ -189,7 +189,7 @@ Failing instruction(s):
             report += [f"Signer[{index}]: {signer.public_key()}"]
 
         for instruction in self.instructions:
-            report += _raw_instruction_to_str(instruction)
+            report += [_raw_instruction_to_str(instruction)]
 
         return "\n".join(report)
 
