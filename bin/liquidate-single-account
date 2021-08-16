@@ -79,7 +79,11 @@ try:
         liquidations_publisher.subscribe(on_next=filtering.send)
 
     if args.dry_run:
-        account_liquidator: mango.AccountLiquidator = mango.NullAccountLiquidator()
+        account_liquidator = mango.ReportingAccountLiquidator(mango.NullAccountLiquidator(),
+                                                              context,
+                                                              wallet,
+                                                              liquidations_publisher,
+                                                              liquidator_name)
     else:
         intermediate = mango.ForceCancelOrdersAccountLiquidator(context, wallet)
         account_liquidator = mango.ReportingAccountLiquidator(intermediate,
