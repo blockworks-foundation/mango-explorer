@@ -62,8 +62,8 @@ class LiquidationProcessorState(enum.Enum):
 
 
 class LiquidationProcessor:
-    _AGE_ERROR_THRESHOLD = timedelta(minutes=10)
-    _AGE_WARNING_THRESHOLD = timedelta(minutes=5)
+    _AGE_ERROR_THRESHOLD = timedelta(minutes=5)
+    _AGE_WARNING_THRESHOLD = timedelta(minutes=2)
 
     def __init__(self, context: Context, name: str, account_liquidator: AccountLiquidator, wallet_balancer: WalletBalancer, worthwhile_threshold: Decimal = Decimal("0.01")):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
