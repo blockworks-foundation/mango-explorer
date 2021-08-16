@@ -53,7 +53,7 @@ class SpotMarketOperations(MarketOperations):
         self.logger.info(f"Cancelling {self.spot_market.symbol} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
-        crank: CombinableInstructions = self._build_crank()
+        crank: CombinableInstructions = self._build_crank(add_self=True)
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
 
         return (signers + cancel + crank + settle).execute(self.context)
@@ -67,10 +67,11 @@ class SpotMarketOperations(MarketOperations):
         self.logger.info(f"Placing {self.spot_market.symbol} order {order}.")
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
             order_with_client_id)
-        crank: CombinableInstructions = self._build_crank()
+        crank: CombinableInstructions = self._build_crank(add_self=True)
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
 
-        (signers + place + crank + settle).execute(self.context)
+        transaction_ids = (signers + place + crank + settle).execute(self.context)
+        self.logger.info(f"Transaction IDs: {transaction_ids}.")
 
         return order_with_client_id
 
@@ -81,7 +82,7 @@ class SpotMarketOperations(MarketOperations):
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        crank = self._build_crank(limit)
+        crank = self._build_crank(limit, add_self=False)
         return (signers + crank).execute(self.context)
 
     def load_orders(self) -> typing.Sequence[Order]:
@@ -102,10 +103,13 @@ class SpotMarketOperations(MarketOperations):
 
         return open_orders_address
 
-    def _build_crank(self, limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def _build_crank(self, limit: Decimal = Decimal(32), add_self: bool = False) -> CombinableInstructions:
         open_orders_to_crank: typing.List[PublicKey] = []
         for event in self.spot_market.unprocessed_events(self.context):
             open_orders_to_crank += [event.public_key]
+
+        if add_self and self.open_orders_address is not None:
+            open_orders_to_crank += [self.open_orders_address]
 
         if len(open_orders_to_crank) == 0:
             return CombinableInstructions.empty()

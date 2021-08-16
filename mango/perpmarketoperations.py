@@ -52,7 +52,8 @@ class PerpMarketOperations(MarketOperations):
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
         accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)
         crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank)
-        return (signers + cancel + crank).execute(self.context)
+        settle = self.market_instruction_builder.build_settle_instructions()
+        return (signers + cancel + crank + settle).execute(self.context)
 
     def place_order(self, order: Order) -> Order:
         client_id: int = self.context.random_client_id()
@@ -63,7 +64,8 @@ class PerpMarketOperations(MarketOperations):
             order_with_client_id)
         accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)
         crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank)
-        (signers + place + crank).execute(self.context)
+        settle = self.market_instruction_builder.build_settle_instructions()
+        (signers + place + crank + settle).execute(self.context)
         return order_with_client_id
 
     def settle(self) -> typing.Sequence[str]:
@@ -73,7 +75,7 @@ class PerpMarketOperations(MarketOperations):
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)
+        accounts_to_crank = self.perp_market.accounts_to_crank(self.context, None)
         crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank, limit)
         return (signers + crank).execute(self.context)
 
