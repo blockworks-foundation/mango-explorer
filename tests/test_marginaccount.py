@@ -6,6 +6,7 @@ from decimal import Decimal
 
 def test_construction():
     account_flags = mango.MangoAccountFlags(mango.Version.V1, True, False, True, False)
+    info = "TestAcc"
     has_borrows = False
     mango_group = fake_seeded_public_key("mango group")
     owner = fake_seeded_public_key("owner")
@@ -16,13 +17,14 @@ def test_construction():
     borrows = [mango.TokenValue(token, Decimal(0)), mango.TokenValue(
         token, Decimal(0)), mango.TokenValue(token, Decimal(0))]
     open_orders = [None, None]
-    actual = mango.MarginAccount(fake_account_info(), mango.Version.V1, account_flags,
+    actual = mango.MarginAccount(fake_account_info(), mango.Version.V1, account_flags, info,
                                  has_borrows, mango_group, owner, being_liquidated,
                                  deposits, borrows, open_orders)
     assert actual is not None
     assert actual.logger is not None
     assert actual.version == mango.Version.V1
     assert actual.account_flags == account_flags
+    assert actual.info == info
     assert actual.has_borrows == has_borrows
     assert actual.mango_group == mango_group
     assert actual.owner == owner

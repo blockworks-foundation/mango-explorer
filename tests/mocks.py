@@ -106,7 +106,7 @@ def mock_margin_account(group: mango.Group, deposits: typing.List[str], borrows:
             open_orders_keys += [None]
         else:
             open_orders_keys += [oo.address]
-    margin_account = mango.MarginAccount(fake_account_info(), mango.Version.V1, account_flags,
+    margin_account = mango.MarginAccount(fake_account_info(), mango.Version.V1, account_flags, "Test",
                                          has_borrows, group.address, owner, being_liquidated,
                                          token_deposits, token_borrows, open_orders_keys)
     margin_account.open_orders_accounts = openorders
