@@ -597,7 +597,8 @@ MARGIN_ACCOUNT_V2 = construct.Struct(
     "open_orders" / construct.Array(MARGIN_ACCOUNT_V2_NUM_MARKETS, PublicKeyAdapter()),
     "being_liquidated" / DecimalAdapter(1),
     "has_borrows" / DecimalAdapter(1),
-    "padding" / construct.Padding(70)
+    "info" / construct.PaddedString(32, "utf8"),
+    "padding" / construct.Padding(38)
 )
 
 

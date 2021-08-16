@@ -73,6 +73,7 @@ class OpenOrders(AddressableAccount):
         base_token_total: Decimal = layout.base_token_total / base_divisor
         quote_token_free: Decimal = layout.quote_token_free / quote_divisor
         quote_token_total: Decimal = layout.quote_token_total / quote_divisor
+        referrer_rebate_accrued: Decimal = layout.referrer_rebate_accrued / quote_divisor
         nonzero_orders: typing.List[Decimal] = list([order for order in layout.orders if order != 0])
         nonzero_client_ids: typing.List[Decimal] = list(
             [client_id for client_id in layout.client_ids if client_id != 0])
@@ -80,7 +81,7 @@ class OpenOrders(AddressableAccount):
         return OpenOrders(account_info, Version.UNSPECIFIED, program_id, account_flags, layout.market,
                           layout.owner, base_token_free, base_token_total, quote_token_free, quote_token_total,
                           layout.free_slot_bits, layout.is_bid_bits, nonzero_orders, nonzero_client_ids,
-                          layout.referrer_rebate_accrued)
+                          referrer_rebate_accrued)
 
     @staticmethod
     def parse(account_info: AccountInfo, base_decimals: Decimal, quote_decimals: Decimal) -> "OpenOrders":

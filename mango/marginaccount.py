@@ -43,12 +43,14 @@ from .version import Version
 
 class MarginAccount(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, account_flags: MangoAccountFlags,
-                 has_borrows: bool, mango_group: PublicKey, owner: PublicKey, being_liquidated: bool,
-                 deposits: typing.List[TokenValue], borrows: typing.List[TokenValue],
+                 info: str, has_borrows: bool, mango_group: PublicKey, owner: PublicKey,
+                 being_liquidated: bool, deposits: typing.List[TokenValue],
+                 borrows: typing.List[TokenValue],
                  open_orders: typing.List[typing.Optional[PublicKey]]):
         super().__init__(account_info)
         self.version: Version = version
         self.account_flags: MangoAccountFlags = account_flags
+        self.info: str = info
         self.has_borrows: bool = has_borrows
         self.mango_group: PublicKey = mango_group
         self.owner: PublicKey = owner
@@ -65,11 +67,13 @@ class MarginAccount(AddressableAccount):
                 f"Margin account belongs to Group ID '{group.address}', not Group ID '{layout.mango_group}'")
 
         if version == Version.V1:
-            # This is an old-style margin account, with no borrows flag
+            # This is an old-style margin account, with no borrows flag or info string
             has_borrows = False
+            info = ""
         else:
-            # This is a new-style margin account where we can depend on the presence of the borrows flag
+            # This is a new-style margin account where we can depend on the presence of the borrows flag and info string
             has_borrows = bool(layout.has_borrows)
+            info = layout.info
 
         account_flags: MangoAccountFlags = MangoAccountFlags.from_layout(layout.account_flags)
         deposits: typing.List[TokenValue] = []
@@ -86,7 +90,7 @@ class MarginAccount(AddressableAccount):
             token_value = TokenValue(token, rebased_borrow)
             borrows += [token_value]
 
-        return MarginAccount(account_info, version, account_flags, has_borrows, layout.mango_group,
+        return MarginAccount(account_info, version, account_flags, info, has_borrows, layout.mango_group,
                              layout.owner, layout.being_liquidated, deposits, borrows, list(layout.open_orders))
 
     @staticmethod
@@ -373,6 +377,7 @@ class MarginAccount(AddressableAccount):
         return ripe_accounts
 
     def __str__(self) -> str:
+        info = f"'{self.info}'" if self.info else "(𝑢𝑛-𝑛𝑎𝑚𝑒𝑑)"
         deposits = "\n        ".join([f"{item}" for item in self.deposits])
         borrows = "\n        ".join([f"{item:}" for item in self.borrows])
         if all(oo is None for oo in self.open_orders_accounts):
@@ -380,7 +385,7 @@ class MarginAccount(AddressableAccount):
         else:
             open_orders_unindented = f"{self.open_orders_accounts}"
             open_orders = open_orders_unindented.replace("\n", "\n    ")
-        return f"""« MarginAccount: {self.address}
+        return f"""« MarginAccount: {info}, {self.version} [{self.address}]
     Flags: {self.account_flags}
     Has Borrows: {self.has_borrows}
     Owner: {self.owner}
