@@ -40,6 +40,8 @@ print(context)
 disposer = mango.DisposePropagator()
 manager = mango.WebSocketSubscriptionManager(context.name)
 disposer.add_disposable(manager)
+health_check = mango.HealthCheck()
+disposer.add_disposable(health_check)
 
 publishers = []
 for address in args.address:
@@ -65,10 +67,7 @@ websocket_url = context.client.cluster_url.replace("https", "wss", 1)
 ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler)
 ws.item.subscribe(on_next=manager.on_item)
 ws.ping_interval = 10
-
-ws_pong_disposable = ws.pong.subscribe(mango.FileToucherObserver("/var/tmp/mango_healthcheck_ws_pong"))
-disposer.add_disposable(ws_pong_disposable)
-
+health_check.add("ws_pong", ws.pong)
 ws.open()
 
 # Wait - don't exit. Exiting will be handled by signals/interrupts.

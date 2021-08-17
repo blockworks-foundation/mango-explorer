@@ -7,10 +7,8 @@ import os.path
 import rx
 import sys
 import threading
-import typing
 
 from decimal import Decimal
-from pyserum.market import Market as PySerumMarket
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
@@ -63,158 +61,13 @@ def cleanup(context: mango.Context, wallet: mango.Wallet, account: mango.Account
     market_operations.settle()
 
 
-def add_file_health(name: str, observable: rx.core.typing.Observable[typing.Any], disposer: mango.DisposePropagator):
-    healthcheck_file_touch_disposer = observable.subscribe(
-        mango.FileToucherObserver(f"/var/tmp/mango_healthcheck_{name}"))
-    disposer.add_disposable(healthcheck_file_touch_disposer)
-
-
-def build_latest_group_observer(context: mango.Context, manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, group: mango.Group) -> mango.LatestItemObserverSubscriber[mango.Group]:
-    group_subscription = mango.WebSocketAccountSubscription[mango.Group](
-        context, group.address, lambda account_info: mango.Group.parse(context, account_info))
-    manager.add(group_subscription)
-    latest_group_observer = mango.LatestItemObserverSubscriber(group)
-    group_subscription.publisher.subscribe(latest_group_observer)
-    add_file_health("group_subscription", group_subscription.publisher, disposer)
-    return latest_group_observer
-
-
-def build_latest_account_observer(context: mango.Context, account: mango.Account, manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, group_observer: mango.LatestItemObserverSubscriber[mango.Group]) -> typing.Tuple[mango.WebSocketSubscription[mango.Account], mango.LatestItemObserverSubscriber[mango.Account]]:
-    account_subscription = mango.WebSocketAccountSubscription[mango.Account](
-        context, account.address, lambda account_info: mango.Account.parse(account_info, group_observer.latest))
-    manager.add(account_subscription)
-    latest_account_observer = mango.LatestItemObserverSubscriber(account)
-    account_subscription.publisher.subscribe(latest_account_observer)
-    add_file_health("account_subscription", account_subscription.publisher, disposer)
-    return account_subscription, latest_account_observer
-
-
-def build_latest_spot_open_orders_observer(context: mango.Context, manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, account: mango.Account, spot_market: mango.SpotMarket) -> mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer]:
-    market_index = group.find_spot_market_index(spot_market.address)
-    open_orders_address = account.spot_open_orders[market_index]
-    if open_orders_address is None:
-        spot_market_instruction_builder: mango.SpotMarketInstructionBuilder = mango.SpotMarketInstructionBuilder.load(
-            context, wallet, spot_market.group, account, spot_market)
-        market_operations: mango.SpotMarketOperations = mango.SpotMarketOperations(
-            context, wallet, spot_market.group, account, spot_market, spot_market_instruction_builder)
-        open_orders_address = market_operations.create_openorders_for_market()
-        logging.info(f"Created {spot_market.symbol} OpenOrders at: {open_orders_address}")
-
-        # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
-        # the Account so that future uses (like later in this method) have access to it in the right place.
-        account.update_spot_open_orders_for_market(market_index, open_orders_address)
-
-    spot_open_orders_subscription = mango.WebSocketAccountSubscription[mango.OpenOrders](
-        context, open_orders_address, lambda account_info: mango.OpenOrders.parse(account_info, spot_market.base.decimals, spot_market.quote.decimals))
-    manager.add(spot_open_orders_subscription)
-    initial_spot_open_orders = mango.OpenOrders.load(
-        context, open_orders_address, spot_market.base.decimals, spot_market.quote.decimals)
-    latest_open_orders_observer = mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer](
-        initial_spot_open_orders)
-    spot_open_orders_subscription.publisher.subscribe(latest_open_orders_observer)
-    add_file_health("open_orders_subscription", spot_open_orders_subscription.publisher, disposer)
-    return latest_open_orders_observer
-
-
-def build_latest_serum_open_orders_observer(manager: mango.WebSocketSubscriptionManager, disposer: mango.DisposePropagator, serum_market: mango.SerumMarket, context: mango.Context, wallet: mango.Wallet) -> mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer]:
-    all_open_orders = mango.OpenOrders.load_for_market_and_owner(
-        context, serum_market.address, wallet.address, context.dex_program_id, serum_market.base.decimals, serum_market.quote.decimals)
-    if len(all_open_orders) > 0:
-        initial_serum_open_orders: mango.OpenOrders = all_open_orders[0]
-        open_orders_address = initial_serum_open_orders.address
-    else:
-        raw_market = PySerumMarket.load(context.client.compatible_client, serum_market.address)
-        create_open_orders = mango.build_create_serum_open_orders_instructions(
-            context, wallet, raw_market)
-
-        open_orders_address = create_open_orders.signers[0].public_key()
-
-        logging.info(f"Creating OpenOrders account for market {serum_market.symbol} at {open_orders_address}.")
-        signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
-        transaction_ids = (signers + create_open_orders).execute(context)
-        context.client.wait_for_confirmation(transaction_ids)
-        initial_serum_open_orders = mango.OpenOrders.load(
-            context, open_orders_address, serum_market.base.decimals, serum_market.quote.decimals)
-
-    serum_open_orders_subscription = mango.WebSocketAccountSubscription[mango.OpenOrders](
-        context, open_orders_address, lambda account_info: mango.OpenOrders.parse(account_info, serum_market.base.decimals, serum_market.quote.decimals))
-
-    manager.add(serum_open_orders_subscription)
-
-    latest_serum_open_orders_observer = mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer](
-        initial_serum_open_orders)
-    serum_open_orders_subscription.publisher.subscribe(latest_serum_open_orders_observer)
-    add_file_health("open_orders_subscription", serum_open_orders_subscription.publisher, disposer)
-    return latest_serum_open_orders_observer
-
-
-def build_latest_perp_open_orders_observer(disposer: mango.DisposePropagator, perp_market: mango.PerpMarket, account: mango.Account, account_subscription: mango.WebSocketSubscription[mango.Account]) -> mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer]:
-    index = group.find_perp_market_index(perp_market.address)
-    initial_perp_account = account.perp_accounts[index]
-    if initial_perp_account is None:
-        raise Exception(f"Could not find perp account at index {index} of account {account.address}.")
-    initial_open_orders = initial_perp_account.open_orders
-    latest_open_orders_observer = mango.LatestItemObserverSubscriber[mango.PlacedOrdersContainer](initial_open_orders)
-    account_subscription.publisher.subscribe(
-        on_next=lambda updated_account: latest_open_orders_observer.on_next(updated_account.perp_accounts[index].open_orders))
-    add_file_health("open_orders_subscription", account_subscription.publisher, disposer)
-    return latest_open_orders_observer
-
-
-def build_latest_price_observer(context: mango.Context, disposer: mango.DisposePropagator, provider_name: str, market: mango.Market) -> mango.LatestItemObserverSubscriber[mango.Price]:
-    oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, provider_name)
-    oracle = oracle_provider.oracle_for_market(context, market)
-    if oracle is None:
-        raise Exception(f"Could not find oracle for market {market.symbol} from provider {provider_name}.")
-
-    initial_price = oracle.fetch_price(context)
-    price_feed = oracle.to_streaming_observable(context)
-    latest_price_observer = mango.LatestItemObserverSubscriber(initial_price)
-    price_disposable = price_feed.subscribe(latest_price_observer)
-    disposer.add_disposable(price_disposable)
-    add_file_health("price_subscription", price_feed, disposer)
-    return latest_price_observer
-
-
-def build_serum_inventory_observer(context: mango.Context, disposer: mango.DisposePropagator, market: mango.Market) -> mango.Watcher[mango.Inventory]:
-    base_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
-        context, wallet.address, market.base)
-    if base_account is None:
-        raise Exception(
-            f"Could not find token account owned by {wallet.address} for base token {market.base}.")
-    base_token_subscription = mango.WebSocketAccountSubscription[mango.TokenAccount](
-        context, base_account.address, lambda account_info: mango.TokenAccount.parse(account_info, market.base))
-    manager.add(base_token_subscription)
-    latest_base_token_account_observer = mango.LatestItemObserverSubscriber(base_account)
-    base_subscription_disposable = base_token_subscription.publisher.subscribe(latest_base_token_account_observer)
-    disposer.add_disposable(base_subscription_disposable)
-
-    quote_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
-        context, wallet.address, market.quote)
-    if quote_account is None:
-        raise Exception(
-            f"Could not find token account owned by {wallet.address} for quote token {market.quote}.")
-    quote_token_subscription = mango.WebSocketAccountSubscription[mango.TokenAccount](
-        context, quote_account.address, lambda account_info: mango.TokenAccount.parse(account_info, market.quote))
-    manager.add(quote_token_subscription)
-    latest_quote_token_account_observer = mango.LatestItemObserverSubscriber(quote_account)
-    quote_subscription_disposable = quote_token_subscription.publisher.subscribe(latest_quote_token_account_observer)
-    disposer.add_disposable(quote_subscription_disposable)
-
-    def serum_inventory_accessor() -> mango.Inventory:
-        return mango.Inventory(mango.InventorySource.SPL_TOKENS,
-                               latest_base_token_account_observer.latest.value,
-                               latest_quote_token_account_observer.latest.value)
-
-    return mango.LamdaUpdateWatcher(serum_inventory_accessor)
-
-
 context = mango.ContextBuilder.from_command_line_parameters(args)
 
 disposer = mango.DisposePropagator()
 manager = mango.WebSocketSubscriptionManager(context.name)
 disposer.add_disposable(manager)
-
+health_check = mango.HealthCheck()
+disposer.add_disposable(health_check)
 
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_id)
@@ -232,24 +85,27 @@ if market.quote != group.shared_quote_token.token:
 
 cleanup(context, wallet, account, market, args.dry_run)
 
-latest_group_observer = build_latest_group_observer(context, manager, disposer, group)
-account_subscription, latest_account_observer = build_latest_account_observer(
-    context, account, manager, disposer, latest_group_observer)
-latest_price_observer = build_latest_price_observer(context, disposer, args.oracle_provider, market)
+latest_group_observer = mango.build_group_watcher(context, manager, health_check, group)
+account_subscription, latest_account_observer = mango.build_account_watcher(
+    context, manager, health_check, account, latest_group_observer)
+latest_price_observer = mango.build_price_watcher(
+    context, manager, health_check, disposer, args.oracle_provider, market)
 
 market = mango.ensure_market_loaded(context, market)
 market_instruction_builder: mango.MarketInstructionBuilder = mango.create_market_instruction_builder(
     context, wallet, account, market, args.dry_run)
 if isinstance(market, mango.SerumMarket):
-    inventory_watcher: mango.Watcher[mango.Inventory] = build_serum_inventory_observer(context, disposer, market)
-    latest_open_orders_observer = build_latest_serum_open_orders_observer(manager, disposer, market, context, wallet)
+    inventory_watcher: mango.Watcher[mango.Inventory] = mango.build_serum_inventory_watcher(
+        context, manager, health_check, disposer, wallet, market)
+    latest_open_orders_observer = mango.build_serum_open_orders_watcher(context, manager, health_check, market, wallet)
 elif isinstance(market, mango.SpotMarket):
     inventory_watcher = mango.InventoryAccountWatcher(market, latest_account_observer)
-    latest_open_orders_observer = build_latest_spot_open_orders_observer(context, manager, disposer, account, market)
+    latest_open_orders_observer = mango.build_spot_open_orders_watcher(
+        context, manager, health_check, wallet, account, group, market)
 elif isinstance(market, mango.PerpMarket):
     inventory_watcher = mango.InventoryAccountWatcher(market, latest_account_observer)
-    latest_open_orders_observer = build_latest_perp_open_orders_observer(
-        disposer, market, account, account_subscription)
+    latest_open_orders_observer = mango.build_perp_open_orders_watcher(
+        context, manager, health_check, market, account, group, account_subscription)
 else:
     raise Exception(f"Could not determine type of market {market.symbol}")
 
@@ -270,7 +126,7 @@ model_state = mango.marketmaking.ModelState(market, latest_account_observer,
                                             latest_open_orders_observer,
                                             inventory_watcher)
 
-add_file_health("marketmaker_pulse", market_maker.pulse_complete, disposer)
+health_check.add("marketmaker_pulse", market_maker.pulse_complete)
 
 logging.info(f"Current assets in account {account.address} (owner: {account.owner}):")
 mango.TokenValue.report([asset for asset in account.net_assets if asset is not None], logging.info)

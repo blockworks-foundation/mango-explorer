@@ -105,6 +105,8 @@ context = mango.ContextBuilder.from_command_line_parameters(args)
 disposer = mango.DisposePropagator()
 manager = mango.WebSocketSubscriptionManager(context.name)
 disposer.add_disposable(manager)
+health_check = mango.HealthCheck()
+disposer.add_disposable(health_check)
 
 for name_and_address in args.named_address:
     add_subscription_for_parameter(context, manager, args.timer_limit, name_and_address)
@@ -113,11 +115,7 @@ websocket_url = context.client.cluster_url.replace("https", "ws", 1)
 ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler)
 ws.item.subscribe(on_next=manager.on_item)
 ws.ping_interval = 10
-
-ws_pong_disposable = ws.pong.subscribe(mango.FileToucherObserver("/var/tmp/mango_healthcheck_ws_pong"))
-disposer.add_disposable(ws_pong_disposable)
-ws_pong_log_disposable = ws.pong.subscribe(on_next=lambda _: logging.info("Pong"))
-disposer.add_disposable(ws_pong_log_disposable)
+health_check.add("ws_pong", ws.pong)
 ws_connecting_log_disposable = ws.connecting.subscribe(
     on_next=lambda _: send_event_notification("Re-connecting websocket"))
 disposer.add_disposable(ws_connecting_log_disposable)
