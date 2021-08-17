@@ -78,20 +78,22 @@ class TransactionException(Exception):
                 return []
             if isinstance(item, str):
                 return [item]
-            return item
+            if isinstance(item, list):
+                return item
+            return [f"{item}"]
         self.accounts: typing.List[str] = _ensure_list(accounts)
         self.errors: typing.List[str] = _ensure_list(errors)
         self.logs: typing.List[str] = _ensure_list(logs)
 
     def __str__(self) -> str:
         accounts = "No Accounts"
-        if len(self.accounts) == 0:
+        if len(self.accounts) > 0:
             accounts = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.accounts])
         errors = "No Errors"
-        if len(self.errors) == 0:
+        if len(self.errors) > 0:
             errors = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.errors])
         logs = "No Logs"
-        if len(self.logs) == 0:
+        if len(self.logs) > 0:
             logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
         return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.name}] {self.code}: {self.message}
     Accounts:
