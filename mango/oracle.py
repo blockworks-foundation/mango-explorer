@@ -114,7 +114,7 @@ class Oracle(metaclass=abc.ABCMeta):
         raise NotImplementedError("Oracle.fetch_price() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
+    def to_streaming_observable(self, context: Context) -> rx.core.Observable:
         raise NotImplementedError("Oracle.fetch_price() is not implemented on the base type.")
 
 

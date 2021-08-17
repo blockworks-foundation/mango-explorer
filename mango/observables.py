@@ -36,7 +36,7 @@ from rxpy_backpressure import BackPressure
 #
 
 
-class NullObserverSubscriber(rx.core.typing.Observer):
+class NullObserverSubscriber(rx.core.Observer):
     def __init__(self) -> None:
         super().__init__()
 
@@ -54,7 +54,7 @@ class NullObserverSubscriber(rx.core.typing.Observer):
 #
 # This class can subscribe to an `Observable` and print out each item.
 #
-class PrintingObserverSubscriber(rx.core.typing.Observer):
+class PrintingObserverSubscriber(rx.core.Observer):
     def __init__(self, report_no_output: bool) -> None:
         super().__init__()
         self.report_no_output = report_no_output
@@ -90,7 +90,7 @@ class TimestampedPrintingObserverSubscriber(PrintingObserverSubscriber):
 #
 # This class can subscribe to an `Observable` and collect each item.
 #
-class CollectingObserverSubscriber(rx.core.typing.Observer):
+class CollectingObserverSubscriber(rx.core.Observer):
     def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.collected: typing.List[typing.Any] = []
@@ -134,7 +134,7 @@ TItem = typing.TypeVar('TItem')
 #
 # This class can subscribe to an `Observable` and capture the latest item as it is observed.
 #
-class LatestItemObserverSubscriber(rx.core.typing.Observer, typing.Generic[TItem]):
+class LatestItemObserverSubscriber(rx.core.Observer, typing.Generic[TItem]):
     def __init__(self, initial: TItem) -> None:
         super().__init__()
         self.latest: TItem = initial
@@ -159,7 +159,7 @@ class LatestItemObserverSubscriber(rx.core.typing.Observer, typing.Generic[TItem
 # This is mostly for libraries (like `rxpy_backpressure`) that take observers but not their
 # component functions.
 #
-class FunctionObserver(rx.core.typing.Observer):
+class FunctionObserver(rx.core.Observer):
     def __init__(self,
                  on_next: typing.Callable[[typing.Any], None],
                  on_error: typing.Callable[[Exception], None] = lambda _: None,
@@ -196,7 +196,7 @@ class FunctionObserver(rx.core.typing.Observer):
 # take multiple seconds to complete. In that case, the latest item will be immediately
 # emitted and the in-between items skipped.
 #
-def create_backpressure_skipping_observer(on_next: typing.Callable[[typing.Any], None], on_error: typing.Callable[[Exception], None] = lambda _: None, on_completed: typing.Callable[[], None] = lambda: None) -> rx.core.typing.Observer:
+def create_backpressure_skipping_observer(on_next: typing.Callable[[typing.Any], None], on_error: typing.Callable[[Exception], None] = lambda _: None, on_completed: typing.Callable[[], None] = lambda: None) -> rx.core.Observer:
     observer = FunctionObserver(on_next=on_next, on_error=on_error, on_completed=on_completed)
     return BackPressure.LATEST(observer)
 

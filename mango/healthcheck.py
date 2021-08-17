@@ -30,7 +30,7 @@ class HealthCheck(rx.core.typing.Disposable):
         self.healthcheck_files_location: str = healthcheck_files_location
         self._to_dispose: typing.List[rx.core.typing.Disposable] = []
 
-    def add(self, name: str, observable: rx.core.typing.Observable[typing.Any]):
+    def add(self, name: str, observable: rx.core.Observable):
         healthcheck_file_touch_disposer = observable.subscribe(
             on_next=lambda _: Path(f"{self.healthcheck_files_location}/mango_healthcheck_{name}").touch(mode=0o666, exist_ok=True))
         self._to_dispose += [healthcheck_file_touch_disposer]

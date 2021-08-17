@@ -87,7 +87,7 @@ class SerumOracle(Oracle):
 
         return Price(self.source, datetime.now(), self.market, top_bid, mid_price, top_ask, SerumOracleConfidence)
 
-    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
+    def to_streaming_observable(self, context: Context) -> rx.core.Observable:
         return rx.interval(1).pipe(
             ops.observe_on(context.pool_scheduler),
             ops.start_with(-1),

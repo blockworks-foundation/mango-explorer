@@ -18,7 +18,6 @@ import json
 import logging
 import rx
 import rx.subject
-import rx.core.typing
 import typing
 import websocket  # type: ignore
 

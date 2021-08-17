@@ -90,7 +90,7 @@ class PythOracle(Oracle):
         # Pyth has no notion of bids, asks, or spreads so just provide the single price.
         return Price(self.source, datetime.now(), self.market, price, price, price, confidence)
 
-    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
+    def to_streaming_observable(self, context: Context) -> rx.core.Observable:
         return rx.interval(1).pipe(
             ops.observe_on(context.pool_scheduler),
             ops.start_with(-1),

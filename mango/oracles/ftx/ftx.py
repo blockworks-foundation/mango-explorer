@@ -74,7 +74,7 @@ class FtxOracle(Oracle):
 
         return Price(self.source, datetime.now(), self.market, bid, price, ask, FtxOracleConfidence)
 
-    def to_streaming_observable(self, _: Context) -> rx.core.typing.Observable:
+    def to_streaming_observable(self, _: Context) -> rx.core.Observable:
         subject = Subject()
 
         def _on_item(data):

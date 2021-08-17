@@ -75,7 +75,7 @@ class StubOracle(Oracle):
         # will give you the consistent results, but you'll need to adjust your code"
         return Price(self.source, datetime.now(), self.market, raw_price.price, raw_price.price, raw_price.price, StubOracleConfidence)
 
-    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
+    def to_streaming_observable(self, context: Context) -> rx.core.Observable:
         return rx.interval(1).pipe(
             ops.observe_on(context.pool_scheduler),
             ops.start_with(-1),
