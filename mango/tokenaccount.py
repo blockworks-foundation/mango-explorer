@@ -21,6 +21,7 @@ from solana.publickey import PublicKey
 from solana.rpc.types import TokenAccountOpts
 from spl.token.client import Token as SplToken
 from spl.token.constants import TOKEN_PROGRAM_ID
+from spl.token.instructions import get_associated_token_address
 
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
@@ -30,6 +31,7 @@ from .token import Token
 from .tokenlookup import TokenLookup
 from .tokenvalue import TokenValue
 from .version import Version
+from .wallet import Wallet
 
 # # 🥭 TokenAccount class
 #
@@ -88,6 +90,25 @@ class TokenAccount(AddressableAccount):
             return TokenAccount.create(context, account, token)
 
         return largest_account
+
+    @staticmethod
+    def find_or_create_token_address_to_use(context: Context, wallet: Wallet, owner: PublicKey, token: Token) -> PublicKey:
+        # This is a root wallet account - get the token account to use.
+        associated_token_address = get_associated_token_address(owner, token.mint)
+        token_account: typing.Optional[TokenAccount] = TokenAccount.load(context, associated_token_address)
+        if token_account is None:
+            # There is no associated token account. See if they have an old-style non-associated token account.
+            largest = TokenAccount.fetch_largest_for_owner_and_token(context, owner, token)
+            if largest is not None:
+                # There is an old-style account so use that.
+                return largest.address
+
+            # There is no old-style token account either, so create the proper associated token account.
+            spl_token = SplToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.account)
+            return spl_token.create_associated_token_account(owner)
+        else:
+            # The associated token account exists so use it
+            return associated_token_address
 
     @staticmethod
     def from_layout(layout: layouts.TOKEN_ACCOUNT, account_info: AccountInfo, token: Token) -> "TokenAccount":

@@ -11,7 +11,6 @@ from decimal import Decimal
 from spl.token.client import Token as SplToken
 from spl.token.constants import TOKEN_PROGRAM_ID
 from solana.publickey import PublicKey
-from spl.token.instructions import get_associated_token_address
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
@@ -45,14 +44,8 @@ if account_info is None:
 
 if account_info.owner == mango.SYSTEM_PROGRAM_ADDRESS:
     # This is a root wallet account - get the associated token account
-    associated_token_address = get_associated_token_address(args.address, token.mint)
-    token_account: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(context, associated_token_address)
-    if token_account is None:
-        # There is no associated token account, so create it
-        destination = spl_token.create_associated_token_account(args.address)
-    else:
-        # The associated token account exists so use it as the destination
-        destination = associated_token_address
+    destination: PublicKey = mango.TokenAccount.find_or_create_token_address_to_use(
+        context, wallet, args.address, token)
 
 quantity = token.shift_to_native(args.quantity)
 
