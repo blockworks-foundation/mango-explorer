@@ -67,24 +67,31 @@ class TooManyRequestsRateLimitException(RateLimitException):
 # of problems at the right place.
 #
 class TransactionException(Exception):
-    def __init__(self, message: str, code: int, name: str, accounts: typing.Optional[typing.List[str]], errors: typing.Optional[typing.List[str]], logs: typing.Optional[typing.List[str]]):
+    def __init__(self, message: str, code: int, name: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None]):
         super().__init__(message)
         self.message: str = message
         self.code: int = code
         self.name: str = name
-        self.accounts: typing.Optional[typing.List[str]] = accounts
-        self.errors: typing.Optional[typing.List[str]] = errors
-        self.logs: typing.Optional[typing.List[str]] = logs
+
+        def _ensure_list(item: typing.Union[str, typing.List[str], None]) -> typing.List[str]:
+            if item is None:
+                return []
+            if isinstance(item, str):
+                return [item]
+            return item
+        self.accounts: typing.List[str] = _ensure_list(accounts)
+        self.errors: typing.List[str] = _ensure_list(errors)
+        self.logs: typing.List[str] = _ensure_list(logs)
 
     def __str__(self) -> str:
         accounts = "No Accounts"
-        if self.accounts:
+        if len(self.accounts) == 0:
             accounts = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.accounts])
         errors = "No Errors"
-        if self.errors:
+        if len(self.errors) == 0:
             errors = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.errors])
         logs = "No Logs"
-        if self.logs:
+        if len(self.logs) == 0:
             logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
         return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.name}] {self.code}: {self.message}
     Accounts:
@@ -283,8 +290,6 @@ class CompatibleClient:
                 error_data: typing.Dict = response["error"]["data"] if "data" in response["error"] else {}
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
                 error_err = error_data["err"] if "err" in error_data else "No error text returned"
-                if isinstance(error_err, str):
-                    error_err = [error_err]
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
                 raise TransactionException(exception_message, error_code, self.name,
                                            error_accounts, error_err, error_logs)
