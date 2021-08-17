@@ -156,7 +156,7 @@ def pulse(self, context: mango.Context, model_state: ModelState):
         cancellations = mango.CombinableInstructions.empty()
         for to_cancel in reconciled.to_cancel:
             self.logger.info(f"Cancelling {self.market.symbol} {to_cancel}")
-            cancel = self.market_instruction_builder.build_cancel_order_instructions(to_cancel)
+            cancel = self.market_instruction_builder.build_cancel_order_instructions(to_cancel, ok_if_missing=True)
             cancellations += cancel
 
         place_orders = mango.CombinableInstructions.empty()

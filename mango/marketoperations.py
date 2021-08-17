@@ -55,7 +55,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def cancel_order(self, order: Order) -> typing.Sequence[str]:
+    def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
         raise NotImplementedError("MarketOperations.cancel_order() is not implemented on the base type.")
 
     @abc.abstractmethod
@@ -93,7 +93,7 @@ class NullMarketOperations(MarketOperations):
         super().__init__()
         self.market_name: str = market_name
 
-    def cancel_order(self, order: Order) -> typing.Sequence[str]:
+    def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
         self.logger.info(f"Cancelling order {order}.")
         return [""]
 

@@ -42,10 +42,11 @@ class SerumMarketOperations(MarketOperations):
         self.serum_market: SerumMarket = serum_market
         self.market_instruction_builder: SerumMarketInstructionBuilder = market_instruction_builder
 
-    def cancel_order(self, order: Order) -> typing.Sequence[str]:
+    def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
         self.logger.info(f"Cancelling {self.serum_market.symbol} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
+        cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(
+            order, ok_if_missing=ok_if_missing)
         crank: CombinableInstructions = self._build_crank()
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
         return (signers + cancel + crank + settle).execute(self.context)

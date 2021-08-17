@@ -326,6 +326,7 @@ MAX_NODE_BANKS: int = 8
 QUOTE_INDEX: int = MAX_TOKENS - 1
 MAX_BOOK_NODES: int = 1024
 MAX_ORDERS: int = 32
+MAX_PERP_OPEN_ORDERS: int = 64
 
 DATA_TYPE = construct.Enum(construct.Int8ul, Group=0, Account=1, RootBank=2,
                            NodeBank=3, PerpMarket=4, Bids=5, Asks=6, Cache=7, EventQueue=8)
@@ -541,30 +542,6 @@ NODE_BANK = construct.Struct(
     "vault" / PublicKeyAdapter()
 )
 
-# # 🥭 PERP_OPEN_ORDERS
-#
-# Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
-# ```
-# #[derive(Copy, Clone, Pod)]
-# #[repr(C)]
-# pub struct PerpOpenOrders {
-#     pub bids_quantity: i64, // total contracts in sell orders
-#     pub asks_quantity: i64, // total quote currency in buy orders
-#     pub is_free_bits: u32,
-#     pub is_bid_bits: u32,
-#     pub orders: [i128; 32],
-#     pub client_order_ids: [u64; 32],
-# }
-# ```
-PERP_OPEN_ORDERS = construct.Struct(
-    "bids_quantity" / SignedDecimalAdapter(),
-    "asks_quantity" / SignedDecimalAdapter(),
-    "free_slot_bits" / DecimalAdapter(4),
-    "is_bid_bits" / DecimalAdapter(4),
-    "orders" / construct.Array(MAX_ORDERS, SignedDecimalAdapter(16)),
-    "client_order_ids" / construct.Array(MAX_ORDERS, DecimalAdapter())
-)
-
 # # 🥭 PERP_ACCOUNT
 #
 # Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/state.rs):
@@ -577,16 +554,31 @@ PERP_OPEN_ORDERS = construct.Struct(
 #
 #     pub long_settled_funding: I80F48,
 #     pub short_settled_funding: I80F48,
-#     pub open_orders: PerpOpenOrders,
-#     pub liquidity_points: I80F48,
+#
+#     // *** orders related info
+#     pub bids_quantity: i64, // total contracts in sell orders
+#     pub asks_quantity: i64, // total quote currency in buy orders
+#
+#     /// Amount that's on EventQueue waiting to be processed
+#     pub taker_base: i64,
+#     pub taker_quote: i64,
+#
+#     pub mngo_accrued: u64,
 # }
 # ```
 PERP_ACCOUNT = construct.Struct(
     "base_position" / SignedDecimalAdapter(),
     "quote_position" / FloatI80F48Adapter(),
+
     "long_settled_funding" / FloatI80F48Adapter(),
     "short_settled_funding" / FloatI80F48Adapter(),
-    "open_orders" / PERP_OPEN_ORDERS,
+
+    "bids_quantity" / SignedDecimalAdapter(),
+    "asks_quantity" / SignedDecimalAdapter(),
+
+    "taker_base" / SignedDecimalAdapter(),
+    "taker_quote" / SignedDecimalAdapter(),
+
     "mngo_accrued" / DecimalAdapter(),
 )
 
@@ -596,6 +588,7 @@ PERP_ACCOUNT = construct.Struct(
 # ```
 # pub const INFO_LEN: usize = 32;
 # pub const MAX_NUM_IN_MARGIN_BASKET: u8 = 10;
+# pub const MAX_PERP_OPEN_ORDERS: usize = 64;
 # #[derive(Copy, Clone, Pod, Loadable)]
 # #[repr(C)]
 # pub struct MangoAccount {
@@ -615,7 +608,13 @@ PERP_ACCOUNT = construct.Struct(
 #     // Perps related data
 #     pub perp_accounts: [PerpAccount; MAX_PAIRS],
 #
+#     pub order_market: [u8; MAX_PERP_OPEN_ORDERS],
+#     pub order_side: [Side; MAX_PERP_OPEN_ORDERS],
+#     pub orders: [i128; MAX_PERP_OPEN_ORDERS],
+#     pub client_order_ids: [u64; MAX_PERP_OPEN_ORDERS],
+#
 #     pub msrm_amount: u64,
+#
 #     /// This account cannot open new positions or borrow until `init_health >= 0`
 #     pub being_liquidated: bool,
 #
@@ -636,6 +635,10 @@ MANGO_ACCOUNT = construct.Struct(
     "borrows" / construct.Array(MAX_TOKENS, FloatI80F48Adapter()),
     "spot_open_orders" / construct.Array(MAX_PAIRS, PublicKeyAdapter()),
     "perp_accounts" / construct.Array(MAX_PAIRS, PERP_ACCOUNT),
+    "order_market" / construct.Array(MAX_PERP_OPEN_ORDERS, DecimalAdapter(1)),
+    "order_side" / construct.Array(MAX_PERP_OPEN_ORDERS, DecimalAdapter(1)),
+    "order_ids" / construct.Array(MAX_PERP_OPEN_ORDERS, SignedDecimalAdapter(16)),
+    "client_order_ids" / construct.Array(MAX_PERP_OPEN_ORDERS, DecimalAdapter()),
     "msrm_amount" / DecimalAdapter(),
     "being_liquidated" / DecimalAdapter(1),
     "is_bankrupt" / DecimalAdapter(1),
@@ -1203,7 +1206,7 @@ CANCEL_PERP_ORDER = construct.Struct(
     "variant" / construct.Const(14, construct.BytesInteger(4, swapped=True)),
 
     "order_id" / DecimalAdapter(16),
-    "side" / DecimalAdapter(4)  # { buy: 0, sell: 1 }
+    "invalid_id_ok" / construct.Flag
 )
 
 
@@ -1327,7 +1330,8 @@ CANCEL_SPOT_ORDER = construct.Struct(
 CANCEL_PERP_ORDER_BY_CLIENT_ID = construct.Struct(
     "variant" / construct.Const(13, construct.BytesInteger(4, swapped=True)),
 
-    "client_order_id" / DecimalAdapter()
+    "client_order_id" / DecimalAdapter(),
+    "invalid_id_ok" / construct.Flag
 )
 
 # Run the Mango crank.

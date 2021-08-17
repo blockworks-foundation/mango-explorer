@@ -47,7 +47,7 @@ class MarketInstructionBuilder(metaclass=abc.ABCMeta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def build_cancel_order_instructions(self, order: Order) -> CombinableInstructions:
+    def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
         raise NotImplementedError(
             "MarketInstructionBuilder.build_cancel_order_instructions() is not implemented on the base type.")
 
@@ -81,7 +81,7 @@ class NullMarketInstructionBuilder(MarketInstructionBuilder):
         super().__init__()
         self.symbol: str = symbol
 
-    def build_cancel_order_instructions(self, order: Order) -> CombinableInstructions:
+    def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:

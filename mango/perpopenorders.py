@@ -16,40 +16,23 @@
 
 import typing
 
-from decimal import Decimal
-
-from .layouts import layouts
 from .openorders import PlacedOrder
 
 
 # # 🥭 PerpOpenOrders class
 #
 class PerpOpenOrders:
-    def __init__(self, bids_quantity: Decimal, asks_quantity: Decimal, free_slot_bits: Decimal,
-                 is_bid_bits: Decimal, placed_orders: typing.Sequence[PlacedOrder]):
-        self.bids_quantity: Decimal = bids_quantity
-        self.asks_quantity: Decimal = asks_quantity
-        self.free_slot_bits: Decimal = free_slot_bits
-        self.is_bid_bits: Decimal = is_bid_bits
+    def __init__(self, placed_orders: typing.Sequence[PlacedOrder]):
         self.placed_orders: typing.Sequence[PlacedOrder] = placed_orders
 
-    @staticmethod
-    def from_layout(layout: layouts.PERP_OPEN_ORDERS) -> "PerpOpenOrders":
-        bids_quantity: Decimal = layout.bids_quantity
-        asks_quantity: Decimal = layout.asks_quantity
-        free_slot_bits: Decimal = layout.free_slot_bits
-        is_bid_bits: Decimal = layout.is_bid_bits
-
-        placed_orders = PlacedOrder.build_from_open_orders_data(
-            layout.free_slot_bits, layout.is_bid_bits, layout.orders, layout.client_order_ids)
-        return PerpOpenOrders(bids_quantity, asks_quantity, free_slot_bits, is_bid_bits, placed_orders)
+    @property
+    def empty(self) -> bool:
+        return len(self.placed_orders) == 0
 
     def __str__(self) -> str:
         placed_orders = "\n        ".join(map(str, self.placed_orders)) or "None"
 
         return f"""« 𝙿𝚎𝚛𝚙𝙾𝚙𝚎𝚗𝙾𝚛𝚍𝚎𝚛𝚜
-    Bids Quantity: {self.bids_quantity}
-    Asks Quantity: {self.asks_quantity}
     Orders:
         {placed_orders}
 »"""

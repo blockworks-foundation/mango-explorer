@@ -13,6 +13,8 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+from mango.perpopenorders import PerpOpenOrders
+from mango.placedorder import PlacedOrder
 from mango.tokeninfo import TokenInfo
 import typing
 
@@ -27,6 +29,7 @@ from .encoding import encode_key
 from .group import Group
 from .layouts import layouts
 from .metadata import Metadata
+from .orders import Side
 from .perpaccount import PerpAccount
 from .token import Token
 from .tokenvalue import TokenValue
@@ -125,13 +128,24 @@ class Account(AddressableAccount):
         in_margin_basket: typing.Sequence[bool] = list([bool(in_basket) for in_basket in layout.in_margin_basket])
         active_in_basket: typing.List[bool] = []
         basket: typing.List[AccountBasketBaseToken] = []
+        placed_orders_all_markets: typing.List[typing.List[PlacedOrder]] = [[] for _ in range(len(group.tokens) - 1)]
+        for index, order_market in enumerate(layout.order_market):
+            if order_market != 0xFF:
+                side = Side.from_value(layout.order_side[index])
+                id = layout.order_ids[index]
+                client_id = layout.client_order_ids[index]
+                placed_order = PlacedOrder(id, client_id, side)
+                placed_orders_all_markets[int(order_market)] += [placed_order]
+
         for index, token_info in enumerate(group.tokens[:-1]):
             if token_info:
                 intrinsic_deposit = token_info.root_bank.deposit_index * layout.deposits[index]
                 deposit = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_deposit))
                 intrinsic_borrow = token_info.root_bank.borrow_index * layout.borrows[index]
                 borrow = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_borrow))
-                perp_account = PerpAccount.from_layout(layout.perp_accounts[index], mngo_token_info.token)
+                perp_open_orders = PerpOpenOrders(placed_orders_all_markets[index])
+                perp_account = PerpAccount.from_layout(
+                    layout.perp_accounts[index], perp_open_orders, mngo_token_info.token)
                 spot_open_orders = layout.spot_open_orders[index]
                 basket_item: AccountBasketBaseToken = AccountBasketBaseToken(
                     token_info, deposit, borrow, spot_open_orders, perp_account)

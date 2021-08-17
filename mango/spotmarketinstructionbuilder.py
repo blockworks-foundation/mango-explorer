@@ -83,7 +83,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
 
         return SpotMarketInstructionBuilder(context, wallet, group, account, spot_market, raw_market, base_token_account, quote_token_account, market_index, fee_discount_token_address)
 
-    def build_cancel_order_instructions(self, order: Order) -> CombinableInstructions:
+    def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
         if self.open_orders_address is None:
             return CombinableInstructions.empty()
 

@@ -319,20 +319,19 @@ def build_compound_serum_place_order_instructions(context: Context, wallet: Wall
 #
 
 
-def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, account: Account, perp_market_details: PerpMarketDetails, order: Order) -> CombinableInstructions:
+def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, account: Account, perp_market_details: PerpMarketDetails, order: Order, invalid_id_ok: bool) -> CombinableInstructions:
     # Prefer cancelling by client ID so we don't have to keep track of the order side.
     if order.client_id != 0:
         data: bytes = layouts.CANCEL_PERP_ORDER_BY_CLIENT_ID.build(
             {
-                "client_order_id": order.client_id
+                "client_order_id": order.client_id,
+                "invalid_id_ok": invalid_id_ok
             })
     else:
-        # { buy: 0, sell: 1 }
-        raw_side: int = 1 if order.side == Side.SELL else 0
         data = layouts.CANCEL_PERP_ORDER.build(
             {
                 "order_id": order.id,
-                "side": raw_side
+                "invalid_id_ok": invalid_id_ok
             })
 
     # Accounts expected by this instruction (both CANCEL_PERP_ORDER and CANCEL_PERP_ORDER_BY_CLIENT_ID are the same):
@@ -648,8 +647,15 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
     base_token_info = base_token_infos[0]
     quote_token_info = group.shared_quote_token
 
-    root_bank: RootBank = quote_token_info.root_bank if side == Side.BUY else base_token_info.root_bank
-    node_bank: NodeBank = root_bank.pick_node_bank(context)
+    base_root_bank: RootBank = base_token_info.root_bank
+    base_node_bank: NodeBank = base_root_bank.pick_node_bank(context)
+    quote_root_bank: RootBank = quote_token_info.root_bank
+    quote_node_bank: NodeBank = quote_root_bank.pick_node_bank(context)
+
+    vault_signer = PublicKey.create_program_address(
+        [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+        market.state.program_id(),
+    )
 
     fee_discount_address_meta: typing.List[AccountMeta] = []
     if fee_discount_address is not None:
@@ -668,13 +674,18 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.event_queue()),
             AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.base_vault()),
             AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.quote_vault()),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=base_root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=base_node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=base_node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=quote_root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=quote_node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=quote_node_bank.vault),
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
             AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=group.srm_vault or SYSTEM_PROGRAM_ADDRESS),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
+            AccountMeta(is_signer=False, is_writable=False,
+                        pubkey=group.msrm_vault or group.srm_vault or SYSTEM_PROGRAM_ADDRESS),
             *list([AccountMeta(is_signer=False, is_writable=(oo_address == open_orders_address),
                                pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders]),
             *fee_discount_address_meta

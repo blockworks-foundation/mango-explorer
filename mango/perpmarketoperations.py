@@ -46,10 +46,11 @@ class PerpMarketOperations(MarketOperations):
         self.account: Account = account
         self.perp_market: PerpMarket = perp_market
 
-    def cancel_order(self, order: Order) -> typing.Sequence[str]:
+    def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
         self.logger.info(f"Cancelling {self.market_name} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(order)
+        cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(
+            order, ok_if_missing=ok_if_missing)
         accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)
         crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank)
         settle = self.market_instruction_builder.build_settle_instructions()

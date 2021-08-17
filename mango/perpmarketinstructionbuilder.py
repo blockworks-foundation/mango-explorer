@@ -51,11 +51,11 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
     def load(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket) -> "PerpMarketInstructionBuilder":
         return PerpMarketInstructionBuilder(context, wallet, group, account, perp_market)
 
-    def build_cancel_order_instructions(self, order: Order) -> CombinableInstructions:
+    def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
         if self.perp_market.underlying_perp_market is None:
             raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
         return build_cancel_perp_order_instructions(
-            self.context, self.wallet, self.account, self.perp_market.underlying_perp_market, order)
+            self.context, self.wallet, self.account, self.perp_market.underlying_perp_market, order, ok_if_missing)
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
         if self.perp_market.underlying_perp_market is None:
