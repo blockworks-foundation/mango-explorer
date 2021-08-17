@@ -42,9 +42,14 @@ for balance in balances:
 mango_accounts = mango.Account.load_all_for_owner(context, address, group)
 for account in mango_accounts:
     print(f"\nAccount Balances [{account.address}]:")
+    at_least_one_output: bool = False
     for asset in account.basket_tokens:
         if (asset is not None) and ((asset.deposit.value != 0) or (asset.borrow.value != 0) or (asset.net_value.value != 0)):
+            at_least_one_output = True
             print(f"""{asset.token_info.token.name}:
     Deposit: {asset.deposit.value:>18,.8f}
     Borrow:  {asset.borrow.value:>18,.8f}
     Net:     {asset.net_value.value:>18,.8f}""")
+
+    if not at_least_one_output:
+        print("None")
