@@ -9,6 +9,7 @@ import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
+from solana.rpc.types import TxOpts
 from spl.token.client import Token
 from spl.token.constants import TOKEN_PROGRAM_ID
 
@@ -72,7 +73,8 @@ print(f"      To: {destination}")
 if args.dry_run:
     print("Skipping actual transfer - dry run.")
 else:
-    transfer_response = spl_token.transfer(source, destination, owner, amount)
+    transfer_response = spl_token.transfer(source, destination, owner, amount,
+                                           opts=TxOpts(preflight_commitment=context.client.commitment))
     transaction_ids = [transfer_response["result"]]
     print(f"Transaction IDs: {transaction_ids}")
     if args.wait:
