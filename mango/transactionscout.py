@@ -304,9 +304,9 @@ class MangoInstruction:
         elif instruction_type == InstructionType.PlacePerpOrder:
             additional_data = f"side: {Side.from_value(self.instruction_data.side)}, order_type: {OrderType.from_value(self.instruction_data.order_type)}, price: {self.instruction_data.price}, quantity: {self.instruction_data.quantity}, client_order_id: {self.instruction_data.client_order_id}"
         elif instruction_type == InstructionType.CancelPerpOrderByClientId:
-            additional_data = f"client ID: {self.instruction_data.client_order_id}"
+            additional_data = f"client ID: {self.instruction_data.client_order_id}, missing OK: {self.instruction_data.invalid_id_ok}"
         elif instruction_type == InstructionType.CancelPerpOrder:
-            additional_data = f"order ID: {self.instruction_data.order_id}, side: {Side.from_value(self.instruction_data.side)}"
+            additional_data = f"order ID: {self.instruction_data.order_id}, missing OK: {self.instruction_data.invalid_id_ok}"
         elif instruction_type == InstructionType.ConsumeEvents:
             additional_data = f"limit: {self.instruction_data.limit}"
         elif instruction_type == InstructionType.CachePerpMarkets:

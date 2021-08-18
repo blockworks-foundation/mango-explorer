@@ -22,6 +22,8 @@ parser.add_argument("--side", type=mango.Side, default=mango.Side.BUY, choices=l
                     help="whether the order to cancel is a BUY or a SELL (either --client-id must be specified, or both --id and --side must be specified")
 parser.add_argument("--account-index", type=int, default=0,
                     help="index of the account to use, if more than one available")
+parser.add_argument("--ok-if-missing", action="store_true", default=False,
+                    help="if supported by market type (PERP-only for now) will not error if the ID does not exist")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
@@ -42,5 +44,5 @@ if market is None:
 market_operations = mango.create_market_operations(context, wallet, account, market, args.dry_run)
 
 order = mango.Order.from_ids(id=args.id, client_id=args.client_id, side=args.side)
-cancellation = market_operations.cancel_order(order)
+cancellation = market_operations.cancel_order(order, ok_if_missing=args.ok_if_missing)
 print(cancellation)

@@ -321,7 +321,7 @@ def build_compound_serum_place_order_instructions(context: Context, wallet: Wall
 
 def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, account: Account, perp_market_details: PerpMarketDetails, order: Order, invalid_id_ok: bool) -> CombinableInstructions:
     # Prefer cancelling by client ID so we don't have to keep track of the order side.
-    if order.client_id != 0:
+    if order.client_id is not None and order.client_id != 0:
         data: bytes = layouts.CANCEL_PERP_ORDER_BY_CLIENT_ID.build(
             {
                 "client_order_id": order.client_id,
