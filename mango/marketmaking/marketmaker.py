@@ -78,7 +78,7 @@ class MarketMaker:
 
             crank = self.market_instruction_builder.build_crank_instructions([])
             settle = self.market_instruction_builder.build_settle_instructions()
-            (payer + cancellations + place_orders + crank + settle).execute(context, on_exception_continue=True)
+            (payer + cancellations + place_orders + crank + settle).execute(context)
 
             self.pulse_complete.on_next(datetime.now())
         except Exception as exception:
