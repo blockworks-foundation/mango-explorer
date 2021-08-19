@@ -49,18 +49,17 @@ from .token import Token
 # the list, check if the item has the optional `extensions` attribute, and in there see if
 # there is a name-value pair for the particular market we're interested in. Also, the
 # current file only lists USDC and USDT markets, so that's all we can support this way.
-
-
 class SerumMarketLookup(MarketLookup):
-    def __init__(self, token_data: typing.Dict) -> None:
+    def __init__(self, program_id: PublicKey, token_data: typing.Dict) -> None:
         super().__init__()
+        self.program_id: PublicKey = program_id
         self.token_data: typing.Dict = token_data
 
     @staticmethod
-    def load(token_data_filename: str) -> "SerumMarketLookup":
+    def load(program_id: PublicKey, token_data_filename: str) -> "SerumMarketLookup":
         with open(token_data_filename) as json_file:
             token_data = json.load(json_file)
-            return SerumMarketLookup(token_data)
+            return SerumMarketLookup(program_id, token_data)
 
     @staticmethod
     def _find_data_by_symbol(symbol: str, token_data: typing.Dict) -> typing.Optional[typing.Dict]:
@@ -122,7 +121,7 @@ class SerumMarketLookup(MarketLookup):
                 f"Could not find market with quote token '{quote.symbol}'. Only markets based on USDC or USDT are supported.")
             return None
 
-        return SerumMarketStub(market_address, base, quote)
+        return SerumMarketStub(self.program_id, market_address, base, quote)
 
     def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
         address_string: str = str(address)
@@ -139,7 +138,7 @@ class SerumMarketLookup(MarketLookup):
                             raise Exception("Could not load token data for USDC (which should always be present).")
                         quote = Token(quote_data["symbol"], quote_data["name"], PublicKey(
                             quote_data["address"]), Decimal(quote_data["decimals"]))
-                        return SerumMarketStub(market_address, base, quote)
+                        return SerumMarketStub(self.program_id, market_address, base, quote)
                 if "serumV3Usdt" in token_data["extensions"]:
                     if token_data["extensions"]["serumV3Usdt"] == address_string:
                         market_address_string = token_data["extensions"]["serumV3Usdt"]
@@ -151,7 +150,7 @@ class SerumMarketLookup(MarketLookup):
                             raise Exception("Could not load token data for USDT (which should always be present).")
                         quote = Token(quote_data["symbol"], quote_data["name"], PublicKey(
                             quote_data["address"]), Decimal(quote_data["decimals"]))
-                        return SerumMarketStub(market_address, base, quote)
+                        return SerumMarketStub(self.program_id, market_address, base, quote)
         return None
 
     def all_markets(self) -> typing.Sequence[Market]:
@@ -166,12 +165,12 @@ class SerumMarketLookup(MarketLookup):
                     market_address = PublicKey(market_address_string)
                     base = Token(token_data["symbol"], token_data["name"], PublicKey(
                         token_data["address"]), Decimal(token_data["decimals"]))
-                    all_markets += [SerumMarketStub(market_address, base, usdc)]
+                    all_markets += [SerumMarketStub(self.program_id, market_address, base, usdc)]
                 if "serumV3Usdt" in token_data["extensions"]:
                     market_address_string = token_data["extensions"]["serumV3Usdt"]
                     market_address = PublicKey(market_address_string)
                     base = Token(token_data["symbol"], token_data["name"], PublicKey(
                         token_data["address"]), Decimal(token_data["decimals"]))
-                    all_markets += [SerumMarketStub(market_address, base, usdt)]
+                    all_markets += [SerumMarketStub(self.program_id, market_address, base, usdt)]
 
         return all_markets

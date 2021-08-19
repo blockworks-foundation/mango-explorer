@@ -17,9 +17,11 @@
 import typing
 
 from decimal import Decimal
+from solana.publickey import PublicKey
 
 from .account import Account
 from .combinableinstructions import CombinableInstructions
+from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .marketoperations import MarketOperations
 from .orders import Order
@@ -32,8 +34,6 @@ from .wallet import Wallet
 #
 # This file deals with placing orders for Perps.
 #
-
-
 class PerpMarketOperations(MarketOperations):
     def __init__(self, market_name: str, context: Context, wallet: Wallet,
                  market_instruction_builder: PerpMarketInstructionBuilder,
@@ -79,6 +79,12 @@ class PerpMarketOperations(MarketOperations):
         accounts_to_crank = self.perp_market.accounts_to_crank(self.context, None)
         crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank, limit)
         return (signers + crank).execute(self.context)
+
+    def create_openorders(self) -> PublicKey:
+        return SYSTEM_PROGRAM_ADDRESS
+
+    def ensure_openorders(self) -> PublicKey:
+        return SYSTEM_PROGRAM_ADDRESS
 
     def load_orders(self) -> typing.Sequence[Order]:
         return self.perp_market.orders(self.context)

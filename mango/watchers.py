@@ -70,12 +70,8 @@ def build_spot_open_orders_watcher(context: Context, manager: WebSocketSubscript
             context, wallet, spot_market.group, account, spot_market)
         market_operations: SpotMarketOperations = SpotMarketOperations(
             context, wallet, spot_market.group, account, spot_market, spot_market_instruction_builder)
-        open_orders_address = market_operations.create_openorders_for_market()
+        open_orders_address = market_operations.create_openorders()
         logging.info(f"Created {spot_market.symbol} OpenOrders at: {open_orders_address}")
-
-        # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
-        # the Account so that future uses (like later in this method) have access to it in the right place.
-        account.update_spot_open_orders_for_market(market_index, open_orders_address)
 
     spot_open_orders_subscription = WebSocketAccountSubscription[OpenOrders](
         context, open_orders_address, lambda account_info: OpenOrders.parse(account_info, spot_market.base.decimals, spot_market.quote.decimals))

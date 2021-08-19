@@ -151,11 +151,12 @@ class ContextBuilder:
         ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(cluster)
         all_market_lookup = ids_json_market_lookup
         if cluster == "mainnet-beta":
-            mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(token_filename)
+            mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(dex_program_id, token_filename)
             all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, mainnet_serum_market_lookup])
         elif cluster == "devnet":
             devnet_token_filename = token_filename.rsplit('.', 1)[0] + ".devnet.json"
-            devnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(devnet_token_filename)
+            devnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
+                dex_program_id, devnet_token_filename)
             all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
 

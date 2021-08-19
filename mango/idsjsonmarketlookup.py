@@ -50,15 +50,15 @@ class IdsJsonMarketLookup(MarketLookup):
         self.cluster: str = cluster
 
     @staticmethod
-    def _from_dict(market_type: IdsJsonMarketType, group_address: PublicKey, data: typing.Dict, tokens: typing.Sequence[Token], quote_symbol: str) -> Market:
+    def _from_dict(market_type: IdsJsonMarketType, program_id: PublicKey, group_address: PublicKey, data: typing.Dict, tokens: typing.Sequence[Token], quote_symbol: str) -> Market:
         base_symbol = data["baseSymbol"]
         base = Token.find_by_symbol(tokens, base_symbol)
         quote = Token.find_by_symbol(tokens, quote_symbol)
         address = PublicKey(data["publicKey"])
         if market_type == IdsJsonMarketType.PERP:
-            return PerpMarketStub(address, base, quote, group_address)
+            return PerpMarketStub(program_id, address, base, quote, group_address)
         else:
-            return SpotMarketStub(address, base, quote, group_address)
+            return SpotMarketStub(program_id, address, base, quote, group_address)
 
     @staticmethod
     def _load_tokens(data: typing.Dict) -> typing.Sequence[Token]:
@@ -82,30 +82,32 @@ class IdsJsonMarketLookup(MarketLookup):
         for group in MangoConstants["groups"]:
             if group["cluster"] == self.cluster:
                 group_address: PublicKey = PublicKey(group["publicKey"])
+                program_id: PublicKey = PublicKey(group["mangoProgramId"])
                 if check_perps:
                     for market_data in group["perpMarkets"]:
                         if market_data["name"].upper() == symbol.upper():
                             tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, group_address, market_data, tokens, group["quoteSymbol"])
+                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, program_id, group_address, market_data, tokens, group["quoteSymbol"])
                 if check_spots:
                     for market_data in group["spotMarkets"]:
                         if market_data["name"].upper() == symbol.upper():
                             tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, group_address, market_data, tokens, group["quoteSymbol"])
+                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, program_id, group_address, market_data, tokens, group["quoteSymbol"])
         return None
 
     def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
         for group in MangoConstants["groups"]:
             if group["cluster"] == self.cluster:
                 group_address: PublicKey = PublicKey(group["publicKey"])
+                program_id: PublicKey = PublicKey(group["mangoProgramId"])
                 for market_data in group["perpMarkets"]:
                     if market_data["key"] == str(address):
                         tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, group_address, market_data, tokens, group["quoteSymbol"])
+                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, program_id, group_address, market_data, tokens, group["quoteSymbol"])
                 for market_data in group["spotMarkets"]:
                     if market_data["key"] == str(address):
                         tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, group_address, market_data, tokens, group["quoteSymbol"])
+                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, program_id, group_address, market_data, tokens, group["quoteSymbol"])
         return None
 
     def all_markets(self) -> typing.Sequence[Market]:
@@ -113,15 +115,16 @@ class IdsJsonMarketLookup(MarketLookup):
         for group in MangoConstants["groups"]:
             if group["cluster"] == self.cluster:
                 group_address: PublicKey = PublicKey(group["publicKey"])
+                program_id: PublicKey = PublicKey(group["mangoProgramId"])
                 for market_data in group["perpMarkets"]:
                     tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
                     market = IdsJsonMarketLookup._from_dict(
-                        IdsJsonMarketType.PERP, group_address, market_data, tokens, group["quoteSymbol"])
+                        IdsJsonMarketType.PERP, program_id, group_address, market_data, tokens, group["quoteSymbol"])
                     markets = [market]
                 for market_data in group["spotMarkets"]:
                     tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
                     market = IdsJsonMarketLookup._from_dict(
-                        IdsJsonMarketType.SPOT, group_address, market_data, tokens, group["quoteSymbol"])
+                        IdsJsonMarketType.SPOT, program_id, group_address, market_data, tokens, group["quoteSymbol"])
                     markets = [market]
 
         return markets

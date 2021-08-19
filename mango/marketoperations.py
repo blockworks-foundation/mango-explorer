@@ -19,7 +19,9 @@ import logging
 import typing
 
 from decimal import Decimal
+from solana.publickey import PublicKey
 
+from .constants import SYSTEM_PROGRAM_ADDRESS
 from .orders import Order
 
 
@@ -48,8 +50,6 @@ from .orders import Order
 # market_operations.place_order(order)
 # ```
 #
-
-
 class MarketOperations(metaclass=abc.ABCMeta):
     def __init__(self):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -78,6 +78,14 @@ class MarketOperations(metaclass=abc.ABCMeta):
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
         raise NotImplementedError("MarketOperations.crank() is not implemented on the base type.")
 
+    @abc.abstractmethod
+    def create_openorders(self) -> PublicKey:
+        raise NotImplementedError("MarketOperations.create_openorders() is not implemented on the base type.")
+
+    @abc.abstractmethod
+    def ensure_openorders(self) -> PublicKey:
+        raise NotImplementedError("MarketOperations.ensure_openorders() is not implemented on the base type.")
+
     def __repr__(self) -> str:
         return f"{self}"
 
@@ -87,7 +95,6 @@ class MarketOperations(metaclass=abc.ABCMeta):
 # A null, no-op, dry-run trade executor that can be plugged in anywhere a `MarketOperations`
 # is expected, but which will not actually trade.
 #
-
 class NullMarketOperations(MarketOperations):
     def __init__(self, market_name: str):
         super().__init__()
@@ -112,6 +119,12 @@ class NullMarketOperations(MarketOperations):
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
         return []
+
+    def create_openorders(self) -> PublicKey:
+        return SYSTEM_PROGRAM_ADDRESS
+
+    def ensure_openorders(self) -> PublicKey:
+        return SYSTEM_PROGRAM_ADDRESS
 
     def __str__(self) -> str:
         return f"""« 𝙽𝚞𝚕𝚕𝙾𝚛𝚍𝚎𝚛𝙿𝚕𝚊𝚌𝚎𝚛 [{self.market_name}] »"""

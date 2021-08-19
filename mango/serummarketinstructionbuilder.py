@@ -41,7 +41,6 @@ from .wallet import Wallet
 # existing data, requiring no fetches from Solana or other sources. All necessary data should all be loaded
 # on initial setup in the `load()` method.
 #
-
 class SerumMarketInstructionBuilder(MarketInstructionBuilder):
     def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket, raw_market: Market, base_token_account: TokenAccount, quote_token_account: TokenAccount, open_orders_address: typing.Optional[PublicKey], fee_discount_token_address: typing.Optional[PublicKey]):
         super().__init__()
@@ -96,10 +95,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
         ensure_open_orders = CombinableInstructions.empty()
         if self.open_orders_address is None:
-            ensure_open_orders = build_create_serum_open_orders_instructions(
-                self.context, self.wallet, self.raw_market)
-
-            self.open_orders_address = ensure_open_orders.signers[0].public_key()
+            ensure_open_orders = self.build_create_openorders_instructions()
 
         serum_order_type: pyserum.enums.OrderType = order.order_type.to_serum()
         serum_side: pyserum.enums.Side = order.side.to_serum()
@@ -133,6 +129,11 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         limited_open_orders_addresses.sort(key=encode_public_key_for_sorting)
 
         return build_serum_consume_events_instructions(self.context, self.serum_market.address, self.raw_market.state.event_queue(), limited_open_orders_addresses, int(limit))
+
+    def build_create_openorders_instructions(self) -> CombinableInstructions:
+        create_open_orders = build_create_serum_open_orders_instructions(self.context, self.wallet, self.raw_market)
+        self.open_orders_address = create_open_orders.signers[0].public_key()
+        return create_open_orders
 
     def __str__(self) -> str:
         return """« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"""

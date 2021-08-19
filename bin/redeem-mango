@@ -20,7 +20,8 @@ def report_accrued(basket_token: mango.AccountBasketBaseToken):
 
 def load_perp_market(context: mango.Context, group: mango.Group, group_basket_market: mango.GroupBasketMarket):
     perp_market_details = mango.PerpMarketDetails.load(context, group_basket_market.perp_market_info.address, group)
-    perp_market = mango.PerpMarket(group_basket_market.perp_market_info.address, group_basket_market.base_token_info.token,
+    perp_market = mango.PerpMarket(context.program_id, group_basket_market.perp_market_info.address,
+                                   group_basket_market.base_token_info.token,
                                    group_basket_market.quote_token_info.token, perp_market_details)
 
     return perp_market

@@ -35,7 +35,6 @@ from .wallet import Wallet
 #
 # This class puts trades on the Serum orderbook. It doesn't do anything complicated.
 #
-
 class SpotMarketOperations(MarketOperations):
     def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, market_instruction_builder: SpotMarketInstructionBuilder):
         super().__init__()
@@ -86,6 +85,24 @@ class SpotMarketOperations(MarketOperations):
         crank = self._build_crank(limit, add_self=False)
         return (signers + crank).execute(self.context)
 
+    def create_openorders(self) -> PublicKey:
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        create_open_orders: CombinableInstructions = self.market_instruction_builder.build_create_openorders_instructions()
+        open_orders_address: PublicKey = create_open_orders.signers[0].public_key()
+        (signers + create_open_orders).execute(self.context)
+
+        # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
+        # the Account so that future uses (like later in this method) have access to it in the right place.
+        self.account.update_spot_open_orders_for_market(self.market_index, open_orders_address)
+
+        return open_orders_address
+
+    def ensure_openorders(self) -> PublicKey:
+        existing: typing.Optional[PublicKey] = self.account.spot_open_orders[self.market_index]
+        if existing is not None:
+            return existing
+        return self.create_openorders()
+
     def load_orders(self) -> typing.Sequence[Order]:
         return self.spot_market.orders(self.context)
 
@@ -95,14 +112,6 @@ class SpotMarketOperations(MarketOperations):
 
         all_orders = self.spot_market.orders(self.context)
         return list([o for o in all_orders if o.owner == self.open_orders_address])
-
-    def create_openorders_for_market(self) -> PublicKey:
-        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        create_open_orders = self.market_instruction_builder.build_create_openorders_instructions()
-        open_orders_address = create_open_orders.signers[0].public_key()
-        (signers + create_open_orders).execute(self.context)
-
-        return open_orders_address
 
     def _build_crank(self, limit: Decimal = Decimal(32), add_self: bool = False) -> CombinableInstructions:
         open_orders_to_crank: typing.List[PublicKey] = []

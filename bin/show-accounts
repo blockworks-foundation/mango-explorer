@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description="Shows details of a Merps account."
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey, required=False,
-                    help="address of Merps account (defaults to the root address of the wallet)")
+                    help="address of account (defaults to the root address of the wallet)")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)

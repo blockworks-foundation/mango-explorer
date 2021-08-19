@@ -2,6 +2,8 @@ from .context import mango
 
 from solana.publickey import PublicKey
 
+from .fakes import fake_seeded_public_key
+
 
 def test_serum_market_lookup():
     data = {
@@ -104,7 +106,7 @@ def test_serum_market_lookup():
             }
         ]
     }
-    actual = mango.SerumMarketLookup(data)
+    actual = mango.SerumMarketLookup(fake_seeded_public_key("program ID"), data)
     assert actual is not None
     assert actual.logger is not None
     assert actual.find_by_symbol("ETH/USDT") is not None
@@ -114,7 +116,8 @@ def test_serum_market_lookup():
 
 
 def test_serum_market_lookups_with_full_data():
-    market_lookup = mango.SerumMarketLookup.load(mango.SplTokenLookup.DefaultDataFilepath)
+    market_lookup = mango.SerumMarketLookup.load(fake_seeded_public_key(
+        "program ID"), mango.SplTokenLookup.DefaultDataFilepath)
     eth_usdt = market_lookup.find_by_symbol("ETH/USDT")
     assert eth_usdt.base.symbol == "ETH"
     assert eth_usdt.quote.symbol == "USDT"

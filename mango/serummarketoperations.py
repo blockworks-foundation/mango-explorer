@@ -31,9 +31,8 @@ from .wallet import Wallet
 
 # # 🥭 SerumMarketOperations class
 #
-# This class puts trades on the Serum orderbook. It doesn't do anything complicated.
+# This class performs standard operations on the Serum orderbook.
 #
-
 class SerumMarketOperations(MarketOperations):
     def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket, market_instruction_builder: SerumMarketInstructionBuilder):
         super().__init__()
@@ -77,6 +76,19 @@ class SerumMarketOperations(MarketOperations):
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         crank = self._build_crank(limit)
         return (signers + crank).execute(self.context)
+
+    def create_openorders(self) -> PublicKey:
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        create_open_orders = self.market_instruction_builder.build_create_openorders_instructions()
+        open_orders_address = create_open_orders.signers[0].public_key()
+        (signers + create_open_orders).execute(self.context)
+
+        return open_orders_address
+
+    def ensure_openorders(self) -> PublicKey:
+        if self.market_instruction_builder.open_orders_address is not None:
+            return self.market_instruction_builder.open_orders_address
+        return self.create_openorders()
 
     def load_orders(self) -> typing.Sequence[Order]:
         return self.serum_market.orders(self.context)

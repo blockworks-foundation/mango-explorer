@@ -32,11 +32,9 @@ from .token import Token
 #
 # This class encapsulates our knowledge of a Serum spot market.
 #
-
-
 class SerumMarket(Market):
-    def __init__(self, address: PublicKey, base: Token, quote: Token, underlying_serum_market: PySerumMarket):
-        super().__init__(address, InventorySource.SPL_TOKENS, base, quote)
+    def __init__(self, program_id: PublicKey, address: PublicKey, base: Token, quote: Token, underlying_serum_market: PySerumMarket):
+        super().__init__(program_id, address, InventorySource.SPL_TOKENS, base, quote)
         self.underlying_serum_market: PySerumMarket = underlying_serum_market
 
     def unprocessed_events(self, context: Context) -> typing.Sequence[SerumEvent]:
@@ -53,7 +51,7 @@ class SerumMarket(Market):
         return list(map(Order.from_serum_order, itertools.chain(bids_orderbook.orders(), asks_orderbook.orders())))
 
     def __str__(self) -> str:
-        return f"""« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} [{self.address}]
+        return f"""« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} {self.address} [{self.program_id}]
     Event Queue: {self.underlying_serum_market.state.event_queue()}
     Request Queue: {self.underlying_serum_market.state.request_queue()}
     Bids: {self.underlying_serum_market.state.bids()}
@@ -67,16 +65,14 @@ class SerumMarket(Market):
 #
 # This class holds information to load a `SerumMarket` object but doesn't automatically load it.
 #
-
-
 class SerumMarketStub(Market):
-    def __init__(self, address: PublicKey, base: Token, quote: Token):
-        super().__init__(address, InventorySource.SPL_TOKENS, base, quote)
+    def __init__(self, program_id: PublicKey, address: PublicKey, base: Token, quote: Token):
+        super().__init__(program_id, address, InventorySource.SPL_TOKENS, base, quote)
 
     def load(self, context: Context) -> SerumMarket:
         underlying_serum_market: PySerumMarket = PySerumMarket.load(
             context.client.compatible_client, self.address, context.dex_program_id)
-        return SerumMarket(self.address, self.base, self.quote, underlying_serum_market)
+        return SerumMarket(self.program_id, self.address, self.base, self.quote, underlying_serum_market)
 
     def __str__(self) -> str:
-        return f"« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} [{self.address}] »"
+        return f"« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} {self.address} [{self.program_id}] »"

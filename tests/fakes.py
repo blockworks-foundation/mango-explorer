@@ -82,7 +82,7 @@ def fake_market() -> market.Market:
 
 
 def fake_spot_market_stub() -> mango.SpotMarketStub:
-    return mango.SpotMarketStub(fake_seeded_public_key("spot market"), fake_token("BASE"), fake_token("QUOTE"), fake_seeded_public_key("group address"))
+    return mango.SpotMarketStub(fake_seeded_public_key("program ID"), fake_seeded_public_key("spot market"), fake_token("BASE"), fake_token("QUOTE"), fake_seeded_public_key("group address"))
 
 
 def fake_token_account() -> mango.TokenAccount:
