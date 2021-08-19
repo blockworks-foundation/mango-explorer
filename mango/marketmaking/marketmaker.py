@@ -82,7 +82,7 @@ class MarketMaker:
 
             self.pulse_complete.on_next(datetime.now())
         except Exception as exception:
-            self.logger.error(f"[{context.name}] Market-maker error on pulse: {exception} - {traceback.format_exc()}")
+            self.logger.error(f"[{context.name}] Market-maker error on pulse:\n{traceback.format_exc()}")
             self.pulse_error.on_next(exception)
 
     def __str__(self) -> str:

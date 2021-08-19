@@ -71,7 +71,8 @@ class SerumOracle(Oracle):
                                                          "mainnet-beta",
                                                          "https://solana-api.projectserum.com",
                                                          context.client.commitment,
-                                                         context.client.skip_preflight)
+                                                         context.client.skip_preflight,
+                                                         context.client.instruction_reporter)
         mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(SplTokenLookup.DefaultDataFilepath)
         adjusted_market = self.market
         mainnet_adjusted_market: typing.Optional[Market] = mainnet_serum_market_lookup.find_by_symbol(

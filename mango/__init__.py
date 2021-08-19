@@ -22,11 +22,13 @@ from .idsjsontokenlookup import IdsJsonTokenLookup
 from .idsjsonmarketlookup import IdsJsonMarketLookup
 from .inventory import Inventory, InventoryAccountWatcher, spl_token_inventory_loader, account_inventory_loader
 from .instructions import build_create_solana_account_instructions, build_create_spl_account_instructions, build_create_associated_spl_account_instructions, build_transfer_spl_tokens_instructions, build_close_spl_account_instructions, build_create_serum_open_orders_instructions, build_serum_place_order_instructions, build_serum_consume_events_instructions, build_serum_settle_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions, build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_create_account_instructions, build_place_perp_order_instructions, build_deposit_instructions, build_withdraw_instructions, build_redeem_accrued_mango_instructions
+from .instructionreporter import InstructionReporter, SerumInstructionReporter, MangoInstructionReporter, CompoundInstructionReporter
 from .instructiontype import InstructionType
 from .liquidatablereport import LiquidatableState, LiquidatableReport
 from .liquidationevent import LiquidationEvent
 from .liquidationprocessor import LiquidationProcessor, LiquidationProcessorState
 from .lotsizeconverter import LotSizeConverter, NullLotSizeConverter
+from .mangoinstruction import MangoInstruction
 from .market import InventorySource, Market
 from .marketinstructionbuilder import MarketInstructionBuilder, NullMarketInstructionBuilder
 from .marketlookup import MarketLookup, NullMarketLookup, CompoundMarketLookup
@@ -69,7 +71,7 @@ from .tokeninfo import TokenInfo
 from .tokenlookup import TokenLookup, NullTokenLookup, CompoundTokenLookup
 from .tokenvalue import TokenValue
 from .tradeexecutor import TradeExecutor, NullTradeExecutor, ImmediateTradeExecutor
-from .transactionscout import MangoInstruction, TransactionScout, fetch_all_recent_transaction_signatures
+from .transactionscout import TransactionScout, fetch_all_recent_transaction_signatures, mango_instruction_from_response
 from .version import Version
 from .wallet import Wallet
 from .walletbalancer import TargetBalance, FixedTargetBalance, PercentageTargetBalance, TargetBalanceParser, sort_changes_for_trades, calculate_required_balance_changes, FilterSmallChanges, WalletBalancer, NullWalletBalancer, LiveWalletBalancer

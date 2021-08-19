@@ -25,6 +25,7 @@ from solana.rpc.commitment import Commitment
 
 from .client import BetterClient
 from .constants import MangoConstants
+from .instructionreporter import InstructionReporter, CompoundInstructionReporter
 from .marketlookup import MarketLookup
 from .tokenlookup import TokenLookup
 
@@ -45,8 +46,9 @@ class Context:
                  group_name: str, group_id: PublicKey, token_lookup: TokenLookup, market_lookup: MarketLookup):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
+        instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_ids(program_id, dex_program_id)
         self.client: BetterClient = BetterClient.from_configuration(
-            name, cluster, cluster_url, Commitment("processed"), skip_preflight)
+            name, cluster, cluster_url, Commitment("processed"), skip_preflight, instruction_reporter)
         self.program_id: PublicKey = program_id
         self.dex_program_id: PublicKey = dex_program_id
         self.group_name: str = group_name

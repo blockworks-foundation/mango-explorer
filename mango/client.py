@@ -32,6 +32,7 @@ from solana.rpc.commitment import Commitment
 from solana.rpc.types import DataSliceOpts, MemcmpOpts, RPCResponse, TokenAccountOpts, TxOpts
 
 from .constants import SOL_DECIMAL_DIVISOR
+from .instructionreporter import InstructionReporter
 
 
 # # 🥭 RateLimitException class
@@ -67,8 +68,9 @@ class TooManyRequestsRateLimitException(RateLimitException):
 # of problems at the right place.
 #
 class TransactionException(Exception):
-    def __init__(self, message: str, code: int, name: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None]):
+    def __init__(self, transaction: typing.Optional[Transaction], message: str, code: int, name: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None], instruction_reporter: InstructionReporter = InstructionReporter()):
         super().__init__(message)
+        self.transaction: typing.Optional[Transaction] = transaction
         self.message: str = message
         self.code: int = code
         self.name: str = name
@@ -84,8 +86,13 @@ class TransactionException(Exception):
         self.accounts: typing.List[str] = _ensure_list(accounts)
         self.errors: typing.List[str] = _ensure_list(errors)
         self.logs: typing.List[str] = _ensure_list(logs)
+        self.instruction_reporter: InstructionReporter = instruction_reporter
 
     def __str__(self) -> str:
+        transaction_details = ""
+        if self.transaction is not None:
+            instruction_details = "\n".join(list(map(self.instruction_reporter.report, self.transaction.instructions)))
+            transaction_details = "\n    Instructions:\n        " + instruction_details.replace("\n", "\n        ")
         accounts = "No Accounts"
         if len(self.accounts) > 0:
             accounts = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.accounts])
@@ -95,7 +102,7 @@ class TransactionException(Exception):
         logs = "No Logs"
         if len(self.logs) > 0:
             logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
-        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.name}] {self.code}: {self.message}
+        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.name}] {self.code}: {self.message}{transaction_details}
     Accounts:
         {accounts}
     Errors:
@@ -127,16 +134,16 @@ UnspecifiedEncoding = "unspecified"
 # some common operations better from our point of view.
 #
 class CompatibleClient:
-    def __init__(self, name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool):
+    def __init__(self, name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster: str = cluster
         self.cluster_url: str = cluster_url
-
-        self._request_counter = itertools.count()
-
         self.commitment: Commitment = commitment
         self.skip_preflight: bool = skip_preflight
+        self.instruction_reporter: InstructionReporter = instruction_reporter
+
+        self._request_counter = itertools.count()
         self.encoding: str = "base64"
 
     def is_node_healthy(self) -> bool:
@@ -250,15 +257,21 @@ class CompatibleClient:
 
         skip_preflight: bool = opts.skip_preflight or self.skip_preflight
 
-        return self._send_request(
-            "sendTransaction",
-            encoded_transaction,
-            {
-                _SkipPreflightKey: skip_preflight,
-                _PreflightCommitmentKey: commitment,
-                _EncodingKey: self.encoding,
-            }
-        )
+        try:
+            return self._send_request(
+                "sendTransaction",
+                encoded_transaction,
+                {
+                    _SkipPreflightKey: skip_preflight,
+                    _PreflightCommitmentKey: commitment,
+                    _EncodingKey: self.encoding,
+                }
+            )
+        except TransactionException as transaction_exception:
+            raise TransactionException(transaction, transaction_exception.message, transaction_exception.code,
+                                       transaction_exception.name, transaction_exception.accounts,
+                                       transaction_exception.errors, transaction_exception.logs,
+                                       self.instruction_reporter) from None
 
     def _send_request(self, method: str, *params: typing.Any) -> RPCResponse:
         request_id = next(self._request_counter) + 1
@@ -293,7 +306,7 @@ class CompatibleClient:
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
                 error_err = error_data["err"] if "err" in error_data else "No error text returned"
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
-                raise TransactionException(exception_message, error_code, self.name,
+                raise TransactionException(None, exception_message, error_code, self.name,
                                            error_accounts, error_err, error_logs)
 
         # The call succeeded.
@@ -377,9 +390,17 @@ class BetterClient:
     def skip_preflight(self, value: bool) -> None:
         self.compatible_client.skip_preflight = value
 
+    @property
+    def instruction_reporter(self) -> InstructionReporter:
+        return self.compatible_client.instruction_reporter
+
+    @instruction_reporter.setter
+    def instruction_reporter(self, value: InstructionReporter) -> None:
+        self.compatible_client.instruction_reporter = value
+
     @staticmethod
-    def from_configuration(name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool) -> "BetterClient":
-        compatible = CompatibleClient(name, cluster, cluster_url, commitment, skip_preflight)
+    def from_configuration(name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter) -> "BetterClient":
+        compatible = CompatibleClient(name, cluster, cluster_url, commitment, skip_preflight, instruction_reporter)
         return BetterClient(compatible)
 
     def is_node_healthy(self) -> bool:

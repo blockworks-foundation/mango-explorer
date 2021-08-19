@@ -16,56 +16,17 @@
 import logging
 import typing
 
-from pyserum._layouts.instructions import InstructionType as SerumInstructionType
 from solana.account import Account as SolanaAccount
 from solana.blockhash import Blockhash
 from solana.publickey import PublicKey
 from solana.transaction import Transaction, TransactionInstruction
 
 from .context import Context
-from .layouts import layouts
-from .transactionscout import MangoInstruction, InstructionType
+from .instructionreporter import InstructionReporter
 from .wallet import Wallet
 
 _MAXIMUM_TRANSACTION_LENGTH = 1280 - 40 - 8
 _SIGNATURE_LENGTH = 64
-
-
-def _mango_instruction_to_str(instruction: TransactionInstruction) -> str:
-    initial = layouts.MANGO_INSTRUCTION_VARIANT_FINDER.parse(instruction.data)
-    parser = layouts.InstructionParsersByVariant[initial.variant]
-    if parser is None:
-        raise Exception(
-            f"Could not find instruction parser for variant {initial.variant} / {InstructionType(initial.variant)}.")
-
-    accounts: typing.List[PublicKey] = list(map(lambda meta: meta.pubkey, instruction.keys))
-    parsed = parser.parse(instruction.data)
-    instruction_type = InstructionType(int(parsed.variant))
-
-    return str(MangoInstruction(instruction_type, parsed, accounts))
-
-
-def _serum_instruction_to_str(instruction: TransactionInstruction) -> str:
-    initial = layouts.SERUM_INSTRUCTION_VARIANT_FINDER.parse(instruction.data)
-    instruction_type = SerumInstructionType(initial.variant)
-    return f"« Serum Instruction: {instruction_type.name}: " + "".join("{:02x}".format(x) for x in instruction.data) + "»"
-
-
-def _raw_instruction_to_str(instruction: TransactionInstruction) -> str:
-    report: typing.List[str] = []
-    for index, key in enumerate(instruction.keys):
-        report += [f"Key[{index}]: {key.pubkey} {key.is_signer: <5} {key.is_writable: <5}"]
-    report += [f"Program ID: {instruction.program_id}"]
-    report += ["Data: " + "".join("{:02x}".format(x) for x in instruction.data)]
-    return "\n".join(report)
-
-
-def _instruction_to_str(context: Context, instruction: TransactionInstruction) -> str:
-    if instruction.program_id == context.program_id:
-        return _mango_instruction_to_str(instruction)
-    elif instruction.program_id == context.dex_program_id:
-        return _serum_instruction_to_str(instruction)
-    return _raw_instruction_to_str(instruction)
 
 
 def _split_instructions_into_chunks(signers: typing.Sequence[SolanaAccount], instructions: typing.Sequence[TransactionInstruction]) -> typing.Sequence[typing.Sequence[TransactionInstruction]]:
@@ -173,12 +134,10 @@ class CombinableInstructions():
                 results += [response]
             except Exception as exception:
                 starts_at = sum(len(ch) for ch in chunks[0:index])
-                instruction_text = "\n".join(list(map(lambda ins: _instruction_to_str(context, ins), chunk)))
-                self.logger.error(f"""[{context.name}] Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction.
-Exception: {exception}
-Failing instruction(s):
-{instruction_text}""")
-                if not on_exception_continue:
+                if on_exception_continue:
+                    self.logger.error(f"""[{context.name}] Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction.
+{exception}""")
+                else:
                     raise exception
 
         return results
@@ -188,8 +147,9 @@ Failing instruction(s):
         for index, signer in enumerate(self.signers):
             report += [f"Signer[{index}]: {signer.public_key()}"]
 
+        instruction_reporter: InstructionReporter = InstructionReporter()
         for instruction in self.instructions:
-            report += [_raw_instruction_to_str(instruction)]
+            report += [instruction_reporter.report(instruction)]
 
         return "\n".join(report)
 
