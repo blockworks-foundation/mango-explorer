@@ -137,6 +137,25 @@ class ContextBuilder:
     #
     @staticmethod
     def _build(name: str, cluster: str, cluster_url: str, skip_preflight: bool, group_name: str, group_id: PublicKey, program_id: PublicKey, dex_program_id: PublicKey, token_filename: str) -> "Context":
+        if (cluster != default_cluster):
+            for group in MangoConstants["groups"]:
+                if group["cluster"] == cluster and group["name"].upper() == group_name.upper():
+                    if dex_program_id == default_dex_program_id:
+                        dex_program_id = PublicKey(group["serumProgramId"])
+                    if program_id == default_program_id:
+                        program_id = PublicKey(group["mangoProgramId"])
+                    if group_id == default_group_id:
+                        group_id = PublicKey(group["publicKey"])
+        elif (group_name != default_group_name) and (group_id == default_group_id):
+            for group in MangoConstants["groups"]:
+                if group["cluster"] == cluster and group["name"].upper() == group_name.upper():
+                    group_id = PublicKey(group["publicKey"])
+
+        # Same problem here, but with cluster names and URLs. We want someone to be able to change the
+        # cluster just by changing the cluster name.
+        if (cluster != default_cluster) and (cluster_url == default_cluster_url):
+            cluster_url = MangoConstants["cluster_urls"][cluster]
+
         ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(cluster, group_name)
         all_token_lookup = ids_json_token_lookup
         if cluster == "mainnet":
@@ -159,19 +178,5 @@ class ContextBuilder:
                 dex_program_id, devnet_token_filename)
             all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
-
-        if (group_name != default_group_name) and (group_id == default_group_id):
-            for group in MangoConstants["groups"]:
-                if group["cluster"] == cluster and group["name"].upper() == group_name.upper():
-                    group_id = PublicKey(group["publicKey"])
-        elif (cluster != default_cluster) and (group_id == default_group_id):
-            for group in MangoConstants["groups"]:
-                if group["cluster"] == cluster and group["name"].upper() == group_name.upper():
-                    group_id = PublicKey(group["publicKey"])
-
-        # Same problem here, but with cluster names and URLs. We want someone to be able to change the
-        # cluster just by changing the cluster name.
-        if (cluster != default_cluster) and (cluster_url == default_cluster_url):
-            cluster_url = MangoConstants["cluster_urls"][cluster]
 
         return Context(name, cluster, cluster_url, skip_preflight, program_id, dex_program_id, group_name, group_id, token_lookup, market_lookup)
