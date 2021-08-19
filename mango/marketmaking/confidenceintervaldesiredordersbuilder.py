@@ -30,11 +30,14 @@ from .modelstate import ModelState
 #
 
 class ConfidenceIntervalDesiredOrdersBuilder(DesiredOrdersBuilder):
-    def __init__(self, position_size_ratio: Decimal, min_price_ratio: Decimal, confidence_weighting: Decimal = Decimal(2), order_type: mango.OrderType = mango.OrderType.POST_ONLY):
+    def __init__(self, position_size_ratio: Decimal, min_price_ratio: Decimal, confidence_interval_levels: typing.Sequence[Decimal] = [Decimal(2)], order_type: mango.OrderType = mango.OrderType.POST_ONLY):
+        print("---")
+        print(confidence_interval_levels)
+        print("---")
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.position_size_ratio: Decimal = position_size_ratio
         self.min_price_ratio: Decimal = min_price_ratio
-        self.confidence_weighting: Decimal = confidence_weighting
+        self.confidence_interval_levels: typing.Sequence[Decimal] = confidence_interval_levels
         self.order_type: mango.OrderType = order_type
 
     def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
@@ -49,20 +52,23 @@ class ConfidenceIntervalDesiredOrdersBuilder(DesiredOrdersBuilder):
         quote_value_to_risk = total * self.position_size_ratio
         base_position_size = quote_value_to_risk / price.mid_price
 
-        # From Daffy on 26th July 2021: max(pyth_conf * 2, price * min_charge)
-        # (Private chat link: https://discord.com/channels/@me/832570058861314048/869208592648134666)
-        charge = max(price.confidence * self.confidence_weighting, price.mid_price * self.min_price_ratio)
-        bid: Decimal = price.mid_price - charge
-        ask: Decimal = price.mid_price + charge
+        orders: typing.List[mango.Order] = []
 
-        orders: typing.List[mango.Order] = [
-            mango.Order.from_basic_info(mango.Side.BUY, price=bid,
-                                        quantity=base_position_size, order_type=self.order_type),
-            mango.Order.from_basic_info(mango.Side.SELL, price=ask,
-                                        quantity=base_position_size, order_type=self.order_type)
-        ]
+        for confidence_interval_level in self.confidence_interval_levels:
+            # From Daffy on 26th July 2021: max(pyth_conf * 2, price * min_charge)
+            # (Private chat link: https://discord.com/channels/@me/832570058861314048/869208592648134666)
+            charge = max(price.confidence * confidence_interval_level, price.mid_price * self.min_price_ratio)
+            bid: Decimal = price.mid_price - charge
+            ask: Decimal = price.mid_price + charge
+
+            orders += [
+                mango.Order.from_basic_info(mango.Side.BUY, price=bid,
+                                            quantity=base_position_size, order_type=self.order_type),
+                mango.Order.from_basic_info(mango.Side.SELL, price=ask,
+                                            quantity=base_position_size, order_type=self.order_type)
+            ]
 
         return orders
 
     def __str__(self) -> str:
-        return f"« 𝙲𝚘𝚗𝚏𝚒𝚍𝚎𝚗𝚌𝚎𝙸𝚗𝚝𝚎𝚛𝚟𝚊𝚕𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜𝙱𝚞𝚒𝚕𝚍𝚎𝚛 {self.order_type} - position size: {self.position_size_ratio}, min charge: {self.min_price_ratio}, confidence weighting: {self.confidence_weighting} »"
+        return f"« 𝙲𝚘𝚗𝚏𝚒𝚍𝚎𝚗𝚌𝚎𝙸𝚗𝚝𝚎𝚛𝚟𝚊𝚕𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜𝙱𝚞𝚒𝚕𝚍𝚎𝚛 {self.order_type} - position size: {self.position_size_ratio}, min charge: {self.min_price_ratio}, confidence interval levels: {self.confidence_interval_levels} »"

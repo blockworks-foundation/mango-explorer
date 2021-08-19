@@ -27,8 +27,8 @@ parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal(
                     help="tolerance in price and quantity when matching existing orders or cancelling/replacing")
 parser.add_argument("--minimum-charge-ratio", type=Decimal, default=Decimal("0.0005"),
                     help="minimum fraction of the price to be accept as a spread")
-parser.add_argument("--confidence-weighting", type=Decimal, default=Decimal("2"),
-                    help="a weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread")
+parser.add_argument("--confidence-interval-level", type=Decimal, action="append",
+                    help="the levels of weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread (can be specified multiple times to give multiple levels)")
 parser.add_argument("--order-type", type=mango.OrderType, default=mango.OrderType.POST_ONLY,
                     choices=list(mango.OrderType), help="Order type: LIMIT, IOC or POST_ONLY")
 parser.add_argument("--pulse-interval", type=int, default=10,
@@ -118,7 +118,7 @@ ws.open()
 order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
     args.existing_order_tolerance, args.existing_order_tolerance)
 desired_orders_builder = mango.marketmaking.ConfidenceIntervalDesiredOrdersBuilder(
-    args.position_size_ratio, args.minimum_charge_ratio, args.confidence_weighting, args.order_type)
+    args.position_size_ratio, args.minimum_charge_ratio, args.confidence_interval_level, args.order_type)
 market_maker = mango.marketmaking.MarketMaker(
     wallet, market, market_instruction_builder, desired_orders_builder, order_reconciler)
 model_state = mango.marketmaking.ModelState(market, latest_account_observer,
