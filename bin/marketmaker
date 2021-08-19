@@ -62,6 +62,7 @@ def cleanup(context: mango.Context, wallet: mango.Wallet, account: mango.Account
 
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
+logging.info(f"{context}")
 
 disposer = mango.DisposePropagator()
 manager = mango.WebSocketSubscriptionManager(context.name)
