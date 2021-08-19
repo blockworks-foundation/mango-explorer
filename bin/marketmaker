@@ -27,7 +27,7 @@ parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal(
                     help="tolerance in price and quantity when matching existing orders or cancelling/replacing")
 parser.add_argument("--minimum-charge-ratio", type=Decimal, default=Decimal("0.0005"),
                     help="minimum fraction of the price to be accept as a spread")
-parser.add_argument("--confidence-interval-level", type=Decimal, action="append",
+parser.add_argument("--confidence-interval-level", type=Decimal, action="append", default=[Decimal(2)],
                     help="the levels of weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread (can be specified multiple times to give multiple levels)")
 parser.add_argument("--order-type", type=mango.OrderType, default=mango.OrderType.POST_ONLY,
                     choices=list(mango.OrderType), help="Order type: LIMIT, IOC or POST_ONLY")
