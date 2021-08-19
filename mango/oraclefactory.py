@@ -33,7 +33,7 @@ def create_oracle_provider(context: Context, provider_name: str) -> OracleProvid
         return ftx.FtxOracleProvider()
     elif provider_name == "pyth":
         return pythnetwork.PythOracleProvider(context)
-    elif provider_name == "pyth-mainnet-beta":
+    elif provider_name == "pyth-mainnet":
         mainnet_beta_pyth_context: Context = context.new_forced_to_mainnet_beta()
         return pythnetwork.PythOracleProvider(mainnet_beta_pyth_context)
     elif provider_name == "pyth-devnet":

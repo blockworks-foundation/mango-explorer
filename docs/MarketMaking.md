@@ -28,7 +28,7 @@ while :
 do
     cancel-my-orders --name "WSMM ${MARKET} (cancel)" --market $MARKET --log-level ERROR
 
-    CURRENT_PRICE=$(fetch-price --provider serum --symbol $ORACLE_MARKET --log-level ERROR --cluster mainnet-beta | cut -d"'" -f 2 | sed 's/,//')
+    CURRENT_PRICE=$(fetch-price --provider serum --symbol $ORACLE_MARKET --log-level ERROR --cluster mainnet | cut -d"'" -f 2 | sed 's/,//')
     place-order --name "WSMM ${MARKET} (buy)" --market $MARKET --order-type LIMIT \
         --log-level ERROR --side BUY --quantity $FIXED_POSITION_SIZE --price $(echo "$CURRENT_PRICE - $FIXED_SPREAD" | bc)
     place-order --name "WSMM ${MARKET} (sell)" --market $MARKET --order-type LIMIT \
@@ -195,7 +195,7 @@ mango-explorer marketmaker --help
 ```
 You can run a basic instance of the marketmaker against the BTC-PERP market using [Pyth](https://pyth.network/) with:
 ```
-mango-explorer marketmaker --market BTC/USDC --oracle-provider pyth-mainnet-beta --position-size-ratio 0.01
+mango-explorer marketmaker --market BTC/USDC --oracle-provider pyth-mainnet --position-size-ratio 0.01
 ```
 
 

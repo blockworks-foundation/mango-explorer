@@ -37,7 +37,7 @@ from .tokenlookup import TokenLookup, CompoundTokenLookup
 # the `Context` in code or introducing dependencies and configuration.
 #
 # The following environment variables are read:
-# * CLUSTER (defaults to: mainnet-beta)
+# * CLUSTER (defaults to: mainnet)
 # * CLUSTER_URL (defaults to URL for RPC server for CLUSTER defined in `ids.json`)
 # * GROUP_NAME (defaults to: BTC_ETH_USDT)
 #
@@ -139,7 +139,7 @@ class ContextBuilder:
     def _build(name: str, cluster: str, cluster_url: str, skip_preflight: bool, group_name: str, group_id: PublicKey, program_id: PublicKey, dex_program_id: PublicKey, token_filename: str) -> "Context":
         ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(cluster, group_name)
         all_token_lookup = ids_json_token_lookup
-        if cluster == "mainnet-beta":
+        if cluster == "mainnet":
             mainnet_spl_token_lookup: TokenLookup = SplTokenLookup.load(token_filename)
             all_token_lookup = CompoundTokenLookup([ids_json_token_lookup, mainnet_spl_token_lookup])
         elif cluster == "devnet":
@@ -150,7 +150,7 @@ class ContextBuilder:
 
         ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(cluster)
         all_market_lookup = ids_json_market_lookup
-        if cluster == "mainnet-beta":
+        if cluster == "mainnet":
             mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(dex_program_id, token_filename)
             all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, mainnet_serum_market_lookup])
         elif cluster == "devnet":

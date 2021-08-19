@@ -28,12 +28,8 @@ from .modelstate import ModelState
 #
 # Builds orders using a fixed position size ratio but with a spread based on the confidence in the oracle price.
 #
-
 class ConfidenceIntervalDesiredOrdersBuilder(DesiredOrdersBuilder):
     def __init__(self, position_size_ratio: Decimal, min_price_ratio: Decimal, confidence_interval_levels: typing.Sequence[Decimal] = [Decimal(2)], order_type: mango.OrderType = mango.OrderType.POST_ONLY):
-        print("---")
-        print(confidence_interval_levels)
-        print("---")
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.position_size_ratio: Decimal = position_size_ratio
         self.min_price_ratio: Decimal = min_price_ratio

@@ -121,7 +121,7 @@ class Context:
         return Context(self.name, cluster, cluster_url, self.client.skip_preflight, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
 
     def new_forced_to_mainnet_beta(self) -> "Context":
-        cluster: str = "mainnet-beta"
+        cluster: str = "mainnet"
         cluster_url: str = MangoConstants["cluster_urls"][cluster]
         return Context(self.name, cluster, cluster_url, self.client.skip_preflight, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
 

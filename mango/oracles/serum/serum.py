@@ -68,7 +68,7 @@ class SerumOracle(Oracle):
         # TODO: Do this right?
         context = copy.copy(context)
         context.client = BetterClient.from_configuration(self.name,
-                                                         "mainnet-beta",
+                                                         "mainnet",
                                                          "https://solana-api.projectserum.com",
                                                          context.client.commitment,
                                                          context.client.skip_preflight,
