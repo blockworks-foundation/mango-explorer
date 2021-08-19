@@ -10,8 +10,8 @@ set -e
 printf "Balances:\n"
 show-account-balances --log-level ERROR
 
-printf "Creating Mango Account...\n"
-init-account --log-level ERROR
+printf "Ensuring Mango Account...\n"
+ensure-account --log-level ERROR
 
 printf "Wrapping SOL...\n"
 wrap-sol --quantity 3500 --log-level ERROR
