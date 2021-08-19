@@ -42,7 +42,7 @@ from .wallet import Wallet
 #
 
 class SpotMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, raw_market: Market, base_token_account: TokenAccount, quote_token_account: TokenAccount, market_index: int, fee_discount_token_address: typing.Optional[PublicKey]):
+    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, raw_market: Market, market_index: int, fee_discount_token_address: typing.Optional[PublicKey]):
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
@@ -50,12 +50,9 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         self.account: Account = account
         self.spot_market: SpotMarket = spot_market
         self.raw_market: Market = raw_market
-        self.base_token_account: TokenAccount = base_token_account
-        self.quote_token_account: TokenAccount = quote_token_account
-        self.group_market_index: int = market_index
+        self.market_index: int = market_index
         self.fee_discount_token_address: typing.Optional[PublicKey] = fee_discount_token_address
 
-        self.market_index: int = group.find_spot_market_index(spot_market.address)
         self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders[self.market_index]
 
     @staticmethod
@@ -70,18 +67,9 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
             if fee_discount_token_account is not None:
                 fee_discount_token_address = fee_discount_token_account.address
 
-        base_token_account = TokenAccount.fetch_largest_for_owner_and_token(context, wallet.address, spot_market.base)
-        if base_token_account is None:
-            raise Exception(f"Could not find source token account for base token {spot_market.base.symbol}.")
-
-        quote_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-            context, wallet.address, spot_market.quote)
-        if quote_token_account is None:
-            raise Exception(f"Could not find source token account for quote token {spot_market.quote.symbol}.")
-
         market_index = group.find_spot_market_index(spot_market.address)
 
-        return SpotMarketInstructionBuilder(context, wallet, group, account, spot_market, raw_market, base_token_account, quote_token_account, market_index, fee_discount_token_address)
+        return SpotMarketInstructionBuilder(context, wallet, group, account, spot_market, raw_market, market_index, fee_discount_token_address)
 
     def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
         if self.open_orders_address is None:
