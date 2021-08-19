@@ -7,7 +7,7 @@ def context_has_default_values(ctx):
     assert ctx.program_id == PublicKey("5fP7Z7a87ZEVsKr2tQPApdtq83GcTW4kz919R6ou5h5E")
     assert ctx.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
     assert ctx.group_name == "devnet.1"
-    assert ctx.group_id == PublicKey("4XKVThVcLBdN9E2CDuuNmJejCVbVjqvb8VGjoGyHz8A4")
+    assert ctx.group_id == PublicKey("2mGzHJLkNeXdSwDuFrvCEsyPqxbt2R4uiX6BTZJT1zum")
 
 
 def test_context_default_exists():
@@ -27,7 +27,7 @@ def test_context_default_values():
 #     assert derived.program_id == PublicKey("5fP7Z7a87ZEVsKr2tQPApdtq83GcTW4kz919R6ou5h5E")
 #     assert derived.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
 #     assert derived.group_name == "devnet.1"
-#     assert derived.group_id == PublicKey("4XKVThVcLBdN9E2CDuuNmJejCVbVjqvb8VGjoGyHz8A4")
+#     assert derived.group_id == PublicKey("2mGzHJLkNeXdSwDuFrvCEsyPqxbt2R4uiX6BTZJT1zum")
 #     context_has_default_values(mango.ContextBuilder.default())
 
 
@@ -37,7 +37,7 @@ def test_new_from_cluster_url():
     assert derived.program_id == PublicKey("5fP7Z7a87ZEVsKr2tQPApdtq83GcTW4kz919R6ou5h5E")
     assert derived.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
     assert derived.group_name == "devnet.1"
-    assert derived.group_id == PublicKey("4XKVThVcLBdN9E2CDuuNmJejCVbVjqvb8VGjoGyHz8A4")
+    assert derived.group_id == PublicKey("2mGzHJLkNeXdSwDuFrvCEsyPqxbt2R4uiX6BTZJT1zum")
     context_has_default_values(mango.ContextBuilder.default())
 
 
@@ -49,17 +49,17 @@ def test_new_from_group_name():
 
     # Should update both of these values on new group name.
     assert derived.group_name == "devnet.1"
-    assert derived.group_id == PublicKey("4XKVThVcLBdN9E2CDuuNmJejCVbVjqvb8VGjoGyHz8A4")
+    assert derived.group_id == PublicKey("2mGzHJLkNeXdSwDuFrvCEsyPqxbt2R4uiX6BTZJT1zum")
     context_has_default_values(mango.ContextBuilder.default())
 
 
 def test_new_from_group_id():
     context_has_default_values(mango.ContextBuilder.default())
-    derived = mango.ContextBuilder.default().new_from_group_id(PublicKey("4XKVThVcLBdN9E2CDuuNmJejCVbVjqvb8VGjoGyHz8A4"))
+    derived = mango.ContextBuilder.default().new_from_group_id(PublicKey("2mGzHJLkNeXdSwDuFrvCEsyPqxbt2R4uiX6BTZJT1zum"))
     assert derived.program_id == PublicKey("5fP7Z7a87ZEVsKr2tQPApdtq83GcTW4kz919R6ou5h5E")
     assert derived.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
 
     # Should update both of these values on new group ID.
     assert derived.group_name == "devnet.1"
-    assert derived.group_id == PublicKey("4XKVThVcLBdN9E2CDuuNmJejCVbVjqvb8VGjoGyHz8A4")
+    assert derived.group_id == PublicKey("2mGzHJLkNeXdSwDuFrvCEsyPqxbt2R4uiX6BTZJT1zum")
     context_has_default_values(mango.ContextBuilder.default())
