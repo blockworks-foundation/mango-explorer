@@ -18,7 +18,9 @@ import logging
 
 from .account import Account
 from .context import Context
+from .group import Group
 from .market import InventorySource, Market
+from .perpmarket import PerpMarket
 from .tokenaccount import TokenAccount
 from .tokenvalue import TokenValue
 from .wallet import Wallet
@@ -42,7 +44,7 @@ class Inventory:
         return f"{self.base.token.symbol}/{self.quote.token.symbol}"
 
     def __str__(self) -> str:
-        return f"« 𝙸𝚗𝚟𝚎𝚗𝚝𝚘𝚛𝚢 {self.symbol} »"
+        return f"« 𝙸𝚗𝚟𝚎𝚗𝚝𝚘𝚛𝚢 {self.symbol} [{self.base} / {self.quote}] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -72,7 +74,7 @@ def account_inventory_loader(market: Market, account: Account) -> Inventory:
     return Inventory(InventorySource.ACCOUNT, base_value, quote_value)
 
 
-class InventoryAccountWatcher:
+class SpotInventoryAccountWatcher:
     def __init__(self, market: Market, account_watcher: Watcher[Account]):
         self.account_watcher: Watcher[Account] = account_watcher
         account: Account = account_watcher.latest
@@ -92,3 +94,28 @@ class InventoryAccountWatcher:
             raise Exception(
                 f"Could not find net assets in account {self.account_watcher.latest.address} at index {self.quote_index}.")
         return Inventory(InventorySource.ACCOUNT, base_value, quote_value)
+
+
+class PerpInventoryAccountWatcher:
+    def __init__(self, market: PerpMarket, account_watcher: Watcher[Account], group: Group):
+        self.market: PerpMarket = market
+        self.account_watcher: Watcher[Account] = account_watcher
+        self.perp_account_index: int = group.find_perp_market_index(market.address)
+        account: Account = account_watcher.latest
+        quote_value = TokenValue.find_by_symbol(account.net_assets, market.quote.symbol)
+        self.quote_index: int = account.net_assets.index(quote_value)
+
+    @property
+    def latest(self) -> Inventory:
+        perp_account = self.account_watcher.latest.perp_accounts[self.perp_account_index]
+        if perp_account is None:
+            raise Exception(
+                f"Could not find perp account for {self.market.symbol} in account {self.account_watcher.latest.address} at index {self.perp_account_index}.")
+        base_lots = perp_account.base_position
+        base_value = self.market.lot_size_converter.quantity_lots_to_value(base_lots)
+        base_token_value = TokenValue(self.market.base, base_value)
+        quote_token_value = self.account_watcher.latest.net_assets[self.quote_index]
+        if quote_token_value is None:
+            raise Exception(
+                f"Could not find net assets in account {self.account_watcher.latest.address} at index {self.quote_index}.")
+        return Inventory(InventorySource.ACCOUNT, base_token_value, quote_token_value)

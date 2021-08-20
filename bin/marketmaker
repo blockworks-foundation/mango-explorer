@@ -23,6 +23,8 @@ parser.add_argument("--oracle-provider", type=str, required=True,
                     help="name of the price provider to use (e.g. pyth)")
 parser.add_argument("--position-size-ratio", type=Decimal, required=True,
                     help="fraction of the token inventory to be bought or sold in each order")
+parser.add_argument("--quote-position-bias", type=Decimal, default=Decimal(0),
+                    help="bias to apply to quotes based on inventory position")
 parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal("0.001"),
                     help="tolerance in price and quantity when matching existing orders or cancelling/replacing")
 parser.add_argument("--minimum-charge-ratio", type=Decimal, default=Decimal("0.0005"),
@@ -100,11 +102,11 @@ if isinstance(market, mango.SerumMarket):
         context, manager, health_check, disposer, wallet, market)
     latest_open_orders_observer = mango.build_serum_open_orders_watcher(context, manager, health_check, market, wallet)
 elif isinstance(market, mango.SpotMarket):
-    inventory_watcher = mango.InventoryAccountWatcher(market, latest_account_observer)
+    inventory_watcher = mango.SpotInventoryAccountWatcher(market, latest_account_observer)
     latest_open_orders_observer = mango.build_spot_open_orders_watcher(
         context, manager, health_check, wallet, account, group, market)
 elif isinstance(market, mango.PerpMarket):
-    inventory_watcher = mango.InventoryAccountWatcher(market, latest_account_observer)
+    inventory_watcher = mango.PerpInventoryAccountWatcher(market, latest_account_observer, group)
     latest_open_orders_observer = mango.build_perp_open_orders_watcher(
         context, manager, health_check, market, account, group, account_subscription)
 else:
@@ -122,7 +124,7 @@ confidence_interval_levels = args.confidence_interval_level
 if len(confidence_interval_levels) == 0:
     confidence_interval_levels = [Decimal(2)]
 desired_orders_builder = mango.marketmaking.ConfidenceIntervalDesiredOrdersBuilder(
-    args.position_size_ratio, args.minimum_charge_ratio, confidence_interval_levels, args.order_type)
+    args.position_size_ratio, args.minimum_charge_ratio, confidence_interval_levels, args.order_type, args.quote_position_bias)
 market_maker = mango.marketmaking.MarketMaker(
     wallet, market, market_instruction_builder, desired_orders_builder, order_reconciler)
 model_state = mango.marketmaking.ModelState(market, latest_account_observer,
