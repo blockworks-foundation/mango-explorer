@@ -18,7 +18,7 @@ import pyserum.enums
 import typing
 
 from decimal import Decimal
-from pyserum.market import Market
+from pyserum.market import Market as PySerumMarket
 from solana.publickey import PublicKey
 
 from .combinableinstructions import CombinableInstructions
@@ -42,12 +42,12 @@ from .wallet import Wallet
 # on initial setup in the `load()` method.
 #
 class SerumMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket, raw_market: Market, base_token_account: TokenAccount, quote_token_account: TokenAccount, open_orders_address: typing.Optional[PublicKey], fee_discount_token_address: typing.Optional[PublicKey]):
+    def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket, raw_market: PySerumMarket, base_token_account: TokenAccount, quote_token_account: TokenAccount, open_orders_address: typing.Optional[PublicKey], fee_discount_token_address: typing.Optional[PublicKey]):
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.serum_market: SerumMarket = serum_market
-        self.raw_market: Market = raw_market
+        self.raw_market: PySerumMarket = raw_market
         self.base_token_account: TokenAccount = base_token_account
         self.quote_token_account: TokenAccount = quote_token_account
         self.open_orders_address: typing.Optional[PublicKey] = open_orders_address
@@ -55,7 +55,8 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
 
     @staticmethod
     def load(context: Context, wallet: Wallet, serum_market: SerumMarket) -> "SerumMarketInstructionBuilder":
-        raw_market: Market = Market.load(context.client.compatible_client, serum_market.address, context.dex_program_id)
+        raw_market: PySerumMarket = PySerumMarket.load(
+            context.client.compatible_client, serum_market.address, context.dex_program_id)
 
         fee_discount_token_address: typing.Optional[PublicKey] = None
         srm_token = context.token_lookup.find_by_symbol("SRM")

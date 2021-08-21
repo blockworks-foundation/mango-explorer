@@ -18,10 +18,11 @@ import pyserum.enums
 import typing
 
 from decimal import Decimal
-from pyserum.enums import OrderType as SerumOrderType, Side as SerumSide
-from pyserum.instructions import settle_funds, SettleFundsParams
+from pyserum._layouts.instructions import INSTRUCTIONS_LAYOUT as PYSERUM_INSTRUCTIONS_LAYOUT, InstructionType as PySerumInstructionType
+from pyserum.enums import OrderType as PySerumOrderType, Side as PySerumSide
+from pyserum.instructions import settle_funds as pyserum_settle_funds, SettleFundsParams as PySerumSettleFundsParams
 from pyserum.market import Market as PySerumMarket
-from pyserum.open_orders_account import make_create_account_instruction
+from pyserum.open_orders_account import make_create_account_instruction as pyserum_make_create_account_instruction
 from solana.account import Account as SolanaAccount
 from solana.publickey import PublicKey
 from solana.system_program import CreateAccountParams, create_account
@@ -29,7 +30,6 @@ from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
 from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, create_associated_token_account, initialize_account, transfer2
-from pyserum._layouts.instructions import INSTRUCTIONS_LAYOUT, InstructionType
 
 from .account import Account
 from .combinableinstructions import CombinableInstructions
@@ -132,7 +132,7 @@ def build_close_spl_account_instructions(context: Context, wallet: Wallet, addre
 def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet, market: PySerumMarket) -> CombinableInstructions:
     new_open_orders_account = SolanaAccount()
     minimum_balance = context.client.get_minimum_balance_for_rent_exemption(layouts.OPEN_ORDERS.sizeof())
-    instruction = make_create_account_instruction(
+    instruction = pyserum_make_create_account_instruction(
         owner_address=wallet.address,
         new_account_address=new_open_orders_account.public_key(),
         lamports=minimum_balance,
@@ -148,8 +148,8 @@ def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet
 #
 
 def build_serum_place_order_instructions(context: Context, wallet: Wallet, market: PySerumMarket, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
-    serum_order_type: SerumOrderType = SerumOrderType.POST_ONLY if order_type == OrderType.POST_ONLY else SerumOrderType.IOC if order_type == OrderType.IOC else SerumOrderType.LIMIT
-    serum_side: SerumSide = SerumSide.SELL if side == Side.SELL else SerumSide.BUY
+    serum_order_type: PySerumOrderType = PySerumOrderType.POST_ONLY if order_type == OrderType.POST_ONLY else PySerumOrderType.IOC if order_type == OrderType.IOC else PySerumOrderType.LIMIT
+    serum_side: PySerumSide = PySerumSide.SELL if side == Side.SELL else PySerumSide.BUY
 
     instruction = market.make_place_order_instruction(
         source,
@@ -178,8 +178,8 @@ def build_serum_consume_events_instructions(context: Context, market_address: Pu
             for pubkey in [*open_orders_addresses, market_address, event_queue_address]
         ],
         program_id=context.dex_program_id,
-        data=INSTRUCTIONS_LAYOUT.build(
-            dict(instruction_type=InstructionType.CONSUME_EVENTS, args=dict(limit=limit))
+        data=PYSERUM_INSTRUCTIONS_LAYOUT.build(
+            dict(instruction_type=PySerumInstructionType.CONSUME_EVENTS, args=dict(limit=limit))
         ),
     )
 
@@ -201,8 +201,8 @@ def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Py
         [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
         market.state.program_id(),
     )
-    instruction = settle_funds(
-        SettleFundsParams(
+    instruction = pyserum_settle_funds(
+        PySerumSettleFundsParams(
             market=market.state.public_key(),
             open_orders=open_orders_address,
             owner=wallet.address,
@@ -764,8 +764,8 @@ def build_mango_settle_instructions(context: Context, wallet: Wallet, market: Py
         [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
         market.state.program_id(),
     )
-    instruction = settle_funds(
-        SettleFundsParams(
+    instruction = pyserum_settle_funds(
+        PySerumSettleFundsParams(
             market=market.state.public_key(),
             open_orders=open_orders_address,
             owner=wallet.address,

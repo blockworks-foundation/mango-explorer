@@ -16,7 +16,7 @@
 import typing
 
 from decimal import Decimal
-from pyserum.market import Market
+from pyserum.market import Market as PySerumMarket
 from solana.publickey import PublicKey
 
 from .account import Account
@@ -42,14 +42,14 @@ from .wallet import Wallet
 #
 
 class SpotMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, raw_market: Market, market_index: int, fee_discount_token_address: typing.Optional[PublicKey]):
+    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, raw_market: PySerumMarket, market_index: int, fee_discount_token_address: typing.Optional[PublicKey]):
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.group: Group = group
         self.account: Account = account
         self.spot_market: SpotMarket = spot_market
-        self.raw_market: Market = raw_market
+        self.raw_market: PySerumMarket = raw_market
         self.market_index: int = market_index
         self.fee_discount_token_address: typing.Optional[PublicKey] = fee_discount_token_address
 
@@ -57,7 +57,8 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
 
     @staticmethod
     def load(context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket) -> "SpotMarketInstructionBuilder":
-        raw_market: Market = Market.load(context.client.compatible_client, spot_market.address, context.dex_program_id)
+        raw_market: PySerumMarket = PySerumMarket.load(
+            context.client.compatible_client, spot_market.address, context.dex_program_id)
 
         fee_discount_token_address: typing.Optional[PublicKey] = None
         srm_token = context.token_lookup.find_by_symbol("SRM")

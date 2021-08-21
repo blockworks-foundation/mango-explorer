@@ -4,8 +4,8 @@ from .context import mango
 from .fakes import fake_context, fake_market, fake_seeded_public_key, fake_token, fake_wallet
 
 from decimal import Decimal
-from pyserum.enums import OrderType, Side
-from pyserum.market.market import Market
+from pyserum.enums import OrderType as PySerumOrderType, Side as PySerumSide
+from pyserum.market.market import Market as PySerumMarket
 from solana.publickey import PublicKey
 from solana.transaction import TransactionInstruction
 
@@ -66,7 +66,7 @@ def test_build_close_spl_account_instructions():
 def test_build_create_serum_open_orders_instructions():
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()
-    market: Market = fake_market()
+    market: PySerumMarket = fake_market()
     actual = mango.build_create_serum_open_orders_instructions(context, wallet, market)
     assert actual is not None
     assert len(actual.signers) == 1
@@ -78,11 +78,11 @@ def test_build_create_serum_open_orders_instructions():
 def test_build_serum_place_order_instructions():
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()
-    market: Market = fake_market()
+    market: PySerumMarket = fake_market()
     source: PublicKey = fake_seeded_public_key("source")
     open_orders_address: PublicKey = fake_seeded_public_key("open orders account")
-    order_type: OrderType = OrderType.IOC
-    side: Side = Side.BUY
+    order_type: PySerumOrderType = PySerumOrderType.IOC
+    side: PySerumSide = PySerumSide.BUY
     price: Decimal = Decimal(72)
     quantity: Decimal = Decimal("0.05")
     client_id: int = 53

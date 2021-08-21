@@ -16,7 +16,7 @@
 
 import typing
 
-from pyserum._layouts.instructions import InstructionType as SerumInstructionType
+from pyserum._layouts.instructions import InstructionType as PySerumInstructionType
 from solana.publickey import PublicKey
 from solana.transaction import TransactionInstruction
 
@@ -56,7 +56,7 @@ class SerumInstructionReporter(InstructionReporter):
 
     def report(self, instruction: TransactionInstruction) -> str:
         initial = layouts.SERUM_INSTRUCTION_VARIANT_FINDER.parse(instruction.data)
-        instruction_type = SerumInstructionType(initial.variant)
+        instruction_type = PySerumInstructionType(initial.variant)
         return f"« Serum Instruction: {instruction_type.name}: " + "".join("{:02x}".format(x) for x in instruction.data) + "»"
 
 

@@ -79,7 +79,7 @@ class OrderBookSide(AddressableAccount):
             raise Exception(f"OrderBookSide account not found at address '{address}'")
         return OrderBookSide.parse(context, account_info, perp_market_details)
 
-    def orders(self):
+    def orders(self) -> typing.Generator[Order, None, None]:
         if self.leaf_count == 0:
             return
 

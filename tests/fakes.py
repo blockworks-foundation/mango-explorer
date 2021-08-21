@@ -2,8 +2,8 @@ import datetime
 import mango
 
 from decimal import Decimal
-from pyserum import market
-from pyserum.market.state import MarketState
+from pyserum.market import Market as PySerumMarket
+from pyserum.market.state import MarketState as PySerumMarketState
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.types import RPCResponse
@@ -66,10 +66,10 @@ def fake_context() -> mango.Context:
     return context
 
 
-def fake_market() -> market.Market:
+def fake_market() -> PySerumMarket:
     Container = NamedTuple("Container", [("own_address", PublicKey), ("vault_signer_nonce", int)])
     container = Container(own_address=fake_seeded_public_key("market address"), vault_signer_nonce=2)
-    state = MarketState(container, fake_seeded_public_key("program ID"), 6, 6)
+    state = PySerumMarketState(container, fake_seeded_public_key("program ID"), 6, 6)
     state.base_vault = lambda: fake_seeded_public_key("base vault")
     state.quote_vault = lambda: fake_seeded_public_key("quote vault")
     state.event_queue = lambda: fake_seeded_public_key("event queue")
@@ -78,7 +78,7 @@ def fake_market() -> market.Market:
     state.asks = lambda: fake_seeded_public_key("asks")
     state.base_lot_size = lambda: 1
     state.quote_lot_size = lambda: 1
-    return market.Market(None, state)
+    return PySerumMarket(None, state)
 
 
 def fake_spot_market_stub() -> mango.SpotMarketStub:

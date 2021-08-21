@@ -20,7 +20,7 @@ import pyserum.enums
 import typing
 
 from decimal import Decimal
-from pyserum.market.types import Order as SerumOrder
+from pyserum.market.types import Order as PySerumOrder
 from solana.publickey import PublicKey
 
 from .constants import SYSTEM_PROGRAM_ADDRESS
@@ -123,7 +123,7 @@ class Order(typing.NamedTuple):
                      client_id=client_id, owner=self.owner, order_type=self.order_type)
 
     @staticmethod
-    def from_serum_order(serum_order: SerumOrder) -> "Order":
+    def from_serum_order(serum_order: PySerumOrder) -> "Order":
         price = Decimal(serum_order.info.price)
         quantity = Decimal(serum_order.info.size)
         side = Side.from_value(serum_order.side)

@@ -17,7 +17,7 @@ import itertools
 import typing
 
 from pyserum.market import Market as PySerumMarket
-from pyserum.market.orderbook import OrderBook as SerumOrderBook
+from pyserum.market.orderbook import OrderBook as PySerumOrderBook
 from solana.publickey import PublicKey
 
 from .accountinfo import AccountInfo
@@ -45,8 +45,8 @@ class SerumMarket(Market):
         raw_market = self.underlying_serum_market
         [bids_info, asks_info] = AccountInfo.load_multiple(
             context, [raw_market.state.bids(), raw_market.state.asks()])
-        bids_orderbook = SerumOrderBook.from_bytes(raw_market.state, bids_info.data)
-        asks_orderbook = SerumOrderBook.from_bytes(raw_market.state, asks_info.data)
+        bids_orderbook = PySerumOrderBook.from_bytes(raw_market.state, bids_info.data)
+        asks_orderbook = PySerumOrderBook.from_bytes(raw_market.state, asks_info.data)
 
         return list(map(Order.from_serum_order, itertools.chain(bids_orderbook.orders(), asks_orderbook.orders())))
 

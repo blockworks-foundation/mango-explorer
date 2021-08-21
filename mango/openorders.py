@@ -17,7 +17,7 @@
 import typing
 
 from decimal import Decimal
-from pyserum.open_orders_account import OpenOrdersAccount
+from pyserum.open_orders_account import OpenOrdersAccount as PySerumOpenOrdersAccount
 from solana.publickey import PublicKey
 from solana.rpc.types import MemcmpOpts
 
@@ -54,9 +54,9 @@ class OpenOrders(AddressableAccount):
         self.placed_orders: typing.Sequence[PlacedOrder] = placed_orders
         self.referrer_rebate_accrued: Decimal = referrer_rebate_accrued
 
-    # Sometimes pyserum wants to take its own OpenOrdersAccount as a parameter (e.g. in settle_funds())
-    def to_pyserum(self) -> OpenOrdersAccount:
-        return OpenOrdersAccount.from_bytes(self.address, self.account_info.data)
+    # Sometimes pyserum wants to take its own PySerumOpenOrdersAccount as a parameter (e.g. in settle_funds())
+    def to_pyserum(self) -> PySerumOpenOrdersAccount:
+        return PySerumOpenOrdersAccount.from_bytes(self.address, self.account_info.data)
 
     @staticmethod
     def from_layout(layout: layouts.OPEN_ORDERS, account_info: AccountInfo,
