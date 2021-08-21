@@ -25,7 +25,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 context = mango.ContextBuilder.from_command_line_parameters(args)
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager(context.name)
+manager = mango.WebSocketSubscriptionManager(context)
 disposer.add_disposable(manager)
 
 log_subscription = mango.WebSocketLogSubscription(context, args.address)
@@ -34,11 +34,7 @@ publisher = log_subscription.publisher
 
 publisher.subscribe(mango.PrintingObserverSubscriber(False))
 
-websocket_url = context.client.cluster_url.replace("https", "wss", 1)
-ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler)
-ws.item.subscribe(on_next=manager.on_item)
-ws.ping_interval = 10
-ws.open()
+manager.open()
 
 # Wait - don't exit. Exiting will be handled by signals/interrupts.
 waiter = threading.Event()
@@ -48,6 +44,5 @@ except:
     pass
 
 logging.info("Shutting down...")
-ws.close()
 disposer.dispose()
 logging.info("Shutdown complete.")

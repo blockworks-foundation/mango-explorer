@@ -47,7 +47,7 @@ group = mango.Group.load(context, context.group_id)
 account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager(context.name)
+manager = mango.WebSocketSubscriptionManager(context)
 disposer.add_disposable(manager)
 health_check = mango.HealthCheck()
 disposer.add_disposable(health_check)
@@ -114,12 +114,7 @@ def hedge(event: mango.PerpFillEvent) -> None:
 
 publisher.subscribe(on_next=hedge)
 
-websocket_url = context.client.cluster_url.replace("https", "ws", 1)
-ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler)
-ws.item.subscribe(on_next=manager.on_item)
-ws.ping_interval = 10
-health_check.add("ws_pong", ws.pong)
-ws.open()
+manager.open()
 
 logging.info(f"Current assets in account {account.address} (owner: {account.owner}):")
 mango.TokenValue.report([asset for asset in account.net_assets if asset is not None], logging.info)
@@ -132,6 +127,5 @@ except:
     pass
 
 logging.info("Shutting down...")
-ws.close()
 disposer.dispose()
 logging.info("Shutdown complete.")

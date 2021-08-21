@@ -25,6 +25,7 @@ from solana.rpc.types import RPCResponse
 from .accountinfo import AccountInfo
 from .context import Context
 from .observables import EventSource
+from .reconnectingwebsocket import ReconnectingWebsocket
 
 
 # # 🥭 WebSocketSubscription class
@@ -157,13 +158,28 @@ class WebSocketLogSubscription(WebSocketSubscription[LogEvent]):
 # `WebSocketSubscription`.
 #
 class WebSocketSubscriptionManager(Disposable):
-    def __init__(self, program_name: str):
+    def __init__(self, context: Context, ping_interval: int = 10):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.program_name: str = program_name
+        self.context: Context = context
+        self.ping_interval: int = ping_interval
         self.subscriptions: typing.List[WebSocketSubscription] = []
+        self.ws: typing.Optional[ReconnectingWebsocket] = None
 
     def add(self, subscription: WebSocketSubscription) -> None:
         self.subscriptions += [subscription]
+
+    def open(self) -> None:
+        websocket_url = self.context.client.cluster_url.replace("https", "wss", 1)
+        ws: ReconnectingWebsocket = ReconnectingWebsocket(websocket_url, self.open_handler)
+        ws.item.subscribe(on_next=self.on_item)
+        ws.ping_interval = self.ping_interval
+        self.ws = ws
+        ws.open()
+
+    def close(self) -> None:
+        if self.ws is not None:
+            self.ws.close()
+            self.ws = None
 
     def add_subscription_id(self, id, subscription_id) -> None:
         for subscription in self.subscriptions:
@@ -172,13 +188,13 @@ class WebSocketSubscriptionManager(Disposable):
                     f"Setting ID {subscription_id} on subscription {subscription.id} for {subscription.address}.")
                 subscription.subscription_id = subscription_id
                 return
-        self.logger.error(f"[{self.program_name}] Subscription ID {id} not found")
+        self.logger.error(f"[{self.context.name}] Subscription ID {id} not found")
 
     def subscription_by_subscription_id(self, subscription_id) -> WebSocketSubscription:
         for subscription in self.subscriptions:
             if subscription.subscription_id == subscription_id:
                 return subscription
-        raise Exception(f"[{self.program_name}] No subscription with subscription ID {subscription_id} could be found.")
+        raise Exception(f"[{self.context.name}] No subscription with subscription ID {subscription_id} could be found.")
 
     def on_item(self, response) -> None:
         if "method" not in response:
@@ -191,7 +207,7 @@ class WebSocketSubscriptionManager(Disposable):
             built = subscription.build(response["params"])
             subscription.publisher.publish(built)
         else:
-            self.logger.error(f"[{self.program_name}] Unknown response: {response}")
+            self.logger.error(f"[{self.context.name}] Unknown response: {response}")
 
     def open_handler(self, ws: websocket.WebSocketApp):
         for subscription in self.subscriptions:
@@ -203,3 +219,6 @@ class WebSocketSubscriptionManager(Disposable):
     def dispose(self):
         for subscription in self.subscriptions:
             subscription.dispose()
+        if self.ws is not None:
+            self.ws.close()
+            self.ws = None

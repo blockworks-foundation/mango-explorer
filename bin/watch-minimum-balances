@@ -103,7 +103,7 @@ def add_subscription_for_parameter(context: mango.Context, manager: mango.WebSoc
 context = mango.ContextBuilder.from_command_line_parameters(args)
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager(context.name)
+manager = mango.WebSocketSubscriptionManager(context)
 disposer.add_disposable(manager)
 health_check = mango.HealthCheck()
 disposer.add_disposable(health_check)
@@ -111,16 +111,7 @@ disposer.add_disposable(health_check)
 for name_and_address in args.named_address:
     add_subscription_for_parameter(context, manager, args.timer_limit, name_and_address)
 
-websocket_url = context.client.cluster_url.replace("https", "ws", 1)
-ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler)
-ws.item.subscribe(on_next=manager.on_item)
-ws.ping_interval = 10
-health_check.add("ws_pong", ws.pong)
-ws_connecting_log_disposable = ws.connecting.subscribe(
-    on_next=lambda _: send_event_notification("Re-connecting websocket"))
-disposer.add_disposable(ws_connecting_log_disposable)
-
-ws.open()
+manager.open()
 
 send_event_notification(f"Starting using context:\n{context}")
 
@@ -132,6 +123,5 @@ except:
     pass
 
 logging.info("Shutting down...")
-ws.close()
 disposer.dispose()
 logging.info("Shutdown complete.")

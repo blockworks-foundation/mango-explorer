@@ -67,7 +67,7 @@ context = mango.ContextBuilder.from_command_line_parameters(args)
 logging.info(f"{context}")
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager(context.name)
+manager = mango.WebSocketSubscriptionManager(context)
 disposer.add_disposable(manager)
 health_check = mango.HealthCheck()
 disposer.add_disposable(health_check)
@@ -112,11 +112,7 @@ elif isinstance(market, mango.PerpMarket):
 else:
     raise Exception(f"Could not determine type of market {market.symbol}")
 
-websocket_url = context.client.cluster_url.replace("https", "ws", 1)
-ws: mango.ReconnectingWebsocket = mango.ReconnectingWebsocket(websocket_url, manager.open_handler)
-ws.item.subscribe(on_next=manager.on_item)
-ws.ping_interval = 10
-ws.open()
+manager.open()
 
 order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
     args.existing_order_tolerance, args.existing_order_tolerance)
@@ -149,7 +145,6 @@ except:
     pass
 
 logging.info("Shutting down...")
-ws.close()
 disposer.dispose()
 cleanup(context, wallet, account, market, args.dry_run)
 logging.info("Shutdown complete.")
