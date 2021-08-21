@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import enum
 import typing
 
 from decimal import Decimal
@@ -27,13 +28,29 @@ from .orders import Order, OrderType, Side
 from .perpmarketdetails import PerpMarketDetails
 from .version import Version
 
-# # 🥭 OrderBookSide class
+
+# # 🥭 OrderBookSideType enum
 #
-# `OrderBookSide` holds orders for one side of a market.
+# Does the orderbook side represent bids or asks?
 #
 
+class OrderBookSideType(enum.Enum):
+    # We use strings here so that argparse can work with these as parameters.
+    BIDS = "BIDS"
+    ASKS = "ASKS"
 
-class OrderBookSide(AddressableAccount):
+    def __str__(self) -> str:
+        return self.value
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+# # 🥭 PerpOrderBookSide class
+#
+# `PerpOrderBookSide` holds orders for one side of a market.
+#
+class PerpOrderBookSide(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
                  meta_data: Metadata, perp_market_details: PerpMarketDetails, bump_index: Decimal,
                  free_list_len: Decimal, free_list_head: Decimal, root_node: Decimal,
@@ -51,7 +68,7 @@ class OrderBookSide(AddressableAccount):
         self.nodes: typing.Any = nodes
 
     @staticmethod
-    def from_layout(layout: layouts.ORDERBOOK_SIDE, account_info: AccountInfo, version: Version, perp_market_details: PerpMarketDetails) -> "OrderBookSide":
+    def from_layout(layout: layouts.ORDERBOOK_SIDE, account_info: AccountInfo, version: Version, perp_market_details: PerpMarketDetails) -> "PerpOrderBookSide":
         meta_data = Metadata.from_layout(layout.meta_data)
         bump_index: Decimal = layout.bump_index
         free_list_len: Decimal = layout.free_list_len
@@ -60,28 +77,28 @@ class OrderBookSide(AddressableAccount):
         leaf_count: Decimal = layout.leaf_count
         nodes: typing.Any = layout.nodes
 
-        return OrderBookSide(account_info, version, meta_data, perp_market_details, bump_index, free_list_len, free_list_head, root_node, leaf_count, nodes)
+        return PerpOrderBookSide(account_info, version, meta_data, perp_market_details, bump_index, free_list_len, free_list_head, root_node, leaf_count, nodes)
 
     @staticmethod
-    def parse(context: Context, account_info: AccountInfo, perp_market_details: PerpMarketDetails) -> "OrderBookSide":
+    def parse(context: Context, account_info: AccountInfo, perp_market_details: PerpMarketDetails) -> "PerpOrderBookSide":
         data = account_info.data
         if len(data) != layouts.ORDERBOOK_SIDE.sizeof():
             raise Exception(
-                f"OrderBookSide data length ({len(data)}) does not match expected size ({layouts.ORDERBOOK_SIDE.sizeof()})")
+                f"PerpOrderBookSide data length ({len(data)}) does not match expected size ({layouts.ORDERBOOK_SIDE.sizeof()})")
 
         layout = layouts.ORDERBOOK_SIDE.parse(data)
-        return OrderBookSide.from_layout(layout, account_info, Version.V1, perp_market_details)
+        return PerpOrderBookSide.from_layout(layout, account_info, Version.V1, perp_market_details)
 
     @staticmethod
-    def load(context: Context, address: PublicKey, perp_market_details: PerpMarketDetails) -> "OrderBookSide":
+    def load(context: Context, address: PublicKey, perp_market_details: PerpMarketDetails) -> "PerpOrderBookSide":
         account_info = AccountInfo.load(context, address)
         if account_info is None:
-            raise Exception(f"OrderBookSide account not found at address '{address}'")
-        return OrderBookSide.parse(context, account_info, perp_market_details)
+            raise Exception(f"PerpOrderBookSide account not found at address '{address}'")
+        return PerpOrderBookSide.parse(context, account_info, perp_market_details)
 
-    def orders(self) -> typing.Generator[Order, None, None]:
+    def orders(self) -> typing.Sequence[Order]:
         if self.leaf_count == 0:
-            return
+            return []
 
         if self.meta_data.data_type == layouts.DATA_TYPE.Bids:
             order_side = Side.BUY
@@ -89,6 +106,7 @@ class OrderBookSide(AddressableAccount):
             order_side = Side.SELL
 
         stack = [self.root_node]
+        orders: typing.List[Order] = []
         while len(stack) > 0:
             index = int(stack.pop())
             node = self.nodes[index]
@@ -105,22 +123,23 @@ class OrderBookSide(AddressableAccount):
                 base_factor = Decimal(10) ** self.perp_market_details.base_token.decimals
                 actual_quantity = (quantity * self.perp_market_details.base_lot_size) / base_factor
 
-                yield Order(int(node.key["order_id"]),
-                            node.client_order_id,
-                            node.owner,
-                            order_side,
-                            actual_price,
-                            actual_quantity,
-                            OrderType.UNKNOWN)
+                orders += [Order(int(node.key["order_id"]),
+                                 node.client_order_id,
+                                 node.owner,
+                                 order_side,
+                                 actual_price,
+                                 actual_quantity,
+                                 OrderType.UNKNOWN)]
             elif node.type_name == "inner":
                 if order_side == Side.BUY:
-                    stack = [node.children[0], node.children[1], *stack]
+                    stack = [*stack, node.children[0], node.children[1]]
                 else:
-                    stack = [node.children[1], node.children[0], *stack]
+                    stack = [*stack, node.children[1], node.children[0]]
+        return orders
 
     def __str__(self) -> str:
         nodes = "\n        ".join([str(node).replace("\n", "\n        ") for node in self.orders()])
-        return f"""« 𝙾𝚛𝚍𝚎𝚛𝙱𝚘𝚘𝚔𝚂𝚒𝚍𝚎 {self.version} [{self.address}]
+        return f"""« 𝙿𝚎𝚛𝚙𝙾𝚛𝚍𝚎𝚛𝙱𝚘𝚘𝚔𝚂𝚒𝚍𝚎 {self.version} [{self.address}]
     {self.meta_data}
     Perp Market: {self.perp_market_details}
     Bump Index: {self.bump_index}

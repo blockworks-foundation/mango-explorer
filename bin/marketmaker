@@ -7,6 +7,7 @@ import os.path
 import rx
 import sys
 import threading
+import typing
 
 from decimal import Decimal
 
@@ -100,15 +101,28 @@ market_instruction_builder: mango.MarketInstructionBuilder = mango.create_market
 if isinstance(market, mango.SerumMarket):
     inventory_watcher: mango.Watcher[mango.Inventory] = mango.build_serum_inventory_watcher(
         context, manager, health_check, disposer, wallet, market)
-    latest_open_orders_observer = mango.build_serum_open_orders_watcher(context, manager, health_check, market, wallet)
+    latest_open_orders_observer: mango.Watcher[mango.PlacedOrdersContainer] = mango.build_serum_open_orders_watcher(
+        context, manager, health_check, market, wallet)
+    latest_bids_watcher: mango.Watcher[typing.Sequence[mango.Order]] = mango.build_serum_orderbook_side_watcher(
+        context, manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.BIDS)
+    latest_asks_watcher: mango.Watcher[typing.Sequence[mango.Order]] = mango.build_serum_orderbook_side_watcher(
+        context, manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.ASKS)
 elif isinstance(market, mango.SpotMarket):
     inventory_watcher = mango.SpotInventoryAccountWatcher(market, latest_account_observer)
     latest_open_orders_observer = mango.build_spot_open_orders_watcher(
         context, manager, health_check, wallet, account, group, market)
+    latest_bids_watcher = mango.build_serum_orderbook_side_watcher(
+        context, manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.BIDS)
+    latest_asks_watcher = mango.build_serum_orderbook_side_watcher(
+        context, manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.ASKS)
 elif isinstance(market, mango.PerpMarket):
     inventory_watcher = mango.PerpInventoryAccountWatcher(market, latest_account_observer, group)
     latest_open_orders_observer = mango.build_perp_open_orders_watcher(
         context, manager, health_check, market, account, group, account_subscription)
+    latest_bids_watcher = mango.build_perp_orderbook_side_watcher(
+        context, manager, health_check, market, mango.OrderBookSideType.BIDS)
+    latest_asks_watcher = mango.build_perp_orderbook_side_watcher(
+        context, manager, health_check, market, mango.OrderBookSideType.ASKS)
 else:
     raise Exception(f"Could not determine type of market {market.symbol}")
 
@@ -125,8 +139,8 @@ market_maker = mango.marketmaking.MarketMaker(
     wallet, market, market_instruction_builder, desired_orders_builder, order_reconciler)
 model_state = mango.marketmaking.ModelState(market, latest_account_observer,
                                             latest_group_observer, latest_price_observer,
-                                            latest_open_orders_observer,
-                                            inventory_watcher)
+                                            latest_open_orders_observer, inventory_watcher,
+                                            latest_bids_watcher, latest_asks_watcher)
 
 health_check.add("marketmaker_pulse", market_maker.pulse_complete)
 

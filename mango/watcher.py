@@ -36,7 +36,7 @@ TWatched = typing.TypeVar("TWatched", covariant=True)
 class Watcher(typing.Protocol[TWatched]):
     @property
     def latest(self) -> TWatched:
-        raise NotImplementedError("Watcher.latest is not implemented on the base type.")
+        raise NotImplementedError("Watcher.latest is not implemented on the Protocol.")
 
 
 # # 🥭 ManualUpdateWatcher class

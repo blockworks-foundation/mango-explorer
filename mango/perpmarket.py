@@ -22,7 +22,7 @@ from .context import Context
 from .group import Group
 from .lotsizeconverter import LotSizeConverter
 from .market import Market, InventorySource
-from .orderbookside import OrderBookSide
+from .orderbookside import PerpOrderBookSide
 from .orders import Order
 from .perpeventqueue import PerpEvent, PerpEventQueue
 from .perpmarketdetails import PerpMarketDetails
@@ -75,8 +75,8 @@ class PerpMarket(Market):
         bids_address: PublicKey = self.underlying_perp_market.bids
         asks_address: PublicKey = self.underlying_perp_market.asks
         [bids, asks] = AccountInfo.load_multiple(context, [bids_address, asks_address])
-        bid_side = OrderBookSide.parse(context, bids, self.underlying_perp_market)
-        ask_side = OrderBookSide.parse(context, asks, self.underlying_perp_market)
+        bid_side = PerpOrderBookSide.parse(context, bids, self.underlying_perp_market)
+        ask_side = PerpOrderBookSide.parse(context, asks, self.underlying_perp_market)
         return [*bid_side.orders(), *ask_side.orders()]
 
     def __str__(self) -> str:

@@ -17,8 +17,11 @@ import logging
 import typing
 
 from pyserum.market import Market as PySerumMarket
+from pyserum.market.orderbook import OrderBook as PySerumOrderBook
+from solana.publickey import PublicKey
 
 from .account import Account
+from .accountinfo import AccountInfo
 from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import Group
@@ -30,6 +33,8 @@ from .observables import DisposePropagator, LatestItemObserverSubscriber
 from .openorders import OpenOrders
 from .oracle import Price
 from .oraclefactory import OracleProvider, create_oracle_provider
+from .orderbookside import OrderBookSideType, PerpOrderBookSide
+from .orders import Order
 from .perpmarket import PerpMarket
 from .placedorder import PlacedOrdersContainer
 from .serummarket import SerumMarket
@@ -46,7 +51,7 @@ def build_group_watcher(context: Context, manager: WebSocketSubscriptionManager,
     group_subscription = WebSocketAccountSubscription[Group](
         context, group.address, lambda account_info: Group.parse(context, account_info))
     manager.add(group_subscription)
-    latest_group_observer = LatestItemObserverSubscriber(group)
+    latest_group_observer = LatestItemObserverSubscriber[Group](group)
     group_subscription.publisher.subscribe(latest_group_observer)
     health_check.add("group_subscription", group_subscription.publisher)
     return latest_group_observer
@@ -56,7 +61,7 @@ def build_account_watcher(context: Context, manager: WebSocketSubscriptionManage
     account_subscription = WebSocketAccountSubscription[Account](
         context, account.address, lambda account_info: Account.parse(account_info, group_observer.latest))
     manager.add(account_subscription)
-    latest_account_observer = LatestItemObserverSubscriber(account)
+    latest_account_observer = LatestItemObserverSubscriber[Account](account)
     account_subscription.publisher.subscribe(latest_account_observer)
     health_check.add("account_subscription", account_subscription.publisher)
     return account_subscription, latest_account_observer
@@ -154,7 +159,7 @@ def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscripti
     base_token_subscription = WebSocketAccountSubscription[TokenAccount](
         context, base_account.address, lambda account_info: TokenAccount.parse(account_info, market.base))
     manager.add(base_token_subscription)
-    latest_base_token_account_observer = LatestItemObserverSubscriber(base_account)
+    latest_base_token_account_observer = LatestItemObserverSubscriber[TokenAccount](base_account)
     base_subscription_disposable = base_token_subscription.publisher.subscribe(latest_base_token_account_observer)
     disposer.add_disposable(base_subscription_disposable)
 
@@ -166,7 +171,7 @@ def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscripti
     quote_token_subscription = WebSocketAccountSubscription[TokenAccount](
         context, quote_account.address, lambda account_info: TokenAccount.parse(account_info, market.quote))
     manager.add(quote_token_subscription)
-    latest_quote_token_account_observer = LatestItemObserverSubscriber(quote_account)
+    latest_quote_token_account_observer = LatestItemObserverSubscriber[TokenAccount](quote_account)
     quote_subscription_disposable = quote_token_subscription.publisher.subscribe(latest_quote_token_account_observer)
     disposer.add_disposable(quote_subscription_disposable)
 
@@ -176,3 +181,46 @@ def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscripti
                          latest_quote_token_account_observer.latest.value)
 
     return LamdaUpdateWatcher(serum_inventory_accessor)
+
+
+def build_perp_orderbook_side_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, perp_market: PerpMarket, side: OrderBookSideType) -> Watcher[typing.Sequence[Order]]:
+    orderbook_address: PublicKey = perp_market.underlying_perp_market.bids if side == OrderBookSideType.BIDS else perp_market.underlying_perp_market.asks
+    orderbook_side_info = AccountInfo.load(context, orderbook_address)
+    if orderbook_side_info is None:
+        raise Exception(f"Could not find perp order book side at address {orderbook_address}.")
+    initial_orderbook_side: PerpOrderBookSide = PerpOrderBookSide.parse(
+        context, orderbook_side_info, perp_market.underlying_perp_market)
+
+    orders_subscription = WebSocketAccountSubscription[typing.Sequence[Order]](
+        context, orderbook_address, lambda account_info: PerpOrderBookSide.parse(context, account_info, perp_market.underlying_perp_market).orders())
+    manager.add(orders_subscription)
+
+    latest_orders_observer = LatestItemObserverSubscriber[typing.Sequence[Order]](initial_orderbook_side.orders())
+
+    orders_subscription.publisher.subscribe(latest_orders_observer)
+    health_check.add("orderbook_side_subscription", orders_subscription.publisher)
+    return latest_orders_observer
+
+
+def build_serum_orderbook_side_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, underlying_serum_market: PySerumMarket, side: OrderBookSideType) -> Watcher[typing.Sequence[Order]]:
+    orderbook_address: PublicKey = underlying_serum_market.state.bids if side == OrderBookSideType.BIDS else underlying_serum_market.state.asks
+    orderbook_side_info = AccountInfo.load(context, orderbook_address)
+    if orderbook_side_info is None:
+        raise Exception(f"Could not find Serum order book side at address {orderbook_address}.")
+
+    def account_info_to_orderbook(account_info: AccountInfo) -> typing.Sequence[Order]:
+        serum_orderbook_side = PySerumOrderBook.from_bytes(
+            underlying_serum_market.state, account_info.data)
+        return list(map(Order.from_serum_order, serum_orderbook_side.orders()))
+
+    initial_orderbook_side: typing.Sequence[Order] = account_info_to_orderbook(orderbook_side_info)
+
+    orders_subscription = WebSocketAccountSubscription[typing.Sequence[Order]](
+        context, orderbook_address, account_info_to_orderbook)
+    manager.add(orders_subscription)
+
+    latest_orders_observer = LatestItemObserverSubscriber[typing.Sequence[Order]](initial_orderbook_side)
+
+    orders_subscription.publisher.subscribe(latest_orders_observer)
+    health_check.add("orderbook_side_subscription", orders_subscription.publisher)
+    return latest_orders_observer

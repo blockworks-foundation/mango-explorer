@@ -29,7 +29,9 @@ class ModelState:
                  group_watcher: mango.Watcher[mango.Group],
                  price_watcher: mango.Watcher[mango.Price],
                  placed_orders_container_watcher: mango.Watcher[mango.PlacedOrdersContainer],
-                 inventory_watcher: mango.Watcher[mango.Inventory]
+                 inventory_watcher: mango.Watcher[mango.Inventory],
+                 bids: mango.Watcher[typing.Sequence[mango.Order]],
+                 asks: mango.Watcher[typing.Sequence[mango.Order]]
                  ):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.market: mango.Market = market
@@ -40,6 +42,8 @@ class ModelState:
             mango.PlacedOrdersContainer] = placed_orders_container_watcher
         self.inventory_watcher: mango.Watcher[
             mango.Inventory] = inventory_watcher
+        self.bids_watcher: mango.Watcher[typing.Sequence[mango.Order]] = bids
+        self.asks_watcher: mango.Watcher[typing.Sequence[mango.Order]] = asks
 
     @property
     def group(self) -> mango.Group:
@@ -60,6 +64,14 @@ class ModelState:
     @property
     def inventory(self) -> mango.Inventory:
         return self.inventory_watcher.latest
+
+    @property
+    def bids(self) -> typing.Sequence[mango.Order]:
+        return self.bids_watcher.latest
+
+    @property
+    def asks(self) -> typing.Sequence[mango.Order]:
+        return self.asks_watcher.latest
 
     @property
     def existing_orders(self) -> typing.Sequence[mango.PlacedOrder]:
