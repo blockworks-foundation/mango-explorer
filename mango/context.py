@@ -56,6 +56,8 @@ class Context:
         self.token_lookup: TokenLookup = token_lookup
         self.market_lookup: MarketLookup = market_lookup
 
+        self.ping_interval: int = 10
+
         # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451
         # "I think you are better off doing 4,8,16,20,30"
         self.retry_pauses: typing.Sequence[Decimal] = [Decimal(4), Decimal(

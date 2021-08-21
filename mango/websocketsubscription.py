@@ -47,22 +47,49 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
         self.subscription_id: int = 0
         self.from_account_info: typing.Callable[[AccountInfo], TSubscriptionInstance] = constructor
         self.publisher: EventSource[TSubscriptionInstance] = EventSource[TSubscriptionInstance]()
+        self.ws: typing.Optional[ReconnectingWebsocket] = None
 
     @abc.abstractmethod
     def build_request(self) -> str:
         raise NotImplementedError("WebSocketSubscription.build_request() is not implemented on the base type.")
 
-    def build_account_info(self, response: RPCResponse) -> AccountInfo:
-        return AccountInfo.from_response(response, self.address)
+    def open(self,) -> None:
+        websocket_url = self.context.client.cluster_url.replace("https", "wss", 1)
+        ws: ReconnectingWebsocket = ReconnectingWebsocket(websocket_url, lambda sock: sock.send(self.build_request()))
+        ws.item.subscribe(on_next=self._on_item)
+        ws.ping_interval = self.context.ping_interval
+        self.ws = ws
+        ws.open()
 
-    def build(self, response: RPCResponse) -> TSubscriptionInstance:
-        account_info: AccountInfo = self.build_account_info(response)
+    def close(self) -> None:
+        if self.ws is not None:
+            self.ws.close()
+            self.ws = None
+
+    def _on_item(self, response) -> None:
+        if "method" not in response:
+            id: int = int(response["id"])
+            if id == self.id:
+                subscription_id: int = int(response["result"])
+                self.logger.info(f"Subscription created with id {subscription_id}.")
+        elif (response["method"] == "accountNotification") or (response["method"] == "programNotification") or (response["method"] == "logsNotification"):
+            subscription_id = response["params"]["subscription"]
+            built = self.build_subscribed_instance(response["params"])
+            self.publisher.publish(built)
+        else:
+            self.logger.error(f"[{self.context.name}] Unknown response: {response}")
+
+    def build_subscribed_instance(self, response: RPCResponse) -> TSubscriptionInstance:
+        account_info: AccountInfo = AccountInfo.from_response(response, self.address)
         built: TSubscriptionInstance = self.from_account_info(account_info)
         return built
 
     def dispose(self):
         self.publisher.on_completed()
         self.publisher.dispose()
+        if self.ws is not None:
+            self.ws.close()
+            self.ws = None
 
 
 class WebSocketProgramSubscription(WebSocketSubscription[TSubscriptionInstance]):
@@ -154,19 +181,60 @@ class WebSocketLogSubscription(WebSocketSubscription[LogEvent]):
 
 # # 🥭 WebSocketSubscriptionManager class
 #
-# The `WebSocketSubscriptionManager` takes websocket account updates and sends them to the correct
-# `WebSocketSubscription`.
+# The `WebSocketSubscriptionManager` is a base class for different websocket management approaches.
 #
-class WebSocketSubscriptionManager(Disposable):
+class WebSocketSubscriptionManager(Disposable, metaclass=abc.ABCMeta):
     def __init__(self, context: Context, ping_interval: int = 10):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
         self.ping_interval: int = ping_interval
         self.subscriptions: typing.List[WebSocketSubscription] = []
-        self.ws: typing.Optional[ReconnectingWebsocket] = None
 
     def add(self, subscription: WebSocketSubscription) -> None:
         self.subscriptions += [subscription]
+
+    def open(self) -> None:
+        raise NotImplementedError("WebSocketSubscription.build_request() is not implemented on the base type.")
+
+    def close(self) -> None:
+        raise NotImplementedError("WebSocketSubscription.build_request() is not implemented on the base type.")
+
+    def on_disconnected(self, ws: websocket.WebSocketApp):
+        for subscription in self.subscriptions:
+            subscription.dispose()
+        self.subscriptions = []
+
+    def dispose(self):
+        for subscription in self.subscriptions:
+            subscription.dispose()
+
+
+# # 🥭 IndividualWebSocketSubscriptionManager class
+#
+# The `IndividualWebSocketSubscriptionManager` runs `WebSocketSubscription`s each in their own websocket.
+#
+class IndividualWebSocketSubscriptionManager(WebSocketSubscriptionManager):
+    def __init__(self, context: Context, ping_interval: int = 10):
+        super().__init__(context, ping_interval)
+
+    def open(self) -> None:
+        for subscription in self.subscriptions:
+            subscription.open()
+
+    def close(self) -> None:
+        for subscription in self.subscriptions:
+            subscription.close()
+
+
+# # 🥭 SharedWebSocketSubscriptionManager class
+#
+# The `SharedWebSocketSubscriptionManager` runs a single websocket and sends updates to the correct
+# `WebSocketSubscription`.
+#
+class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
+    def __init__(self, context: Context, ping_interval: int = 10):
+        super().__init__(context, ping_interval)
+        self.ws: typing.Optional[ReconnectingWebsocket] = None
 
     def open(self) -> None:
         websocket_url = self.context.client.cluster_url.replace("https", "wss", 1)
@@ -204,7 +272,7 @@ class WebSocketSubscriptionManager(Disposable):
         elif (response["method"] == "accountNotification") or (response["method"] == "programNotification") or (response["method"] == "logsNotification"):
             subscription_id = response["params"]["subscription"]
             subscription = self.subscription_by_subscription_id(subscription_id)
-            built = subscription.build(response["params"])
+            built = subscription.build_subscribed_instance(response["params"])
             subscription.publisher.publish(built)
         else:
             self.logger.error(f"[{self.context.name}] Unknown response: {response}")
@@ -213,12 +281,8 @@ class WebSocketSubscriptionManager(Disposable):
         for subscription in self.subscriptions:
             ws.send(subscription.build_request())
 
-    def on_disconnected(self, ws: websocket.WebSocketApp):
-        self.subscriptions = []
-
     def dispose(self):
-        for subscription in self.subscriptions:
-            subscription.dispose()
+        super().dispose()
         if self.ws is not None:
             self.ws.close()
             self.ws = None

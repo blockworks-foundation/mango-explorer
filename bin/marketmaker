@@ -67,7 +67,7 @@ context = mango.ContextBuilder.from_command_line_parameters(args)
 logging.info(f"{context}")
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager(context)
+manager = mango.IndividualWebSocketSubscriptionManager(context)
 disposer.add_disposable(manager)
 health_check = mango.HealthCheck()
 disposer.add_disposable(health_check)

@@ -76,7 +76,7 @@ def log_account(account_info: mango.AccountInfo) -> mango.AccountInfo:
     return account_info
 
 
-def add_subscription_for_parameter(context: mango.Context, manager: mango.WebSocketSubscriptionManager, timer_limit: int, name_and_address: str):
+def add_subscription_for_parameter(context: mango.Context, manager: mango.IndividualWebSocketSubscriptionManager, timer_limit: int, name_and_address: str):
     name, address_str = name_and_address.split(":")
     address = PublicKey(address_str)
 
@@ -103,7 +103,7 @@ def add_subscription_for_parameter(context: mango.Context, manager: mango.WebSoc
 context = mango.ContextBuilder.from_command_line_parameters(args)
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager(context)
+manager = mango.IndividualWebSocketSubscriptionManager(context)
 disposer.add_disposable(manager)
 health_check = mango.HealthCheck()
 disposer.add_disposable(health_check)

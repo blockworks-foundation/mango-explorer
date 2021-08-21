@@ -25,7 +25,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 context = mango.ContextBuilder.from_command_line_parameters(args)
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager(context)
+manager = mango.IndividualWebSocketSubscriptionManager(context)
 disposer.add_disposable(manager)
 
 log_subscription = mango.WebSocketLogSubscription(context, args.address)

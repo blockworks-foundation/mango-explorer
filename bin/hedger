@@ -47,7 +47,7 @@ group = mango.Group.load(context, context.group_id)
 account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
 
 disposer = mango.DisposePropagator()
-manager = mango.WebSocketSubscriptionManager(context)
+manager = mango.IndividualWebSocketSubscriptionManager(context)
 disposer.add_disposable(manager)
 health_check = mango.HealthCheck()
 disposer.add_disposable(health_check)
