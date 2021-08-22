@@ -19,39 +19,26 @@ import logging
 import mango
 import typing
 
-from .modelstate import ModelState
+from ..modelstate import ModelState
 
 
-# # 🥭 DesiredOrdersBuilder class
+# # 🥭 Element class
 #
-# A builder that builds a list of orders we'd like to be on the orderbook.
+# A base class for a part of a chain that can take in a sequence of elements and process them, changing
+# them as desired.
 #
-# The logic of what orders to create will be implemented in a derived class.
+# Only `Order`s returned from `process()` method are passed to the next element of the chain.
 #
-
-class DesiredOrdersBuilder(metaclass=abc.ABCMeta):
+class Element(metaclass=abc.ABCMeta):
     def __init__(self):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
-        raise NotImplementedError("DesiredOrdersBuilder.build() is not implemented on the base type.")
+    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
+        raise NotImplementedError("Element.process() is not implemented on the base type.")
 
     def __repr__(self) -> str:
         return f"{self}"
 
-
-# # 🥭 NullDesiredOrdersBuilder class
-#
-# A no-op implementation of the `DesiredOrdersBuilder` that will never ask to create orders.
-#
-
-class NullDesiredOrdersBuilder(DesiredOrdersBuilder):
-    def __init__(self):
-        super().__init__()
-
-    def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
-        return []
-
     def __str__(self) -> str:
-        return "« 𝙽𝚞𝚕𝚕𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"
+        return """« 𝙴𝚕𝚎𝚖𝚎𝚗𝚝 »"""

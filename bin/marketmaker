@@ -15,25 +15,18 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 import mango.marketmaking  # nopep8
+from mango.marketmaking.orderchain import chain  # nopep8
+from mango.marketmaking.orderchain import chainbuilder  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
+chainbuilder.ChainBuilder.add_command_line_parameters(parser)
 parser.add_argument("--market", type=str, required=True, help="market symbol to make market upon (e.g. ETH/USDC)")
 parser.add_argument("--oracle-provider", type=str, required=True,
                     help="name of the price provider to use (e.g. pyth)")
-parser.add_argument("--position-size-ratio", type=Decimal, required=True,
-                    help="fraction of the token inventory to be bought or sold in each order")
-parser.add_argument("--quote-position-bias", type=Decimal, default=Decimal(0),
-                    help="bias to apply to quotes based on inventory position")
 parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal("0.001"),
                     help="tolerance in price and quantity when matching existing orders or cancelling/replacing")
-parser.add_argument("--minimum-charge-ratio", type=Decimal, default=Decimal("0.0005"),
-                    help="minimum fraction of the price to be accept as a spread")
-parser.add_argument("--confidence-interval-level", type=Decimal, action="append",
-                    help="the levels of weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread (can be specified multiple times to give multiple levels)")
-parser.add_argument("--order-type", type=mango.OrderType, default=mango.OrderType.POST_ONLY,
-                    choices=list(mango.OrderType), help="Order type: LIMIT, IOC or POST_ONLY")
 parser.add_argument("--pulse-interval", type=int, default=10,
                     help="number of seconds between each 'pulse' of the market maker")
 parser.add_argument("--account-index", type=int, default=0,
@@ -130,13 +123,10 @@ manager.open()
 
 order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
     args.existing_order_tolerance, args.existing_order_tolerance)
-confidence_interval_levels = args.confidence_interval_level
-if len(confidence_interval_levels) == 0:
-    confidence_interval_levels = [Decimal(2)]
-desired_orders_builder = mango.marketmaking.ConfidenceIntervalDesiredOrdersBuilder(
-    args.position_size_ratio, args.minimum_charge_ratio, confidence_interval_levels, args.order_type, args.quote_position_bias)
+
+desired_orders_chain: chain.Chain = chainbuilder.ChainBuilder.from_command_line_parameters(args)
 market_maker = mango.marketmaking.MarketMaker(
-    wallet, market, market_instruction_builder, desired_orders_builder, order_reconciler)
+    wallet, market, market_instruction_builder, desired_orders_chain, order_reconciler)
 model_state = mango.marketmaking.ModelState(market, latest_account_observer,
                                             latest_group_observer, latest_price_observer,
                                             latest_open_orders_observer, inventory_watcher,

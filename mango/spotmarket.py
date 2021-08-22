@@ -23,6 +23,7 @@ from solana.publickey import PublicKey
 from .accountinfo import AccountInfo
 from .context import Context
 from .group import Group
+from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .market import Market, InventorySource
 from .orders import Order
 from .serumeventqueue import SerumEvent, SerumEventQueue
@@ -35,9 +36,11 @@ from .token import Token
 #
 class SpotMarket(Market):
     def __init__(self, program_id: PublicKey, address: PublicKey, base: Token, quote: Token, group: Group, underlying_serum_market: PySerumMarket):
-        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote)
+        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.group: Group = group
         self.underlying_serum_market: PySerumMarket = underlying_serum_market
+        self.lot_size_converter: LotSizeConverter = LotSizeConverter(
+            base, underlying_serum_market.state.base_lot_size, quote, underlying_serum_market.state.quote_lot_size)
 
     def unprocessed_events(self, context: Context) -> typing.Sequence[SerumEvent]:
         event_queue: SerumEventQueue = SerumEventQueue.load(context, self.underlying_serum_market.state.event_queue())
@@ -71,7 +74,7 @@ class SpotMarket(Market):
 
 class SpotMarketStub(Market):
     def __init__(self, program_id: PublicKey, address: PublicKey, base: Token, quote: Token, group_address: PublicKey):
-        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote)
+        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.group_address: PublicKey = group_address
 
     def load(self, context: Context, group: typing.Optional[Group]) -> SpotMarket:

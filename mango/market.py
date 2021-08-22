@@ -20,6 +20,7 @@ import logging
 
 from solana.publickey import PublicKey
 
+from .lotsizeconverter import LotSizeConverter
 from .token import Token
 
 
@@ -40,13 +41,14 @@ class InventorySource(enum.Enum):
 #
 
 class Market(metaclass=abc.ABCMeta):
-    def __init__(self, program_id: PublicKey, address: PublicKey, inventory_source: InventorySource, base: Token, quote: Token):
+    def __init__(self, program_id: PublicKey, address: PublicKey, inventory_source: InventorySource, base: Token, quote: Token, lot_size_converter: LotSizeConverter):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.program_id: PublicKey = program_id
         self.address: PublicKey = address
         self.inventory_source: InventorySource = inventory_source
         self.base: Token = base
         self.quote: Token = quote
+        self.lot_size_converter: LotSizeConverter = lot_size_converter
 
     @property
     def symbol(self) -> str:

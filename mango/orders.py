@@ -122,6 +122,11 @@ class Order(typing.NamedTuple):
         return Order(id=self.id, side=self.side, price=self.price, quantity=self.quantity,
                      client_id=client_id, owner=self.owner, order_type=self.order_type)
 
+    # Returns an identical order with the price changed.
+    def with_price(self, price: Decimal) -> "Order":
+        return Order(id=self.id, side=self.side, price=price, quantity=self.quantity,
+                     client_id=self.client_id, owner=self.owner, order_type=self.order_type)
+
     @staticmethod
     def from_serum_order(serum_order: PySerumOrder) -> "Order":
         price = Decimal(serum_order.info.price)

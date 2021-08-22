@@ -14,11 +14,6 @@ from solana.publickey import PublicKey
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
-import mango.layouts  # nopep8
-import mango.marketmaking.fixedratiosdesiredordersbuilder  # nopep8
-import mango.marketmaking.marketmaker  # nopep8
-import mango.marketmaking.modelstate  # nopep8
-import mango.marketmaking.toleranceorderreconciler  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
 mango.ContextBuilder.add_command_line_parameters(parser)

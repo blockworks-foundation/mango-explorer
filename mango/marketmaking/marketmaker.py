@@ -21,28 +21,26 @@ import typing
 
 from datetime import datetime
 
-from .desiredordersbuilder import DesiredOrdersBuilder
 from .modelstate import ModelState
 from ..observables import EventSource
 from .orderreconciler import OrderReconciler
 from .ordertracker import OrderTracker
+from .orderchain.chain import Chain
 
 
 # # 🥭 MarketMaker class
 #
 # An event-driven market-maker.
 #
-
 class MarketMaker:
     def __init__(self, wallet: mango.Wallet, market: mango.Market,
                  market_instruction_builder: mango.MarketInstructionBuilder,
-                 desired_orders_builder: DesiredOrdersBuilder,
-                 order_reconciler: OrderReconciler):
+                 desired_orders_chain: Chain, order_reconciler: OrderReconciler):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.wallet: mango.Wallet = wallet
         self.market: mango.Market = market
         self.market_instruction_builder: mango.MarketInstructionBuilder = market_instruction_builder
-        self.desired_orders_builder: DesiredOrdersBuilder = desired_orders_builder
+        self.desired_orders_chain: Chain = desired_orders_chain
         self.order_reconciler: OrderReconciler = order_reconciler
         self.order_tracker: OrderTracker = OrderTracker()
 
@@ -56,7 +54,7 @@ class MarketMaker:
         try:
             payer = mango.CombinableInstructions.from_wallet(self.wallet)
 
-            desired_orders = self.desired_orders_builder.build(context, model_state)
+            desired_orders = self.desired_orders_chain.process(context, model_state)
             existing_orders = self.order_tracker.existing_orders(model_state)
             reconciled = self.order_reconciler.reconcile(model_state, existing_orders, desired_orders)
 

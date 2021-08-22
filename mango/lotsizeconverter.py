@@ -18,16 +18,19 @@ from decimal import Decimal
 
 from .token import Token
 
+
 # # 🥭 LotSizeConverter class
 #
-
-
 class LotSizeConverter():
     def __init__(self, base: Token, base_lot_size: Decimal, quote: Token, quote_lot_size: Decimal):
         self.base: Token = base
         self.base_lot_size: Decimal = base_lot_size
         self.quote: Token = quote
         self.quote_lot_size: Decimal = quote_lot_size
+
+    @property
+    def tick_size(self) -> Decimal:
+        return self.price_lots_to_value(Decimal(1))
 
     def price_lots_to_native(self, price_lots: Decimal) -> Decimal:
         return (price_lots * self.quote_lot_size) / self.base_lot_size
@@ -52,8 +55,6 @@ class LotSizeConverter():
 
 # # 🥭 NullLotSizeConverter class
 #
-
-
 class NullLotSizeConverter(LotSizeConverter):
     def __init__(self):
         super().__init__(None, Decimal(1), None, Decimal(1))
@@ -69,6 +70,32 @@ class NullLotSizeConverter(LotSizeConverter):
 
     def quantity_lots_to_value(self, quantity_lots: Decimal) -> Decimal:
         return quantity_lots
+
+    def __str__(self) -> str:
+        return "« 𝙽𝚞𝚕𝚕𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 »"
+
+
+# # 🥭 RaisingLotSizeConverter class
+#
+class RaisingLotSizeConverter(LotSizeConverter):
+    def __init__(self):
+        super().__init__(None, Decimal(-1), None, Decimal(-1))
+
+    def price_lots_to_native(self, price_lots: Decimal) -> Decimal:
+        raise NotImplementedError(
+            "RaisingLotSizeConverter.price_lots_to_native() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called.")
+
+    def quantity_lots_to_native(self, quantity_lots: Decimal) -> Decimal:
+        raise NotImplementedError(
+            "RaisingLotSizeConverter.quantity_lots_to_native() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called.")
+
+    def price_lots_to_value(self, price_lots: Decimal) -> Decimal:
+        raise NotImplementedError(
+            "RaisingLotSizeConverter.price_lots_to_value() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called.")
+
+    def quantity_lots_to_value(self, quantity_lots: Decimal) -> Decimal:
+        raise NotImplementedError(
+            "RaisingLotSizeConverter.quantity_lots_to_value() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called.")
 
     def __str__(self) -> str:
         return "« 𝙽𝚞𝚕𝚕𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 »"

@@ -20,7 +20,7 @@ from solana.publickey import PublicKey
 from .accountinfo import AccountInfo
 from .context import Context
 from .group import Group
-from .lotsizeconverter import LotSizeConverter
+from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .market import Market, InventorySource
 from .orderbookside import PerpOrderBookSide
 from .orders import Order
@@ -35,7 +35,7 @@ from .token import Token
 #
 class PerpMarket(Market):
     def __init__(self, program_id: PublicKey, address: PublicKey, base: Token, quote: Token, underlying_perp_market: PerpMarketDetails):
-        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote)
+        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.underlying_perp_market: PerpMarketDetails = underlying_perp_market
         self.lot_size_converter: LotSizeConverter = LotSizeConverter(
             base, underlying_perp_market.base_lot_size, quote, underlying_perp_market.quote_lot_size)
@@ -92,7 +92,7 @@ class PerpMarket(Market):
 #
 class PerpMarketStub(Market):
     def __init__(self, program_id: PublicKey, address: PublicKey, base: Token, quote: Token, group_address: PublicKey):
-        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote)
+        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.group_address: PublicKey = group_address
 
     def load(self, context: Context, group: typing.Optional[Group] = None) -> PerpMarket:

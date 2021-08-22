@@ -18,6 +18,8 @@ import logging
 import mango
 import typing
 
+from decimal import Decimal
+
 
 # # 🥭 ModelState class
 #
@@ -72,6 +74,18 @@ class ModelState:
     @property
     def asks(self) -> typing.Sequence[mango.Order]:
         return self.asks_watcher.latest
+
+    @property
+    def top_bid(self) -> mango.Order:
+        return self.bids_watcher.latest[0]
+
+    @property
+    def top_ask(self) -> mango.Order:
+        return self.asks_watcher.latest[0]
+
+    @property
+    def spread(self) -> Decimal:
+        return self.top_ask.price - self.top_bid.price
 
     @property
     def existing_orders(self) -> typing.Sequence[mango.PlacedOrder]:

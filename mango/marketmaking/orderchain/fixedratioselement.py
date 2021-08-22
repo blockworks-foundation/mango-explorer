@@ -20,16 +20,16 @@ import typing
 
 from decimal import Decimal
 
-from .desiredordersbuilder import DesiredOrdersBuilder
-from .modelstate import ModelState
+from .element import Element
+from ..modelstate import ModelState
 
 
 # # 🥭 FixedRatiosDesiredOrdersBuilder class
 #
-# Builds orders using a fixed spread ratio and a fixed position size ratio.
+# Ignores any input `Order`s (so probably best at the head of the chain). Builds orders using a fixed spread
+# ratio and a fixed position size ratio.
 #
-
-class FixedRatiosDesiredOrdersBuilder(DesiredOrdersBuilder):
+class FixedRatiosElement(Element):
     def __init__(self, spread_ratios: typing.Sequence[Decimal], position_size_ratios: typing.Sequence[Decimal], order_type: mango.OrderType = mango.OrderType.POST_ONLY):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         if len(spread_ratios) != len(position_size_ratios):
@@ -39,14 +39,14 @@ class FixedRatiosDesiredOrdersBuilder(DesiredOrdersBuilder):
         self.position_size_ratios: typing.Sequence[Decimal] = position_size_ratios
         self.order_type: mango.OrderType = order_type
 
-    def build(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
+    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
         base_tokens: mango.TokenValue = model_state.inventory.base
         quote_tokens: mango.TokenValue = model_state.inventory.quote
 
         total = (base_tokens.value * price.mid_price) + quote_tokens.value
 
-        orders: typing.List[mango.Order] = []
+        new_orders: typing.List[mango.Order] = []
         for counter in range(len(self.spread_ratios)):
             position_size_ratio = self.position_size_ratios[counter]
             quote_value_to_risk = total * position_size_ratio
@@ -56,14 +56,14 @@ class FixedRatiosDesiredOrdersBuilder(DesiredOrdersBuilder):
             bid: Decimal = price.mid_price - (price.mid_price * spread_ratio)
             ask: Decimal = price.mid_price + (price.mid_price * spread_ratio)
 
-            orders += [
+            new_orders += [
                 mango.Order.from_basic_info(mango.Side.BUY, price=bid,
                                             quantity=base_position_size, order_type=self.order_type),
                 mango.Order.from_basic_info(mango.Side.SELL, price=ask,
                                             quantity=base_position_size, order_type=self.order_type)
             ]
 
-        return orders
+        return new_orders
 
     def __str__(self) -> str:
-        return f"« 𝙵𝚒𝚡𝚎𝚍𝚁𝚊𝚝𝚒𝚘𝙳𝚎𝚜𝚒𝚛𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜𝙱𝚞𝚒𝚕𝚍𝚎𝚛 using ratios - spread: {self.spread_ratios}, position size: {self.position_size_ratios} »"
+        return f"« 𝙵𝚒𝚡𝚎𝚍𝚁𝚊𝚝𝚒𝚘𝚜𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using ratios - spread: {self.spread_ratios}, position size: {self.position_size_ratios} »"
