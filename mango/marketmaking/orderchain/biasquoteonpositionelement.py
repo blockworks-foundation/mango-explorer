@@ -38,28 +38,32 @@ class BiasQuoteOnPositionElement(Element):
             # Zero bias results in no changes to orders.
             return orders
 
-        # From Daffy on 20th August 2021:
-        #  Formula to adjust price might look like this `pyth_price * (1 + (curr_pos / size) * pos_lean)`
-        #  where pos_lean is a negative number
-        #
-        #  size is the standard size you're quoting which I believe comes from the position-size-ratio
-        #
-        #  So if my standard size I'm quoting is 0.0002 BTC, my current position is +0.0010 BTC, and pos_lean
-        #  is -0.0001, you would move your quotes down by 0.0005 (or 5bps)
-        # (Private chat link: https://discord.com/channels/@me/832570058861314048/878343278523723787)
-        quote_position_bias = self.quote_position_bias * -1
         new_orders: typing.List[mango.Order] = []
         for order in orders:
-            bias = (1 + (model_state.inventory.base.value / order.quantity) * quote_position_bias)
-            new_price: Decimal = order.price * bias
-            new_order: mango.Order = order.with_price(new_price)
-            bias_description = "BUY more" if bias > 0 else "SELL more"
-            self.logger.debug(f"""Order change - quote_position_bias {self.quote_position_bias} creates a ({bias_description}) bias factor of {bias}:
-    Old: {order}
-    New: {new_order}""")
+            new_order: mango.Order = self.bias_order(order, model_state.inventory.base.value)
             new_orders += [new_order]
 
         return new_orders
+
+    # From Daffy on 20th August 2021:
+    #  Formula to adjust price might look like this `pyth_price * (1 + (curr_pos / size) * pos_lean)`
+    #  where pos_lean is a negative number
+    #
+    #  size is the standard size you're quoting which I believe comes from the position-size-ratio
+    #
+    #  So if my standard size I'm quoting is 0.0002 BTC, my current position is +0.0010 BTC, and pos_lean
+    #  is -0.0001, you would move your quotes down by 0.0005 (or 5bps)
+    # (Private chat link: https://discord.com/channels/@me/832570058861314048/878343278523723787)
+    def bias_order(self, order: mango.Order, base_inventory_value: Decimal) -> mango.Order:
+        quote_position_bias = self.quote_position_bias * -1
+        bias = 1 + ((base_inventory_value / order.quantity) * quote_position_bias)
+        new_price: Decimal = order.price * bias
+        new_order: mango.Order = order.with_price(new_price)
+        bias_description = "BUY more" if bias > 1 else "SELL more"
+        self.logger.debug(f"""Order change - quote_position_bias {self.quote_position_bias} on inventory {base_inventory_value} / {order.quantity} creates a ({bias_description}) bias factor of {bias}:
+Old: {order}
+New: {new_order}""")
+        return new_order
 
     def __str__(self) -> str:
         return f"« 𝙱𝚒𝚊𝚜𝚀𝚞𝚘𝚝𝚎𝙾𝚗𝙿𝚘𝚜𝚒𝚝𝚒𝚘𝚗𝙴𝚕𝚎𝚖𝚎𝚗𝚝 - bias: {self.quote_position_bias} »"
