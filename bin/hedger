@@ -4,11 +4,8 @@ import argparse
 import logging
 import os
 import os.path
-import rx
-import rx.operators
 import sys
 import threading
-import traceback
 
 from decimal import Decimal
 
@@ -16,14 +13,16 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 import mango.layouts  # nopep8
+import mango.marketmaking  # nopep8
 
 parser = argparse.ArgumentParser(
     description="Hedges perp purchases by trading the underlying in the opposite direction.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--market", type=str, required=True, help="perp market symbol to hedge (e.g. ETH-PERP)")
+parser.add_argument("--watch-market", type=str, required=True, help="perp market symbol to hedge (e.g. ETH-PERP)")
+parser.add_argument("--hedge-market", type=str, required=True, help="spot market symbol to hedge (e.g. ETH/USDC)")
 parser.add_argument("--max-price-slippage-factor", type=Decimal, default=Decimal("0.05"),
-                    help="the maximum value the IOC hedging order price can slip by (default is 0.05 for 5%)")
+                    help="the maximum value the IOC hedging order price can slip by when hedging (default is 0.05 for 5%)")
 parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
                     help="The notification target for error events")
 parser.add_argument("--account-index", type=int, default=0,
@@ -40,7 +39,7 @@ for notify in args.notify_errors:
 
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-logger: logging.Logger = logging.getLogger("Hedger")
+
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_id)
@@ -52,10 +51,7 @@ disposer.add_disposable(manager)
 health_check = mango.HealthCheck()
 disposer.add_disposable(health_check)
 
-buy_price_adjustment_factor: Decimal = Decimal("1") + args.max_price_slippage_factor
-sell_price_adjustment_factor: Decimal = Decimal("1") - args.max_price_slippage_factor
-
-watched_market_symbol = args.market.upper()
+watched_market_symbol = args.watch_market.upper()
 watched_market_stub = context.market_lookup.find_by_symbol(watched_market_symbol)
 if watched_market_stub is None:
     raise Exception(f"Could not find market {watched_market_symbol}")
@@ -65,7 +61,7 @@ if not isinstance(ensured_watched_market, mango.PerpMarket):
     raise Exception(f"Market {watched_market_symbol} is not a perp market.")
 watched_market: mango.PerpMarket = ensured_watched_market
 
-hedging_market_symbol = f"{watched_market.base.symbol}/USDC"
+hedging_market_symbol = args.hedge_market.upper()
 hedging_market_stub = context.market_lookup.find_by_symbol(hedging_market_symbol)
 if hedging_market_stub is None:
     raise Exception(f"Could not find market {hedging_market_symbol}")
@@ -77,43 +73,17 @@ if not isinstance(hedging_market, mango.SpotMarket):
 hedging_market_operations: mango.MarketOperations = mango.create_market_operations(
     context, wallet, account, hedging_market, args.dry_run)
 
-initial: mango.PerpEventQueue = mango.PerpEventQueue.load(
+perp_event_queue: mango.PerpEventQueue = mango.PerpEventQueue.load(
     context, watched_market.underlying_perp_market.event_queue, watched_market.lot_size_converter)
-splitter: mango.UnseenPerpEventChangesTracker = mango.UnseenPerpEventChangesTracker(initial)
 
-event_splitting_subscription = mango.WebSocketAccountSubscription(
+event_subscription = mango.WebSocketAccountSubscription(
     context, watched_market.underlying_perp_market.event_queue, lambda account_info: mango.PerpEventQueue.parse(account_info, watched_market.lot_size_converter))
-manager.add(event_splitting_subscription)
-publisher = event_splitting_subscription.publisher.pipe(
-    rx.operators.observe_on(context.pool_scheduler),
-    rx.operators.flat_map(splitter.unseen),
-    rx.operators.filter(lambda event: isinstance(event, mango.PerpFillEvent)),
-    rx.operators.filter(lambda event: (event.maker == account.address) or (event.taker == account.address)),
-    rx.operators.catch(mango.observable_pipeline_error_reporter),
-    rx.operators.retry()
-)
+manager.add(event_subscription)
+health_check.add("hedger_watched_events_pong_subscription", event_subscription.pong)
 
-
-def hedge(event: mango.PerpFillEvent) -> None:
-    if event.maker == event.taker:
-        logger.info(f"Ignoring self-trade of {event.quantity:,.8f} at {event.price:,.8f} on {watched_market.symbol}.")
-        return
-
-    opposite_side: mango.Side = mango.Side.BUY if event.side == mango.Side.SELL else mango.Side.SELL
-    price_adjustment_factor: Decimal = sell_price_adjustment_factor if opposite_side == mango.Side.SELL else buy_price_adjustment_factor
-    adjusted_price: Decimal = event.price * price_adjustment_factor
-    quantity: Decimal = event.quantity
-    order: mango.Order = mango.Order.from_basic_info(opposite_side, adjusted_price, event.quantity, mango.OrderType.IOC)
-    logger.info(f"Hedging {event.side} of {event.quantity:,.8f} at {event.price:,.8f} on {watched_market.symbol} with {opposite_side} of {quantity:,.8f} at {adjusted_price:,.8f} on {hedging_market.symbol}\n\t{order}")
-    try:
-        hedging_market_operations.place_order(order)
-    except Exception as exception:
-        logger.error(
-            f"[{context.name}] Failed to hedge {watched_market.symbol} on {hedging_market.symbol} using order {order} - {exception} - {traceback.format_exc()}")
-
-
-publisher.subscribe(on_next=hedge)
-
+hedger: mango.marketmaking.Hedger = mango.marketmaking.Hedger(context, account, watched_market, hedging_market, perp_event_queue, event_subscription.publisher,
+                                                              hedging_market_operations, args.max_price_slippage_factor)
+disposer.add_disposable(hedger)
 manager.open()
 
 logging.info(f"Current assets in account {account.address} (owner: {account.owner}):")

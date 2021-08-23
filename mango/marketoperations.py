@@ -90,22 +90,22 @@ class MarketOperations(metaclass=abc.ABCMeta):
         return f"{self}"
 
 
-# # 🥭 NullMarketOperations class
+# # 🥭 DryRunMarketOperations class
 #
 # A null, no-op, dry-run trade executor that can be plugged in anywhere a `MarketOperations`
 # is expected, but which will not actually trade.
 #
-class NullMarketOperations(MarketOperations):
+class DryRunMarketOperations(MarketOperations):
     def __init__(self, market_name: str):
         super().__init__()
         self.market_name: str = market_name
 
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
-        self.logger.info(f"Cancelling order {order}.")
+        self.logger.info(f"[Dry Run] Not cancelling order {order}.")
         return [""]
 
     def place_order(self, order: Order) -> Order:
-        self.logger.info(f"Placing order {order}.")
+        self.logger.info(f"[Dry Run] Not placing order {order}.")
         return order
 
     def load_orders(self) -> typing.Sequence[Order]:
@@ -127,4 +127,4 @@ class NullMarketOperations(MarketOperations):
         return SYSTEM_PROGRAM_ADDRESS
 
     def __str__(self) -> str:
-        return f"""« 𝙽𝚞𝚕𝚕𝙾𝚛𝚍𝚎𝚛𝙿𝚕𝚊𝚌𝚎𝚛 [{self.market_name}] »"""
+        return f"""« 𝙳𝚛𝚢𝚁𝚞𝚗𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.market_name}] »"""

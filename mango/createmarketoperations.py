@@ -19,7 +19,7 @@ from .account import Account
 from .context import Context
 from .ensuremarketloaded import ensure_market_loaded
 from .market import Market
-from .marketoperations import MarketOperations, NullMarketOperations
+from .marketoperations import MarketOperations, DryRunMarketOperations
 from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarketoperations import PerpMarketOperations
 from .perpmarket import PerpMarket
@@ -38,7 +38,7 @@ from .wallet import Wallet
 
 def create_market_operations(context: Context, wallet: Wallet, account: typing.Optional[Account], market: Market, dry_run: bool = False) -> MarketOperations:
     if dry_run:
-        return NullMarketOperations(market.symbol)
+        return DryRunMarketOperations(market.symbol)
 
     loaded_market: Market = ensure_market_loaded(context, market)
     if isinstance(loaded_market, SerumMarket):

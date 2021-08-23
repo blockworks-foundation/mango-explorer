@@ -18,6 +18,8 @@ import logging
 import typing
 import websocket
 
+from datetime import datetime
+from rx.subject import BehaviorSubject
 from rx.core.typing import Disposable
 from solana.publickey import PublicKey
 from solana.rpc.types import RPCResponse
@@ -48,6 +50,8 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
         self.from_account_info: typing.Callable[[AccountInfo], TSubscriptionInstance] = constructor
         self.publisher: EventSource[TSubscriptionInstance] = EventSource[TSubscriptionInstance]()
         self.ws: typing.Optional[ReconnectingWebsocket] = None
+        self.pong: BehaviorSubject = BehaviorSubject(datetime.now())
+        self.pong_subscription: typing.Optional[Disposable] = None
 
     @abc.abstractmethod
     def build_request(self) -> str:
@@ -60,9 +64,13 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
         ws.ping_interval = self.context.ping_interval
         self.ws = ws
         ws.open()
+        self.pong_subscription = ws.pong.subscribe(self.pong)
 
     def close(self) -> None:
         if self.ws is not None:
+            if self.pong_subscription is not None:
+                self.pong_subscription.dispose()
+                self.pong_subscription = None
             self.ws.close()
             self.ws = None
 
@@ -88,6 +96,9 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
         self.publisher.on_completed()
         self.publisher.dispose()
         if self.ws is not None:
+            if self.pong_subscription is not None:
+                self.pong_subscription.dispose()
+                self.pong_subscription = None
             self.ws.close()
             self.ws = None
 

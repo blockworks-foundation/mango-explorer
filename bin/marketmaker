@@ -29,6 +29,9 @@ parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal(
                     help="tolerance in price and quantity when matching existing orders or cancelling/replacing")
 parser.add_argument("--pulse-interval", type=int, default=10,
                     help="number of seconds between each 'pulse' of the market maker")
+parser.add_argument("--hedge-market", type=str, help="spot market symbol to use for hedging (e.g. ETH/USDC)")
+parser.add_argument("--max-price-slippage-factor", type=Decimal, default=Decimal("0.05"),
+                    help="the maximum value the IOC hedging order price can slip by when hedging (default is 0.05 for 5%)")
 parser.add_argument("--account-index", type=int, default=0,
                     help="index of the account to use, if more than one available")
 parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
@@ -118,6 +121,39 @@ elif isinstance(market, mango.PerpMarket):
         context, manager, health_check, market, mango.OrderBookSideType.ASKS)
 else:
     raise Exception(f"Could not determine type of market {market.symbol}")
+
+if args.hedge_market is not None:
+    if not isinstance(market, mango.PerpMarket):
+        raise Exception(f"Cannot hedge - market {market_symbol} is not a perp market.")
+    watched_market: mango.PerpMarket = market
+
+    hedging_market_symbol = args.hedge_market.upper()
+    hedging_market_stub = context.market_lookup.find_by_symbol(hedging_market_symbol)
+    if hedging_market_stub is None:
+        raise Exception(f"Could not find market {hedging_market_symbol}")
+
+    hedging_market = mango.ensure_market_loaded(context, hedging_market_stub)
+    if not isinstance(hedging_market, mango.SpotMarket):
+        raise Exception(f"Market {hedging_market_symbol} is not a spot market.")
+
+    logging.info(f"Hedging on {hedging_market.symbol}")
+
+    hedging_market_operations: mango.MarketOperations = mango.create_market_operations(
+        context, wallet, account, hedging_market, args.dry_run)
+
+    perp_event_queue: mango.PerpEventQueue = mango.PerpEventQueue.load(
+        context, watched_market.underlying_perp_market.event_queue, watched_market.lot_size_converter)
+
+    event_subscription = mango.WebSocketAccountSubscription(
+        context, watched_market.underlying_perp_market.event_queue,
+        lambda account_info: mango.PerpEventQueue.parse(account_info, watched_market.lot_size_converter))
+    manager.add(event_subscription)
+    health_check.add("hedger_watched_events_pong_subscription", event_subscription.pong)
+
+    hedger: mango.marketmaking.Hedger = mango.marketmaking.Hedger(
+        context, account, watched_market, hedging_market, perp_event_queue, event_subscription.publisher,
+        hedging_market_operations, args.max_price_slippage_factor)
+    disposer.add_disposable(hedger)
 
 manager.open()
 

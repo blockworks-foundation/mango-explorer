@@ -1,3 +1,4 @@
+from .hedger import Hedger
 from .marketmaker import MarketMaker
 from .modelstate import ModelState
 from .orderreconciler import OrderReconciler, NullOrderReconciler
