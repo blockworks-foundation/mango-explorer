@@ -53,7 +53,8 @@ class BiasQuoteOnPositionElement(Element):
             bias = (1 + (model_state.inventory.base.value / order.quantity) * quote_position_bias)
             new_price: Decimal = order.price * bias
             new_order: mango.Order = order.with_price(new_price)
-            self.logger.debug(f"""Order change - quote_position_bias {self.quote_position_bias} creates a bias factor of {bias}:
+            bias_description = "BUY more" if bias > 0 else "SELL more"
+            self.logger.debug(f"""Order change - quote_position_bias {self.quote_position_bias} creates a ({bias_description}) bias factor of {bias}:
     Old: {order}
     New: {new_order}""")
             new_orders += [new_order]
