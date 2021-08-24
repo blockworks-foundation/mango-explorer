@@ -42,6 +42,7 @@ from .orderbookside import OrderBookSideType, PerpOrderBookSide
 from .orders import Order, OrderType, Side
 from .ownedtokenvalue import OwnedTokenValue
 from .oraclefactory import create_oracle_provider
+from .parse_account_info_to_orders import parse_account_info_to_orders
 from .perpaccount import PerpAccount
 from .perpeventqueue import PerpEvent, PerpFillEvent, PerpOutEvent, PerpUnknownEvent, PerpEventQueue, UnseenPerpEventChangesTracker
 from .perpmarket import PerpMarket, PerpMarketStub

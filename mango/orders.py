@@ -16,7 +16,6 @@
 
 import enum
 import pyserum.enums
-
 import typing
 
 from decimal import Decimal

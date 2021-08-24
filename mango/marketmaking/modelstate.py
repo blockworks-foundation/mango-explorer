@@ -27,8 +27,8 @@ from decimal import Decimal
 #
 class ModelState:
     def __init__(self, market: mango.Market,
-                 account_watcher: mango.Watcher[mango.Account],
                  group_watcher: mango.Watcher[mango.Group],
+                 account_watcher: mango.Watcher[mango.Account],
                  price_watcher: mango.Watcher[mango.Price],
                  placed_orders_container_watcher: mango.Watcher[mango.PlacedOrdersContainer],
                  inventory_watcher: mango.Watcher[mango.Inventory],
@@ -37,8 +37,8 @@ class ModelState:
                  ):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.market: mango.Market = market
-        self.account_watcher: mango.Watcher[mango.Account] = account_watcher
         self.group_watcher: mango.Watcher[mango.Group] = group_watcher
+        self.account_watcher: mango.Watcher[mango.Account] = account_watcher
         self.price_watcher: mango.Watcher[mango.Price] = price_watcher
         self.placed_orders_container_watcher: mango.Watcher[
             mango.PlacedOrdersContainer] = placed_orders_container_watcher
@@ -92,7 +92,15 @@ class ModelState:
         return self.placed_orders_container_watcher.latest.placed_orders
 
     def __str__(self) -> str:
-        return f"""« 𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎 for market '{self.market.symbol}' »"""
+        return f"""« 𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎 for market '{self.market.symbol}'
+    Group: {self.group_watcher.latest.address}
+    Account: {self.account_watcher.latest.address}
+    Price: {self.price_watcher.latest}
+    Inventory: {self.inventory_watcher.latest}
+    Existing Order Count: {len(self.placed_orders_container_watcher.latest.placed_orders)}
+    Bid Count: {len(self.bids_watcher.latest)}
+    Ask Count: {len(self.bids_watcher.latest)}
+»"""
 
     def __repr__(self) -> str:
         return f"{self}"

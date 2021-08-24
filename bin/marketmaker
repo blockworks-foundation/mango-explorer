@@ -5,9 +5,9 @@ import logging
 import os
 import os.path
 import rx
+import rx.operators
 import sys
 import threading
-import typing
 
 from decimal import Decimal
 
@@ -23,12 +23,16 @@ mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 chainbuilder.ChainBuilder.add_command_line_parameters(parser)
 parser.add_argument("--market", type=str, required=True, help="market symbol to make market upon (e.g. ETH/USDC)")
+parser.add_argument("--update-mode", type=mango.marketmaking.ModelUpdateMode, default=mango.marketmaking.ModelUpdateMode.WEBSOCKET,
+                    choices=list(mango.marketmaking.ModelUpdateMode), help="Update mode for model data - can be WEBSOCKET (default) or POLL")
 parser.add_argument("--oracle-provider", type=str, required=True,
                     help="name of the price provider to use (e.g. pyth)")
 parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal("0.001"),
                     help="tolerance in price and quantity when matching existing orders or cancelling/replacing")
 parser.add_argument("--pulse-interval", type=int, default=10,
                     help="number of seconds between each 'pulse' of the market maker")
+parser.add_argument("--event-queue-poll-interval", type=int, default=10,
+                    help="number of seconds between each 'poll' of the event queue (only used if --update-mode is POLL)")
 parser.add_argument("--hedge-market", type=str, help="spot market symbol to use for hedging (e.g. ETH/USDC)")
 parser.add_argument("--max-price-slippage-factor", type=Decimal, default=Decimal("0.05"),
                     help="the maximum value the IOC hedging order price can slip by when hedging (default is 0.05 for 5%)")
@@ -85,42 +89,7 @@ if market.quote != group.shared_quote_token.token:
 
 cleanup(context, wallet, account, market, args.dry_run)
 
-latest_group_observer = mango.build_group_watcher(context, manager, health_check, group)
-account_subscription, latest_account_observer = mango.build_account_watcher(
-    context, manager, health_check, account, latest_group_observer)
-latest_price_observer = mango.build_price_watcher(
-    context, manager, health_check, disposer, args.oracle_provider, market)
-
 market = mango.ensure_market_loaded(context, market)
-market_instruction_builder: mango.MarketInstructionBuilder = mango.create_market_instruction_builder(
-    context, wallet, account, market, args.dry_run)
-if isinstance(market, mango.SerumMarket):
-    inventory_watcher: mango.Watcher[mango.Inventory] = mango.build_serum_inventory_watcher(
-        context, manager, health_check, disposer, wallet, market)
-    latest_open_orders_observer: mango.Watcher[mango.PlacedOrdersContainer] = mango.build_serum_open_orders_watcher(
-        context, manager, health_check, market, wallet)
-    latest_bids_watcher: mango.Watcher[typing.Sequence[mango.Order]] = mango.build_serum_orderbook_side_watcher(
-        context, manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.BIDS)
-    latest_asks_watcher: mango.Watcher[typing.Sequence[mango.Order]] = mango.build_serum_orderbook_side_watcher(
-        context, manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.ASKS)
-elif isinstance(market, mango.SpotMarket):
-    inventory_watcher = mango.SpotInventoryAccountWatcher(market, latest_account_observer)
-    latest_open_orders_observer = mango.build_spot_open_orders_watcher(
-        context, manager, health_check, wallet, account, group, market)
-    latest_bids_watcher = mango.build_serum_orderbook_side_watcher(
-        context, manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.BIDS)
-    latest_asks_watcher = mango.build_serum_orderbook_side_watcher(
-        context, manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.ASKS)
-elif isinstance(market, mango.PerpMarket):
-    inventory_watcher = mango.PerpInventoryAccountWatcher(market, latest_account_observer, group)
-    latest_open_orders_observer = mango.build_perp_open_orders_watcher(
-        context, manager, health_check, market, account, group, account_subscription)
-    latest_bids_watcher = mango.build_perp_orderbook_side_watcher(
-        context, manager, health_check, market, mango.OrderBookSideType.BIDS)
-    latest_asks_watcher = mango.build_perp_orderbook_side_watcher(
-        context, manager, health_check, market, mango.OrderBookSideType.ASKS)
-else:
-    raise Exception(f"Could not determine type of market {market.symbol}")
 
 if args.hedge_market is not None:
     if not isinstance(market, mango.PerpMarket):
@@ -144,37 +113,59 @@ if args.hedge_market is not None:
     perp_event_queue: mango.PerpEventQueue = mango.PerpEventQueue.load(
         context, watched_market.underlying_perp_market.event_queue, watched_market.lot_size_converter)
 
-    event_subscription = mango.WebSocketAccountSubscription(
-        context, watched_market.underlying_perp_market.event_queue,
-        lambda account_info: mango.PerpEventQueue.parse(account_info, watched_market.lot_size_converter))
-    manager.add(event_subscription)
-    health_check.add("hedger_watched_events_pong_subscription", event_subscription.pong)
+    event_queue_source: mango.EventSource[mango.PerpEventQueue]
+    if args.update_mode == mango.marketmaking.ModelUpdateMode.WEBSOCKET:
+        event_subscription = mango.WebSocketAccountSubscription(
+            context, watched_market.underlying_perp_market.event_queue,
+            lambda account_info: mango.PerpEventQueue.parse(account_info, watched_market.lot_size_converter))
+        manager.add(event_subscription)
+        health_check.add("hedger_watched_events_pong_subscription", event_subscription.pong)
+        event_queue_source = event_subscription.publisher
+    else:
+        event_queue_observable: rx.Observable = rx.interval(args.event_queue_poll_interval).pipe(
+            rx.operators.observe_on(context.pool_scheduler),
+            rx.operators.catch(mango.observable_pipeline_error_reporter),
+            rx.operators.retry(),
+            rx.operators.start_with(-1),
+            rx.operators.map(lambda _: mango.PerpEventQueue.load(
+                context, watched_market.underlying_perp_market.event_queue, watched_market.lot_size_converter))
+        )
+        event_queue_source = mango.EventSource[mango.PerpEventQueue]()
+        event_queue_observable.subscribe(event_queue_source)
+        health_check.add("hedger_watched_events_pong_subscription", event_queue_source)
 
     hedger: mango.marketmaking.Hedger = mango.marketmaking.Hedger(
-        context, account, watched_market, hedging_market, perp_event_queue, event_subscription.publisher,
+        context, account, watched_market, hedging_market, perp_event_queue, event_queue_source,
         hedging_market_operations, args.max_price_slippage_factor)
     disposer.add_disposable(hedger)
-
-manager.open()
 
 order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
     args.existing_order_tolerance, args.existing_order_tolerance)
 
 desired_orders_chain: chain.Chain = chainbuilder.ChainBuilder.from_command_line_parameters(args)
+
+market_instruction_builder: mango.MarketInstructionBuilder = mango.create_market_instruction_builder(
+    context, wallet, account, market, args.dry_run)
 market_maker = mango.marketmaking.MarketMaker(
     wallet, market, market_instruction_builder, desired_orders_chain, order_reconciler)
-model_state = mango.marketmaking.ModelState(market, latest_account_observer,
-                                            latest_group_observer, latest_price_observer,
-                                            latest_open_orders_observer, inventory_watcher,
-                                            latest_bids_watcher, latest_asks_watcher)
+
+oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, args.oracle_provider)
+oracle = oracle_provider.oracle_for_market(context, market)
+if oracle is None:
+    raise Exception(f"Could not find oracle for market {market.symbol} from provider {args.oracle_provider}.")
+
+model_state_builder: mango.marketmaking.ModelStateBuilder = mango.marketmaking.model_state_builder_factory(
+    args.update_mode, context, disposer, manager, health_check, wallet, group, account, market, oracle)
 
 health_check.add("marketmaker_pulse", market_maker.pulse_complete)
 
 logging.info(f"Current assets in account {account.address} (owner: {account.owner}):")
 mango.TokenValue.report([asset for asset in account.net_assets if asset is not None], logging.info)
 
+manager.open()
+
 pulse_disposable = rx.interval(args.pulse_interval).subscribe(
-    on_next=lambda _: market_maker.pulse(context, model_state))
+    on_next=lambda _: market_maker.pulse(context, model_state_builder.build(context)))
 disposer.add_disposable(pulse_disposable)
 
 # Wait - don't exit. Exiting will be handled by signals/interrupts.
