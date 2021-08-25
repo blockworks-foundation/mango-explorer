@@ -31,35 +31,13 @@ def test_context_default_values():
 #     context_has_default_values(mango.ContextBuilder.default())
 
 
-def test_new_from_cluster_url():
-    context_has_default_values(mango.ContextBuilder.default())
-    derived = mango.ContextBuilder.default().new_from_cluster_url("https://some-dev-host")
-    assert derived.program_id == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
-    assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-    assert derived.group_name == "mainnet.0"
-    assert derived.group_id == PublicKey("4yJ2Vx3kZnmHTNCrHzdoj5nCwriF2kVhfKNvqC6gU8tr")
-    context_has_default_values(mango.ContextBuilder.default())
-
-
 def test_new_from_group_name():
     context_has_default_values(mango.ContextBuilder.default())
-    derived = mango.ContextBuilder.default().new_from_group_name("mainnet.0")
+    derived = mango.ContextBuilder.from_group_name(mango.ContextBuilder.default(), "mainnet.0")
     assert derived.program_id == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
     assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
 
     # Should update both of these values on new group name.
-    assert derived.group_name == "mainnet.0"
-    assert derived.group_id == PublicKey("4yJ2Vx3kZnmHTNCrHzdoj5nCwriF2kVhfKNvqC6gU8tr")
-    context_has_default_values(mango.ContextBuilder.default())
-
-
-def test_new_from_group_id():
-    context_has_default_values(mango.ContextBuilder.default())
-    derived = mango.ContextBuilder.default().new_from_group_id(PublicKey("4yJ2Vx3kZnmHTNCrHzdoj5nCwriF2kVhfKNvqC6gU8tr"))
-    assert derived.program_id == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
-    assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-
-    # Should update both of these values on new group ID.
     assert derived.group_name == "mainnet.0"
     assert derived.group_id == PublicKey("4yJ2Vx3kZnmHTNCrHzdoj5nCwriF2kVhfKNvqC6gU8tr")
     context_has_default_values(mango.ContextBuilder.default())

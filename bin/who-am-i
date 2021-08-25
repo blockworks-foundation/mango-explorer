@@ -19,5 +19,7 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
+print(context)
+
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-print(wallet.address)
+print("Wallet Address:", wallet.address)

@@ -30,8 +30,6 @@ from .marketlookup import MarketLookup
 from .tokenlookup import TokenLookup
 
 
-_default_group_data = MangoConstants["groups"][0]
-
 # Probably best to access this through the Context object
 _pool_scheduler = ThreadPoolScheduler(multiprocessing.cpu_count())
 
@@ -80,52 +78,6 @@ class Context:
                 return group["name"]
 
         return "« Unknown Group »"
-
-    def new_from_cluster(self, cluster: str) -> "Context":
-        cluster_url = MangoConstants["cluster_urls"][cluster]
-        for group_data in MangoConstants["groups"]:
-            if group_data["cluster"] == cluster:
-                if group_data["name"] == self.group_name:
-                    program_id = PublicKey(group_data["mangoProgramId"])
-                    dex_program_id = PublicKey(group_data["serumProgramId"])
-                    group_id = PublicKey(_default_group_data["publicKey"])
-                    return Context(self.name, cluster, cluster_url, self.client.skip_preflight, program_id, dex_program_id, self.group_name, group_id, self.token_lookup, self.market_lookup)
-        raise Exception(f"Could not find group name '{self.group_name}' in cluster '{cluster}'.")
-
-    def new_from_cluster_url(self, cluster_url: str) -> "Context":
-        return Context(self.name, self.client.cluster, cluster_url, self.client.skip_preflight, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
-
-    def new_from_group_name(self, group_name: str) -> "Context":
-        for group_data in MangoConstants["groups"]:
-            if group_data["cluster"] == self.client.cluster:
-                if group_data["name"] == group_name:
-                    program_id = PublicKey(group_data["mangoProgramId"])
-                    dex_program_id = PublicKey(group_data["serumProgramId"])
-                    group_id = PublicKey(_default_group_data["publicKey"])
-                    return Context(self.name, self.client.cluster, self.client.cluster_url, self.client.skip_preflight, program_id, dex_program_id, group_name, group_id, self.token_lookup, self.market_lookup)
-        raise Exception(f"Could not find group name '{group_name}' in cluster '{self.client.cluster}'.")
-
-    def new_from_group_id(self, group_id: PublicKey) -> "Context":
-        group_id_str = str(group_id)
-        for group_data in MangoConstants["groups"]:
-            if group_data["cluster"] == self.client.cluster:
-                if group_data["publicKey"] == group_id_str:
-                    program_id = PublicKey(group_data["mangoProgramId"])
-                    dex_program_id = PublicKey(group_data["serumProgramId"])
-                    group_id = PublicKey(_default_group_data["publicKey"])
-                    group_name = _default_group_data["name"]
-                    return Context(self.name, self.client.cluster, self.client.cluster_url, self.client.skip_preflight, program_id, dex_program_id, group_name, group_id, self.token_lookup, self.market_lookup)
-        raise Exception(f"Could not find group with ID '{group_id}' in cluster '{self.client.cluster}'.")
-
-    def new_forced_to_devnet(self) -> "Context":
-        cluster: str = "devnet"
-        cluster_url: str = MangoConstants["cluster_urls"][cluster]
-        return Context(self.name, cluster, cluster_url, self.client.skip_preflight, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
-
-    def new_forced_to_mainnet_beta(self) -> "Context":
-        cluster: str = "mainnet"
-        cluster_url: str = MangoConstants["cluster_urls"][cluster]
-        return Context(self.name, cluster, cluster_url, self.client.skip_preflight, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.token_lookup, self.market_lookup)
 
     def __str__(self) -> str:
         return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝 '{self.name}':

@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 from .context import Context
+from .contextbuilder import ContextBuilder
 from .oracle import OracleProvider
 from .oracles.ftx import ftx
 from .oracles.pythnetwork import pythnetwork
@@ -25,7 +26,6 @@ from .oracles.stub import stub
 #
 # This file allows you to create a concreate OracleProvider for a specified provider name.
 #
-
 def create_oracle_provider(context: Context, provider_name: str) -> OracleProvider:
     if provider_name == "serum":
         return serum.SerumOracleProvider()
@@ -34,10 +34,10 @@ def create_oracle_provider(context: Context, provider_name: str) -> OracleProvid
     elif provider_name == "pyth":
         return pythnetwork.PythOracleProvider(context)
     elif provider_name == "pyth-mainnet":
-        mainnet_beta_pyth_context: Context = context.new_forced_to_mainnet_beta()
+        mainnet_beta_pyth_context: Context = ContextBuilder.forced_to_mainnet_beta(context)
         return pythnetwork.PythOracleProvider(mainnet_beta_pyth_context)
     elif provider_name == "pyth-devnet":
-        devnet_pyth_context: Context = context.new_forced_to_devnet()
+        devnet_pyth_context: Context = ContextBuilder.forced_to_devnet(context)
         return pythnetwork.PythOracleProvider(devnet_pyth_context)
     elif provider_name == "stub":
         return stub.StubOracleProvider()
