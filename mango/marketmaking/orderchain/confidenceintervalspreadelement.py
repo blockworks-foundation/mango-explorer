@@ -62,7 +62,10 @@ class ConfidenceIntervalSpreadElement(Element):
 
         new_orders.sort(key=lambda ord: ord.price, reverse=True)
         order_text = "\n    ".join([f"{order}" for order in new_orders])
-        self.logger.debug(f"""Initial desired orders - spread {model_state.spread} ({model_state.top_bid.price} / {model_state.top_ask.price}):
+
+        top_bid = model_state.top_bid
+        top_ask = model_state.top_ask
+        self.logger.debug(f"""Initial desired orders - spread {model_state.spread} ({top_bid.price if top_bid else None} / {top_ask.price if top_ask else None}):
     {order_text}""")
         return new_orders
 
