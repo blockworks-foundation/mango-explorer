@@ -71,7 +71,7 @@ def log_account(account_info: mango.AccountInfo) -> mango.AccountInfo:
     return account_info
 
 
-def add_subscription_for_parameter(context: mango.Context, manager: mango.IndividualWebSocketSubscriptionManager, timer_limit: int, name_and_address: str):
+def add_subscription_for_parameter(context: mango.Context, manager: mango.IndividualWebSocketSubscriptionManager, health_check: mango.HealthCheck, timer_limit: int, name_and_address: str):
     name, address_str = name_and_address.split(":")
     address = PublicKey(address_str)
 
@@ -81,6 +81,9 @@ def add_subscription_for_parameter(context: mango.Context, manager: mango.Indivi
 
     account_subscription = mango.WebSocketAccountSubscription(context, address, lambda account_info: account_info)
     manager.add(account_subscription)
+
+    # Need a nice way of ensuring pongs from all subscriptions
+    health_check.add("ws_pong", account_subscription.pong)
 
     on_change = account_subscription.publisher.pipe(rx.operators.start_with(immediate))
     on_timer = rx.interval(timer_limit).pipe(
@@ -104,7 +107,7 @@ health_check = mango.HealthCheck()
 disposer.add_disposable(health_check)
 
 for name_and_address in args.named_address:
-    add_subscription_for_parameter(context, manager, args.timer_limit, name_and_address)
+    add_subscription_for_parameter(context, manager, health_check, args.timer_limit, name_and_address)
 
 manager.open()
 
