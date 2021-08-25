@@ -3,11 +3,11 @@ from .context import mango
 from solana.publickey import PublicKey
 
 
-def context_has_default_values(ctx):
+def context_has_default_values(ctx: mango.Context):
     assert ctx.program_id == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
     assert ctx.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-    assert ctx.group_name == "mainnet.0"
-    assert ctx.group_id == PublicKey("4yJ2Vx3kZnmHTNCrHzdoj5nCwriF2kVhfKNvqC6gU8tr")
+    assert ctx.group_name == "mainnet.1"
+    assert ctx.group_id == PublicKey("98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue")
 
 
 def test_context_default_exists():
@@ -27,7 +27,7 @@ def test_context_default_values():
 #     assert derived.program_id == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
 #     assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
 #     assert derived.group_name == "mainnet.0"
-#     assert derived.group_id == PublicKey("4yJ2Vx3kZnmHTNCrHzdoj5nCwriF2kVhfKNvqC6gU8tr")
+#     assert derived.group_id == PublicKey("98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue")
 #     context_has_default_values(mango.ContextBuilder.default())
 
 
@@ -40,4 +40,3 @@ def test_new_from_group_name():
     # Should update both of these values on new group name.
     assert derived.group_name == "mainnet.0"
     assert derived.group_id == PublicKey("4yJ2Vx3kZnmHTNCrHzdoj5nCwriF2kVhfKNvqC6gU8tr")
-    context_has_default_values(mango.ContextBuilder.default())
