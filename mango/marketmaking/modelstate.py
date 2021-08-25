@@ -76,14 +76,14 @@ class ModelState:
         return self.asks_watcher.latest
 
     @property
-    def top_bid(self) -> typing.Union[mango.Order, None]:
+    def top_bid(self) -> typing.Optional[mango.Order]:
         if self.bids_watcher.latest:
             return self.bids_watcher.latest[0]
         else:
             return None
 
     @property
-    def top_ask(self) -> typing.Union[mango.Order, None]:
+    def top_ask(self) -> typing.Optional[mango.Order]:
         if self.asks_watcher.latest:
             return self.asks_watcher.latest[0]
         else:
@@ -96,7 +96,7 @@ class ModelState:
         if top_ask is None or top_bid is None:
             return Decimal(0)
         else:
-            return self.top_ask.price - self.top_bid.price
+            return top_ask.price - top_bid.price
 
     @property
     def existing_orders(self) -> typing.Sequence[mango.PlacedOrder]:
