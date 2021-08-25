@@ -50,7 +50,12 @@ class MarketMaker:
         self.buy_client_ids: typing.List[int] = []
         self.sell_client_ids: typing.List[int] = []
 
+        self.not_quoting: bool = False
+
     def pulse(self, context: mango.Context, model_state: ModelState):
+        if self.not_quoting:
+            return True
+
         try:
             payer = mango.CombinableInstructions.from_wallet(self.wallet)
 
