@@ -17,7 +17,7 @@ OK, now is the time to question if you should really do this. No-one here is goi
 To run this quickstart you’ll need:
 * A server set up with [docker](https://www.docker.com/) or [podman](https://podman.io/) installed and configured.
 * Some SOL for transaction costs.
-* Some Solana-based USDT (we'll convert USDT to other tokens in this Quickstart).
+* Some Solana-based USDC (we'll convert USDC to other tokens in this Quickstart).
 
 
 # 1. ❓ Why Run A Liquidator?
@@ -35,9 +35,9 @@ For more details of the process and what it involves, see the [Liquidation noteb
 
 # 2. 💵 How Much Money?
 
-This Quickstart will use 1,000USDT as the starting point. Is this enough? Too much? It all depends on you, how much you have, and how much you want to allocate to the liquidator.
+This Quickstart will use 1,000USDC as the starting point. Is this enough? Too much? It all depends on you, how much you have, and how much you want to allocate to the liquidator.
 
-1,000USDT seemed a nice starting point for this guide, but how much you use is up to you. Adjust the figures below where necessary.
+1,000USDC seemed a nice starting point for this guide, but how much you use is up to you. Adjust the figures below where necessary.
 
 
 # 3. 📂 Directories And Files
@@ -134,12 +134,14 @@ Balances:
     SOL balance:         1.00000000
     BTC balance:         0.00000000
     ETH balance:         0.00000000
-   USDT balance:         0.00000000
+    SOL balance:         0.00000000
+    SRM balance:         0.00000000
+   USDC balance:         0.00000000
 ```
 
-This shows 1 SOL and 0 BTC, 0 ETH, and 0 USDT, as you'd expect (since we haven't sent any of those yet).
+This shows 1 SOL and 0 BTC, 0 ETH, 0 SOL, 0 SRM, and 0 USDC, as you'd expect (since we haven't sent any of those yet).
 
-These three tokens - BTC, ETH, USDT - are the three tokens of the default 'group' of cross-margined tokens we're using. If you want to use a different group, you can pass the `--group-name` parameter to commands.
+These five tokens - BTC, ETH, USDC - are the five tokens of the default 'group' of cross-margined tokens we're using. If you want to use a different group, you can pass the `--group-name` parameter to commands.
 
 
 # 7. ✅ Validate Account
@@ -168,24 +170,28 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     Errors:
         Account '48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB' has no account for token 'BTC', mint '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E'.
         Account '48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB' has no account for token 'ETH', mint '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk'.
-        Account '48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB' has no account for token 'USDT', mint 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'.
+        Account '48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB' has no account for token 'SOL', mint 'So11111111111111111111111111111111111111112'.
+        Account '48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB' has no account for token 'SRM', mint 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt'.
+        Account '48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB' has no account for token 'USDC', mint 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'.
 
     Warnings:
-        No Serum open orders account for market 'BTC/USDT' [C1EuT9VokAKLiW7i2ASnZUvxDoKuKkCpDDeNxAptuNe4]'.
-        No Serum open orders account for market 'ETH/USDT' [7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF]'.
+        No Serum open orders account for market 'BTC/USDC' [A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw]'.
+        No Serum open orders account for market 'ETH/USDC' [4tSvZvnbyzHXLMTiFonMyxZoHmFqau1XArcRCVHLZ5gX]'.
+        No Serum open orders account for market 'SOL/USDC' [9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT]'.
+        No Serum open orders account for market 'SRM/USDC' [ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA]'.
 
     Details:
         Account '48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB' has no Mango Markets margin accounts.
 »
 ```
-So, we have 3 errors - no token accounts for BTC, ETH or USDT. That's expected - we haven't added any of those tokens yet. Let's start that now.
+So, we have 5 errors - no token accounts for BTC, ETH, SOL, SRM, or USDC. That's expected - we haven't added any of those tokens yet. Let's start that now.
 
 
-# 8. 💸 Add USDT
+# 8. 💸 Add USDC
 
-Transfer some USDT to the new account. Again I'm using [sollet](https://sollet.io) for this but you use whatever you're comfortable with. I transferred 1,000 USDT to **48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB**.
+Transfer some USDC to the new account. Again I'm using [sollet](https://sollet.io) for this but you use whatever you're comfortable with. I transferred 1,000 USDC to **48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB**.
 
-When you've transferred the USDT, a re-run of the `group-balances` should show something like:
+When you've transferred the USDC, a re-run of the `group-balances` should show something like:
 ```
 # mango-explorer group-balances
 2021-05-08 14:18:21 ⚠ root
@@ -204,25 +210,32 @@ Balances:
     SOL balance:         1.00000000
     BTC balance:         0.00000000
     ETH balance:         0.00000000
-   USDT balance:     1,000.00000000
+    SOL balance:         0.00000000
+    SRM balance:         0.00000000
+   USDC balance:     1,000.00000000
 ```
 
-You can see above that the USDT balance is now 1,000. You should see whatever amount you transferred in your own output.
+You can see above that the USDC balance is now 1,000. You should see whatever amount you transferred in your own output.
 
 
 # 9. ⚖️ 'Balancing' The Wallet
 
-The default group is a cross-margined basket of 3 tokens: BTC, ETH, and USDT. A general liquidator probably wants to be able to provide any of those tokens, to allow for situations where it needs to provide tokens to make up a margin account's shortfall.
+The default group is a cross-margined basket of 3 tokens: BTC, ETH, and USDC. A general liquidator probably wants to be able to provide any of those tokens, to allow for situations where it needs to provide tokens to make up a margin account's shortfall.
 
 After performing a liquidation though, the wallet may 'run out' of one type of token, or may have too much of another token, skewing the risk profile of the wallet. To fix this, we need to 'balance' the proportion of each token in the wallet.
 
-What proportion of tokens is 'right'? It depends on your goals. You might want to accumulate only USDT, so you would specify a fixed amount of BTC and ETH as the target for balancing. On the other hand, you may just want to keep a third of the value in each token.
+What proportion of tokens is 'right'? It depends on your goals. You might want to accumulate only USDC, so you would specify a fixed amount of BTC and ETH as the target for balancing. On the other hand, you may just want to keep a third of the value in each token.
 
-For our purposes here, let's go for a third in each token.
+For our purposes here, let's go for about a fifth in each token. At today's prices, that's:
+* 0.004 BTC
+* 0.06 ETH
+* 2.65 SOL
+* 30 SRM
+* 200 USDC
 
 To set this up, we can use the `group-balance-wallet` command. We tell it we want to put 33% in BTC (using the `--target` parameter with the value "BTC:33%") and 33% in ETH (using the `--target` parameter with the value "ETH:33%"). Since this command actually performs transactions, let's run it first with the `--dry-run` parameter - this tells the command to run but not send any actual transactions to Serum.
 ```
-# mango-explorer group-balance-wallet --target "BTC:33%" --target "ETH:33%" --dry-run
+# mango-explorer group-balance-wallet --target "BTC:0.004" --target "ETH:0.06" --target "SOL:2.65" --target "SRM:30" --dry-run
 2021-05-08 14:20:04 ⚠ root
 ⚠ WARNING ⚠
 
@@ -235,14 +248,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     🚧 Github: https://github.com/blockworks-foundation
     📧 Email: mailto:hello@blockworks.foundation
 
-Skipping BUY trade of 0.00561444 of 'BTC'.
-Skipping BUY trade of 0.09036219 of 'ETH'.
+Skipping BUY trade of 0.00400000 of 'BTC'.
+Skipping BUY trade of 0.06000000 of 'ETH'.
+Skipping BUY trade of 2.65000000 of 'SOL'.
+Skipping BUY trade of 30.00000000 of 'SRM'.
 ```
-33% of 1,000USDT is 330 USDT, and you can see that 330 USDT is worth about 0.00561444 BTC and 0.09036219 ETH at today's prices.
-
 Let's run it again without the `--dry-run` flag, so that it actually performs the transactions. This will place orders on the Serum orderbook to trade the tokens.
 ```
-# mango-explorer group-balance-wallet --target "BTC:33%" --target "ETH:33%"
+# mango-explorer group-balance-wallet --target "BTC:0.004" --target "ETH:0.06" --target "SOL:2.65" --target "SRM:30" --dry-run
 2021-05-08 14:28:12 ⚠ root
 ⚠ WARNING ⚠
 
@@ -262,7 +275,8 @@ Source token account: « AccountInfo [2HchGy6FnjC6DuZb9oTZ9ByUMtUScJkhdDzGUkVNtc
     Executable: False
     Lamports: 2039280
     Rent Epoch: 179                                                                                             »
-Placing order                                                                                                                         paying_token_address: 2HchGy6FnjC6DuZb9oTZ9ByUMtUScJkhdDzGUkVNtc8T
+Placing order
+    paying_token_address: 2HchGy6FnjC6DuZb9oTZ9ByUMtUScJkhdDzGUkVNtc8T
     account: <solana.account.Account object at 0x7f237d147790>
     order_type: IOC
     side: BUY
@@ -333,7 +347,7 @@ Order execution complete
 
 If you have problems at this stage, for example with Solana transactions timing out because of network problems, there are useful commands to manually fix things: `serum-buy`, `serum-sell` and (particularly useful for problems where Serum completes the order but the token doesn't make it to your wallet) `group-settle`.
 
-Now if we check the balances we can see we have roughly a third in each of the three group tokens:
+Now if we check the balances we can see we have roughly a fifth in each of the five group tokens:
 ```
 # mango-explorer group-balances
 2021-05-08 14:31:43 ⚠ root
@@ -350,12 +364,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 Balances:
     SOL balance:         0.94913592
-    BTC balance:         0.00560000
-    ETH balance:         0.09000000
-   USDT balance:       339.20742600
+    BTC balance:         0.00400000
+    ETH balance:         0.06000000
+    SOL balance:         2.65000000
+    SRM balance:        30.00000000
+   USDC balance:       199.20742600
 ```
 
-We now have about 339 USDT, 0.0056 BTC, and 0.09 ETH. That's roughly a third each at today's prices.
+We now have about 200 USDC, 0.004 BTC, 0.06 ETH, 2.65 SOL, and 30 SRM. That's roughly a fifth each at today's prices.
 
 
 # 10. ✅ Validate Account (Again)
@@ -386,10 +402,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         None
 
     Details:
-        Token account with mint '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E' has balance: 0.0056 BTC
-        Token account with mint '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk' has balance: 0.09 ETH
-        Token account with mint 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB' has balance: 339.207426 USDT
-        Serum open orders account for market 'BTC/USDT': « OpenOrders:
+        Token account with mint '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E' has balance: 0.004 BTC
+        Token account with mint '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk' has balance: 0.06 ETH
+        Token account with mint 'So11111111111111111111111111111111111111112' has balance: 2.65 SOL
+        Token account with mint 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt' has balance: 30 SRM
+        Token account with mint 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' has balance: 199.207426 USDC
+        Serum open orders account for market 'BTC/USDC': « OpenOrders:
             Flags: « SerumAccountFlags: initialized | open_orders »
             Program ID: 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin
             Address: 2DCKHwbchxUDr2x2A7Z8YxKJojvv7gipTKwjyiZBbyvB
@@ -403,10 +421,38 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             Client IDs:
                 None
         »
-        Serum open orders account for market 'ETH/USDT': « OpenOrders:
+        Serum open orders account for market 'ETH/USDC': « OpenOrders:
             Flags: « SerumAccountFlags: initialized | open_orders »
             Program ID: 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin
             Address: E4jX61Z8w7uXpCiqU3amBKPdtf8qzpdrGvGFifNsxBAg
+            Market: 7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF
+            Owner: 48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB
+            Base Token: 0.00000000 of 0.00000000
+            Quote Token: 0.00000000 of 0.00000000
+            Referrer Rebate Accrued: 0
+            Orders:
+                None
+            Client IDs:
+                None
+        »
+        Serum open orders account for market 'SOL/USDC': « OpenOrders:
+            Flags: « SerumAccountFlags: initialized | open_orders »
+            Program ID: 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin
+            Address: E4jX61Z8w7uXpCiqU3amBKPdtf8qzpdrGvGFifNsxBAh
+            Market: 7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF
+            Owner: 48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB
+            Base Token: 0.00000000 of 0.00000000
+            Quote Token: 0.00000000 of 0.00000000
+            Referrer Rebate Accrued: 0
+            Orders:
+                None
+            Client IDs:
+                None
+        »
+        Serum open orders account for market 'SRM/USDC': « OpenOrders:
+            Flags: « SerumAccountFlags: initialized | open_orders »
+            Program ID: 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin
+            Address: E4jX61Z8w7uXpCiqU3amBKPdtf8qzpdrGvGFifNsxBAi
             Market: 7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF
             Owner: 48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB
             Base Token: 0.00000000 of 0.00000000
@@ -434,7 +480,7 @@ This is a long-running process, so we'll need to use Control-C to cancel it when
 
 Here goes:
 ```
-# mango-explorer liquidator --target "BTC:33%" --target "ETH:33%" --dry-run
+# mango-explorer liquidator --target "BTC:0.004" --target "ETH:0.06" --target "SOL:2.65" --target "SRM:30" --dry-run
 2021-05-08 14:36:34 ⚠ root
 ⚠ WARNING ⚠
 
@@ -442,15 +488,17 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
     🥭 Mango Markets: https://mango.markets
     📄 Documentation: https://docs.mango.markets/
-    💬 Discord: https://discord.gg/67jySBhxrg                                                                       🐦 Twitter: https://twitter.com/mangomarkets
-    🚧 Github: https://github.com/blockworks-foundation                                                             📧 Email: mailto:hello@blockworks.foundation
+    💬 Discord: https://discord.gg/67jySBhxrg                                                                       
+    🐦 Twitter: https://twitter.com/mangomarkets
+    🚧 Github: https://github.com/blockworks-foundation                                                             
+    📧 Email: mailto:hello@blockworks.foundation
 
 2021-05-08 14:36:34 ⓘ root         Context: « Context:
     Cluster: mainnet-beta
     Cluster URL: https://mango.rpcpool.com/
     Program ID: JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu
     DEX Program ID: 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin
-    Group Name: BTC_ETH_USDT
+    Group Name: BTC_ETH_USDC
     Group ID: 7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV
 »
 2021-05-08 14:36:34 ⓘ root         Wallet address: 48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB
@@ -466,10 +514,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         None
 
     Details:
-        Token account with mint '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E' has balance: 0.0056 BTC
-        Token account with mint '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk' has balance: 0.09 ETH
-        Token account with mint 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB' has balance: 339.207426 USDT
-        Serum open orders account for market 'BTC/USDT': « OpenOrders:
+        Token account with mint '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E' has balance: 0.004 BTC
+        Token account with mint '2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk' has balance: 0.06 ETH
+        Token account with mint 'So11111111111111111111111111111111111111112' has balance: 2.65 SOL
+        Token account with mint 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt' has balance: 30 SRM
+        Token account with mint 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' has balance: 199.207426 USDC
+        Serum open orders account for market 'BTC/USDC': « OpenOrders:
             Flags: « SerumAccountFlags: initialized | open_orders »
             Program ID: 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin
             Address: 2DCKHwbchxUDr2x2A7Z8YxKJojvv7gipTKwjyiZBbyvB
@@ -483,10 +533,38 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             Client IDs:
                 None
         »
-        Serum open orders account for market 'ETH/USDT': « OpenOrders:
+        Serum open orders account for market 'ETH/USDC': « OpenOrders:
             Flags: « SerumAccountFlags: initialized | open_orders »
             Program ID: 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin
             Address: E4jX61Z8w7uXpCiqU3amBKPdtf8qzpdrGvGFifNsxBAg
+            Market: 7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF
+            Owner: 48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB
+            Base Token: 0.00000000 of 0.00000000
+            Quote Token: 0.00000000 of 0.00000000
+            Referrer Rebate Accrued: 0
+            Orders:
+                None
+            Client IDs:
+                None
+        »
+        Serum open orders account for market 'SOL/USDC': « OpenOrders:
+            Flags: « SerumAccountFlags: initialized | open_orders »
+            Program ID: 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin
+            Address: E4jX61Z8w7uXpCiqU3amBKPdtf8qzpdrGvGFifNsxBAh
+            Market: 7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF
+            Owner: 48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB
+            Base Token: 0.00000000 of 0.00000000
+            Quote Token: 0.00000000 of 0.00000000
+            Referrer Rebate Accrued: 0
+            Orders:
+                None
+            Client IDs:
+                None
+        »
+        Serum open orders account for market 'SRM/USDC': « OpenOrders:
+            Flags: « SerumAccountFlags: initialized | open_orders »
+            Program ID: 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin
+            Address: E4jX61Z8w7uXpCiqU3amBKPdtf8qzpdrGvGFifNsxBAi
             Market: 7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF
             Owner: 48z8UzFTYYbmFGgryA3muJ4tjdPsDUnB84YvfCXtv4dB
             Base Token: 0.00000000 of 0.00000000
