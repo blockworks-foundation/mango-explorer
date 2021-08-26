@@ -23,8 +23,8 @@ mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 chainbuilder.ChainBuilder.add_command_line_parameters(parser)
 parser.add_argument("--market", type=str, required=True, help="market symbol to make market upon (e.g. ETH/USDC)")
-parser.add_argument("--update-mode", type=mango.marketmaking.ModelUpdateMode, default=mango.marketmaking.ModelUpdateMode.WEBSOCKET,
-                    choices=list(mango.marketmaking.ModelUpdateMode), help="Update mode for model data - can be WEBSOCKET (default) or POLL")
+parser.add_argument("--update-mode", type=mango.marketmaking.ModelUpdateMode, default=mango.marketmaking.ModelUpdateMode.POLL,
+                    choices=list(mango.marketmaking.ModelUpdateMode), help="Update mode for model data - can be POLL (default) or WEBSOCKET")
 parser.add_argument("--oracle-provider", type=str, required=True,
                     help="name of the price provider to use (e.g. pyth)")
 parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal("0.001"),
