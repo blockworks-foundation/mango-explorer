@@ -66,6 +66,11 @@ class MarketInstructionBuilder(metaclass=abc.ABCMeta):
         raise NotImplementedError(
             "MarketInstructionBuilder.build_crank_instructions() is not implemented on the base type.")
 
+    @abc.abstractmethod
+    def build_redeem_instructions(self) -> CombinableInstructions:
+        raise NotImplementedError(
+            "MarketInstructionBuilder.build_redeem_instructions() is not implemented on the base type.")
+
     def __repr__(self) -> str:
         return f"{self}"
 
@@ -91,6 +96,9 @@ class NullMarketInstructionBuilder(MarketInstructionBuilder):
         return CombinableInstructions.empty()
 
     def build_crank_instructions(self, addresses_to_crank: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+        return CombinableInstructions.empty()
+
+    def build_redeem_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
     def __str__(self) -> str:

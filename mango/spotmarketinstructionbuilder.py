@@ -114,6 +114,9 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
 
         return build_serum_consume_events_instructions(self.context, self.spot_market.address, self.raw_market.state.event_queue(), limited_open_orders_addresses, int(limit))
 
+    def build_redeem_instructions(self) -> CombinableInstructions:
+        return CombinableInstructions.empty()
+
     def build_create_openorders_instructions(self) -> CombinableInstructions:
         return build_spot_openorders_instructions(self.context, self.wallet, self.group, self.account, self.raw_market)
 

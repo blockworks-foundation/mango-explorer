@@ -136,5 +136,8 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         self.open_orders_address = create_open_orders.signers[0].public_key()
         return create_open_orders
 
+    def build_redeem_instructions(self) -> CombinableInstructions:
+        return CombinableInstructions.empty()
+
     def __str__(self) -> str:
         return """« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"""

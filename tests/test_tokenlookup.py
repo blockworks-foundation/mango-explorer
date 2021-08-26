@@ -31,7 +31,7 @@ def test_token_lookup():
                 "decimals": 6,
             }]
     }
-    actual = mango.SplTokenLookup(data)
+    actual = mango.SplTokenLookup("test-filename", data)
     assert actual is not None
     assert actual.logger is not None
     assert actual.find_by_symbol("ETH") is not None

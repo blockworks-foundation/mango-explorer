@@ -23,9 +23,10 @@ from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import Group
 from .marketinstructionbuilder import MarketInstructionBuilder
-from .instructions import build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_place_perp_order_instructions
+from .instructions import build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_place_perp_order_instructions, build_redeem_accrued_mango_instructions
 from .orders import Order
 from .perpmarket import PerpMarket
+from .tokeninfo import TokenInfo
 from .wallet import Wallet
 
 
@@ -46,6 +47,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         self.group: Group = group
         self.account: Account = account
         self.perp_market: PerpMarket = perp_market
+        self.mngo_token_info: TokenInfo = self.group.find_token_info_by_symbol("MNGO")
 
     @staticmethod
     def load(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket) -> "PerpMarketInstructionBuilder":
@@ -70,6 +72,9 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         if self.perp_market.underlying_perp_market is None:
             raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
         return build_mango_consume_events_instructions(self.context, self.group, self.perp_market.underlying_perp_market, account_addresses, limit)
+
+    def build_redeem_instructions(self) -> CombinableInstructions:
+        return build_redeem_accrued_mango_instructions(self.context, self.wallet, self.perp_market, self.group, self.account, self.mngo_token_info)
 
     def __str__(self) -> str:
         return """« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝚜 »"""
