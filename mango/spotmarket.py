@@ -16,6 +16,7 @@
 import itertools
 import typing
 
+from decimal import Decimal
 from pyserum.market import Market as PySerumMarket
 from pyserum.market.orderbook import OrderBook as PySerumOrderBook
 from solana.publickey import PublicKey
@@ -39,8 +40,9 @@ class SpotMarket(Market):
         super().__init__(serum_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.group: Group = group
         self.underlying_serum_market: PySerumMarket = underlying_serum_market
-        self.lot_size_converter: LotSizeConverter = LotSizeConverter(
-            base, underlying_serum_market.state.base_lot_size, quote, underlying_serum_market.state.quote_lot_size)
+        base_lot_size: Decimal = Decimal(underlying_serum_market.state.base_lot_size())
+        quote_lot_size: Decimal = Decimal(underlying_serum_market.state.quote_lot_size())
+        self.lot_size_converter: LotSizeConverter = LotSizeConverter(base, base_lot_size, quote, quote_lot_size)
 
     def unprocessed_events(self, context: Context) -> typing.Sequence[SerumEvent]:
         event_queue: SerumEventQueue = SerumEventQueue.load(context, self.underlying_serum_market.state.event_queue())
