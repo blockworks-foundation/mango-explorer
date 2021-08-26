@@ -14,7 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import copy
 import re
 import rx
 import rx.operators as ops
@@ -23,8 +22,8 @@ import typing
 from datetime import datetime
 from decimal import Decimal
 
-from ...client import BetterClient
 from ...context import Context
+from ...contextbuilder import ContextBuilder
 from ...ensuremarketloaded import ensure_market_loaded
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
@@ -65,14 +64,7 @@ class SerumOracle(Oracle):
         self.source: OracleSource = OracleSource("Serum", name, features, market)
 
     def fetch_price(self, context: Context) -> Price:
-        # TODO: Do this right?
-        context = copy.copy(context)
-        context.client = BetterClient.from_configuration(self.name,
-                                                         "mainnet",
-                                                         "https://solana-api.projectserum.com",
-                                                         context.client.commitment,
-                                                         context.client.skip_preflight,
-                                                         context.client.instruction_reporter)
+        context = ContextBuilder.forced_to_mainnet_beta(context)
         mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
             context.serum_program_address, SplTokenLookup.DefaultDataFilepath)
         adjusted_market = self.market

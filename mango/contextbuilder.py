@@ -14,12 +14,14 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import argparse
+import copy
 import logging
 import os
 import typing
 
 from solana.publickey import PublicKey
 
+from .client import BetterClient
 from .constants import MangoConstants
 from .context import Context
 from .idsjsonmarketlookup import IdsJsonMarketLookup
@@ -84,7 +86,7 @@ class ContextBuilder:
     # It then uses those parameters to create a properly-configured `Context` object.
     #
     @staticmethod
-    def from_command_line_parameters(args: argparse.Namespace) -> "Context":
+    def from_command_line_parameters(args: argparse.Namespace) -> Context:
         name: typing.Optional[str] = args.name
         cluster_name: typing.Optional[str] = args.cluster_name
         cluster_url: typing.Optional[str] = args.cluster_url
@@ -111,13 +113,29 @@ class ContextBuilder:
     def forced_to_devnet(context: Context) -> Context:
         cluster_name: str = "devnet"
         cluster_url: str = MangoConstants["cluster_urls"][cluster_name]
-        return ContextBuilder._build(context.name, cluster_name, cluster_url, context.client.skip_preflight, context.group_name, context.group_address, context.mango_program_address, context.serum_program_address, SplTokenLookup.DefaultDataFilepath)
+        fresh_context = copy.copy(context)
+        fresh_context.client = BetterClient.from_configuration(context.name,
+                                                               cluster_name,
+                                                               cluster_url,
+                                                               context.client.commitment,
+                                                               context.client.skip_preflight,
+                                                               context.client.instruction_reporter)
+
+        return fresh_context
 
     @staticmethod
     def forced_to_mainnet_beta(context: Context) -> Context:
         cluster_name: str = "mainnet"
         cluster_url: str = MangoConstants["cluster_urls"][cluster_name]
-        return ContextBuilder._build(context.name, cluster_name, cluster_url, context.client.skip_preflight, context.group_name, context.group_address, context.mango_program_address, context.serum_program_address, SplTokenLookup.DefaultDataFilepath)
+        fresh_context = copy.copy(context)
+        fresh_context.client = BetterClient.from_configuration(context.name,
+                                                               cluster_name,
+                                                               cluster_url,
+                                                               context.client.commitment,
+                                                               context.client.skip_preflight,
+                                                               context.client.instruction_reporter)
+
+        return fresh_context
 
     # This function is the converse of `add_command_line_parameters()` - it takes
     # an argument of parsed command-line parameters and expects to see the ones it added
