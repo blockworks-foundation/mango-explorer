@@ -47,6 +47,9 @@ class ModelState:
         self.bids_watcher: mango.Watcher[typing.Sequence[mango.Order]] = bids
         self.asks_watcher: mango.Watcher[typing.Sequence[mango.Order]] = asks
 
+        self.not_quoting: bool = False
+        self.state: typing.Dict[str, typing.Any] = {}
+
     @property
     def group(self) -> mango.Group:
         return self.group_watcher.latest

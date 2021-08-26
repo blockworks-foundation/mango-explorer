@@ -50,16 +50,22 @@ class MarketMaker:
         self.buy_client_ids: typing.List[int] = []
         self.sell_client_ids: typing.List[int] = []
 
-        self.not_quoting: bool = False
-
     def pulse(self, context: mango.Context, model_state: ModelState):
-        if self.not_quoting:
-            return True
-
         try:
             payer = mango.CombinableInstructions.from_wallet(self.wallet)
 
             desired_orders = self.desired_orders_chain.process(context, model_state)
+
+            # This is here to give the orderchain the chance to look at state and set `not_quoting`. Any
+            # element in the orderchain can set this, rather than just return an empty list of desired
+            # orders, knowing it won't be accidentally changed by subsequent elements returning orders.
+            #
+            # It also gives the opportunity to code outside the orderchain to set `not_quoting` if that
+            # code has access to the `model_state`.
+            if model_state.not_quoting:
+                self.logger.info(f"[{context.name}] Market-maker not quoting - model_state.not_quoting is set.")
+                return
+
             existing_orders = self.order_tracker.existing_orders(model_state)
             reconciled = self.order_reconciler.reconcile(model_state, existing_orders, desired_orders)
 

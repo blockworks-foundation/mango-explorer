@@ -33,9 +33,9 @@ class PreventPostOnlyCrossingBookElement(Element):
         new_orders: typing.List[mango.Order] = []
         for order in orders:
             if order.order_type == mango.OrderType.POST_ONLY:
-                top_bid = model_state.top_bid
-                top_ask = model_state.top_ask
-                if order.side == mango.Side.BUY and top_ask is not None and order.price >= top_ask.price:
+                top_bid: typing.Optional[mango.Order] = model_state.top_bid
+                top_ask: typing.Optional[mango.Order] = model_state.top_ask
+                if order.side == mango.Side.BUY and top_bid is not None and top_ask is not None and order.price >= top_ask.price:
                     new_buy_price: Decimal = top_bid.price - model_state.market.lot_size_converter.tick_size
                     new_buy: mango.Order = order.with_price(new_buy_price)
                     self.logger.debug(
@@ -43,7 +43,7 @@ class PreventPostOnlyCrossingBookElement(Element):
                     Old: {order}
                     New: {new_buy}""")
                     new_orders += [new_buy]
-                elif order.side == mango.Side.SELL and top_bid is not None and order.price <= top_bid.price:
+                elif order.side == mango.Side.SELL and top_bid is not None and top_ask is not None and order.price <= top_bid.price:
                     new_sell_price: Decimal = top_ask.price + model_state.market.lot_size_converter.tick_size
                     new_sell: mango.Order = order.with_price(new_sell_price)
                     self.logger.debug(
