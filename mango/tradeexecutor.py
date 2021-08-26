@@ -22,7 +22,7 @@ import spl.token.instructions as spl_token
 
 from decimal import Decimal
 from pyserum.enums import OrderType, Side
-from pyserum.market import Market
+from pyserum.market import Market as PySerumMarket
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.transaction import Transaction
@@ -65,11 +65,11 @@ class TradeExecutor(metaclass=abc.ABCMeta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def buy(self, symbol: str, quantity: Decimal) -> str:
+    def buy(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
         raise NotImplementedError("TradeExecutor.buy() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def sell(self, symbol: str, quantity: Decimal) -> str:
+    def sell(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
         raise NotImplementedError("TradeExecutor.sell() is not implemented on the base type.")
 
 
@@ -84,13 +84,15 @@ class NullTradeExecutor(TradeExecutor):
         super().__init__()
         self.reporter = reporter or (lambda _: None)
 
-    def buy(self, symbol: str, quantity: Decimal):
+    def buy(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
         self.logger.info(f"Skipping BUY trade of {quantity:,.8f} of '{symbol}'.")
         self.reporter(f"Skipping BUY trade of {quantity:,.8f} of '{symbol}'.")
+        return []
 
-    def sell(self, symbol: str, quantity: Decimal):
+    def sell(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
         self.logger.info(f"Skipping SELL trade of {quantity:,.8f} of '{symbol}'.")
         self.reporter(f"Skipping SELL trade of {quantity:,.8f} of '{symbol}'.")
+        return []
 
 
 # # 🥭 SerumImmediateTradeExecutor class
@@ -173,9 +175,9 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         self._serum_fee_discount_token_address_loaded = True
         return self._serum_fee_discount_token_address
 
-    def buy(self, symbol: str, quantity: Decimal) -> str:
+    def buy(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
         spot_market = self._lookup_spot_market(symbol)
-        market = Market.load(self.context.client, spot_market.address)
+        market = PySerumMarket.load(self.context.client.compatible_client, spot_market.address)
         self.reporter(f"BUY order market: {spot_market.address} {market}")
 
         asks = market.load_asks()
@@ -193,9 +195,9 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             quantity
         )
 
-    def sell(self, symbol: str, quantity: Decimal) -> str:
+    def sell(self, symbol: str, quantity: Decimal) -> typing.Sequence[str]:
         spot_market = self._lookup_spot_market(symbol)
-        market = Market.load(self.context.client, spot_market.address)
+        market = PySerumMarket.load(self.context.client.compatible_client, spot_market.address)
         self.reporter(f"SELL order market: {spot_market.address} {market}")
 
         bids = market.load_bids()
@@ -214,7 +216,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
             quantity
         )
 
-    def _execute(self, spot_market: SpotMarket, market: Market, side: Side, price: Decimal, quantity: Decimal) -> str:
+    def _execute(self, spot_market: SpotMarket, market: PySerumMarket, side: Side, price: Decimal, quantity: Decimal) -> typing.Sequence[str]:
         transaction = Transaction()
         signers: typing.List[Account] = [self.wallet.account]
 
@@ -274,8 +276,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         transaction.add(settle.build())
 
         with retry_context("Place Serum Order And Settle", self.context.client.send_transaction, self.context.retry_pauses) as retrier:
-            response = retrier.run(transaction, *signers, opts=self.context.transaction_options)
-            return self.context.unwrap_transaction_id_or_raise_exception(response)
+            return retrier.run(transaction, *signers)
 
     def _lookup_spot_market(self, symbol: str) -> SpotMarket:
         spot_market = self.context.market_lookup.find_by_symbol(symbol)

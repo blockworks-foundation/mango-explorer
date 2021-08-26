@@ -21,7 +21,7 @@ import typing
 from datetime import datetime
 from decimal import Decimal
 from pyserum.market.orderbook import OrderBook
-from pyserum.market import Market as SerumMarket
+from pyserum.market import Market as PySerumMarket
 
 from ...accountinfo import AccountInfo
 from ...context import Context
@@ -48,11 +48,12 @@ class SerumOracle(Oracle):
         super().__init__(name, spot_market)
         self.spot_market: SpotMarket = spot_market
         self.source: OracleSource = OracleSource("Serum", name, spot_market)
-        self._serum_market: SerumMarket = None
+        self._serum_market: PySerumMarket = None
 
     def fetch_price(self, context: Context) -> Price:
         if self._serum_market is None:
-            self._serum_market = SerumMarket.load(context.client, self.spot_market.address, context.dex_program_id)
+            self._serum_market = PySerumMarket.load(
+                context.client.compatible_client, self.spot_market.address, context.dex_program_id)
 
         bids_address = self._serum_market.state.bids()
         asks_address = self._serum_market.state.asks()

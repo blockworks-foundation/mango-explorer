@@ -11,9 +11,9 @@ from solana.rpc.types import RPCResponse
 import mango
 
 
-class MockClient(mango.Client):
+class MockClient(mango.CompatibleClient):
     def __init__(self):
-        super().__init__("local", "http://localhost", "processed", False)
+        super().__init__("Test", "local", "http://localhost", "processed", False)
         self.token_accounts_by_owner = []
 
     def get_token_accounts_by_owner(self, *args, **kwargs) -> RPCResponse:
@@ -43,7 +43,7 @@ def fake_context() -> mango.Context:
                             dex_program_id=fake_seeded_public_key("DEX program ID"),
                             group_name="TEST_GROUP",
                             group_id=fake_seeded_public_key("group ID"))
-    context.client = MockClient()
+    context.client = mango.BetterClient(MockClient())
     return context
 
 

@@ -47,7 +47,7 @@ class MarketMetadata:
 
     def fetch_market(self, context: Context) -> PySerumMarket:
         if self._market is None:
-            self._market = PySerumMarket.load(context.client, self.spot.address)
+            self._market = PySerumMarket.load(context.client.compatible_client, self.spot.address)
 
         return self._market
 

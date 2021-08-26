@@ -471,9 +471,7 @@ class CreateSplAccountInstructionBuilder(InstructionBuilder):
         self.lamports: int = lamports
 
     def build(self) -> TransactionInstruction:
-        minimum_balance_response = self.context.client.get_minimum_balance_for_rent_exemption(
-            ACCOUNT_LEN, commitment=self.context.commitment)
-        minimum_balance = self.context.unwrap_or_raise_exception(minimum_balance_response)
+        minimum_balance = self.context.client.get_minimum_balance_for_rent_exemption(ACCOUNT_LEN)
         return create_account(
             CreateAccountParams(self.wallet.address, self.address, self.lamports + minimum_balance, ACCOUNT_LEN, TOKEN_PROGRAM_ID))
 
@@ -544,9 +542,7 @@ class CreateSerumOpenOrdersInstructionBuilder(InstructionBuilder):
         self.open_orders_address: PublicKey = open_orders_address
 
     def build(self) -> TransactionInstruction:
-        response = self.context.client.get_minimum_balance_for_rent_exemption(
-            layouts.OPEN_ORDERS.sizeof(), commitment=self.context.commitment)
-        balanced_needed = self.context.unwrap_or_raise_exception(response)
+        balanced_needed = self.context.client.get_minimum_balance_for_rent_exemption(layouts.OPEN_ORDERS.sizeof())
         instruction = make_create_account_instruction(
             owner_address=self.wallet.address,
             new_account_address=self.open_orders_address,

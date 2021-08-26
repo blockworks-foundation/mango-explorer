@@ -132,10 +132,9 @@ class MarginAccount(AddressableAccount):
         else:
             parser = layouts.MARGIN_ACCOUNT_V2
 
-        response = context.client.get_program_accounts(
-            program_id, data_size=parser.sizeof(), memcmp_opts=filters, commitment=context.commitment, encoding="base64")
+        results = context.client.get_program_accounts(program_id, data_size=parser.sizeof(), memcmp_opts=filters)
         margin_accounts = []
-        for margin_account_data in response["result"]:
+        for margin_account_data in results:
             address = PublicKey(margin_account_data["pubkey"])
             account = AccountInfo._from_response_values(margin_account_data["account"], address)
             margin_account = MarginAccount.parse(account, group)
@@ -171,10 +170,9 @@ class MarginAccount(AddressableAccount):
             )
         ]
 
-        response = context.client.get_program_accounts(
-            context.program_id, memcmp_opts=filters, commitment=context.commitment, encoding="base64")
+        results = context.client.get_program_accounts(context.program_id, memcmp_opts=filters)
         margin_accounts = []
-        for margin_account_data in response["result"]:
+        for margin_account_data in results:
             address = PublicKey(margin_account_data["pubkey"])
             account = AccountInfo._from_response_values(margin_account_data["account"], address)
             margin_account = MarginAccount.parse(account, group)
@@ -333,12 +331,10 @@ class MarginAccount(AddressableAccount):
         ]
 
         data_size = layouts.MARGIN_ACCOUNT_V2.sizeof()
-        response = context.client.get_program_accounts(
-            context.program_id, data_size=data_size, memcmp_opts=filters, commitment=context.commitment, encoding="base64")
-        result = context.unwrap_or_raise_exception(response)
+        results = context.client.get_program_accounts(context.program_id, data_size=data_size, memcmp_opts=filters)
         margin_accounts = []
         open_orders_addresses = []
-        for margin_account_data in result:
+        for margin_account_data in results:
             address = PublicKey(margin_account_data["pubkey"])
             account = AccountInfo._from_response_values(margin_account_data["account"], address)
             margin_account = MarginAccount.parse(account, group)

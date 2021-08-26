@@ -135,27 +135,33 @@ class LiquidationProcessor:
                                    key=lambda report: report.balance_sheet.assets - report.balance_sheet.liabilities, reverse=True)
             highest = highest_first[0]
             try:
-                self.account_liquidator.liquidate(highest)
-                self.wallet_balancer.balance(prices)
-
-                updated_margin_account = MarginAccount.load(self.context, highest.margin_account.address, group)
-                updated_report = LiquidatableReport.build(
-                    group, prices, updated_margin_account, highest.worthwhile_threshold)
-                if not (updated_report.state & LiquidatableState.WORTHWHILE):
+                liquidate_result = self.account_liquidator.liquidate(highest)
+                if liquidate_result is None:
                     self.logger.info(
-                        f"Margin account {updated_margin_account.address} has been drained and is no longer worthwhile.")
+                        f"Margin account {highest.margin_account.address} was not liquidated and is now being skipped.")
                 else:
-                    self.logger.info(
-                        f"Margin account {updated_margin_account.address} is still worthwhile - putting it back on list.")
-                    to_process += [updated_report]
+                    self.wallet_balancer.balance(prices)
+
+                    updated_margin_account = MarginAccount.load(self.context, highest.margin_account.address, group)
+                    updated_report = LiquidatableReport.build(
+                        group, prices, updated_margin_account, highest.worthwhile_threshold)
+                    if not (updated_report.state & LiquidatableState.WORTHWHILE):
+                        self.logger.info(
+                            f"Margin account {updated_margin_account.address} has been drained and is no longer worthwhile.")
+                    else:
+                        self.logger.info(
+                            f"Margin account {updated_margin_account.address} is still worthwhile - putting it back on list.")
+                        to_process += [updated_report]
             except Exception as exception:
                 self.logger.error(
                     f"Liquidator '{self.name}' - failed to liquidate account '{highest.margin_account.address}' - {exception} - {traceback.format_exc()}")
             finally:
                 # highest should always be in to_process, but we're outside the try-except block
                 # so let's be a little paranoid about it.
+                self.logger.info(f"Liquidatable accounts to process was: {len(to_process)}")
                 if highest in to_process:
                     to_process.remove(highest)
+                self.logger.info(f"Liquidatable accounts to process is now: {len(to_process)}")
 
     def _check_update_recency(self, name: str, last_updated_at: datetime) -> None:
         how_long_ago_was_last_update = datetime.now() - last_updated_at

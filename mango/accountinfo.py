@@ -56,9 +56,8 @@ class AccountInfo:
 
     @staticmethod
     def load(context: Context, address: PublicKey) -> typing.Optional["AccountInfo"]:
-        response: RPCResponse = context.client.get_account_info(address, commitment=context.commitment)
-        result = context.unwrap_or_raise_exception(response)
-        if result["value"] is None:
+        result: typing.Optional[typing.Dict[str, typing.Any]] = context.client.get_account_info(address)
+        if result is None or result["value"] is None:
             return None
 
         return AccountInfo._from_response_values(result["value"], address)
@@ -73,9 +72,8 @@ class AccountInfo:
         multiple: typing.List[AccountInfo] = []
         chunks = AccountInfo._split_list_into_chunks(address_strings, chunk_size)
         for counter, chunk in enumerate(chunks):
-            response = context.client.get_multiple_accounts(chunk)
-            result = context.unwrap_or_raise_exception(response)
-            response_value_list = zip(result["value"], addresses)
+            result: typing.Sequence[typing.Dict] = context.client.get_multiple_accounts(chunk)
+            response_value_list = zip(result, addresses)
             multiple += list(map(lambda pair: AccountInfo._from_response_values(pair[0], pair[1]), response_value_list))
             if (sleep_between_calls > 0.0) and (counter < (len(chunks) - 1)):
                 time.sleep(sleep_between_calls)

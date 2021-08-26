@@ -21,6 +21,7 @@ import typing
 
 from solana.transaction import Transaction
 
+from .client import TransactionException
 from .context import Context
 from .group import Group
 from .instructions import ForceCancelOrdersInstructionBuilder, InstructionBuilder, LiquidateInstructionBuilder
@@ -63,7 +64,7 @@ class AccountLiquidator(metaclass=abc.ABCMeta):
         raise NotImplementedError("AccountLiquidator.prepare_instructions() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[str]:
+    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[typing.Sequence[str]]:
         raise NotImplementedError("AccountLiquidator.liquidate() is not implemented on the base type.")
 
 
@@ -80,7 +81,7 @@ class NullAccountLiquidator(AccountLiquidator):
     def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.List[InstructionBuilder]:
         return []
 
-    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[str]:
+    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[typing.Sequence[str]]:
         self.logger.info(f"Skipping liquidation of margin account [{liquidatable_report.margin_account.address}]")
         return None
 
@@ -110,7 +111,7 @@ class ActualAccountLiquidator(AccountLiquidator):
 
         return liquidate_instructions
 
-    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[str]:
+    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[typing.Sequence[str]]:
         instruction_builders = self.prepare_instructions(liquidatable_report)
 
         if len(instruction_builders) == 0:
@@ -129,10 +130,8 @@ class ActualAccountLiquidator(AccountLiquidator):
             self.logger.debug("    Data:", " ".join(f"{x:02x}" for x in instruction.data))
             self.logger.debug("    Program ID:", instruction.program_id)
 
-        transaction_response = self.context.client.send_transaction(
-            transaction, self.wallet.account, opts=self.context.transaction_options)
-        transaction_id = self.context.unwrap_transaction_id_or_raise_exception(transaction_response)
-        return transaction_id
+        transaction_ids = self.context.client.send_transaction(transaction, self.wallet.account)
+        return transaction_ids
 
 
 # # 🌪️ ForceCancelOrdersAccountLiquidator class
@@ -194,19 +193,21 @@ class ReportingAccountLiquidator(AccountLiquidator):
     def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.List[InstructionBuilder]:
         return self.inner.prepare_instructions(liquidatable_report)
 
-    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[str]:
+    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[typing.Sequence[str]]:
         balances_before = liquidatable_report.group.fetch_balances(self.context, self.wallet.address)
         self.logger.info("Wallet balances before:")
         TokenValue.report(balances_before, self.logger.info)
 
-        self.logger.info(f"Margin account balances before:\n{liquidatable_report.balances}")
+        self.logger.info("Margin account balances before:")
+        TokenValue.report(liquidatable_report.balances, self.logger.info)
         self.logger.info(
             f"Liquidating margin account: {liquidatable_report.margin_account}\n{liquidatable_report.balance_sheet}")
         try:
-            transaction_id = self.inner.liquidate(liquidatable_report)
-        except Exception as exception:
+            transaction_ids = self.inner.liquidate(liquidatable_report)
+        except TransactionException as exception:
+            self.logger.warning(f"Account was not liquidatable:\n{exception}")
             # It would be nice if we had a strongly-typed way of checking this.
-            if "MangoErrorCode::NotLiquidatable" in str(exception):
+            if "MangoErrorCode::NotLiquidatable" in str("".join(exception.logs)):
                 failed_liquidation_event = LiquidationEvent(datetime.datetime.now(),
                                                             self.liquidator_name,
                                                             self.context.group_name,
@@ -218,27 +219,31 @@ class ReportingAccountLiquidator(AccountLiquidator):
                                                             balances_before)
                 self.liquidations_publisher.publish(failed_liquidation_event)
                 return None
-            else:
-                raise exception
+            raise exception
 
-        if transaction_id is None:
+        if transaction_ids is None or len(transaction_ids) == 0:
             self.logger.info("No transaction sent.")
         else:
-            self.logger.info(f"Transaction ID: {transaction_id} - waiting for confirmation...")
+            self.logger.info(f"Transaction IDs: {transaction_ids} - waiting for confirmation...")
 
-            response = self.context.wait_for_confirmation(transaction_id)
-            if response is None:
+            transactions = self.context.client.wait_for_confirmation(transaction_ids)
+            if transactions is None:
                 self.logger.warning(
-                    f"Could not process 'after' liquidation stage - no data for transaction {transaction_id}")
-                return transaction_id
+                    f"Could not process 'after' liquidation stage - no data for transaction {transaction_ids}")
+                return transaction_ids
 
-            transaction_scout = TransactionScout.from_transaction_response(self.context, response)
+            all_succeeded: bool = True
+            for individual_response in transactions:
+                transaction_scout = TransactionScout.from_transaction_response(self.context, individual_response)
+                if not transaction_scout.succeeded:
+                    all_succeeded = False
 
             group_after = Group.load(self.context)
             margin_account_after_liquidation = MarginAccount.load(
                 self.context, liquidatable_report.margin_account.address, group_after)
             intrinsic_balances_after = margin_account_after_liquidation.get_intrinsic_balances(group_after)
-            self.logger.info(f"Margin account balances after: {intrinsic_balances_after}")
+            self.logger.info("Margin account balances after:")
+            TokenValue.report(intrinsic_balances_after, self.logger.info)
 
             self.logger.info("Wallet Balances After:")
             balances_after = group_after.fetch_balances(self.context, self.wallet.address)
@@ -247,8 +252,8 @@ class ReportingAccountLiquidator(AccountLiquidator):
             liquidation_event = LiquidationEvent(datetime.datetime.now(),
                                                  self.liquidator_name,
                                                  self.context.group_name,
-                                                 transaction_scout.succeeded,
-                                                 transaction_id,
+                                                 all_succeeded,
+                                                 transaction_ids,
                                                  self.wallet.address,
                                                  margin_account_after_liquidation.address,
                                                  balances_before,
@@ -260,4 +265,4 @@ class ReportingAccountLiquidator(AccountLiquidator):
 
             self.liquidations_publisher.publish(liquidation_event)
 
-        return transaction_id
+        return transaction_ids

@@ -13,10 +13,12 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import datetime
 import itertools
 import json
 import logging
 import requests
+import time
 import typing
 
 
@@ -65,25 +67,35 @@ class TooManyRequestsRateLimitException(RateLimitException):
 # of problems at the right place.
 #
 class TransactionException(Exception):
-    def __init__(self, message: str, code: int, accounts: typing.Optional[typing.List[str]], errors: typing.Optional[typing.List[str]], logs: typing.Optional[typing.List[str]]):
+    def __init__(self, message: str, code: int, name: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None]):
         super().__init__(message)
         self.message: str = message
         self.code: int = code
-        self.accounts: typing.Optional[typing.List[str]] = accounts
-        self.errors: typing.Optional[typing.List[str]] = errors
-        self.logs: typing.Optional[typing.List[str]] = logs
+        self.name: str = name
+
+        def _ensure_list(item: typing.Union[str, typing.List[str], None]) -> typing.List[str]:
+            if item is None:
+                return []
+            if isinstance(item, str):
+                return [item]
+            if isinstance(item, list):
+                return item
+            return [f"{item}"]
+        self.accounts: typing.List[str] = _ensure_list(accounts)
+        self.errors: typing.List[str] = _ensure_list(errors)
+        self.logs: typing.List[str] = _ensure_list(logs)
 
     def __str__(self) -> str:
         accounts = "No Accounts"
-        if self.accounts:
+        if len(self.accounts) > 0:
             accounts = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.accounts])
         errors = "No Errors"
-        if self.errors:
+        if len(self.errors) > 0:
             errors = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.errors])
         logs = "No Logs"
-        if self.logs:
+        if len(self.logs) > 0:
             logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
-        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.code}] {self.message}
+        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.name}] {self.code}: {self.message}
     Accounts:
         {accounts}
     Errors:
@@ -109,14 +121,15 @@ UnspecifiedCommitment = Commitment("unspecified")
 UnspecifiedEncoding = "unspecified"
 
 
-# # 🥭 Client class
+# # 🥭 CompatibleClient class
 #
-# A `Client` class that tries to be compatible with the proper Solana Client, but that handles
+# A `CompatibleClient` class that tries to be compatible with the proper Solana Client, but that handles
 # some common operations better from our point of view.
 #
-class Client:
-    def __init__(self, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool):
+class CompatibleClient:
+    def __init__(self, name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.name: str = name
         self.cluster: str = cluster
         self.cluster_url: str = cluster_url
 
@@ -131,7 +144,7 @@ class Client:
             response = requests.get(f"{self.cluster_url}/health")
             response.raise_for_status()
         except (IOError, requests.HTTPError) as err:
-            self.logger.warning("Health check failed with error: %s", str(err))
+            self.logger.warning(f"[{self.name}] Health check failed with error: {err}")
             return False
 
         return response.ok
@@ -222,10 +235,10 @@ class Client:
         try:
             blockhash_resp = self.get_recent_blockhash()
             if not blockhash_resp["result"]:
-                raise RuntimeError("failed to get recent blockhash")
+                raise RuntimeError("Failed to get recent blockhash")
             transaction.recent_blockhash = Blockhash(blockhash_resp["result"]["value"]["blockhash"])
         except Exception as err:
-            raise RuntimeError("failed to get recent blockhash") from err
+            raise RuntimeError("Failed to get recent blockhash") from err
 
         transaction.sign(*signers)
 
@@ -278,9 +291,10 @@ class Client:
                 error_code: int = response["error"]["code"] if "code" in response["error"] else -1
                 error_data: typing.Dict = response["error"]["data"] if "data" in response["error"] else {}
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
-                error_err = error_data["err"] if "err" in error_data else "No err"
+                error_err = error_data["err"] if "err" in error_data else "No error text returned"
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
-                raise TransactionException(exception_message, error_code, error_accounts, error_err, error_logs)
+                raise TransactionException(exception_message, error_code, self.name,
+                                           error_accounts, error_err, error_logs)
 
         # The call succeeded.
         return typing.cast(RPCResponse, response)
@@ -307,7 +321,145 @@ class Client:
         return self._build_options(commitment, encoding_to_use, data_slice)
 
     def __str__(self) -> str:
-        return f"« 𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster}]: {self.cluster_url} »"
+        return f"« 𝙲𝚘𝚖𝚙𝚊𝚝𝚒𝚋𝚕𝚎𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster}]: {self.cluster_url} »"
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+class BetterClient:
+    def __init__(self, client: CompatibleClient):
+        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.compatible_client: CompatibleClient = client
+
+        # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451
+        # "I think you are better off doing 4,8,16,20,30"
+        self.retry_pauses: typing.Sequence[Decimal] = [Decimal(4), Decimal(
+            8), Decimal(16), Decimal(20), Decimal(30)]
+
+    @property
+    def cluster(self) -> str:
+        return self.compatible_client.cluster
+
+    @cluster.setter
+    def cluster(self, value: str) -> None:
+        self.compatible_client.cluster = value
+
+    @property
+    def cluster_url(self) -> str:
+        return self.compatible_client.cluster_url
+
+    @cluster_url.setter
+    def cluster_url(self, value: str) -> None:
+        self.compatible_client.cluster_url = value
+
+    @property
+    def encoding(self) -> str:
+        return self.compatible_client.encoding
+
+    @encoding.setter
+    def encoding(self, value: str) -> None:
+        self.compatible_client.encoding = value
+
+    @property
+    def commitment(self) -> Commitment:
+        return self.compatible_client.commitment
+
+    @commitment.setter
+    def commitment(self, value: Commitment) -> None:
+        self.compatible_client.commitment = value
+
+    @property
+    def skip_preflight(self) -> bool:
+        return self.compatible_client.skip_preflight
+
+    @skip_preflight.setter
+    def skip_preflight(self, value: bool) -> None:
+        self.compatible_client.skip_preflight = value
+
+    @staticmethod
+    def from_configuration(name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool) -> "BetterClient":
+        compatible = CompatibleClient(name, cluster, cluster_url, commitment, skip_preflight)
+        return BetterClient(compatible)
+
+    def is_node_healthy(self) -> bool:
+        return self.compatible_client.is_node_healthy()
+
+    def get_balance(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment) -> Decimal:
+        response = self.compatible_client.get_balance(pubkey, commitment)
+        value = Decimal(response["result"]["value"])
+        return value / SOL_DECIMAL_DIVISOR
+
+    def get_account_info(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment,
+                         encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> typing.Optional[typing.Dict[str, typing.Any]]:
+        response = self.compatible_client.get_account_info(pubkey, commitment, encoding, data_slice)
+        return response["result"]
+
+    def get_confirmed_signatures_for_address2(self, account: typing.Union[str, Account, PublicKey], before: typing.Optional[str] = None, limit: typing.Optional[int] = None) -> typing.Sequence[str]:
+        response = self.compatible_client.get_confirmed_signature_for_address2(account, before, limit)
+        return [result["signature"] for result in response["result"]]
+
+    def get_confirmed_transaction(self, signature: str, encoding: str = "json") -> typing.Dict:
+        response = self.compatible_client.get_confirmed_transaction(signature, encoding)
+        return response["result"]
+
+    def get_minimum_balance_for_rent_exemption(self, size: int, commitment: Commitment = UnspecifiedCommitment) -> int:
+        response = self.compatible_client.get_minimum_balance_for_rent_exemption(size, commitment)
+        return response["result"]
+
+    def get_program_accounts(self, pubkey: typing.Union[str, PublicKey],
+                             commitment: Commitment = UnspecifiedCommitment,
+                             encoding: typing.Optional[str] = UnspecifiedEncoding,
+                             data_slice: typing.Optional[DataSliceOpts] = None,
+                             data_size: typing.Optional[int] = None,
+                             memcmp_opts: typing.Optional[typing.List[MemcmpOpts]] = None) -> typing.Dict:
+        response = self.compatible_client.get_program_accounts(
+            pubkey, commitment, encoding, data_slice, data_size, memcmp_opts)
+        return response["result"]
+
+    def get_recent_blockhash(self, commitment: Commitment = UnspecifiedCommitment) -> Blockhash:
+        response = self.compatible_client.get_recent_blockhash(commitment)
+        return Blockhash(response["result"]["value"]["blockhash"])
+
+    def get_token_account_balance(self, pubkey: typing.Union[str, PublicKey], commitment: Commitment = UnspecifiedCommitment) -> typing.Dict:
+        response = self.compatible_client.get_token_account_balance(pubkey, commitment)
+        return response["result"]["value"]
+
+    def get_token_accounts_by_owner(self, owner: PublicKey, token_account_options: TokenAccountOpts, commitment: Commitment = UnspecifiedCommitment,) -> typing.Sequence[typing.Dict]:
+        response = self.compatible_client.get_token_accounts_by_owner(owner, token_account_options, commitment)
+        return response["result"]["value"]
+
+    def get_multiple_accounts(self, pubkeys: typing.Sequence[PublicKey], commitment: Commitment = UnspecifiedCommitment,
+                              encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> typing.Sequence[typing.Dict]:
+        response = self.compatible_client.get_multiple_accounts(pubkeys, commitment, encoding, data_slice)
+        return response["result"]["value"]
+
+    def send_transaction(self, transaction: Transaction, *signers: Account, opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment)) -> str:
+        response = self.compatible_client.send_transaction(
+            transaction, *signers, opts=opts)
+        return response["result"]
+
+    def wait_for_confirmation(self, transaction_ids: typing.Sequence[str], max_wait_in_seconds: int = 60) -> typing.Sequence[typing.Dict]:
+        self.logger.info(f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}.")
+        all_confirmed: typing.List[typing.Dict] = []
+        start_time: datetime.datetime = datetime.datetime.now()
+        cutoff: datetime.datetime = start_time + datetime.timedelta(seconds=max_wait_in_seconds)
+        for transaction_id in transaction_ids:
+            while datetime.datetime.now() < cutoff:
+                time.sleep(1)
+                confirmed = self.get_confirmed_transaction(transaction_id)
+                if confirmed is not None:
+                    self.logger.info(
+                        f"Confirmed {transaction_id} after {datetime.datetime.now() - start_time} seconds.")
+                    all_confirmed += [confirmed]
+                    break
+
+        if len(all_confirmed) != len(transaction_ids):
+            self.logger.info(f"Timed out after {max_wait_in_seconds} seconds waiting on transaction {transaction_id}.")
+        return all_confirmed
+
+    def __str__(self) -> str:
+        return f"« 𝙱𝚎𝚝𝚝𝚎𝚛𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster}]: {self.cluster_url} »"
 
     def __repr__(self) -> str:
         return f"{self}"

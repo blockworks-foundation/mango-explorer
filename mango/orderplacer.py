@@ -22,7 +22,7 @@ import pyserum.enums
 import typing
 
 from decimal import Decimal
-from pyserum.market import Market
+from pyserum.market import Market as PySerumMarket
 
 from .context import Context
 from .openorders import OpenOrders
@@ -150,7 +150,8 @@ class SerumOrderPlacer(OrderPlacer):
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.spot_market: SpotMarket = spot_market
-        self.market: Market = Market.load(context.client, spot_market.address, context.dex_program_id)
+        self.market: PySerumMarket = PySerumMarket.load(
+            context.client.compatible_client, spot_market.address, context.dex_program_id)
         all_open_orders = OpenOrders.load_for_market_and_owner(
             context, spot_market.address, wallet.address, context.dex_program_id, spot_market.base.decimals, spot_market.quote.decimals)
         if len(all_open_orders) == 0:

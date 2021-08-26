@@ -242,7 +242,7 @@ class CsvFileNotificationTarget(NotificationTarget):
             with open(self.filename, "a") as csvfile:
                 result = "Succeeded" if event.succeeded else "Failed"
                 row_data = [event.timestamp, event.liquidator_name, event.group_name, result,
-                            event.signature, event.wallet_address, event.margin_account_address]
+                            " ".join(event.signatures), event.wallet_address, event.margin_account_address]
                 for change in event.changes:
                     row_data += [f"{change.value:.8f}", change.token.name]
                 file_writer = csv.writer(csvfile, quoting=csv.QUOTE_MINIMAL)

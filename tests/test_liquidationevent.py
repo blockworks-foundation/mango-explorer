@@ -19,13 +19,13 @@ def test_liquidation_event():
         mango.TokenValue(token_lookup.find_by_symbol("USDT"), Decimal(2000))
     ]
     timestamp = datetime.datetime(2021, 5, 17, 12, 20, 56)
-    event = mango.LiquidationEvent(timestamp, "Liquidator", "Group", True, "signature",
+    event = mango.LiquidationEvent(timestamp, "Liquidator", "Group", True, ["signature"],
                                    fake_public_key(), fake_public_key(),
                                    balances_before, balances_after)
     assert str(event) == """« 🥭 Liqudation Event ✅ at 2021-05-17 12:20:56
     💧 Liquidator: Liquidator
     🗃️ Group: Group
-    📇 Signature: signature
+    📇 Signatures: ['signature']
     👛 Wallet: 11111111111111111111111111111112
     💳 Margin Account: 11111111111111111111111111111112
     💸 Changes:

@@ -305,8 +305,7 @@ class TransactionScout:
 
     @staticmethod
     def load_if_available(context: Context, signature: str) -> typing.Optional["TransactionScout"]:
-        transaction_response = context.client.get_confirmed_transaction(signature)
-        transaction_details = context.unwrap_or_raise_exception(transaction_response)
+        transaction_details = context.client.get_confirmed_transaction(signature)
         if transaction_details is None:
             return None
         return TransactionScout.from_transaction_response(context, transaction_details)
@@ -406,23 +405,16 @@ class TransactionScout:
 
 # # 🥭 fetch_all_recent_transaction_signatures function
 #
-
-def fetch_all_recent_transaction_signatures(context: Context, in_the_last: datetime.timedelta = datetime.timedelta(days=1)) -> typing.Sequence[str]:
-    now = datetime.datetime.now()
-    recency_cutoff = now - in_the_last
-    recency_cutoff_timestamp = recency_cutoff.timestamp()
-
+def fetch_all_recent_transaction_signatures(context: Context) -> typing.Sequence[str]:
     all_fetched = False
     before = None
-    signature_results = []
+    signature_results: typing.List[str] = []
     while not all_fetched:
-        signature_response = context.client.get_confirmed_signature_for_address2(context.group_id, before=before)
-        signature_result = context.unwrap_or_raise_exception(signature_response)
-        signature_results += signature_result
-        if (len(signature_result) == 0) or (signature_result[-1]["blockTime"] < recency_cutoff_timestamp):
+        signatures = context.client.get_confirmed_signatures_for_address2(context.group_id, before=before)
+        signature_results += signatures
+        if (len(signatures) == 0):
             all_fetched = True
         else:
-            before = signature_results[-1]["signature"]
+            before = signature_results[-1]
 
-    recent = [result["signature"] for result in signature_results if result["blockTime"] > recency_cutoff_timestamp]
-    return recent
+    return signature_results

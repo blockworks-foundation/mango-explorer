@@ -18,17 +18,16 @@ import logging
 import multiprocessing
 import os
 import random
-import time
 import typing
 
 from decimal import Decimal
 from rx.scheduler import ThreadPoolScheduler
 from solana.publickey import PublicKey
 from solana.rpc.commitment import Commitment
-from solana.rpc.types import MemcmpOpts, RPCError, RPCResponse, TxOpts
+from solana.rpc.types import RPCError, RPCResponse, TxOpts
 
-from .client import Client
-from .constants import MangoConstants, SOL_DECIMAL_DIVISOR
+from .client import BetterClient
+from .constants import MangoConstants
 from .market import CompoundMarketLookup, MarketLookup
 from .spotmarket import SpotMarketLookup
 from .token import TokenLookup
@@ -68,12 +67,11 @@ _OLD_3_TOKEN_PROGRAM_ID = PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zf
 # Probably best to access this through the Context object
 _pool_scheduler = ThreadPoolScheduler(multiprocessing.cpu_count())
 
+
 # # 🥭 Context class
 #
 # A `Context` object to manage Solana connection and Mango configuration.
 #
-
-
 class Context:
     def __init__(self, cluster: str, cluster_url: str, program_id: PublicKey, dex_program_id: PublicKey,
                  group_name: str, group_id: PublicKey, token_filename: str = TokenLookup.DEFAULT_FILE_NAME):
@@ -82,6 +80,8 @@ class Context:
             configured_program_id = _OLD_3_TOKEN_PROGRAM_ID
 
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.client: BetterClient = BetterClient.from_configuration(
+            "Mango Explorer", cluster, cluster_url, Commitment("processed"), False)
         self.cluster: str = cluster
         self.cluster_url: str = cluster_url
         self.program_id: PublicKey = configured_program_id
@@ -89,7 +89,6 @@ class Context:
         self.group_name: str = group_name
         self.group_id: PublicKey = group_id
         self.commitment: Commitment = Commitment("processed")
-        self.client: Client = Client(self.cluster, self.cluster_url, self.commitment, False)
         self.transaction_options: TxOpts = TxOpts(preflight_commitment=self.commitment)
         self.encoding: str = "base64"
         self.token_lookup: TokenLookup = TokenLookup.load(token_filename)
@@ -113,16 +112,7 @@ class Context:
                        default_dex_program_id, default_group_name, default_group_id)
 
     def fetch_sol_balance(self, account_public_key: PublicKey) -> Decimal:
-        result = self.client.get_balance(account_public_key, commitment=self.commitment)
-        value = Decimal(result["result"]["value"])
-        return value / SOL_DECIMAL_DIVISOR
-
-    def fetch_program_accounts_for_owner(self, program_id: PublicKey, owner: PublicKey):
-        memcmp_opts = [
-            MemcmpOpts(offset=40, bytes=str(owner)),
-        ]
-
-        return self.client.get_program_accounts(program_id, memcmp_opts=memcmp_opts, commitment=self.commitment, encoding=self.encoding)
+        return self.client.get_balance(account_public_key, commitment=self.commitment)
 
     def unwrap_or_raise_exception(self, response: RPCResponse) -> typing.Any:
         if "error" in response:
@@ -170,18 +160,6 @@ class Context:
 
     def lookup_oracle_name(self, token_address: PublicKey) -> str:
         return Context._lookup_name_by_address(token_address, MangoConstants[self.cluster]["oracles"]) or "« Unknown Oracle »"
-
-    def wait_for_confirmation(self, transaction_id: str, max_wait_in_seconds: int = 60) -> typing.Optional[typing.Dict]:
-        self.logger.info(
-            f"Waiting up to {max_wait_in_seconds} seconds for {transaction_id}.")
-        for wait in range(0, max_wait_in_seconds):
-            time.sleep(1)
-            confirmed = self.client.get_confirmed_transaction(transaction_id)
-            if confirmed["result"] is not None:
-                self.logger.info(f"Confirmed after {wait} seconds.")
-                return confirmed["result"]
-        self.logger.info(f"Timed out after {wait} seconds waiting on transaction {transaction_id}.")
-        return None
 
     def new_from_cluster(self, cluster: str) -> "Context":
         cluster_url = MangoConstants["cluster_urls"][cluster]

@@ -44,7 +44,7 @@ try:
     group_basket_token = mango.BasketToken.find_by_symbol(group.basket_tokens, args.token_symbol)
     group_token = group_basket_token.token
 
-    spl_token = Token(context.client, group_token.mint, TOKEN_PROGRAM_ID, wallet.account)
+    spl_token = Token(context.client.compatible_client, group_token.mint, TOKEN_PROGRAM_ID, wallet.account)
     source_accounts = spl_token.get_accounts(wallet.address)
     source_account = source_accounts["result"]["value"][0]
     source = PublicKey(source_account["pubkey"])
@@ -78,7 +78,7 @@ try:
         transfer_response = spl_token.transfer(source, destination, owner, amount)
         transaction_id = context.unwrap_transaction_id_or_raise_exception(transfer_response)
         print(f"Waiting on transaction ID: {transaction_id}")
-        context.wait_for_confirmation(transaction_id)
+        context.client.wait_for_confirmation([transaction_id])
 
     updated_balance = spl_token.get_balance(source)
     updated_balance_text = updated_balance["result"]["value"]["uiAmountString"]
