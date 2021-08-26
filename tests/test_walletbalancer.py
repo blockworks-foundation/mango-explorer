@@ -1,3 +1,5 @@
+import pytest
+
 from .context import mango
 from .fakes import fake_token
 
@@ -85,9 +87,8 @@ def test_percentage_target_balance():
 
 def test_target_balance_parser():
     parser = mango.TargetBalanceParser([ETH_TOKEN, BTC_TOKEN, USDT_TOKEN])
-    parsed_percent = parser.parse("eth:10%")
-    assert(parsed_percent.token == ETH_TOKEN)
-    assert(parsed_percent.target_fraction == Decimal("0.1"))
+    with pytest.raises(ValueError):
+        parser.parse("eth:10%")
 
     parsed_fixed = parser.parse("eth:70")
     assert(parsed_fixed.token == ETH_TOKEN)

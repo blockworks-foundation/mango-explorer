@@ -155,14 +155,11 @@ class TargetBalanceParser:
             raise Exception(
                 f"Could not parse '{numeric_value_string}' as a decimal number. It should be formatted as a decimal number, e.g. '2.345', with no surrounding spaces.") from exception
 
-        if len(values) > 2:
-            raise Exception(
-                f"Could not parse '{value}' as a decimal percentage. It should be formatted as a decimal number followed by a percentage sign, e.g. '30%', with no surrounding spaces.")
+        if len(values) > 1:
+            raise ValueError(
+                f"Error parsing '{value}'. Percentage targets could lead to over-rebalancing (due to token value changes rather than liquidations) and so are no longer supported.")
 
-        if len(values) == 1:
-            return FixedTargetBalance(token, numeric_value)
-        else:
-            return PercentageTargetBalance(token, numeric_value)
+        return FixedTargetBalance(token, numeric_value)
 
 
 # # 🥭 sort_changes_for_trades function
