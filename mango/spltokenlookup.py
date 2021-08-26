@@ -42,8 +42,9 @@ from .tokenlookup import TokenLookup
 class SplTokenLookup(TokenLookup):
     DefaultDataFilepath = os.path.join(os.path.dirname(__file__), "../data/solana.tokenlist.json")
 
-    def __init__(self, token_data: typing.Dict) -> None:
+    def __init__(self, filename: str, token_data: typing.Dict) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.filename: str = filename
         self.token_data = token_data
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
@@ -79,4 +80,7 @@ class SplTokenLookup(TokenLookup):
     def load(filename: str) -> "TokenLookup":
         with open(filename) as json_file:
             token_data = json.load(json_file)
-            return SplTokenLookup(token_data)
+            return SplTokenLookup(filename, token_data)
+
+    def __str__(self) -> str:
+        return f"« 𝚂𝚙𝚕𝚃𝚘𝚔𝚎𝚗𝙻𝚘𝚘𝚔𝚞𝚙 [{self.filename}] »"

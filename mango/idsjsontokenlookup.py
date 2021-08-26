@@ -50,3 +50,6 @@ class IdsJsonTokenLookup(TokenLookup):
                     if token["mintKey"] == mint_str:
                         return Token(token["symbol"], token["symbol"], PublicKey(token["mintKey"]), Decimal(token["decimals"]))
         return None
+
+    def __str__(self) -> str:
+        return f"« 𝙸𝚍𝚜𝙹𝚜𝚘𝚗𝚃𝚘𝚔𝚎𝚗𝙻𝚘𝚘𝚔𝚞𝚙 [{self.cluster_name}, {self.group_name}] »"

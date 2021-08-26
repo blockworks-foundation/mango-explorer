@@ -136,7 +136,7 @@ class ContextBuilder:
             return None
         default_group_data = MangoConstants["groups"][0]
         actual_name: str = name or os.environ.get("NAME") or "Mango Explorer"
-        actual_cluster: str = cluster_name or os.environ.get("CLUSTER") or default_group_data["cluster"]
+        actual_cluster: str = cluster_name or os.environ.get("CLUSTER_NAME") or default_group_data["cluster"]
         actual_cluster_url: str = cluster_url or os.environ.get(
             "CLUSTER_URL") or MangoConstants["cluster_urls"][actual_cluster]
         actual_skip_preflight: bool = skip_preflight
@@ -148,7 +148,7 @@ class ContextBuilder:
                 found_group_data = group
 
         if found_group_data is None:
-            raise Exception(f"Could not find group named '{actual_group_name}' in cluster_name '{actual_cluster}.")
+            raise Exception(f"Could not find group named '{actual_group_name}' in cluster '{actual_cluster}'.")
 
         actual_group_address: PublicKey = group_address or public_key_or_none(os.environ.get(
             "GROUP_ADDRESS")) or PublicKey(found_group_data["publicKey"])

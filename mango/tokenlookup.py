@@ -57,6 +57,12 @@ class TokenLookup(metaclass=abc.ABCMeta):
 
         return token
 
+    def __repr__(self) -> str:
+        return f"{self}"
+
+    def __str__(self) -> str:
+        return """« 𝚃𝚘𝚔𝚎𝚗𝙻𝚘𝚘𝚔𝚞𝚙 »"""
+
 
 # # 🥭 NullTokenLookup class
 #
@@ -72,6 +78,9 @@ class NullTokenLookup(TokenLookup):
 
     def find_by_mint(self, mint: PublicKey) -> typing.Optional[Token]:
         return None
+
+    def __str__(self) -> str:
+        return "« 𝙽𝚞𝚕𝚕𝚃𝚘𝚔𝚎𝚗𝙻𝚘𝚘𝚔𝚞𝚙 »"
 
 
 # # 🥭 CompoundTokenLookup class
@@ -98,3 +107,9 @@ class CompoundTokenLookup(TokenLookup):
             if result is not None:
                 return result
         return None
+
+    def __str__(self) -> str:
+        inner = "\n    ".join([f"{item}".replace("\n", "\n    ") for item in self.lookups])
+        return f"""« 𝙲𝚘𝚖𝚙𝚘𝚞𝚗𝚍𝚃𝚘𝚔𝚎𝚗𝙻𝚘𝚘𝚔𝚞𝚙
+    {inner}
+»"""
