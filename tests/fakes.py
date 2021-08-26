@@ -53,13 +53,13 @@ def fake_token_info() -> mango.TokenInfo:
 
 def fake_context() -> mango.Context:
     context = mango.Context(name="Mango Test",
-                            cluster="test",
+                            cluster_name="test",
                             cluster_url="http://localhost",
                             skip_preflight=False,
-                            program_id=fake_seeded_public_key("program ID"),
-                            dex_program_id=fake_seeded_public_key("DEX program ID"),
+                            mango_program_address=fake_seeded_public_key("Mango program address"),
+                            serum_program_address=fake_seeded_public_key("Serum program address"),
                             group_name="TEST_GROUP",
-                            group_id=fake_seeded_public_key("group ID"),
+                            group_address=fake_seeded_public_key("group ID"),
                             token_lookup=mango.NullTokenLookup(),
                             market_lookup=mango.NullMarketLookup())
     context.client = MockClient()

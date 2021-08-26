@@ -35,8 +35,8 @@ from .token import Token
 # This class encapsulates our knowledge of a Serum spot market.
 #
 class SpotMarket(Market):
-    def __init__(self, program_id: PublicKey, address: PublicKey, base: Token, quote: Token, group: Group, underlying_serum_market: PySerumMarket):
-        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
+    def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token, group: Group, underlying_serum_market: PySerumMarket):
+        super().__init__(serum_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.group: Group = group
         self.underlying_serum_market: PySerumMarket = underlying_serum_market
         self.lot_size_converter: LotSizeConverter = LotSizeConverter(
@@ -56,7 +56,7 @@ class SpotMarket(Market):
         return list(map(Order.from_serum_order, itertools.chain(bids_orderbook.orders(), asks_orderbook.orders())))
 
     def __str__(self) -> str:
-        return f"""« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} {self.address} [{self.program_id}]
+        return f"""« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} {self.address} [{self.program_address}]
     Event Queue: {self.underlying_serum_market.state.event_queue()}
     Request Queue: {self.underlying_serum_market.state.request_queue()}
     Bids: {self.underlying_serum_market.state.bids()}
@@ -73,15 +73,15 @@ class SpotMarket(Market):
 
 
 class SpotMarketStub(Market):
-    def __init__(self, program_id: PublicKey, address: PublicKey, base: Token, quote: Token, group_address: PublicKey):
-        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
+    def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token, group_address: PublicKey):
+        super().__init__(serum_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.group_address: PublicKey = group_address
 
     def load(self, context: Context, group: typing.Optional[Group]) -> SpotMarket:
         actual_group: Group = group or Group.load(context, self.group_address)
         underlying_serum_market: PySerumMarket = PySerumMarket.load(
-            context.client.compatible_client, self.address, context.dex_program_id)
-        return SpotMarket(self.program_id, self.address, self.base, self.quote, actual_group, underlying_serum_market)
+            context.client.compatible_client, self.address, context.serum_program_address)
+        return SpotMarket(self.program_address, self.address, self.base, self.quote, actual_group, underlying_serum_market)
 
     def __str__(self) -> str:
-        return f"« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} {self.address} [{self.program_id}] »"
+        return f"« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} {self.address} [{self.program_address}] »"

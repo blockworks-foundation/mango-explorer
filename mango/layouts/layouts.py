@@ -450,7 +450,7 @@ PERP_MARKET_INFO = construct.Struct(
 #     pub signer_nonce: u64,
 #     pub signer_key: Pubkey,
 #     pub admin: Pubkey,          // Used to add new markets and adjust risk params
-#     pub dex_program_id: Pubkey, // Consider allowing more
+#     pub serum_program_address: Pubkey, // Consider allowing more
 #     pub mango_cache: Pubkey,
 #     pub valid_interval: u64,
 #
@@ -473,7 +473,7 @@ GROUP = construct.Struct(
     "signer_nonce" / DecimalAdapter(),
     "signer_key" / PublicKeyAdapter(),
     "admin" / PublicKeyAdapter(),
-    "dex_program_id" / PublicKeyAdapter(),
+    "serum_program_address" / PublicKeyAdapter(),
     "cache" / PublicKeyAdapter(),
     "valid_interval" / DecimalAdapter(),
     "dao_vault" / PublicKeyAdapter(),

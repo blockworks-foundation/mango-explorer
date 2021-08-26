@@ -220,7 +220,7 @@ def fetch_all_recent_transaction_signatures(context: Context) -> typing.Sequence
     before = None
     signature_results: typing.List[str] = []
     while not all_fetched:
-        signatures = context.client.get_confirmed_signatures_for_address2(context.group_id, before=before)
+        signatures = context.client.get_confirmed_signatures_for_address2(context.group_address, before=before)
         signature_results += signatures
         if (len(signatures) == 0):
             all_fetched = True
@@ -232,7 +232,7 @@ def fetch_all_recent_transaction_signatures(context: Context) -> typing.Sequence
 
 def mango_instruction_from_response(context: Context, all_accounts: typing.Sequence[PublicKey], instruction_data: typing.Dict) -> typing.Optional["MangoInstruction"]:
     program_account_index = instruction_data["programIdIndex"]
-    if all_accounts[program_account_index] != context.program_id:
+    if all_accounts[program_account_index] != context.mango_program_address:
         # It's an instruction, it's just not a Mango one.
         return None
 

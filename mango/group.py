@@ -82,7 +82,7 @@ class Group(AddressableAccount):
                  basket_indices: typing.Sequence[bool],
                  basket: typing.Sequence[GroupBasketMarket],
                  signer_nonce: Decimal, signer_key: PublicKey,
-                 admin: PublicKey, dex_program_id: PublicKey, cache: PublicKey, valid_interval: Decimal,
+                 admin: PublicKey, serum_program_address: PublicKey, cache: PublicKey, valid_interval: Decimal,
                  dao_vault: PublicKey, srm_vault: PublicKey, msrm_vault: PublicKey):
         super().__init__(account_info)
         self.version: Version = version
@@ -95,7 +95,7 @@ class Group(AddressableAccount):
         self.signer_nonce: Decimal = signer_nonce
         self.signer_key: PublicKey = signer_key
         self.admin: PublicKey = admin
-        self.dex_program_id: PublicKey = dex_program_id
+        self.serum_program_address: PublicKey = serum_program_address
         self.cache: PublicKey = cache
         self.valid_interval: Decimal = valid_interval
         self.dao_vault: PublicKey = dao_vault
@@ -151,14 +151,14 @@ class Group(AddressableAccount):
         signer_nonce: Decimal = layout.signer_nonce
         signer_key: PublicKey = layout.signer_key
         admin: PublicKey = layout.admin
-        dex_program_id: PublicKey = layout.dex_program_id
+        serum_program_address: PublicKey = layout.serum_program_address
         cache: PublicKey = layout.cache
         valid_interval: Decimal = layout.valid_interval
         dao_vault: PublicKey = layout.dao_vault
         srm_vault: PublicKey = layout.srm_vault
         msrm_vault: PublicKey = layout.msrm_vault
 
-        return Group(account_info, version, name, meta_data, quote_token_info, in_basket, basket, signer_nonce, signer_key, admin, dex_program_id, cache, valid_interval, dao_vault, srm_vault, msrm_vault)
+        return Group(account_info, version, name, meta_data, quote_token_info, in_basket, basket, signer_nonce, signer_key, admin, serum_program_address, cache, valid_interval, dao_vault, srm_vault, msrm_vault)
 
     @staticmethod
     def parse(context: Context, account_info: AccountInfo) -> "Group":
@@ -186,7 +186,7 @@ class Group(AddressableAccount):
 
     @staticmethod
     def load(context: Context, address: typing.Optional[PublicKey] = None) -> "Group":
-        group_address: PublicKey = address or context.group_id
+        group_address: PublicKey = address or context.group_address
         account_info = AccountInfo.load(context, group_address)
         if account_info is None:
             raise Exception(f"Group account not found at address '{group_address}'")
@@ -239,7 +239,7 @@ class Group(AddressableAccount):
     Name: {self.name}
     Signer [Nonce: {self.signer_nonce}]: {self.signer_key}
     Admin: {self.admin}
-    DEX Program ID: {self.dex_program_id}
+    DEX Program ID: {self.serum_program_address}
     Cache: {self.cache}
     DAO Vault: {self.dao_vault}
     SRM Vault: {self.srm_vault}

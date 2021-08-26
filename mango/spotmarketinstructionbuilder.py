@@ -58,7 +58,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
     @staticmethod
     def load(context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket) -> "SpotMarketInstructionBuilder":
         raw_market: PySerumMarket = PySerumMarket.load(
-            context.client.compatible_client, spot_market.address, context.dex_program_id)
+            context.client.compatible_client, spot_market.address, context.serum_program_address)
 
         fee_discount_token_address: typing.Optional[PublicKey] = None
         srm_token = context.token_lookup.find_by_symbol("SRM")

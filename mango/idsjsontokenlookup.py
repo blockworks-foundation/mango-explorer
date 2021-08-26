@@ -29,14 +29,14 @@ from .tokenlookup import TokenLookup
 #
 
 class IdsJsonTokenLookup(TokenLookup):
-    def __init__(self, cluster: str, group_name: str) -> None:
+    def __init__(self, cluster_name: str, group_name: str) -> None:
         super().__init__()
-        self.cluster: str = cluster
+        self.cluster_name: str = cluster_name
         self.group_name: str = group_name
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
         for group in MangoConstants["groups"]:
-            if group["cluster"] == self.cluster and group["name"] == self.group_name:
+            if group["cluster"] == self.cluster_name and group["name"] == self.group_name:
                 for token in group["tokens"]:
                     if token["symbol"] == symbol:
                         return Token(token["symbol"], token["symbol"], PublicKey(token["mintKey"]), Decimal(token["decimals"]))
@@ -45,7 +45,7 @@ class IdsJsonTokenLookup(TokenLookup):
     def find_by_mint(self, mint: PublicKey) -> typing.Optional[Token]:
         mint_str = str(mint)
         for group in MangoConstants["groups"]:
-            if group["cluster"] == self.cluster and group["name"] == self.group_name:
+            if group["cluster"] == self.cluster_name and group["name"] == self.group_name:
                 for token in group["tokens"]:
                     if token["mintKey"] == mint_str:
                         return Token(token["symbol"], token["symbol"], PublicKey(token["mintKey"]), Decimal(token["decimals"]))

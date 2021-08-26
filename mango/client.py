@@ -134,10 +134,10 @@ UnspecifiedEncoding = "unspecified"
 # some common operations better from our point of view.
 #
 class CompatibleClient:
-    def __init__(self, name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter):
+    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
-        self.cluster: str = cluster
+        self.cluster_name: str = cluster_name
         self.cluster_url: str = cluster_url
         self.commitment: Commitment = commitment
         self.skip_preflight: bool = skip_preflight
@@ -334,7 +334,7 @@ class CompatibleClient:
         return self._build_options(commitment, encoding_to_use, data_slice)
 
     def __str__(self) -> str:
-        return f"« 𝙲𝚘𝚖𝚙𝚊𝚝𝚒𝚋𝚕𝚎𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster}]: {self.cluster_url} »"
+        return f"« 𝙲𝚘𝚖𝚙𝚊𝚝𝚒𝚋𝚕𝚎𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster_name}]: {self.cluster_url} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -351,12 +351,12 @@ class BetterClient:
             8), Decimal(16), Decimal(20), Decimal(30)]
 
     @property
-    def cluster(self) -> str:
-        return self.compatible_client.cluster
+    def cluster_name(self) -> str:
+        return self.compatible_client.cluster_name
 
-    @cluster.setter
-    def cluster(self, value: str) -> None:
-        self.compatible_client.cluster = value
+    @cluster_name.setter
+    def cluster_name(self, value: str) -> None:
+        self.compatible_client.cluster_name = value
 
     @property
     def cluster_url(self) -> str:
@@ -399,8 +399,8 @@ class BetterClient:
         self.compatible_client.instruction_reporter = value
 
     @staticmethod
-    def from_configuration(name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter) -> "BetterClient":
-        compatible = CompatibleClient(name, cluster, cluster_url, commitment, skip_preflight, instruction_reporter)
+    def from_configuration(name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter) -> "BetterClient":
+        compatible = CompatibleClient(name, cluster_name, cluster_url, commitment, skip_preflight, instruction_reporter)
         return BetterClient(compatible)
 
     def is_node_healthy(self) -> bool:
@@ -480,7 +480,7 @@ class BetterClient:
         return all_confirmed
 
     def __str__(self) -> str:
-        return f"« 𝙱𝚎𝚝𝚝𝚎𝚛𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster}]: {self.cluster_url} »"
+        return f"« 𝙱𝚎𝚝𝚝𝚎𝚛𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster_name}]: {self.cluster_url} »"
 
     def __repr__(self) -> str:
         return f"{self}"

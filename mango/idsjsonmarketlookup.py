@@ -45,20 +45,20 @@ class IdsJsonMarketType(enum.Enum):
 
 
 class IdsJsonMarketLookup(MarketLookup):
-    def __init__(self, cluster: str) -> None:
+    def __init__(self, cluster_name: str) -> None:
         super().__init__()
-        self.cluster: str = cluster
+        self.cluster_name: str = cluster_name
 
     @staticmethod
-    def _from_dict(market_type: IdsJsonMarketType, program_id: PublicKey, group_address: PublicKey, data: typing.Dict, tokens: typing.Sequence[Token], quote_symbol: str) -> Market:
+    def _from_dict(market_type: IdsJsonMarketType, mango_program_address: PublicKey, group_address: PublicKey, data: typing.Dict, tokens: typing.Sequence[Token], quote_symbol: str) -> Market:
         base_symbol = data["baseSymbol"]
         base = Token.find_by_symbol(tokens, base_symbol)
         quote = Token.find_by_symbol(tokens, quote_symbol)
         address = PublicKey(data["publicKey"])
         if market_type == IdsJsonMarketType.PERP:
-            return PerpMarketStub(program_id, address, base, quote, group_address)
+            return PerpMarketStub(mango_program_address, address, base, quote, group_address)
         else:
-            return SpotMarketStub(program_id, address, base, quote, group_address)
+            return SpotMarketStub(mango_program_address, address, base, quote, group_address)
 
     @staticmethod
     def _load_tokens(data: typing.Dict) -> typing.Sequence[Token]:
@@ -80,51 +80,51 @@ class IdsJsonMarketLookup(MarketLookup):
             check_spots = False  # Skip spot markets because we're explicitly told it's a perp
 
         for group in MangoConstants["groups"]:
-            if group["cluster"] == self.cluster:
+            if group["cluster"] == self.cluster_name:
                 group_address: PublicKey = PublicKey(group["publicKey"])
-                program_id: PublicKey = PublicKey(group["mangoProgramId"])
+                mango_program_address: PublicKey = PublicKey(group["mangoProgramId"])
                 if check_perps:
                     for market_data in group["perpMarkets"]:
                         if market_data["name"].upper() == symbol.upper():
                             tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, program_id, group_address, market_data, tokens, group["quoteSymbol"])
+                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
                 if check_spots:
                     for market_data in group["spotMarkets"]:
                         if market_data["name"].upper() == symbol.upper():
                             tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, program_id, group_address, market_data, tokens, group["quoteSymbol"])
+                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
         return None
 
     def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
         for group in MangoConstants["groups"]:
-            if group["cluster"] == self.cluster:
+            if group["cluster"] == self.cluster_name:
                 group_address: PublicKey = PublicKey(group["publicKey"])
-                program_id: PublicKey = PublicKey(group["mangoProgramId"])
+                mango_program_address: PublicKey = PublicKey(group["mangoProgramId"])
                 for market_data in group["perpMarkets"]:
                     if market_data["key"] == str(address):
                         tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, program_id, group_address, market_data, tokens, group["quoteSymbol"])
+                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
                 for market_data in group["spotMarkets"]:
                     if market_data["key"] == str(address):
                         tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, program_id, group_address, market_data, tokens, group["quoteSymbol"])
+                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
         return None
 
     def all_markets(self) -> typing.Sequence[Market]:
         markets = []
         for group in MangoConstants["groups"]:
-            if group["cluster"] == self.cluster:
+            if group["cluster"] == self.cluster_name:
                 group_address: PublicKey = PublicKey(group["publicKey"])
-                program_id: PublicKey = PublicKey(group["mangoProgramId"])
+                mango_program_address: PublicKey = PublicKey(group["mangoProgramId"])
                 for market_data in group["perpMarkets"]:
                     tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
                     market = IdsJsonMarketLookup._from_dict(
-                        IdsJsonMarketType.PERP, program_id, group_address, market_data, tokens, group["quoteSymbol"])
+                        IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
                     markets = [market]
                 for market_data in group["spotMarkets"]:
                     tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
                     market = IdsJsonMarketLookup._from_dict(
-                        IdsJsonMarketType.SPOT, program_id, group_address, market_data, tokens, group["quoteSymbol"])
+                        IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
                     markets = [market]
 
         return markets

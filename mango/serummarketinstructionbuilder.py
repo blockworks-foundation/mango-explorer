@@ -56,7 +56,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
     @staticmethod
     def load(context: Context, wallet: Wallet, serum_market: SerumMarket) -> "SerumMarketInstructionBuilder":
         raw_market: PySerumMarket = PySerumMarket.load(
-            context.client.compatible_client, serum_market.address, context.dex_program_id)
+            context.client.compatible_client, serum_market.address, context.serum_program_address)
 
         fee_discount_token_address: typing.Optional[PublicKey] = None
         srm_token = context.token_lookup.find_by_symbol("SRM")
@@ -68,7 +68,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
 
         open_orders_address: typing.Optional[PublicKey] = None
         all_open_orders = OpenOrders.load_for_market_and_owner(
-            context, serum_market.address, wallet.address, context.dex_program_id, serum_market.base.decimals, serum_market.quote.decimals)
+            context, serum_market.address, wallet.address, context.serum_program_address, serum_market.base.decimals, serum_market.quote.decimals)
         if len(all_open_orders) > 0:
             open_orders_address = all_open_orders[0].address
 

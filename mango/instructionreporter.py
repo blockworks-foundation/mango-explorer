@@ -48,11 +48,11 @@ class InstructionReporter:
 # The `SerumInstructionParser` class knows a bit more about Serum instructions.
 #
 class SerumInstructionReporter(InstructionReporter):
-    def __init__(self, dex_program_id: PublicKey):
-        self.dex_program_id: PublicKey = dex_program_id
+    def __init__(self, serum_program_address: PublicKey):
+        self.serum_program_address: PublicKey = serum_program_address
 
     def matches(self, instruction: TransactionInstruction) -> bool:
-        return instruction.program_id == self.dex_program_id
+        return instruction.program_id == self.serum_program_address
 
     def report(self, instruction: TransactionInstruction) -> str:
         initial = layouts.SERUM_INSTRUCTION_VARIANT_FINDER.parse(instruction.data)
@@ -65,11 +65,11 @@ class SerumInstructionReporter(InstructionReporter):
 # The `MangoInstructionReporter` class knows a bit more about Mango instructions.
 #
 class MangoInstructionReporter(InstructionReporter):
-    def __init__(self, program_id: PublicKey):
-        self.program_id: PublicKey = program_id
+    def __init__(self, mango_program_address: PublicKey):
+        self.mango_program_address: PublicKey = mango_program_address
 
     def matches(self, instruction: TransactionInstruction) -> bool:
-        return instruction.program_id == self.program_id
+        return instruction.program_id == self.mango_program_address
 
     def report(self, instruction: TransactionInstruction) -> str:
         initial = layouts.MANGO_INSTRUCTION_VARIANT_FINDER.parse(instruction.data)
@@ -107,8 +107,8 @@ class CompoundInstructionReporter(InstructionReporter):
             f"Could not find instruction reporter for instruction {instruction}.")
 
     @staticmethod
-    def from_ids(program_id: PublicKey, dex_program_id: PublicKey) -> InstructionReporter:
+    def from_addresses(mango_program_address: PublicKey, serum_program_address: PublicKey) -> InstructionReporter:
         base: InstructionReporter = InstructionReporter()
-        serum: InstructionReporter = SerumInstructionReporter(dex_program_id)
-        mango: InstructionReporter = MangoInstructionReporter(program_id)
+        serum: InstructionReporter = SerumInstructionReporter(serum_program_address)
+        mango: InstructionReporter = MangoInstructionReporter(mango_program_address)
         return CompoundInstructionReporter([mango, serum, base])

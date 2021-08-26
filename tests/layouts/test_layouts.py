@@ -37,7 +37,7 @@ def test_group_layout():
     assert group.signer_nonce == 0
     assert group.signer_key == PublicKey("9GXvznfEep9yEsvH4CQzqNy5GH81FNk1HDeAR8UjefSf")
     assert group.admin == PublicKey("Cwg1f6m4m3DGwMEbmsbAfDtUToUf5jRdKrJSGD7GfZCB")
-    assert group.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
+    assert group.serum_program_address == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
     assert group.cache == PublicKey("PJhM2enPpZH7E9wgw7Sqt8S2p4mr3Bc7SycawQwfY7b")
     assert group.valid_interval == 5
     assert group.dao_vault == PublicKey("14gfuPWjUQnYXpsxs4WgsjafUrJctKkR9AMFH7fjvTgR")

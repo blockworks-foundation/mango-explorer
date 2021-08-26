@@ -76,7 +76,7 @@ def _polling_serum_model_state_builder_factory(context: mango.Context, wallet: m
         raise Exception(
             f"Could not find token account owned by {wallet.address} for quote token {market.quote}.")
     all_open_orders = mango.OpenOrders.load_for_market_and_owner(
-        context, market.address, wallet.address, context.dex_program_id, market.base.decimals, market.quote.decimals)
+        context, market.address, wallet.address, context.serum_program_address, market.base.decimals, market.quote.decimals)
     if len(all_open_orders) == 0:
         raise Exception(
             f"Could not find serum openorders account owned by {wallet.address} for market {market.symbol}.")

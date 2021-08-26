@@ -40,17 +40,19 @@ _pool_scheduler = ThreadPoolScheduler(multiprocessing.cpu_count())
 
 
 class Context:
-    def __init__(self, name: str, cluster: str, cluster_url: str, skip_preflight: bool, program_id: PublicKey, dex_program_id: PublicKey,
-                 group_name: str, group_id: PublicKey, token_lookup: TokenLookup, market_lookup: MarketLookup):
+    def __init__(self, name: str, cluster_name: str, cluster_url: str, skip_preflight: bool, mango_program_address: PublicKey,
+                 serum_program_address: PublicKey, group_name: str, group_address: PublicKey,
+                 token_lookup: TokenLookup, market_lookup: MarketLookup):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
-        instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_ids(program_id, dex_program_id)
+        instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_addresses(
+            mango_program_address, serum_program_address)
         self.client: BetterClient = BetterClient.from_configuration(
-            name, cluster, cluster_url, Commitment("processed"), skip_preflight, instruction_reporter)
-        self.program_id: PublicKey = program_id
-        self.dex_program_id: PublicKey = dex_program_id
+            name, cluster_name, cluster_url, Commitment("processed"), skip_preflight, instruction_reporter)
+        self.mango_program_address: PublicKey = mango_program_address
+        self.serum_program_address: PublicKey = serum_program_address
         self.group_name: str = group_name
-        self.group_id: PublicKey = group_id
+        self.group_address: PublicKey = group_address
         self.token_lookup: TokenLookup = token_lookup
         self.market_lookup: MarketLookup = market_lookup
 
@@ -74,19 +76,19 @@ class Context:
     def lookup_group_name(self, group_address: PublicKey) -> str:
         group_address_str = str(group_address)
         for group in MangoConstants["groups"]:
-            if group["cluster"] == self.client.cluster and group["publicKey"] == group_address_str:
+            if group["cluster"] == self.client.cluster_name and group["publicKey"] == group_address_str:
                 return group["name"]
 
         return "« Unknown Group »"
 
     def __str__(self) -> str:
         return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝 '{self.name}':
-    Cluster: {self.client.cluster}
+    Cluster Name: {self.client.cluster_name}
     Cluster URL: {self.client.cluster_url}
-    Program ID: {self.program_id}
-    DEX Program ID: {self.dex_program_id}
     Group Name: {self.group_name}
-    Group ID: {self.group_id}
+    Group Address: {self.group_address}
+    Mango Program Address: {self.mango_program_address}
+    Serum Program Address: {self.serum_program_address}
 »"""
 
     def __repr__(self) -> str:

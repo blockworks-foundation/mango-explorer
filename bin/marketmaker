@@ -74,7 +74,7 @@ health_check = mango.HealthCheck()
 disposer.add_disposable(health_check)
 
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-group = mango.Group.load(context, context.group_id)
+group = mango.Group.load(context, context.group_address)
 account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
 
 market_symbol = args.market.upper()

@@ -27,7 +27,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-group = mango.Group.load(context, context.group_id)
+group = mango.Group.load(context, context.group_address)
 accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
 if len(accounts) == 0:
     raise Exception(f"Could not find any Mango accounts for '{wallet.address}'.")

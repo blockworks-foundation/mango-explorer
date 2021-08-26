@@ -110,7 +110,7 @@ class PythOracle(Oracle):
 
 class PythOracleProvider(OracleProvider):
     def __init__(self, context: Context) -> None:
-        self.address: PublicKey = PYTH_MAINNET_MAPPING_ROOT if context.client.cluster == "mainnet" else PYTH_DEVNET_MAPPING_ROOT
+        self.address: PublicKey = PYTH_MAINNET_MAPPING_ROOT if context.client.cluster_name == "mainnet" else PYTH_DEVNET_MAPPING_ROOT
         super().__init__(f"Pyth Oracle Factory [{self.address}]")
         self.context: Context = context
 

@@ -4,10 +4,10 @@ from solana.publickey import PublicKey
 
 
 def context_has_default_values(ctx: mango.Context):
-    assert ctx.program_id == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
-    assert ctx.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+    assert ctx.mango_program_address == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
+    assert ctx.serum_program_address == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
     assert ctx.group_name == "mainnet.1"
-    assert ctx.group_id == PublicKey("98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue")
+    assert ctx.group_address == PublicKey("98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue")
 
 
 def test_context_default_exists():
@@ -22,21 +22,21 @@ def test_context_default_values():
 # def test_new_from_cluster():
 #     context_has_default_values(mango.ContextBuilder.default())
 #     derived = mango.ContextBuilder.default().new_from_cluster("mainnet")
-#     assert derived.cluster == "mainnet"
+#     assert derived.cluster_name == "mainnet"
 #     assert derived.cluster_url == "https://solana-api.projectserum.com"
-#     assert derived.program_id == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
-#     assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+#     assert derived.mango_program_address == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
+#     assert derived.serum_program_address == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
 #     assert derived.group_name == "mainnet.0"
-#     assert derived.group_id == PublicKey("98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue")
+#     assert derived.group_address == PublicKey("98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue")
 #     context_has_default_values(mango.ContextBuilder.default())
 
 
 def test_new_from_group_name():
     context_has_default_values(mango.ContextBuilder.default())
     derived = mango.ContextBuilder.from_group_name(mango.ContextBuilder.default(), "mainnet.0")
-    assert derived.program_id == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
-    assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+    assert derived.mango_program_address == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
+    assert derived.serum_program_address == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
 
     # Should update both of these values on new group name.
     assert derived.group_name == "mainnet.0"
-    assert derived.group_id == PublicKey("4yJ2Vx3kZnmHTNCrHzdoj5nCwriF2kVhfKNvqC6gU8tr")
+    assert derived.group_address == PublicKey("4yJ2Vx3kZnmHTNCrHzdoj5nCwriF2kVhfKNvqC6gU8tr")

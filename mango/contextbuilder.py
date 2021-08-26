@@ -43,7 +43,7 @@ from .tokenlookup import TokenLookup, CompoundTokenLookup
 # * CLUSTER_URL
 # * GROUP_NAME
 # * GROUP_ADDRESS
-# * PROGRAM_ADDRESS
+# * MANGO_PROGRAM_ADDRESS
 # * SERUM_PROGRAM_ADDRESS
 
 
@@ -61,13 +61,13 @@ class ContextBuilder:
     def add_command_line_parameters(parser: argparse.ArgumentParser, logging_default=logging.INFO) -> None:
         parser.add_argument("--name", type=str, default="Mango Explorer",
                             help="Name of the program (used in reports and alerts)")
-        parser.add_argument("--cluster", type=str, default=None, help="Solana RPC cluster name")
+        parser.add_argument("--cluster-name", type=str, default=None, help="Solana RPC cluster name")
         parser.add_argument("--cluster-url", type=str, default=None, help="Solana RPC cluster URL")
-        parser.add_argument("--skip-preflight", default=False, action="store_true", help="Skip pre-flight checks")
-        parser.add_argument("--program-id", type=PublicKey, default=None, help="Mango program ID/address")
-        parser.add_argument("--dex-program-id", type=PublicKey, default=None, help="DEX program ID/address")
         parser.add_argument("--group-name", type=str, default=None, help="Mango group name")
-        parser.add_argument("--group-id", type=PublicKey, default=None, help="Mango group ID/address")
+        parser.add_argument("--group-address", type=PublicKey, default=None, help="Mango group address")
+        parser.add_argument("--mango-program-address", type=PublicKey, default=None, help="Mango program address")
+        parser.add_argument("--serum-program-address", type=PublicKey, default=None, help="Serum program address")
+        parser.add_argument("--skip-preflight", default=False, action="store_true", help="Skip pre-flight checks")
 
         parser.add_argument("--token-data-file", type=str, default=SplTokenLookup.DefaultDataFilepath,
                             help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
@@ -85,25 +85,17 @@ class ContextBuilder:
     #
     @staticmethod
     def from_command_line_parameters(args: argparse.Namespace) -> "Context":
-        # Here we should have values for all our parameters (because they'll either be specified
-        # on the command-line or will be the default_* value) but we may be in the situation where
-        # a group name is specified but not a group ID, and in that case we want to look up the
-        # group ID.
-        #
-        # In that situation, the group_name will not be default_group_name but the group_id will
-        # still be default_group_id. In that situation we want to override what we were passed
-        # as the group_id.
         name: typing.Optional[str] = args.name
-        group_name: typing.Optional[str] = args.group_name
-        cluster: typing.Optional[str] = args.cluster
+        cluster_name: typing.Optional[str] = args.cluster_name
         cluster_url: typing.Optional[str] = args.cluster_url
+        group_name: typing.Optional[str] = args.group_name
+        group_address: typing.Optional[PublicKey] = args.group_address
+        mango_program_address: typing.Optional[PublicKey] = args.mango_program_address
+        serum_program_address: typing.Optional[PublicKey] = args.serum_program_address
         skip_preflight: bool = bool(args.skip_preflight)
-        group_id: typing.Optional[PublicKey] = args.group_id
-        program_id: typing.Optional[PublicKey] = args.program_id
-        dex_program_id: typing.Optional[PublicKey] = args.dex_program_id
         token_filename: str = args.token_data_file
 
-        return ContextBuilder._build(name, cluster, cluster_url, skip_preflight, group_name, group_id, program_id, dex_program_id, token_filename)
+        return ContextBuilder._build(name, cluster_name, cluster_url, skip_preflight, group_name, group_address, mango_program_address, serum_program_address, token_filename)
 
     @staticmethod
     def default():
@@ -111,21 +103,21 @@ class ContextBuilder:
 
     @staticmethod
     def from_group_name(context: Context, group_name: str) -> Context:
-        return ContextBuilder._build(context.name, context.client.cluster, context.client.cluster_url,
+        return ContextBuilder._build(context.name, context.client.cluster_name, context.client.cluster_url,
                                      context.client.skip_preflight, group_name, None,
                                      None, None, SplTokenLookup.DefaultDataFilepath)
 
     @staticmethod
     def forced_to_devnet(context: Context) -> Context:
-        cluster: str = "devnet"
-        cluster_url: str = MangoConstants["cluster_urls"][cluster]
-        return ContextBuilder._build(context.name, cluster, cluster_url, context.client.skip_preflight, context.group_name, context.group_id, context.program_id, context.dex_program_id, SplTokenLookup.DefaultDataFilepath)
+        cluster_name: str = "devnet"
+        cluster_url: str = MangoConstants["cluster_urls"][cluster_name]
+        return ContextBuilder._build(context.name, cluster_name, cluster_url, context.client.skip_preflight, context.group_name, context.group_address, context.mango_program_address, context.serum_program_address, SplTokenLookup.DefaultDataFilepath)
 
     @staticmethod
     def forced_to_mainnet_beta(context: Context) -> Context:
-        cluster: str = "mainnet"
-        cluster_url: str = MangoConstants["cluster_urls"][cluster]
-        return ContextBuilder._build(context.name, cluster, cluster_url, context.client.skip_preflight, context.group_name, context.group_id, context.program_id, context.dex_program_id, SplTokenLookup.DefaultDataFilepath)
+        cluster_name: str = "mainnet"
+        cluster_url: str = MangoConstants["cluster_urls"][cluster_name]
+        return ContextBuilder._build(context.name, cluster_name, cluster_url, context.client.skip_preflight, context.group_name, context.group_address, context.mango_program_address, context.serum_program_address, SplTokenLookup.DefaultDataFilepath)
 
     # This function is the converse of `add_command_line_parameters()` - it takes
     # an argument of parsed command-line parameters and expects to see the ones it added
@@ -134,7 +126,7 @@ class ContextBuilder:
     # It then uses those parameters to create a properly-configured `Context` object.
     #
     @staticmethod
-    def _build(name: typing.Optional[str], cluster: typing.Optional[str], cluster_url: typing.Optional[str],
+    def _build(name: typing.Optional[str], cluster_name: typing.Optional[str], cluster_url: typing.Optional[str],
                skip_preflight: bool, group_name: typing.Optional[str], group_address: typing.Optional[PublicKey],
                program_address: typing.Optional[PublicKey], serum_program_address: typing.Optional[PublicKey],
                token_filename: str) -> "Context":
@@ -144,7 +136,7 @@ class ContextBuilder:
             return None
         default_group_data = MangoConstants["groups"][0]
         actual_name: str = name or os.environ.get("NAME") or "Mango Explorer"
-        actual_cluster: str = cluster or os.environ.get("CLUSTER") or default_group_data["cluster"]
+        actual_cluster: str = cluster_name or os.environ.get("CLUSTER") or default_group_data["cluster"]
         actual_cluster_url: str = cluster_url or os.environ.get(
             "CLUSTER_URL") or MangoConstants["cluster_urls"][actual_cluster]
         actual_skip_preflight: bool = skip_preflight
@@ -156,12 +148,12 @@ class ContextBuilder:
                 found_group_data = group
 
         if found_group_data is None:
-            raise Exception(f"Could not find group named '{actual_group_name}' in cluster '{actual_cluster}.")
+            raise Exception(f"Could not find group named '{actual_group_name}' in cluster_name '{actual_cluster}.")
 
         actual_group_address: PublicKey = group_address or public_key_or_none(os.environ.get(
             "GROUP_ADDRESS")) or PublicKey(found_group_data["publicKey"])
         actual_program_address: PublicKey = program_address or public_key_or_none(os.environ.get(
-            "PROGRAM_ADDRESS")) or PublicKey(found_group_data["mangoProgramId"])
+            "MANGO_PROGRAM_ADDRESS")) or PublicKey(found_group_data["mangoProgramId"])
         actual_serum_program_address: PublicKey = serum_program_address or public_key_or_none(os.environ.get(
             "SERUM_PROGRAM_ADDRESS")) or PublicKey(found_group_data["serumProgramId"])
 

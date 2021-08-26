@@ -34,8 +34,8 @@ from .token import Token
 # This class encapsulates our knowledge of a Mango perps market.
 #
 class PerpMarket(Market):
-    def __init__(self, program_id: PublicKey, address: PublicKey, base: Token, quote: Token, underlying_perp_market: PerpMarketDetails):
-        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
+    def __init__(self, mango_program_address: PublicKey, address: PublicKey, base: Token, quote: Token, underlying_perp_market: PerpMarketDetails):
+        super().__init__(mango_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.underlying_perp_market: PerpMarketDetails = underlying_perp_market
         self.lot_size_converter: LotSizeConverter = LotSizeConverter(
             base, underlying_perp_market.base_lot_size, quote, underlying_perp_market.quote_lot_size)
@@ -81,7 +81,7 @@ class PerpMarket(Market):
 
     def __str__(self) -> str:
         underlying: str = f"{self.underlying_perp_market}".replace("\n", "\n    ")
-        return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} {self.address} [{self.program_id}]
+        return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} {self.address} [{self.program_address}]
     {underlying}
 »"""
 
@@ -91,18 +91,18 @@ class PerpMarket(Market):
 # This class holds information to load a `PerpMarket` object but doesn't automatically load it.
 #
 class PerpMarketStub(Market):
-    def __init__(self, program_id: PublicKey, address: PublicKey, base: Token, quote: Token, group_address: PublicKey):
-        super().__init__(program_id, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
+    def __init__(self, mango_program_address: PublicKey, address: PublicKey, base: Token, quote: Token, group_address: PublicKey):
+        super().__init__(mango_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.group_address: PublicKey = group_address
 
     def load(self, context: Context, group: typing.Optional[Group] = None) -> PerpMarket:
         actual_group: Group = group or Group.load(context, self.group_address)
         underlying_perp_market: PerpMarketDetails = PerpMarketDetails.load(context, self.address, actual_group)
-        return PerpMarket(self.program_id, self.address, self.base, self.quote, underlying_perp_market)
+        return PerpMarket(self.program_address, self.address, self.base, self.quote, underlying_perp_market)
 
     @property
     def symbol(self) -> str:
         return f"{self.base.symbol}-PERP"
 
     def __str__(self) -> str:
-        return f"« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} {self.address} [{self.program_id}] »"
+        return f"« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} {self.address} [{self.program_address}] »"

@@ -39,11 +39,10 @@ class InventorySource(enum.Enum):
 #
 # This class describes a crypto market. It *must* have an address, a base token and a quote token.
 #
-
 class Market(metaclass=abc.ABCMeta):
-    def __init__(self, program_id: PublicKey, address: PublicKey, inventory_source: InventorySource, base: Token, quote: Token, lot_size_converter: LotSizeConverter):
+    def __init__(self, program_address: PublicKey, address: PublicKey, inventory_source: InventorySource, base: Token, quote: Token, lot_size_converter: LotSizeConverter):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.program_id: PublicKey = program_id
+        self.program_address: PublicKey = program_address
         self.address: PublicKey = address
         self.inventory_source: InventorySource = inventory_source
         self.base: Token = base

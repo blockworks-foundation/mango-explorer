@@ -20,7 +20,7 @@ def report_accrued(basket_token: mango.AccountBasketBaseToken):
 
 def load_perp_market(context: mango.Context, group: mango.Group, group_basket_market: mango.GroupBasketMarket):
     perp_market_details = mango.PerpMarketDetails.load(context, group_basket_market.perp_market_info.address, group)
-    perp_market = mango.PerpMarket(context.program_id, group_basket_market.perp_market_info.address,
+    perp_market = mango.PerpMarket(context.mango_program_address, group_basket_market.perp_market_info.address,
                                    group_basket_market.base_token_info.token,
                                    group_basket_market.quote_token_info.token, perp_market_details)
 
@@ -70,7 +70,7 @@ if (not args.all) and (args.market is None):
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-group = mango.Group.load(context, context.group_id)
+group = mango.Group.load(context, context.group_address)
 mngo = group.find_token_info_by_symbol("MNGO")
 account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
 

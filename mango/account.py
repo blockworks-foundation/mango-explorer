@@ -206,7 +206,7 @@ class Account(AddressableAccount):
             )
         ]
 
-        results = context.client.get_program_accounts(context.program_id, memcmp_opts=filters)
+        results = context.client.get_program_accounts(context.mango_program_address, memcmp_opts=filters)
         accounts = []
         for account_data in results:
             address = PublicKey(account_data["pubkey"])

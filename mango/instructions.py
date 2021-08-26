@@ -66,11 +66,11 @@ from .wallet import Wallet
 # necesary.
 #
 
-def build_create_solana_account_instructions(context: Context, wallet: Wallet, program_id: PublicKey, size: int, lamports: int = 0) -> CombinableInstructions:
+def build_create_solana_account_instructions(context: Context, wallet: Wallet, mango_program_address: PublicKey, size: int, lamports: int = 0) -> CombinableInstructions:
     minimum_balance = context.client.get_minimum_balance_for_rent_exemption(size)
     account = SolanaAccount()
     create_instruction = create_account(
-        CreateAccountParams(wallet.address, account.public_key(), lamports + minimum_balance, size, program_id))
+        CreateAccountParams(wallet.address, account.public_key(), lamports + minimum_balance, size, mango_program_address))
     return CombinableInstructions(signers=[account], instructions=[create_instruction])
 
 
@@ -177,7 +177,7 @@ def build_serum_consume_events_instructions(context: Context, market_address: Pu
             AccountMeta(pubkey=pubkey, is_signer=False, is_writable=True)
             for pubkey in [*open_orders_addresses, market_address, event_queue_address]
         ],
-        program_id=context.dex_program_id,
+        program_id=context.serum_program_address,
         data=PYSERUM_INSTRUCTIONS_LAYOUT.build(
             dict(instruction_type=PySerumInstructionType.CONSUME_EVENTS, args=dict(limit=limit))
         ),
@@ -260,7 +260,7 @@ def build_spot_settle_instructions(context: Context, wallet: Wallet, account: Ac
             AccountMeta(is_signer=False, is_writable=True, pubkey=group.cache),
             AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=context.dex_program_id),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=context.serum_program_address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.public_key()),
             AccountMeta(is_signer=False, is_writable=True, pubkey=open_orders_address),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
@@ -275,7 +275,7 @@ def build_spot_settle_instructions(context: Context, wallet: Wallet, account: Ac
             AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID)
         ],
-        program_id=context.program_id,
+        program_id=context.mango_program_address,
         data=layouts.SETTLE_FUNDS.build(dict())
     )
 
@@ -352,7 +352,7 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, accou
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks)
             ],
-            program_id=context.program_id,
+            program_id=context.mango_program_address,
             data=data
         )
     ]
@@ -399,7 +399,7 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
                 *list([AccountMeta(is_signer=False, is_writable=False,
                                    pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders])
             ],
-            program_id=context.program_id,
+            program_id=context.mango_program_address,
             data=layouts.PLACE_PERP_ORDER.build(
                 {
                     "price": native_price,
@@ -435,7 +435,7 @@ def build_mango_consume_events_instructions(context: Context, group: Group, perp
                 *list([AccountMeta(is_signer=False, is_writable=True,
                                    pubkey=account_address) for account_address in account_addresses])
             ],
-            program_id=context.program_id,
+            program_id=context.mango_program_address,
             data=layouts.CONSUME_EVENTS.build(
                 {
                     "limit": limit,
@@ -447,7 +447,7 @@ def build_mango_consume_events_instructions(context: Context, group: Group, perp
 
 def build_create_account_instructions(context: Context, wallet: Wallet, group: Group) -> CombinableInstructions:
     create_account_instructions = build_create_solana_account_instructions(
-        context, wallet, context.program_id, layouts.MANGO_ACCOUNT.sizeof())
+        context, wallet, context.mango_program_address, layouts.MANGO_ACCOUNT.sizeof())
     mango_account_address = create_account_instructions.signers[0].public_key()
 
     # /// 0. `[]` mango_group_ai - Group that this mango account is for
@@ -460,7 +460,7 @@ def build_create_account_instructions(context: Context, wallet: Wallet, group: G
             AccountMeta(is_signer=False, is_writable=True, pubkey=mango_account_address),
             AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address)
         ],
-        program_id=context.program_id,
+        program_id=context.mango_program_address,
         data=layouts.INIT_MANGO_ACCOUNT.build({})
     )
     return create_account_instructions + CombinableInstructions(signers=[], instructions=[init])
@@ -496,7 +496,7 @@ def build_deposit_instructions(context: Context, wallet: Wallet, group: Group, a
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
             AccountMeta(is_signer=False, is_writable=True, pubkey=token_account.address)
         ],
-        program_id=context.program_id,
+        program_id=context.mango_program_address,
         data=layouts.DEPOSIT.build({
             "quantity": value
         })
@@ -544,7 +544,7 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
             *list([AccountMeta(is_signer=False, is_writable=False,
                                pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders])
         ],
-        program_id=context.program_id,
+        program_id=context.mango_program_address,
         data=layouts.WITHDRAW.build({
             "quantity": value,
             "allow_borrow": allow_borrow
@@ -557,7 +557,7 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
 def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: PySerumMarket) -> CombinableInstructions:
     instructions: CombinableInstructions = CombinableInstructions.empty()
     create_open_orders = build_create_solana_account_instructions(
-        context, wallet, context.dex_program_id, layouts.OPEN_ORDERS.sizeof())
+        context, wallet, context.serum_program_address, layouts.OPEN_ORDERS.sizeof())
     instructions += create_open_orders
 
     open_orders_address = create_open_orders.signers[0].public_key()
@@ -567,13 +567,13 @@ def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: 
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
             AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=context.dex_program_id),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=context.serum_program_address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=open_orders_address),
             AccountMeta(is_signer=False, is_writable=False, pubkey=market.state.public_key()),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
             AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY)
         ],
-        program_id=context.program_id,
+        program_id=context.mango_program_address,
         data=layouts.INIT_SPOT_OPEN_ORDERS.build(dict())
     )
     instructions += CombinableInstructions(signers=[], instructions=[initialise_open_orders_instruction])
@@ -666,7 +666,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
             AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=context.dex_program_id),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=context.serum_program_address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.public_key()),
             AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.bids()),
             AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.asks()),
@@ -690,7 +690,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
                                pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders]),
             *fee_discount_address_meta
         ],
-        program_id=context.program_id,
+        program_id=context.mango_program_address,
         data=layouts.PLACE_SPOT_ORDER.build(
             dict(
                 side=serum_side,
@@ -736,7 +736,7 @@ def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group
                 AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
                 AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
                 AccountMeta(is_signer=False, is_writable=False, pubkey=account.address),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=context.dex_program_id),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=context.serum_program_address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.public_key()),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.bids()),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.asks()),
@@ -744,7 +744,7 @@ def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group
                 AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.event_queue())
             ],
-            program_id=context.program_id,
+            program_id=context.mango_program_address,
             data=layouts.CANCEL_SPOT_ORDER.build(
                 {
                     "order_id": order.id,
@@ -815,7 +815,7 @@ def build_redeem_accrued_mango_instructions(context: Context, wallet: Wallet, pe
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID)
         ],
-        program_id=context.program_id,
+        program_id=context.mango_program_address,
         data=layouts.REDEEM_MNGO.build(dict())
     )
     return CombinableInstructions(signers=[], instructions=[redeem_accrued_mango_instruction])

@@ -36,14 +36,14 @@ from .version import Version
 
 
 class OpenOrders(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version, program_id: PublicKey,
+    def __init__(self, account_info: AccountInfo, version: Version, program_address: PublicKey,
                  account_flags: AccountFlags, market: PublicKey, owner: PublicKey,
                  base_token_free: Decimal, base_token_total: Decimal, quote_token_free: Decimal,
                  quote_token_total: Decimal, placed_orders: typing.Sequence[PlacedOrder],
                  referrer_rebate_accrued: Decimal):
         super().__init__(account_info)
         self.version: Version = version
-        self.program_id: PublicKey = program_id
+        self.program_address: PublicKey = program_address
         self.account_flags: AccountFlags = account_flags
         self.market: PublicKey = market
         self.owner: PublicKey = owner
@@ -62,7 +62,7 @@ class OpenOrders(AddressableAccount):
     def from_layout(layout: layouts.OPEN_ORDERS, account_info: AccountInfo,
                     base_decimals: Decimal, quote_decimals: Decimal) -> "OpenOrders":
         account_flags = AccountFlags.from_layout(layout.account_flags)
-        program_id = account_info.owner
+        program_address = account_info.owner
 
         base_divisor = 10 ** base_decimals
         quote_divisor = 10 ** quote_decimals
@@ -75,7 +75,7 @@ class OpenOrders(AddressableAccount):
         if account_flags.initialized:
             placed_orders = PlacedOrder.build_from_open_orders_data(
                 layout.free_slot_bits, layout.is_bid_bits, layout.orders, layout.client_ids)
-        return OpenOrders(account_info, Version.UNSPECIFIED, program_id, account_flags, layout.market,
+        return OpenOrders(account_info, Version.UNSPECIFIED, program_address, account_flags, layout.market,
                           layout.owner, base_token_free, base_token_total, quote_token_free,
                           quote_token_total, placed_orders, layout.referrer_rebate_accrued)
 
@@ -98,7 +98,7 @@ class OpenOrders(AddressableAccount):
         ]
 
         results = context.client.get_program_accounts(
-            group.dex_program_id, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters)
+            group.serum_program_address, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters)
         account_infos = list(map(lambda pair: AccountInfo._from_response_values(pair[0], pair[1]), [
                              (result["account"], PublicKey(result["pubkey"])) for result in results]))
         account_infos_by_address = {key: value for key, value in [
@@ -113,7 +113,7 @@ class OpenOrders(AddressableAccount):
         return OpenOrders.parse(open_orders_account, base_decimals, quote_decimals)
 
     @staticmethod
-    def load_for_market_and_owner(context: Context, market: PublicKey, owner: PublicKey, program_id: PublicKey, base_decimals: Decimal, quote_decimals: Decimal):
+    def load_for_market_and_owner(context: Context, market: PublicKey, owner: PublicKey, program_address: PublicKey, base_decimals: Decimal, quote_decimals: Decimal):
         filters = [
             MemcmpOpts(
                 offset=layouts.ACCOUNT_FLAGS.sizeof() + 5,
@@ -126,7 +126,7 @@ class OpenOrders(AddressableAccount):
         ]
 
         results = context.client.get_program_accounts(
-            program_id, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters)
+            program_address, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters)
         accounts = map(lambda result: AccountInfo._from_response_values(
             result["account"], PublicKey(result["pubkey"])), results)
         return list(map(lambda acc: OpenOrders.parse(acc, base_decimals, quote_decimals), accounts))
@@ -136,7 +136,7 @@ class OpenOrders(AddressableAccount):
 
         return f"""« OpenOrders [{self.address}]:
     Flags: {self.account_flags}
-    Program ID: {self.program_id}
+    Program ID: {self.program_address}
     Market: {self.market}
     Owner: {self.owner}
     Base Token: {self.base_token_free:,.8f} of {self.base_token_total:,.8f}

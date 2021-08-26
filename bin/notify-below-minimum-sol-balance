@@ -35,7 +35,7 @@ if account_info is None:
 else:
     account_sols = account_info.lamports / mango.SOL_DECIMAL_DIVISOR
     if account_sols < args.minimum_sol_balance:
-        report = f"Account \"{args.name} [{args.address}]\" on {context.client.cluster} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
+        report = f"Account \"{args.name} [{args.address}]\" on {context.client.cluster_name} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
         for notify in args.notify:
             notify.send(report)
         print(f"Notification sent: {report}")

@@ -92,7 +92,7 @@ def build_spot_open_orders_watcher(context: Context, manager: WebSocketSubscript
 
 def build_serum_open_orders_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, serum_market: SerumMarket, wallet: Wallet) -> Watcher[PlacedOrdersContainer]:
     all_open_orders = OpenOrders.load_for_market_and_owner(
-        context, serum_market.address, wallet.address, context.dex_program_id, serum_market.base.decimals, serum_market.quote.decimals)
+        context, serum_market.address, wallet.address, context.serum_program_address, serum_market.base.decimals, serum_market.quote.decimals)
     if len(all_open_orders) > 0:
         initial_serum_open_orders: OpenOrders = all_open_orders[0]
         open_orders_address = initial_serum_open_orders.address

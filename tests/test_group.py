@@ -15,7 +15,7 @@ def test_construction():
     signer_nonce = Decimal(1)
     signer_key = fake_seeded_public_key("signer key")
     admin_key = fake_seeded_public_key("admin key")
-    dex_program_id = fake_seeded_public_key("DEX program ID")
+    serum_program_address = fake_seeded_public_key("Serum program ID")
     cache_key = fake_seeded_public_key("cache key")
     valid_interval = Decimal(7)
     dao_vault = fake_seeded_public_key("insurance vault")
@@ -24,7 +24,7 @@ def test_construction():
 
     actual = mango.Group(account_info, mango.Version.V1, name, meta_data, shared_quote_token,
                          in_basket, basket_markets, signer_nonce, signer_key, admin_key,
-                         dex_program_id, cache_key, valid_interval, dao_vault, srm_vault, msrm_vault)
+                         serum_program_address, cache_key, valid_interval, dao_vault, srm_vault, msrm_vault)
 
     assert actual is not None
     assert actual.logger is not None
@@ -36,7 +36,7 @@ def test_construction():
     assert actual.signer_nonce == signer_nonce
     assert actual.signer_key == signer_key
     assert actual.admin == admin_key
-    assert actual.dex_program_id == dex_program_id
+    assert actual.serum_program_address == serum_program_address
     assert actual.cache == cache_key
     assert actual.valid_interval == valid_interval
     assert actual.dao_vault == dao_vault
@@ -55,7 +55,7 @@ def test_construction():
 #     context = fake_context()
 #     ids_json_token_lookup: mango.TokenLookup = mango.IdsJsonTokenLookup("devnet", mango.default_group_name)
 #     context.token_lookup = ids_json_token_lookup
-#     # context.cluster = "devnet"  # Needed for devnet token lookups.
+#     # context.cluster_name = "devnet"  # Needed for devnet token lookups.
 #     group = mango.Group.parse(context, group_account_info)
 
 #     assert group.address == group_public_key
@@ -81,7 +81,7 @@ def test_construction():
 #     assert group.signer_nonce == 0
 #     assert group.signer_key == PublicKey("HzpyPmuz8C4P6ExinCDndujSAy68MeMNHNzYLpmMAGMS")
 #     assert group.admin == PublicKey("Cwg1f6m4m3DGwMEbmsbAfDtUToUf5jRdKrJSGD7GfZCB")
-#     assert group.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
+#     assert group.serum_program_address == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
 #     assert group.cache == PublicKey("D2zSEAJTJADF46eCm1SrsSP3k4QDfv33nneTpbHow3DM")
 #     assert group.valid_interval == 5
 #     assert group.dao_vault is None

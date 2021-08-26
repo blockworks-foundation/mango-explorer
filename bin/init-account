@@ -21,7 +21,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-group = mango.Group.load(context, context.group_id)
+group = mango.Group.load(context, context.group_address)
 
 signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
 init = mango.build_create_account_instructions(context, wallet, group)

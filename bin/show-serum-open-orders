@@ -32,7 +32,7 @@ if not isinstance(market, mango.SerumMarket):
     raise Exception(f"Market {market_symbol} is not a Serum market: {market}")
 
 all_open_orders_for_market = mango.OpenOrders.load_for_market_and_owner(
-    context, market.address, wallet.address, context.dex_program_id, market.base.decimals, market.quote.decimals)
+    context, market.address, wallet.address, context.serum_program_address, market.base.decimals, market.quote.decimals)
 print(f"Found {len(all_open_orders_for_market)} OpenOrders account(s) for market {market.symbol}.")
 for open_orders in all_open_orders_for_market:
     print(open_orders)

@@ -74,7 +74,7 @@ class SerumOracle(Oracle):
                                                          context.client.skip_preflight,
                                                          context.client.instruction_reporter)
         mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
-            context.dex_program_id, SplTokenLookup.DefaultDataFilepath)
+            context.serum_program_address, SplTokenLookup.DefaultDataFilepath)
         adjusted_market = self.market
         mainnet_adjusted_market: typing.Optional[Market] = mainnet_serum_market_lookup.find_by_symbol(
             self.market.symbol)
@@ -111,7 +111,7 @@ class SerumOracleProvider(OracleProvider):
     def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
         loaded_market: Market = ensure_market_loaded(context, market)
         if isinstance(loaded_market, SpotMarket):
-            serum_market = SerumMarket(context.dex_program_id, loaded_market.address, loaded_market.base,
+            serum_market = SerumMarket(context.serum_program_address, loaded_market.address, loaded_market.base,
                                        loaded_market.quote, loaded_market.underlying_serum_market)
             return SerumOracle(serum_market)
         elif isinstance(loaded_market, SerumMarket):
