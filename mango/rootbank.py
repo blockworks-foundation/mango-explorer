@@ -31,8 +31,6 @@ from .version import Version
 #
 # `NodeBank` stores details of deposits/borrows and vault.
 #
-
-
 class NodeBank(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
                  deposits: Decimal, borrows: Decimal, vault: PublicKey):
@@ -45,7 +43,7 @@ class NodeBank(AddressableAccount):
         self.vault: PublicKey = vault
 
     @staticmethod
-    def from_layout(layout: layouts.ROOT_BANK, account_info: AccountInfo, version: Version) -> "NodeBank":
+    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version) -> "NodeBank":
         meta_data: Metadata = layout.meta_data
         deposits: Decimal = layout.deposits
         borrows: Decimal = layout.borrows
@@ -86,8 +84,6 @@ class NodeBank(AddressableAccount):
 #
 # `RootBank` stores details of how to reach `NodeBank`.
 #
-
-
 class RootBank(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
                  node_banks: typing.Sequence[PublicKey], deposit_index: Decimal,
@@ -106,7 +102,7 @@ class RootBank(AddressableAccount):
         return list(map(NodeBank.parse, node_bank_account_infos))[0]
 
     @staticmethod
-    def from_layout(layout: layouts.ROOT_BANK, account_info: AccountInfo, version: Version) -> "RootBank":
+    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version) -> "RootBank":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
         num_node_banks: Decimal = layout.num_node_banks
         node_banks: typing.Sequence[PublicKey] = layout.node_banks[0:int(num_node_banks)]

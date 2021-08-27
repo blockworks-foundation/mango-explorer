@@ -152,9 +152,18 @@ class ContextBuilder:
             if address is not None and address != "":
                 return PublicKey(address)
             return None
-        default_group_data = MangoConstants["groups"][0]
+        # The first group is only used to determine the default cluster if it is not otherwise specified.
+        first_group_data = MangoConstants["groups"][0]
         actual_name: str = name or os.environ.get("NAME") or "Mango Explorer"
-        actual_cluster: str = cluster_name or os.environ.get("CLUSTER_NAME") or default_group_data["cluster"]
+        actual_cluster: str = cluster_name or os.environ.get("CLUSTER_NAME") or first_group_data["cluster"]
+
+        # Now that we have the actual cluster name, taking environment variables and defaults into account,
+        # we can decide what we want as the default group.
+        for group_data in MangoConstants["groups"]:
+            if group_data["cluster"] == actual_cluster:
+                default_group_data = group_data
+                break
+
         actual_cluster_url: str = cluster_url or os.environ.get(
             "CLUSTER_URL") or MangoConstants["cluster_urls"][actual_cluster]
         actual_skip_preflight: bool = skip_preflight

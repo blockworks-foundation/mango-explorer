@@ -65,7 +65,6 @@ from .wallet import Wallet
 # Creates and initializes an SPL token account. Can add additional lamports too but that's usually not
 # necesary.
 #
-
 def build_create_solana_account_instructions(context: Context, wallet: Wallet, mango_program_address: PublicKey, size: int, lamports: int = 0) -> CombinableInstructions:
     minimum_balance = context.client.get_minimum_balance_for_rent_exemption(size)
     account = SolanaAccount()
@@ -119,7 +118,6 @@ def build_transfer_spl_tokens_instructions(context: Context, wallet: Wallet, tok
 #
 # Creates an instructio to close an SPL token account and transfers any remaining lamports to the wallet.
 #
-
 def build_close_spl_account_instructions(context: Context, wallet: Wallet, address: PublicKey) -> CombinableInstructions:
     return CombinableInstructions(signers=[], instructions=[close_account(CloseAccountParams(TOKEN_PROGRAM_ID, address, wallet.address, wallet.address))])
 
@@ -128,7 +126,6 @@ def build_close_spl_account_instructions(context: Context, wallet: Wallet, addre
 #
 # Creates a Serum openorders-creating instruction.
 #
-
 def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet, market: PySerumMarket) -> CombinableInstructions:
     new_open_orders_account = SolanaAccount()
     minimum_balance = context.client.get_minimum_balance_for_rent_exemption(layouts.OPEN_ORDERS.sizeof())
@@ -146,7 +143,6 @@ def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet
 #
 # Creates a Serum order-placing instruction using V3 of the NewOrder instruction.
 #
-
 def build_serum_place_order_instructions(context: Context, wallet: Wallet, market: PySerumMarket, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
     serum_order_type: PySerumOrderType = PySerumOrderType.POST_ONLY if order_type == OrderType.POST_ONLY else PySerumOrderType.IOC if order_type == OrderType.IOC else PySerumOrderType.LIMIT
     serum_side: PySerumSide = PySerumSide.SELL if side == Side.SELL else PySerumSide.BUY

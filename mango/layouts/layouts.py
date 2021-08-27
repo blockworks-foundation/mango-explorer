@@ -47,11 +47,9 @@ from solana.publickey import PublicKey
 # ## DecimalAdapter class
 #
 # A simple construct `Adapter` that lets us use `Decimal`s directly in our structs.
-
-
 class DecimalAdapter(construct.Adapter):
     def __init__(self, size: int = 8):
-        construct.Adapter.__init__(self, construct.BytesInteger(size, swapped=True))
+        construct.Adapter.__init__(self, construct.BytesInteger(size, swapped=True))  # type: ignore[call-arg]
 
     def _decode(self, obj, context, path) -> Decimal:
         return Decimal(obj)
@@ -85,7 +83,7 @@ class DecimalAdapter(construct.Adapter):
 class FloatAdapter(construct.Adapter):
     def __init__(self, size: int = 16):
         self.size = size
-        construct.Adapter.__init__(self, construct.BytesInteger(size, swapped=True))
+        construct.Adapter.__init__(self, construct.BytesInteger(size, swapped=True))  # type: ignore[call-arg]
 
         # Our size is in bytes but we want to work with bits here.
         bit_size = self.size * 8
@@ -109,7 +107,8 @@ class FloatAdapter(construct.Adapter):
 
 class SignedDecimalAdapter(construct.Adapter):
     def __init__(self, size: int = 8):
-        construct.Adapter.__init__(self, construct.BytesInteger(size, signed=True, swapped=True))
+        construct.Adapter.__init__(self, construct.BytesInteger(
+            size, signed=True, swapped=True))  # type: ignore[call-arg]
 
     def _decode(self, obj, context, path) -> Decimal:
         return Decimal(obj)
@@ -230,7 +229,7 @@ class OrderBookNodeAdapter(construct.Adapter):
     def __init__(self):
         construct.Adapter.__init__(self, construct.Bytes(_NODE_SIZE))
 
-    def _decode(self, obj, context, path) -> Decimal:
+    def _decode(self, obj, context, path) -> construct.Container:
         any_node = ANY_NODE.parse(obj)
         if any_node.tag == Decimal(0):
             return UNINITIALIZED_BOOK_NODE.parse(obj)

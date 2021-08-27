@@ -13,10 +13,10 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import typing
 
 from decimal import Decimal
 
-from .layouts import layouts
 from .perpopenorders import PerpOpenOrders
 from .token import Token
 from .tokenvalue import TokenValue
@@ -43,7 +43,7 @@ class PerpAccount:
         self.open_orders: PerpOpenOrders = open_orders
 
     @staticmethod
-    def from_layout(layout: layouts.PERP_ACCOUNT, open_orders: PerpOpenOrders, mngo_token: Token) -> "PerpAccount":
+    def from_layout(layout: typing.Any, open_orders: PerpOpenOrders, mngo_token: Token) -> "PerpAccount":
         base_position: Decimal = layout.base_position
         quote_position: Decimal = layout.quote_position
         long_settled_funding: Decimal = layout.long_settled_funding

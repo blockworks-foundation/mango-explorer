@@ -201,7 +201,7 @@ class PerpEventQueue(AddressableAccount):
         self.processed_events: typing.Sequence[PerpEvent] = processed_events
 
     @staticmethod
-    def from_layout(layout: layouts.PERP_EVENT_QUEUE, account_info: AccountInfo, version: Version, lot_size_converter: LotSizeConverter) -> "PerpEventQueue":
+    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version, lot_size_converter: LotSizeConverter) -> "PerpEventQueue":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
         head: Decimal = layout.head
         count: Decimal = layout.count

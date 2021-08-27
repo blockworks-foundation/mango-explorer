@@ -68,7 +68,7 @@ class PerpOrderBookSide(AddressableAccount):
         self.nodes: typing.Any = nodes
 
     @staticmethod
-    def from_layout(layout: layouts.ORDERBOOK_SIDE, account_info: AccountInfo, version: Version, perp_market_details: PerpMarketDetails) -> "PerpOrderBookSide":
+    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version, perp_market_details: PerpMarketDetails) -> "PerpOrderBookSide":
         meta_data = Metadata.from_layout(layout.meta_data)
         bump_index: Decimal = layout.bump_index
         free_list_len: Decimal = layout.free_list_len

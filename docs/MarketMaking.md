@@ -5,7 +5,7 @@ _(This is very much a work in progress! Expect things to change frequently. The 
 
 # 🏛️  Marketmaking
 
-Traders buy and sell, but it helps when there are reliable entities for them to trade against. And while an individual trader may buy or sell, they typically aren’t doing both at the same time on the same symbol. In contract, a marketmaker places both buy and sell orders for the same symbol, producing a valuation of the symbol and saying how much they’d be willing to pay for some quantity, and how much they’d ask to part with some quantity. They _literally make a market_ by always providing a price at which someone can buy and a price at which someone can sell, and profit by the difference between the buy and sell prices - the ‘spread’.
+Traders buy and sell, but it helps when there are reliable entities for them to trade against. And while an individual trader may buy or sell, they typically aren’t doing both at the same time on the same symbol. In contrast, a marketmaker places both buy and sell orders for the same symbol, producing a valuation of the symbol and saying how much they’d be willing to pay for some quantity, and how much they’d ask to part with some quantity. They _literally make a market_ by always providing a price at which someone can buy and a price at which someone can sell, and profit by the difference between the buy and sell prices - the ‘spread’.
 
 How the marketmaker knows what prices to use, how much inventory to offer, and how to manage risk are all great questions that will not be adequately addressed here. Sorry. Successful marketmakers often guard their approaches and I just don’t know any of their secrets.
 
@@ -141,7 +141,7 @@ The main design ideas behind the design are:
 * the main pluggable component is a ‘desired orders builder’. It looks at the state of balances, market, or other data sources, and it provides a list of BUY and SELL orders it would like to see on the orderbook.
 * another component (also pluggable) compares the desired orders with any existing orders, and decides which orders need to be placed or cancelled.
 
-Live data is provided as a `ModelState` parameter to the `pulse()` method, and it’s kept live by a websocket connection that watches for changes in the underlying accounts. That doesn’t matter (much) to the marketmaker code, it can just assume the `ModelState` parameter provides up-to-date information on balances, group, prices etc.
+Live data is provided as a `ModelState` parameter to the `pulse()` method, and it’s kept live by polling or a websocket connection that watches for changes in the underlying accounts. That doesn’t matter (much) to the marketmaker code, it can just assume the `ModelState` parameter provides up-to-date information on balances, group, prices etc.
 
 The `pulse()` method is called, say, every 30 seconds (again, it’s configurable). The current version of it looks like this:
 ```

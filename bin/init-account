@@ -13,6 +13,7 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Initializes a Mango margin account")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--wait", action="store_true", default=False, help="wait until the transaction is confirmed")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
@@ -27,4 +28,14 @@ signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet
 init = mango.build_create_account_instructions(context, wallet, group)
 all_instructions = signers + init
 transaction_ids = all_instructions.execute(context)
-print("Transaction IDs:", transaction_ids)
+
+if args.wait:
+    print("Waiting on transaction IDs:", transaction_ids)
+    context.client.wait_for_confirmation(transaction_ids)
+
+    accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
+    if len(accounts) == 0:
+        raise Exception("Failed to create Account")
+    print(accounts[-1])
+else:
+    print("Transaction IDs:", transaction_ids)

@@ -22,7 +22,7 @@ mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--watch-market", type=str, required=True, help="perp market symbol to hedge (e.g. ETH-PERP)")
 parser.add_argument("--hedge-market", type=str, required=True, help="spot market symbol to hedge (e.g. ETH/USDC)")
 parser.add_argument("--max-price-slippage-factor", type=Decimal, default=Decimal("0.05"),
-                    help="the maximum value the IOC hedging order price can slip by when hedging (default is 0.05 for 5%)")
+                    help="the maximum value the IOC hedging order price can slip by when hedging (default is 0.05 for 5%%)")
 parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
                     help="The notification target for error events")
 parser.add_argument("--account-index", type=int, default=0,

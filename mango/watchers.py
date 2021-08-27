@@ -16,6 +16,7 @@
 import logging
 import typing
 
+from decimal import Decimal
 from pyserum.market import Market as PySerumMarket
 from pyserum.market.orderbook import OrderBook as PySerumOrderBook
 from solana.publickey import PublicKey
@@ -42,6 +43,8 @@ from .spotmarket import SpotMarket
 from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
 from .spotmarketoperations import SpotMarketOperations
 from .tokenaccount import TokenAccount
+from .token import Token
+from .tokenvalue import TokenValue
 from .wallet import Wallet
 from .watcher import Watcher, LamdaUpdateWatcher
 from .websocketsubscription import WebSocketAccountSubscription, WebSocketSubscription, WebSocketSubscriptionManager
@@ -175,8 +178,14 @@ def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscripti
     quote_subscription_disposable = quote_token_subscription.publisher.subscribe(latest_quote_token_account_observer)
     disposer.add_disposable(quote_subscription_disposable)
 
+    # Serum markets don't accrue MNGO liquidity incentives
+    mngo: typing.Optional[Token] = context.token_lookup.find_by_symbol("MNGO")
+    if mngo is None:
+        raise Exception("Could not find details of MNGO token.")
+    mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
+
     def serum_inventory_accessor() -> Inventory:
-        return Inventory(InventorySource.SPL_TOKENS,
+        return Inventory(InventorySource.SPL_TOKENS, mngo_accrued,
                          latest_base_token_account_observer.latest.value,
                          latest_quote_token_account_observer.latest.value)
 
@@ -203,7 +212,8 @@ def build_perp_orderbook_side_watcher(context: Context, manager: WebSocketSubscr
 
 
 def build_serum_orderbook_side_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, underlying_serum_market: PySerumMarket, side: OrderBookSideType) -> Watcher[typing.Sequence[Order]]:
-    orderbook_address: PublicKey = underlying_serum_market.state.bids if side == OrderBookSideType.BIDS else underlying_serum_market.state.asks
+    orderbook_address: PublicKey = underlying_serum_market.state.bids(
+    ) if side == OrderBookSideType.BIDS else underlying_serum_market.state.asks()
     orderbook_side_info = AccountInfo.load(context, orderbook_address)
     if orderbook_side_info is None:
         raise Exception(f"Could not find Serum order book side at address {orderbook_address}.")

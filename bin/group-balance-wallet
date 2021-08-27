@@ -21,7 +21,7 @@ parser = argparse.ArgumentParser(
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--target", type=str, action="append", required=True,
-                    help="token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5' or 'ETH:33%')")
+                    help="token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5')")
 parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
                     help="fraction of total wallet value a trade must be above to be carried out")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),

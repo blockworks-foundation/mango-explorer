@@ -19,9 +19,11 @@ import mango
 import time
 import typing
 
+from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .modelstate import ModelState
+from ..tokenvalue import TokenValue
 
 
 # # 🥭 ModelStateBuilder class
@@ -137,11 +139,16 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
         placed_orders_container: mango.PlacedOrdersContainer = mango.OpenOrders.parse(
             account_infos[2], self.market.base.decimals, self.market.quote.decimals)
 
+        # Serum markets don't accrue MNGO liquidity incentives
+        mngo = group.find_token_info_by_symbol("MNGO").token
+        mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
+
         base_inventory_token_account = mango.TokenAccount.parse(
             account_infos[3], self.base_inventory_token_account.value.token)
         quote_inventory_token_account = mango.TokenAccount.parse(
             account_infos[4], self.quote_inventory_token_account.value.token)
         inventory: mango.Inventory = mango.Inventory(mango.InventorySource.SPL_TOKENS,
+                                                     mngo_accrued,
                                                      base_inventory_token_account.value,
                                                      quote_inventory_token_account.value)
 
@@ -192,9 +199,14 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
         placed_orders_container: mango.PlacedOrdersContainer = mango.OpenOrders.parse(
             account_infos[2], self.market.base.decimals, self.market.quote.decimals)
 
+        # Spot markets don't accrue MNGO liquidity incentives
+        mngo = account.group.find_token_info_by_symbol("MNGO").token
+        mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
+
         base_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.base.symbol)
         quote_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.quote.symbol)
-        inventory: mango.Inventory = mango.Inventory(mango.InventorySource.ACCOUNT, base_value, quote_value)
+        inventory: mango.Inventory = mango.Inventory(
+            mango.InventorySource.ACCOUNT, mngo_accrued, base_value, quote_value)
 
         bids: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
             account_infos[3], self.market.underlying_serum_market)
@@ -248,7 +260,8 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         base_value = self.market.lot_size_converter.quantity_lots_to_value(base_lots)
         base_token_value = mango.TokenValue(self.market.base, base_value)
         quote_token_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.quote.symbol)
-        inventory: mango.Inventory = mango.Inventory(mango.InventorySource.ACCOUNT, base_token_value, quote_token_value)
+        inventory: mango.Inventory = mango.Inventory(
+            mango.InventorySource.ACCOUNT, perp_account.mngo_accrued, base_token_value, quote_token_value)
 
         bids: mango.PerpOrderBookSide = mango.PerpOrderBookSide.parse(
             context, account_infos[2], self.market.underlying_perp_market)

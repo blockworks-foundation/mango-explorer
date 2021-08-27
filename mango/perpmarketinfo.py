@@ -18,13 +18,9 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-from .layouts import layouts
-
 
 # # 🥭 PerpMarketInfo class
 #
-
-
 class PerpMarketInfo():
     def __init__(self, address: PublicKey, maint_asset_weight: Decimal, init_asset_weight: Decimal, maint_liab_weight: Decimal, init_liab_weight: Decimal, liquidation_fee: Decimal, base_lot_size: Decimal, quote_lot_size: Decimal):
         self.address: PublicKey = address
@@ -36,7 +32,7 @@ class PerpMarketInfo():
         self.base_lot_size: Decimal = base_lot_size
         self.quote_lot_size: Decimal = quote_lot_size
 
-    def from_layout(layout: layouts.PERP_MARKET_INFO) -> "PerpMarketInfo":
+    def from_layout(layout: typing.Any) -> "PerpMarketInfo":
         perp_market: PublicKey = layout.perp_market
         maint_asset_weight: Decimal = round(layout.maint_asset_weight, 8)
         init_asset_weight: Decimal = round(layout.init_asset_weight, 8)
@@ -47,7 +43,7 @@ class PerpMarketInfo():
         quote_lot_size: Decimal = layout.quote_lot_size
         return PerpMarketInfo(perp_market, maint_asset_weight, init_asset_weight, maint_liab_weight, init_liab_weight, liquidation_fee, base_lot_size, quote_lot_size)
 
-    def from_layout_or_none(layout: layouts.PERP_MARKET_INFO) -> typing.Optional["PerpMarketInfo"]:
+    def from_layout_or_none(layout: typing.Any) -> typing.Optional["PerpMarketInfo"]:
         if layout.perp_market is None:
             return None
 

@@ -120,7 +120,7 @@ class Account(AddressableAccount):
         self.is_bankrupt: bool = is_bankrupt
 
     @staticmethod
-    def from_layout(layout: layouts.MANGO_ACCOUNT, account_info: AccountInfo, version: Version, group: Group) -> "Account":
+    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version, group: Group) -> "Account":
         meta_data = Metadata.from_layout(layout.meta_data)
         owner: PublicKey = layout.owner
         info: str = layout.info

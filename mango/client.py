@@ -27,9 +27,10 @@ from decimal import Decimal
 from solana.account import Account
 from solana.blockhash import Blockhash
 from solana.publickey import PublicKey
-from solana.transaction import Transaction
+from solana.rpc.api import Client
 from solana.rpc.commitment import Commitment
 from solana.rpc.types import DataSliceOpts, MemcmpOpts, RPCResponse, TokenAccountOpts, TxOpts
+from solana.transaction import Transaction
 
 from .constants import SOL_DECIMAL_DIVISOR
 from .instructionreporter import InstructionReporter
@@ -133,7 +134,7 @@ UnspecifiedEncoding = "unspecified"
 # A `CompatibleClient` class that tries to be compatible with the proper Solana Client, but that handles
 # some common operations better from our point of view.
 #
-class CompatibleClient:
+class CompatibleClient(Client):
     def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
@@ -156,7 +157,7 @@ class CompatibleClient:
 
         return response.ok
 
-    def get_balance(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment) -> RPCResponse:
+    def get_balance(self, pubkey: typing.Union[PublicKey, str], commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> RPCResponse:
         options = self._build_options(commitment, None, None)
         return self._send_request("getBalance", str(pubkey), options)
 
@@ -165,7 +166,7 @@ class CompatibleClient:
         value = Decimal(result["result"]["value"])
         return value / SOL_DECIMAL_DIVISOR
 
-    def get_account_info(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment,
+    def get_account_info(self, pubkey: typing.Union[PublicKey, str], commitment: typing.Optional[Commitment] = UnspecifiedCommitment,
                          encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> RPCResponse:
         options = self._build_options_with_encoding(commitment, encoding, data_slice)
         return self._send_request("getAccountInfo", str(pubkey), options)
@@ -189,12 +190,12 @@ class CompatibleClient:
     def get_confirmed_transaction(self, signature: str, encoding: str = "json") -> RPCResponse:
         return self._send_request("getConfirmedTransaction", signature, encoding)
 
-    def get_minimum_balance_for_rent_exemption(self, size: int, commitment: Commitment = UnspecifiedCommitment) -> RPCResponse:
+    def get_minimum_balance_for_rent_exemption(self, size: int, commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> RPCResponse:
         options = self._build_options(commitment, None, None)
         return self._send_request("getMinimumBalanceForRentExemption", size, options)
 
     def get_program_accounts(self, pubkey: typing.Union[str, PublicKey],
-                             commitment: Commitment = UnspecifiedCommitment,
+                             commitment: typing.Optional[Commitment] = UnspecifiedCommitment,
                              encoding: typing.Optional[str] = UnspecifiedEncoding,
                              data_slice: typing.Optional[DataSliceOpts] = None,
                              data_size: typing.Optional[int] = None,
@@ -210,15 +211,15 @@ class CompatibleClient:
 
         return self._send_request("getProgramAccounts", str(pubkey), options)
 
-    def get_recent_blockhash(self, commitment: Commitment = UnspecifiedCommitment) -> RPCResponse:
+    def get_recent_blockhash(self, commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> RPCResponse:
         options = self._build_options(commitment, None, None)
         return self._send_request("getRecentBlockhash", options)
 
-    def get_token_account_balance(self, pubkey: typing.Union[str, PublicKey], commitment: Commitment = UnspecifiedCommitment):
+    def get_token_account_balance(self, pubkey: typing.Union[str, PublicKey], commitment: typing.Optional[Commitment] = UnspecifiedCommitment):
         options = self._build_options(commitment, None, None)
         return self._send_request("getTokenAccountBalance", str(pubkey), options)
 
-    def get_token_accounts_by_owner(self, owner: PublicKey, token_account_options: TokenAccountOpts, commitment: Commitment = UnspecifiedCommitment,) -> RPCResponse:
+    def get_token_accounts_by_owner(self, owner: PublicKey, token_account_options: TokenAccountOpts, commitment: typing.Optional[Commitment] = UnspecifiedCommitment,) -> RPCResponse:
         options = self._build_options_with_encoding(
             commitment, token_account_options.encoding, token_account_options.data_slice)
 
@@ -312,9 +313,9 @@ class CompatibleClient:
         # The call succeeded.
         return typing.cast(RPCResponse, response)
 
-    def _build_options(self, commitment: Commitment, encoding: typing.Optional[str], data_slice: typing.Optional[DataSliceOpts]) -> typing.Dict[str, typing.Any]:
+    def _build_options(self, commitment: typing.Optional[Commitment], encoding: typing.Optional[str], data_slice: typing.Optional[DataSliceOpts]) -> typing.Dict[str, typing.Any]:
         options: typing.Dict[str, typing.Any] = {}
-        if commitment == UnspecifiedCommitment:
+        if commitment is None or commitment == UnspecifiedCommitment:
             options[_CommitmentKey] = self.commitment
         else:
             options[_CommitmentKey] = commitment
@@ -327,7 +328,7 @@ class CompatibleClient:
 
         return options
 
-    def _build_options_with_encoding(self, commitment: Commitment, encoding: typing.Optional[str], data_slice: typing.Optional[DataSliceOpts]) -> typing.Dict[str, typing.Any]:
+    def _build_options_with_encoding(self, commitment: typing.Optional[Commitment], encoding: typing.Optional[str], data_slice: typing.Optional[DataSliceOpts]) -> typing.Dict[str, typing.Any]:
         encoding_to_use: str = self.encoding
         if (encoding is not None) and (encoding != UnspecifiedEncoding):
             encoding_to_use = encoding

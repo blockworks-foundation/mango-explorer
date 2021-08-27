@@ -33,9 +33,8 @@ account_info = mango.AccountInfo.load(context, args.address)
 if account_info is None:
     raise Exception(f"No account at '{args.address}'")
 else:
-    account_sols = account_info.lamports / mango.SOL_DECIMAL_DIVISOR
-    if account_sols < args.minimum_sol_balance:
-        report = f"Account \"{args.name} [{args.address}]\" on {context.client.cluster_name} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
+    if account_info.sols < args.minimum_sol_balance:
+        report = f"Account \"{args.name} [{args.address}]\" on {context.client.cluster_name} has only {account_info.sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
         for notify in args.notify:
             notify.send(report)
         print(f"Notification sent: {report}")

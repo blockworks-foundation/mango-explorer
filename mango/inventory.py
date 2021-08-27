@@ -16,14 +16,13 @@
 
 import logging
 
+from decimal import Decimal
+
 from .account import Account
-from .context import Context
 from .group import Group
 from .market import InventorySource, Market
 from .perpmarket import PerpMarket
-from .tokenaccount import TokenAccount
 from .tokenvalue import TokenValue
-from .wallet import Wallet
 from .watcher import Watcher
 
 
@@ -33,9 +32,10 @@ from .watcher import Watcher
 #
 
 class Inventory:
-    def __init__(self, inventory_source: InventorySource, base: TokenValue, quote: TokenValue):
+    def __init__(self, inventory_source: InventorySource, liquidity_incentives: TokenValue, base: TokenValue, quote: TokenValue):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.inventory_source: InventorySource = inventory_source
+        self.liquidity_incentives: TokenValue = liquidity_incentives
         self.base: TokenValue = base
         self.quote: TokenValue = quote
 
@@ -44,34 +44,13 @@ class Inventory:
         return f"{self.base.token.symbol}/{self.quote.token.symbol}"
 
     def __str__(self) -> str:
-        return f"« 𝙸𝚗𝚟𝚎𝚗𝚝𝚘𝚛𝚢 {self.symbol} [{self.base} / {self.quote}] »"
+        liquidity_incentives: str = ""
+        if self.liquidity_incentives.value > 0:
+            liquidity_incentives = f" {self.liquidity_incentives}"
+        return f"« 𝙸𝚗𝚟𝚎𝚗𝚝𝚘𝚛𝚢 {self.symbol}{liquidity_incentives} [{self.base} / {self.quote}] »"
 
     def __repr__(self) -> str:
         return f"{self}"
-
-
-def spl_token_inventory_loader(context: Context, wallet: Wallet, market: Market) -> Inventory:
-    base_account = TokenAccount.fetch_largest_for_owner_and_token(
-        context, wallet.address, market.base)
-    if base_account is None:
-        raise Exception(
-            f"Could not find token account owned by {wallet.address} for base token {market.base}.")
-    quote_account = TokenAccount.fetch_largest_for_owner_and_token(
-        context, wallet.address, market.quote)
-    if quote_account is None:
-        raise Exception(
-            f"Could not find token account owned by {wallet.address} for quote token {market.quote}.")
-    return Inventory(InventorySource.SPL_TOKENS, base_account.value, quote_account.value)
-
-
-def account_inventory_loader(market: Market, account: Account) -> Inventory:
-    base_value = TokenValue.find_by_symbol(account.net_assets, market.base.symbol)
-    if base_value is None:
-        raise Exception(f"Could not find net assets in account {account.address} for base token {market.base}.")
-    quote_value = TokenValue.find_by_symbol(account.net_assets, market.quote.symbol)
-    if quote_value is None:
-        raise Exception(f"Could not find net assets in account {account.address} for quote token {market.quote}.")
-    return Inventory(InventorySource.ACCOUNT, base_value, quote_value)
 
 
 class SpotInventoryAccountWatcher:
@@ -85,15 +64,22 @@ class SpotInventoryAccountWatcher:
 
     @property
     def latest(self) -> Inventory:
-        base_value = self.account_watcher.latest.net_assets[self.base_index]
+        account: Account = self.account_watcher.latest
+
+        # Spot markets don't accrue MNGO liquidity incentives
+        mngo = account.group.find_token_info_by_symbol("MNGO").token
+        mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
+
+        base_value = account.net_assets[self.base_index]
         if base_value is None:
             raise Exception(
-                f"Could not find net assets in account {self.account_watcher.latest.address} at index {self.base_index}.")
-        quote_value = self.account_watcher.latest.net_assets[self.quote_index]
+                f"Could not find net assets in account {account.address} at index {self.base_index}.")
+        quote_value = account.net_assets[self.quote_index]
         if quote_value is None:
             raise Exception(
-                f"Could not find net assets in account {self.account_watcher.latest.address} at index {self.quote_index}.")
-        return Inventory(InventorySource.ACCOUNT, base_value, quote_value)
+                f"Could not find net assets in account {account.address} at index {self.quote_index}.")
+
+        return Inventory(InventorySource.ACCOUNT, mngo_accrued, base_value, quote_value)
 
 
 class PerpInventoryAccountWatcher:
@@ -118,4 +104,4 @@ class PerpInventoryAccountWatcher:
         if quote_token_value is None:
             raise Exception(
                 f"Could not find net assets in account {self.account_watcher.latest.address} at index {self.quote_index}.")
-        return Inventory(InventorySource.ACCOUNT, base_token_value, quote_token_value)
+        return Inventory(InventorySource.ACCOUNT, perp_account.mngo_accrued, base_token_value, quote_token_value)

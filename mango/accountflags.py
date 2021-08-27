@@ -17,7 +17,6 @@
 import logging
 import typing
 
-from .layouts import layouts
 from .version import Version
 
 
@@ -41,7 +40,7 @@ class AccountFlags:
         self.disabled: bool = disabled
 
     @staticmethod
-    def from_layout(layout: layouts.ACCOUNT_FLAGS) -> "AccountFlags":
+    def from_layout(layout: typing.Any) -> "AccountFlags":
         return AccountFlags(Version.UNSPECIFIED, layout.initialized, layout.market,
                             layout.open_orders, layout.request_queue, layout.event_queue,
                             layout.bids, layout.asks, layout.disabled)

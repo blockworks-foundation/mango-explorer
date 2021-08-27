@@ -20,7 +20,6 @@ from decimal import Decimal
 
 from solana.publickey import PublicKey
 
-from .layouts import layouts
 from .rootbank import RootBank
 from .token import Token
 from .tokenlookup import TokenLookup
@@ -38,7 +37,7 @@ class TokenInfo():
         self.root_bank: RootBank = root_bank
         self.decimals: Decimal = decimals
 
-    def from_layout(layout: layouts.TOKEN_INFO, token_lookup: TokenLookup, root_banks: typing.Sequence[RootBank]) -> "TokenInfo":
+    def from_layout(layout: typing.Any, token_lookup: TokenLookup, root_banks: typing.Sequence[RootBank]) -> "TokenInfo":
         token = token_lookup.find_by_mint(layout.mint)
         if token is None:
             raise Exception(f"Token with mint {layout.mint} could not be found.")
@@ -50,7 +49,7 @@ class TokenInfo():
         root_bank = RootBank.find_by_address(root_banks, layout.root_bank)
         return TokenInfo(token, root_bank, layout.decimals)
 
-    def from_layout_or_none(layout: layouts.TOKEN_INFO, token_lookup: TokenLookup, root_banks: typing.Sequence[RootBank]) -> typing.Optional["TokenInfo"]:
+    def from_layout_or_none(layout: typing.Any, token_lookup: TokenLookup, root_banks: typing.Sequence[RootBank]) -> typing.Optional["TokenInfo"]:
         if layout.mint is None:
             return None
 

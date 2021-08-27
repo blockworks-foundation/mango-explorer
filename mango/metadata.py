@@ -15,24 +15,21 @@
 
 
 import logging
-
-from .layouts import layouts
+import typing
 
 from .version import Version
 
 
 # # 🥭 Metadata class
 #
-
-
 class Metadata():
-    def __init__(self, data_type: layouts.DATA_TYPE, version: Version, is_initialized: bool):
+    def __init__(self, data_type: typing.Any, version: Version, is_initialized: bool):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.data_type: layouts.DATA_TYPE = data_type
+        self.data_type: typing.Any = data_type
         self.version: Version = version
         self.is_initialized: bool = is_initialized
 
-    def from_layout(layout: layouts.METADATA) -> "Metadata":
+    def from_layout(layout: typing.Any) -> "Metadata":
         version = Version(layout.version + 1)
         is_initialized = bool(layout.is_initialized)
         return Metadata(layout.data_type, version, is_initialized)

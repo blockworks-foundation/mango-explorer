@@ -34,14 +34,13 @@ from .constants import SYSTEM_PROGRAM_ADDRESS
 #
 # Is an order a Buy or a Sell?
 #
-
 class Side(enum.Enum):
     # We use strings here so that argparse can work with these as parameters.
     BUY = "BUY"
     SELL = "SELL"
 
     @staticmethod
-    def from_value(value: Decimal) -> "Side":
+    def from_value(value: pyserum.enums.Side) -> "Side":
         converted: pyserum.enums.Side = pyserum.enums.Side(int(value))
         return Side.BUY if converted == pyserum.enums.Side.BUY else Side.SELL
 
@@ -61,8 +60,6 @@ class Side(enum.Enum):
 # so if it doesn't get filled immediately it is cancelled), and Post Only (only ever places orders on the
 # orderbook - if this would be filled immediately without being placed on the order book it is cancelled).
 #
-
-
 class OrderType(enum.Enum):
     # We use strings here so that argparse can work with these as parameters.
     UNKNOWN = "UNKNOWN"
@@ -81,7 +78,7 @@ class OrderType(enum.Enum):
             return OrderType.LIMIT
         return OrderType.UNKNOWN
 
-    def to_serum(self) -> "Side":
+    def to_serum(self) -> pyserum.enums.OrderType:
         if self == OrderType.IOC:
             return pyserum.enums.OrderType.IOC
         elif self == OrderType.POST_ONLY:
@@ -100,8 +97,6 @@ class OrderType(enum.Enum):
 #
 # A package that encapsulates common information about an order.
 #
-
-
 class Order(typing.NamedTuple):
     id: int
     client_id: int

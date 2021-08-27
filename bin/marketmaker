@@ -18,7 +18,7 @@ import mango.marketmaking  # nopep8
 from mango.marketmaking.orderchain import chain  # nopep8
 from mango.marketmaking.orderchain import chainbuilder  # nopep8
 
-parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
+parser = argparse.ArgumentParser(description="Runs a marketmaker against a particular market.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 chainbuilder.ChainBuilder.add_command_line_parameters(parser)
@@ -29,13 +29,15 @@ parser.add_argument("--oracle-provider", type=str, required=True,
                     help="name of the price provider to use (e.g. pyth)")
 parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal("0.001"),
                     help="tolerance in price and quantity when matching existing orders or cancelling/replacing")
+parser.add_argument("--redeem-threshold", type=Decimal,
+                    help="threshold above which liquidity incentives will be automatically moved to the account (default: no moving)")
 parser.add_argument("--pulse-interval", type=int, default=10,
                     help="number of seconds between each 'pulse' of the market maker")
 parser.add_argument("--event-queue-poll-interval", type=int, default=10,
                     help="number of seconds between each 'poll' of the event queue (only used if --update-mode is POLL)")
 parser.add_argument("--hedge-market", type=str, help="spot market symbol to use for hedging (e.g. ETH/USDC)")
 parser.add_argument("--max-price-slippage-factor", type=Decimal, default=Decimal("0.05"),
-                    help="the maximum value the IOC hedging order price can slip by when hedging (default is 0.05 for 5%)")
+                    help="the maximum value the IOC hedging order price can slip by when hedging (default is 0.05 for 5%%)")
 parser.add_argument("--account-index", type=int, default=0,
                     help="index of the account to use, if more than one available")
 parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
@@ -147,7 +149,7 @@ desired_orders_chain: chain.Chain = chainbuilder.ChainBuilder.from_command_line_
 market_instruction_builder: mango.MarketInstructionBuilder = mango.create_market_instruction_builder(
     context, wallet, account, market, args.dry_run)
 market_maker = mango.marketmaking.MarketMaker(
-    wallet, market, market_instruction_builder, desired_orders_chain, order_reconciler)
+    wallet, market, market_instruction_builder, desired_orders_chain, order_reconciler, args.redeem_threshold)
 
 oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, args.oracle_provider)
 oracle = oracle_provider.oracle_for_market(context, market)

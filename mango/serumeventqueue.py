@@ -30,8 +30,6 @@ from .version import Version
 #
 # `SerumEventFlags` stores flags describing a `SerumEvent`.
 #
-
-
 class SerumEventFlags:
     def __init__(self, version: Version, fill: bool, out: bool, bid: bool, maker: bool):
         self.version: Version = version
@@ -41,7 +39,7 @@ class SerumEventFlags:
         self.maker: bool = maker
 
     @staticmethod
-    def from_layout(layout: layouts.SERUM_EVENT_FLAGS) -> "SerumEventFlags":
+    def from_layout(layout: typing.Any) -> "SerumEventFlags":
         return SerumEventFlags(Version.UNSPECIFIED, bool(layout.fill), bool(layout.out), bool(layout.bid), bool(layout.maker))
 
     def __str__(self) -> str:
@@ -61,7 +59,6 @@ class SerumEventFlags:
 #
 # `SerumEvent` stores details of an actual event in Serum.
 #
-
 class SerumEvent:
     def __init__(self, version: Version, event_flags: SerumEventFlags, open_order_slot: Decimal, fee_tier: Decimal,
                  native_quantity_released: Decimal, native_quantity_paid: Decimal, native_fee_or_rebate: Decimal,
@@ -79,7 +76,7 @@ class SerumEvent:
         self.original_index: Decimal = Decimal(0)
 
     @staticmethod
-    def from_layout(layout: layouts.SERUM_EVENT) -> "SerumEvent":
+    def from_layout(layout: typing.Any) -> "SerumEvent":
         event_flags: SerumEventFlags = SerumEventFlags.from_layout(layout.event_flags)
         return SerumEvent(Version.UNSPECIFIED, event_flags, layout.open_order_slot, layout.fee_tier,
                           layout.native_quantity_released, layout.native_quantity_paid, layout.native_fee_or_rebate,
@@ -128,7 +125,7 @@ class SerumEventQueue(AddressableAccount):
         self.processed_events: typing.Sequence[SerumEvent] = processed_events
 
     @staticmethod
-    def from_layout(layout: layouts.SERUM_EVENT_QUEUE, account_info: AccountInfo, version: Version) -> "SerumEventQueue":
+    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version) -> "SerumEventQueue":
         account_flags: AccountFlags = AccountFlags.from_layout(layout.account_flags)
         head: Decimal = layout.head
         count: Decimal = layout.count

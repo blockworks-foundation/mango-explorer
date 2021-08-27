@@ -60,12 +60,12 @@ from .layouts import MAGIC, MAPPING, PRICE, PRODUCT, PYTH_DEVNET_MAPPING_ROOT, P
 #
 
 class PythOracle(Oracle):
-    def __init__(self, context: Context, market: Market, product_data: PRODUCT):
+    def __init__(self, context: Context, market: Market, product_data: typing.Any):
         name = f"Pyth Oracle for {market.symbol}"
         super().__init__(name, market)
         self.context: Context = context
         self.market: Market = market
-        self.product_data: PRODUCT = product_data
+        self.product_data: typing.Any = product_data
         self.address: PublicKey = product_data.address
         features: SupportedOracleFeature = SupportedOracleFeature.MID_PRICE | SupportedOracleFeature.CONFIDENCE
         self.source: OracleSource = OracleSource("Pyth", name, features, market)
@@ -142,7 +142,7 @@ class PythOracleProvider(OracleProvider):
             return [f"{symbol}C", f"{symbol}T"]
         return [symbol]
 
-    def _load_pyth_mapping(self, context: Context, address: PublicKey) -> MAPPING:
+    def _load_pyth_mapping(self, context: Context, address: PublicKey) -> typing.Any:
         account_info = AccountInfo.load(context, address)
         if account_info is None:
             raise Exception(f"Pyth mapping account {address} not found.")
@@ -151,7 +151,7 @@ class PythOracleProvider(OracleProvider):
             raise Exception(
                 f"Mapping account data has incorrect size. Expected: {MAPPING.sizeof()}, got {len(account_info.data)}.")
 
-        mapping = MAPPING.parse(account_info.data)
+        mapping: typing.Any = MAPPING.parse(account_info.data)
         mapping.address = account_info.address
         if mapping.magic != MAGIC:
             raise Exception(f"Mapping account {account_info.address} is not a Pyth account.")
@@ -162,9 +162,9 @@ class PythOracleProvider(OracleProvider):
         mapping = self._load_pyth_mapping(context, address)
         all_product_addresses = mapping.products[0:int(mapping.num)]
         product_account_infos = AccountInfo.load_multiple(context, all_product_addresses)
-        products: typing.List[PRODUCT] = []
+        products: typing.List[typing.Any] = []
         for product_account_info in product_account_infos:
-            product = PRODUCT.parse(product_account_info.data)
+            product: typing.Any = PRODUCT.parse(product_account_info.data)
             product.address = product_account_info.address
             if product.magic != MAGIC:
                 raise Exception(f"Product account {product_account_info.address} is not a Pyth account.")

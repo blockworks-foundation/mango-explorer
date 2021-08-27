@@ -18,13 +18,9 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-from .layouts import layouts
-
 
 # # 🥭 SpotMarketInfo class
 #
-
-
 class SpotMarketInfo():
     def __init__(self, address: PublicKey, maint_asset_weight: Decimal, init_asset_weight: Decimal, maint_liab_weight: Decimal, init_liab_weight: Decimal):
         self.address: PublicKey = address
@@ -33,7 +29,7 @@ class SpotMarketInfo():
         self.maint_liab_weight: Decimal = maint_liab_weight
         self.init_liab_weight: Decimal = init_liab_weight
 
-    def from_layout(layout: layouts.SPOT_MARKET_INFO) -> "SpotMarketInfo":
+    def from_layout(layout: typing.Any) -> "SpotMarketInfo":
         spot_market: PublicKey = layout.spot_market
         maint_asset_weight: Decimal = round(layout.maint_asset_weight, 8)
         init_asset_weight: Decimal = round(layout.init_asset_weight, 8)
@@ -41,7 +37,7 @@ class SpotMarketInfo():
         init_liab_weight: Decimal = round(layout.init_liab_weight, 8)
         return SpotMarketInfo(spot_market, maint_asset_weight, init_asset_weight, maint_liab_weight, init_liab_weight)
 
-    def from_layout_or_none(layout: layouts.SPOT_MARKET_INFO) -> typing.Optional["SpotMarketInfo"]:
+    def from_layout_or_none(layout: typing.Any) -> typing.Optional["SpotMarketInfo"]:
         if layout.spot_market is None:
             return None
 

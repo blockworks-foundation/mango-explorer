@@ -39,7 +39,7 @@ class PriceCache:
         self.last_update: datetime = last_update
 
     @staticmethod
-    def from_layout(layout: layouts.PRICE_CACHE) -> typing.Optional["PriceCache"]:
+    def from_layout(layout: typing.Any) -> typing.Optional["PriceCache"]:
         if layout.last_update.timestamp() == 0:
             return None
         return PriceCache(layout.price, layout.last_update)
@@ -58,7 +58,7 @@ class RootBankCache:
         self.last_update: datetime = last_update
 
     @staticmethod
-    def from_layout(layout: layouts.PRICE_CACHE) -> typing.Optional["RootBankCache"]:
+    def from_layout(layout: typing.Any) -> typing.Optional["RootBankCache"]:
         if layout.last_update.timestamp() == 0:
             return None
         return RootBankCache(layout.deposit_index, layout.borrow_index, layout.last_update)
@@ -77,7 +77,7 @@ class PerpMarketCache:
         self.last_update: datetime = last_update
 
     @staticmethod
-    def from_layout(layout: layouts.PRICE_CACHE) -> typing.Optional["PerpMarketCache"]:
+    def from_layout(layout: typing.Any) -> typing.Optional["PerpMarketCache"]:
         if layout.last_update.timestamp() == 0:
             return None
         return PerpMarketCache(layout.long_funding, layout.short_funding, layout.last_update)
@@ -108,7 +108,7 @@ class Cache(AddressableAccount):
         self.perp_market_cache: typing.Sequence[typing.Optional[PerpMarketCache]] = perp_market_cache
 
     @staticmethod
-    def from_layout(layout: layouts.ROOT_BANK, account_info: AccountInfo, version: Version) -> "Cache":
+    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version) -> "Cache":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
         price_cache: typing.Sequence[typing.Optional[PriceCache]] = list(
             map(PriceCache.from_layout, layout.price_cache))

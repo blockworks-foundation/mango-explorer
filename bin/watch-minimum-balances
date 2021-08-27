@@ -48,26 +48,20 @@ def send_event_notification(message: str) -> None:
         notify.send(f"[{args.name}] {message}")
 
 
-def sols_from_lamports(lamports: Decimal) -> Decimal:
-    return lamports / mango.SOL_DECIMAL_DIVISOR
-
-
 def notifier(name: str) -> typing.Callable[[mango.AccountInfo], None]:
     def notify(account_info: mango.AccountInfo) -> None:
-        account_sols = sols_from_lamports(account_info.lamports)
-        report = f"Account \"{name} [{account_info.address}]\" on {context.client.cluster_name} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
+        report = f"Account \"{name} [{account_info.address}]\" on {context.client.cluster_name} has only {account_info.sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
         send_balance_notification(report)
         print(f"Notification sent: {report}")
     return notify
 
 
 def account_fails_balance_check(account_info: mango.AccountInfo) -> bool:
-    return sols_from_lamports(account_info.lamports) < args.minimum_sol_balance
+    return account_info.sols < args.minimum_sol_balance
 
 
 def log_account(account_info: mango.AccountInfo) -> mango.AccountInfo:
-    account_sols = sols_from_lamports(account_info.lamports)
-    logging.info(f"Checking account {account_info.address} - {account_sols} SOL.")
+    logging.info(f"Checking account {account_info.address} - {account_info.sols} SOL.")
     return account_info
 
 

@@ -1,3 +1,4 @@
+import construct
 import datetime
 import mango
 
@@ -7,7 +8,6 @@ from pyserum.market.state import MarketState as PySerumMarketState
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.types import RPCResponse
-from typing import NamedTuple
 
 
 class MockCompatibleClient(mango.CompatibleClient):
@@ -67,18 +67,20 @@ def fake_context() -> mango.Context:
 
 
 def fake_market() -> PySerumMarket:
-    Container = NamedTuple("Container", [("own_address", PublicKey), ("vault_signer_nonce", int)])
-    container = Container(own_address=fake_seeded_public_key("market address"), vault_signer_nonce=2)
+    # Container = NamedTuple("Container", [("own_address", PublicKey), ("vault_signer_nonce", int)])
+    container = construct.Container({"own_address": fake_seeded_public_key("market address"), "vault_signer_nonce": 2})
+    # container: Container[typing.Any] = Container(
+    #     own_address=fake_seeded_public_key("market address"), vault_signer_nonce=2)
     state = PySerumMarketState(container, fake_seeded_public_key("program ID"), 6, 6)
-    state.base_vault = lambda: fake_seeded_public_key("base vault")
-    state.quote_vault = lambda: fake_seeded_public_key("quote vault")
-    state.event_queue = lambda: fake_seeded_public_key("event queue")
-    state.request_queue = lambda: fake_seeded_public_key("request queue")
-    state.bids = lambda: fake_seeded_public_key("bids")
-    state.asks = lambda: fake_seeded_public_key("asks")
-    state.base_lot_size = lambda: 1
-    state.quote_lot_size = lambda: 1
-    return PySerumMarket(None, state)
+    state.base_vault = lambda: fake_seeded_public_key("base vault")  # type: ignore[assignment]
+    state.quote_vault = lambda: fake_seeded_public_key("quote vault")  # type: ignore[assignment]
+    state.event_queue = lambda: fake_seeded_public_key("event queue")  # type: ignore[assignment]
+    state.request_queue = lambda: fake_seeded_public_key("request queue")  # type: ignore[assignment]
+    state.bids = lambda: fake_seeded_public_key("bids")  # type: ignore[assignment]
+    state.asks = lambda: fake_seeded_public_key("asks")  # type: ignore[assignment]
+    state.base_lot_size = lambda: 1  # type: ignore[assignment]
+    state.quote_lot_size = lambda: 1  # type: ignore[assignment]
+    return PySerumMarket(MockCompatibleClient(), state)
 
 
 def fake_spot_market_stub() -> mango.SpotMarketStub:

@@ -1,0 +1,47 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+import typing
+
+import spl.token.instructions as spl_token
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="mint SPL tokens to your wallet")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--symbol", type=str, required=True,
+                    help="token symbol to ensure the associated token account exists (e.g. USDC)")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+token = context.token_lookup.find_by_symbol(args.symbol.upper())
+if token is None:
+    raise Exception(f"Could not find token with symbol '{args.symbol}'.")
+
+associated_token_address = spl_token.get_associated_token_address(wallet.address, token.mint)
+token_account: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(context, associated_token_address)
+if token_account is not None:
+    # The associated token account exists
+    print(f"Associated token account already exists at: {associated_token_address}.")
+else:
+    # Create the proper associated token account.
+    signer = mango.CombinableInstructions.from_wallet(wallet)
+    create_instruction = spl_token.create_associated_token_account(wallet.address, wallet.address, token.mint)
+    create = mango.CombinableInstructions.from_instruction(create_instruction)
+
+    print(f"No associated token account at: {associated_token_address} - creating...")
+    transaction_ids = (signer + create).execute(context)
+    context.client.wait_for_confirmation(transaction_ids)
+    print(f"Associated token account created at: {associated_token_address}.")

@@ -98,12 +98,22 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         if self.open_orders_address is None:
             ensure_open_orders = self.build_create_openorders_instructions()
 
+        if self.open_orders_address is None:
+            raise Exception("Failed to find or create OpenOrders address")
+
         serum_order_type: pyserum.enums.OrderType = order.order_type.to_serum()
         serum_side: pyserum.enums.Side = order.side.to_serum()
         payer_token_account = self.quote_token_account if order.side == Side.BUY else self.base_token_account
 
-        raw_instruction = self.raw_market.make_place_order_instruction(payer_token_account.address, self.wallet.account, serum_order_type, serum_side, float(
-            order.price), float(order.quantity), order.client_id, self.open_orders_address, self.fee_discount_token_address)
+        raw_instruction = self.raw_market.make_place_order_instruction(payer_token_account.address,
+                                                                       self.wallet.account,
+                                                                       serum_order_type,
+                                                                       serum_side,
+                                                                       float(order.price),
+                                                                       float(order.quantity),
+                                                                       order.client_id,
+                                                                       self.open_orders_address,
+                                                                       self.fee_discount_token_address)
 
         place = CombinableInstructions.from_instruction(raw_instruction)
 

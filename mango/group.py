@@ -123,7 +123,7 @@ class Group(AddressableAccount):
         return Group._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item.perp_market_info)
 
     @staticmethod
-    def from_layout(context: Context, layout: layouts.GROUP, name: str, account_info: AccountInfo, version: Version, token_lookup: TokenLookup, market_lookup: MarketLookup) -> "Group":
+    def from_layout(context: Context, layout: typing.Any, name: str, account_info: AccountInfo, version: Version, token_lookup: TokenLookup, market_lookup: MarketLookup) -> "Group":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
 
         root_bank_addresses = [ti.root_bank for ti in layout.tokens if ti is not None and ti.root_bank is not None]

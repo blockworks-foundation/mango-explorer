@@ -13,6 +13,8 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import typing
+
 from datetime import datetime
 from decimal import Decimal
 from solana.publickey import PublicKey
@@ -40,7 +42,7 @@ class LiquidityMiningInfo:
         self.mngo_per_period: Decimal = mngo_per_period
 
     @staticmethod
-    def from_layout(layout: layouts.LIQUIDITY_MINING_INFO, version: Version) -> "LiquidityMiningInfo":
+    def from_layout(layout: typing.Any, version: Version) -> "LiquidityMiningInfo":
         rate: Decimal = layout.rate
         max_depth_bps: Decimal = layout.max_depth_bps
         period_start: Decimal = layout.period_start
@@ -105,7 +107,7 @@ class PerpMarketDetails(AddressableAccount):
         self.quote_token: TokenInfo = quote_token
 
     @staticmethod
-    def from_layout(layout: layouts.PERP_MARKET, account_info: AccountInfo, version: Version, group: Group) -> "PerpMarketDetails":
+    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version, group: Group) -> "PerpMarketDetails":
         meta_data = Metadata.from_layout(layout.meta_data)
         bids: PublicKey = layout.bids
         asks: PublicKey = layout.asks

@@ -22,14 +22,13 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 from solana.rpc.types import RPCResponse
 
+from .constants import SOL_DECIMAL_DIVISOR
 from .context import Context
 from .encoding import decode_binary, encode_binary
 
 
 # # 🥭 AccountInfo class
 #
-
-
 class AccountInfo:
     def __init__(self, address: PublicKey, executable: bool, lamports: Decimal, owner: PublicKey, rent_epoch: Decimal, data: bytes):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -39,6 +38,10 @@ class AccountInfo:
         self.owner: PublicKey = owner
         self.rent_epoch: Decimal = rent_epoch
         self.data: bytes = data
+
+    @property
+    def sols(self) -> Decimal:
+        return self.lamports / SOL_DECIMAL_DIVISOR
 
     def encoded_data(self) -> typing.Sequence:
         return encode_binary(self.data)
