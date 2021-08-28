@@ -58,14 +58,24 @@ It takes a smart strategy to successfully run a marketmaker these days, and this
 
 # 2. 📂 Directories And Files
 
-Our server will keep all its files under `/var/mango-explorer`, so run the following commands to set up the necessary directories and files:
+Our server needs at least one file - the `id.json` that holds the secret key - but it can be useful to keep all mango-explorer things together, away from any other files you may have.
+
+So what we’ll do is create a directory called `mango-explorer` in your home directory, put the `id.json` file there, and leave it up to you if you want to put logfiles or anything else in there too.
+
+Run the following commands to set up the necessary directories and files:
 
 ```
-# mkdir /var/mango-explorer
-# touch /var/mango-explorer/id.json
-# chown 1000:1000 /var/mango-explorer/id.json
+# mkdir ~/mango-explorer
+# touch ~/mango-explorer/id.json
+# chmod 600 ~/mango-explorer/id.json
 ```
 (Don’t type the # prompt - that’s to show you the unix prompt where the command starts.)
+
+If you are running as `root`, there’s an additional step. Docker can’t write to that file now if you are `root` so you need to explicitly allow the container user access to that file by running:
+```
+# chown 1000:1000 ~/mango-explorer/id.json
+```
+You only need to run the `chown` command if you’re `root`. If you’re not `root`, that command is unnecessary and won’t work.
 
 
 # 3. 📜 ‘mango-explorer’ Setup
@@ -126,7 +136,7 @@ Next, we’ll set up an `alias` to make running the container easier. There are 
 `docker` command and they’re the same every time so to save typing them over and over, run:
 ```
 # alias mango-explorer="docker run --rm -it --name=mango-explorer \
-    -v /var/mango-explorer/id.json:/home/jovyan/work/id.json \
+    -v $HOME/mango-explorer/id.json:/home/jovyan/work/id.json \
     opinionatedgeek/mango-explorer-v3:latest"
 ```
 It’s probably a good idea to put this alias in your `.profile` or `.bashrc` (or use whatever mechanism your shell uses for such things).
@@ -138,7 +148,7 @@ Run the following command to create your wallet:
 ```
 # mango-explorer solana-keygen new --force --outfile /home/jovyan/work/id.json
 ```
-(/home/jovyan/work/id.json is not a typo in the command - it’s the path to the ID file in the docker container’s context - it’s mapped to the /var/mango-explorer/id.json file.)
+(/home/jovyan/work/id.json is not a typo in the command - it’s the path to the ID file in the docker container’s context - it’s mapped to the ~/mango-explorer/id.json file.)
 
 This will ask you for a passphrase to protect your wallet - just press ENTER for no passphrase (`mango-explorer` assumes no passphrase on key files).
 
@@ -161,7 +171,7 @@ Save this seed phrase and your BIP39 passphrase to recover your new keypair:
 finger embrace similar anger type laptop public romance then elevator build border
 ==================================================================================
 ```
-This is what a successful run of the command looks like. It creates a Solana wallet and writes its secret key to /var/mango-explorer/id.json. **Looking after this file is entirely your responsibility. If you lose this file, you lose the private key for all the funds in the wallet. If you give it to someone else you give them the entire contents of your wallet.** This is not a big deal on devnet but it’s very important on mainnet.
+This is what a successful run of the command looks like. It creates a Solana wallet and writes its secret key to ~/mango-explorer/id.json. **Looking after this file is entirely your responsibility. If you lose this file, you lose the private key for all the funds in the wallet. If you give it to someone else you give them the entire contents of your wallet.** This is not a big deal on devnet but it’s very important on mainnet.
 
 The above run shows a public key of: **6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB**
 
@@ -169,12 +179,12 @@ If you look at the file you’ll see the bytes of your private key. **Keep this 
 
 It should look something like this, but with different numbers:
 ```
-# cat /var/mango-explorer/id.json
+# cat ~/mango-explorer/id.json
 [166,81,103,111,69,211,162,167,170,195,187,147,198,66,207,254,111,165,74,24,53,240,172,184,88,93,123,9,212,63,129,100,79,121,76,191,160,172,186,119,139,5,119,189,44,192,176,241,32,118,41,15,108,49,7,162,213,238,6,100,23,184,198,118]
 ```
 Yes, that’s the actual secret key of the account.
 
-Import that secret key into [Sollet](https://www.sollet.io/) by clicking 'Account', 'Add Account', entering a name into the Name field ('Marketmaker' perhaps?), turning the 'Import Private Key' slider to On, and pasting in that JSON array of the secret key (the bit that starts '[166,81,103,111...' above) into the field that says 'Paste your private key here'. Then click the 'Add' button. You can now switch Sollet to devnet (the selector is at the top-right) and use your new devnet account to sign transactions. (You'll need this later for the faucet.)
+Import that secret key into [Sollet](https://www.sollet.io/) by clicking ‘Account’, ‘Add Account’, entering a name into the Name field (‘Marketmaker’ perhaps?), turning the ‘Import Private Key’ slider to On, and pasting in that JSON array of the secret key (the bit that starts ‘[166,81,103,111...’ above) into the field that says ‘Paste your private key here’. Then click the ‘Add’ button. You can now switch Sollet to devnet (the selector is at the top-right) and use your new devnet account to sign transactions. (You’ll need this later for the faucet.)
 
 
 # 5. 🎱 Common Command Parameters
@@ -347,15 +357,15 @@ You can see the details of your new account there, including all the zero-balanc
 
 # 8. 💸 Add USDC
 
-Now you need to get some devnet USDC. You only need USDC for marketmaking on BTC-PERP - you don't need a stash of both base and quote tokens the way you would if you were marketmaking on, say, BTC/USDC.
+Now you need to get some devnet USDC. You only need USDC for marketmaking on BTC-PERP - you don’t need a stash of both base and quote tokens the way you would if you were marketmaking on, say, BTC/USDC.
 
-There's a faucet to freely give out USDC tokens, and a [faucet web site](https://www.spl-token-ui.com/#/token-faucets) to help interact with the faucet contract.
+There’s a faucet to freely give out USDC tokens, and a [faucet web site](https://www.spl-token-ui.com/#/token-faucets) to help interact with the faucet contract.
 
-You need to create the 'Associated Token Account' for your USDC devnet tokens before you use the faucet though. This is a bit awkward, so there's a command to help. Run:
+You need to create the ‘Associated Token Account’ for your USDC devnet tokens before you use the faucet though. This is a bit awkward, so there’s a command to help. Run:
 ```
 # mango-explorer ensure-associated-token-account --cluster-name devnet --symbol USDC
 ```
-That command should create the associated token account if it doesn't exist, and then print out the address of it. You need that address for the faucet. You should see something like:
+That command should create the associated token account if it doesn’t exist, and then print out the address of it. You need that address for the faucet. You should see something like:
 ```
 2021-08-27 19:19:06 ⚠ root
 ⚠ WARNING ⚠
@@ -374,7 +384,7 @@ No associated token account at: CfWq8oFtsyWQ1eVaC3qW3ffCFjQHUd4QmVjW9L9EQrBL - c
 2021-08-27 19:19:21 ⓘ BetterClient Confirmed 2ATus96zNYysfR6xzpBoYXiZdr69copCJAqovM86nLJLQkr7dnYBLpBxEaKDUerCb1MnEkXcc1TiXdjYqqtmYjjc after 0:00:14.180995 seconds.
 Associated token account created at: CfWq8oFtsyWQ1eVaC3qW3ffCFjQHUd4QmVjW9L9EQrBL.
 ```
-It's safe to run it again. It won't create additional accounts, and you'll see output like this:
+It’s safe to run it again. It won’t create additional associated token accounts, and you’ll see output like this:
 ```
 2021-08-27 19:20:02 ⚠ root
 ⚠ WARNING ⚠
@@ -390,20 +400,20 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 Associated token account already exists at: CfWq8oFtsyWQ1eVaC3qW3ffCFjQHUd4QmVjW9L9EQrBL.
 ```
-In both cases you should see the associated token account address. It's CfWq8oFtsyWQ1eVaC3qW3ffCFjQHUd4QmVjW9L9EQrBL in the output above, but it will be different for your account.
+In both cases you should see the associated token account address. It’s CfWq8oFtsyWQ1eVaC3qW3ffCFjQHUd4QmVjW9L9EQrBL in the output above, but it will be different for your account.
 
 Now, to use the faucet:
 1. Go to the [faucet website](https://www.spl-token-ui.com/#/token-faucets)
-2. Change to devnet by hovering over the 'mainnet-beta' button in the top-right of the page and choosing 'devnet'.
-3. Click the 'Token Airdrop' button.
-4. Leave the 'Admin' field blank.
-5. Enter the associated token account address (from the account you just created) into the 'Token Destination Address' field.
-6. Enter B87AhxX6BkBsj3hnyHzcerX2WxPoACC7ZyDr8E7H9geN into the 'Faucet Address' field.
-7. Enter 10000000000 into the Amount field (that's 10,000,000,000 because the token value takes an integer and shifts it 6 decimal places)
-8. Click the 'Airdrop Tokens' button.
+2. Change to devnet by hovering over the ‘mainnet-beta’ button in the top-right of the page and choosing ‘devnet’.
+3. Click the ‘Token Airdrop’ button.
+4. Leave the ‘Admin’ field blank.
+5. Enter the associated token account address (from the account you just created) into the ‘Token Destination Address’ field.
+6. Enter B87AhxX6BkBsj3hnyHzcerX2WxPoACC7ZyDr8E7H9geN into the ‘Faucet Address’ field.
+7. Enter 10000000000 into the Amount field (that’s 10,000,000,000 because the token value takes an integer and shifts it 6 decimal places)
+8. Click the ‘Airdrop Tokens’ button.
 9. Connect and sign the transaction using your devnet Sollet wallet.
 
-You should then get a confirmation message from the site saying 'Success! Take a look at your account'.
+You should then get a confirmation message from the site saying ‘Success! Take a look at your account’.
 
 
 # 9. ⚖️ Deposit USDC
@@ -668,7 +678,7 @@ Well, that all seemed fine.
 
 Some important things to note from the simulated run:
 * It does a bunch of checks on startup to make sure it is in a state that can run.
-* It shows the orders it would have placed, if this hadn't been a dry run.
+* It shows the orders it would have placed, if this hadn’t been a dry run.
 * It outputs a **lot** of information. You can turn that down with the parameters `--log-level INFO` or `--log-level WARNING` when you’re confident of the marketmaker’s operation.
 * It prints out some summary information about the current assets in the account.
 * It pulses every 30 seconds, deciding which orders to place and which to cancel
