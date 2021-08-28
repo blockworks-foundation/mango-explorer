@@ -252,7 +252,7 @@ Now let’s set up the Mango Account. The Mango Account is associated with a Man
 
 To create and initialise your Mango Account, run:
 ```
-# mango-explorer init-account --cluster-name devnet --wait
+# mango-explorer ensure-account --cluster-name devnet --wait
 2021-08-27 19:17:42 ⚠ root
 ⚠ WARNING ⚠
 
@@ -265,6 +265,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     🚧 Github: https://github.com/blockworks-foundation
     📧 Email: mailto:hello@blockworks.foundation
 
+Created account.
 Waiting on transaction IDs: ['TJTBPUPv9tf7vgRUr27Jh8VeWNRGZfy8nkW1uEQhAYRLN8vpM4WboSHgeKGpJc25T4RnSYDFDsSy3fRn8TqKSYp']
 2021-08-27 19:17:43 ⓘ BetterClient Waiting up to 60 seconds for ['TJTBPUPv9tf7vgRUr27Jh8VeWNRGZfy8nkW1uEQhAYRLN8vpM4WboSHgeKGpJc25T4RnSYDFDsSy3fRn8TqKSYp'].
 2021-08-27 19:17:59 ⓘ BetterClient Confirmed TJTBPUPv9tf7vgRUr27Jh8VeWNRGZfy8nkW1uEQhAYRLN8vpM4WboSHgeKGpJc25T4RnSYDFDsSy3fRn8TqKSYp after 0:00:15.954582 seconds.

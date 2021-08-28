@@ -38,3 +38,7 @@ else:
     if args.wait:
         print("Waiting on transaction IDs:", transaction_ids)
         context.client.wait_for_confirmation(transaction_ids)
+        accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
+
+for account in accounts:
+    print(account)
