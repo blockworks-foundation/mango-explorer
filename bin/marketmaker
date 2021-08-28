@@ -55,15 +55,21 @@ for notify in args.notify_errors:
 
 
 def cleanup(context: mango.Context, wallet: mango.Wallet, account: mango.Account, market: mango.Market, dry_run: bool):
-    logging.info("Cleaning up.")
     market_operations: mango.MarketOperations = mango.create_market_operations(
         context, wallet, account, market, dry_run)
+    market_instruction_builder: mango.MarketInstructionBuilder = mango.create_market_instruction_builder(
+        context, wallet, account, market, dry_run)
+    cancels: mango.CombinableInstructions = mango.CombinableInstructions.empty()
     orders = market_operations.load_my_orders()
     for order in orders:
-        market_operations.cancel_order(order)
-    logging.info("Settling.")
-    market_operations.crank()
-    market_operations.settle()
+        cancels += market_instruction_builder.build_cancel_order_instructions(order, ok_if_missing=True)
+
+    if len(cancels.instructions) > 0:
+        logging.info(f"Cleaning up {len(cancels.instructions)} order(s).")
+        signer: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
+        (signer + cancels).execute(context)
+        market_operations.crank()
+        market_operations.settle()
 
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
