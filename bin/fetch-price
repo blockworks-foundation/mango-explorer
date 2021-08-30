@@ -7,11 +7,11 @@ import os.path
 import sys
 
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+    os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Displays the price from the Pyth Network.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 parser.add_argument("--provider", type=str, required=True,
                     help="name of the price provider to use (e.g. pyth)")
 parser.add_argument("--symbol", type=str, required=True,
@@ -23,13 +23,13 @@ args = parser.parse_args()
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-context = mango.Context.from_command_line_parameters(args)
+context = mango.ContextBuilder.from_command_line_parameters(args)
 
 logging.info(str(context))
 
-oracle_provider: mango.OracleProvider = mango.create_oracle_provider(args.provider)
+oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, args.provider)
 
-market = context.market_lookup.find_by_symbol(args.symbol)
+market = context.market_lookup.find_by_symbol(args.symbol.upper())
 if market is None:
     raise Exception(f"Could not find market {args.symbol}.")
 
@@ -39,7 +39,11 @@ if oracle is None:
 else:
     if not args.stream:
         price = oracle.fetch_price(context)
-        print(f"The price of '{oracle.symbol}' on {price.source.provider_name} is: '{price.mid_price:,.8f}'")
+        confidence = ""
+        if price.source.supports & mango.SupportedOracleFeature.CONFIDENCE:
+            confidence = f" +/- {price.confidence:,.8f}"
+        print(
+            f"The price of «{oracle.symbol}» on {price.source.provider_name} is: '{price.mid_price:,.8f}'{confidence}")
     else:
         print("Press <ENTER> to quit.")
         price_subscription = oracle.to_streaming_observable(context)

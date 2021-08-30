@@ -1,0 +1,63 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+from decimal import Decimal
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="deposit funds into a Mango account")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--symbol", type=str, required=True, help="token symbol to deposit (e.g. USDC)")
+parser.add_argument("--quantity", type=Decimal, required=True, help="quantity token to deposit")
+parser.add_argument("--account-index", type=int, default=0,
+                    help="index of the account to use, if more than one available")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+group = mango.Group.load(context, context.group_address)
+accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
+if len(accounts) == 0:
+    raise Exception(f"Could not find any Mango accounts for '{wallet.address}'.")
+account = accounts[args.account_index]
+
+token = context.token_lookup.find_by_symbol(args.symbol.upper())
+if token is None:
+    raise Exception(f"Could not find token with symbol '{args.symbol}'.")
+
+token_account = mango.TokenAccount.fetch_largest_for_owner_and_token(context, wallet.account.public_key(), token)
+if token_account is None:
+    raise Exception(f"Could not find token account for token {token} with owner {wallet.account}.")
+
+deposit_value = mango.TokenValue(token, args.quantity)
+deposit_token_account = mango.TokenAccount(
+    token_account.account_info, token_account.version, token_account.owner, deposit_value)
+
+root_bank = None
+for token_info in group.tokens:
+    if token_info is not None and token_info.token is not None and token_info.token.mint == token.mint:
+        root_bank = token_info.root_bank
+if root_bank is None:
+    raise Exception(f"Could not find token root bank for symbol '{args.symbol}'.")
+
+node_bank = root_bank.pick_node_bank(context)
+
+signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
+deposit = mango.build_deposit_instructions(
+    context, wallet, group, account, root_bank, node_bank, deposit_token_account)
+
+all_instructions = signers + deposit
+transaction_ids = all_instructions.execute(context)
+print("Transaction IDs:", transaction_ids)

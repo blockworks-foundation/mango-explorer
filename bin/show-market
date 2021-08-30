@@ -1,0 +1,28 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows all properties of a given market.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+parser.add_argument("--market", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+market_symbol = args.market.upper()
+market = context.market_lookup.find_by_symbol(market_symbol)
+if market is None:
+    raise Exception(f"Could not find market {market_symbol}")
+
+actual_market = mango.ensure_market_loaded(context, market)
+print(actual_market)

@@ -1,0 +1,44 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows Mango open orders accounts.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--account-index", type=int, default=0,
+                    help="index of the account to use, if more than one available")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+group = mango.Group.load(context)
+accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
+account = accounts[args.account_index]
+
+
+at_least_one_open_orders_account = False
+quote_token_info = group.shared_quote_token
+for index, open_orders_address in enumerate(account.spot_open_orders):
+    if open_orders_address is not None:
+        base_token_info = group.base_tokens[index]
+        if base_token_info is None:
+            raise Exception(f"No base token available at index {index}.")
+        open_orders = mango.OpenOrders.load(context, open_orders_address,
+                                            base_token_info.decimals, quote_token_info.decimals)
+        print(open_orders)
+        at_least_one_open_orders_account = True
+
+if not at_least_one_open_orders_account:
+    print(f"No OpenOrders accounts for {wallet.address}[{args.account_index}]")

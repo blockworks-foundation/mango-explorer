@@ -10,13 +10,13 @@ import traceback
 from decimal import Decimal
 
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+    os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Sells an SPL token in a Serum market.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--symbol", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)")
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of token to buy")
@@ -32,7 +32,7 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
-    context = mango.Context.from_command_line_parameters(args)
+    context = mango.ContextBuilder.from_command_line_parameters(args)
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
     adjustment_factor = args.adjustment_factor
@@ -45,14 +45,10 @@ try:
     if args.dry_run:
         trade_executor: mango.TradeExecutor = mango.NullTradeExecutor()
     else:
-        trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, adjustment_factor)
+        trade_executor = mango.ImmediateTradeExecutor(context, wallet, None, adjustment_factor)
 
-    transaction_ids = trade_executor.sell(symbol, args.quantity)
-    if args.wait:
-        logging.info(f"Waiting on {transaction_ids}")
-        context.client.wait_for_confirmation(transaction_ids)
-
-    logging.info("Sell completed.")
+    order = trade_executor.sell(symbol, args.quantity)
+    logging.info(f"Sell completed for {order}")
 except Exception as exception:
     logging.critical(f"Buy stopped because of exception: {exception} - {traceback.format_exc()}")
 except:

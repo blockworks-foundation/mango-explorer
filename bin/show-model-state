@@ -1,0 +1,52 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+import mango.marketmaking  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows all properties of a given market.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--market", type=str, required=True, help="market symbol load model state for (e.g. ETH/USDC)")
+parser.add_argument("--oracle-provider", type=str, required=True,
+                    help="name of the price provider to use (e.g. pyth-mainnet)")
+parser.add_argument("--account-index", type=int, default=0,
+                    help="index of the account to use, if more than one available")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+group = mango.Group.load(context, context.group_address)
+account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
+
+market_symbol = args.market.upper()
+market = context.market_lookup.find_by_symbol(market_symbol)
+if market is None:
+    raise Exception(f"Could not find market {market_symbol}")
+
+market = mango.ensure_market_loaded(context, market)
+
+oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, args.oracle_provider)
+oracle = oracle_provider.oracle_for_market(context, market)
+if oracle is None:
+    raise Exception(f"Could not find oracle for market {market.symbol} from provider {args.oracle_provider}.")
+
+disposer = mango.DisposePropagator()
+health_check = mango.HealthCheck()
+disposer.add_disposable(health_check)
+manager = mango.IndividualWebSocketSubscriptionManager(context)  # Should never be used
+model_state_builder: mango.marketmaking.ModelStateBuilder = mango.marketmaking.model_state_builder_factory(
+    mango.marketmaking.ModelUpdateMode.POLL, context, disposer, manager, health_check, wallet, group, account, market, oracle)
+
+model_state = model_state_builder.build(context)
+print(model_state)

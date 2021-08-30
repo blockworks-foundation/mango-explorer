@@ -16,12 +16,15 @@
 
 import base58
 import datetime
+import logging
+import traceback
 import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .context import Context
+from .instructionreporter import MangoInstruction
 from .instructiontype import InstructionType
 from .layouts import layouts
 from .ownedtokenvalue import OwnedTokenValue
@@ -59,201 +62,8 @@ from .tokenvalue import TokenValue
 #
 
 
-# The index of the sender/signer depends on the instruction.
-_instruction_signer_indices: typing.Dict[InstructionType, int] = {
-    InstructionType.InitMangoGroup: 3,
-    InstructionType.InitMarginAccount: 2,
-    InstructionType.Deposit: 2,
-    InstructionType.Withdraw: 2,
-    InstructionType.Borrow: 2,
-    InstructionType.SettleBorrow: 2,
-    InstructionType.Liquidate: 1,
-    InstructionType.DepositSrm: 2,
-    InstructionType.WithdrawSrm: 2,
-    InstructionType.PlaceOrder: 1,
-    InstructionType.SettleFunds: 1,
-    InstructionType.CancelOrder: 1,
-    InstructionType.CancelOrderByClientId: 1,
-    InstructionType.ChangeBorrowLimit: 1,
-    InstructionType.PlaceAndSettle: 1,
-    InstructionType.ForceCancelOrders: 1,
-    InstructionType.PartialLiquidate: 1
-}
-
-# The index of the token IN account depends on the instruction, and for some instructions
-# doesn't exist.
-_token_in_indices: typing.Dict[InstructionType, int] = {
-    InstructionType.InitMangoGroup: -1,
-    InstructionType.InitMarginAccount: -1,
-    InstructionType.Deposit: 3,  # token_account_acc - TokenAccount owned by user which will be sending the funds
-    InstructionType.Withdraw: 4,  # vault_acc - TokenAccount owned by MangoGroup which will be sending
-    InstructionType.Borrow: -1,
-    InstructionType.SettleBorrow: -1,
-    InstructionType.Liquidate: -1,
-    InstructionType.DepositSrm: 3,  # srm_account_acc - TokenAccount owned by user which will be sending the funds
-    InstructionType.WithdrawSrm: 4,  # vault_acc - SRM vault of MangoGroup
-    InstructionType.PlaceOrder: -1,
-    InstructionType.SettleFunds: -1,
-    InstructionType.CancelOrder: -1,
-    InstructionType.CancelOrderByClientId: -1,
-    InstructionType.ChangeBorrowLimit: -1,
-    InstructionType.PlaceAndSettle: -1,
-    InstructionType.ForceCancelOrders: -1,
-    InstructionType.PartialLiquidate: 2  # liqor_in_token_acc - liquidator's token account to deposit
-}
-
-# The index of the token OUT account depends on the instruction, and for some instructions
-# doesn't exist.
-_token_out_indices: typing.Dict[InstructionType, int] = {
-    InstructionType.InitMangoGroup: -1,
-    InstructionType.InitMarginAccount: -1,
-    InstructionType.Deposit: 4,  # vault_acc - TokenAccount owned by MangoGroup
-    InstructionType.Withdraw: 3,  # token_account_acc - TokenAccount owned by user which will be receiving the funds
-    InstructionType.Borrow: -1,
-    InstructionType.SettleBorrow: -1,
-    InstructionType.Liquidate: -1,
-    InstructionType.DepositSrm: 4,  # vault_acc - SRM vault of MangoGroup
-    InstructionType.WithdrawSrm: 3,  # srm_account_acc - TokenAccount owned by user which will be receiving the funds
-    InstructionType.PlaceOrder: -1,
-    InstructionType.SettleFunds: -1,
-    InstructionType.CancelOrder: -1,
-    InstructionType.CancelOrderByClientId: -1,
-    InstructionType.ChangeBorrowLimit: -1,
-    InstructionType.PlaceAndSettle: -1,
-    InstructionType.ForceCancelOrders: -1,
-    InstructionType.PartialLiquidate: 3  # liqor_out_token_acc - liquidator's token account to withdraw into
-}
-
-
-# # 🥭 MangoInstruction class
-#
-# This class packages up Mango instruction data, which can come from disparate parts of the
-# transaction. Keeping it all together here makes many things simpler.
-#
-
-
-class MangoInstruction:
-    def __init__(self, instruction_type: InstructionType, instruction_data: typing.Any, accounts: typing.Sequence[PublicKey]):
-        self.instruction_type = instruction_type
-        self.instruction_data = instruction_data
-        self.accounts = accounts
-
-    @property
-    def group(self) -> PublicKey:
-        # Group PublicKey is always the zero index.
-        return self.accounts[0]
-
-    @property
-    def sender(self) -> PublicKey:
-        account_index = _instruction_signer_indices[self.instruction_type]
-        return self.accounts[account_index]
-
-    @property
-    def token_in_account(self) -> typing.Optional[PublicKey]:
-        account_index = _token_in_indices[self.instruction_type]
-        if account_index < 0:
-            return None
-        return self.accounts[account_index]
-
-    @property
-    def token_out_account(self) -> typing.Optional[PublicKey]:
-        account_index = _token_out_indices[self.instruction_type]
-        if account_index < 0:
-            return None
-        return self.accounts[account_index]
-
-    def describe_parameters(self) -> str:
-        instruction_type = self.instruction_type
-        additional_data = ""
-        if instruction_type == InstructionType.InitMangoGroup:
-            pass
-        elif instruction_type == InstructionType.InitMarginAccount:
-            pass
-        elif instruction_type == InstructionType.Deposit:
-            additional_data = f"quantity: {self.instruction_data.quantity}"
-        elif instruction_type == InstructionType.Withdraw:
-            additional_data = f"quantity: {self.instruction_data.quantity}"
-        elif instruction_type == InstructionType.Borrow:
-            additional_data = f"quantity: {self.instruction_data.quantity}, token index: {self.instruction_data.token_index}"
-        elif instruction_type == InstructionType.SettleBorrow:
-            additional_data = f"quantity: {self.instruction_data.quantity}, token index: {self.instruction_data.token_index}"
-        elif instruction_type == InstructionType.Liquidate:
-            additional_data = f"deposit quantities: {self.instruction_data.deposit_quantities}"
-        elif instruction_type == InstructionType.DepositSrm:
-            additional_data = f"quantity: {self.instruction_data.quantity}"
-        elif instruction_type == InstructionType.WithdrawSrm:
-            additional_data = f"quantity: {self.instruction_data.quantity}"
-        elif instruction_type == InstructionType.PlaceOrder:
-            pass
-        elif instruction_type == InstructionType.SettleFunds:
-            pass
-        elif instruction_type == InstructionType.CancelOrder:
-            pass
-        elif instruction_type == InstructionType.CancelOrderByClientId:
-            additional_data = f"client ID: {self.instruction_data.client_id}"
-        elif instruction_type == InstructionType.ChangeBorrowLimit:
-            additional_data = f"borrow limit: {self.instruction_data.borrow_limit}, token index: {self.instruction_data.token_index}"
-        elif instruction_type == InstructionType.PlaceAndSettle:
-            pass
-        elif instruction_type == InstructionType.ForceCancelOrders:
-            additional_data = f"limit: {self.instruction_data.limit}"
-        elif instruction_type == InstructionType.PartialLiquidate:
-            additional_data = f"max deposit: {self.instruction_data.max_deposit}"
-
-        return additional_data
-
-    # It'd be nice to be able to describe the target of some operations, like liquidations. So far
-    # only `PartialLiquidate` is handled in the code below but it could be extended if others also
-    # have a useful target.
-    def describe_target(self) -> typing.Optional[PublicKey]:
-        if self.instruction_type == InstructionType.PartialLiquidate:
-            return self.accounts[4]
-
-        return None
-
-    @staticmethod
-    def from_response(context: Context, all_accounts: typing.Sequence[PublicKey], instruction_data: typing.Dict) -> typing.Optional["MangoInstruction"]:
-        program_account_index = instruction_data["programIdIndex"]
-        if all_accounts[program_account_index] != context.program_id:
-            # It's an instruction, it's just not a Mango one.
-            return None
-
-        data = instruction_data["data"]
-        instructions_account_indices = instruction_data["accounts"]
-
-        decoded = base58.b58decode(data)
-        initial = layouts.MANGO_INSTRUCTION_VARIANT_FINDER.parse(decoded)
-        parser = layouts.InstructionParsersByVariant[initial.variant]
-        if parser is None:
-            raise Exception(f"Could not find instruction parser for variant {initial.variant}.")
-
-        # A whole bunch of accounts are listed for a transaction. Some (or all) of them apply
-        # to this instruction. The instruction data gives the index of each account it uses,
-        # in the order in which it uses them. So, for example, if it uses 3 accounts, the
-        # instruction data could say [3, 2, 14], meaning the first account it uses is index 3
-        # in the whole transaction account list, the second is index 2 in the whole transaction
-        # account list, the third is index 14 in the whole transaction account list.
-        accounts: typing.List[PublicKey] = []
-        for index in instructions_account_indices:
-            accounts += [all_accounts[index]]
-
-        parsed = parser.parse(decoded)
-        instruction_type = InstructionType(int(parsed.variant))
-
-        return MangoInstruction(instruction_type, parsed, accounts)
-
-    def __str__(self) -> str:
-        parameters = self.describe_parameters() or "None"
-        return f"« {self.instruction_type.name}: {parameters} »"
-
-    def __repr__(self) -> str:
-        return f"{self}"
-
-
 # # 🥭 TransactionScout class
 #
-
-
 class TransactionScout:
     def __init__(self, timestamp: datetime.datetime, signatures: typing.Sequence[str],
                  succeeded: bool, group_name: str, accounts: typing.Sequence[PublicKey],
@@ -293,7 +103,7 @@ class TransactionScout:
         return f"« TransactionScout {result} {self.group_name} [{self.timestamp}] {instructions}: Token Changes: {changed_tokens_text}\n    {self.signatures} »"
 
     @property
-    def sender(self) -> PublicKey:
+    def sender(self) -> typing.Optional[PublicKey]:
         return self.instructions[0].sender
 
     @property
@@ -334,7 +144,7 @@ class TransactionScout:
             accounts = list(map(PublicKey, response["transaction"]["message"]["accountKeys"]))
             instructions: typing.List[MangoInstruction] = []
             for instruction_data in response["transaction"]["message"]["instructions"]:
-                instruction = MangoInstruction.from_response(context, accounts, instruction_data)
+                instruction = mango_instruction_from_response(context, accounts, instruction_data)
                 if instruction is not None:
                     instructions += [instruction]
 
@@ -359,7 +169,7 @@ class TransactionScout:
             signature = "Unknown"
             if response and ("transaction" in response) and ("signatures" in response["transaction"]) and len(response["transaction"]["signatures"]) > 0:
                 signature = ", ".join(response["transaction"]["signatures"])
-            raise Exception(f"Exception fetching transaction '{signature}'", exception)
+            raise Exception(f"Exception fetching transaction '{signature}' - {traceback.format_exc()}", exception)
 
     def __str__(self) -> str:
         def format_tokens(account_token_values: typing.Sequence[OwnedTokenValue]) -> str:
@@ -410,7 +220,7 @@ def fetch_all_recent_transaction_signatures(context: Context) -> typing.Sequence
     before = None
     signature_results: typing.List[str] = []
     while not all_fetched:
-        signatures = context.client.get_confirmed_signatures_for_address2(context.group_id, before=before)
+        signatures = context.client.get_confirmed_signatures_for_address2(context.group_address, before=before)
         signature_results += signatures
         if (len(signatures) == 0):
             all_fetched = True
@@ -418,3 +228,36 @@ def fetch_all_recent_transaction_signatures(context: Context) -> typing.Sequence
             before = signature_results[-1]
 
     return signature_results
+
+
+def mango_instruction_from_response(context: Context, all_accounts: typing.Sequence[PublicKey], instruction_data: typing.Dict) -> typing.Optional["MangoInstruction"]:
+    program_account_index = instruction_data["programIdIndex"]
+    if all_accounts[program_account_index] != context.mango_program_address:
+        # It's an instruction, it's just not a Mango one.
+        return None
+
+    data = instruction_data["data"]
+    instructions_account_indices = instruction_data["accounts"]
+
+    decoded = base58.b58decode(data)
+    initial = layouts.MANGO_INSTRUCTION_VARIANT_FINDER.parse(decoded)
+    parser = layouts.InstructionParsersByVariant[initial.variant]
+    if parser is None:
+        logging.warning(
+            f"Could not find instruction parser for variant {initial.variant} / {InstructionType(initial.variant)}.")
+        return None
+
+    # A whole bunch of accounts are listed for a transaction. Some (or all) of them apply
+    # to this instruction. The instruction data gives the index of each account it uses,
+    # in the order in which it uses them. So, for example, if it uses 3 accounts, the
+    # instruction data could say [3, 2, 14], meaning the first account it uses is index 3
+    # in the whole transaction account list, the second is index 2 in the whole transaction
+    # account list, the third is index 14 in the whole transaction account list.
+    accounts: typing.List[PublicKey] = []
+    for index in instructions_account_indices:
+        accounts += [all_accounts[index]]
+
+    parsed = parser.parse(decoded)
+    instruction_type = InstructionType(int(parsed.variant))
+
+    return MangoInstruction(instruction_type, parsed, accounts)

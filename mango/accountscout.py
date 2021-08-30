@@ -18,12 +18,11 @@ import typing
 
 from solana.publickey import PublicKey
 
+from .account import Account
 from .accountinfo import AccountInfo
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import Group
-from .marginaccount import MarginAccount
-from .openorders import OpenOrders
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
 
@@ -144,34 +143,24 @@ class AccountScout:
             return report
 
         # Must have token accounts for each of the tokens in the group's basket.
-        for basket_token in group.basket_tokens:
-            token_accounts = TokenAccount.fetch_all_for_owner_and_token(context, account_address, basket_token.token)
-            if len(token_accounts) == 0:
-                report.add_error(
-                    f"Account '{account_address}' has no account for token '{basket_token.token.name}', mint '{basket_token.token.mint}'.")
-            else:
-                report.add_detail(
-                    f"Account '{account_address}' has {len(token_accounts)} {basket_token.token.name} token account(s) with mint '{basket_token.token.mint}': {[ta.address for ta in token_accounts]}")
-
-        # Should have an open orders account for each market in the group. (Only required for re-balancing via Serum, which isn't implemented here yet.)
-        for market in group.markets:
-            open_orders = OpenOrders.load_for_market_and_owner(
-                context, market.address, account_address, context.dex_program_id, market.base.token.decimals, market.quote.token.decimals)
-            if len(open_orders) == 0:
-                report.add_warning(
-                    f"No Serum open orders account for market '{market.base.token.name}/{market.quote.token.name}' [{market.address}]'.")
-            else:
-                for open_orders_account in open_orders:
+        for basket_token in group.tokens:
+            if basket_token is not None:
+                token_accounts = TokenAccount.fetch_all_for_owner_and_token(
+                    context, account_address, basket_token.token)
+                if len(token_accounts) == 0:
+                    report.add_error(
+                        f"Account '{account_address}' has no account for token '{basket_token.token.name}', mint '{basket_token.token.mint}'.")
+                else:
                     report.add_detail(
-                        f"Serum open orders account for market '{market.base.token.name}/{market.quote.token.name}': {open_orders_account}")
+                        f"Account '{account_address}' has {len(token_accounts)} {basket_token.token.name} token account(s) with mint '{basket_token.token.mint}': {[ta.address for ta in token_accounts]}")
 
         # May have one or more Mango Markets margin account, but it's optional for liquidating
-        margin_accounts = MarginAccount.load_all_for_owner(context, account_address, group)
-        if len(margin_accounts) == 0:
+        accounts = Account.load_all_for_owner(context, account_address, group)
+        if len(accounts) == 0:
             report.add_detail(f"Account '{account_address}' has no Mango Markets margin accounts.")
         else:
-            for margin_account in margin_accounts:
-                report.add_detail(f"Margin account: {margin_account}")
+            for account in accounts:
+                report.add_detail(f"Margin account: {account}")
 
         return report
 

@@ -1,23 +1,30 @@
+import construct
 import datetime
+import mango
 
 from decimal import Decimal
-from typing import NamedTuple
-from pyserum import market
-from pyserum.market.state import MarketState
+from pyserum.market import Market as PySerumMarket
+from pyserum.market.state import MarketState as PySerumMarketState
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.types import RPCResponse
 
-import mango
 
-
-class MockClient(mango.CompatibleClient):
+class MockCompatibleClient(mango.CompatibleClient):
     def __init__(self):
-        super().__init__("Test", "local", "http://localhost", "processed", False)
+        super().__init__("test", "local", "http://localhost", "processed", "base64", mango.InstructionReporter())
         self.token_accounts_by_owner = []
 
     def get_token_accounts_by_owner(self, *args, **kwargs) -> RPCResponse:
         return RPCResponse(result={"value": self.token_accounts_by_owner})
+
+    def get_minimum_balance_for_rent_exemption(size, *args, **kwargs) -> RPCResponse:
+        return RPCResponse(result=27)
+
+
+class MockClient(mango.BetterClient):
+    def __init__(self):
+        super().__init__(MockCompatibleClient())
 
 
 def fake_public_key() -> PublicKey:
@@ -32,33 +39,52 @@ def fake_account_info(address: PublicKey = fake_public_key(), executable: bool =
     return mango.AccountInfo(address, executable, lamports, owner, rent_epoch, data)
 
 
-def fake_token() -> mango.Token:
-    return mango.Token("FAKE", "Fake Token", fake_seeded_public_key("fake token"), Decimal(6))
+def fake_token(symbol: str = "FAKE") -> mango.Token:
+    return mango.Token(symbol, f"Fake Token ({symbol})", fake_seeded_public_key(f"fake token ({symbol})"), Decimal(6))
+
+
+def fake_token_info() -> mango.TokenInfo:
+    token = fake_token()
+    meta_data = mango.Metadata(mango.layouts.DATA_TYPE.Group, mango.Version.V1, True)
+    root_bank = mango.RootBank(fake_account_info(), mango.Version.V1, meta_data, [],
+                               Decimal(5), Decimal(2), datetime.datetime.now())
+    return mango.TokenInfo(token, root_bank, Decimal(7))
 
 
 def fake_context() -> mango.Context:
-    context = mango.Context(cluster="test",
+    context = mango.Context(name="Mango Test",
+                            cluster_name="test",
                             cluster_url="http://localhost",
-                            program_id=fake_seeded_public_key("program ID"),
-                            dex_program_id=fake_seeded_public_key("DEX program ID"),
+                            skip_preflight=False,
+                            mango_program_address=fake_seeded_public_key("Mango program address"),
+                            serum_program_address=fake_seeded_public_key("Serum program address"),
                             group_name="TEST_GROUP",
-                            group_id=fake_seeded_public_key("group ID"))
-    context.client = mango.BetterClient(MockClient())
+                            group_address=fake_seeded_public_key("group ID"),
+                            token_lookup=mango.NullTokenLookup(),
+                            market_lookup=mango.NullMarketLookup())
+    context.client = MockClient()
     return context
 
 
-def fake_index() -> mango.Index:
-    token = fake_token()
-    borrow = mango.TokenValue(token, Decimal(0))
-    deposit = mango.TokenValue(token, Decimal(0))
-    return mango.Index(mango.Version.V1, token, datetime.datetime.now(), borrow, deposit)
+def fake_market() -> PySerumMarket:
+    # Container = NamedTuple("Container", [("own_address", PublicKey), ("vault_signer_nonce", int)])
+    container = construct.Container({"own_address": fake_seeded_public_key("market address"), "vault_signer_nonce": 2})
+    # container: Container[typing.Any] = Container(
+    #     own_address=fake_seeded_public_key("market address"), vault_signer_nonce=2)
+    state = PySerumMarketState(container, fake_seeded_public_key("program ID"), 6, 6)
+    state.base_vault = lambda: fake_seeded_public_key("base vault")  # type: ignore[assignment]
+    state.quote_vault = lambda: fake_seeded_public_key("quote vault")  # type: ignore[assignment]
+    state.event_queue = lambda: fake_seeded_public_key("event queue")  # type: ignore[assignment]
+    state.request_queue = lambda: fake_seeded_public_key("request queue")  # type: ignore[assignment]
+    state.bids = lambda: fake_seeded_public_key("bids")  # type: ignore[assignment]
+    state.asks = lambda: fake_seeded_public_key("asks")  # type: ignore[assignment]
+    state.base_lot_size = lambda: 1  # type: ignore[assignment]
+    state.quote_lot_size = lambda: 1  # type: ignore[assignment]
+    return PySerumMarket(MockCompatibleClient(), state)
 
 
-def fake_market() -> market.Market:
-    Container = NamedTuple("Container", [("own_address", PublicKey), ("vault_signer_nonce", int)])
-    container = Container(own_address=fake_seeded_public_key("market address"), vault_signer_nonce=2)
-    state = MarketState(container, fake_seeded_public_key("program ID"), 6, 6)
-    return market.Market(None, state)
+def fake_spot_market_stub() -> mango.SpotMarketStub:
+    return mango.SpotMarketStub(fake_seeded_public_key("program ID"), fake_seeded_public_key("spot market"), fake_token("BASE"), fake_token("QUOTE"), fake_seeded_public_key("group address"))
 
 
 def fake_token_account() -> mango.TokenAccount:
@@ -66,6 +92,10 @@ def fake_token_account() -> mango.TokenAccount:
     token = fake_token()
     token_value = mango.TokenValue(token, Decimal("100"))
     return mango.TokenAccount(token_account_info, mango.Version.V1, fake_seeded_public_key("owner"), token_value)
+
+
+def fake_token_value(value: Decimal = Decimal(100)) -> mango.TokenValue:
+    return mango.TokenValue(fake_token(), value)
 
 
 def fake_wallet() -> mango.Wallet:

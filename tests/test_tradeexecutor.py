@@ -30,7 +30,7 @@ def test_serum_trade_executor_constructor():
 
     def reporter(x):
         return None
-    actual = mango.SerumImmediateTradeExecutor(context, wallet, price_adjustment_factor, reporter)
+    actual = mango.ImmediateTradeExecutor(context, wallet, None, price_adjustment_factor, reporter)
     assert actual is not None
     assert actual.logger is not None
     assert actual.context == context

@@ -39,7 +39,6 @@ from .liquidationevent import LiquidationEvent
 #
 # Derived classes should not override `send()` since that is the interface outside classes call and it's used to ensure `NotificationTarget`s don't throw an exception when sending.
 #
-
 class NotificationTarget(metaclass=abc.ABCMeta):
     def __init__(self):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -76,8 +75,6 @@ class NotificationTarget(metaclass=abc.ABCMeta):
 #
 # The [Telegram instructions to create a bot](https://core.telegram.org/bots#creating-a-new-bot)
 # show you how to create the bot token.
-
-
 class TelegramNotificationTarget(NotificationTarget):
     def __init__(self, address):
         super().__init__()
@@ -99,8 +96,6 @@ class TelegramNotificationTarget(NotificationTarget):
 #
 # The `DiscordNotificationTarget` sends messages to Discord.
 #
-
-
 class DiscordNotificationTarget(NotificationTarget):
     def __init__(self, address):
         super().__init__()
@@ -168,8 +163,6 @@ class DiscordNotificationTarget(NotificationTarget):
 #       ]
 # 	}'
 # ```
-
-
 class MailjetNotificationTarget(NotificationTarget):
     def __init__(self, encoded_parameters):
         super().__init__()
@@ -224,8 +217,6 @@ class MailjetNotificationTarget(NotificationTarget):
 # columns to the output. Token changes may arrive in different orders, so ordering of token
 # changes is not guaranteed to be consistent from transaction to transaction.
 #
-
-
 class CsvFileNotificationTarget(NotificationTarget):
     def __init__(self, filename):
         super().__init__()
@@ -242,7 +233,7 @@ class CsvFileNotificationTarget(NotificationTarget):
             with open(self.filename, "a") as csvfile:
                 result = "Succeeded" if event.succeeded else "Failed"
                 row_data = [event.timestamp, event.liquidator_name, event.group_name, result,
-                            " ".join(event.signatures), event.wallet_address, event.margin_account_address]
+                            event.signatures, event.wallet_address, event.account_address]
                 for change in event.changes:
                     row_data += [f"{change.value:.8f}", change.token.name]
                 file_writer = csv.writer(csvfile, quoting=csv.QUOTE_MINIMAL)
@@ -257,8 +248,6 @@ class CsvFileNotificationTarget(NotificationTarget):
 # This class takes a `NotificationTarget` and a filter function, and only calls the
 # `NotificationTarget` if the filter function returns `True` for the notification item.
 #
-
-
 class FilteringNotificationTarget(NotificationTarget):
     def __init__(self, inner_notifier: NotificationTarget, filter_func: typing.Callable[[typing.Any], bool]):
         super().__init__()
@@ -279,8 +268,6 @@ class FilteringNotificationTarget(NotificationTarget):
 # `NotificationTarget` to be plugged in to the `logging` subsystem to receive log messages
 # and notify however it chooses.
 #
-
-
 class NotificationHandler(logging.StreamHandler):
     def __init__(self, target: NotificationTarget):
         logging.StreamHandler.__init__(self)
@@ -302,8 +289,6 @@ class NotificationHandler(logging.StreamHandler):
 # This is most likely used when parsing command-line arguments - this function can be used
 # in the `type` parameter of an `add_argument()` call.
 #
-
-
 def parse_subscription_target(target):
     protocol, destination = target.split(":", 1)
 

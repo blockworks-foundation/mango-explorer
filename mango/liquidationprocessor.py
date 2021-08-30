@@ -16,18 +16,17 @@
 import enum
 import logging
 import time
-import traceback
 import typing
 
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from .account import Account
 from .accountliquidator import AccountLiquidator
 from .context import Context
 from .group import Group
 from .liquidatablereport import LiquidatableReport, LiquidatableState
 from .liquidationevent import LiquidationEvent
-from .marginaccount import MarginAccount
 from .observables import EventSource
 from .tokenvalue import TokenValue
 from .walletbalancer import WalletBalancer
@@ -49,14 +48,14 @@ class LiquidationProcessorState(enum.Enum):
     HEALTHY = enum.auto()
     UNHEALTHY = enum.auto()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
 # # 💧 LiquidationProcessor class
 #
-# An `AccountLiquidator` liquidates a `MarginAccount`. A `LiquidationProcessor` processes a
-# list of `MarginAccount`s, determines if they're liquidatable, and calls an
+# An `AccountLiquidator` liquidates a `Account`. A `LiquidationProcessor` processes a
+# list of `Account`s, determines if they're liquidatable, and calls an
 # `AccountLiquidator` to do the work.
 #
 
@@ -73,17 +72,17 @@ class LiquidationProcessor:
         self.wallet_balancer: WalletBalancer = wallet_balancer
         self.worthwhile_threshold: Decimal = worthwhile_threshold
         self.liquidations: EventSource[LiquidationEvent] = EventSource[LiquidationEvent]()
-        self.ripe_accounts: typing.Optional[typing.List[MarginAccount]] = None
+        self.ripe_accounts: typing.Optional[typing.Sequence[Account]] = None
         self.ripe_accounts_updated_at: datetime = datetime.now()
         self.prices_updated_at: datetime = datetime.now()
         self.state: LiquidationProcessorState = LiquidationProcessorState.STARTING
         self.state_change: EventSource[LiquidationProcessor] = EventSource[LiquidationProcessor]()
 
-    def update_margin_accounts(self, ripe_margin_accounts: typing.List[MarginAccount]):
+    def update_accounts(self, ripe_accounts: typing.Sequence[Account]):
         self.logger.info(
-            f"Received {len(ripe_margin_accounts)} ripe 🥭 margin accounts to process - prices last updated {self.prices_updated_at:%Y-%m-%d %H:%M:%S}")
+            f"Received {len(ripe_accounts)} ripe 🥭 margin accounts to process - prices last updated {self.prices_updated_at:%Y-%m-%d %H:%M:%S}")
         self._check_update_recency("prices", self.prices_updated_at)
-        self.ripe_accounts = ripe_margin_accounts
+        self.ripe_accounts = ripe_accounts
         self.ripe_accounts_updated_at = datetime.now()
         # If this is the first time through, mark ourselves as Healthy.
         if self.state == LiquidationProcessorState.STARTING:
@@ -106,8 +105,8 @@ class LiquidationProcessor:
 
         report: typing.List[str] = []
         updated: typing.List[LiquidatableReport] = []
-        for margin_account in self.ripe_accounts:
-            updated += [LiquidatableReport.build(group, prices, margin_account, self.worthwhile_threshold)]
+        for account in self.ripe_accounts:
+            updated += [LiquidatableReport.build(group, prices, account, self.worthwhile_threshold)]
 
         liquidatable = list(filter(lambda report: report.state & LiquidatableState.LIQUIDATABLE, updated))
         report += [f"Of those {len(updated)} ripe accounts, {len(liquidatable)} are liquidatable."]
@@ -128,33 +127,31 @@ class LiquidationProcessor:
         time_taken = time.time() - started_at
         self.logger.info(f"Check of all ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
 
-    def _liquidate_all(self, group: Group, prices: typing.List[TokenValue], to_liquidate: typing.List[LiquidatableReport]):
-        to_process = to_liquidate
+    def _liquidate_all(self, group: Group, prices: typing.Sequence[TokenValue], to_liquidate: typing.Sequence[LiquidatableReport]):
+        to_process = list(to_liquidate)
         while len(to_process) > 0:
-            highest_first = sorted(to_process,
-                                   key=lambda report: report.balance_sheet.assets - report.balance_sheet.liabilities, reverse=True)
+            # TODO - sort this when LiquidationReport has the proper details for V3.
+            # highest_first = sorted(to_process,
+            #                        key=lambda report: report.balance_sheet.assets - report.balance_sheet.liabilities, reverse=True)
+            highest_first = to_process
             highest = highest_first[0]
             try:
-                liquidate_result = self.account_liquidator.liquidate(highest)
-                if liquidate_result is None:
-                    self.logger.info(
-                        f"Margin account {highest.margin_account.address} was not liquidated and is now being skipped.")
-                else:
-                    self.wallet_balancer.balance(prices)
+                self.account_liquidator.liquidate(highest)
+                self.wallet_balancer.balance(prices)
 
-                    updated_margin_account = MarginAccount.load(self.context, highest.margin_account.address, group)
-                    updated_report = LiquidatableReport.build(
-                        group, prices, updated_margin_account, highest.worthwhile_threshold)
-                    if not (updated_report.state & LiquidatableState.WORTHWHILE):
-                        self.logger.info(
-                            f"Margin account {updated_margin_account.address} has been drained and is no longer worthwhile.")
-                    else:
-                        self.logger.info(
-                            f"Margin account {updated_margin_account.address} is still worthwhile - putting it back on list.")
-                        to_process += [updated_report]
+                updated_account = Account.load(self.context, highest.account.address, group)
+                updated_report = LiquidatableReport.build(
+                    group, prices, updated_account, highest.worthwhile_threshold)
+                if not (updated_report.state & LiquidatableState.WORTHWHILE):
+                    self.logger.info(
+                        f"Margin account {updated_account.address} has been drained and is no longer worthwhile.")
+                else:
+                    self.logger.info(
+                        f"Margin account {updated_account.address} is still worthwhile - putting it back on list.")
+                    to_process += [updated_report]
             except Exception as exception:
                 self.logger.error(
-                    f"Liquidator '{self.name}' - failed to liquidate account '{highest.margin_account.address}' - {exception} - {traceback.format_exc()}")
+                    f"[{self.name}] Failed to liquidate account '{highest.account.address}' - {exception}.")
             finally:
                 # highest should always be in to_process, but we're outside the try-except block
                 # so let's be a little paranoid about it.
@@ -169,7 +166,7 @@ class LiquidationProcessor:
             self.state = LiquidationProcessorState.UNHEALTHY
             self.state_change.on_next(self)
             self.logger.error(
-                f"Liquidator '{self.name}' - last {name} update was {how_long_ago_was_last_update} ago - more than error threshold {LiquidationProcessor._AGE_ERROR_THRESHOLD}")
+                f"[{self.name}] Liquidator - last {name} update was {how_long_ago_was_last_update} ago - more than error threshold {LiquidationProcessor._AGE_ERROR_THRESHOLD}")
         elif how_long_ago_was_last_update > LiquidationProcessor._AGE_WARNING_THRESHOLD:
             self.logger.warning(
-                f"Liquidator '{self.name}' - last {name} update was {how_long_ago_was_last_update} ago - more than warning threshold {LiquidationProcessor._AGE_WARNING_THRESHOLD}")
+                f"[{self.name}] Liquidator - last {name} update was {how_long_ago_was_last_update} ago - more than warning threshold {LiquidationProcessor._AGE_WARNING_THRESHOLD}")

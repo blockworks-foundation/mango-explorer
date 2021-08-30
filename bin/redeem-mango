@@ -1,0 +1,114 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+import typing
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+
+def report_accrued(basket_token: mango.AccountBasketBaseToken):
+    symbol: str = basket_token.token_info.token.symbol
+    accrued: mango.TokenValue = basket_token.perp_account.mngo_accrued
+    print(f"Accrued in perp market [{symbol:>5}]: {accrued}")
+
+
+def load_perp_market(context: mango.Context, group: mango.Group, group_basket_market: mango.GroupBasketMarket):
+    perp_market_details = mango.PerpMarketDetails.load(context, group_basket_market.perp_market_info.address, group)
+    perp_market = mango.PerpMarket(context.mango_program_address, group_basket_market.perp_market_info.address,
+                                   group_basket_market.base_token_info.token,
+                                   group_basket_market.quote_token_info.token, perp_market_details)
+
+    return perp_market
+
+
+def find_basket_token_in_account(account: mango.Account, token: mango.Token) -> typing.Optional[mango.AccountBasketBaseToken]:
+    basket_tokens = [in_basket for in_basket in account.basket if in_basket.token_info.token == token]
+
+    if len(basket_tokens) == 0:
+        return None
+    else:
+        return basket_tokens[0]
+
+
+def build_redeem_instruction_for_account(context: mango.Context, wallet: mango.Wallet, group: mango.Group,
+                                         mngo: mango.TokenInfo, account: mango.Account,
+                                         perp_market: mango.PerpMarket,
+                                         basket_token: typing.Optional[mango.AccountBasketBaseToken]):
+    if (basket_token is None) or basket_token.perp_account.mngo_accrued.value == 0:
+        return mango.CombinableInstructions.empty()
+
+    report_accrued(basket_token)
+    redeem = mango.build_redeem_accrued_mango_instructions(context, wallet, perp_market, group, account, mngo)
+
+    return redeem
+
+
+parser = argparse.ArgumentParser(description="redeems accrued MNGO from a Mango account")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--market", type=str, help="perp market symbol with accrued MNGO (e.g. ETH-PERP)")
+parser.add_argument("--all", action="store_true", default=False,
+                    help="redeem all MNGO in all perp markets in the account")
+parser.add_argument("--account-index", type=int, default=0,
+                    help="index of the account to use, if more than one available")
+parser.add_argument("--wait", action="store_true", default=False,
+                    help="wait until the transaction is confirmed")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+if (not args.all) and (args.market is None):
+    raise Exception("Must specify either an individual market (using --market) or use --all for all markets")
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+group = mango.Group.load(context, context.group_address)
+mngo = group.find_token_info_by_symbol("MNGO")
+account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
+
+signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
+all_instructions: mango.CombinableInstructions = signers
+
+if args.all:
+    for group_basket_market in group.basket:
+        perp_market = load_perp_market(context, group, group_basket_market)
+        basket_token = find_basket_token_in_account(account, group_basket_market.base_token_info.token)
+        all_instructions += build_redeem_instruction_for_account(context,
+                                                                 wallet, group, mngo, account, perp_market, basket_token)
+else:
+    market_symbol = args.market.upper()
+    market = context.market_lookup.find_by_symbol(market_symbol)
+    if market is None:
+        raise Exception(f"Could not find market {market_symbol}")
+
+    perp_market = mango.ensure_market_loaded(context, market)
+    if not isinstance(perp_market, mango.PerpMarket):
+        raise Exception(f"Market {market_symbol} is not a perp market")
+
+    basket_token = find_basket_token_in_account(account, perp_market.base)
+    all_instructions += build_redeem_instruction_for_account(context,
+                                                             wallet, group, mngo, account, perp_market, basket_token)
+
+transaction_ids = all_instructions.execute(context)
+print("Transaction IDs:", transaction_ids)
+
+if args.wait:
+    context.client.wait_for_confirmation(transaction_ids)
+    reloaded_account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
+    if args.all:
+        for group_basket_market in group.basket:
+            basket_token = find_basket_token_in_account(reloaded_account, group_basket_market.base_token_info.token)
+            if basket_token is not None:
+                report_accrued(basket_token)
+    else:
+        basket_token = find_basket_token_in_account(reloaded_account, perp_market.base)
+        if basket_token is not None:
+            report_accrued(basket_token)

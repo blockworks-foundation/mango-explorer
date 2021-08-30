@@ -14,21 +14,25 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
+import re
 import rx
 import rx.operators as ops
 import typing
 
 from datetime import datetime
 from decimal import Decimal
-from pyserum.market.orderbook import OrderBook
-from pyserum.market import Market as PySerumMarket
 
-from ...accountinfo import AccountInfo
 from ...context import Context
+from ...contextbuilder import ContextBuilder
+from ...ensuremarketloaded import ensure_market_loaded
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
-from ...oracle import Oracle, OracleProvider, OracleSource, Price
-from ...spotmarket import SpotMarket
+from ...oracle import Oracle, OracleProvider, OracleSource, Price, SupportedOracleFeature
+from ...orders import Order, Side
+from ...serummarket import SerumMarket, SerumMarketStub
+from ...serummarketlookup import SerumMarketLookup
+from ...spltokenlookup import SplTokenLookup
+from ...spotmarket import SpotMarket, SpotMarketStub
 
 
 # # 🥭 Serum
@@ -37,44 +41,49 @@ from ...spotmarket import SpotMarket
 #
 
 
+# # 🥭 SerumOracleConfidence constant
+#
+# FTX doesn't provide a confidence value.
+#
+
+SerumOracleConfidence: Decimal = Decimal(0)
+
+
 # # 🥭 SerumOracle class
 #
 # Implements the `Oracle` abstract base class specialised to the Serum DEX.
 #
 
+
 class SerumOracle(Oracle):
-    def __init__(self, spot_market: SpotMarket):
-        name = f"Serum Oracle for {spot_market.symbol}"
-        super().__init__(name, spot_market)
-        self.spot_market: SpotMarket = spot_market
-        self.source: OracleSource = OracleSource("Serum", name, spot_market)
-        self._serum_market: PySerumMarket = None
+    def __init__(self, market: SerumMarket):
+        name = f"Serum Oracle for {market.symbol}"
+        super().__init__(name, market)
+        self.market: SerumMarket = market
+        features: SupportedOracleFeature = SupportedOracleFeature.TOP_BID_AND_OFFER
+        self.source: OracleSource = OracleSource("Serum", name, features, market)
 
     def fetch_price(self, context: Context) -> Price:
-        if self._serum_market is None:
-            self._serum_market = PySerumMarket.load(
-                context.client.compatible_client, self.spot_market.address, context.dex_program_id)
+        context = ContextBuilder.forced_to_mainnet_beta(context)
+        mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
+            context.serum_program_address, SplTokenLookup.DefaultDataFilepath)
+        adjusted_market = self.market
+        mainnet_adjusted_market: typing.Optional[Market] = mainnet_serum_market_lookup.find_by_symbol(
+            self.market.symbol)
+        if mainnet_adjusted_market is not None:
+            adjusted_market_stub = typing.cast(SerumMarketStub, mainnet_adjusted_market)
+            adjusted_market = adjusted_market_stub.load(context)
 
-        bids_address = self._serum_market.state.bids()
-        asks_address = self._serum_market.state.asks()
-        bid_ask_account_infos = AccountInfo.load_multiple(context, [bids_address, asks_address])
-        if len(bid_ask_account_infos) != 2:
-            raise Exception(
-                f"Failed to get bid/ask data from Serum for market address {self.spot_market.address} (bids: {bids_address}, asks: {asks_address}).")
-        bids = OrderBook.from_bytes(self._serum_market.state, bid_ask_account_infos[0].data)
-        asks = OrderBook.from_bytes(self._serum_market.state, bid_ask_account_infos[1].data)
+        orders: typing.Sequence[Order] = adjusted_market.orders(context)
+        top_bid = max([order.price for order in orders if order.side == Side.BUY])
+        top_ask = min([order.price for order in orders if order.side == Side.SELL])
+        mid_price = (top_bid + top_ask) / 2
 
-        top_bid = list(bids.orders())[-1]
-        top_ask = list(asks.orders())[0]
-        top_bid_price = self.spot_market.quote.round(Decimal(top_bid.info.price))
-        top_ask_price = self.spot_market.quote.round(Decimal(top_ask.info.price))
-        mid_price = (top_bid_price + top_ask_price) / 2
+        return Price(self.source, datetime.now(), self.market, top_bid, mid_price, top_ask, SerumOracleConfidence)
 
-        return Price(self.source, datetime.now(), self.spot_market, top_bid_price, mid_price, top_ask_price)
-
-    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable:
+    def to_streaming_observable(self, context: Context) -> rx.core.Observable:
         return rx.interval(1).pipe(
-            ops.subscribe_on(context.pool_scheduler),
+            ops.observe_on(context.pool_scheduler),
             ops.start_with(-1),
             ops.map(lambda _: self.fetch_price(context)),
             ops.catch(observable_pipeline_error_reporter),
@@ -92,20 +101,31 @@ class SerumOracleProvider(OracleProvider):
         super().__init__("Serum Oracle Factory")
 
     def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
-        if isinstance(market, SpotMarket):
-            return SerumOracle(market)
+        loaded_market: Market = ensure_market_loaded(context, market)
+        if isinstance(loaded_market, SpotMarket):
+            serum_market = SerumMarket(context.serum_program_address, loaded_market.address, loaded_market.base,
+                                       loaded_market.quote, loaded_market.underlying_serum_market)
+            return SerumOracle(serum_market)
+        elif isinstance(loaded_market, SerumMarket):
+            return SerumOracle(loaded_market)
         else:
-            optional_spot_market = context.market_lookup.find_by_symbol(market.symbol)
-            if optional_spot_market is None:
+            fixed_symbol = self._market_symbol_to_serum_symbol(loaded_market.symbol)
+            underlying_market = context.market_lookup.find_by_symbol(fixed_symbol)
+            if underlying_market is None:
                 return None
-            if isinstance(optional_spot_market, SpotMarket):
-                return SerumOracle(optional_spot_market)
+            if isinstance(underlying_market, SpotMarketStub) or isinstance(underlying_market, SpotMarket) or isinstance(underlying_market, SerumMarketStub) or isinstance(underlying_market, SerumMarket):
+                return self.oracle_for_market(context, underlying_market)
 
         return None
 
     def all_available_symbols(self, context: Context) -> typing.Sequence[str]:
         all_markets = context.market_lookup.all_markets()
         symbols: typing.List[str] = []
-        for spot_market in all_markets:
-            symbols += [spot_market.symbol]
+        for market in all_markets:
+            symbols += [market.symbol]
         return symbols
+
+    def _market_symbol_to_serum_symbol(self, symbol: str) -> str:
+        normalised = symbol.upper()
+        fixed_perp = re.sub("\\-PERP$", "/USDC", normalised)
+        return fixed_perp

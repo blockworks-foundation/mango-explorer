@@ -28,19 +28,39 @@ class InstructionType(enum.IntEnum):
     InitMarginAccount = 1
     Deposit = 2
     Withdraw = 3
-    Borrow = 4
-    SettleBorrow = 5
-    Liquidate = 6
-    DepositSrm = 7
-    WithdrawSrm = 8
-    PlaceOrder = 9
-    SettleFunds = 10
-    CancelOrder = 11
-    CancelOrderByClientId = 12
-    ChangeBorrowLimit = 13
-    PlaceAndSettle = 14
-    ForceCancelOrders = 15
-    PartialLiquidate = 16
+    AddSpotMarket = 4
+    AddToBasket = 5
+    Borrow = 6
+    CachePrices = 7
+    CacheRootBanks = 8
+    PlaceSpotOrder = 9
+    AddOracle = 10
+    AddPerpMarket = 11
+    PlacePerpOrder = 12
+    CancelPerpOrderByClientId = 13
+    CancelPerpOrder = 14
+    ConsumeEvents = 15
+    CachePerpMarkets = 16
+    UpdateFunding = 17
+    SetOracle = 18
+    SettleFunds = 19
+    CancelSpotOrder = 20
+    UpdateRootBank = 21
+    SettlePnl = 22
+    SettleBorrow = 23
+    ForceCancelSpotOrders = 24
+    ForceCancelPerpOrders = 25
+    LiquidateTokenAndToken = 26
+    LiquidateTokenAndPerp = 27
+    LiquidatePerpMarket = 28
+    SettleFees = 29
+    ResolvePerpBankruptcy = 30
+    ResolveTokenBankruptcy = 31
+    InitSpotOpenOrders = 32
+    RedeemMngo = 33
+    AddMangoAccountInfo = 34
+    DepositMsrm = 35
+    WithdrawMsrm = 36
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name

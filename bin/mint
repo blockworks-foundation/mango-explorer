@@ -1,0 +1,55 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+import typing
+
+from decimal import Decimal
+from spl.token.client import Token as SplToken
+from spl.token.constants import TOKEN_PROGRAM_ID
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="mint SPL tokens to your wallet")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--symbol", type=str, required=True, help="token symbol to mint (e.g. USDC)")
+parser.add_argument("--quantity", type=Decimal, required=True, help="quantity token to deposit")
+parser.add_argument("--address", type=PublicKey,
+                    help="Destination address for the minted token - can be either the actual token address or the address of the owner of the token address")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+token = context.token_lookup.find_by_symbol(args.symbol.upper())
+if token is None:
+    raise Exception(f"Could not find token with symbol '{args.symbol}'.")
+
+spl_token = SplToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.account)
+
+# Is the address an actual token account? Or is it the SOL address of the owner?
+account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(context, args.address)
+if account_info is None:
+    raise Exception(f"Could not find account at address {args.address}.")
+
+if account_info.owner == mango.SYSTEM_PROGRAM_ADDRESS:
+    # This is a root wallet account - get the associated token account
+    destination: PublicKey = mango.TokenAccount.find_or_create_token_address_to_use(
+        context, wallet, args.address, token)
+
+quantity = token.shift_to_native(args.quantity)
+
+print(f"Minting {args.quantity} {args.symbol} to {destination}")
+response = spl_token.mint_to(destination, wallet.address, int(quantity), multi_signers=[wallet.account])
+
+print(response["result"])

@@ -1,0 +1,55 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Display the balances of all group tokens in the current wallet.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--address", type=PublicKey,
+                    help="Root address to check (if not provided, the wallet address is used)")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+
+address = args.address
+if address is None:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    address = wallet.address
+
+logging.info(f"Context: {context}")
+logging.info(f"Address: {address}")
+
+group = mango.Group.load(context)
+balances = group.fetch_balances(context, address)
+print(f"\nToken Balances [{address}]:")
+for balance in balances:
+    if balance.value != 0:
+        print(f"{balance.token.name:<12} {balance.value:>18,.8f}")
+
+mango_accounts = mango.Account.load_all_for_owner(context, address, group)
+for account in mango_accounts:
+    print(f"\nAccount Balances [{account.address}]:")
+    at_least_one_output: bool = False
+    for asset in account.basket_tokens:
+        if (asset is not None) and ((asset.deposit.value != 0) or (asset.borrow.value != 0) or (asset.net_value.value != 0)):
+            at_least_one_output = True
+            print(f"""{asset.token_info.token.name}:
+    Deposit: {asset.deposit.value:>18,.8f}
+    Borrow:  {asset.borrow.value:>18,.8f}
+    Net:     {asset.net_value.value:>18,.8f}""")
+
+    if not at_least_one_output:
+        print("None")

@@ -17,6 +17,7 @@ def test_constructor():
     assert actual.address == address
     assert actual.executable == executable
     assert actual.lamports == lamports
+    assert actual.sols == Decimal("0.000012345")
     assert actual.owner == owner
     assert actual.rent_epoch == rent_epoch
     assert actual.data == data

@@ -15,6 +15,7 @@
 
 
 import typing
+import spl.token.instructions as spl_token
 
 from solana.account import Account
 from solana.publickey import PublicKey
@@ -24,11 +25,14 @@ from spl.token.constants import TOKEN_PROGRAM_ID
 
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
+from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .layouts import layouts
-from .token import Token, TokenLookup
+from .token import Token
+from .tokenlookup import TokenLookup
 from .tokenvalue import TokenValue
 from .version import Version
+from .wallet import Wallet
 
 # # 🥭 TokenAccount class
 #
@@ -53,6 +57,7 @@ class TokenAccount(AddressableAccount):
         opts = TokenAccountOpts(mint=token.mint)
 
         token_accounts = context.client.get_token_accounts_by_owner(owner_public_key, opts)
+
         all_accounts: typing.List[TokenAccount] = []
         for token_account_response in token_accounts:
             account_info = AccountInfo._from_response_values(
@@ -88,7 +93,32 @@ class TokenAccount(AddressableAccount):
         return largest_account
 
     @staticmethod
-    def from_layout(layout: layouts.TOKEN_ACCOUNT, account_info: AccountInfo, token: Token) -> "TokenAccount":
+    def find_or_create_token_address_to_use(context: Context, wallet: Wallet, owner: PublicKey, token: Token) -> PublicKey:
+        # This is a root wallet account - get the token account to use.
+        associated_token_address = spl_token.get_associated_token_address(owner, token.mint)
+        token_account: typing.Optional[TokenAccount] = TokenAccount.load(context, associated_token_address)
+        if token_account is not None:
+            # The associated token account exists so use it
+            return associated_token_address
+
+        # There is no associated token account. See if they have an old-style non-associated token account.
+        largest = TokenAccount.fetch_largest_for_owner_and_token(context, owner, token)
+        if largest is not None:
+            # There is an old-style account so use that.
+            return largest.address
+
+        # There is no old-style token account either, so create the proper associated token account.
+        signer = CombinableInstructions.from_wallet(wallet)
+        create_instruction = spl_token.create_associated_token_account(wallet.address, owner, token.mint)
+        create = CombinableInstructions.from_instruction(create_instruction)
+
+        transaction_ids = (signer + create).execute(context)
+        context.client.wait_for_confirmation(transaction_ids)
+
+        return associated_token_address
+
+    @staticmethod
+    def from_layout(layout: typing.Any, account_info: AccountInfo, token: Token) -> "TokenAccount":
         token_value = TokenValue(token, token.shift_to_decimals(layout.amount))
         return TokenAccount(account_info, Version.UNSPECIFIED, layout.owner, token_value)
 

@@ -15,6 +15,7 @@
 
 
 import requests
+import re
 import rx
 import typing
 
@@ -25,8 +26,8 @@ from rx.core import Observable
 
 from ...context import Context
 from ...market import Market
-from ...observables import DisposePropagator
-from ...oracle import Oracle, OracleProvider, OracleSource, Price
+from ...observables import DisposePropagator, DisposeWrapper
+from ...oracle import Oracle, OracleProvider, OracleSource, Price, SupportedOracleFeature
 from ...reconnectingwebsocket import ReconnectingWebsocket
 
 
@@ -43,28 +44,37 @@ def _ftx_get_from_url(url: str) -> typing.Dict:
     return response_values["result"]
 
 
+# # 🥭 FtxOracleConfidence constant
+#
+# FTX doesn't provide a confidence value.
+#
+
+FtxOracleConfidence: Decimal = Decimal(0)
+
+
 # # 🥭 FtxOracle class
 #
 # Implements the `Oracle` abstract base class specialised to the Ftx Network.
 #
 
-
 class FtxOracle(Oracle):
-    def __init__(self, market: Market):
-        name = f"Ftx Oracle for {market.symbol}"
+    def __init__(self, market: Market, ftx_symbol: str):
+        name = f"Ftx Oracle for {market.symbol} / {ftx_symbol}"
         super().__init__(name, market)
         self.market: Market = market
-        self.source: OracleSource = OracleSource("FTX", name, market)
+        self.ftx_symbol: str = ftx_symbol
+        features: SupportedOracleFeature = SupportedOracleFeature.MID_PRICE | SupportedOracleFeature.TOP_BID_AND_OFFER
+        self.source: OracleSource = OracleSource("FTX", name, features, market)
 
     def fetch_price(self, context: Context) -> Price:
-        result = _ftx_get_from_url(f"https://ftx.com/api/markets/{self.market.symbol}")
+        result = _ftx_get_from_url(f"https://ftx.com/api/markets/{self.ftx_symbol}")
         bid = Decimal(result["bid"])
         ask = Decimal(result["ask"])
         price = Decimal(result["price"])
 
-        return Price(self.source, datetime.now(), self.market, bid, price, ask)
+        return Price(self.source, datetime.now(), self.market, bid, price, ask, FtxOracleConfidence)
 
-    def to_streaming_observable(self, _: Context) -> rx.core.typing.Observable:
+    def to_streaming_observable(self, _: Context) -> rx.core.Observable:
         subject = Subject()
 
         def _on_item(data):
@@ -74,18 +84,20 @@ class FtxOracle(Oracle):
                 mid = (bid + ask) / Decimal(2)
                 time = data["data"]["time"]
                 timestamp = datetime.fromtimestamp(time)
-                price = Price(self.source, timestamp, self.market, bid, mid, ask)
+                price = Price(self.source, timestamp, self.market, bid, mid, ask, FtxOracleConfidence)
                 subject.on_next(price)
 
         ws: ReconnectingWebsocket = ReconnectingWebsocket("wss://ftx.com/ws/",
-                                                          f"""{{"op": "subscribe", "channel": "ticker", "market": "{self.market.symbol}"}}""", _on_item)
+                                                          lambda ws: ws.send(
+                                                              f"""{{"op": "subscribe", "channel": "ticker", "market": "{self.ftx_symbol}"}}"""))
+        ws.item.subscribe(on_next=_on_item)
 
         def subscribe(observer, scheduler_=None):
             subject.subscribe(observer, scheduler_)
 
             disposable = DisposePropagator()
-            disposable.add_ondispose(lambda: ws.close())
-            disposable.add_ondispose(lambda: subject.dispose())
+            disposable.add_disposable(DisposeWrapper(lambda: ws.close()))
+            disposable.add_disposable(DisposeWrapper(lambda: subject.dispose()))
 
             return disposable
 
@@ -106,12 +118,22 @@ class FtxOracleProvider(OracleProvider):
         super().__init__("Ftx Oracle Factory")
 
     def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
-        return FtxOracle(market)
+        symbol = self._market_symbol_to_ftx_symbol(market.symbol)
+        return FtxOracle(market, symbol)
 
     def all_available_symbols(self, context: Context) -> typing.Sequence[str]:
         result = _ftx_get_from_url("https://ftx.com/api/markets")
         symbols: typing.List[str] = []
         for market in result:
-            symbols += [market["name"]]
+            symbol: str = market["name"]
+            if symbol.endswith("USD"):
+                symbol = f"{symbol}C"
+            symbols += [symbol]
 
         return symbols
+
+    def _market_symbol_to_ftx_symbol(self, symbol: str) -> str:
+        normalised = symbol.upper()
+        fixed_usdc = re.sub("USDC$", "USD", normalised)
+        fixed_perp = re.sub("\\-PERP$", "/USD", fixed_usdc)
+        return fixed_perp

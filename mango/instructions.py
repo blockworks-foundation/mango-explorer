@@ -14,673 +14,846 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import abc
-import logging
-import struct
+import pyserum.enums
 import typing
 
 from decimal import Decimal
-from pyserum.enums import OrderType, Side
-from pyserum.instructions import ConsumeEventsParams, consume_events, settle_funds, SettleFundsParams
-from pyserum.market import Market
-from pyserum.open_orders_account import make_create_account_instruction
-from solana.account import Account
+from pyserum._layouts.instructions import INSTRUCTIONS_LAYOUT as PYSERUM_INSTRUCTIONS_LAYOUT, InstructionType as PySerumInstructionType
+from pyserum.enums import OrderType as PySerumOrderType, Side as PySerumSide
+from pyserum.instructions import settle_funds as pyserum_settle_funds, SettleFundsParams as PySerumSettleFundsParams
+from pyserum.market import Market as PySerumMarket
+from pyserum.open_orders_account import make_create_account_instruction as pyserum_make_create_account_instruction
+from solana.account import Account as SolanaAccount
 from solana.publickey import PublicKey
 from solana.system_program import CreateAccountParams, create_account
+from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
-from solana.sysvar import SYSVAR_CLOCK_PUBKEY
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
-from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, initialize_account, transfer2
+from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, create_associated_token_account, initialize_account, transfer2
 
-from .baskettoken import BasketToken
+from .account import Account
+from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import Group
 from .layouts import layouts
-from .marginaccount import MarginAccount
-from .marketmetadata import MarketMetadata
+from .orders import Order, OrderType, Side
+from .perpmarket import PerpMarket
+from .perpmarketdetails import PerpMarketDetails
+from .rootbank import NodeBank, RootBank
 from .token import Token
 from .tokenaccount import TokenAccount
-from .tokenvalue import TokenValue
+from .tokeninfo import TokenInfo
 from .wallet import Wallet
 
 
 # 🥭 Instructions
 #
-# This notebook contains the low-level `InstructionBuilder`s that build the raw instructions
+# This file contains the low-level instruction functions that build the raw instructions
 # to send to Solana.
 #
-
-# # 🥭 InstructionBuilder class
+# One important distinction between these functions and the more common `create instruction functions` in
+# Solana is that these functions *all return a combinable of instructions and signers*.
 #
-# An abstract base class for all our `InstructionBuilder`s.
-#
-
-class InstructionBuilder(metaclass=abc.ABCMeta):
-    def __init__(self, context: Context):
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.context = context
-
-    @abc.abstractmethod
-    def build(self) -> TransactionInstruction:
-        raise NotImplementedError("InstructionBuilder.build() is not implemented on the base class.")
-
-    def __repr__(self) -> str:
-        return f"{self}"
-
-
-# # 🥭 ForceCancelOrdersInstructionBuilder class
-#
-#
-# ## Rust Interface
-#
-# This is what the `force_cancel_orders` instruction looks like in the [Mango Rust](https://github.com/blockworks-foundation/mango/blob/master/program/src/instruction.rs) code:
-# ```
-# pub fn force_cancel_orders(
-#     program_id: &Pubkey,
-#     mango_group_pk: &Pubkey,
-#     liqor_pk: &Pubkey,
-#     liqee_margin_account_acc: &Pubkey,
-#     base_vault_pk: &Pubkey,
-#     quote_vault_pk: &Pubkey,
-#     spot_market_pk: &Pubkey,
-#     bids_pk: &Pubkey,
-#     asks_pk: &Pubkey,
-#     signer_pk: &Pubkey,
-#     dex_event_queue_pk: &Pubkey,
-#     dex_base_pk: &Pubkey,
-#     dex_quote_pk: &Pubkey,
-#     dex_signer_pk: &Pubkey,
-#     dex_prog_id: &Pubkey,
-#     open_orders_pks: &[Pubkey],
-#     oracle_pks: &[Pubkey],
-#     limit: u8
-# ) -> Result<Instruction, ProgramError>
-# ```
-#
-# ## Client API call
-#
-# This is how it is built using the Mango Markets client API:
-# ```
-#   const keys = [
-#     { isSigner: false, isWritable: true, pubkey: mangoGroup },
-#     { isSigner: true, isWritable: false, pubkey: liqor },
-#     { isSigner: false, isWritable: true, pubkey: liqeeMarginAccount },
-#     { isSigner: false, isWritable: true, pubkey: baseVault },
-#     { isSigner: false, isWritable: true, pubkey: quoteVault },
-#     { isSigner: false, isWritable: true, pubkey: spotMarket },
-#     { isSigner: false, isWritable: true, pubkey: bids },
-#     { isSigner: false, isWritable: true, pubkey: asks },
-#     { isSigner: false, isWritable: false, pubkey: signerKey },
-#     { isSigner: false, isWritable: true, pubkey: dexEventQueue },
-#     { isSigner: false, isWritable: true, pubkey: dexBaseVault },
-#     { isSigner: false, isWritable: true, pubkey: dexQuoteVault },
-#     { isSigner: false, isWritable: false, pubkey: dexSigner },
-#     { isSigner: false, isWritable: false, pubkey: TOKEN_PROGRAM_ID },
-#     { isSigner: false, isWritable: false, pubkey: dexProgramId },
-#     { isSigner: false, isWritable: false, pubkey: SYSVAR_CLOCK_PUBKEY },
-#     ...openOrders.map((pubkey) => ({
-#       isSigner: false,
-#       isWritable: true,
-#       pubkey,
-#     })),
-#     ...oracles.map((pubkey) => ({
-#       isSigner: false,
-#       isWritable: false,
-#       pubkey,
-#     })),
-#   ];
-#
-#   const data = encodeMangoInstruction({ ForceCancelOrders: { limit } });
-#   return new TransactionInstruction({ keys, data, programId });
-# ```
+# It's likely that some operations will require actions split across multiple instructions because of
+# instruction size limitiations, so all our functions are prepared for this without having to change
+# the function signature in future.
 #
 
-class ForceCancelOrdersInstructionBuilder(InstructionBuilder):
-    # We can create up to a maximum of max_instructions instructions. I'm not sure of the reason
-    # for this threshold but it's what's in the original liquidator source code and I'm assuming
-    # it's there for a good reason.
-    max_instructions: int = 10
-
-    # We cancel up to max_cancels_per_instruction orders with each instruction.
-    max_cancels_per_instruction: int = 5
-
-    def __init__(self, context: Context, group: Group, wallet: Wallet, margin_account: MarginAccount, market_metadata: MarketMetadata, market: Market, oracles: typing.List[PublicKey], dex_signer: PublicKey):
-        super().__init__(context)
-        self.group = group
-        self.wallet = wallet
-        self.margin_account = margin_account
-        self.market_metadata = market_metadata
-        self.market = market
-        self.oracles = oracles
-        self.dex_signer = dex_signer
-
-    def build(self) -> TransactionInstruction:
-        transaction = TransactionInstruction(
-            keys=[
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.group.address),
-                AccountMeta(is_signer=True, is_writable=False, pubkey=self.wallet.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.margin_account.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.market_metadata.base.vault),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.market_metadata.quote.vault),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.market_metadata.spot.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.market.state.bids()),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.market.state.asks()),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=self.group.signer_key),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.market.state.event_queue()),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.market.state.base_vault()),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.market.state.quote_vault()),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=self.dex_signer),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=self.context.dex_program_id),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_CLOCK_PUBKEY),
-                *list([AccountMeta(is_signer=False, is_writable=oo_address is None, pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS)
-                      for oo_address in self.margin_account.open_orders]),
-                *list([AccountMeta(is_signer=False, is_writable=False, pubkey=oracle_address) for oracle_address in self.oracles])
-            ],
-            program_id=self.context.program_id,
-            data=layouts.FORCE_CANCEL_ORDERS.build(
-                {"limit": ForceCancelOrdersInstructionBuilder.max_cancels_per_instruction})
-        )
-        self.logger.debug(f"Built transaction: {transaction}")
-        return transaction
-
-    @staticmethod
-    def from_margin_account_and_market(context: Context, group: Group, wallet: Wallet, margin_account: MarginAccount, market_metadata: MarketMetadata) -> "ForceCancelOrdersInstructionBuilder":
-        market = market_metadata.fetch_market(context)
-        nonce = struct.pack("<Q", market.state.vault_signer_nonce())
-        dex_signer = PublicKey.create_program_address(
-            [bytes(market_metadata.spot.address), nonce], context.dex_program_id)
-        oracles = list([mkt.oracle for mkt in group.markets])
-
-        return ForceCancelOrdersInstructionBuilder(context, group, wallet, margin_account, market_metadata, market, oracles, dex_signer)
-
-    @classmethod
-    def multiple_instructions_from_margin_account_and_market(cls, context: Context, group: Group, wallet: Wallet, margin_account: MarginAccount, market_metadata: MarketMetadata, at_least_this_many_cancellations: int) -> typing.List["ForceCancelOrdersInstructionBuilder"]:
-        logger: logging.Logger = logging.getLogger(cls.__name__)
-
-        # We cancel up to max_cancels_per_instruction orders with each instruction, but if
-        # we have more than cancel_limit we create more instructions (each handling up to
-        # 5 orders)
-        calculated_instruction_count = int(
-            at_least_this_many_cancellations / ForceCancelOrdersInstructionBuilder.max_cancels_per_instruction) + 1
-
-        # We create a maximum of max_instructions instructions.
-        instruction_count = min(calculated_instruction_count, ForceCancelOrdersInstructionBuilder.max_instructions)
-
-        instructions: typing.List[ForceCancelOrdersInstructionBuilder] = []
-        for counter in range(instruction_count):
-            instructions += [ForceCancelOrdersInstructionBuilder.from_margin_account_and_market(
-                context, group, wallet, margin_account, market_metadata)]
-
-        logger.debug(f"Built {len(instructions)} transaction(s).")
-
-        return instructions
-
-    def __str__(self) -> str:
-        # Print the members out using the Rust parameter order and names.
-        return f"""« ForceCancelOrdersInstructionBuilder:
-    program_id: &Pubkey: {self.context.program_id},
-    mango_group_pk: &Pubkey: {self.group.address},
-    liqor_pk: &Pubkey: {self.wallet.address},
-    liqee_margin_account_acc: &Pubkey: {self.margin_account.address},
-    base_vault_pk: &Pubkey: {self.market_metadata.base.vault},
-    quote_vault_pk: &Pubkey: {self.market_metadata.quote.vault},
-    spot_market_pk: &Pubkey: {self.market_metadata.spot.address},
-    bids_pk: &Pubkey: {self.market.state.bids()},
-    asks_pk: &Pubkey: {self.market.state.asks()},
-    signer_pk: &Pubkey: {self.group.signer_key},
-    dex_event_queue_pk: &Pubkey: {self.market.state.event_queue()},
-    dex_base_pk: &Pubkey: {self.market.state.base_vault()},
-    dex_quote_pk: &Pubkey: {self.market.state.quote_vault()},
-    dex_signer_pk: &Pubkey: {self.dex_signer},
-    dex_prog_id: &Pubkey: {self.context.dex_program_id},
-    open_orders_pks: &[Pubkey]: {self.margin_account.open_orders},
-    oracle_pks: &[Pubkey]: {self.oracles},
-    limit: u8: {ForceCancelOrdersInstructionBuilder.max_cancels_per_instruction}
-»"""
-
-
-# # 🥭 LiquidateInstructionBuilder class
+# # 🥭 build_create_solana_account_instructions function
 #
-# This is the `Instruction` we send to Solana to perform the (partial) liquidation.
+# Creates and initializes an SPL token account. Can add additional lamports too but that's usually not
+# necesary.
 #
-# We take care to pass the proper high-level parameters to the `LiquidateInstructionBuilder`
-# constructor so that `build_transaction()` is straightforward. That tends to push
-# complexities to `from_margin_account_and_market()` though.
+def build_create_solana_account_instructions(context: Context, wallet: Wallet, mango_program_address: PublicKey, size: int, lamports: int = 0) -> CombinableInstructions:
+    minimum_balance = context.client.get_minimum_balance_for_rent_exemption(size)
+    account = SolanaAccount()
+    create_instruction = create_account(
+        CreateAccountParams(wallet.address, account.public_key(), lamports + minimum_balance, size, mango_program_address))
+    return CombinableInstructions(signers=[account], instructions=[create_instruction])
+
+
+# # 🥭 build_create_spl_account_instructions function
 #
-# ## Rust Interface
+# Creates and initializes an SPL token account. Can add additional lamports too but that's usually not
+# necesary.
 #
-# This is what the `partial_liquidate` instruction looks like in the [Mango Rust](https://github.com/blockworks-foundation/mango/blob/master/program/src/instruction.rs) code:
-# ```
-# /// Take over a MarginAccount that is below init_coll_ratio by depositing funds
-# ///
-# /// Accounts expected by this instruction (10 + 2 * NUM_MARKETS):
-# ///
-# /// 0. `[writable]` mango_group_acc - MangoGroup that this margin account is for
-# /// 1. `[signer]` liqor_acc - liquidator's solana account
-# /// 2. `[writable]` liqor_in_token_acc - liquidator's token account to deposit
-# /// 3. `[writable]` liqor_out_token_acc - liquidator's token account to withdraw into
-# /// 4. `[writable]` liqee_margin_account_acc - MarginAccount of liquidatee
-# /// 5. `[writable]` in_vault_acc - Mango vault of in_token
-# /// 6. `[writable]` out_vault_acc - Mango vault of out_token
-# /// 7. `[]` signer_acc
-# /// 8. `[]` token_prog_acc - Token program id
-# /// 9. `[]` clock_acc - Clock sysvar account
-# /// 10..10+NUM_MARKETS `[]` open_orders_accs - open orders for each of the spot market
-# /// 10+NUM_MARKETS..10+2*NUM_MARKETS `[]`
-# ///     oracle_accs - flux aggregator feed accounts
-# ```
-#
-# ```
-# pub fn partial_liquidate(
-#     program_id: &Pubkey,
-#     mango_group_pk: &Pubkey,
-#     liqor_pk: &Pubkey,
-#     liqor_in_token_pk: &Pubkey,
-#     liqor_out_token_pk: &Pubkey,
-#     liqee_margin_account_acc: &Pubkey,
-#     in_vault_pk: &Pubkey,
-#     out_vault_pk: &Pubkey,
-#     signer_pk: &Pubkey,
-#     open_orders_pks: &[Pubkey],
-#     oracle_pks: &[Pubkey],
-#     max_deposit: u64
-# ) -> Result<Instruction, ProgramError>
-# ```
-#
-# ## Client API call
-#
-# This is how it is built using the Mango Markets client API:
-# ```
-#   const keys = [
-#     { isSigner: false, isWritable: true, pubkey: mangoGroup },
-#     { isSigner: true, isWritable: false, pubkey: liqor },
-#     { isSigner: false, isWritable: true, pubkey: liqorInTokenWallet },
-#     { isSigner: false, isWritable: true, pubkey: liqorOutTokenWallet },
-#     { isSigner: false, isWritable: true, pubkey: liqeeMarginAccount },
-#     { isSigner: false, isWritable: true, pubkey: inTokenVault },
-#     { isSigner: false, isWritable: true, pubkey: outTokenVault },
-#     { isSigner: false, isWritable: false, pubkey: signerKey },
-#     { isSigner: false, isWritable: false, pubkey: TOKEN_PROGRAM_ID },
-#     { isSigner: false, isWritable: false, pubkey: SYSVAR_CLOCK_PUBKEY },
-#     ...openOrders.map((pubkey) => ({
-#       isSigner: false,
-#       isWritable: false,
-#       pubkey,
-#     })),
-#     ...oracles.map((pubkey) => ({
-#       isSigner: false,
-#       isWritable: false,
-#       pubkey,
-#     })),
-#   ];
-#   const data = encodeMangoInstruction({ PartialLiquidate: { maxDeposit } });
-#
-#   return new TransactionInstruction({ keys, data, programId });
-# ```
-#
-# ## from_margin_account_and_market() function
-#
-# `from_margin_account_and_market()` merits a bit of explaining.
-#
-# `from_margin_account_and_market()` takes (among other things) a `Wallet` and a
-# `MarginAccount`. The idea is that the `MarginAccount` has some assets in one token, and
-# some liabilities in some different token.
-#
-# To liquidate the account, we want to:
-# * supply tokens from the `Wallet` in the token currency that has the greatest liability
-#   value in the `MarginAccount`
-# * receive tokens in the `Wallet` in the token currency that has the greatest asset value
-#   in the `MarginAccount`
-#
-# So we calculate the token currencies from the largest liabilities and assets in the
-# `MarginAccount`, but we use those token types to get the correct `Wallet` accounts.
-# * `input_token` is the `BasketToken` of the currency the `Wallet` is _paying_ and the
-#   `MarginAccount` is _receiving_ to pay off its largest liability.
-# * `output_token` is the `BasketToken` of the currency the `Wallet` is _receiving_ and the
-#   `MarginAccount` is _paying_ from its largest asset.
+# Prefer `build_create_spl_account_instructions()` over this function. This function should be
+# reserved for cases where you specifically don't want the associated token account.
 #
 
-
-class LiquidateInstructionBuilder(InstructionBuilder):
-    def __init__(self, context: Context, group: Group, wallet: Wallet, margin_account: MarginAccount, oracles: typing.List[PublicKey], input_token: BasketToken, output_token: BasketToken, wallet_input_token_account: TokenAccount, wallet_output_token_account: TokenAccount, maximum_input_amount: Decimal):
-        super().__init__(context)
-        self.group: Group = group
-        self.wallet: Wallet = wallet
-        self.margin_account: MarginAccount = margin_account
-        self.oracles: typing.List[PublicKey] = oracles
-        self.input_token: BasketToken = input_token
-        self.output_token: BasketToken = output_token
-        self.wallet_input_token_account: TokenAccount = wallet_input_token_account
-        self.wallet_output_token_account: TokenAccount = wallet_output_token_account
-        self.maximum_input_amount: Decimal = maximum_input_amount
-
-    def build(self) -> TransactionInstruction:
-        transaction = TransactionInstruction(
-            keys=[
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.group.address),
-                AccountMeta(is_signer=True, is_writable=False, pubkey=self.wallet.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.wallet_input_token_account.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.wallet_output_token_account.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.margin_account.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.input_token.vault),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=self.output_token.vault),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=self.group.signer_key),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_CLOCK_PUBKEY),
-                *list([AccountMeta(is_signer=False, is_writable=oo_address is None, pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS)
-                      for oo_address in self.margin_account.open_orders]),
-                *list([AccountMeta(is_signer=False, is_writable=False, pubkey=oracle_address) for oracle_address in self.oracles])
-            ],
-            program_id=self.context.program_id,
-            data=layouts.PARTIAL_LIQUIDATE.build({"max_deposit": int(self.maximum_input_amount)})
-        )
-        self.logger.debug(f"Built transaction: {transaction}")
-        return transaction
-
-    @classmethod
-    def from_margin_account_and_market(cls, context: Context, group: Group, wallet: Wallet, margin_account: MarginAccount, prices: typing.List[TokenValue]) -> typing.Optional["LiquidateInstructionBuilder"]:
-        logger: logging.Logger = logging.getLogger(cls.__name__)
-
-        oracles = list([mkt.oracle for mkt in group.markets])
-
-        balance_sheets = margin_account.get_priced_balance_sheets(group, prices)
-
-        sorted_by_assets = sorted(balance_sheets, key=lambda sheet: sheet.assets, reverse=True)
-        sorted_by_liabilities = sorted(balance_sheets, key=lambda sheet: sheet.liabilities, reverse=True)
-
-        most_assets = sorted_by_assets[0]
-        most_liabilities = sorted_by_liabilities[0]
-        if most_assets.token == most_liabilities.token:
-            # If there's a weirdness where the account with the biggest assets is also the one
-            # with the biggest liabilities, pick the next-best one by assets.
-            logger.info(
-                f"Switching asset token from {most_assets.token.name} to {sorted_by_assets[1].token.name} because {most_liabilities.token.name} is the token with most liabilities.")
-            most_assets = sorted_by_assets[1]
-
-        logger.info(f"Most assets: {most_assets}")
-        logger.info(f"Most liabilities: {most_liabilities}")
-
-        most_assets_basket_token = BasketToken.find_by_token(group.basket_tokens, most_assets.token)
-        most_liabilities_basket_token = BasketToken.find_by_token(group.basket_tokens, most_liabilities.token)
-        logger.info(f"Most assets basket token: {most_assets_basket_token}")
-        logger.info(f"Most liabilities basket token: {most_liabilities_basket_token}")
-
-        if most_assets.value == Decimal(0):
-            logger.warning(f"Margin account {margin_account.address} has no assets to take.")
-            return None
-
-        if most_liabilities.value == Decimal(0):
-            logger.warning(f"Margin account {margin_account.address} has no liabilities to fund.")
-            return None
-
-        wallet_input_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-            context, wallet.address, most_liabilities.token)
-        if wallet_input_token_account is None:
-            raise Exception(f"Could not load wallet input token account for mint '{most_liabilities.token.mint}'")
-
-        if wallet_input_token_account.value.value == Decimal(0):
-            logger.warning(
-                f"Wallet token account {wallet_input_token_account.address} has no tokens to send that could fund a liquidation.")
-            return None
-
-        wallet_output_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-            context, wallet.address, most_assets.token)
-        if wallet_output_token_account is None:
-            raise Exception(f"Could not load wallet output token account for mint '{most_assets.token.mint}'")
-
-        # Convert the token amount to the native representation
-        maximum_input_value = wallet_input_token_account.value
-        maximum_input_amount = maximum_input_value.token.shift_to_native(maximum_input_value.value)
-        return LiquidateInstructionBuilder(context, group, wallet, margin_account, oracles,
-                                           most_liabilities_basket_token, most_assets_basket_token,
-                                           wallet_input_token_account,
-                                           wallet_output_token_account,
-                                           maximum_input_amount)
-
-    def __str__(self) -> str:
-        # Print the members out using the Rust parameter order and names.
-        return f"""« LiquidateInstructionBuilder:
-    program_id: &Pubkey: {self.context.program_id},
-    mango_group_pk: &Pubkey: {self.group.address},
-    liqor_pk: &Pubkey: {self.wallet.address},
-    liqor_in_token_pk: &Pubkey: {self.wallet_input_token_account.address},
-    liqor_out_token_pk: &Pubkey: {self.wallet_output_token_account.address},
-    liqee_margin_account_acc: &Pubkey: {self.margin_account.address},
-    in_vault_pk: &Pubkey: {self.input_token.vault},
-    out_vault_pk: &Pubkey: {self.output_token.vault},
-    signer_pk: &Pubkey: {self.group.signer_key},
-    open_orders_pks: &[Pubkey]: {self.margin_account.open_orders},
-    oracle_pks: &[Pubkey]: {self.oracles},
-    max_deposit: u64: : {self.maximum_input_amount}
-»"""
+def build_create_spl_account_instructions(context: Context, wallet: Wallet, token: Token, lamports: int = 0) -> CombinableInstructions:
+    create_account_instructions = build_create_solana_account_instructions(
+        context, wallet, TOKEN_PROGRAM_ID, ACCOUNT_LEN, lamports)
+    initialize_instruction = initialize_account(InitializeAccountParams(
+        TOKEN_PROGRAM_ID, create_account_instructions.signers[0].public_key(), token.mint, wallet.address))
+    return create_account_instructions + CombinableInstructions(signers=[], instructions=[initialize_instruction])
 
 
-# # 🥭 CreateSplAccountInstructionBuilder class
+# # 🥭 build_create_associated_spl_account_instructions function
 #
-# Creates an SPL token account. Can't do much with it without following by an
-# `InitializeSplAccountInstructionBuilder`.
+# Creates and initializes an 'associated' SPL token account. This is the usual way of creating a
+# token account now. `build_create_spl_account_instructions()` should be reserved for cases where
+# you specifically don't want the associated token account.
 #
 
-class CreateSplAccountInstructionBuilder(InstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, address: PublicKey, lamports: int = 0):
-        super().__init__(context)
-        self.wallet: Wallet = wallet
-        self.address: PublicKey = address
-        self.lamports: int = lamports
-
-    def build(self) -> TransactionInstruction:
-        minimum_balance = self.context.client.get_minimum_balance_for_rent_exemption(ACCOUNT_LEN)
-        return create_account(
-            CreateAccountParams(self.wallet.address, self.address, self.lamports + minimum_balance, ACCOUNT_LEN, TOKEN_PROGRAM_ID))
+def build_create_associated_spl_account_instructions(context: Context, wallet: Wallet, token: Token) -> CombinableInstructions:
+    create_account_instructions = create_associated_token_account(wallet.address, wallet.address, token.mint)
+    return CombinableInstructions(signers=[], instructions=[create_account_instructions])
 
 
-# # 🥭 InitializeSplAccountInstructionBuilder class
+# # 🥭 build_transfer_spl_tokens_instructions function
 #
-# Initialises an SPL token account, presumably created by a previous
-# `CreateSplAccountInstructionBuilder` instruction.
+# Creates an instruction to transfer SPL tokens from one account to another.
 #
 
-class InitializeSplAccountInstructionBuilder(InstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, token: Token, address: PublicKey):
-        super().__init__(context)
-        self.wallet: Wallet = wallet
-        self.token: Token = token
-        self.address: PublicKey = address
-
-    def build(self) -> TransactionInstruction:
-        return initialize_account(
-            InitializeAccountParams(TOKEN_PROGRAM_ID, self.address, self.token.mint, self.wallet.address))
+def build_transfer_spl_tokens_instructions(context: Context, wallet: Wallet, token: Token, source: PublicKey, destination: PublicKey, quantity: Decimal) -> CombinableInstructions:
+    amount = int(quantity * (10 ** token.decimals))
+    instructions = [transfer2(Transfer2Params(TOKEN_PROGRAM_ID, source, token.mint,
+                              destination, wallet.address, amount, int(token.decimals)))]
+    return CombinableInstructions(signers=[], instructions=instructions)
 
 
-# # 🥭 TransferSplTokensInstructionBuilder class
+# # 🥭 build_close_spl_account_instructions function
 #
-# Creates a `TransactionInstruction` that can transfer SPL tokens from one account to
-# another.
+# Creates an instructio to close an SPL token account and transfers any remaining lamports to the wallet.
 #
-
-class TransferSplTokensInstructionBuilder(InstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, token: Token, source: PublicKey, destination: PublicKey, quantity: Decimal):
-        super().__init__(context)
-        self.wallet: Wallet = wallet
-        self.token: Token = token
-        self.source: PublicKey = source
-        self.destination: PublicKey = destination
-        self.amount = int(quantity * (10 ** token.decimals))
-
-    def build(self) -> TransactionInstruction:
-        return transfer2(
-            Transfer2Params(TOKEN_PROGRAM_ID, self.source, self.token.mint, self.destination, self.wallet.address, self.amount, int(self.token.decimals)))
+def build_close_spl_account_instructions(context: Context, wallet: Wallet, address: PublicKey) -> CombinableInstructions:
+    return CombinableInstructions(signers=[], instructions=[close_account(CloseAccountParams(TOKEN_PROGRAM_ID, address, wallet.address, wallet.address))])
 
 
-# # 🥭 CloseSplAccountInstructionBuilder class
-#
-# Closes an SPL token account and transfers any remaining lamports to the wallet.
-#
-
-class CloseSplAccountInstructionBuilder(InstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, address: PublicKey):
-        super().__init__(context)
-        self.wallet: Wallet = wallet
-        self.address: PublicKey = address
-
-    def build(self) -> TransactionInstruction:
-        return close_account(
-            CloseAccountParams(TOKEN_PROGRAM_ID, self.address, self.wallet.address, self.wallet.address))
-
-
-# # 🥭 CreateSerumOpenOrdersInstructionBuilder class
+# # 🥭 build_create_serum_open_orders_instructions function
 #
 # Creates a Serum openorders-creating instruction.
 #
-class CreateSerumOpenOrdersInstructionBuilder(InstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey):
-        super().__init__(context)
-        self.wallet: Wallet = wallet
-        self.market: Market = market
-        self.open_orders_address: PublicKey = open_orders_address
+def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet, market: PySerumMarket) -> CombinableInstructions:
+    new_open_orders_account = SolanaAccount()
+    minimum_balance = context.client.get_minimum_balance_for_rent_exemption(layouts.OPEN_ORDERS.sizeof())
+    instruction = pyserum_make_create_account_instruction(
+        owner_address=wallet.address,
+        new_account_address=new_open_orders_account.public_key(),
+        lamports=minimum_balance,
+        program_id=market.state.program_id(),
+    )
 
-    def build(self) -> TransactionInstruction:
-        balanced_needed = self.context.client.get_minimum_balance_for_rent_exemption(layouts.OPEN_ORDERS.sizeof())
-        instruction = make_create_account_instruction(
-            owner_address=self.wallet.address,
-            new_account_address=self.open_orders_address,
-            lamports=balanced_needed,
-            program_id=self.market.state.program_id(),
-        )
-
-        return instruction
-
-    def __str__(self) -> str:
-        return f"""« CreateSerumOpenOrdersInstructionBuilder:
-    owner_address: {self.wallet.address},
-    new_account_address: {self.open_orders_address},
-    program_id: {self.market.state.program_id()}
-»"""
+    return CombinableInstructions(signers=[new_open_orders_account], instructions=[instruction])
 
 
-# # 🥭 NewOrderV3InstructionBuilder class
+# # 🥭 build_serum_place_order_instructions function
 #
 # Creates a Serum order-placing instruction using V3 of the NewOrder instruction.
 #
-class NewOrderV3InstructionBuilder(InstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, market: Market, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, fee_discount_address: typing.Optional[PublicKey]):
-        super().__init__(context)
-        self.wallet: Wallet = wallet
-        self.market: Market = market
-        self.source: PublicKey = source
-        self.open_orders_address: PublicKey = open_orders_address
-        self.order_type: OrderType = order_type
-        self.side: Side = side
-        self.price: Decimal = price
-        self.quantity: Decimal = quantity
-        self.client_id: int = client_id
-        self.fee_discount_address: typing.Optional[PublicKey] = fee_discount_address
+def build_serum_place_order_instructions(context: Context, wallet: Wallet, market: PySerumMarket, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
+    serum_order_type: PySerumOrderType = PySerumOrderType.POST_ONLY if order_type == OrderType.POST_ONLY else PySerumOrderType.IOC if order_type == OrderType.IOC else PySerumOrderType.LIMIT
+    serum_side: PySerumSide = PySerumSide.SELL if side == Side.SELL else PySerumSide.BUY
 
-    def build(self) -> TransactionInstruction:
-        instruction = self.market.make_place_order_instruction(
-            self.source,
-            self.wallet.account,
-            self.order_type,
-            self.side,
-            float(self.price),
-            float(self.quantity),
-            self.client_id,
-            self.open_orders_address,
-            self.fee_discount_address
-        )
+    instruction = market.make_place_order_instruction(
+        source,
+        wallet.account,
+        serum_order_type,
+        serum_side,
+        float(price),
+        float(quantity),
+        client_id,
+        open_orders_address,
+        fee_discount_address
+    )
 
-        return instruction
-
-    def __str__(self) -> str:
-        return f"""« NewOrderV3InstructionBuilder:
-    source.address: {self.source},
-    wallet.account: {self.wallet.account.public_key()},
-    order_type: {self.order_type},
-    side: {self.side},
-    price: {float(self.price)},
-    quantity: {float(self.quantity)},
-    client_id: {self.client_id},
-    open_orders_address: {self.open_orders_address}
-    fee_discount_address: {self.fee_discount_address}
-»"""
+    return CombinableInstructions(signers=[], instructions=[instruction])
 
 
-# # 🥭 ConsumeEventsInstructionBuilder class
+# # 🥭 build_serum_consume_events_instructions function
 #
 # Creates an event-consuming 'crank' instruction.
 #
-class ConsumeEventsInstructionBuilder(InstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, market: Market, open_orders_addresses: typing.List[PublicKey], limit: int = 32):
-        super().__init__(context)
-        self.wallet: Wallet = wallet
-        self.market: Market = market
-        self.open_orders_addresses: typing.List[PublicKey] = open_orders_addresses
-        self.limit: int = limit
 
-    def build(self) -> TransactionInstruction:
-        instruction = consume_events(ConsumeEventsParams(
-            market=self.market.state.public_key(),
-            event_queue=self.market.state.event_queue(),
-            open_orders_accounts=self.open_orders_addresses,
-            limit=32
-        ))
+def build_serum_consume_events_instructions(context: Context, market_address: PublicKey, event_queue_address: PublicKey, open_orders_addresses: typing.Sequence[PublicKey], limit: int = 32) -> CombinableInstructions:
+    instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(pubkey=pubkey, is_signer=False, is_writable=True)
+            for pubkey in [*open_orders_addresses, market_address, event_queue_address]
+        ],
+        program_id=context.serum_program_address,
+        data=PYSERUM_INSTRUCTIONS_LAYOUT.build(
+            dict(instruction_type=PySerumInstructionType.CONSUME_EVENTS, args=dict(limit=limit))
+        ),
+    )
 
-        # The interface accepts (and currently requires) two accounts at the end, but
-        # it doesn't actually use them.
-        random_account = Account().public_key()
-        instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=False))
-        instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=False))
-        return instruction
-
-    def __str__(self) -> str:
-        return f"""« ConsumeEventsInstructionBuilder:
-    market: {self.market.state.public_key()},
-    event_queue: {self.market.state.event_queue()},
-    open_orders_accounts: {self.open_orders_addresses},
-    limit: {self.limit}
-»"""
+    # The interface accepts (and currently requires) two accounts at the end, but
+    # it doesn't actually use them.
+    random_account = SolanaAccount().public_key()
+    instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=True))
+    instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=True))
+    return CombinableInstructions(signers=[], instructions=[instruction])
 
 
-# # 🥭 SettleInstructionBuilder class
+# # 🥭 build_serum_settle_instructions function
 #
 # Creates a 'settle' instruction.
 #
-class SettleInstructionBuilder(InstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, market: Market, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey):
-        super().__init__(context)
-        self.wallet: Wallet = wallet
-        self.market: Market = market
-        self.base_token_account_address: PublicKey = base_token_account_address
-        self.quote_token_account_address: PublicKey = quote_token_account_address
-        self.open_orders_address: PublicKey = open_orders_address
-        self.vault_signer = PublicKey.create_program_address(
-            [bytes(self.market.state.public_key()), self.market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
-            self.market.state.program_id(),
-        )
 
-    def build(self) -> TransactionInstruction:
-        instruction = settle_funds(
-            SettleFundsParams(
-                market=self.market.state.public_key(),
-                open_orders=self.open_orders_address,
-                owner=self.wallet.address,
-                base_vault=self.market.state.base_vault(),
-                quote_vault=self.market.state.quote_vault(),
-                base_wallet=self.base_token_account_address,
-                quote_wallet=self.quote_token_account_address,
-                vault_signer=self.vault_signer,
-                program_id=self.market.state.program_id(),
+def build_serum_settle_instructions(context: Context, wallet: Wallet, market: PySerumMarket, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
+    vault_signer = PublicKey.create_program_address(
+        [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+        market.state.program_id(),
+    )
+    instruction = pyserum_settle_funds(
+        PySerumSettleFundsParams(
+            market=market.state.public_key(),
+            open_orders=open_orders_address,
+            owner=wallet.address,
+            base_vault=market.state.base_vault(),
+            quote_vault=market.state.quote_vault(),
+            base_wallet=base_token_account_address,
+            quote_wallet=quote_token_account_address,
+            vault_signer=vault_signer,
+            program_id=market.state.program_id(),
+        )
+    )
+
+    return CombinableInstructions(signers=[], instructions=[instruction])
+
+# # 🥭 build_spot_settle_instructions function
+#
+# Creates a 'settle' instruction for spot markets.
+#
+# /// Settle all funds from serum dex open orders
+# ///
+# /// Accounts expected by this instruction (18):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[]` mango_cache_ai - MangoCache for this MangoGroup
+# /// 2. `[signer]` owner_ai - MangoAccount owner
+# /// 3. `[writable]` mango_account_ai - MangoAccount
+# /// 4. `[]` dex_prog_ai - program id of serum dex
+# /// 5.  `[writable]` spot_market_ai - dex MarketState account
+# /// 6.  `[writable]` open_orders_ai - open orders for this market for this MangoAccount
+# /// 7. `[]` signer_ai - MangoGroup signer key
+# /// 8. `[writable]` dex_base_ai - base vault for dex MarketState
+# /// 9. `[writable]` dex_quote_ai - quote vault for dex MarketState
+# /// 10. `[]` base_root_bank_ai - MangoGroup base vault acc
+# /// 11. `[writable]` base_node_bank_ai - MangoGroup quote vault acc
+# /// 12. `[]` quote_root_bank_ai - MangoGroup quote vault acc
+# /// 13. `[writable]` quote_node_bank_ai - MangoGroup quote vault acc
+# /// 14. `[writable]` base_vault_ai - MangoGroup base vault acc
+# /// 15. `[writable]` quote_vault_ai - MangoGroup quote vault acc
+# /// 16. `[]` dex_signer_ai - dex PySerumMarket signer account
+# /// 17. `[]` spl token program
+
+
+def build_spot_settle_instructions(context: Context, wallet: Wallet, account: Account,
+                                   market: PySerumMarket, group: Group, open_orders_address: PublicKey,
+                                   base_rootbank: RootBank, base_nodebank: NodeBank,
+                                   quote_rootbank: RootBank, quote_nodebank: NodeBank) -> CombinableInstructions:
+    vault_signer = PublicKey.create_program_address(
+        [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+        market.state.program_id(),
+    )
+
+    settle_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=group.cache),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=context.serum_program_address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.public_key()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=open_orders_address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.base_vault()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.quote_vault()),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=base_rootbank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=base_nodebank.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=quote_rootbank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=quote_nodebank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=base_nodebank.vault),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=quote_nodebank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID)
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.SETTLE_FUNDS.build(dict())
+    )
+
+    return CombinableInstructions(signers=[], instructions=[settle_instruction])
+
+
+# # 🥭 build_compound_serum_place_order_instructions function
+#
+# This function puts a trade on the Serum orderbook and then cranks and settles.
+# It follows the pattern described here:
+#   https://solanadev.blogspot.com/2021/05/order-techniques-with-project-serum.html
+#
+# Here's an example (Raydium?) transaction that does this:
+#   https://solanabeach.io/transaction/3Hb2h7QMM3BbJCK42BUDuVEYwwaiqfp2oQUZMDJvUuoyCRJD5oBmA3B8oAGkB9McdCFtwdT2VrSKM2GCKhJ92FpY
+#
+# Basically, it tries to send to a 'buy/sell' and settle all in one transaction.
+#
+# It does this by:
+# * Sending a Place Order (V3) instruction
+# * Sending a Consume Events (crank) instruction
+# * Sending a Settle Funds instruction
+# all in the same transaction. With V3 Serum, this should consistently settle funds to the wallet
+# immediately if the order is filled (either because it's IOC or because it matches an order on the
+# orderbook).
+#
+
+def build_compound_serum_place_order_instructions(context: Context, wallet: Wallet, market: PySerumMarket, source: PublicKey, open_orders_address: PublicKey, all_open_orders_addresses: typing.Sequence[PublicKey], order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, base_token_account_address: PublicKey, quote_token_account_address: PublicKey, fee_discount_address: typing.Optional[PublicKey], consume_limit: int = 32) -> CombinableInstructions:
+    place_order = build_serum_place_order_instructions(
+        context, wallet, market, source, open_orders_address, order_type, side, price, quantity, client_id, fee_discount_address)
+    consume_events = build_serum_consume_events_instructions(
+        context, market.state.public_key(), market.state.event_queue(), all_open_orders_addresses, consume_limit)
+    settle = build_serum_settle_instructions(
+        context, wallet, market, open_orders_address, base_token_account_address, quote_token_account_address)
+
+    return place_order + consume_events + settle
+
+
+# # 🥭 build_cancel_perp_order_instruction function
+#
+# Builds the instructions necessary for cancelling a perp order.
+#
+
+
+def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, account: Account, perp_market_details: PerpMarketDetails, order: Order, invalid_id_ok: bool) -> CombinableInstructions:
+    # Prefer cancelling by client ID so we don't have to keep track of the order side.
+    if order.client_id is not None and order.client_id != 0:
+        data: bytes = layouts.CANCEL_PERP_ORDER_BY_CLIENT_ID.build(
+            {
+                "client_order_id": order.client_id,
+                "invalid_id_ok": invalid_id_ok
+            })
+    else:
+        data = layouts.CANCEL_PERP_ORDER.build(
+            {
+                "order_id": order.id,
+                "invalid_id_ok": invalid_id_ok
+            })
+
+    # Accounts expected by this instruction (both CANCEL_PERP_ORDER and CANCEL_PERP_ORDER_BY_CLIENT_ID are the same):
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
+    # { isSigner: true, isWritable: false, pubkey: ownerPk },
+    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: bidsPk },
+    # { isSigner: false, isWritable: true, pubkey: asksPk },
+
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(is_signer=False, is_writable=False, pubkey=account.group.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks)
+            ],
+            program_id=context.mango_program_address,
+            data=data
+        )
+    ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market_details: PerpMarketDetails, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType) -> CombinableInstructions:
+    # { buy: 0, sell: 1 }
+    raw_side: int = 1 if side == Side.SELL else 0
+    # { limit: 0, ioc: 1, postOnly: 2 }
+    raw_order_type: int = 2 if order_type == OrderType.POST_ONLY else 1 if order_type == OrderType.IOC else 0
+
+    base_decimals = perp_market_details.base_token.decimals
+    quote_decimals = perp_market_details.quote_token.decimals
+
+    base_factor = Decimal(10) ** base_decimals
+    quote_factor = Decimal(10) ** quote_decimals
+
+    native_price = ((price * quote_factor) * perp_market_details.base_lot_size) / \
+        (perp_market_details.quote_lot_size * base_factor)
+    native_quantity = (quantity * base_factor) / perp_market_details.base_lot_size
+
+    # /// Accounts expected by this instruction (6):
+    # /// 0. `[]` mango_group_ai - TODO
+    # /// 1. `[writable]` mango_account_ai - TODO
+    # /// 2. `[signer]` owner_ai - TODO
+    # /// 3. `[]` mango_cache_ai - TODO
+    # /// 4. `[writable]` perp_market_ai - TODO
+    # /// 5. `[writable]` bids_ai - TODO
+    # /// 6. `[writable]` asks_ai - TODO
+    # /// 7. `[writable]` event_queue_ai - TODO
+
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue),
+                *list([AccountMeta(is_signer=False, is_writable=False,
+                                   pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders])
+            ],
+            program_id=context.mango_program_address,
+            data=layouts.PLACE_PERP_ORDER.build(
+                {
+                    "price": native_price,
+                    "quantity": native_quantity,
+                    "client_order_id": client_order_id,
+                    "side": raw_side,
+                    "order_type": raw_order_type
+                })
+        )
+    ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+def build_mango_consume_events_instructions(context: Context, group: Group, perp_market_details: PerpMarketDetails, account_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    # Accounts expected by this instruction:
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: false, isWritable: false, pubkey: mangoCachePk },
+    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: eventQueuePk },
+    # ...mangoAccountPks.sort().map((pubkey) => ({
+    #     isSigner: false,
+    #     isWritable: true,
+    #     pubkey,
+    # })),
+
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue),
+                *list([AccountMeta(is_signer=False, is_writable=True,
+                                   pubkey=account_address) for account_address in account_addresses])
+            ],
+            program_id=context.mango_program_address,
+            data=layouts.CONSUME_EVENTS.build(
+                {
+                    "limit": limit,
+                })
+        )
+    ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+def build_create_account_instructions(context: Context, wallet: Wallet, group: Group) -> CombinableInstructions:
+    create_account_instructions = build_create_solana_account_instructions(
+        context, wallet, context.mango_program_address, layouts.MANGO_ACCOUNT.sizeof())
+    mango_account_address = create_account_instructions.signers[0].public_key()
+
+    # /// 0. `[]` mango_group_ai - Group that this mango account is for
+    # /// 1. `[writable]` mango_account_ai - the mango account data
+    # /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
+    # /// 3. `[]` rent_ai - Rent sysvar account
+    init = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=mango_account_address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address)
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.INIT_MANGO_ACCOUNT.build({})
+    )
+    return create_account_instructions + CombinableInstructions(signers=[], instructions=[init])
+
+
+# /// Deposit funds into mango account
+# ///
+# /// Accounts expected by this instruction (8):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[writable]` mango_account_ai - the mango account for this user
+# /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
+# /// 3. `[]` mango_cache_ai - MangoCache
+# /// 4. `[]` root_bank_ai - RootBank owned by MangoGroup
+# /// 5. `[writable]` node_bank_ai - NodeBank owned by RootBank
+# /// 6. `[writable]` vault_ai - TokenAccount owned by MangoGroup
+# /// 7. `[]` token_prog_ai - acc pointed to by SPL token program id
+# /// 8. `[writable]` owner_token_account_ai - TokenAccount owned by user which will be sending the funds
+# Deposit {
+#     quantity: u64,
+# },
+def build_deposit_instructions(context: Context, wallet: Wallet, group: Group, account: Account, root_bank: RootBank, node_bank: NodeBank, token_account: TokenAccount) -> CombinableInstructions:
+    value = token_account.value.shift_to_native().value
+    deposit = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=token_account.address)
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.DEPOSIT.build({
+            "quantity": value
+        })
+    )
+
+    return CombinableInstructions(signers=[], instructions=[deposit])
+
+
+# /// Withdraw funds that were deposited earlier.
+# ///
+# /// Accounts expected by this instruction (10):
+# ///
+# /// 0. `[read]` mango_group_ai,   -
+# /// 1. `[write]` mango_account_ai, -
+# /// 2. `[read]` owner_ai,         -
+# /// 3. `[read]` mango_cache_ai,   -
+# /// 4. `[read]` root_bank_ai,     -
+# /// 5. `[write]` node_bank_ai,     -
+# /// 6. `[write]` vault_ai,         -
+# /// 7. `[write]` token_account_ai, -
+# /// 8. `[read]` signer_ai,        -
+# /// 9. `[read]` token_prog_ai,    -
+# /// 10. `[read]` clock_ai,         -
+# /// 11..+ `[]` open_orders_accs - open orders for each of the spot market
+# Withdraw {
+#     quantity: u64,
+#     allow_borrow: bool,
+# },
+
+
+def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, account: Account, root_bank: RootBank, node_bank: NodeBank, token_account: TokenAccount, allow_borrow: bool) -> CombinableInstructions:
+    value = token_account.value.shift_to_native().value
+    withdraw = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=token_account.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
+            *list([AccountMeta(is_signer=False, is_writable=False,
+                               pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders])
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.WITHDRAW.build({
+            "quantity": value,
+            "allow_borrow": allow_borrow
+        })
+    )
+
+    return CombinableInstructions(signers=[], instructions=[withdraw])
+
+
+def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: PySerumMarket) -> CombinableInstructions:
+    instructions: CombinableInstructions = CombinableInstructions.empty()
+    create_open_orders = build_create_solana_account_instructions(
+        context, wallet, context.serum_program_address, layouts.OPEN_ORDERS.sizeof())
+    instructions += create_open_orders
+
+    open_orders_address = create_open_orders.signers[0].public_key()
+
+    initialise_open_orders_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=context.serum_program_address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=open_orders_address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=market.state.public_key()),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY)
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.INIT_SPOT_OPEN_ORDERS.build(dict())
+    )
+    instructions += CombinableInstructions(signers=[], instructions=[initialise_open_orders_instruction])
+    return instructions
+
+
+# # 🥭 build_spot_place_order_instructions function
+#
+# Creates a Mango order-placing instruction using the Serum instruction as the inner instruction. Will create
+# the necessary OpenOrders account if it doesn't already exist.
+#
+# /// Accounts expected by PLACE_SPOT_ORDER instruction (19+openorders):
+# { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+# { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
+# { isSigner: true, isWritable: false, pubkey: ownerPk },
+# { isSigner: false, isWritable: false, pubkey: mangoCachePk },
+# { isSigner: false, isWritable: false, pubkey: serumDexPk },
+# { isSigner: false, isWritable: true, pubkey: spotMarketPk },
+# { isSigner: false, isWritable: true, pubkey: bidsPk },
+# { isSigner: false, isWritable: true, pubkey: asksPk },
+# { isSigner: false, isWritable: true, pubkey: requestQueuePk },
+# { isSigner: false, isWritable: true, pubkey: eventQueuePk },
+# { isSigner: false, isWritable: true, pubkey: spotMktBaseVaultPk },
+# { isSigner: false, isWritable: true, pubkey: spotMktQuoteVaultPk },
+# { isSigner: false, isWritable: false, pubkey: rootBankPk },
+# { isSigner: false, isWritable: true, pubkey: nodeBankPk },
+# { isSigner: false, isWritable: true, pubkey: vaultPk },
+# { isSigner: false, isWritable: false, pubkey: TOKEN_PROGRAM_ID },
+# { isSigner: false, isWritable: false, pubkey: signerPk },
+# { isSigner: false, isWritable: false, pubkey: SYSVAR_RENT_PUBKEY },
+# { isSigner: false, isWritable: false, pubkey: msrmOrSrmVaultPk },
+# ...openOrders.map(({ pubkey, isWritable }) => ({
+#     isSigner: false,
+#     isWritable,
+#     pubkey,
+# })),
+
+def build_spot_place_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account,
+                                        market: PySerumMarket,
+                                        order_type: OrderType, side: Side, price: Decimal,
+                                        quantity: Decimal, client_id: int,
+                                        fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
+    instructions: CombinableInstructions = CombinableInstructions.empty()
+
+    spot_market_address = market.state.public_key()
+    market_index = group.find_spot_market_index(spot_market_address)
+
+    open_orders_address = account.spot_open_orders[market_index]
+    if open_orders_address is None:
+        create_open_orders = build_spot_openorders_instructions(context, wallet, group, account, market)
+        instructions += create_open_orders
+
+        open_orders_address = create_open_orders.signers[0].public_key()
+
+        # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
+        # the Account so that future uses (like later in this method) have access to it in the right place.
+        account.update_spot_open_orders_for_market(market_index, open_orders_address)
+
+    serum_order_type: pyserum.enums.OrderType = order_type.to_serum()
+    serum_side: pyserum.enums.Side = side.to_serum()
+    intrinsic_price = market.state.price_number_to_lots(float(price))
+    max_base_quantity = market.state.base_size_number_to_lots(float(quantity))
+    max_quote_quantity = market.state.base_size_number_to_lots(
+        float(quantity)) * market.state.quote_lot_size() * market.state.price_number_to_lots(float(price))
+
+    base_token_infos = [
+        token_info for token_info in group.base_tokens if token_info is not None and token_info.token.mint == market.state.base_mint()]
+    if len(base_token_infos) != 1:
+        raise Exception(
+            f"Could not find base token info for group {group.address} - length was {len(base_token_infos)} when it should be 1.")
+    base_token_info = base_token_infos[0]
+    quote_token_info = group.shared_quote_token
+
+    base_root_bank: RootBank = base_token_info.root_bank
+    base_node_bank: NodeBank = base_root_bank.pick_node_bank(context)
+    quote_root_bank: RootBank = quote_token_info.root_bank
+    quote_node_bank: NodeBank = quote_root_bank.pick_node_bank(context)
+
+    vault_signer = PublicKey.create_program_address(
+        [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+        market.state.program_id(),
+    )
+
+    fee_discount_address_meta: typing.List[AccountMeta] = []
+    if fee_discount_address is not None:
+        fee_discount_address_meta = [AccountMeta(is_signer=False, is_writable=False, pubkey=fee_discount_address)]
+    place_spot_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=context.serum_program_address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.public_key()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.bids()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.asks()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.request_queue()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.event_queue()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.base_vault()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.quote_vault()),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=base_root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=base_node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=base_node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=quote_root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=quote_node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=quote_node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
+            AccountMeta(is_signer=False, is_writable=False,
+                        pubkey=group.msrm_vault or group.srm_vault or SYSTEM_PROGRAM_ADDRESS),
+            *list([AccountMeta(is_signer=False, is_writable=(oo_address == open_orders_address),
+                               pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders]),
+            *fee_discount_address_meta
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.PLACE_SPOT_ORDER.build(
+            dict(
+                side=serum_side,
+                limit_price=intrinsic_price,
+                max_base_quantity=max_base_quantity,
+                max_quote_quantity=max_quote_quantity,
+                self_trade_behavior=pyserum.enums.SelfTradeBehavior.DECREMENT_TAKE,
+                order_type=serum_order_type,
+                client_id=client_id,
+                limit=65535,
             )
         )
+    )
 
-        return instruction
+    return instructions + CombinableInstructions(signers=[], instructions=[place_spot_instruction])
 
-    def __str__(self) -> str:
-        return f"""« SettleInstructionBuilder:
-    market: {self.market.state.public_key()},
-    base_token_account: {self.base_token_account_address},
-    quote_token_account: {self.quote_token_account_address},
-    vault_signer: {self.vault_signer}
-»"""
+
+# # 🥭 build_cancel_spot_order_instruction function
+#
+# Builds the instructions necessary for cancelling a spot order.
+#
+
+
+def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: PySerumMarket, order: Order, open_orders_address: PublicKey) -> CombinableInstructions:
+    # { buy: 0, sell: 1 }
+    raw_side: int = 1 if order.side == Side.SELL else 0
+
+    # Accounts expected by this instruction:
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: true, isWritable: false, pubkey: ownerPk },
+    # { isSigner: false, isWritable: false, pubkey: mangoAccountPk },
+    # { isSigner: false, isWritable: false, pubkey: dexProgramId },
+    # { isSigner: false, isWritable: true, pubkey: spotMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: bidsPk },
+    # { isSigner: false, isWritable: true, pubkey: asksPk },
+    # { isSigner: false, isWritable: true, pubkey: openOrdersPk },
+    # { isSigner: false, isWritable: false, pubkey: signerKey },
+    # { isSigner: false, isWritable: true, pubkey: eventQueuePk },
+
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=account.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=context.serum_program_address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.public_key()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.bids()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.asks()),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=open_orders_address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.event_queue())
+            ],
+            program_id=context.mango_program_address,
+            data=layouts.CANCEL_SPOT_ORDER.build(
+                {
+                    "order_id": order.id,
+                    "side": raw_side
+                })
+        )
+    ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+# # 🥭 build_mango_settle_instructions function
+#
+# Creates a 'settle' instruction for Mango accounts.
+#
+def build_mango_settle_instructions(context: Context, wallet: Wallet, market: PySerumMarket, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
+    vault_signer = PublicKey.create_program_address(
+        [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
+        market.state.program_id(),
+    )
+    instruction = pyserum_settle_funds(
+        PySerumSettleFundsParams(
+            market=market.state.public_key(),
+            open_orders=open_orders_address,
+            owner=wallet.address,
+            base_vault=market.state.base_vault(),
+            quote_vault=market.state.quote_vault(),
+            base_wallet=base_token_account_address,
+            quote_wallet=quote_token_account_address,
+            vault_signer=vault_signer,
+            program_id=market.state.program_id(),
+        )
+    )
+
+    return CombinableInstructions(signers=[], instructions=[instruction])
+
+
+# # 🥭 build_redeem_accrued_mango_instructions function
+#
+# Creates a 'RedeemMngo' instruction for Mango accounts.
+#
+def build_redeem_accrued_mango_instructions(context: Context, wallet: Wallet, perp_market: PerpMarket, group: Group, account: Account, mngo: TokenInfo) -> CombinableInstructions:
+    node_bank: NodeBank = mngo.root_bank.pick_node_bank(context)
+    # /// Redeem the mngo_accrued in a PerpAccount for MNGO in MangoAccount deposits
+    # ///
+    # /// Accounts expected by this instruction (11):
+    # /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+    # /// 1. `[]` mango_cache_ai - MangoCache
+    # /// 2. `[writable]` mango_account_ai - MangoAccount
+    # /// 3. `[signer]` owner_ai - MangoAccount owner
+    # /// 4. `[]` perp_market_ai - PerpMarket
+    # /// 5. `[writable]` mngo_perp_vault_ai
+    # /// 6. `[]` mngo_root_bank_ai
+    # /// 7. `[writable]` mngo_node_bank_ai
+    # /// 8. `[writable]` mngo_bank_vault_ai
+    # /// 9. `[]` signer_ai - Group Signer Account
+    # /// 10. `[]` token_prog_ai - SPL Token program id
+    redeem_accrued_mango_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=perp_market.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.underlying_perp_market.mngo_vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=mngo.root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID)
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.REDEEM_MNGO.build(dict())
+    )
+    return CombinableInstructions(signers=[], instructions=[redeem_accrued_mango_instruction])
+
+
+# # 🥭 build_faucet_airdrop_instructions function
+#
+# Creates an airdrop instruction for compatible faucets (those based on https://github.com/paul-schaaf/spl-token-faucet)
+#
+def build_faucet_airdrop_instructions(token_mint: PublicKey, destination: PublicKey, faucet: PublicKey, quantity: Decimal) -> CombinableInstructions:
+    faucet_program_address: PublicKey = PublicKey("4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt")
+    authority_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
+        [b"faucet"],
+        faucet_program_address
+    )
+    authority: PublicKey = authority_and_nonce[0]
+
+    # Mints and airdrops tokens from a faucet.
+    #
+    # SPL instruction is at:
+    #   https://github.com/paul-schaaf/spl-token-faucet/blob/main/src/program/src/instruction.rs
+    #
+    # ///
+    # /// Mints Tokens
+    # ///
+    # /// 0. `[]` The mint authority - Program Derived Address
+    # /// 1. `[writable]` Token Mint Account
+    # /// 2. `[writable]` Destination Account
+    # /// 3. `[]` The SPL Token Program
+    # /// 4. `[]` The Faucet Account
+    # /// 5. `[optional/signer]` Admin Account
+    faucet_airdrop_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=authority),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=token_mint),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=destination),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=faucet)
+        ],
+        program_id=faucet_program_address,
+        data=layouts.FAUCET_AIRDROP.build({
+            "quantity": quantity
+        })
+    )
+    return CombinableInstructions(signers=[], instructions=[faucet_airdrop_instruction])

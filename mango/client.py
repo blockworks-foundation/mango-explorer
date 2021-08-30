@@ -27,11 +27,13 @@ from decimal import Decimal
 from solana.account import Account
 from solana.blockhash import Blockhash
 from solana.publickey import PublicKey
-from solana.transaction import Transaction
+from solana.rpc.api import Client
 from solana.rpc.commitment import Commitment
 from solana.rpc.types import DataSliceOpts, MemcmpOpts, RPCResponse, TokenAccountOpts, TxOpts
+from solana.transaction import Transaction
 
 from .constants import SOL_DECIMAL_DIVISOR
+from .instructionreporter import InstructionReporter
 
 
 # # 🥭 RateLimitException class
@@ -67,8 +69,9 @@ class TooManyRequestsRateLimitException(RateLimitException):
 # of problems at the right place.
 #
 class TransactionException(Exception):
-    def __init__(self, message: str, code: int, name: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None]):
+    def __init__(self, transaction: typing.Optional[Transaction], message: str, code: int, name: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None], instruction_reporter: InstructionReporter = InstructionReporter()):
         super().__init__(message)
+        self.transaction: typing.Optional[Transaction] = transaction
         self.message: str = message
         self.code: int = code
         self.name: str = name
@@ -84,8 +87,13 @@ class TransactionException(Exception):
         self.accounts: typing.List[str] = _ensure_list(accounts)
         self.errors: typing.List[str] = _ensure_list(errors)
         self.logs: typing.List[str] = _ensure_list(logs)
+        self.instruction_reporter: InstructionReporter = instruction_reporter
 
     def __str__(self) -> str:
+        transaction_details = ""
+        if self.transaction is not None:
+            instruction_details = "\n".join(list(map(self.instruction_reporter.report, self.transaction.instructions)))
+            transaction_details = "\n    Instructions:\n        " + instruction_details.replace("\n", "\n        ")
         accounts = "No Accounts"
         if len(self.accounts) > 0:
             accounts = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.accounts])
@@ -95,7 +103,7 @@ class TransactionException(Exception):
         logs = "No Logs"
         if len(self.logs) > 0:
             logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
-        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.name}] {self.code}: {self.message}
+        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.name}] {self.code}: {self.message}{transaction_details}
     Accounts:
         {accounts}
     Errors:
@@ -126,17 +134,17 @@ UnspecifiedEncoding = "unspecified"
 # A `CompatibleClient` class that tries to be compatible with the proper Solana Client, but that handles
 # some common operations better from our point of view.
 #
-class CompatibleClient:
-    def __init__(self, name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool):
+class CompatibleClient(Client):
+    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
-        self.cluster: str = cluster
+        self.cluster_name: str = cluster_name
         self.cluster_url: str = cluster_url
-
-        self._request_counter = itertools.count()
-
         self.commitment: Commitment = commitment
         self.skip_preflight: bool = skip_preflight
+        self.instruction_reporter: InstructionReporter = instruction_reporter
+
+        self._request_counter = itertools.count()
         self.encoding: str = "base64"
 
     def is_node_healthy(self) -> bool:
@@ -149,7 +157,7 @@ class CompatibleClient:
 
         return response.ok
 
-    def get_balance(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment) -> RPCResponse:
+    def get_balance(self, pubkey: typing.Union[PublicKey, str], commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> RPCResponse:
         options = self._build_options(commitment, None, None)
         return self._send_request("getBalance", str(pubkey), options)
 
@@ -158,7 +166,7 @@ class CompatibleClient:
         value = Decimal(result["result"]["value"])
         return value / SOL_DECIMAL_DIVISOR
 
-    def get_account_info(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment,
+    def get_account_info(self, pubkey: typing.Union[PublicKey, str], commitment: typing.Optional[Commitment] = UnspecifiedCommitment,
                          encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> RPCResponse:
         options = self._build_options_with_encoding(commitment, encoding, data_slice)
         return self._send_request("getAccountInfo", str(pubkey), options)
@@ -182,12 +190,12 @@ class CompatibleClient:
     def get_confirmed_transaction(self, signature: str, encoding: str = "json") -> RPCResponse:
         return self._send_request("getConfirmedTransaction", signature, encoding)
 
-    def get_minimum_balance_for_rent_exemption(self, size: int, commitment: Commitment = UnspecifiedCommitment) -> RPCResponse:
+    def get_minimum_balance_for_rent_exemption(self, size: int, commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> RPCResponse:
         options = self._build_options(commitment, None, None)
         return self._send_request("getMinimumBalanceForRentExemption", size, options)
 
     def get_program_accounts(self, pubkey: typing.Union[str, PublicKey],
-                             commitment: Commitment = UnspecifiedCommitment,
+                             commitment: typing.Optional[Commitment] = UnspecifiedCommitment,
                              encoding: typing.Optional[str] = UnspecifiedEncoding,
                              data_slice: typing.Optional[DataSliceOpts] = None,
                              data_size: typing.Optional[int] = None,
@@ -203,15 +211,15 @@ class CompatibleClient:
 
         return self._send_request("getProgramAccounts", str(pubkey), options)
 
-    def get_recent_blockhash(self, commitment: Commitment = UnspecifiedCommitment) -> RPCResponse:
+    def get_recent_blockhash(self, commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> RPCResponse:
         options = self._build_options(commitment, None, None)
         return self._send_request("getRecentBlockhash", options)
 
-    def get_token_account_balance(self, pubkey: typing.Union[str, PublicKey], commitment: Commitment = UnspecifiedCommitment):
+    def get_token_account_balance(self, pubkey: typing.Union[str, PublicKey], commitment: typing.Optional[Commitment] = UnspecifiedCommitment):
         options = self._build_options(commitment, None, None)
         return self._send_request("getTokenAccountBalance", str(pubkey), options)
 
-    def get_token_accounts_by_owner(self, owner: PublicKey, token_account_options: TokenAccountOpts, commitment: Commitment = UnspecifiedCommitment,) -> RPCResponse:
+    def get_token_accounts_by_owner(self, owner: PublicKey, token_account_options: TokenAccountOpts, commitment: typing.Optional[Commitment] = UnspecifiedCommitment,) -> RPCResponse:
         options = self._build_options_with_encoding(
             commitment, token_account_options.encoding, token_account_options.data_slice)
 
@@ -250,15 +258,21 @@ class CompatibleClient:
 
         skip_preflight: bool = opts.skip_preflight or self.skip_preflight
 
-        return self._send_request(
-            "sendTransaction",
-            encoded_transaction,
-            {
-                _SkipPreflightKey: skip_preflight,
-                _PreflightCommitmentKey: commitment,
-                _EncodingKey: self.encoding,
-            }
-        )
+        try:
+            return self._send_request(
+                "sendTransaction",
+                encoded_transaction,
+                {
+                    _SkipPreflightKey: skip_preflight,
+                    _PreflightCommitmentKey: commitment,
+                    _EncodingKey: self.encoding,
+                }
+            )
+        except TransactionException as transaction_exception:
+            raise TransactionException(transaction, transaction_exception.message, transaction_exception.code,
+                                       transaction_exception.name, transaction_exception.accounts,
+                                       transaction_exception.errors, transaction_exception.logs,
+                                       self.instruction_reporter) from None
 
     def _send_request(self, method: str, *params: typing.Any) -> RPCResponse:
         request_id = next(self._request_counter) + 1
@@ -293,15 +307,15 @@ class CompatibleClient:
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
                 error_err = error_data["err"] if "err" in error_data else "No error text returned"
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
-                raise TransactionException(exception_message, error_code, self.name,
+                raise TransactionException(None, exception_message, error_code, self.name,
                                            error_accounts, error_err, error_logs)
 
         # The call succeeded.
         return typing.cast(RPCResponse, response)
 
-    def _build_options(self, commitment: Commitment, encoding: typing.Optional[str], data_slice: typing.Optional[DataSliceOpts]) -> typing.Dict[str, typing.Any]:
+    def _build_options(self, commitment: typing.Optional[Commitment], encoding: typing.Optional[str], data_slice: typing.Optional[DataSliceOpts]) -> typing.Dict[str, typing.Any]:
         options: typing.Dict[str, typing.Any] = {}
-        if commitment == UnspecifiedCommitment:
+        if commitment is None or commitment == UnspecifiedCommitment:
             options[_CommitmentKey] = self.commitment
         else:
             options[_CommitmentKey] = commitment
@@ -314,14 +328,14 @@ class CompatibleClient:
 
         return options
 
-    def _build_options_with_encoding(self, commitment: Commitment, encoding: typing.Optional[str], data_slice: typing.Optional[DataSliceOpts]) -> typing.Dict[str, typing.Any]:
+    def _build_options_with_encoding(self, commitment: typing.Optional[Commitment], encoding: typing.Optional[str], data_slice: typing.Optional[DataSliceOpts]) -> typing.Dict[str, typing.Any]:
         encoding_to_use: str = self.encoding
         if (encoding is not None) and (encoding != UnspecifiedEncoding):
             encoding_to_use = encoding
         return self._build_options(commitment, encoding_to_use, data_slice)
 
     def __str__(self) -> str:
-        return f"« 𝙲𝚘𝚖𝚙𝚊𝚝𝚒𝚋𝚕𝚎𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster}]: {self.cluster_url} »"
+        return f"« 𝙲𝚘𝚖𝚙𝚊𝚝𝚒𝚋𝚕𝚎𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster_name}]: {self.cluster_url} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -338,12 +352,12 @@ class BetterClient:
             8), Decimal(16), Decimal(20), Decimal(30)]
 
     @property
-    def cluster(self) -> str:
-        return self.compatible_client.cluster
+    def cluster_name(self) -> str:
+        return self.compatible_client.cluster_name
 
-    @cluster.setter
-    def cluster(self, value: str) -> None:
-        self.compatible_client.cluster = value
+    @cluster_name.setter
+    def cluster_name(self, value: str) -> None:
+        self.compatible_client.cluster_name = value
 
     @property
     def cluster_url(self) -> str:
@@ -377,9 +391,17 @@ class BetterClient:
     def skip_preflight(self, value: bool) -> None:
         self.compatible_client.skip_preflight = value
 
+    @property
+    def instruction_reporter(self) -> InstructionReporter:
+        return self.compatible_client.instruction_reporter
+
+    @instruction_reporter.setter
+    def instruction_reporter(self, value: InstructionReporter) -> None:
+        self.compatible_client.instruction_reporter = value
+
     @staticmethod
-    def from_configuration(name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool) -> "BetterClient":
-        compatible = CompatibleClient(name, cluster, cluster_url, commitment, skip_preflight)
+    def from_configuration(name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter) -> "BetterClient":
+        compatible = CompatibleClient(name, cluster_name, cluster_url, commitment, skip_preflight, instruction_reporter)
         return BetterClient(compatible)
 
     def is_node_healthy(self) -> bool:
@@ -391,7 +413,7 @@ class BetterClient:
         return value / SOL_DECIMAL_DIVISOR
 
     def get_account_info(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment,
-                         encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> typing.Optional[typing.Dict[str, typing.Any]]:
+                         encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> typing.Dict:
         response = self.compatible_client.get_account_info(pubkey, commitment, encoding, data_slice)
         return response["result"]
 
@@ -439,9 +461,9 @@ class BetterClient:
             transaction, *signers, opts=opts)
         return response["result"]
 
-    def wait_for_confirmation(self, transaction_ids: typing.Sequence[str], max_wait_in_seconds: int = 60) -> typing.Sequence[typing.Dict]:
+    def wait_for_confirmation(self, transaction_ids: typing.Sequence[str], max_wait_in_seconds: int = 60) -> typing.Sequence[str]:
         self.logger.info(f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}.")
-        all_confirmed: typing.List[typing.Dict] = []
+        all_confirmed: typing.List[str] = []
         start_time: datetime.datetime = datetime.datetime.now()
         cutoff: datetime.datetime = start_time + datetime.timedelta(seconds=max_wait_in_seconds)
         for transaction_id in transaction_ids:
@@ -451,7 +473,7 @@ class BetterClient:
                 if confirmed is not None:
                     self.logger.info(
                         f"Confirmed {transaction_id} after {datetime.datetime.now() - start_time} seconds.")
-                    all_confirmed += [confirmed]
+                    all_confirmed += [transaction_id]
                     break
 
         if len(all_confirmed) != len(transaction_ids):
@@ -459,7 +481,7 @@ class BetterClient:
         return all_confirmed
 
     def __str__(self) -> str:
-        return f"« 𝙱𝚎𝚝𝚝𝚎𝚛𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster}]: {self.cluster_url} »"
+        return f"« 𝙱𝚎𝚝𝚝𝚎𝚛𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster_name}]: {self.cluster_url} »"
 
     def __repr__(self) -> str:
         return f"{self}"

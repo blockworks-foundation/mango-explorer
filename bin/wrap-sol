@@ -4,19 +4,18 @@ import argparse
 import logging
 import os
 import sys
-import typing
 
 from decimal import Decimal
-from solana.account import Account
-from solana.transaction import Transaction
+
+from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+    os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(
     description="Wraps Pure SOL to Wrapped SOL and adds it to the first Wrapped SOL account, creating that account if it doesn't exist.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of SOL to wrap")
 args = parser.parse_args()
@@ -24,40 +23,36 @@ args = parser.parse_args()
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-context = mango.Context.from_command_line_parameters(args)
+context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 wrapped_sol = context.token_lookup.find_by_symbol_or_raise("SOL")
 amount_to_transfer = int(args.quantity * mango.SOL_DECIMAL_DIVISOR)
 
-transaction = Transaction()
-signers: typing.List[Account] = [wallet.account]
-wrapped_sol_account = Account()
-signers.append(wrapped_sol_account)
-
-create_instruction = mango.CreateSplAccountInstructionBuilder(
-    context, wallet, wrapped_sol_account.public_key(), amount_to_transfer)
-transaction.add(create_instruction.build())
-init_instruction = mango.InitializeSplAccountInstructionBuilder(
-    context, wallet, wrapped_sol, wrapped_sol_account.public_key())
-transaction.add(init_instruction.build())
+signers: mango.CombinableInstructions = mango.CombinableInstructions.from_signers([wallet.account])
+all_instructions = signers
 
 token_accounts = mango.TokenAccount.fetch_all_for_owner_and_token(context, wallet.address, wrapped_sol)
 print("Wrapping SOL:")
 if len(token_accounts) == 0:
-    print(f"    Source: {wallet.address}")
-    print(f"    Destination: {wrapped_sol_account.public_key()}")
+    create_instructions = mango.build_create_associated_spl_account_instructions(context, wallet, wrapped_sol)
+    destination_wrapped_sol_address: PublicKey = create_instructions.instructions[0].keys[1].pubkey
+    all_instructions += create_instructions
 else:
-    print(f"    Temporary account: {wrapped_sol_account.public_key()}")
-    print(f"    Source: {wallet.address}")
-    print(f"    Destination: {token_accounts[0].address}")
-    wrap_instruction = mango.TransferSplTokensInstructionBuilder(
-        context, wallet, wrapped_sol, wrapped_sol_account.public_key(), token_accounts[0].address, args.quantity)
-    transaction.add(wrap_instruction.build())
-    close_instruction = mango.CloseSplAccountInstructionBuilder(context, wallet, wrapped_sol_account.public_key())
-    transaction.add(close_instruction.build())
+    destination_wrapped_sol_address = token_accounts[0].address
 
-transaction_ids = context.client.send_transaction(transaction, *signers)
+create_temporary_account_instructions = mango.build_create_spl_account_instructions(
+    context, wallet, wrapped_sol, amount_to_transfer)
+temporary_wrapped_sol_address = create_temporary_account_instructions.signers[0].public_key()
+all_instructions += create_temporary_account_instructions
 
-context.client.wait_for_confirmation(transaction_ids)
-print("Transaction confirmed.")
+print(f"    Temporary account: {temporary_wrapped_sol_address}")
+print(f"    Source: {wallet.address}")
+print(f"    Destination: {destination_wrapped_sol_address}")
+wrap_instruction = mango.build_transfer_spl_tokens_instructions(
+    context, wallet, wrapped_sol, temporary_wrapped_sol_address, destination_wrapped_sol_address, args.quantity)
+close_instruction = mango.build_close_spl_account_instructions(context, wallet, temporary_wrapped_sol_address)
+all_instructions = all_instructions + wrap_instruction + close_instruction
+
+transaction_ids = all_instructions.execute(context)
+print(f"Transaction ID: {transaction_ids}")

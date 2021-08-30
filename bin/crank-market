@@ -1,0 +1,46 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+from decimal import Decimal
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Cranks all openorders in the market.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--market", type=str, required=True, help="market symbol to crank (e.g. ETH/USDC)")
+parser.add_argument("--limit", type=Decimal, default=Decimal(32), help="maximum number of events to be processed")
+parser.add_argument("--account-index", type=int, default=0,
+                    help="index of the account to use, if more than one available")
+parser.add_argument("--dry-run", action="store_true", default=False,
+                    help="runs as read-only and does not perform any transactions")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+logging.info(f"Context: {context}")
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+group = mango.Group.load(context, context.group_address)
+account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
+
+logging.info(f"Wallet address: {wallet.address}")
+
+market_symbol = args.market.upper()
+market = context.market_lookup.find_by_symbol(market_symbol)
+if market is None:
+    raise Exception(f"Could not find market {market_symbol}")
+
+market_operations = mango.create_market_operations(context, wallet, account, market, args.dry_run)
+crank = market_operations.crank(args.limit)
+print(crank)
+
+logging.info("Crank completed.")

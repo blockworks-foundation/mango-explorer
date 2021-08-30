@@ -1,0 +1,101 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+import threading
+
+from decimal import Decimal
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+import mango.layouts  # nopep8
+import mango.marketmaking  # nopep8
+
+parser = argparse.ArgumentParser(
+    description="Hedges perp purchases by trading the underlying in the opposite direction.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--watch-market", type=str, required=True, help="perp market symbol to hedge (e.g. ETH-PERP)")
+parser.add_argument("--hedge-market", type=str, required=True, help="spot market symbol to hedge (e.g. ETH/USDC)")
+parser.add_argument("--max-price-slippage-factor", type=Decimal, default=Decimal("0.05"),
+                    help="the maximum value the IOC hedging order price can slip by when hedging (default is 0.05 for 5%%)")
+parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
+                    help="The notification target for error events")
+parser.add_argument("--account-index", type=int, default=0,
+                    help="index of the account to use, if more than one available")
+parser.add_argument("--dry-run", action="store_true", default=False,
+                    help="runs as read-only and does not perform any transactions")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+for notify in args.notify_errors:
+    handler = mango.NotificationHandler(notify)
+    handler.setLevel(logging.ERROR)
+    logging.getLogger().addHandler(handler)
+
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+group = mango.Group.load(context, context.group_address)
+account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
+
+disposer = mango.DisposePropagator()
+manager = mango.IndividualWebSocketSubscriptionManager(context)
+disposer.add_disposable(manager)
+health_check = mango.HealthCheck()
+disposer.add_disposable(health_check)
+
+watched_market_symbol = args.watch_market.upper()
+watched_market_stub = context.market_lookup.find_by_symbol(watched_market_symbol)
+if watched_market_stub is None:
+    raise Exception(f"Could not find market {watched_market_symbol}")
+
+ensured_watched_market = mango.ensure_market_loaded(context, watched_market_stub)
+if not isinstance(ensured_watched_market, mango.PerpMarket):
+    raise Exception(f"Market {watched_market_symbol} is not a perp market.")
+watched_market: mango.PerpMarket = ensured_watched_market
+
+hedging_market_symbol = args.hedge_market.upper()
+hedging_market_stub = context.market_lookup.find_by_symbol(hedging_market_symbol)
+if hedging_market_stub is None:
+    raise Exception(f"Could not find market {hedging_market_symbol}")
+
+hedging_market = mango.ensure_market_loaded(context, hedging_market_stub)
+if not isinstance(hedging_market, mango.SpotMarket):
+    raise Exception(f"Market {hedging_market_symbol} is not a spot market.")
+
+hedging_market_operations: mango.MarketOperations = mango.create_market_operations(
+    context, wallet, account, hedging_market, args.dry_run)
+
+perp_event_queue: mango.PerpEventQueue = mango.PerpEventQueue.load(
+    context, watched_market.underlying_perp_market.event_queue, watched_market.lot_size_converter)
+
+event_subscription = mango.WebSocketAccountSubscription(
+    context, watched_market.underlying_perp_market.event_queue, lambda account_info: mango.PerpEventQueue.parse(account_info, watched_market.lot_size_converter))
+manager.add(event_subscription)
+health_check.add("hedger_watched_events_pong_subscription", event_subscription.pong)
+
+hedger: mango.marketmaking.Hedger = mango.marketmaking.Hedger(context, account, watched_market, hedging_market, perp_event_queue, event_subscription.publisher,
+                                                              hedging_market_operations, args.max_price_slippage_factor)
+disposer.add_disposable(hedger)
+manager.open()
+
+logging.info(f"Current assets in account {account.address} (owner: {account.owner}):")
+mango.TokenValue.report([asset for asset in account.net_assets if asset is not None], logging.info)
+
+# Wait - don't exit. Exiting will be handled by signals/interrupts.
+waiter = threading.Event()
+try:
+    waiter.wait()
+except:
+    pass
+
+logging.info("Shutting down...")
+disposer.dispose()
+logging.info("Shutdown complete.")

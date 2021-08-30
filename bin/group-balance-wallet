@@ -6,21 +6,22 @@ import os
 import os.path
 import sys
 import traceback
+import typing
 
 from decimal import Decimal
 
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+    os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
     description="Balance the value of tokens in a Mango Markets group to specific values or percentages.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--target", type=str, action="append", required=True,
-                    help="token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5' or 'ETH:33%')")
+                    help="token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5')")
 parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
                     help="fraction of total wallet value a trade must be above to be carried out")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
@@ -33,7 +34,7 @@ logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
-    context = mango.Context.from_command_line_parameters(args)
+    context = mango.ContextBuilder.from_command_line_parameters(args)
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     action_threshold = args.action_threshold
     adjustment_factor = args.adjustment_factor
@@ -42,19 +43,21 @@ try:
     logging.info(f"Wallet address: {wallet.address}")
 
     group = mango.Group.load(context)
-    tokens = [basket_token.token for basket_token in group.basket_tokens]
+    tokens = [token_info.token for token_info in group.tokens if token_info is not None]
 
     balance_parser = mango.TargetBalanceParser(tokens)
     targets = list(map(balance_parser.parse, args.target))
     logging.info(f"Targets: {targets}")
 
-    prices = group.fetch_token_prices(context)
+    # TODO - fetch prices when available for V3.
+    # prices = group.fetch_token_prices(context)
+    prices: typing.Sequence[mango.TokenValue] = []
     logging.info(f"Prices: {prices}")
 
     if args.dry_run:
         trade_executor: mango.TradeExecutor = mango.NullTradeExecutor(print)
     else:
-        trade_executor = mango.SerumImmediateTradeExecutor(context, wallet, adjustment_factor, print)
+        trade_executor = mango.ImmediateTradeExecutor(context, wallet, None, adjustment_factor, print)
 
     wallet_balancer = mango.LiveWalletBalancer(
         context, wallet, group, trade_executor, action_threshold, tokens, targets)

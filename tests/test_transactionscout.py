@@ -9,7 +9,7 @@ import typing
 
 
 def test_transaction_instruction_constructor():
-    instruction_type: mango.InstructionType = mango.InstructionType.PartialLiquidate
+    instruction_type: mango.InstructionType = mango.InstructionType.Deposit
     instruction_data: typing.Dict[str, str] = {"key": "test value"}
     account1 = fake_seeded_public_key("account 1")
     account2 = fake_seeded_public_key("account 2")
@@ -24,21 +24,21 @@ def test_transaction_instruction_constructor():
 
 def test_transaction_scout_constructor():
     timestamp: datetime = datetime.now()
-    signatures: typing.List[str] = ["Signature1", "Signature2"]
+    signatures: typing.Sequence[str] = ["Signature1", "Signature2"]
     succeeded: bool = True
     group_name: str = "BTC_ETH_USDT"
     account1: PublicKey = fake_seeded_public_key("account 1")
     account2: PublicKey = fake_seeded_public_key("account 2")
     account3: PublicKey = fake_seeded_public_key("account 3")
-    accounts: typing.List[PublicKey] = [account1, account2, account3]
-    instructions: typing.List[str] = ["Instruction"]
-    messages: typing.List[str] = ["Message 1", "Message 2"]
+    accounts: typing.Sequence[PublicKey] = [account1, account2, account3]
+    instructions: typing.Sequence[str] = ["Instruction"]
+    messages: typing.Sequence[str] = ["Message 1", "Message 2"]
     token = fake_token()
     token_value = mango.TokenValue(token, Decimal(28))
     owner = fake_seeded_public_key("owner")
     owned_token_value = mango.OwnedTokenValue(owner, token_value)
-    pre_token_balances: typing.List[mango.OwnedTokenValue] = [owned_token_value]
-    post_token_balances: typing.List[mango.OwnedTokenValue] = [owned_token_value]
+    pre_token_balances: typing.Sequence[mango.OwnedTokenValue] = [owned_token_value]
+    post_token_balances: typing.Sequence[mango.OwnedTokenValue] = [owned_token_value]
     actual = mango.TransactionScout(timestamp, signatures, succeeded, group_name, accounts,
                                     instructions, messages, pre_token_balances, post_token_balances)
     assert actual is not None

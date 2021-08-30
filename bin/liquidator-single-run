@@ -9,16 +9,14 @@ import time
 import traceback
 
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+    os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Run a single pass of the liquidator for a Mango Markets group.")
-mango.Context.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--name", type=str, default="Mango Markets Liquidator",
-                    help="Name of the liquidator (used in reports and alerts)")
 parser.add_argument("--notify-liquidations", type=mango.parse_subscription_target, action="append", default=[],
                     help="The notification target for liquidation events")
 parser.add_argument("--notify-successful-liquidations", type=mango.parse_subscription_target,
@@ -40,7 +38,7 @@ for notify in args.notify_errors:
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
 try:
-    context = mango.Context.from_command_line_parameters(args)
+    context = mango.ContextBuilder.from_command_line_parameters(args)
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
     liquidator_name = args.name
@@ -71,27 +69,22 @@ try:
             item, mango.LiquidationEvent) and not item.succeeded)
         liquidations_publisher.subscribe(on_next=filtering.send)
 
+    # TODO: Add proper liquidator classes here when they're written for V3
     if args.dry_run:
         account_liquidator: mango.AccountLiquidator = mango.NullAccountLiquidator()
     else:
-        intermediate = mango.ForceCancelOrdersAccountLiquidator(context, wallet)
-        account_liquidator = mango.ReportingAccountLiquidator(intermediate,
-                                                              context,
-                                                              wallet,
-                                                              liquidations_publisher,
-                                                              liquidator_name)
+        account_liquidator = mango.NullAccountLiquidator()
 
     wallet_balancer = mango.NullWalletBalancer()
 
     liquidation_processor = mango.LiquidationProcessor(context, liquidator_name, account_liquidator, wallet_balancer)
 
     started_at = time.time()
-    ripe = group.load_ripe_margin_accounts()
-    liquidation_processor.update_margin_accounts(ripe)
+    liquidation_processor.update_accounts([])
 
     group = mango.Group.load(context)  # Refresh group data
-    prices = group.fetch_token_prices(context)
-    liquidation_processor.update_prices(group, prices)
+    # prices = group.fetch_token_prices(context)
+    liquidation_processor.update_prices(group, [])
 
     time_taken = time.time() - started_at
     logging.info(f"Check of all margin accounts complete. Time taken: {time_taken:.2f} seconds.")

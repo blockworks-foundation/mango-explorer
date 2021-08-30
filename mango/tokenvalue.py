@@ -37,6 +37,10 @@ class TokenValue:
         self.token = token
         self.value = value
 
+    def shift_to_native(self) -> "TokenValue":
+        new_value = self.token.shift_to_native(self.value)
+        return TokenValue(self.token, new_value)
+
     @staticmethod
     def fetch_total_value_or_none(context: Context, account_public_key: PublicKey, token: Token) -> typing.Optional["TokenValue"]:
         opts = TokenAccountOpts(mint=token.mint)
@@ -63,13 +67,14 @@ class TokenValue:
         return value
 
     @staticmethod
-    def report(values: typing.List["TokenValue"], reporter: typing.Callable[[str], None] = print) -> None:
+    def report(values: typing.Sequence["TokenValue"], reporter: typing.Callable[[str], None] = print) -> None:
         for value in values:
             reporter(f"{value.value:>18,.8f} {value.token.name}")
 
     @staticmethod
-    def find_by_symbol(values: typing.List["TokenValue"], symbol: str) -> "TokenValue":
-        found = [value for value in values if value.token.symbol_matches(symbol)]
+    def find_by_symbol(values: typing.Sequence[typing.Optional["TokenValue"]], symbol: str) -> "TokenValue":
+        found = [
+            value for value in values if value is not None and value.token is not None and value.token.symbol_matches(symbol)]
         if len(found) == 0:
             raise Exception(f"Token '{symbol}' not found in token values: {values}")
 
@@ -79,8 +84,8 @@ class TokenValue:
         return found[0]
 
     @staticmethod
-    def find_by_mint(values: typing.List["TokenValue"], mint: PublicKey) -> "TokenValue":
-        found = [value for value in values if value.token.mint == mint]
+    def find_by_mint(values: typing.Sequence[typing.Optional["TokenValue"]], mint: PublicKey) -> "TokenValue":
+        found = [value for value in values if value is not None and value.token is not None and value.token.mint == mint]
         if len(found) == 0:
             raise Exception(f"Token '{mint}' not found in token values: {values}")
 
@@ -90,11 +95,11 @@ class TokenValue:
         return found[0]
 
     @staticmethod
-    def find_by_token(values: typing.List["TokenValue"], token: Token) -> "TokenValue":
+    def find_by_token(values: typing.Sequence[typing.Optional["TokenValue"]], token: Token) -> "TokenValue":
         return TokenValue.find_by_mint(values, token.mint)
 
     @staticmethod
-    def changes(before: typing.List["TokenValue"], after: typing.List["TokenValue"]) -> typing.List["TokenValue"]:
+    def changes(before: typing.Sequence["TokenValue"], after: typing.Sequence["TokenValue"]) -> typing.Sequence["TokenValue"]:
         changes: typing.List[TokenValue] = []
         for before_balance in before:
             after_balance = TokenValue.find_by_token(after, before_balance.token)
@@ -103,8 +108,28 @@ class TokenValue:
 
         return changes
 
+    def __add__(self, token_value_to_add: "TokenValue") -> "TokenValue":
+        if self.token != token_value_to_add.token:
+            raise Exception(
+                f"Cannot add TokenValues from different tokens ({self.token} and {token_value_to_add.token}).")
+        return TokenValue(self.token, self.value + token_value_to_add.value)
+
+    def __sub__(self, token_value_to_subtract: "TokenValue") -> "TokenValue":
+        if self.token != token_value_to_subtract.token:
+            raise Exception(
+                f"Cannot subtract TokenValues from different tokens ({self.token} and {token_value_to_subtract.token}).")
+        return TokenValue(self.token, self.value - token_value_to_subtract.value)
+
+    def __eq__(self, other: typing.Any) -> bool:
+        if isinstance(other, TokenValue) and self.token == other.token and self.value == other.value:
+            return True
+        return False
+
     def __str__(self) -> str:
-        return f"« TokenValue: {self.value:>18,.8f} {self.token.name} »"
+        name = "« 𝚄𝚗-𝙽𝚊𝚖𝚎𝚍 𝚃𝚘𝚔𝚎𝚗 »"
+        if self.token and self.token.name:
+            name = self.token.name
+        return f"« 𝚃𝚘𝚔𝚎𝚗𝚅𝚊𝚕𝚞𝚎: {self.value:>18,.8f} {name} »"
 
     def __repr__(self) -> str:
         return f"{self}"

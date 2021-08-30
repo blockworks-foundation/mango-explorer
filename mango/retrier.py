@@ -42,11 +42,11 @@ from decimal import Decimal
 
 
 class RetryWithPauses:
-    def __init__(self, name: str, func: typing.Callable, pauses: typing.List[Decimal]) -> None:
+    def __init__(self, name: str, func: typing.Callable, pauses: typing.Sequence[Decimal]) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.func: typing.Callable = func
-        self.pauses: typing.List[Decimal] = pauses
+        self.pauses: typing.Sequence[Decimal] = pauses
 
     def run(self, *args, **kwargs):
         captured_exception: Exception = None
@@ -98,5 +98,5 @@ class RetryWithPauses:
 # ```
 
 @contextmanager
-def retry_context(name: str, func: typing.Callable, pauses: typing.List[Decimal]) -> typing.Iterator[RetryWithPauses]:
+def retry_context(name: str, func: typing.Callable, pauses: typing.Sequence[Decimal]) -> typing.Iterator[RetryWithPauses]:
     yield RetryWithPauses(name, func, pauses)

@@ -20,22 +20,21 @@ from solana.publickey import PublicKey
 
 from .tokenvalue import TokenValue
 
+
 # # 🥭 LiquidationEvent class
 #
-
-
 class LiquidationEvent:
-    def __init__(self, timestamp: datetime.datetime, liquidator_name: str, group_name: str, succeeded: bool, signatures: typing.Sequence[str], wallet_address: PublicKey, margin_account_address: PublicKey, balances_before: typing.List[TokenValue], balances_after: typing.List[TokenValue]):
+    def __init__(self, timestamp: datetime.datetime, liquidator_name: str, group_name: str, succeeded: bool, signatures: typing.Sequence[str], wallet_address: PublicKey, account_address: PublicKey, balances_before: typing.Sequence[TokenValue], balances_after: typing.Sequence[TokenValue]):
         self.timestamp: datetime.datetime = timestamp
         self.liquidator_name: str = liquidator_name
         self.group_name: str = group_name
         self.succeeded: bool = succeeded
         self.signatures: typing.Sequence[str] = signatures
         self.wallet_address: PublicKey = wallet_address
-        self.margin_account_address: PublicKey = margin_account_address
-        self.balances_before: typing.List[TokenValue] = balances_before
-        self.balances_after: typing.List[TokenValue] = balances_after
-        self.changes: typing.List[TokenValue] = TokenValue.changes(balances_before, balances_after)
+        self.account_address: PublicKey = account_address
+        self.balances_before: typing.Sequence[TokenValue] = balances_before
+        self.balances_after: typing.Sequence[TokenValue] = balances_after
+        self.changes: typing.Sequence[TokenValue] = TokenValue.changes(balances_before, balances_after)
 
     def __str__(self) -> str:
         result = "✅" if self.succeeded else "❌"
@@ -45,7 +44,7 @@ class LiquidationEvent:
     🗃️ Group: {self.group_name}
     📇 Signatures: {self.signatures}
     👛 Wallet: {self.wallet_address}
-    💳 Margin Account: {self.margin_account_address}
+    💳 Margin Account: {self.account_address}
     💸 Changes:
         {changes_text}
 »"""

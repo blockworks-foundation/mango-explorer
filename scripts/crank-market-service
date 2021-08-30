@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+MARKET=${1:-BTC-PERP}
+LIMIT=${2:-5}
+SLEEP_TIME=${3:-5}
+
+printf "Running crank on market %s with a limit of %d and a sleep time of %d second(s) between cranks.\nPress Control+C to stop...\n" ${MARKET} ${LIMIT} ${SLEEP_TIME}
+while :
+do
+    if crank-market --name "Crank ${MARKET}" --market ${MARKET} --limit ${LIMIT} --log-level ERROR; then
+        echo "Last ${MARKET} crank action: $(date)" > /var/tmp/mango_healthcheck_crank_market_service
+    fi
+
+    printf "Pausing after cranking for %d seconds.\n" ${SLEEP_TIME}
+    sleep ${SLEEP_TIME}
+done

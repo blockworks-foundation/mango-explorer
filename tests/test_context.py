@@ -3,102 +3,40 @@ from .context import mango
 from solana.publickey import PublicKey
 
 
-def context_has_default_values(ctx):
-    assert ctx.cluster == "mainnet-beta"
-    assert ctx.cluster_url == "https://solana-api.projectserum.com"
-    assert ctx.program_id == PublicKey("5fNfvyp5czQVX77yoACa3JJVEhdRaWjPuazuWgjhTqEH")
-    assert ctx.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-    assert ctx.group_name == "BTC_ETH_SOL_SRM_USDC"
-    assert ctx.group_id == PublicKey("2oogpTYm1sp6LPZAWD3bp2wsFpnV2kXL1s52yyFhW5vp")
+def context_has_default_values(ctx: mango.Context):
+    assert ctx.mango_program_address == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
+    assert ctx.serum_program_address == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+    assert ctx.group_name == "mainnet.1"
+    assert ctx.group_address == PublicKey("98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue")
 
 
 def test_context_default_exists():
-    assert mango.Context.default() is not None
+    assert mango.ContextBuilder.default() is not None
 
 
 def test_context_default_values():
-    context_has_default_values(mango.Context.default())
+    context_has_default_values(mango.ContextBuilder.default())
 
 
-def test_new_from_cluster():
-    context_has_default_values(mango.Context.default())
-    derived = mango.Context.default().new_from_cluster("devnet")
-    assert derived.cluster == "devnet"
-    assert derived.cluster_url == "https://api.devnet.solana.com"
-    assert derived.program_id == PublicKey("9XzhtAtDXxW2rjbeVFhTq4fnhD8dqzr154r5b2z6pxEp")
-    assert derived.dex_program_id == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
-    assert derived.group_name == "BTC_ETH_SOL_SRM_USDC"
-    assert derived.group_id == PublicKey("B9Uddrao7b7sCjNZp1BJSQqFzqhMEmBxD2SvYTs2TSBn")
-    context_has_default_values(mango.Context.default())
-
-
-def test_new_from_cluster_url():
-    context_has_default_values(mango.Context.default())
-    derived = mango.Context.default().new_from_cluster_url("https://some-dev-host")
-    assert derived.cluster == "mainnet-beta"
-    assert derived.cluster_url == "https://some-dev-host"
-    assert derived.program_id == PublicKey("5fNfvyp5czQVX77yoACa3JJVEhdRaWjPuazuWgjhTqEH")
-    assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-    assert derived.group_name == "BTC_ETH_SOL_SRM_USDC"
-    assert derived.group_id == PublicKey("2oogpTYm1sp6LPZAWD3bp2wsFpnV2kXL1s52yyFhW5vp")
-    context_has_default_values(mango.Context.default())
+# Need to have more than one working cluster for this test.
+# def test_new_from_cluster():
+#     context_has_default_values(mango.ContextBuilder.default())
+#     derived = mango.ContextBuilder.default().new_from_cluster("mainnet")
+#     assert derived.cluster_name == "mainnet"
+#     assert derived.cluster_url == "https://solana-api.projectserum.com"
+#     assert derived.mango_program_address == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
+#     assert derived.serum_program_address == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+#     assert derived.group_name == "mainnet.0"
+#     assert derived.group_address == PublicKey("98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue")
+#     context_has_default_values(mango.ContextBuilder.default())
 
 
 def test_new_from_group_name():
-    context_has_default_values(mango.Context.default())
-    derived = mango.Context.default().new_from_group_name("BTC_ETH_SOL_SRM_USDC")
-    assert derived.cluster == "mainnet-beta"
-    assert derived.cluster_url == "https://solana-api.projectserum.com"
-    assert derived.program_id == PublicKey("5fNfvyp5czQVX77yoACa3JJVEhdRaWjPuazuWgjhTqEH")
-    assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
+    context_has_default_values(mango.ContextBuilder.default())
+    derived = mango.ContextBuilder.from_group_name(mango.ContextBuilder.default(), "mainnet.0")
+    assert derived.mango_program_address == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
+    assert derived.serum_program_address == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
 
     # Should update both of these values on new group name.
-    assert derived.group_name == "BTC_ETH_SOL_SRM_USDC"
-    assert derived.group_id == PublicKey("2oogpTYm1sp6LPZAWD3bp2wsFpnV2kXL1s52yyFhW5vp")
-    context_has_default_values(mango.Context.default())
-
-
-def test_new_from_group_name_3token_group():
-    context_has_default_values(mango.Context.default())
-    derived = mango.Context.default().new_from_group_name("BTC_ETH_USDT")
-    assert derived.cluster == "mainnet-beta"
-    assert derived.cluster_url == "https://solana-api.projectserum.com"
-
-    # 3-token Group should use JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu as program ID
-    assert derived.program_id == PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
-    assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-
-    # Should update both of these values on new group name.
-    assert derived.group_name == "BTC_ETH_USDT"
-    assert derived.group_id == PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV")
-    context_has_default_values(mango.Context.default())
-
-
-def test_new_from_group_id():
-    context_has_default_values(mango.Context.default())
-    derived = mango.Context.default().new_from_group_id(PublicKey("2oogpTYm1sp6LPZAWD3bp2wsFpnV2kXL1s52yyFhW5vp"))
-    assert derived.cluster == "mainnet-beta"
-    assert derived.cluster_url == "https://solana-api.projectserum.com"
-    assert derived.program_id == PublicKey("5fNfvyp5czQVX77yoACa3JJVEhdRaWjPuazuWgjhTqEH")
-    assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-
-    # Should update both of these values on new group ID.
-    assert derived.group_name == "BTC_ETH_SOL_SRM_USDC"
-    assert derived.group_id == PublicKey("2oogpTYm1sp6LPZAWD3bp2wsFpnV2kXL1s52yyFhW5vp")
-    context_has_default_values(mango.Context.default())
-
-
-def test_new_from_group_id_3token_group():
-    context_has_default_values(mango.Context.default())
-    derived = mango.Context.default().new_from_group_id(PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV"))
-    assert derived.cluster == "mainnet-beta"
-    assert derived.cluster_url == "https://solana-api.projectserum.com"
-
-    # 3-token Group should use JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu as program ID
-    assert derived.program_id == PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
-    assert derived.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-
-    # Should update both of these values on new group ID.
-    assert derived.group_name == "BTC_ETH_USDT"
-    assert derived.group_id == PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV")
-    context_has_default_values(mango.Context.default())
+    assert derived.group_name == "mainnet.0"
+    assert derived.group_address == PublicKey("4yJ2Vx3kZnmHTNCrHzdoj5nCwriF2kVhfKNvqC6gU8tr")

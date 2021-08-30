@@ -10,14 +10,12 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+    os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(
     description="Sends a notification if an account's SOL balance is below the '--minimum-sol-balance' parameter threshold.")
-mango.Context.add_command_line_parameters(parser)
-parser.add_argument("--name", type=str, required=True,
-                    help="name of the account")
+mango.ContextBuilder.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey, required=True,
                     help="address of the account")
 parser.add_argument("--minimum-sol-balance", type=Decimal, default=Decimal("0.1"),
@@ -29,15 +27,14 @@ args = parser.parse_args()
 logging.getLogger().setLevel(args.log_level)
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
-context = mango.Context.from_command_line_parameters(args)
+context = mango.ContextBuilder.from_command_line_parameters(args)
 
 account_info = mango.AccountInfo.load(context, args.address)
 if account_info is None:
     raise Exception(f"No account at '{args.address}'")
 else:
-    account_sols = account_info.lamports / mango.SOL_DECIMAL_DIVISOR
-    if account_sols < args.minimum_sol_balance:
-        report = f"Account \"{args.name} [{args.address}]\" on {context.cluster} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
+    if account_info.sols < args.minimum_sol_balance:
+        report = f"Account \"{args.name} [{args.address}]\" on {context.client.cluster_name} has only {account_info.sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
         for notify in args.notify:
             notify.send(report)
         print(f"Notification sent: {report}")

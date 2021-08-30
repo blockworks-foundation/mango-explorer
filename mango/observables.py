@@ -14,12 +14,12 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import datetime
 import logging
 import rx
 import rx.subject
 import typing
 
+from datetime import datetime
 from rx.core.abc.disposable import Disposable
 from rxpy_backpressure import BackPressure
 
@@ -30,20 +30,40 @@ from rxpy_backpressure import BackPressure
 # [RX Observables](https://rxpy.readthedocs.io/en/latest/reference_observable.html).
 #
 
+# # 🥭 NullObserverSubscriber class
+#
+# This class can subscribe to an `Observable` to do nothing but make sure it runs.
+#
+
+
+class NullObserverSubscriber(rx.core.Observer):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def on_next(self, item: typing.Any) -> None:
+        pass
+
+    def on_error(self, ex: Exception) -> None:
+        pass
+
+    def on_completed(self) -> None:
+        pass
+
+
 # # 🥭 PrintingObserverSubscriber class
 #
 # This class can subscribe to an `Observable` and print out each item.
 #
-
-
-class PrintingObserverSubscriber(rx.core.typing.Observer):
+class PrintingObserverSubscriber(rx.core.Observer):
     def __init__(self, report_no_output: bool) -> None:
         super().__init__()
         self.report_no_output = report_no_output
+        self.counter = 0
 
     def on_next(self, item: typing.Any) -> None:
         self.report_no_output = False
-        print(item)
+        print(self.counter, item)
+        self.counter += 1
 
     def on_error(self, ex: Exception) -> None:
         self.report_no_output = False
@@ -58,22 +78,19 @@ class PrintingObserverSubscriber(rx.core.typing.Observer):
 #
 # Just like `PrintingObserverSubscriber` but it puts a timestamp on each printout.
 #
-
 class TimestampedPrintingObserverSubscriber(PrintingObserverSubscriber):
     def __init__(self, report_no_output: bool) -> None:
         super().__init__(report_no_output)
 
     def on_next(self, item: typing.Any) -> None:
-        super().on_next(f"{datetime.datetime.now()}: {item}")
+        super().on_next(f"{datetime.now()}: {item}")
 
 
 # # 🥭 CollectingObserverSubscriber class
 #
 # This class can subscribe to an `Observable` and collect each item.
 #
-
-
-class CollectingObserverSubscriber(rx.core.typing.Observer):
+class CollectingObserverSubscriber(rx.core.Observer):
     def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.collected: typing.List[typing.Any] = []
@@ -90,11 +107,9 @@ class CollectingObserverSubscriber(rx.core.typing.Observer):
 
 # # 🥭 CaptureFirstItem class
 #
-# This captures the first item to pass through the pipeline, allowing it to be instpected
+# This captures the first item to pass through the pipeline, allowing it to be inspected
 # later.
 #
-
-
 class CaptureFirstItem:
     def __init__(self):
         self.captured: typing.Any = None
@@ -108,6 +123,34 @@ class CaptureFirstItem:
         return item
 
 
+# # 🥭 TItem type parameter
+#
+# The `TItem` type parameter is the type parameter for the generic `LatestItemObserverSubscriber`.
+#
+TItem = typing.TypeVar('TItem')
+
+
+# # 🥭 LatestItemObserverSubscriber class
+#
+# This class can subscribe to an `Observable` and capture the latest item as it is observed.
+#
+class LatestItemObserverSubscriber(rx.core.Observer, typing.Generic[TItem]):
+    def __init__(self, initial: TItem) -> None:
+        super().__init__()
+        self.latest: TItem = initial
+        self.update_timestamp: datetime = datetime.now()
+
+    def on_next(self, item: TItem) -> None:
+        self.latest = item
+        self.update_timestamp = datetime.now()
+
+    def on_error(self, ex: Exception) -> None:
+        pass
+
+    def on_completed(self) -> None:
+        pass
+
+
 # # 🥭 FunctionObserver
 #
 # This class takes functions for `on_next()`, `on_error()` and `on_completed()` and returns
@@ -116,9 +159,7 @@ class CaptureFirstItem:
 # This is mostly for libraries (like `rxpy_backpressure`) that take observers but not their
 # component functions.
 #
-
-
-class FunctionObserver(rx.core.typing.Observer):
+class FunctionObserver(rx.core.Observer):
     def __init__(self,
                  on_next: typing.Callable[[typing.Any], None],
                  on_error: typing.Callable[[Exception], None] = lambda _: None,
@@ -155,8 +196,7 @@ class FunctionObserver(rx.core.typing.Observer):
 # take multiple seconds to complete. In that case, the latest item will be immediately
 # emitted and the in-between items skipped.
 #
-
-def create_backpressure_skipping_observer(on_next: typing.Callable[[typing.Any], None], on_error: typing.Callable[[Exception], None] = lambda _: None, on_completed: typing.Callable[[], None] = lambda: None) -> rx.core.typing.Observer:
+def create_backpressure_skipping_observer(on_next: typing.Callable[[typing.Any], None], on_error: typing.Callable[[Exception], None] = lambda _: None, on_completed: typing.Callable[[], None] = lambda: None) -> rx.core.Observer:
     observer = FunctionObserver(on_next=on_next, on_error=on_error, on_completed=on_completed)
     return BackPressure.LATEST(observer)
 
@@ -174,7 +214,6 @@ def create_backpressure_skipping_observer(on_next: typing.Callable[[typing.Any],
 # ).subscribe(some_subscriber)
 # ```
 #
-
 def debug_print_item(title: str) -> typing.Callable[[typing.Any], typing.Any]:
     def _debug_print_item(item: typing.Any) -> typing.Any:
         print(title, item)
@@ -186,7 +225,6 @@ def debug_print_item(title: str) -> typing.Callable[[typing.Any], typing.Any]:
 #
 # Logs subscription exceptions to the root logger.
 #
-
 def log_subscription_error(error: Exception) -> None:
     logging.error(f"Observable subscription error: {error}")
 
@@ -220,20 +258,22 @@ def log_subscription_error(error: Exception) -> None:
 # sub1.subscribe(lambda item: print(item), on_error = lambda error: print(f"Error : {error}"))
 # ```
 #
-
 def observable_pipeline_error_reporter(ex, _):
     logging.error(f"Intercepted error in observable pipeline: {ex}")
     raise ex
+
+
+# # 🥭 TEventDatum type parameter
+#
+# The `TEventDatum` type parameter is the type parameter for the generic `LatestItemObserverSubscriber`.
+#
+TEventDatum = typing.TypeVar('TEventDatum')
 
 
 # # 🥭 EventSource class
 #
 # A strongly(ish)-typed event source that can handle many subscribers.
 #
-
-TEventDatum = typing.TypeVar('TEventDatum')
-
-
 class EventSource(rx.subject.Subject, typing.Generic[TEventDatum]):
     def __init__(self) -> None:
         super().__init__()
@@ -263,14 +303,25 @@ class EventSource(rx.subject.Subject, typing.Generic[TEventDatum]):
 # A `Disposable` class that can 'fan out' `dispose()` calls to perform additional
 # cleanup actions.
 #
-
 class DisposePropagator(Disposable):
     def __init__(self):
-        self.handlers: typing.List[typing.Callable[[], None]] = []
+        self.disposables: typing.List[Disposable] = []
 
-    def add_ondispose(self, handler: typing.Callable[[], None]):
-        self.handlers += [handler]
+    def add_disposable(self, disposable: Disposable):
+        self.disposables += [disposable]
 
     def dispose(self):
-        for handler in self.handlers:
-            handler()
+        for disposable in self.disposables:
+            disposable.dispose()
+
+
+# # 🥭 DisposeWrapper class
+#
+# A `Disposable` class that wraps a lambda to perform some cleanup actions when it is disposed.
+#
+class DisposeWrapper(Disposable):
+    def __init__(self, callable):
+        self.callable: typing.Callable[[], None] = callable
+
+    def dispose(self):
+        self.callable()

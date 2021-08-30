@@ -21,31 +21,32 @@ mypy:
 	for file in bin/* ; do \
         cp $${file} .tmplintdir/$${file##*/}.py ; \
 	done
-	-mypy mango tests .tmplintdir
+	-mypy --no-incremental --cache-dir=/dev/null mango tests .tmplintdir
 	rm -rf .tmplintdir
 
 flake8:
-	flake8 --extend-ignore E402,E501,E722,W291,W391 . tests/* bin/*
+	flake8 --extend-ignore E402,E501,E722,W291,W391 . bin/*
 
 lint: flake8 mypy
 
 ci: lint test ## Run all the tests and code checks
 
 docker-build:
-	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer:latest
+	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer-v3:latest
 
 docker-push:
-	docker push opinionatedgeek/mango-explorer:latest
+	docker push opinionatedgeek/mango-explorer-v3:latest
 
 docker: docker-build docker-push
 
 docker-experimental-build:
-	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer:experimental
+	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer-v3:experimental
 
 docker-experimental-push:
-	docker push opinionatedgeek/mango-explorer:experimental
+	docker push opinionatedgeek/mango-explorer-v3:experimental
 
 docker-experimental: docker-experimental-build docker-experimental-push
+
 
 # Absolutely awesome: http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help:
