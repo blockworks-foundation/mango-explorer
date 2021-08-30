@@ -815,3 +815,45 @@ def build_redeem_accrued_mango_instructions(context: Context, wallet: Wallet, pe
         data=layouts.REDEEM_MNGO.build(dict())
     )
     return CombinableInstructions(signers=[], instructions=[redeem_accrued_mango_instruction])
+
+
+# # 🥭 build_faucet_airdrop_instructions function
+#
+# Creates an airdrop instruction for compatible faucets (those based on https://github.com/paul-schaaf/spl-token-faucet)
+#
+def build_faucet_airdrop_instructions(token_mint: PublicKey, destination: PublicKey, faucet: PublicKey, quantity: Decimal) -> CombinableInstructions:
+    faucet_program_address: PublicKey = PublicKey("4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt")
+    authority_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
+        [b"faucet"],
+        faucet_program_address
+    )
+    authority: PublicKey = authority_and_nonce[0]
+
+    # Mints and airdrops tokens from a faucet.
+    #
+    # SPL instruction is at:
+    #   https://github.com/paul-schaaf/spl-token-faucet/blob/main/src/program/src/instruction.rs
+    #
+    # ///
+    # /// Mints Tokens
+    # ///
+    # /// 0. `[]` The mint authority - Program Derived Address
+    # /// 1. `[writable]` Token Mint Account
+    # /// 2. `[writable]` Destination Account
+    # /// 3. `[]` The SPL Token Program
+    # /// 4. `[]` The Faucet Account
+    # /// 5. `[optional/signer]` Admin Account
+    faucet_airdrop_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=authority),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=token_mint),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=destination),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=faucet)
+        ],
+        program_id=faucet_program_address,
+        data=layouts.FAUCET_AIRDROP.build({
+            "quantity": quantity
+        })
+    )
+    return CombinableInstructions(signers=[], instructions=[faucet_airdrop_instruction])

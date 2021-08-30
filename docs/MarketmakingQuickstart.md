@@ -184,8 +184,6 @@ It should look something like this, but with different numbers:
 ```
 Yes, that’s the actual secret key of the account.
 
-Import that secret key into [Sollet](https://www.sollet.io/) by clicking ‘Account’, ‘Add Account’, entering a name into the Name field (‘Marketmaker’ perhaps?), turning the ‘Import Private Key’ slider to On, and pasting in that JSON array of the secret key (the bit that starts ‘[166,81,103,111...’ above) into the field that says ‘Paste your private key here’. Then click the ‘Add’ button. You can now switch Sollet to devnet (the selector is at the top-right) and use your new devnet account to sign transactions. (You’ll need this later for the faucet.)
-
 
 # 5. 🎱 Common Command Parameters
 
@@ -357,17 +355,13 @@ You can see the details of your new account there, including all the zero-balanc
 
 # 8. 💸 Add USDC
 
-Now you need to get some devnet USDC. You only need USDC for marketmaking on BTC-PERP - you don’t need a stash of both base and quote tokens the way you would if you were marketmaking on, say, BTC/USDC.
-
-There’s a faucet to freely give out USDC tokens, and a [faucet web site](https://www.spl-token-ui.com/#/token-faucets) to help interact with the faucet contract.
-
-You need to create the ‘Associated Token Account’ for your USDC devnet tokens before you use the faucet though. This is a bit awkward, so there’s a command to help. Run:
+Now you need to get some devnet USDC. You only need USDC for marketmaking on BTC-PERP - you don’t need a stash of both base and quote tokens the way you would if you were marketmaking on, say, BTC/USDC. There’s a faucet to freely give out devnet USDC tokens at 6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB. Instead of using the [faucet web site](https://www.spl-token-ui.com/#/token-faucets), just run the command:
 ```
-# mango-explorer ensure-associated-token-account --cluster-name devnet --symbol USDC
+# airdrop --symbol USDC --quantity 10000 --faucet 6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB --cluster-name devnet
 ```
-That command should create the associated token account if it doesn’t exist, and then print out the address of it. You need that address for the faucet. You should see something like:
+You should see output like:
 ```
-2021-08-27 19:19:06 ⚠ root
+2021-08-30 11:03:09 ⚠ root
 ⚠ WARNING ⚠
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -379,41 +373,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     🚧 Github: https://github.com/blockworks-foundation
     📧 Email: mailto:hello@blockworks.foundation
 
-No associated token account at: CfWq8oFtsyWQ1eVaC3qW3ffCFjQHUd4QmVjW9L9EQrBL - creating...
-2021-08-27 19:19:07 ⓘ BetterClient Waiting up to 60 seconds for ['2ATus96zNYysfR6xzpBoYXiZdr69copCJAqovM86nLJLQkr7dnYBLpBxEaKDUerCb1MnEkXcc1TiXdjYqqtmYjjc'].
-2021-08-27 19:19:21 ⓘ BetterClient Confirmed 2ATus96zNYysfR6xzpBoYXiZdr69copCJAqovM86nLJLQkr7dnYBLpBxEaKDUerCb1MnEkXcc1TiXdjYqqtmYjjc after 0:00:14.180995 seconds.
-Associated token account created at: CfWq8oFtsyWQ1eVaC3qW3ffCFjQHUd4QmVjW9L9EQrBL.
+2021-08-30 11:03:09 ⓘ BetterClient Waiting up to 60 seconds for ['2pHzmyPVT1UaU13zyigjQRr1xLz8jExpbiAsFpxxMzjoTEbyxAbhvtfYmQ2oiqfLF5Y6U637EBbJh3Wi1i561z5A'].
+2021-08-30 11:03:28 ⓘ BetterClient Confirmed 2pHzmyPVT1UaU13zyigjQRr1xLz8jExpbiAsFpxxMzjoTEbyxAbhvtfYmQ2oiqfLF5Y6U637EBbJh3Wi1i561z5A after 0:00:19.050797 seconds.
+Airdropping 10000 USDC to CfWq8oFtsyWQ1eVaC3qW3ffCFjQHUd4QmVjW9L9EQrBL
+Transaction IDs: ['2fS2eFBryK97mxwh65dKqvmDX2PZdNDbYYfFHmphufnqWZpYPuhovsdiXpf96teZvM1eF6obxyWgFsAxtmEt6uvU']
 ```
-It’s safe to run it again. It won’t create additional associated token accounts, and you’ll see output like this:
-```
-2021-08-27 19:20:02 ⚠ root
-⚠ WARNING ⚠
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-    🥭 Mango Markets: https://mango.markets
-    📄 Documentation: https://docs.mango.markets/
-    💬 Discord: https://discord.gg/67jySBhxrg
-    🐦 Twitter: https://twitter.com/mangomarkets
-    🚧 Github: https://github.com/blockworks-foundation
-    📧 Email: mailto:hello@blockworks.foundation
-
-Associated token account already exists at: CfWq8oFtsyWQ1eVaC3qW3ffCFjQHUd4QmVjW9L9EQrBL.
-```
-In both cases you should see the associated token account address. It’s CfWq8oFtsyWQ1eVaC3qW3ffCFjQHUd4QmVjW9L9EQrBL in the output above, but it will be different for your account.
-
-Now, to use the faucet:
-1. Go to the [faucet website](https://www.spl-token-ui.com/#/token-faucets)
-2. Change to devnet by hovering over the ‘mainnet-beta’ button in the top-right of the page and choosing ‘devnet’.
-3. Click the ‘Token Airdrop’ button.
-4. Leave the ‘Admin’ field blank.
-5. Enter the associated token account address (from the account you just created) into the ‘Token Destination Address’ field.
-6. Enter B87AhxX6BkBsj3hnyHzcerX2WxPoACC7ZyDr8E7H9geN into the ‘Faucet Address’ field.
-7. Enter 10000000000 into the Amount field (that’s 10,000,000,000 because the token value takes an integer and shifts it 6 decimal places)
-8. Click the ‘Airdrop Tokens’ button.
-9. Connect and sign the transaction using your devnet Sollet wallet.
-
-You should then get a confirmation message from the site saying ‘Success! Take a look at your account’.
+10,000 devnet USDC should now be deposited into your USDC SPL token devnet account.
 
 
 # 9. ⚖️ Deposit USDC

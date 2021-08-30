@@ -1,0 +1,52 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+from decimal import Decimal
+from spl.token.client import Token as SplToken
+from spl.token.constants import TOKEN_PROGRAM_ID
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="mint SPL tokens to your wallet")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--symbol", type=str, required=True, help="token symbol to airdrop (e.g. USDC)")
+parser.add_argument("--faucet", type=PublicKey, required=True, help="public key of the faucet")
+parser.add_argument("--quantity", type=Decimal, required=True, help="quantity token to airdrop")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+token = context.token_lookup.find_by_symbol(args.symbol.upper())
+if token is None:
+    raise Exception(f"Could not find token with symbol '{args.symbol}'.")
+
+spl_token = SplToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.account)
+
+# This is a root wallet account - get the associated token account
+destination: PublicKey = mango.TokenAccount.find_or_create_token_address_to_use(
+    context, wallet, wallet.address, token)
+print("destination", destination)
+
+quantity = token.shift_to_native(args.quantity)
+
+signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
+
+print(f"Airdropping {args.quantity} {args.symbol} to {destination}")
+airdrop = mango.build_faucet_airdrop_instructions(token.mint, destination, args.faucet, quantity)
+
+all_instructions = signers + airdrop
+transaction_ids = all_instructions.execute(context)
+print("Transaction IDs:", transaction_ids)

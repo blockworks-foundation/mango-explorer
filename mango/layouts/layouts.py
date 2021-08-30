@@ -284,8 +284,6 @@ ACCOUNT_FLAGS = construct.BitsSwapped(
 
 
 # ## TOKEN_ACCOUNT
-
-
 TOKEN_ACCOUNT = construct.Struct(
     "mint" / PublicKeyAdapter(),
     "owner" / PublicKeyAdapter(),
@@ -299,8 +297,6 @@ TOKEN_ACCOUNT = construct.Struct(
 # Trying to use the `OPEN_ORDERS_LAYOUT` and `OpenOrdersAccount` from `pyserum` just
 # proved too probelmatic. (`OpenOrdersAccount` doesn't expose `referrer_rebate_accrued`,
 # for instance.)
-
-
 OPEN_ORDERS = construct.Struct(
     construct.Padding(5),
     "account_flags" / ACCOUNT_FLAGS,
@@ -316,6 +312,25 @@ OPEN_ORDERS = construct.Struct(
     "client_ids" / construct.Array(128, DecimalAdapter()),
     "referrer_rebate_accrued" / DecimalAdapter(),
     "padding" / construct.Padding(7)
+)
+
+# Mints and airdrops tokens from a faucet.
+#
+# SPL instruction is at:
+#   https://github.com/paul-schaaf/spl-token-faucet/blob/main/src/program/src/instruction.rs
+#
+# ///
+# /// Mints Tokens
+# ///
+# /// 0. `[]` The mint authority - Program Derived Address
+# /// 1. `[writable]` Token Mint Account
+# /// 2. `[writable]` Destination Account
+# /// 3. `[]` The SPL Token Program
+# /// 4. `[]` The Faucet Account
+# /// 5. `[optional/signer]` Admin Account
+FAUCET_AIRDROP = construct.Struct(
+    "variant" / construct.Const(1, construct.BytesInteger(1, swapped=True)),
+    "quantity" / DecimalAdapter()
 )
 
 
