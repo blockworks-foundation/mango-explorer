@@ -172,7 +172,12 @@ mango.TokenValue.report([asset for asset in account.net_assets if asset is not N
 
 manager.open()
 
-pulse_disposable = rx.interval(args.pulse_interval).subscribe(
+pulse_disposable = rx.interval(args.pulse_interval).pipe(
+    rx.operators.observe_on(context.pool_scheduler),
+    rx.operators.start_with(-1),
+    rx.operators.catch(mango.observable_pipeline_error_reporter),
+    rx.operators.retry()
+).subscribe(
     on_next=lambda _: market_maker.pulse(context, model_state_builder.build(context)))
 disposer.add_disposable(pulse_disposable)
 
