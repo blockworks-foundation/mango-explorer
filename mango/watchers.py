@@ -23,6 +23,7 @@ from solana.publickey import PublicKey
 
 from .account import Account
 from .accountinfo import AccountInfo
+from .cache import Cache
 from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import Group
@@ -68,6 +69,16 @@ def build_account_watcher(context: Context, manager: WebSocketSubscriptionManage
     account_subscription.publisher.subscribe(latest_account_observer)
     health_check.add("account_subscription", account_subscription.publisher)
     return account_subscription, latest_account_observer
+
+
+def build_cache_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, cache: Cache, group: Group) -> Watcher[Cache]:
+    cache_subscription = WebSocketAccountSubscription[Cache](
+        context, group.cache, lambda account_info: Cache.parse(account_info))
+    manager.add(cache_subscription)
+    latest_cache_observer = LatestItemObserverSubscriber[Cache](cache)
+    cache_subscription.publisher.subscribe(latest_cache_observer)
+    health_check.add("cache_subscription", cache_subscription.publisher)
+    return latest_cache_observer
 
 
 def build_spot_open_orders_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, wallet: Wallet, account: Account, group: Group, spot_market: SpotMarket) -> Watcher[PlacedOrdersContainer]:
@@ -153,12 +164,11 @@ def build_price_watcher(context: Context, manager: WebSocketSubscriptionManager,
     return latest_price_observer
 
 
-def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, disposer: DisposePropagator, wallet: Wallet, market: Market) -> Watcher[Inventory]:
+def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, disposer: DisposePropagator, wallet: Wallet, market: Market, price_watcher: Watcher[Price]) -> Watcher[Inventory]:
     base_account = TokenAccount.fetch_largest_for_owner_and_token(
         context, wallet.address, market.base)
     if base_account is None:
-        raise Exception(
-            f"Could not find token account owned by {wallet.address} for base token {market.base}.")
+        raise Exception(f"Could not find token account owned by {wallet.address} for base token {market.base}.")
     base_token_subscription = WebSocketAccountSubscription[TokenAccount](
         context, base_account.address, lambda account_info: TokenAccount.parse(account_info, market.base))
     manager.add(base_token_subscription)
@@ -169,8 +179,7 @@ def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscripti
     quote_account = TokenAccount.fetch_largest_for_owner_and_token(
         context, wallet.address, market.quote)
     if quote_account is None:
-        raise Exception(
-            f"Could not find token account owned by {wallet.address} for quote token {market.quote}.")
+        raise Exception(f"Could not find token account owned by {wallet.address} for quote token {market.quote}.")
     quote_token_subscription = WebSocketAccountSubscription[TokenAccount](
         context, quote_account.address, lambda account_info: TokenAccount.parse(account_info, market.quote))
     manager.add(quote_token_subscription)
@@ -185,7 +194,11 @@ def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscripti
     mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
 
     def serum_inventory_accessor() -> Inventory:
+        available: Decimal = (latest_base_token_account_observer.latest.value.value * price_watcher.latest.mid_price) + \
+            latest_quote_token_account_observer.latest.value.value
+        available_collateral: TokenValue = TokenValue(latest_quote_token_account_observer.latest.value.token, available)
         return Inventory(InventorySource.SPL_TOKENS, mngo_accrued,
+                         available_collateral,
                          latest_base_token_account_observer.latest.value,
                          latest_quote_token_account_observer.latest.value)
 

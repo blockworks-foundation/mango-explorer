@@ -13,9 +13,6 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-from mango.perpopenorders import PerpOpenOrders
-from mango.placedorder import PlacedOrder
-from mango.tokeninfo import TokenInfo
 import typing
 
 from decimal import Decimal
@@ -31,7 +28,10 @@ from .layouts import layouts
 from .metadata import Metadata
 from .orders import Side
 from .perpaccount import PerpAccount
+from .perpopenorders import PerpOpenOrders
+from .placedorder import PlacedOrder
 from .token import Token
+from .tokeninfo import TokenInfo
 from .tokenvalue import TokenValue
 from .version import Version
 

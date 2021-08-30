@@ -37,7 +37,6 @@ from .serumeventqueue import SerumEventQueue
 # Given a `Context` and an account type, returns a function that can take an `AccountInfo` and
 # return one of our objects.
 #
-
 def build_account_info_converter(context: Context, account_type: str) -> typing.Callable[[AccountInfo], AddressableAccount]:
     account_type_upper = account_type.upper()
     if account_type_upper == "GROUP":

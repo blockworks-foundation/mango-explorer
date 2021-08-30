@@ -74,7 +74,6 @@ TMappedGroupBasketValue = typing.TypeVar("TMappedGroupBasketValue")
 #
 # `Group` defines root functionality for Mango Markets.
 #
-
 class Group(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, name: str,
                  meta_data: Metadata,
@@ -121,6 +120,10 @@ class Group(AddressableAccount):
     @property
     def perp_markets(self) -> typing.Sequence[typing.Optional[PerpMarketInfo]]:
         return Group._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item.perp_market_info)
+
+    @property
+    def markets(self) -> typing.Sequence[typing.Optional[GroupBasketMarket]]:
+        return Group._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item)
 
     @staticmethod
     def from_layout(context: Context, layout: typing.Any, name: str, account_info: AccountInfo, version: Version, token_lookup: TokenLookup, market_lookup: MarketLookup) -> "Group":
@@ -205,6 +208,13 @@ class Group(AddressableAccount):
                 return index
 
         raise Exception(f"Could not find perp market {perp_market_address} in group {self.address}")
+
+    def find_base_token_market_index(self, base_token: TokenInfo) -> int:
+        for index, bt in enumerate(self.base_tokens):
+            if bt is not None and bt.token == base_token.token:
+                return index
+
+        raise Exception(f"Could not find base token {base_token} in group {self.address}")
 
     def find_token_info_by_token(self, token: Token) -> TokenInfo:
         for token_info in self.tokens:

@@ -147,10 +147,6 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
             account_infos[3], self.base_inventory_token_account.value.token)
         quote_inventory_token_account = mango.TokenAccount.parse(
             account_infos[4], self.quote_inventory_token_account.value.token)
-        inventory: mango.Inventory = mango.Inventory(mango.InventorySource.SPL_TOKENS,
-                                                     mngo_accrued,
-                                                     base_inventory_token_account.value,
-                                                     quote_inventory_token_account.value)
 
         bids: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
             account_infos[5], self.market.underlying_serum_market)
@@ -158,6 +154,15 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
             account_infos[6], self.market.underlying_serum_market)
 
         price: mango.Price = self.oracle.fetch_price(context)
+
+        available: Decimal = (base_inventory_token_account.value.value * price.mid_price) + \
+            quote_inventory_token_account.value.value
+        available_collateral: TokenValue = TokenValue(quote_inventory_token_account.value.token, available)
+        inventory: mango.Inventory = mango.Inventory(mango.InventorySource.SPL_TOKENS,
+                                                     mngo_accrued,
+                                                     available_collateral,
+                                                     base_inventory_token_account.value,
+                                                     quote_inventory_token_account.value)
 
         return self.from_values(self.market, group, account, price, placed_orders_container, inventory, bids, asks)
 
@@ -174,6 +179,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
                  market: mango.SpotMarket,
                  oracle: mango.Oracle,
                  group_address: PublicKey,
+                 cache_address: PublicKey,
                  account_address: PublicKey,
                  open_orders_address: PublicKey
                  ):
@@ -182,12 +188,16 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
         self.oracle: mango.Oracle = oracle
 
         self.group_address: PublicKey = group_address
+        self.cache_address: PublicKey = cache_address
         self.account_address: PublicKey = account_address
         self.open_orders_address: PublicKey = open_orders_address
+
+        self.collateral_calculator: mango.CollateralCalculator = mango.SpotCollateralCalculator()
 
     def poll(self, context: mango.Context) -> ModelState:
         addresses: typing.List[PublicKey] = [
             self.group_address,
+            self.cache_address,
             self.account_address,
             self.open_orders_address,
             self.market.underlying_serum_market.state.bids(),
@@ -195,9 +205,10 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
         ]
         account_infos: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(context, addresses)
         group: mango.Group = mango.Group.parse(context, account_infos[0])
-        account: mango.Account = mango.Account.parse(account_infos[1], group)
+        cache: mango.Cache = mango.Cache.parse(account_infos[1])
+        account: mango.Account = mango.Account.parse(account_infos[2], group)
         placed_orders_container: mango.PlacedOrdersContainer = mango.OpenOrders.parse(
-            account_infos[2], self.market.base.decimals, self.market.quote.decimals)
+            account_infos[3], self.market.base.decimals, self.market.quote.decimals)
 
         # Spot markets don't accrue MNGO liquidity incentives
         mngo = account.group.find_token_info_by_symbol("MNGO").token
@@ -205,13 +216,18 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
 
         base_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.base.symbol)
         quote_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.quote.symbol)
-        inventory: mango.Inventory = mango.Inventory(
-            mango.InventorySource.ACCOUNT, mngo_accrued, base_value, quote_value)
+
+        available_collateral: TokenValue = self.collateral_calculator.calculate(account, cache)
+        inventory: mango.Inventory = mango.Inventory(mango.InventorySource.ACCOUNT,
+                                                     mngo_accrued,
+                                                     available_collateral,
+                                                     base_value,
+                                                     quote_value)
 
         bids: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
-            account_infos[3], self.market.underlying_serum_market)
-        asks: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
             account_infos[4], self.market.underlying_serum_market)
+        asks: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
+            account_infos[5], self.market.underlying_serum_market)
 
         price: mango.Price = self.oracle.fetch_price(context)
 
@@ -230,6 +246,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
                  market: mango.PerpMarket,
                  oracle: mango.Oracle,
                  group_address: PublicKey,
+                 cache_address: PublicKey,
                  account_address: PublicKey
                  ):
         super().__init__()
@@ -237,18 +254,23 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         self.oracle: mango.Oracle = oracle
 
         self.group_address: PublicKey = group_address
+        self.cache_address: PublicKey = cache_address
         self.account_address: PublicKey = account_address
+
+        self.collateral_calculator: mango.CollateralCalculator = mango.PerpCollateralCalculator()
 
     def poll(self, context: mango.Context) -> ModelState:
         addresses: typing.List[PublicKey] = [
             self.group_address,
+            self.cache_address,
             self.account_address,
             self.market.underlying_perp_market.bids,
             self.market.underlying_perp_market.asks
         ]
         account_infos: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(context, addresses)
         group: mango.Group = mango.Group.parse(context, account_infos[0])
-        account: mango.Account = mango.Account.parse(account_infos[1], group)
+        cache: mango.Cache = mango.Cache.parse(account_infos[1])
+        account: mango.Account = mango.Account.parse(account_infos[2], group)
 
         index = group.find_perp_market_index(self.market.address)
         perp_account = account.perp_accounts[index]
@@ -260,13 +282,17 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         base_value = self.market.lot_size_converter.quantity_lots_to_value(base_lots)
         base_token_value = mango.TokenValue(self.market.base, base_value)
         quote_token_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.quote.symbol)
-        inventory: mango.Inventory = mango.Inventory(
-            mango.InventorySource.ACCOUNT, perp_account.mngo_accrued, base_token_value, quote_token_value)
+        available_collateral: TokenValue = self.collateral_calculator.calculate(account, cache)
+        inventory: mango.Inventory = mango.Inventory(mango.InventorySource.ACCOUNT,
+                                                     perp_account.mngo_accrued,
+                                                     available_collateral,
+                                                     base_token_value,
+                                                     quote_token_value)
 
         bids: mango.PerpOrderBookSide = mango.PerpOrderBookSide.parse(
-            context, account_infos[2], self.market.underlying_perp_market)
-        asks: mango.PerpOrderBookSide = mango.PerpOrderBookSide.parse(
             context, account_infos[3], self.market.underlying_perp_market)
+        asks: mango.PerpOrderBookSide = mango.PerpOrderBookSide.parse(
+            context, account_infos[4], self.market.underlying_perp_market)
 
         price: mango.Price = self.oracle.fetch_price(context)
 

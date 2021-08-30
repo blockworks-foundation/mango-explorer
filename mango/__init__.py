@@ -8,6 +8,7 @@ from .addressableaccount import AddressableAccount
 from .balancesheet import BalanceSheet
 from .cache import PriceCache, RootBankCache, PerpMarketCache, Cache
 from .client import CompatibleClient, BetterClient
+from .collateralcalculator import CollateralCalculator, SerumCollateralCalculator, SpotCollateralCalculator, PerpCollateralCalculator
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS, SOL_MINT_ADDRESS, SOL_DECIMALS, SOL_DECIMAL_DIVISOR, WARNING_DISCLAIMER_TEXT, MangoConstants
 from .context import Context
@@ -77,7 +78,7 @@ from .version import Version
 from .wallet import Wallet
 from .walletbalancer import TargetBalance, FixedTargetBalance, PercentageTargetBalance, TargetBalanceParser, sort_changes_for_trades, calculate_required_balance_changes, FilterSmallChanges, WalletBalancer, NullWalletBalancer, LiveWalletBalancer
 from .watcher import Watcher, ManualUpdateWatcher, LamdaUpdateWatcher
-from .watchers import build_group_watcher, build_account_watcher, build_spot_open_orders_watcher, build_serum_open_orders_watcher, build_perp_open_orders_watcher, build_price_watcher, build_serum_inventory_watcher, build_perp_orderbook_side_watcher, build_serum_orderbook_side_watcher
+from .watchers import build_group_watcher, build_account_watcher, build_cache_watcher, build_spot_open_orders_watcher, build_serum_open_orders_watcher, build_perp_open_orders_watcher, build_price_watcher, build_serum_inventory_watcher, build_perp_orderbook_side_watcher, build_serum_orderbook_side_watcher
 from .websocketsubscription import WebSocketSubscription, WebSocketProgramSubscription, WebSocketAccountSubscription, WebSocketLogSubscription, WebSocketSubscriptionManager, IndividualWebSocketSubscriptionManager, SharedWebSocketSubscriptionManager
 
 from .layouts import layouts

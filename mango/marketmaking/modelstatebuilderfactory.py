@@ -92,12 +92,12 @@ def _polling_spot_model_state_builder_factory(group: mango.Group, account: mango
         raise Exception(
             f"Could not find spot openorders in account {account.address} for market {market.symbol}.")
     return SpotPollingModelStateBuilder(
-        market, oracle, group.address, account.address, open_orders_address)
+        market, oracle, group.address, group.cache, account.address, open_orders_address)
 
 
 def _polling_perp_model_state_builder_factory(group: mango.Group, account: mango.Account, market: mango.PerpMarket,
                                               oracle: mango.Oracle) -> ModelStateBuilder:
-    return PerpPollingModelStateBuilder(market, oracle, group.address, account.address)
+    return PerpPollingModelStateBuilder(market, oracle, group.address, group.cache, account.address)
 
 
 def _websocket_model_state_builder_factory(context: mango.Context, disposer: mango.DisposePropagator,
@@ -118,8 +118,10 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
 
     market = mango.ensure_market_loaded(context, market)
     if isinstance(market, mango.SerumMarket):
+        price_watcher: mango.Watcher[mango.Price] = mango.build_price_watcher(
+            context, websocket_manager, health_check, disposer, "serum", market)
         inventory_watcher: mango.Watcher[mango.Inventory] = mango.build_serum_inventory_watcher(
-            context, websocket_manager, health_check, disposer, wallet, market)
+            context, websocket_manager, health_check, disposer, wallet, market, price_watcher)
         latest_open_orders_observer: mango.Watcher[mango.PlacedOrdersContainer] = mango.build_serum_open_orders_watcher(
             context, websocket_manager, health_check, market, wallet)
         latest_bids_watcher: mango.Watcher[typing.Sequence[mango.Order]] = mango.build_serum_orderbook_side_watcher(
@@ -127,7 +129,10 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
         latest_asks_watcher: mango.Watcher[typing.Sequence[mango.Order]] = mango.build_serum_orderbook_side_watcher(
             context, websocket_manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.ASKS)
     elif isinstance(market, mango.SpotMarket):
-        inventory_watcher = mango.SpotInventoryAccountWatcher(market, latest_account_observer)
+        cache: mango.Cache = mango.Cache.load(context, group.cache)
+        cache_watcher: mango.Watcher[mango.Cache] = mango.build_cache_watcher(
+            context, websocket_manager, health_check, cache, group)
+        inventory_watcher = mango.SpotInventoryAccountWatcher(market, latest_account_observer, cache_watcher)
         latest_open_orders_observer = mango.build_spot_open_orders_watcher(
             context, websocket_manager, health_check, wallet, account, group, market)
         latest_bids_watcher = mango.build_serum_orderbook_side_watcher(
@@ -135,7 +140,9 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
         latest_asks_watcher = mango.build_serum_orderbook_side_watcher(
             context, websocket_manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.ASKS)
     elif isinstance(market, mango.PerpMarket):
-        inventory_watcher = mango.PerpInventoryAccountWatcher(market, latest_account_observer, group)
+        cache = mango.Cache.load(context, group.cache)
+        cache_watcher = mango.build_cache_watcher(context, websocket_manager, health_check, cache, group)
+        inventory_watcher = mango.PerpInventoryAccountWatcher(market, latest_account_observer, cache_watcher, group)
         latest_open_orders_observer = mango.build_perp_open_orders_watcher(
             context, websocket_manager, health_check, market, account, group, account_subscription)
         latest_bids_watcher = mango.build_perp_orderbook_side_watcher(
