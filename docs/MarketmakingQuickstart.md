@@ -529,7 +529,7 @@ Here are some parameters that are commonly passed to the `marketmaker`.
 
 - `--pulse-interval` This is the interval (in seconds) between each marketmaker iteration. Each iteration it examines state, cancels orders and places orders - the ‘pulse interval’ is the number of seconds to wait between these iterations.
 
-- `--order-type` The order type to use. POSTONLY is a common choice for a marketmaker, although LIMIT is sometimes helpful. Options are:
+- `--order-type` The order type to use. POST_ONLY is a common choice for a marketmaker, although LIMIT is sometimes helpful. Options are:
     - POST_ONLY
     - LIMIT
     - IOC
