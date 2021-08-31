@@ -73,15 +73,15 @@ class PythOracle(Oracle):
     def fetch_price(self, _: Context) -> Price:
         price_account_info = AccountInfo.load(self.context, self.product_data.px_acc)
         if price_account_info is None:
-            raise Exception(f"Price account {self.product_data.px_acc} not found.")
+            raise Exception(f"[{self.context.name}] Price account {self.product_data.px_acc} not found.")
 
         if len(price_account_info.data) != PRICE.sizeof():
             raise Exception(
-                f"Price account data has incorrect size. Expected: {PRICE.sizeof()}, got {len(price_account_info.data)}.")
+                f"[{self.context.name}] Price account data has incorrect size. Expected: {PRICE.sizeof()}, got {len(price_account_info.data)}.")
 
         price_data = PRICE.parse(price_account_info.data)
         if price_data.magic != MAGIC:
-            raise Exception(f"Price account {price_account_info.address} is not a Pyth account.")
+            raise Exception(f"[{self.context.name}] Price account {price_account_info.address} is not a Pyth account.")
 
         factor = Decimal(10) ** price_data.expo
         price = price_data.agg.price * factor
@@ -145,7 +145,7 @@ class PythOracleProvider(OracleProvider):
     def _load_pyth_mapping(self, context: Context, address: PublicKey) -> typing.Any:
         account_info = AccountInfo.load(context, address)
         if account_info is None:
-            raise Exception(f"Pyth mapping account {address} not found.")
+            raise Exception(f"[{context.name}] Pyth mapping account {address} not found.")
 
         if len(account_info.data) != MAPPING.sizeof():
             raise Exception(
@@ -154,7 +154,7 @@ class PythOracleProvider(OracleProvider):
         mapping: typing.Any = MAPPING.parse(account_info.data)
         mapping.address = account_info.address
         if mapping.magic != MAGIC:
-            raise Exception(f"Mapping account {account_info.address} is not a Pyth account.")
+            raise Exception(f"[{context.name}] Mapping account {account_info.address} is not a Pyth account.")
 
         return mapping
 
@@ -167,6 +167,7 @@ class PythOracleProvider(OracleProvider):
             product: typing.Any = PRODUCT.parse(product_account_info.data)
             product.address = product_account_info.address
             if product.magic != MAGIC:
-                raise Exception(f"Product account {product_account_info.address} is not a Pyth account.")
+                raise Exception(
+                    f"[{context.name}] Product account {product_account_info.address} is not a Pyth account.")
             products += [product]
         return products
