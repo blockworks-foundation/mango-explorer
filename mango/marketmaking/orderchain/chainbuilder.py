@@ -25,6 +25,7 @@ from .confidenceintervalspreadelement import ConfidenceIntervalSpreadElement
 from .element import Element
 from .minimumchargeelement import MinimumChargeElement
 from .preventpostonlycrossingbookelement import PreventPostOnlyCrossingBookElement
+from .roundtolotsizeelement import RoundToLotSizeElement
 
 
 # # 🥭 ChainBuilder class
@@ -61,7 +62,8 @@ class ChainBuilder:
             ConfidenceIntervalSpreadElement(args.position_size_ratio, confidence_interval_levels, args.order_type),
             BiasQuoteOnPositionElement(args.quote_position_bias),
             MinimumChargeElement(args.minimum_charge_ratio),
-            PreventPostOnlyCrossingBookElement()
+            PreventPostOnlyCrossingBookElement(),
+            RoundToLotSizeElement()
         ]
 
         return Chain(elements)

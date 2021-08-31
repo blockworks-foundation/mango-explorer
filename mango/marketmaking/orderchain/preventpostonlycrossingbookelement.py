@@ -40,16 +40,16 @@ class PreventPostOnlyCrossingBookElement(Element):
                     new_buy: mango.Order = order.with_price(new_buy_price)
                     self.logger.debug(
                         f"""Order change - would cross the orderbook {top_bid.price if top_bid else None} / {top_ask.price}:
-                    Old: {order}
-                    New: {new_buy}""")
+    Old: {order}
+    New: {new_buy}""")
                     new_orders += [new_buy]
                 elif order.side == mango.Side.SELL and top_bid is not None and top_ask is not None and order.price <= top_bid.price:
                     new_sell_price: Decimal = top_ask.price + model_state.market.lot_size_converter.tick_size
                     new_sell: mango.Order = order.with_price(new_sell_price)
                     self.logger.debug(
                         f"""Order change - would cross the orderbook {top_bid.price} / {top_ask.price if top_ask else None}:
-                    Old: {order}
-                    New: {new_sell}""")
+    Old: {order}
+    New: {new_sell}""")
 
                     new_orders += [new_sell]
                 else:

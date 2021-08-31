@@ -13,7 +13,6 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
 from decimal import Decimal
 
 from .token import Token
@@ -45,6 +44,18 @@ class LotSizeConverter():
 
     def quantity_lots_to_value(self, quantity_lots: Decimal) -> Decimal:
         return (quantity_lots * self.base_lot_size) / (10 ** self.base.decimals)
+
+    def round_base(self, quantity: Decimal) -> Decimal:
+        base_factor: Decimal = 10 ** self.base.decimals
+        rounded: int = round(quantity * base_factor)
+        return Decimal(rounded) / base_factor
+
+    def round_quote(self, price: Decimal) -> Decimal:
+        quote_factor: Decimal = 10 ** self.base.decimals
+        base_factor: Decimal = 10 ** self.base.decimals
+        lots: Decimal = (price * quote_factor * self.base_lot_size) / (base_factor * self.quote_lot_size)
+        rounded: int = round(lots)
+        return Decimal(rounded) / self.quote_lot_size
 
     def __str__(self) -> str:
         return f"« 𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 [base lot size: {self.base_lot_size}, quote lot size: {self.quote_lot_size}] »"
