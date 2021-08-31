@@ -130,8 +130,8 @@ class ActualAccountLiquidator(AccountLiquidator):
             self.logger.debug("    Data:", " ".join(f"{x:02x}" for x in instruction.data))
             self.logger.debug("    Program ID:", instruction.program_id)
 
-        transaction_ids = self.context.client.send_transaction(transaction, self.wallet.account)
-        return transaction_ids
+        transaction_id: str = self.context.client.send_transaction(transaction, self.wallet.account)
+        return [transaction_id]
 
 
 # # 🌪️ ForceCancelOrdersAccountLiquidator class

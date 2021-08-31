@@ -67,11 +67,14 @@ class TooManyRequestsRateLimitException(RateLimitException):
 # of problems at the right place.
 #
 class TransactionException(Exception):
-    def __init__(self, message: str, code: int, name: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None]):
+    def __init__(self, message: str, code: int, name: str, rpc_method: str, request_text: str, response_text: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None]):
         super().__init__(message)
         self.message: str = message
         self.code: int = code
         self.name: str = name
+        self.rpc_method: str = rpc_method
+        self.request_text: str = request_text
+        self.response_text: str = response_text
 
         def _ensure_list(item: typing.Union[str, typing.List[str], None]) -> typing.List[str]:
             if item is None:
@@ -95,13 +98,17 @@ class TransactionException(Exception):
         logs = "No Logs"
         if len(self.logs) > 0:
             logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
-        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.name}] {self.code}: {self.message}
+        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 in '{self.name}' calling [{self.rpc_method}]: {self.code}:: {self.message}
     Accounts:
         {accounts}
     Errors:
         {errors}
     Logs:
         {logs}
+    Request Text:
+        {self.request_text}
+    Response Text:
+        {self.response_text}
 »"""
 
     def __repr__(self) -> str:
@@ -280,7 +287,8 @@ class CompatibleClient:
 
         # All seems OK, but maybe the server returned an error? If so, try to pass on as much
         # information as we can.
-        response = json.loads(raw_response.text)
+        response_text: str = raw_response.text
+        response: typing.Dict = json.loads(response_text)
         if "error" in response:
             if response["error"] is str:
                 message: str = typing.cast(str, response["error"])
@@ -293,8 +301,8 @@ class CompatibleClient:
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
                 error_err = error_data["err"] if "err" in error_data else "No error text returned"
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
-                raise TransactionException(exception_message, error_code, self.name,
-                                           error_accounts, error_err, error_logs)
+                raise TransactionException(exception_message, error_code, self.name, method, data,
+                                           response_text, error_accounts, error_err, error_logs)
 
         # The call succeeded.
         return typing.cast(RPCResponse, response)
