@@ -69,12 +69,15 @@ class TooManyRequestsRateLimitException(RateLimitException):
 # of problems at the right place.
 #
 class TransactionException(Exception):
-    def __init__(self, transaction: typing.Optional[Transaction], message: str, code: int, name: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None], instruction_reporter: InstructionReporter = InstructionReporter()):
+    def __init__(self, transaction: typing.Optional[Transaction], message: str, code: int, name: str, rpc_method: str, request_text: str, response_text: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None], instruction_reporter: InstructionReporter = InstructionReporter()):
         super().__init__(message)
         self.transaction: typing.Optional[Transaction] = transaction
         self.message: str = message
         self.code: int = code
         self.name: str = name
+        self.rpc_method: str = rpc_method
+        self.request_text: str = request_text
+        self.response_text: str = response_text
 
         def _ensure_list(item: typing.Union[str, typing.List[str], None]) -> typing.List[str]:
             if item is None:
@@ -90,6 +93,15 @@ class TransactionException(Exception):
         self.instruction_reporter: InstructionReporter = instruction_reporter
 
     def __str__(self) -> str:
+        request_details: str = ""
+        response_details: str = ""
+        if logging.DEBUG >= logging.root.level:
+            request_details = f"""
+    Request:
+        {self.request_text}"""
+            response_details = f"""
+    Response:
+        {self.response_text}"""
         transaction_details = ""
         if self.transaction is not None:
             instruction_details = "\n".join(list(map(self.instruction_reporter.report, self.transaction.instructions)))
@@ -103,13 +115,13 @@ class TransactionException(Exception):
         logs = "No Logs"
         if len(self.logs) > 0:
             logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
-        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.name}] {self.code}: {self.message}{transaction_details}
+        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 in '{self.name}' [{self.rpc_method}]: {self.code}:: {self.message}{transaction_details}
     Accounts:
         {accounts}
     Errors:
         {errors}
     Logs:
-        {logs}
+        {logs}{request_details}{response_details}
 »"""
 
     def __repr__(self) -> str:
@@ -270,9 +282,10 @@ class CompatibleClient(Client):
             )
         except TransactionException as transaction_exception:
             raise TransactionException(transaction, transaction_exception.message, transaction_exception.code,
-                                       transaction_exception.name, transaction_exception.accounts,
-                                       transaction_exception.errors, transaction_exception.logs,
-                                       self.instruction_reporter) from None
+                                       transaction_exception.name, transaction_exception.rpc_method,
+                                       transaction_exception.request_text, transaction_exception.response_text,
+                                       transaction_exception.accounts, transaction_exception.errors,
+                                       transaction_exception.logs, self.instruction_reporter) from None
 
     def _send_request(self, method: str, *params: typing.Any) -> RPCResponse:
         request_id = next(self._request_counter) + 1
@@ -294,7 +307,8 @@ class CompatibleClient(Client):
 
         # All seems OK, but maybe the server returned an error? If so, try to pass on as much
         # information as we can.
-        response = json.loads(raw_response.text)
+        response_text: str = raw_response.text
+        response: typing.Dict = json.loads(response_text)
         if "error" in response:
             if response["error"] is str:
                 message: str = typing.cast(str, response["error"])
@@ -307,8 +321,8 @@ class CompatibleClient(Client):
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
                 error_err = error_data["err"] if "err" in error_data else "No error text returned"
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
-                raise TransactionException(None, exception_message, error_code, self.name,
-                                           error_accounts, error_err, error_logs)
+                raise TransactionException(None, exception_message, error_code, self.name, method, data,
+                                           response_text, error_accounts, error_err, error_logs)
 
         # The call succeeded.
         return typing.cast(RPCResponse, response)

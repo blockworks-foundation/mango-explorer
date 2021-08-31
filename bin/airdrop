@@ -38,7 +38,6 @@ spl_token = SplToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM
 # This is a root wallet account - get the associated token account
 destination: PublicKey = mango.TokenAccount.find_or_create_token_address_to_use(
     context, wallet, wallet.address, token)
-print("destination", destination)
 
 quantity = token.shift_to_native(args.quantity)
 
