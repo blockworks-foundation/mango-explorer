@@ -4,7 +4,7 @@
 
 This Quickstart will guide you through setting up and running [mango-explorer](https://github.com/blockworks-foundation/mango-explorer/) to run a marketmaker on [Mango Markets](https://mango.markets/) perps on devnet.
 
-Devnet and [Mango’s Devnet Site](https://v3.mango.markets) are test/development environments where it is safe to try things out without risking ‘live’ tokens. Tokens on devnet are purely for development and testing and have no value.
+Devnet and [Mango’s Devnet Site](https://devnet.mango.markets) are test/development environments where it is safe to try things out without risking ‘live’ tokens. Tokens on devnet are purely for development and testing and have no value.
 
 Throughout this guide you’ll see the private key, accounts and transaction IDs as well as the commands and parameters that are used. (This is a devnet account so no actual funds are required. And remember - sharing your private key is usually a Very Bad Idea!)
 
@@ -654,6 +654,6 @@ Some important things to note from the simulated run:
 
 If you’ve got this far and you’re happy with the results, you can run the same command with the `--dry-run` parameter removed. That will start the marketmaker and have it place orders. This is all still on devnet, so no real funds are at stake.
 
-Output should be broadly the same as the output for a ‘dry run’, but you’ll be able to see the orders appear on [Mango Devnet](https://v3.mango.markets) and you’ll sometimes see errors from the chain or more detail from some of the transactions.
+Output should be broadly the same as the output for a ‘dry run’, but you’ll be able to see the orders appear on [Mango Devnet](https://devnet.mango.markets) and you’ll sometimes see errors from the chain or more detail from some of the transactions.
 
 Now, it’s over to you. Happy marketmaking!
