@@ -51,7 +51,7 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
         self.publisher: EventSource[TSubscriptionInstance] = EventSource[TSubscriptionInstance]()
         self.ws: typing.Optional[ReconnectingWebsocket] = None
         self.pong: BehaviorSubject = BehaviorSubject(datetime.now())
-        self.pong_subscription: typing.Optional[Disposable] = None
+        self._pong_subscription: typing.Optional[Disposable] = None
 
     @abc.abstractmethod
     def build_request(self) -> str:
@@ -64,13 +64,13 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
         ws.ping_interval = self.context.ping_interval
         self.ws = ws
         ws.open()
-        self.pong_subscription = ws.pong.subscribe(self.pong)
+        self._pong_subscription = ws.pong.subscribe(self.pong)
 
     def close(self) -> None:
         if self.ws is not None:
-            if self.pong_subscription is not None:
-                self.pong_subscription.dispose()
-                self.pong_subscription = None
+            if self._pong_subscription is not None:
+                self._pong_subscription.dispose()
+                self._pong_subscription = None
             self.ws.close()
             self.ws = None
 
@@ -96,9 +96,9 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
         self.publisher.on_completed()
         self.publisher.dispose()
         if self.ws is not None:
-            if self.pong_subscription is not None:
-                self.pong_subscription.dispose()
-                self.pong_subscription = None
+            if self._pong_subscription is not None:
+                self._pong_subscription.dispose()
+                self._pong_subscription = None
             self.ws.close()
             self.ws = None
 
@@ -246,6 +246,8 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
     def __init__(self, context: Context, ping_interval: int = 10):
         super().__init__(context, ping_interval)
         self.ws: typing.Optional[ReconnectingWebsocket] = None
+        self.pong: BehaviorSubject = BehaviorSubject(datetime.now())
+        self._pong_subscription: typing.Optional[Disposable] = None
 
     def open(self) -> None:
         websocket_url = self.context.client.cluster_url.replace("https", "wss", 1)
@@ -254,9 +256,13 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
         ws.ping_interval = self.ping_interval
         self.ws = ws
         ws.open()
+        self._pong_subscription = ws.pong.subscribe(self.pong)
 
     def close(self) -> None:
         if self.ws is not None:
+            if self._pong_subscription is not None:
+                self._pong_subscription.dispose()
+                self._pong_subscription = None
             self.ws.close()
             self.ws = None
 
@@ -295,5 +301,8 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
     def dispose(self):
         super().dispose()
         if self.ws is not None:
+            if self._pong_subscription is not None:
+                self._pong_subscription.dispose()
+                self._pong_subscription = None
             self.ws.close()
             self.ws = None
