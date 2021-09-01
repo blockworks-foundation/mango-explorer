@@ -50,7 +50,7 @@ class AccountInfo:
         return f"""« AccountInfo [{self.address}]:
     Owner: {self.owner}
     Executable: {self.executable}
-    Lamports: {self.lamports}
+    Lamports: {self.lamports} / Sols: {self.sols}
     Rent Epoch: {self.rent_epoch}
 »"""
 

@@ -357,7 +357,7 @@ You can see the details of your new account there, including all the zero-balanc
 
 Now you need to get some devnet USDC. You only need USDC for marketmaking on BTC-PERP - you don’t need a stash of both base and quote tokens the way you would if you were marketmaking on, say, BTC/USDC. There’s a faucet to freely give out devnet USDC tokens at B87AhxX6BkBsj3hnyHzcerX2WxPoACC7ZyDr8E7H9geN. Instead of using the [faucet web site](https://www.spl-token-ui.com/#/token-faucets), just run the command:
 ```
-# airdrop --symbol USDC --quantity 10000 --faucet B87AhxX6BkBsj3hnyHzcerX2WxPoACC7ZyDr8E7H9geN --cluster-name devnet
+# mango-explorer airdrop --symbol USDC --quantity 10000 --faucet B87AhxX6BkBsj3hnyHzcerX2WxPoACC7ZyDr8E7H9geN --cluster-name devnet
 ```
 You should see output like:
 ```
