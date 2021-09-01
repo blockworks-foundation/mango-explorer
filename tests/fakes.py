@@ -1,6 +1,8 @@
 import construct
 import datetime
 import mango
+import mango.marketmaking
+import typing
 
 from decimal import Decimal
 from pyserum.market import Market as PySerumMarket
@@ -87,6 +89,10 @@ def fake_spot_market_stub() -> mango.SpotMarketStub:
     return mango.SpotMarketStub(fake_seeded_public_key("program ID"), fake_seeded_public_key("spot market"), fake_token("BASE"), fake_token("QUOTE"), fake_seeded_public_key("group address"))
 
 
+def fake_loaded_market() -> mango.Market:
+    return mango.Market(fake_seeded_public_key("program ID"), fake_seeded_public_key("perp market"), mango.InventorySource.ACCOUNT, fake_token("BASE"), fake_token("QUOTE"), mango.NullLotSizeConverter())
+
+
 def fake_token_account() -> mango.TokenAccount:
     token_account_info = fake_account_info()
     token = fake_token()
@@ -102,3 +108,64 @@ def fake_wallet() -> mango.Wallet:
     wallet = mango.Wallet([1] * 64)
     wallet.account = Account()
     return wallet
+
+
+def fake_order(price: Decimal = Decimal(1), quantity: Decimal = Decimal(1), side: mango.Side = mango.Side.BUY, order_type: mango.OrderType = mango.OrderType.LIMIT) -> mango.Order:
+    return mango.Order.from_basic_info(side=side, price=price, quantity=quantity, order_type=order_type)
+
+
+def fake_group():
+    return None
+
+
+def fake_account():
+    return None
+
+
+def fake_price():
+    return None
+
+
+def fake_placed_orders_container():
+    return None
+
+
+def fake_inventory():
+    return None
+
+
+def fake_bids():
+    return None
+
+
+def fake_asks():
+    return None
+
+
+def fake_model_state(market: typing.Optional[mango.Market] = None,
+                     group: typing.Optional[mango.Group] = None,
+                     account: typing.Optional[mango.Account] = None,
+                     price: typing.Optional[mango.Price] = None,
+                     placed_orders_container: typing.Optional[mango.PlacedOrdersContainer] = None,
+                     inventory: typing.Optional[mango.Inventory] = None,
+                     bids: typing.Optional[typing.Sequence[mango.Order]] = None,
+                     asks: typing.Optional[typing.Sequence[mango.Order]] = None) -> mango.marketmaking.ModelState:
+    market = market or fake_loaded_market()
+    group = group or fake_group()
+    account = account or fake_account()
+    price = price or fake_price()
+    placed_orders_container = placed_orders_container or fake_placed_orders_container()
+    inventory = inventory or fake_inventory()
+    bids = bids or fake_bids()
+    asks = asks or fake_asks()
+    group_watcher: mango.ManualUpdateWatcher[mango.Group] = mango.ManualUpdateWatcher(group)
+    account_watcher: mango.ManualUpdateWatcher[mango.Account] = mango.ManualUpdateWatcher(account)
+    price_watcher: mango.ManualUpdateWatcher[mango.Price] = mango.ManualUpdateWatcher(price)
+    placed_orders_container_watcher: mango.ManualUpdateWatcher[
+        mango.PlacedOrdersContainer] = mango.ManualUpdateWatcher(placed_orders_container)
+    inventory_watcher: mango.ManualUpdateWatcher[mango.Inventory] = mango.ManualUpdateWatcher(inventory)
+    bids_watcher: mango.ManualUpdateWatcher[typing.Sequence[mango.Order]] = mango.ManualUpdateWatcher(bids)
+    asks_watcher: mango.ManualUpdateWatcher[typing.Sequence[mango.Order]] = mango.ManualUpdateWatcher(asks)
+
+    return mango.marketmaking.ModelState(market, group_watcher, account_watcher, price_watcher,
+                                         placed_orders_container_watcher, inventory_watcher, bids_watcher, asks_watcher)

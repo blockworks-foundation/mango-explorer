@@ -78,6 +78,7 @@ class ModelState:
     def asks(self) -> typing.Sequence[mango.Order]:
         return self.asks_watcher.latest
 
+    # The top bid is the highest price someone is willing to pay to BUY
     @property
     def top_bid(self) -> typing.Optional[mango.Order]:
         if self.bids_watcher.latest:
@@ -85,6 +86,7 @@ class ModelState:
         else:
             return None
 
+    # The top ask is the lowest price someone is willing to pay to SELL
     @property
     def top_ask(self) -> typing.Optional[mango.Order]:
         if self.asks_watcher.latest:
