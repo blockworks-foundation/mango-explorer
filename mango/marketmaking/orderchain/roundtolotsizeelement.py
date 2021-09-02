@@ -13,7 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
+import argparse
 import mango
 import typing
 
@@ -28,8 +28,12 @@ from ..modelstate import ModelState
 # May modifiy an `Order`s price or quantity to ensure it's exactly aligned to the market's lot sizes.
 #
 class RoundToLotSizeElement(Element):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, args: argparse.Namespace):
+        super().__init__(args)
+
+    @staticmethod
+    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+        pass
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         new_orders: typing.List[mango.Order] = []

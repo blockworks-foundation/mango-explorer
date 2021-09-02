@@ -1,8 +1,5 @@
 # 🥭 Mango Explorer
 
-_(This is very much a work in progress! Expect things to change frequently. The Python code shown here is available in the [Mango Explorer V3 branch](https://github.com/blockworks-foundation/mango-explorer/tree/v3).)_
-
-
 # 🏛️  Marketmaking
 
 Traders buy and sell, but it helps when there are reliable entities for them to trade against. And while an individual trader may buy or sell, they typically aren’t doing both at the same time on the same symbol. In contrast, a marketmaker places both buy and sell orders for the same symbol, producing a valuation of the symbol and saying how much they’d be willing to pay for some quantity, and how much they’d ask to part with some quantity. They _literally make a market_ by always providing a price at which someone can buy and a price at which someone can sell, and profit by the difference between the buy and sell prices - the ‘spread’.
@@ -205,4 +202,4 @@ We started by saying what prices to use, how much inventory to offer, and how to
 
 They’re up to you.
 
-For now the code is in the [Mango Explorer V3 branch](https://github.com/blockworks-foundation/mango-explorer/tree/v3). Happy marketmaking!
+For now the code is in the [Mango Explorer repo](https://github.com/blockworks-foundation/mango-explorer/tree/v3). Happy marketmaking!

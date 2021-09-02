@@ -13,7 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
+import argparse
 import mango
 import typing
 
@@ -29,11 +29,24 @@ from ..modelstate import ModelState
 # size ratio but with a spread based on the confidence in the oracle price.
 #
 class ConfidenceIntervalSpreadElement(Element):
-    def __init__(self, position_size_ratio: Decimal, confidence_interval_levels: typing.Sequence[Decimal] = [Decimal(2)], order_type: mango.OrderType = mango.OrderType.POST_ONLY):
-        super().__init__()
-        self.position_size_ratio: Decimal = position_size_ratio
+    def __init__(self, args: argparse.Namespace):
+        super().__init__(args)
+        if args.position_size_ratio is None or args.position_size_ratio == 0:
+            raise Exception("No position-size ratio specified.")
+
+        self.position_size_ratio: Decimal = args.position_size_ratio
+        confidence_interval_levels: typing.Sequence[Decimal] = args.confidence_interval_level
+        if len(confidence_interval_levels) == 0:
+            confidence_interval_levels = [Decimal(2)]
         self.confidence_interval_levels: typing.Sequence[Decimal] = confidence_interval_levels
-        self.order_type: mango.OrderType = order_type
+        self.order_type: mango.OrderType = args.order_type
+
+    @staticmethod
+    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--position-size-ratio", type=Decimal,
+                            help="fraction of the token inventory to be bought or sold in each order")
+        parser.add_argument("--confidence-interval-level", type=Decimal, action="append",
+                            help="the levels of weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread (can be specified multiple times to give multiple levels)")
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
@@ -66,4 +79,5 @@ class ConfidenceIntervalSpreadElement(Element):
         return new_orders
 
     def __str__(self) -> str:
-        return f"« 𝙲𝚘𝚗𝚏𝚒𝚍𝚎𝚗𝚌𝚎𝙸𝚗𝚝𝚎𝚛𝚟𝚊𝚕𝚂𝚙𝚛𝚎𝚊𝚍𝙴𝚕𝚎𝚖𝚎𝚗𝚝 {self.order_type} - position size: {self.position_size_ratio}, confidence interval levels: {self.confidence_interval_levels} »"
+        confidence_interval_levels = ", ".join(map(str, self.confidence_interval_levels)) or "None"
+        return f"« 𝙲𝚘𝚗𝚏𝚒𝚍𝚎𝚗𝚌𝚎𝙸𝚗𝚝𝚎𝚛𝚟𝚊𝚕𝚂𝚙𝚛𝚎𝚊𝚍𝙴𝚕𝚎𝚖𝚎𝚗𝚝 {self.order_type} - position size: {self.position_size_ratio}, confidence interval levels: {confidence_interval_levels} »"

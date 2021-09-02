@@ -15,6 +15,7 @@
 
 
 import abc
+import argparse
 import logging
 import mango
 import typing
@@ -30,8 +31,13 @@ from ..modelstate import ModelState
 # Only `Order`s returned from `process()` method are passed to the next element of the chain.
 #
 class Element(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self, args: argparse.Namespace):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.args: argparse.Namespace = args
+
+    @staticmethod
+    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+        pass
 
     @abc.abstractmethod
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:

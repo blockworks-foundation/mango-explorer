@@ -13,7 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
+import argparse
 import mango
 import typing
 
@@ -29,9 +29,14 @@ from ..modelstate import ModelState
 # of a charge if that `Order` is filled.
 #
 class MinimumChargeElement(Element):
-    def __init__(self, minimum_charge_ratio: Decimal = Decimal(0)):
-        super().__init__()
-        self.minimum_charge_ratio: Decimal = minimum_charge_ratio
+    def __init__(self, args: argparse.Namespace):
+        super().__init__(args)
+        self.minimum_charge_ratio: Decimal = args.minimum_charge_ratio
+
+    @staticmethod
+    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--minimum-charge-ratio", type=Decimal, default=Decimal("0.0005"),
+                            help="minimum fraction of the price to be accept as a spread")
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         # From Daffy on 26th July 2021: max(pyth_conf * 2, price * min_charge)

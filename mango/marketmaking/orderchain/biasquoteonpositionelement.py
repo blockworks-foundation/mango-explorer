@@ -13,7 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
+import argparse
 import mango
 import typing
 
@@ -29,9 +29,14 @@ from ..modelstate import ModelState
 # more (if too much inventory) or buy more (if too little inventory).
 #
 class BiasQuoteOnPositionElement(Element):
-    def __init__(self, quote_position_bias: Decimal = Decimal(0)):
-        super().__init__()
-        self.quote_position_bias: Decimal = quote_position_bias
+    def __init__(self, args: argparse.Namespace):
+        super().__init__(args)
+        self.quote_position_bias: Decimal = args.quote_position_bias or Decimal(0)
+
+    @staticmethod
+    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--quote-position-bias", type=Decimal, default=Decimal(0),
+                            help="bias to apply to quotes based on inventory position")
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         if self.quote_position_bias == 0:

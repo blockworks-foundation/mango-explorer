@@ -13,7 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
+import argparse
 import mango
 import typing
 
@@ -29,6 +29,13 @@ from ..modelstate import ModelState
 # of a charge if that `Order` is filled.
 #
 class PreventPostOnlyCrossingBookElement(Element):
+    def __init__(self, args: argparse.Namespace):
+        super().__init__(args)
+
+    @staticmethod
+    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+        pass
+
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         new_orders: typing.List[mango.Order] = []
         for order in orders:

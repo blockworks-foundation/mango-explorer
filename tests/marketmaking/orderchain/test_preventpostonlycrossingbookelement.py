@@ -1,3 +1,5 @@
+import argparse
+
 from ...context import mango
 from ...fakes import fake_context, fake_model_state, fake_loaded_market, fake_order
 
@@ -15,50 +17,55 @@ model_state = fake_model_state(market=fake_loaded_market(), bids=[top_bid], asks
 
 
 def test_not_crossing_results_in_no_change():
+    args: argparse.Namespace = argparse.Namespace()
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(100), order_type=mango.OrderType.POST_ONLY)
 
-    actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement()
+    actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement(args)
     result = actual.process(context, model_state, [order])
 
     assert result == [order]
 
 
 def test_bid_too_high_results_in_new_bid():
+    args: argparse.Namespace = argparse.Namespace()
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(120), side=mango.Side.BUY, order_type=mango.OrderType.POST_ONLY)
 
-    actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement()
+    actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement(args)
     result = actual.process(context, model_state, [order])
 
     assert result[0].price == 109
 
 
 def test_bid_too_low_results_in_no_change():
+    args: argparse.Namespace = argparse.Namespace()
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(80), side=mango.Side.BUY, order_type=mango.OrderType.POST_ONLY)
 
-    actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement()
+    actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement(args)
     result = actual.process(context, model_state, [order])
 
     assert result == [order]
 
 
 def test_ask_too_low_results_in_new_ask():
+    args: argparse.Namespace = argparse.Namespace()
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(80), side=mango.Side.SELL, order_type=mango.OrderType.POST_ONLY)
 
-    actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement()
+    actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement(args)
     result = actual.process(context, model_state, [order])
 
     assert result[0].price == 91
 
 
 def test_ask_too_high_results_in_no_change():
+    args: argparse.Namespace = argparse.Namespace()
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(120), side=mango.Side.SELL, order_type=mango.OrderType.POST_ONLY)
 
-    actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement()
+    actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement(args)
     result = actual.process(context, model_state, [order])
 
     assert result == [order]

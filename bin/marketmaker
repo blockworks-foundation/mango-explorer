@@ -151,6 +151,7 @@ order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
     args.existing_order_tolerance, args.existing_order_tolerance)
 
 desired_orders_chain: chain.Chain = chainbuilder.ChainBuilder.from_command_line_parameters(args)
+logging.info(f"Desired orders chain: {desired_orders_chain}")
 
 market_instruction_builder: mango.MarketInstructionBuilder = mango.create_market_instruction_builder(
     context, wallet, account, market, args.dry_run)

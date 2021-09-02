@@ -13,8 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
-import logging
+import argparse
 import mango
 import typing
 
@@ -30,14 +29,27 @@ from ..modelstate import ModelState
 # ratio and a fixed position size ratio.
 #
 class FixedRatiosElement(Element):
-    def __init__(self, spread_ratios: typing.Sequence[Decimal], position_size_ratios: typing.Sequence[Decimal], order_type: mango.OrderType = mango.OrderType.POST_ONLY):
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        if len(spread_ratios) != len(position_size_ratios):
+    def __init__(self, args: argparse.Namespace):
+        super().__init__(args)
+        self.spread_ratios: typing.Sequence[Decimal] = args.fixed_spread_ratio or []
+        self.position_size_ratios: typing.Sequence[Decimal] = args.fixed_position_size_ratio or []
+        self.order_type: mango.OrderType = args.order_type
+
+        if len(self.spread_ratios) == 0:
+            raise Exception("No spread ratios specified. Try the --fixed-spread-ratio parameter?")
+
+        if len(self.position_size_ratios) == 0:
+            raise Exception("No position-size ratios specified. Try the --fixed-position-size-ratio parameter?")
+
+        if len(self.spread_ratios) != len(self.position_size_ratios):
             raise Exception("List of spread ratios and position size ratios must be the same length.")
 
-        self.spread_ratios: typing.Sequence[Decimal] = spread_ratios
-        self.position_size_ratios: typing.Sequence[Decimal] = position_size_ratios
-        self.order_type: mango.OrderType = order_type
+    @staticmethod
+    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--fixed-spread-ratio", type=Decimal, action="append",
+                            help="ratio to apply to the mid-price to create the BUY and SELL price (can be specified multiple times but every occurrance must have a matching --position-size-ratio occurrance)")
+        parser.add_argument("--fixed-position-size-ratio", type=Decimal, action="append",
+                            help="ratio to apply to the available collateral to create the position size (can be specified multiple times but every occurrance must have a matching --spread-ratio occurrance)")
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price

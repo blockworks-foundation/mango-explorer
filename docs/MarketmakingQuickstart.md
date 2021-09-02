@@ -472,11 +472,11 @@ USDC:
 
 # 10. 🎬 A Bit About Marketmaking
 
-If you’ve read the [MarketMaking](MarketMaking.md) doc you’ll be well placed to understand the `marketmaker` output, but if you haven’t here’s a brief summary of what the `marketmaker` does:
+If you’ve read the [Marketmaking Introduction](MarketmakingIntroduction.md) doc you’ll be well placed to understand the `marketmaker` output, but if you haven’t here’s a brief summary of what the `marketmaker` does:
 
 The marketmaker keeps the group, price and account data up-to-date and passes this fresh state to every ‘pulse’.
 
-A ‘chain’ of pluggable objects of type `ChainElement` look at the state every pulse and build a list of orders they would like to see on the orderbook.
+A ‘chain’ of pluggable objects of type `Element` look at the state every pulse and build a list of orders they would like to see on the orderbook.
 
 Another pluggable object, this time of type `OrderReconciler` tries to reconcile the desired orders with the existing orders, and only cancel/replace where necessary.
 

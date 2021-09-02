@@ -16,16 +16,23 @@
 import argparse
 import typing
 
-from decimal import Decimal
-
 from ...orders import OrderType
 from .biasquoteonpositionelement import BiasQuoteOnPositionElement
 from .chain import Chain
 from .confidenceintervalspreadelement import ConfidenceIntervalSpreadElement
 from .element import Element
+from .fixedratioselement import FixedRatiosElement
 from .minimumchargeelement import MinimumChargeElement
 from .preventpostonlycrossingbookelement import PreventPostOnlyCrossingBookElement
 from .roundtolotsizeelement import RoundToLotSizeElement
+
+_DEFAULT_CHAIN = [
+    "confidenceintervalspread",
+    "biasquoteonposition",
+    "minimumcharge",
+    "preventpostonlycrossingbook",
+    "roundtolotsize"
+]
 
 
 # # 🥭 ChainBuilder class
@@ -36,16 +43,19 @@ from .roundtolotsizeelement import RoundToLotSizeElement
 class ChainBuilder:
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--chain", type=str, action="append", default=[],
+                            help="The specific order chain elements to use instead of the default chain")
+        # OrderType is used by multiple elements so specify it here rather than have them fighting over which
+        # one specifies it.
         parser.add_argument("--order-type", type=OrderType, default=OrderType.POST_ONLY,
                             choices=list(OrderType), help="Order type: LIMIT, IOC or POST_ONLY")
-        parser.add_argument("--position-size-ratio", type=Decimal, required=True,
-                            help="fraction of the token inventory to be bought or sold in each order")
-        parser.add_argument("--confidence-interval-level", type=Decimal, action="append",
-                            help="the levels of weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread (can be specified multiple times to give multiple levels)")
-        parser.add_argument("--quote-position-bias", type=Decimal, default=Decimal(0),
-                            help="bias to apply to quotes based on inventory position")
-        parser.add_argument("--minimum-charge-ratio", type=Decimal, default=Decimal("0.0005"),
-                            help="minimum fraction of the price to be accept as a spread")
+        # Now add args for all the elements.
+        BiasQuoteOnPositionElement.add_command_line_parameters(parser)
+        ConfidenceIntervalSpreadElement.add_command_line_parameters(parser)
+        FixedRatiosElement.add_command_line_parameters(parser)
+        MinimumChargeElement.add_command_line_parameters(parser)
+        PreventPostOnlyCrossingBookElement.add_command_line_parameters(parser)
+        RoundToLotSizeElement.add_command_line_parameters(parser)
 
     # This function is the converse of `add_command_line_parameters()` - it takes
     # an argument of parsed command-line parameters and expects to see the ones it added
@@ -55,15 +65,31 @@ class ChainBuilder:
     #
     @staticmethod
     def from_command_line_parameters(args: argparse.Namespace) -> Chain:
-        confidence_interval_levels: typing.Sequence[Decimal] = args.confidence_interval_level
-        if len(confidence_interval_levels) == 0:
-            confidence_interval_levels = [Decimal(2)]
-        elements: typing.List[Element] = [
-            ConfidenceIntervalSpreadElement(args.position_size_ratio, confidence_interval_levels, args.order_type),
-            BiasQuoteOnPositionElement(args.quote_position_bias),
-            MinimumChargeElement(args.minimum_charge_ratio),
-            PreventPostOnlyCrossingBookElement(),
-            RoundToLotSizeElement()
-        ]
+        chain_names: typing.Sequence[str] = args.chain
+        if chain_names is None or len(chain_names) == 0:
+            chain_names = _DEFAULT_CHAIN
+
+        elements: typing.List[Element] = []
+        for name in chain_names:
+            element = ChainBuilder._create_element_by_name(args, name)
+            elements += [element]
 
         return Chain(elements)
+
+    @staticmethod
+    def _create_element_by_name(args: argparse.Namespace, name: str) -> Element:
+        proper_name: str = name.upper()
+        if proper_name == "BIASQUOTEONPOSITION":
+            return BiasQuoteOnPositionElement(args)
+        elif proper_name == "CONFIDENCEINTERVALSPREAD":
+            return ConfidenceIntervalSpreadElement(args)
+        elif proper_name == "FIXEDRATIOS":
+            return FixedRatiosElement(args)
+        elif proper_name == "MINIMUMCHARGE":
+            return MinimumChargeElement(args)
+        elif proper_name == "PREVENTPOSTONLYCROSSINGBOOK":
+            return PreventPostOnlyCrossingBookElement(args)
+        elif proper_name == "ROUNDTOLOTSIZE":
+            return RoundToLotSizeElement(args)
+        else:
+            raise Exception(f"Unknown chain element: '{proper_name}'")
