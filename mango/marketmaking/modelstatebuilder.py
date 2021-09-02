@@ -80,9 +80,10 @@ class PollingModelStateBuilder(ModelStateBuilder):
     def poll(self, context: mango.Context) -> ModelState:
         raise NotImplementedError("PollingModelStateBuilder.poll() is not implemented on the base type.")
 
-    def from_values(self, market: mango.Market, group: mango.Group, account: mango.Account, price: mango.Price,
-                    placed_orders_container: mango.PlacedOrdersContainer, inventory: mango.Inventory,
-                    bids: typing.Sequence[mango.Order], asks: typing.Sequence[mango.Order]) -> ModelState:
+    def from_values(self, order_owner: PublicKey, market: mango.Market, group: mango.Group, account: mango.Account,
+                    price: mango.Price, placed_orders_container: mango.PlacedOrdersContainer,
+                    inventory: mango.Inventory, bids: typing.Sequence[mango.Order],
+                    asks: typing.Sequence[mango.Order]) -> ModelState:
         group_watcher: mango.ManualUpdateWatcher[mango.Group] = mango.ManualUpdateWatcher(group)
         account_watcher: mango.ManualUpdateWatcher[mango.Account] = mango.ManualUpdateWatcher(account)
         price_watcher: mango.ManualUpdateWatcher[mango.Price] = mango.ManualUpdateWatcher(price)
@@ -92,7 +93,7 @@ class PollingModelStateBuilder(ModelStateBuilder):
         bids_watcher: mango.ManualUpdateWatcher[typing.Sequence[mango.Order]] = mango.ManualUpdateWatcher(bids)
         asks_watcher: mango.ManualUpdateWatcher[typing.Sequence[mango.Order]] = mango.ManualUpdateWatcher(asks)
 
-        return ModelState(market, group_watcher, account_watcher, price_watcher,
+        return ModelState(order_owner, market, group_watcher, account_watcher, price_watcher,
                           placed_orders_container_watcher, inventory_watcher, bids_watcher, asks_watcher)
 
     def __str__(self) -> str:
@@ -105,6 +106,7 @@ class PollingModelStateBuilder(ModelStateBuilder):
 #
 class SerumPollingModelStateBuilder(PollingModelStateBuilder):
     def __init__(self,
+                 order_owner: PublicKey,
                  market: mango.SerumMarket,
                  oracle: mango.Oracle,
                  group_address: PublicKey,
@@ -114,6 +116,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
                  quote_inventory_token_account: mango.TokenAccount,
                  ):
         super().__init__()
+        self.order_owner: PublicKey = order_owner
         self.market: mango.SerumMarket = market
         self.oracle: mango.Oracle = oracle
 
@@ -164,7 +167,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
                                                      base_inventory_token_account.value,
                                                      quote_inventory_token_account.value)
 
-        return self.from_values(self.market, group, account, price, placed_orders_container, inventory, bids, asks)
+        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, bids, asks)
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚎𝚛𝚞𝚖𝙿𝚘𝚕𝚕𝚒𝚗𝚐𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 for market '{self.market.symbol}' »"""
@@ -176,6 +179,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
 #
 class SpotPollingModelStateBuilder(PollingModelStateBuilder):
     def __init__(self,
+                 order_owner: PublicKey,
                  market: mango.SpotMarket,
                  oracle: mango.Oracle,
                  group_address: PublicKey,
@@ -184,6 +188,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
                  open_orders_address: PublicKey
                  ):
         super().__init__()
+        self.order_owner: PublicKey = order_owner
         self.market: mango.SpotMarket = market
         self.oracle: mango.Oracle = oracle
 
@@ -231,7 +236,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
 
         price: mango.Price = self.oracle.fetch_price(context)
 
-        return self.from_values(self.market, group, account, price, placed_orders_container, inventory, bids, asks)
+        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, bids, asks)
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚙𝚘𝚝𝙿𝚘𝚕𝚕𝚒𝚗𝚐𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 for market '{self.market.symbol}' »"""
@@ -243,6 +248,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
 #
 class PerpPollingModelStateBuilder(PollingModelStateBuilder):
     def __init__(self,
+                 order_owner: PublicKey,
                  market: mango.PerpMarket,
                  oracle: mango.Oracle,
                  group_address: PublicKey,
@@ -250,6 +256,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
                  account_address: PublicKey
                  ):
         super().__init__()
+        self.order_owner: PublicKey = order_owner
         self.market: mango.PerpMarket = market
         self.oracle: mango.Oracle = oracle
 
@@ -296,7 +303,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
 
         price: mango.Price = self.oracle.fetch_price(context)
 
-        return self.from_values(self.market, group, account, price, placed_orders_container, inventory, bids.orders(), asks.orders())
+        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, bids.orders(), asks.orders())
 
     def __str__(self) -> str:
         return f"""« 𝙿𝚎𝚛𝚙𝙿𝚘𝚕𝚕𝚒𝚗𝚐𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 for market '{self.market.symbol}' »"""

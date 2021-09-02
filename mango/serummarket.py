@@ -25,6 +25,7 @@ from .accountinfo import AccountInfo
 from .context import Context
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .market import Market, InventorySource
+from .openorders import OpenOrders
 from .orders import Order
 from .serumeventqueue import SerumEvent, SerumEventQueue
 from .token import Token
@@ -54,6 +55,13 @@ class SerumMarket(Market):
         asks_orderbook = PySerumOrderBook.from_bytes(raw_market.state, asks_info.data)
 
         return list(map(Order.from_serum_order, itertools.chain(bids_orderbook.orders(), asks_orderbook.orders())))
+
+    def find_openorders_address_for_owner(self, context: Context, owner: PublicKey) -> typing.Optional[PublicKey]:
+        all_open_orders = OpenOrders.load_for_market_and_owner(
+            context, self.address, owner, context.serum_program_address, self.base.decimals, self.quote.decimals)
+        if len(all_open_orders) == 0:
+            return None
+        return all_open_orders[0].address
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} {self.address} [{self.program_address}]

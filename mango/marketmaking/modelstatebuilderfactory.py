@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import enum
+from mango.constants import SYSTEM_PROGRAM_ADDRESS
 import mango
 import typing
 
@@ -81,7 +82,7 @@ def _polling_serum_model_state_builder_factory(context: mango.Context, wallet: m
         raise Exception(
             f"Could not find serum openorders account owned by {wallet.address} for market {market.symbol}.")
     return SerumPollingModelStateBuilder(
-        market, oracle, group.address, account.address, all_open_orders[0].address, base_account, quote_account)
+        all_open_orders[0].address, market, oracle, group.address, account.address, all_open_orders[0].address, base_account, quote_account)
 
 
 def _polling_spot_model_state_builder_factory(group: mango.Group, account: mango.Account, market: mango.SpotMarket,
@@ -92,12 +93,12 @@ def _polling_spot_model_state_builder_factory(group: mango.Group, account: mango
         raise Exception(
             f"Could not find spot openorders in account {account.address} for market {market.symbol}.")
     return SpotPollingModelStateBuilder(
-        market, oracle, group.address, group.cache, account.address, open_orders_address)
+        open_orders_address, market, oracle, group.address, group.cache, account.address, open_orders_address)
 
 
 def _polling_perp_model_state_builder_factory(group: mango.Group, account: mango.Account, market: mango.PerpMarket,
                                               oracle: mango.Oracle) -> ModelStateBuilder:
-    return PerpPollingModelStateBuilder(market, oracle, group.address, group.cache, account.address)
+    return PerpPollingModelStateBuilder(account.address, market, oracle, group.address, group.cache, account.address)
 
 
 def _websocket_model_state_builder_factory(context: mango.Context, disposer: mango.DisposePropagator,
@@ -118,6 +119,8 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
 
     market = mango.ensure_market_loaded(context, market)
     if isinstance(market, mango.SerumMarket):
+        order_owner: PublicKey = market.find_openorders_address_for_owner(
+            context, wallet.address) or SYSTEM_PROGRAM_ADDRESS
         price_watcher: mango.Watcher[mango.Price] = mango.build_price_watcher(
             context, websocket_manager, health_check, disposer, "serum", market)
         inventory_watcher: mango.Watcher[mango.Inventory] = mango.build_serum_inventory_watcher(
@@ -129,6 +132,8 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
         latest_asks_watcher: mango.Watcher[typing.Sequence[mango.Order]] = mango.build_serum_orderbook_side_watcher(
             context, websocket_manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.ASKS)
     elif isinstance(market, mango.SpotMarket):
+        market_index: int = group.find_spot_market_index(market.address)
+        order_owner = account.spot_open_orders[market_index] or SYSTEM_PROGRAM_ADDRESS
         cache: mango.Cache = mango.Cache.load(context, group.cache)
         cache_watcher: mango.Watcher[mango.Cache] = mango.build_cache_watcher(
             context, websocket_manager, health_check, cache, group)
@@ -140,6 +145,7 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
         latest_asks_watcher = mango.build_serum_orderbook_side_watcher(
             context, websocket_manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.ASKS)
     elif isinstance(market, mango.PerpMarket):
+        order_owner = account.address
         cache = mango.Cache.load(context, group.cache)
         cache_watcher = mango.build_cache_watcher(context, websocket_manager, health_check, cache, group)
         inventory_watcher = mango.PerpInventoryAccountWatcher(market, latest_account_observer, cache_watcher, group)
@@ -152,7 +158,7 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
     else:
         raise Exception(f"Could not determine type of market {market.symbol}")
 
-    model_state = ModelState(market, latest_group_observer, latest_account_observer,
+    model_state = ModelState(order_owner, market, latest_group_observer, latest_account_observer,
                              latest_price_observer, latest_open_orders_observer,
                              inventory_watcher, latest_bids_watcher, latest_asks_watcher)
     return WebsocketModelStateBuilder(model_state)

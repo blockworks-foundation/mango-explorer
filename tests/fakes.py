@@ -142,7 +142,8 @@ def fake_asks():
     return None
 
 
-def fake_model_state(market: typing.Optional[mango.Market] = None,
+def fake_model_state(order_owner: typing.Optional[PublicKey] = None,
+                     market: typing.Optional[mango.Market] = None,
                      group: typing.Optional[mango.Group] = None,
                      account: typing.Optional[mango.Account] = None,
                      price: typing.Optional[mango.Price] = None,
@@ -150,6 +151,7 @@ def fake_model_state(market: typing.Optional[mango.Market] = None,
                      inventory: typing.Optional[mango.Inventory] = None,
                      bids: typing.Optional[typing.Sequence[mango.Order]] = None,
                      asks: typing.Optional[typing.Sequence[mango.Order]] = None) -> mango.marketmaking.ModelState:
+    order_owner = order_owner or fake_seeded_public_key("order owner")
     market = market or fake_loaded_market()
     group = group or fake_group()
     account = account or fake_account()
@@ -167,5 +169,6 @@ def fake_model_state(market: typing.Optional[mango.Market] = None,
     bids_watcher: mango.ManualUpdateWatcher[typing.Sequence[mango.Order]] = mango.ManualUpdateWatcher(bids)
     asks_watcher: mango.ManualUpdateWatcher[typing.Sequence[mango.Order]] = mango.ManualUpdateWatcher(asks)
 
-    return mango.marketmaking.ModelState(market, group_watcher, account_watcher, price_watcher,
-                                         placed_orders_container_watcher, inventory_watcher, bids_watcher, asks_watcher)
+    return mango.marketmaking.ModelState(order_owner, market, group_watcher,
+                                         account_watcher, price_watcher, placed_orders_container_watcher,
+                                         inventory_watcher, bids_watcher, asks_watcher)

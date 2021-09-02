@@ -25,7 +25,6 @@ from decimal import Decimal
 from .modelstate import ModelState
 from ..observables import EventSource
 from .orderreconciler import OrderReconciler
-from .ordertracker import OrderTracker
 from .orderchain.chain import Chain
 
 
@@ -46,7 +45,6 @@ class MarketMaker:
         self.order_reconciler: OrderReconciler = order_reconciler
         self.redeem_threshold: typing.Optional[Decimal] = redeem_threshold
 
-        self.order_tracker: OrderTracker = OrderTracker()
         self.pulse_complete: EventSource[datetime] = EventSource[datetime]()
         self.pulse_error: EventSource[Exception] = EventSource[Exception]()
 
@@ -69,7 +67,7 @@ class MarketMaker:
                 self.logger.info(f"[{context.name}] Market-maker not quoting - model_state.not_quoting is set.")
                 return
 
-            existing_orders = self.order_tracker.existing_orders(model_state)
+            existing_orders = model_state.current_orders()
             reconciled = self.order_reconciler.reconcile(model_state, existing_orders, desired_orders)
 
             cancellations = mango.CombinableInstructions.empty()
@@ -82,7 +80,6 @@ class MarketMaker:
             for to_place in reconciled.to_place:
                 desired_client_id: int = context.random_client_id()
                 to_place_with_client_id = to_place.with_client_id(desired_client_id)
-                self.order_tracker.track(to_place_with_client_id)
 
                 self.logger.info(f"Placing {self.market.symbol} {to_place_with_client_id}")
                 place_order = self.market_instruction_builder.build_place_order_instructions(to_place_with_client_id)

@@ -20,13 +20,17 @@ import typing
 
 from decimal import Decimal
 
+from solana.publickey import PublicKey
+
 
 # # 🥭 ModelState class
 #
 # Provides simple access to the latest state of market and account data.
 #
 class ModelState:
-    def __init__(self, market: mango.Market,
+    def __init__(self,
+                 order_owner: PublicKey,
+                 market: mango.Market,
                  group_watcher: mango.Watcher[mango.Group],
                  account_watcher: mango.Watcher[mango.Account],
                  price_watcher: mango.Watcher[mango.Price],
@@ -36,6 +40,7 @@ class ModelState:
                  asks: mango.Watcher[typing.Sequence[mango.Order]]
                  ):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.order_owner: PublicKey = order_owner
         self.market: mango.Market = market
         self.group_watcher: mango.Watcher[mango.Group] = group_watcher
         self.account_watcher: mango.Watcher[mango.Account] = account_watcher
@@ -103,9 +108,9 @@ class ModelState:
         else:
             return top_ask.price - top_bid.price
 
-    @property
-    def existing_orders(self) -> typing.Sequence[mango.PlacedOrder]:
-        return self.placed_orders_container_watcher.latest.placed_orders
+    def current_orders(self) -> typing.Sequence[mango.Order]:
+        all_orders = [*self.bids_watcher.latest, *self.asks_watcher.latest]
+        return list([o for o in all_orders if o.owner == self.order_owner])
 
     def __str__(self) -> str:
         return f"""« 𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎 for market '{self.market.symbol}'
