@@ -1,0 +1,62 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+import typing
+
+from decimal import Decimal
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Sells all base tokens for quote on a market.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--market", type=str, required=True, help="market symbol to sweep (e.g. ETH/USDC)")
+parser.add_argument("--max-slippage", type=Decimal, default=Decimal("0.05"),
+                    help="maximum slippage allowed for the IOC order price")
+parser.add_argument("--account-address", type=PublicKey,
+                    help="address of the specific account to use, if more than one available")
+parser.add_argument("--dry-run", action="store_true", default=False,
+                    help="runs as read-only and does not perform any transactions")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+group = mango.Group.load(context, context.group_address)
+account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
+
+market_symbol = args.market.upper()
+market: typing.Optional[mango.Market] = context.market_lookup.find_by_symbol(market_symbol)
+if market is None:
+    raise Exception(f"Could not find market {market_symbol}")
+
+loaded_market: mango.Market = mango.ensure_market_loaded(context, market)
+if not isinstance(loaded_market, mango.SpotMarket):
+    raise Exception(f"Market {market_symbol} is not a spot market")
+
+basket_token: mango.AccountBasketBaseToken = account.find_basket_token(market.base)
+quantity: Decimal = basket_token.net_value.value
+if quantity <= 0:
+    print(f"No {basket_token.net_value.token.symbol} to sweep.")
+else:
+    market_operations: mango.MarketOperations = mango.create_market_operations(context, wallet, account, market, False)
+    orders: typing.Sequence[mango.Order] = market_operations.load_orders()
+    top_bid: Decimal = max([order.price for order in orders if order.side == mango.Side.BUY])
+    decrease_factor: Decimal = Decimal(1) - args.max_slippage
+    price: Decimal = top_bid * decrease_factor
+    order: mango.Order = mango.Order.from_basic_info(
+        mango.Side.SELL, price, basket_token.net_value.value, mango.OrderType.IOC)
+    if args.dry_run:
+        print("Dry run: not completing order", order)
+    else:
+        placed: mango.Order = market_operations.place_order(order)
+        print(placed)

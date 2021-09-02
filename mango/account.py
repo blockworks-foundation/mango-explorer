@@ -266,6 +266,13 @@ class Account(AddressableAccount):
     def perp_accounts(self) -> typing.Sequence[typing.Optional[PerpAccount]]:
         return Account._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item.perp_account)
 
+    def find_basket_token(self, token: Token) -> AccountBasketBaseToken:
+        for bt in self.basket:
+            if bt.token_info.token == token:
+                return bt
+
+        raise Exception(f"Could not find token {token} in basket in group {self.address}")
+
     def update_spot_open_orders_for_market(self, spot_market_index: int, spot_open_orders: PublicKey) -> None:
         indexable_basket: typing.Sequence[typing.Optional[AccountBasketBaseToken]] = Account._map_sequence_to_basket_indices(
             self.basket, self.basket_indices, lambda item: item)
