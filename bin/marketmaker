@@ -131,7 +131,7 @@ if args.hedge_market is not None:
         event_queue_source = event_subscription.publisher
     else:
         event_queue_observable: rx.Observable = rx.interval(args.event_queue_poll_interval).pipe(
-            rx.operators.observe_on(context.pool_scheduler),
+            rx.operators.observe_on(context.create_thread_pool_scheduler()),
             rx.operators.catch(mango.observable_pipeline_error_reporter),
             rx.operators.retry(),
             rx.operators.start_with(-1),
@@ -173,7 +173,7 @@ mango.TokenValue.report([asset for asset in account.net_assets if asset is not N
 manager.open()
 
 pulse_disposable = rx.interval(args.pulse_interval).pipe(
-    rx.operators.observe_on(context.pool_scheduler),
+    rx.operators.observe_on(context.create_thread_pool_scheduler()),
     rx.operators.start_with(-1),
     rx.operators.catch(mango.observable_pipeline_error_reporter),
     rx.operators.retry()

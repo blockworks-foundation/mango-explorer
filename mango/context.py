@@ -30,10 +30,6 @@ from .marketlookup import MarketLookup
 from .tokenlookup import TokenLookup
 
 
-# Probably best to access this through the Context object
-_pool_scheduler = ThreadPoolScheduler(multiprocessing.cpu_count())
-
-
 # # 🥭 Context class
 #
 # A `Context` object to manage Solana connection and Mango configuration.
@@ -62,9 +58,8 @@ class Context:
         self.retry_pauses: typing.Sequence[Decimal] = [Decimal(4), Decimal(
             8), Decimal(16), Decimal(20), Decimal(30)]
 
-    @property
-    def pool_scheduler(self) -> ThreadPoolScheduler:
-        return _pool_scheduler
+    def create_thread_pool_scheduler(self) -> ThreadPoolScheduler:
+        return ThreadPoolScheduler(multiprocessing.cpu_count())
 
     def random_client_id(self) -> int:
         # 9223372036854775807 is sys.maxsize for 64-bit systems, with a bit_length of 63.

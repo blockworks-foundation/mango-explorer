@@ -92,7 +92,7 @@ class PythOracle(Oracle):
 
     def to_streaming_observable(self, context: Context) -> rx.core.Observable:
         return rx.interval(1).pipe(
-            ops.observe_on(context.pool_scheduler),
+            ops.observe_on(context.create_thread_pool_scheduler()),
             ops.start_with(-1),
             ops.map(lambda _: self.fetch_price(context)),
             ops.catch(observable_pipeline_error_reporter),
