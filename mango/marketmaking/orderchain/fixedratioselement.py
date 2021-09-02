@@ -53,29 +53,28 @@ class FixedRatiosElement(Element):
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
-        base_tokens: mango.TokenValue = model_state.inventory.base
-        quote_tokens: mango.TokenValue = model_state.inventory.quote
-
-        total = (base_tokens.value * price.mid_price) + quote_tokens.value
-
         new_orders: typing.List[mango.Order] = []
         for counter in range(len(self.spread_ratios)):
             position_size_ratio = self.position_size_ratios[counter]
-            quote_value_to_risk = total * position_size_ratio
+            quote_value_to_risk = model_state.inventory.available_collateral.value * position_size_ratio
             base_position_size = quote_value_to_risk / price.mid_price
 
             spread_ratio = self.spread_ratios[counter]
             bid: Decimal = price.mid_price - (price.mid_price * spread_ratio)
             ask: Decimal = price.mid_price + (price.mid_price * spread_ratio)
 
-            new_orders += [
-                mango.Order.from_basic_info(mango.Side.BUY, price=bid,
-                                            quantity=base_position_size, order_type=self.order_type),
-                mango.Order.from_basic_info(mango.Side.SELL, price=ask,
-                                            quantity=base_position_size, order_type=self.order_type)
-            ]
+            bid_order = mango.Order.from_basic_info(mango.Side.BUY, price=bid,
+                                                    quantity=base_position_size, order_type=self.order_type)
+            ask_order = mango.Order.from_basic_info(mango.Side.SELL, price=ask,
+                                                    quantity=base_position_size, order_type=self.order_type)
+            self.logger.debug(f"""Desired orders:
+    Bid: {bid_order}
+    Ask: {ask_order}""")
+            new_orders += [bid_order, ask_order]
 
         return new_orders
 
     def __str__(self) -> str:
-        return f"« 𝙵𝚒𝚡𝚎𝚍𝚁𝚊𝚝𝚒𝚘𝚜𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using ratios - spread: {self.spread_ratios}, position size: {self.position_size_ratios} »"
+        spread_ratios = ", ".join(map(str, self.spread_ratios)) or "None"
+        position_size_ratios = ", ".join(map(str, self.position_size_ratios)) or "None"
+        return f"« 𝙵𝚒𝚡𝚎𝚍𝚁𝚊𝚝𝚒𝚘𝚜𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using ratios - spread(s): {spread_ratios}, position size(s): {position_size_ratios} »"
