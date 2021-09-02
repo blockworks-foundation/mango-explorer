@@ -216,13 +216,15 @@ class Account(AddressableAccount):
         return accounts
 
     @staticmethod
-    def load_for_owner_by_index(context: Context, owner: PublicKey, group: Group, account_index: int) -> "Account":
+    def load_for_owner_by_address(context: Context, owner: PublicKey, group: Group, account_address: typing.Optional[PublicKey]) -> "Account":
+        if account_address is not None:
+            return Account.load(context, account_address, group)
+
         accounts: typing.Sequence[Account] = Account.load_all_for_owner(context, owner, group)
-        if len(accounts) == 0:
-            raise Exception(f"Could not find any Mango accounts for owner '{owner}'.")
-        if account_index >= len(accounts):
-            raise Exception(f"Could not find Mango account at index {account_index} for owner '{owner}'.")
-        return accounts[account_index]
+        if len(accounts) > 1:
+            raise Exception(f"More than 1 Mango account for owner '{owner}' and which to choose not specified.")
+
+        return accounts[0]
 
     @staticmethod
     def _map_sequence_to_basket_indices(items: typing.Sequence[AccountBasketBaseToken], in_basket: typing.Sequence[bool], selector: typing.Callable[[typing.Any], TMappedAccountBasketValue]) -> typing.Sequence[typing.Optional[TMappedAccountBasketValue]]:

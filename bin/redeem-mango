@@ -7,6 +7,8 @@ import os.path
 import sys
 import typing
 
+from solana.publickey import PublicKey
+
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 import mango  # nopep8
@@ -55,8 +57,8 @@ mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--market", type=str, help="perp market symbol with accrued MNGO (e.g. ETH-PERP)")
 parser.add_argument("--all", action="store_true", default=False,
                     help="redeem all MNGO in all perp markets in the account")
-parser.add_argument("--account-index", type=int, default=0,
-                    help="index of the account to use, if more than one available")
+parser.add_argument("--account-address", type=PublicKey,
+                    help="address of the specific account to use, if more than one available")
 parser.add_argument("--wait", action="store_true", default=False,
                     help="wait until the transaction is confirmed")
 args = parser.parse_args()
@@ -72,7 +74,7 @@ wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 group = mango.Group.load(context, context.group_address)
 mngo = group.find_token_info_by_symbol("MNGO")
-account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
+account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
 
 signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
 all_instructions: mango.CombinableInstructions = signers
@@ -102,7 +104,7 @@ print("Transaction IDs:", transaction_ids)
 
 if args.wait:
     context.client.wait_for_confirmation(transaction_ids)
-    reloaded_account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
+    reloaded_account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
     if args.all:
         for group_basket_market in group.basket:
             basket_token = find_basket_token_in_account(reloaded_account, group_basket_market.base_token_info.token)

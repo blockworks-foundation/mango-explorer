@@ -7,6 +7,7 @@ import os.path
 import sys
 
 from decimal import Decimal
+from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
@@ -21,8 +22,8 @@ parser.add_argument("--price", type=Decimal, required=True, help="price to BUY o
 parser.add_argument("--side", type=mango.Side, required=True, choices=list(mango.Side), help="side: BUY or SELL")
 parser.add_argument("--order-type", type=mango.OrderType, required=True,
                     choices=list(mango.OrderType), help="Order type: LIMIT, IOC or POST_ONLY")
-parser.add_argument("--account-index", type=int, default=0,
-                    help="index of the account to use, if more than one available")
+parser.add_argument("--account-address", type=PublicKey,
+                    help="address of the specific account to use, if more than one available")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
@@ -33,7 +34,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_address)
-account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
+account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
 
 market_symbol = args.market.upper()
 market = context.market_lookup.find_by_symbol(market_symbol)

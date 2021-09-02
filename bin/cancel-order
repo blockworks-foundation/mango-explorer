@@ -6,6 +6,8 @@ import os
 import os.path
 import sys
 
+from solana.publickey import PublicKey
+
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
@@ -20,8 +22,8 @@ parser.add_argument("--client-id", type=int,
                     help="client ID of the order to cancel (either --client-id must be specified, or both --id and --side must be specified")
 parser.add_argument("--side", type=mango.Side, default=mango.Side.BUY, choices=list(mango.Side),
                     help="whether the order to cancel is a BUY or a SELL (either --client-id must be specified, or both --id and --side must be specified")
-parser.add_argument("--account-index", type=int, default=0,
-                    help="index of the account to use, if more than one available")
+parser.add_argument("--account-address", type=PublicKey,
+                    help="address of the specific account to use, if more than one available")
 parser.add_argument("--ok-if-missing", action="store_true", default=False,
                     help="if supported by market type (PERP-only for now) will not error if the ID does not exist")
 parser.add_argument("--dry-run", action="store_true", default=False,
@@ -34,7 +36,7 @@ logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_address)
-account = mango.Account.load_for_owner_by_index(context, wallet.address, group, args.account_index)
+account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
 
 market_symbol = args.market.upper()
 market = context.market_lookup.find_by_symbol(market_symbol)
