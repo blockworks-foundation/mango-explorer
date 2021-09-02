@@ -271,7 +271,7 @@ class CompatibleClient(Client):
         skip_preflight: bool = opts.skip_preflight or self.skip_preflight
 
         try:
-            return self._send_request(
+            response = self._send_request(
                 "sendTransaction",
                 encoded_transaction,
                 {
@@ -280,6 +280,8 @@ class CompatibleClient(Client):
                     _EncodingKey: self.encoding,
                 }
             )
+            self.logger.debug(f"Transaction ID response: {response}")
+            return response
         except TransactionException as transaction_exception:
             raise TransactionException(transaction, transaction_exception.message, transaction_exception.code,
                                        transaction_exception.name, transaction_exception.rpc_method,
