@@ -40,10 +40,10 @@ class RatiosElement(Element):
         self.order_type: mango.OrderType = args.order_type
 
         if len(self.spread_ratios) == 0:
-            raise Exception("No spread ratios specified. Try the --spread-ratio parameter?")
+            raise Exception("No spread ratios specified. Try the --ratios-spread parameter?")
 
         if len(self.position_size_ratios) == 0:
-            raise Exception("No position-size ratios specified. Try the --position-size-ratio parameter?")
+            raise Exception("No position-size ratios specified. Try the --ratios-position-size parameter?")
 
         if len(self.spread_ratios) != len(self.position_size_ratios):
             raise Exception("List of spread ratios and position size ratios must be the same length.")
