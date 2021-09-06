@@ -19,7 +19,7 @@ def test_bid_price_updated():
     actual: FixedSpreadElement = FixedSpreadElement(args)
     result = actual.process(context, model_state, [order])
 
-    assert result[0].price == 71
+    assert result[0].price == 75.5  # 80 - (9/2)
 
 
 def test_ask_price_updated():
@@ -30,4 +30,4 @@ def test_ask_price_updated():
     actual: FixedSpreadElement = FixedSpreadElement(args)
     result = actual.process(context, model_state, [order])
 
-    assert result[0].price == 89
+    assert result[0].price == 84.5  # 80 + (9/2)
