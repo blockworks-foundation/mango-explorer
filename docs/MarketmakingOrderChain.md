@@ -64,7 +64,7 @@ Currently only two elements - `ratios` and `confidenceinterval` - create orders.
 
 Here's a completely different chain. This chain will specify orders with a spread of 0.5% and a position size of 2:
 ```
---chain ratios --ratios-spread 0.005 --chain fixedspread --fixedspread-value 2
+--chain ratios --ratios-spread 0.005 --chain fixedpositionsize --fixedpositionsize-value 2
 ```
 The lack of a `roundtolotsize` element means positions won't be rounded to lot sizes when being sent to the marketmaker (so reconciling orders won't work as well as it might) but they'll be properly rounded when placed. 
 
@@ -72,7 +72,7 @@ The lack of a `preventpostonlycrossingbook` element means there's no specific ha
 
 Alternatively, both those elements can be added to the end to give the following chain parameters:
 ```
---chain ratios --ratios-spread 0.005 --chain fixedspread --fixedspread-value 2 --chain preventpostonlycrossingbook --chain roundtolotsize
+--chain ratios --ratios-spread 0.005 --chain fixedpositionsize --fixedpositionsize-value 2 --chain preventpostonlycrossingbook --chain roundtolotsize
 ```
 
 
