@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(
     description="Balance the value of tokens in a Mango Markets group to specific values or percentages.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--target", type=str, action="append", required=True,
+parser.add_argument("--target", type=mango.parse_target_balance, action="append", required=True,
                     help="token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5')")
 parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
                     help="fraction of total wallet value a trade must be above to be carried out")
@@ -45,8 +45,7 @@ try:
     group = mango.Group.load(context)
     tokens = [token_info.token for token_info in group.tokens if token_info is not None]
 
-    balance_parser = mango.TargetBalanceParser(tokens)
-    targets = list(map(balance_parser.parse, args.target))
+    targets = args.target
     logging.info(f"Targets: {targets}")
 
     # TODO - fetch prices when available for V3.

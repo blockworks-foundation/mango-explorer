@@ -61,9 +61,8 @@ class SpotMarketOperations(MarketOperations):
     def place_order(self, order: Order) -> Order:
         client_id: int = self.context.random_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        order_with_client_id: Order = Order(id=0, client_id=client_id, side=order.side, price=order.price,
-                                            quantity=order.quantity, owner=self.open_orders_address or SYSTEM_PROGRAM_ADDRESS,
-                                            order_type=order.order_type)
+        order_with_client_id: Order = order.with_client_id(client_id).with_owner(
+            self.open_orders_address or SYSTEM_PROGRAM_ADDRESS)
         self.logger.info(f"Placing {self.spot_market.symbol} order {order}.")
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
             order_with_client_id)

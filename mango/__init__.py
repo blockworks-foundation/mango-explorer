@@ -77,7 +77,7 @@ from .tradeexecutor import TradeExecutor, NullTradeExecutor, ImmediateTradeExecu
 from .transactionscout import TransactionScout, fetch_all_recent_transaction_signatures, mango_instruction_from_response
 from .version import Version
 from .wallet import Wallet
-from .walletbalancer import TargetBalance, FixedTargetBalance, PercentageTargetBalance, TargetBalanceParser, sort_changes_for_trades, calculate_required_balance_changes, FilterSmallChanges, WalletBalancer, NullWalletBalancer, LiveWalletBalancer
+from .walletbalancer import TargetBalance, FixedTargetBalance, PercentageTargetBalance, parse_target_balance, sort_changes_for_trades, calculate_required_balance_changes, FilterSmallChanges, WalletBalancer, NullWalletBalancer, LiveWalletBalancer
 from .watcher import Watcher, ManualUpdateWatcher, LamdaUpdateWatcher
 from .watchers import build_group_watcher, build_account_watcher, build_cache_watcher, build_spot_open_orders_watcher, build_serum_open_orders_watcher, build_perp_open_orders_watcher, build_price_watcher, build_serum_inventory_watcher, build_perp_orderbook_side_watcher, build_serum_orderbook_side_watcher
 from .websocketsubscription import WebSocketSubscription, WebSocketProgramSubscription, WebSocketAccountSubscription, WebSocketLogSubscription, WebSocketSubscriptionManager, IndividualWebSocketSubscriptionManager, SharedWebSocketSubscriptionManager

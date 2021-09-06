@@ -1,5 +1,3 @@
-import pytest
-
 from .context import mango
 from .fakes import fake_token
 
@@ -27,28 +25,19 @@ def test_target_balance_constructor():
 def test_fixed_target_balance_constructor():
     token = fake_token()
     value = Decimal(23)
-    actual = mango.FixedTargetBalance(token, value)
+    actual = mango.FixedTargetBalance(token.symbol, value)
     assert actual is not None
-    assert actual.token == token
+    assert actual.symbol == token.symbol
     assert actual.value == value
 
 
 def test_percentage_target_balance_constructor():
     token = fake_token()
     value = Decimal(5)
-    actual = mango.PercentageTargetBalance(token, value)
+    actual = mango.PercentageTargetBalance(token.symbol, value)
     assert actual is not None
-    assert actual.token == token
+    assert actual.symbol == token.symbol
     assert actual.target_fraction == Decimal("0.05")  # Calculated as a fraction instead of a percentage.
-
-
-def test_target_balance_parser_constructor():
-    token1 = fake_token()
-    token2 = fake_token()
-    tokens = [token1, token2]
-    actual = mango.TargetBalanceParser(tokens)
-    assert actual is not None
-    assert actual.tokens == tokens
 
 
 def test_calculate_required_balance_changes():
@@ -72,27 +61,32 @@ def test_calculate_required_balance_changes():
 
 def test_percentage_target_balance():
     token = fake_token()
-    percentage_parsed_balance_change = mango.PercentageTargetBalance(token, Decimal(33))
-    assert(percentage_parsed_balance_change.token == token)
+    percentage_parsed_balance_change = mango.PercentageTargetBalance(token.symbol, Decimal(33))
+    assert(percentage_parsed_balance_change.symbol == token.symbol)
 
     current_token_price = Decimal(2000)  # It's $2,000 per TOKEN
     current_account_value = Decimal(10000)  # We hold $10,000 in total across all assets in our account.
-    resolved_parsed_balance_change = percentage_parsed_balance_change.resolve(
-        current_token_price, current_account_value)
+    resolved_parsed_balance_change = percentage_parsed_balance_change.resolve(token,
+                                                                              current_token_price,
+                                                                              current_account_value)
     assert(resolved_parsed_balance_change.token == token)
     # 33% of $10,000 is $3,300
     # $3,300 spent on TOKEN gives us 1.65 TOKEN
     assert(resolved_parsed_balance_change.value == Decimal("1.65"))
 
 
-def test_target_balance_parser():
-    parser = mango.TargetBalanceParser([ETH_TOKEN, BTC_TOKEN, USDT_TOKEN])
-    with pytest.raises(ValueError):
-        parser.parse("eth:10%")
+def test_target_balance_parser_fixedvalue():
+    parsed = mango.parse_target_balance("eth:70")
+    assert isinstance(parsed, mango.FixedTargetBalance)
+    assert parsed.symbol == "ETH"
+    assert parsed.value == Decimal(70)
 
-    parsed_fixed = parser.parse("eth:70")
-    assert(parsed_fixed.token == ETH_TOKEN)
-    assert(parsed_fixed.value == Decimal(70))
+
+def test_target_balance_parser_percentagevalue():
+    parsed = mango.parse_target_balance("btc:10%")
+    assert isinstance(parsed, mango.PercentageTargetBalance)
+    assert parsed.symbol == "BTC"
+    assert parsed.target_fraction == Decimal("0.1")
 
 
 def test_filter_small_changes_constructor():

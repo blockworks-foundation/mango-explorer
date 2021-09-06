@@ -26,7 +26,7 @@ parser.add_argument("--throttle-reload-to-seconds", type=Decimal, default=Decima
                     help="minimum number of seconds between each full margin account reload loop (including time taken processing accounts)")
 parser.add_argument("--throttle-ripe-update-to-seconds", type=Decimal, default=Decimal(5),
                     help="minimum number of seconds between each ripe update loop (including time taken processing accounts)")
-parser.add_argument("--target", type=str, action="append",
+parser.add_argument("--target", type=mango.parse_target_balance, action="append",
                     help="token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5')")
 parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
                     help="fraction of total wallet value a trade must be above to be carried out")
@@ -127,8 +127,7 @@ try:
     if args.dry_run or (args.target is None) or (len(args.target) == 0):
         wallet_balancer: mango.WalletBalancer = mango.NullWalletBalancer()
     else:
-        balance_parser = mango.TargetBalanceParser(tokens)
-        targets = list(map(balance_parser.parse, args.target))
+        targets = args.target
         trade_executor = mango.ImmediateTradeExecutor(context, wallet, None, adjustment_factor)
         wallet_balancer = mango.LiveWalletBalancer(
             context, wallet, group, trade_executor, action_threshold, tokens, targets)

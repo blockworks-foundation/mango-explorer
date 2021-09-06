@@ -14,12 +14,22 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
+
+def resolve_quantity(token: mango.Token, current_quantity: Decimal, target_quantity: mango.TargetBalance, price: Decimal):
+    current_value: Decimal = current_quantity * price
+    resolved_value_to_keep: mango.TokenValue = target_quantity.resolve(token, price, current_value)
+    return resolved_value_to_keep
+
+
 parser = argparse.ArgumentParser(description="Sells all base tokens for quote on a market.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--market", type=str, required=True, help="market symbol to sweep (e.g. ETH/USDC)")
+parser.add_argument("--target-quantity", type=mango.parse_target_balance, required=True,
+                    help="target quantity to maintain - token symbol plus target value or percentage, separated by a colon (e.g. 'ETH:2.5')")
 parser.add_argument("--max-slippage", type=Decimal, default=Decimal("0.05"),
                     help="maximum slippage allowed for the IOC order price")
+parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
+                    help="fraction of total wallet value a trade must be above to be carried out")
 parser.add_argument("--account-address", type=PublicKey,
                     help="address of the specific account to use, if more than one available")
 parser.add_argument("--dry-run", action="store_true", default=False,
@@ -34,7 +44,10 @@ wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_address)
 account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
 
-market_symbol = args.market.upper()
+target_quantity: mango.TargetBalance = args.target_quantity
+base = mango.TokenInfo.find_by_symbol(group.base_tokens, target_quantity.symbol)
+
+market_symbol = f"{base.token.symbol}/{group.shared_quote_token.token.symbol}"
 market: typing.Optional[mango.Market] = context.market_lookup.find_by_symbol(market_symbol)
 if market is None:
     raise Exception(f"Could not find market {market_symbol}")
@@ -44,17 +57,39 @@ if not isinstance(loaded_market, mango.SpotMarket):
     raise Exception(f"Market {market_symbol} is not a spot market")
 
 basket_token: mango.AccountBasketBaseToken = account.find_basket_token(market.base)
-quantity: Decimal = basket_token.net_value.value
-if quantity <= 0:
-    print(f"No {basket_token.net_value.token.symbol} to sweep.")
+logging.info(f"Value in basket:{basket_token}")
+
+market_operations: mango.MarketOperations = mango.create_market_operations(context, wallet, account, market, False)
+orders: typing.Sequence[mango.Order] = market_operations.load_orders()
+top_bid: Decimal = max([order.price for order in orders if order.side == mango.Side.BUY])
+top_ask: Decimal = min([order.price for order in orders if order.side == mango.Side.SELL])
+logging.info(f"Spread is {top_bid:,.8f} / {top_ask:,.8f}")
+
+resolved_value_to_keep = resolve_quantity(base.token, basket_token.net_value.value, target_quantity, top_bid)
+quantity: Decimal = basket_token.net_value.value - resolved_value_to_keep.value
+if quantity < 0:
+    quantity = 0 - quantity
+    side: mango.Side = mango.Side.BUY
+    slippage_factor: Decimal = Decimal(1) + args.max_slippage
+    price: Decimal = top_ask * slippage_factor
 else:
-    market_operations: mango.MarketOperations = mango.create_market_operations(context, wallet, account, market, False)
-    orders: typing.Sequence[mango.Order] = market_operations.load_orders()
-    top_bid: Decimal = max([order.price for order in orders if order.side == mango.Side.BUY])
-    decrease_factor: Decimal = Decimal(1) - args.max_slippage
-    price: Decimal = top_bid * decrease_factor
-    order: mango.Order = mango.Order.from_basic_info(
-        mango.Side.SELL, price, basket_token.net_value.value, mango.OrderType.IOC)
+    side = mango.Side.SELL
+    slippage_factor = Decimal(1) - args.max_slippage
+    price = top_bid * slippage_factor
+
+logging.info(f"Resolved value to order {quantity:,.8f}")
+logging.info(f"Worst acceptable price: {price:,.8f}")
+
+token_price: mango.TokenValue = mango.TokenValue(basket_token.net_value.token, price)
+quantity_change: mango.TokenValue = mango.TokenValue(basket_token.net_value.token, quantity)
+
+worthwhile_checker = mango.FilterSmallChanges(args.action_threshold, [basket_token.net_value], [token_price])
+worth_doing: bool = worthwhile_checker.allow(quantity_change)
+
+if not worth_doing:
+    print(f"Balance change {quantity_change} is below threshold for change: {args.action_threshold}")
+else:
+    order: mango.Order = mango.Order.from_basic_info(side, price, quantity, mango.OrderType.IOC)
     if args.dry_run:
         print("Dry run: not completing order", order)
     else:
