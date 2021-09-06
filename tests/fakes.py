@@ -89,8 +89,8 @@ def fake_spot_market_stub() -> mango.SpotMarketStub:
     return mango.SpotMarketStub(fake_seeded_public_key("program ID"), fake_seeded_public_key("spot market"), fake_token("BASE"), fake_token("QUOTE"), fake_seeded_public_key("group address"))
 
 
-def fake_loaded_market() -> mango.Market:
-    return mango.Market(fake_seeded_public_key("program ID"), fake_seeded_public_key("perp market"), mango.InventorySource.ACCOUNT, fake_token("BASE"), fake_token("QUOTE"), mango.NullLotSizeConverter())
+def fake_loaded_market() -> mango.LoadedMarket:
+    return mango.LoadedMarket(fake_seeded_public_key("program ID"), fake_seeded_public_key("perp market"), mango.InventorySource.ACCOUNT, fake_token("BASE"), fake_token("QUOTE"), mango.NullLotSizeConverter())
 
 
 def fake_token_account() -> mango.TokenAccount:
@@ -122,8 +122,8 @@ def fake_account():
     return None
 
 
-def fake_price():
-    return None
+def fake_price(market: mango.Market = fake_loaded_market(), price: Decimal = Decimal(100)):
+    return mango.Price(mango.OracleSource("test", "test", mango.SupportedOracleFeature.MID_PRICE, market), datetime.datetime.now(), market, price, price, price, Decimal(0))
 
 
 def fake_placed_orders_container():

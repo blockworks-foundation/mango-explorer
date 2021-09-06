@@ -23,6 +23,7 @@ from solana.publickey import PublicKey
 
 from .accountinfo import AccountInfo
 from .context import Context
+from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .market import Market, InventorySource
 from .openorders import OpenOrders
@@ -35,7 +36,7 @@ from .token import Token
 #
 # This class encapsulates our knowledge of a Serum spot market.
 #
-class SerumMarket(Market):
+class SerumMarket(LoadedMarket):
     def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token, underlying_serum_market: PySerumMarket):
         super().__init__(serum_program_address, address, InventorySource.SPL_TOKENS, base, quote, RaisingLotSizeConverter())
         self.underlying_serum_market: PySerumMarket = underlying_serum_market

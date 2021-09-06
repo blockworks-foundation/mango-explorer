@@ -26,12 +26,12 @@ When there are no more `Element`s in the `Chain`, the desired orders are passed 
 
 Usually the head of the marketmaker ‘chain’ creates some desired orders, and they may be modified by subsequent elements in the chain.
 
-The default chain is:
-- `ConfidenceIntervalSpreadElement`
-- `BiasQuoteOnPositionElement`
-- `MinimumChargeElement`
-- `PreventPostOnlyCrossingBookElement`
-- `RoundToLotSizeElement`
+The default chain is (in order):
+- `confidenceinterval`
+- `biasquoteonposition`
+- `minimumcharge`
+- `preventpostonlycrossingbook`
+- `roundtolotsize`
 
 It's possible to specify a different `Chain` on the command line.
 
@@ -42,40 +42,81 @@ It's possible to specify a different `Chain` on the command line.
 
 The default chain is equivalent to specifying:
 ```
---chain confidenceintervalspread --chain biasquoteonposition --chain minimumcharge --chain preventpostonlycrossingbook --chain roundtolotsize
+--chain confidenceinterval --chain biasquoteonposition --chain minimumcharge --chain preventpostonlycrossingbook --chain roundtolotsize
 ```
 
 To specify a different chain, you must specify on the command-line each chain element you want to use, in order.
 
 For example, to specify a chain similar to the default chain but without the `BiasQuoteOnPosition` element, you would add the following parameters to the marketmaker command-line:
 ```
---chain confidenceintervalspread --chain minimumcharge --chain preventpostonlycrossingbook --chain roundtolotsize
+--chain confidenceinterval --chain minimumcharge --chain preventpostonlycrossingbook --chain roundtolotsize
 ```
 
 Don't forget - if you want to change any part of the default chain, you must specify the full chain you want to use.
 
 
-## Element Details
+## Chain Heads
+
+Currently only two elements - `ratios` and `confidenceinterval` - create orders. The remaining elements modify orders that are passed to them. Since each 'pulse' starts with no desired orders, that means the first element of the chain (or 'head of the chain') must be either `ratios` or `confidenceinterval`. Subsequent elements in the chain can modify the orders.
+
+
+## Example Chain
+
+Here's a completely different chain. This chain will specify orders with a spread of 0.5% and a position size of 2:
+```
+--chain ratios --ratios-spread 0.005 --chain fixedspread --fixedspread-value 2
+```
+The lack of a `roundtolotsize` element means positions won't be rounded to lot sizes when being sent to the marketmaker (so reconciling orders won't work as well as it might) but they'll be properly rounded when placed. 
+
+The lack of a `preventpostonlycrossingbook` element means there's no specific handling of a POST_ONLY order that would cross the orderbook. That means those orders (since they're POST_ONLY) will be implicitly cancelled - this default behaviour may be exactly what you want.
+
+Alternatively, both those elements can be added to the end to give the following chain parameters:
+```
+--chain ratios --ratios-spread 0.005 --chain fixedspread --fixedspread-value 2 --chain preventpostonlycrossingbook --chain roundtolotsize
+```
+
+
+## Element Reference
 
 Here's a list of all available `Element`s and the additional configuration parameters they can take.
 
-
-### `FixedRatiosElement`
-
-> Specified using `--chain fixedratios`
-
-The `FixedRatiosElement` builds orders using a fixed ratio of available collateral for the position size and a fixed ratio of the price for the spread. The position size is specified using the `--fixed-position-size-ratio` parameter, and the spread is specified using the `--fixed-spread-ratio` parameter.
-
-It is possible to 'layer' orders by specifying the `--position-size-ratio` and `--spread-ratio` parameters multiple times. **Note**: both parameters must be specified the same number of times - for example, it is an error to specify 3 position size ratios and only 2 spread ratios.
+**Note**: In general, any parameters for a specific element have the name --*elementname*-parametername to help distinguish them and the element they operate upon.
 
 
-### `ConfidenceIntervalSpreadElement`
+### `AfterAccumulatedDepthElement`
 
-> Specified using `--chain confidenceintervalspread`
+> Specified using: `--chain afteraccumulateddepth`
 
-The `ConfidenceIntervalSpreadElement` uses the ‘confidence interval’ in the oracle price to determine the spread. How aggressively this is used can be tuned by the `--confidence-interval-level` parameter.
+Tries to place an order on the orderbook with sufficient quantity on orders between it and the mid-price.
 
-A weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread.
+Basically, if an order is for quantity X then this element will start at the top of the book and move down orders until the accumulated quantity from orders is greater than the quantity of the desired order.
+
+E.g. if an order is for 1 BTC, the order will be priced so that there is at least 1 BTC's worth of orders between its price and the mid-price.
+
+
+
+### `BiasQuoteOnPositionElement`
+
+> Specified using: `--chain biasquoteonposition`
+
+> Accepts parameter: `--biasquoteonposition-bias`
+
+This can shift the price of orders based on how much inventory is held. Too much inventory: bias prices down (so it tends to buy less and sell more). Too little inventory: bias prices up (so it tends to buy more and sell less).
+
+The default bias is 0, meaning no changes will be made to orders. You can change this using the `-biasquoteonposition-bias` parameter. This should be a small, positive number - for example 0.00003 can shift the order price significantly.
+
+
+### `ConfidenceIntervalElement`
+
+> Specified using: `--chain confidenceinterval`
+
+> Accepts parameter: `--confidenceinterval-level`
+
+> Accepts parameter: `--confidenceinterval-position-size-ratio`
+
+The `ConfidenceIntervalElement` uses the ‘confidence interval’ in the oracle price to determine the spread. How aggressively this is used can be tuned by the `--confidenceinterval-level` parameter.
+
+This 'level' is weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread.
 
 The ‘confidence interval’ is Pyth’s expectation of how far from the current mid-price the next trade will occur. If you use a ‘confidence weighting’ parameter of 2, this confidence interval is doubled and then added to the mid-price to get the sell price for the order and subtracted from the mid-price to get the buy price for the order.
 
@@ -86,22 +127,45 @@ The ‘confidence interval’ is Pyth’s expectation of how far from the curren
 **Important note:** this can be specified multiple times on the command line, so you can have orders placed at, say, 1x, 2x and 5x the confidence interval, placing/checking 6 orders in total each pulse (3 BUYs, 3 SELLs).
 
 
-### `BiasQuoteOnPositionElement`
+### `FixedPositionSizeElement`
 
-> Specified using `--chain biasquoteonposition`
+> Specified using: `--chain fixedpositionsize`
 
-This can shift the price of orders based on how much inventory is held. Too much inventory: bias prices down (so it tends to buy less and sell more). Too little inventory: bias prices up (so it tends to buy more and sell less).
+> Accepts parameter: `--fixedpositionsize-value`
 
-The default bias is 0, meaning no changes will be made to orders. You can change this using the `-quote-position-bias` parameter. This should be a small, positive number. I’m trialing 0.00003 and it shifts the price significantly.
+The `FixedPositionSizeElement` overrides the position size of all orders it sees, setting them to the fixed value (in the base currency) specified in the parameter.
+
+For example, adding:
+```
+--chain fixedpositionsize --fixedpositionsize-value 3
+```
+to a chain on ETH/USDC will force all BUY and SELL orders to have a position size of 3 ETH.
+
+
+### `FixedSpreadElement`
+
+> Specified using: `--chain fixedspread`
+
+> Accepts parameter: `--fixedspread-value`
+
+The `FixedSpreadElement` overrides the spread of all orders it sees, setting them to the fixed value (in the quote currency) specified in the parameter.
+
+For example, adding:
+```
+--chain fixedspread --fixedspread-value 0.5
+```
+to a chain on ETH/USDC will force the spread on BUY and SELL orders to be 0.5 USDC, meaning the BUY price will be the mid-price *minus* half the --fixedspread-value, and the SELL price will be the mid-price *plus* half the --fixedspread-value.
 
 
 ### `MinimumChargeElement`
 
-> Specified using `--chain minimumcharge`
+> Specified using: `--chain minimumcharge`
+
+> Accepts parameter: `--minimumcharge-ratio`
 
 This ensures that there’s a minimum value of spread to be paid by the taker.
 
-It’s possible that the configuration may lead to too small a spread to be profitable. You can use the `--minimum-charge-ratio` parameter to enforce a minimum spread. The default of 0.0005 is 0.05%.
+It’s possible that the configuration may lead to too small a spread to be profitable. You can use the `--minimumcharge-ratio` parameter to enforce a minimum spread. The default of 0.0005 is 0.05%.
 
 
 ### `PreventPostOnlyCrossingBookElement`
@@ -109,6 +173,19 @@ It’s possible that the configuration may lead to too small a spread to be prof
 > Specified using `--chain preventpostonlycrossingbook`
 
 This ensures that POST_ONLY orders that would corss the orderbook (and so be cancelled instead of put on the book) are placed *just* inside the spread by 1 tick.
+
+
+### `RatiosElement`
+
+> Specified using: `--chain ratios`
+
+> Accepts parameter: `--ratios-spread`
+
+> Accepts parameter: `--ratios-position-size`
+
+The `RatiosElement` builds orders using the specified ratio of available collateral for the position size and the specified ratio of the price for the spread. The position size is specified using the `--ratios-position-size` parameter, and the spread is specified using the `--ratios-spread` parameter.
+
+It is possible to 'layer' orders by specifying the `--ratios-position-size` and `--ratios-spread` parameters multiple times. **Note**: both parameters must be specified the same number of times - for example, it is an error to specify 3 position size ratios and only 2 spread ratios.
 
 
 ### `RoundToLotSizeElement`

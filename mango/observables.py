@@ -188,6 +188,25 @@ class FunctionObserver(rx.core.Observer):
             self.logger.warning(f"on_completed callable raised exception: {exception}")
 
 
+# # 🥭 DisposingSubject
+#
+# This class is a regular Subject that can take additional `Disposable` objects to dispose of when the
+# `Subject` is being cleaned up.
+#
+class DisposingSubject(rx.subject.Subject):
+    def __init__(self) -> None:
+        super().__init__()
+        self._to_dispose: typing.List[rx.core.typing.Disposable] = []
+
+    def add_disposable(self, disposable: rx.core.typing.Disposable) -> None:
+        self._to_dispose += [disposable]
+
+    def dispose(self) -> None:
+        for disposable in self._to_dispose:
+            disposable.dispose()
+        super().dispose()
+
+
 # # 🥭 create_backpressure_skipping_observer function
 #
 # Creates an `Observer` that skips inputs if they are building up while a subscriber works.

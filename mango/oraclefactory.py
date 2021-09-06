@@ -17,8 +17,8 @@ from .context import Context
 from .contextbuilder import ContextBuilder
 from .oracle import OracleProvider
 from .oracles.ftx import ftx
+from .oracles.market import market
 from .oracles.pythnetwork import pythnetwork
-from .oracles.serum import serum
 from .oracles.stub import stub
 
 
@@ -27,18 +27,19 @@ from .oracles.stub import stub
 # This file allows you to create a concreate OracleProvider for a specified provider name.
 #
 def create_oracle_provider(context: Context, provider_name: str) -> OracleProvider:
-    if provider_name == "serum":
-        return serum.SerumOracleProvider()
-    elif provider_name == "ftx":
+    proper_provider_name: str = provider_name.upper()
+    if proper_provider_name == "FTX":
         return ftx.FtxOracleProvider()
-    elif provider_name == "pyth":
+    elif proper_provider_name == "MARKET":
+        return market.MarketOracleProvider()
+    elif proper_provider_name == "PYTH":
         return pythnetwork.PythOracleProvider(context)
-    elif provider_name == "pyth-mainnet":
+    elif proper_provider_name == "PYTH-MAINNET":
         mainnet_beta_pyth_context: Context = ContextBuilder.forced_to_mainnet_beta(context)
         return pythnetwork.PythOracleProvider(mainnet_beta_pyth_context)
-    elif provider_name == "pyth-devnet":
+    elif proper_provider_name == "PYTH-DEVNET":
         devnet_pyth_context: Context = ContextBuilder.forced_to_devnet(context)
         return pythnetwork.PythOracleProvider(devnet_pyth_context)
-    elif provider_name == "stub":
+    elif proper_provider_name == "STUB":
         return stub.StubOracleProvider()
-    raise Exception(f"Unknown oracle provider '{provider_name}'.")
+    raise Exception(f"Unknown oracle provider '{proper_provider_name}'.")

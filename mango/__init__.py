@@ -16,7 +16,7 @@ from .contextbuilder import ContextBuilder
 from .createmarketinstructionbuilder import create_market_instruction_builder
 from .createmarketoperations import create_market_operations
 from .encoding import decode_binary, encode_binary, encode_key, encode_int
-from .ensuremarketloaded import ensure_market_loaded
+from .ensuremarketloaded import ensure_market_loaded, load_market_by_symbol
 from .group import GroupBasketMarket, Group
 from .healthcheck import HealthCheck
 from .idsjsontokenlookup import IdsJsonTokenLookup
@@ -28,6 +28,7 @@ from .instructiontype import InstructionType
 from .liquidatablereport import LiquidatableState, LiquidatableReport
 from .liquidationevent import LiquidationEvent
 from .liquidationprocessor import LiquidationProcessor, LiquidationProcessorState
+from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, NullLotSizeConverter
 from .mangoinstruction import MangoInstruction
 from .market import InventorySource, Market

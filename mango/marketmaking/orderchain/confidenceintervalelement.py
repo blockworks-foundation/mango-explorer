@@ -23,19 +23,19 @@ from .element import Element
 from ..modelstate import ModelState
 
 
-# # 🥭 ConfidenceIntervalSpreadElement class
+# # 🥭 ConfidenceIntervalElement class
 #
 # Ignores any input `Order`s (so probably best at the head of the chain). Builds orders using a fixed position
 # size ratio but with a spread based on the confidence in the oracle price.
 #
-class ConfidenceIntervalSpreadElement(Element):
+class ConfidenceIntervalElement(Element):
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
-        if args.position_size_ratio is None or args.position_size_ratio == 0:
+        if args.confidenceinterval_position_size_ratio is None or args.confidenceinterval_position_size_ratio == 0:
             raise Exception("No position-size ratio specified.")
 
-        self.position_size_ratio: Decimal = args.position_size_ratio
-        confidence_interval_levels: typing.Sequence[Decimal] = args.confidence_interval_level
+        self.position_size_ratio: Decimal = args.confidenceinterval_position_size_ratio
+        confidence_interval_levels: typing.Sequence[Decimal] = args.confidenceinterval_level
         if len(confidence_interval_levels) == 0:
             confidence_interval_levels = [Decimal(2)]
         self.confidence_interval_levels: typing.Sequence[Decimal] = confidence_interval_levels
@@ -43,10 +43,10 @@ class ConfidenceIntervalSpreadElement(Element):
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--position-size-ratio", type=Decimal,
-                            help="fraction of the token inventory to be bought or sold in each order")
-        parser.add_argument("--confidence-interval-level", type=Decimal, action="append",
+        parser.add_argument("--confidenceinterval-level", type=Decimal, action="append",
                             help="the levels of weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread (can be specified multiple times to give multiple levels)")
+        parser.add_argument("--confidenceinterval-position-size-ratio", type=Decimal,
+                            help="fraction of the token inventory to be bought or sold in each order")
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
@@ -82,4 +82,4 @@ class ConfidenceIntervalSpreadElement(Element):
 
     def __str__(self) -> str:
         confidence_interval_levels = ", ".join(map(str, self.confidence_interval_levels)) or "None"
-        return f"« 𝙲𝚘𝚗𝚏𝚒𝚍𝚎𝚗𝚌𝚎𝙸𝚗𝚝𝚎𝚛𝚟𝚊𝚕𝚂𝚙𝚛𝚎𝚊𝚍𝙴𝚕𝚎𝚖𝚎𝚗𝚝 {self.order_type} - position size: {self.position_size_ratio}, confidence interval levels: {confidence_interval_levels} »"
+        return f"« 𝙲𝚘𝚗𝚏𝚒𝚍𝚎𝚗𝚌𝚎𝙸𝚗𝚝𝚎𝚛𝚟𝚊𝚕𝙴𝚕𝚎𝚖𝚎𝚗𝚝 {self.order_type} - position size: {self.position_size_ratio}, confidence interval levels: {confidence_interval_levels} »"

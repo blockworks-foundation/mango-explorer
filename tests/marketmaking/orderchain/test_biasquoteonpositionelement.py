@@ -8,7 +8,7 @@ from mango.marketmaking.orderchain.biasquoteonpositionelement import BiasQuoteOn
 
 
 def test_no_bias_results_in_no_change():
-    args: argparse.Namespace = argparse.Namespace(quote_position_bias=Decimal(0))
+    args: argparse.Namespace = argparse.Namespace(biasquoteonposition_bias=Decimal(0))
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement(args)
     order: mango.Order = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
 
@@ -18,7 +18,7 @@ def test_no_bias_results_in_no_change():
 
 
 def test_bias_with_positive_inventory():
-    args: argparse.Namespace = argparse.Namespace(quote_position_bias=Decimal("0.001"))
+    args: argparse.Namespace = argparse.Namespace(biasquoteonposition_bias=Decimal("0.001"))
     quantity: Decimal = Decimal(10)
     inventory: Decimal = Decimal(100)
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement(args)
@@ -34,7 +34,7 @@ def test_bias_with_positive_inventory():
 
 
 def test_bias_with_negative_inventory():
-    args: argparse.Namespace = argparse.Namespace(quote_position_bias=Decimal("0.001"))
+    args: argparse.Namespace = argparse.Namespace(biasquoteonposition_bias=Decimal("0.001"))
     quantity: Decimal = Decimal(10)
     inventory: Decimal = Decimal(-100)
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement(args)
@@ -59,7 +59,7 @@ def test_bias_with_negative_inventory():
 #  is -0.0001, you would move your quotes down by 0.0005 (or 5bps)
 # (Private chat link: https://discord.com/channels/@me/832570058861314048/878343278523723787)
 def test_from_daffys_original_note():
-    args: argparse.Namespace = argparse.Namespace(quote_position_bias=Decimal("0.0001"))
+    args: argparse.Namespace = argparse.Namespace(biasquoteonposition_bias=Decimal("0.0001"))
     quantity: Decimal = Decimal("0.0002")
     inventory: Decimal = Decimal("0.0010")
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement(args)

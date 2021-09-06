@@ -31,11 +31,11 @@ from ..modelstate import ModelState
 class MinimumChargeElement(Element):
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
-        self.minimum_charge_ratio: Decimal = args.minimum_charge_ratio
+        self.minimum_charge_ratio: Decimal = args.minimumcharge_ratio
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--minimum-charge-ratio", type=Decimal, default=Decimal("0.0005"),
+        parser.add_argument("--minimumcharge-ratio", type=Decimal, default=Decimal("0.0005"),
                             help="minimum fraction of the price to be accept as a spread")
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:

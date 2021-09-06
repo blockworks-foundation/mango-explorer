@@ -31,11 +31,11 @@ from ..modelstate import ModelState
 class BiasQuoteOnPositionElement(Element):
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
-        self.quote_position_bias: Decimal = args.quote_position_bias or Decimal(0)
+        self.quote_position_bias: Decimal = args.biasquoteonposition_bias or Decimal(0)
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--quote-position-bias", type=Decimal, default=Decimal(0),
+        parser.add_argument("--biasquoteonposition-bias", type=Decimal, default=Decimal(0),
                             help="bias to apply to quotes based on inventory position")
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:

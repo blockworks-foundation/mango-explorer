@@ -13,6 +13,10 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import rx
+import rx.disposable
+import rx.subject
+import rx.operators as ops
 import typing
 
 from solana.publickey import PublicKey
@@ -20,11 +24,13 @@ from solana.publickey import PublicKey
 from .accountinfo import AccountInfo
 from .context import Context
 from .group import Group
+from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .market import Market, InventorySource
+from .observables import DisposingSubject, observable_pipeline_error_reporter
 from .orderbookside import PerpOrderBookSide
 from .orders import Order
-from .perpeventqueue import PerpEvent, PerpEventQueue
+from .perpeventqueue import PerpEvent, PerpEventQueue, UnseenPerpEventChangesTracker
 from .perpmarketdetails import PerpMarketDetails
 from .token import Token
 
@@ -33,7 +39,7 @@ from .token import Token
 #
 # This class encapsulates our knowledge of a Mango perps market.
 #
-class PerpMarket(Market):
+class PerpMarket(LoadedMarket):
     def __init__(self, mango_program_address: PublicKey, address: PublicKey, base: Token, quote: Token, underlying_perp_market: PerpMarketDetails):
         super().__init__(mango_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.underlying_perp_market: PerpMarketDetails = underlying_perp_market
@@ -78,6 +84,24 @@ class PerpMarket(Market):
         bid_side = PerpOrderBookSide.parse(context, bids, self.underlying_perp_market)
         ask_side = PerpOrderBookSide.parse(context, asks, self.underlying_perp_market)
         return [*bid_side.orders(), *ask_side.orders()]
+
+    def observe_events(self, context: Context, interval: int = 30) -> DisposingSubject:
+        perp_event_queue: PerpEventQueue = PerpEventQueue.load(
+            context, self.underlying_perp_market.event_queue, self.lot_size_converter)
+        perp_splitter: UnseenPerpEventChangesTracker = UnseenPerpEventChangesTracker(perp_event_queue)
+
+        fill_events = DisposingSubject()
+        disposable_subscription = rx.interval(interval).pipe(
+            ops.observe_on(context.create_thread_pool_scheduler()),
+            ops.start_with(-1),
+            ops.map(lambda _: PerpEventQueue.load(
+                context, self.underlying_perp_market.event_queue, self.lot_size_converter)),
+            ops.flat_map(perp_splitter.unseen),
+            ops.catch(observable_pipeline_error_reporter),
+            ops.retry()
+        ).subscribe(fill_events)
+        fill_events.add_disposable(disposable_subscription)
+        return fill_events
 
     def __str__(self) -> str:
         underlying: str = f"{self.underlying_perp_market}".replace("\n", "\n    ")

@@ -485,28 +485,15 @@ Another pluggable object, this time of type `OrderReconciler` tries to reconcile
 
 Usually the head of the marketmaker ‘chain’ creates some desired orders, and they may be modified by subsequent elements in the chain.
 
-The default chain is:
+The default chain is (in order):
+- `confidenceinterval`
+- `biasquoteonposition`
+- `minimumcharge`
+- `preventpostonlycrossingbook`
+- `roundtolotsize`
 
-- `ConfidenceIntervalSpreadElement` - uses the ‘confidence interval’ in the oracle price to determine the spread. How aggressively this is used can be tuned by the `--confidence-interval-level` parameter.
+Many more details about the chain, the default chain, and additional elements, can be found in the [OrderChain Guide](MarketmakingOrderChain.md)
 
-    A weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread.
-
-    The ‘confidence interval’ is Pyth’s expectation of how far from the current mid-price the next trade will occur. If you use a ‘confidence weighting’ parameter of 2, this confidence interval is doubled and then added to the mid-price to get the sell price for the order and subtracted from the mid-price to get the buy price for the order.
-
-    - Using a confidence weighting of 1 just uses the confidence interval to create the spread
-    - Using a confidence weighting of 2 (the default) doubles the width of the spread
-    - Using a confidence weighting of 0.5 halves the width of the spread (and so is more aggressive)
-
-    **Important note:** this can be specified multiple times on the command line, so you can have orders placed at, say, 1x, 2x and 5x the confidence interval, placing/checking 6 orders in total each pulse (3 BUYs, 3 SELLs).
-
-- `BiasQuoteOnPositionElement` - can shift the price of orders based on how much inventory is held. Too much inventory: bias prices down (so it tends to buy less and sell more). Too little inventory: bias prices up (so it tends to buy more and sell less).
-
-    The default bias is 0, meaning no changes will be made to orders. You can change this using the `-quote-position-bias` parameter. This should be a small, positive number. I’m trialing 0.00003 and it shifts the price significantly.
-- `MinimumChargeElement` - ensures that there’s a minimum value of spread to be paid by the taker.
-
-    It’s possible that the configuration may lead to too small a spread to be profitable. You can use the `--minimum-charge-ratio` parameter to enforce a minimum spread. The default of 0.0005 is 0.05%.
-
-- `PreventPostOnlyCrossingBookElement` - ensures that POST_ONLY orders that would corss the orderbook (and so be cancelled instead of put on the book) are placed *just* inside the spread by 1 tick.
 
 ## Frequently-Used Marketmaker Parameters
 
@@ -523,7 +510,9 @@ Here are some parameters that are commonly passed to the `marketmaker`.
     - serum
     - ftx
 
-- `--position-size-ratio` This is the portion of your funds to use for each order. 0.01 is 1%.
+- `--confidenceinterval-level` A weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread.
+
+- `--confidenceinterval-position-size-ratio` This is the portion of your funds to use for each order. 0.01 is 1%.
 
 - `--existing-order-tolerance` The marketmaker examines existing orders and compares them with the desired orders. If an existing order is within tolerance of the price and quantity of a desired order, it is kept. If not, it’s cancelled and a new order is placed. 0.0001 is 0.01%.
 
@@ -543,7 +532,7 @@ This is a long-running process, so we’ll need to use Control-C to cancel it wh
 
 Here goes:
 ```
-# mango-explorer marketmaker --name "BTC-PERP Marketmaker" --market BTC-PERP --oracle-provider pyth --position-size-ratio 0.1 --minimum-charge-ratio 0 --confidence-interval-level 2 --confidence-interval-level 4 --existing-order-tolerance 0.0001 --pulse-interval 30 --order-type POST_ONLY --quote-position-bias 0.00003 --log-level DEBUG --cluster-name devnet --dry-run
+# mango-explorer marketmaker --name "BTC-PERP Marketmaker" --market BTC-PERP --oracle-provider pyth --confidenceinterval-position-size-ratio 0.1 --minimumcharge-ratio 0 --confidenceinterval-level 2 --confidenceinterval-level 4 --existing-order-tolerance 0.0001 --pulse-interval 30 --order-type POST_ONLY --biasquoteonposition-bias 0.00003 --log-level DEBUG --cluster-name devnet --dry-run
 2021-08-27 19:26:09 ⚠ root
 ⚠ WARNING ⚠
 

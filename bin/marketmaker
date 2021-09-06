@@ -26,8 +26,11 @@ chainbuilder.ChainBuilder.add_command_line_parameters(parser)
 parser.add_argument("--market", type=str, required=True, help="market symbol to make market upon (e.g. ETH/USDC)")
 parser.add_argument("--update-mode", type=mango.marketmaking.ModelUpdateMode, default=mango.marketmaking.ModelUpdateMode.POLL,
                     choices=list(mango.marketmaking.ModelUpdateMode), help="Update mode for model data - can be POLL (default) or WEBSOCKET")
-parser.add_argument("--oracle-provider", type=str, required=True,
-                    help="name of the price provider to use (e.g. pyth)")
+parser.add_argument("--oracle-provider", type=str, required=True, help="name of the price provider to use (e.g. pyth)")
+parser.add_argument("--oracle-market", type=str,
+                    help="market symbol for oracle to use for pricing (e.g. ETH/USDC) - defaults to market specified in --market")
+parser.add_argument("--order-type", type=mango.OrderType, default=mango.OrderType.POST_ONLY,
+                    choices=list(mango.OrderType), help="Order type: LIMIT, IOC or POST_ONLY")
 parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal("0.001"),
                     help="tolerance in price and quantity when matching existing orders or cancelling/replacing")
 parser.add_argument("--redeem-threshold", type=Decimal,
@@ -86,10 +89,7 @@ wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_address)
 account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
 
-market_symbol = args.market.upper()
-market = context.market_lookup.find_by_symbol(market_symbol)
-if market is None:
-    raise Exception(f"Could not find market {market_symbol}")
+market = mango.load_market_by_symbol(context, args.market)
 
 # The market index is also the index of the base token in the group's token list.
 if market.quote != group.shared_quote_token.token:
@@ -98,11 +98,10 @@ if market.quote != group.shared_quote_token.token:
 
 cleanup(context, wallet, account, market, args.dry_run)
 
-market = mango.ensure_market_loaded(context, market)
 
 if args.hedge_market is not None:
     if not isinstance(market, mango.PerpMarket):
-        raise Exception(f"Cannot hedge - market {market_symbol} is not a perp market.")
+        raise Exception(f"Cannot hedge - market {market.symbol} is not a perp market.")
     watched_market: mango.PerpMarket = market
 
     hedging_market_symbol = args.hedge_market.upper()
@@ -160,9 +159,11 @@ market_maker = mango.marketmaking.MarketMaker(
     wallet, market, market_instruction_builder, desired_orders_chain, order_reconciler, args.redeem_threshold)
 
 oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, args.oracle_provider)
-oracle = oracle_provider.oracle_for_market(context, market)
+oracle_market: mango.LoadedMarket = market if args.oracle_market is None else mango.load_market_by_symbol(
+    context, args.oracle_market)
+oracle = oracle_provider.oracle_for_market(context, oracle_market)
 if oracle is None:
-    raise Exception(f"Could not find oracle for market {market.symbol} from provider {args.oracle_provider}.")
+    raise Exception(f"Could not find oracle for market {oracle_market.symbol} from provider {args.oracle_provider}.")
 
 model_state_builder: mango.marketmaking.ModelStateBuilder = mango.marketmaking.model_state_builder_factory(
     args.update_mode, context, disposer, manager, health_check, wallet, group, account, market, oracle)

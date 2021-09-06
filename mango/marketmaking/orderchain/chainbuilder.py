@@ -14,20 +14,22 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import argparse
+from mango.marketmaking.orderchain.afteraccumulateddepthelement import AfterAccumulatedDepthElement
 import typing
 
-from ...orders import OrderType
 from .biasquoteonpositionelement import BiasQuoteOnPositionElement
 from .chain import Chain
-from .confidenceintervalspreadelement import ConfidenceIntervalSpreadElement
+from .confidenceintervalelement import ConfidenceIntervalElement
 from .element import Element
-from .fixedratioselement import FixedRatiosElement
+from .fixedpositionsizeelement import FixedPositionSizeElement
+from .ratioselement import RatiosElement
+from .fixedspreadelement import FixedSpreadElement
 from .minimumchargeelement import MinimumChargeElement
 from .preventpostonlycrossingbookelement import PreventPostOnlyCrossingBookElement
 from .roundtolotsizeelement import RoundToLotSizeElement
 
 _DEFAULT_CHAIN = [
-    "confidenceintervalspread",
+    "confidenceinterval",
     "biasquoteonposition",
     "minimumcharge",
     "preventpostonlycrossingbook",
@@ -47,14 +49,14 @@ class ChainBuilder:
                             help="The specific order chain elements to use instead of the default chain")
         # OrderType is used by multiple elements so specify it here rather than have them fighting over which
         # one specifies it.
-        parser.add_argument("--order-type", type=OrderType, default=OrderType.POST_ONLY,
-                            choices=list(OrderType), help="Order type: LIMIT, IOC or POST_ONLY")
         # Now add args for all the elements.
         BiasQuoteOnPositionElement.add_command_line_parameters(parser)
-        ConfidenceIntervalSpreadElement.add_command_line_parameters(parser)
-        FixedRatiosElement.add_command_line_parameters(parser)
+        ConfidenceIntervalElement.add_command_line_parameters(parser)
+        FixedSpreadElement.add_command_line_parameters(parser)
+        FixedPositionSizeElement.add_command_line_parameters(parser)
         MinimumChargeElement.add_command_line_parameters(parser)
         PreventPostOnlyCrossingBookElement.add_command_line_parameters(parser)
+        RatiosElement.add_command_line_parameters(parser)
         RoundToLotSizeElement.add_command_line_parameters(parser)
 
     # This function is the converse of `add_command_line_parameters()` - it takes
@@ -79,16 +81,22 @@ class ChainBuilder:
     @staticmethod
     def _create_element_by_name(args: argparse.Namespace, name: str) -> Element:
         proper_name: str = name.upper()
-        if proper_name == "BIASQUOTEONPOSITION":
+        if proper_name == "AFTERACCUMULATEDDEPTH":
+            return AfterAccumulatedDepthElement(args)
+        elif proper_name == "BIASQUOTEONPOSITION":
             return BiasQuoteOnPositionElement(args)
-        elif proper_name == "CONFIDENCEINTERVALSPREAD":
-            return ConfidenceIntervalSpreadElement(args)
-        elif proper_name == "FIXEDRATIOS":
-            return FixedRatiosElement(args)
+        elif proper_name == "CONFIDENCEINTERVAL":
+            return ConfidenceIntervalElement(args)
+        elif proper_name == "FIXEDSPREAD":
+            return FixedSpreadElement(args)
+        elif proper_name == "FIXEDPOSITIONSIZE":
+            return FixedPositionSizeElement(args)
         elif proper_name == "MINIMUMCHARGE":
             return MinimumChargeElement(args)
         elif proper_name == "PREVENTPOSTONLYCROSSINGBOOK":
             return PreventPostOnlyCrossingBookElement(args)
+        elif proper_name == "RATIOS":
+            return RatiosElement(args)
         elif proper_name == "ROUNDTOLOTSIZE":
             return RoundToLotSizeElement(args)
         else:

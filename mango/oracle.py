@@ -117,6 +117,12 @@ class Oracle(metaclass=abc.ABCMeta):
     def to_streaming_observable(self, context: Context) -> rx.core.Observable:
         raise NotImplementedError("Oracle.fetch_price() is not implemented on the base type.")
 
+    def __str__(self) -> str:
+        return f"« Oracle {self.name} [{self.market.symbol}] »"
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
 
 # # 🥭 OracleProvider class
 #
