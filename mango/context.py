@@ -15,7 +15,7 @@
 
 import logging
 import multiprocessing
-import random
+import time
 import typing
 
 from decimal import Decimal
@@ -53,6 +53,8 @@ class Context:
 
         self.ping_interval: int = 10
 
+        self._last_generated_client_id: int = 0
+
         # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451
         # "I think you are better off doing 4,8,16,20,30"
         self.retry_pauses: typing.Sequence[Decimal] = [Decimal(4), Decimal(
@@ -61,11 +63,30 @@ class Context:
     def create_thread_pool_scheduler(self) -> ThreadPoolScheduler:
         return ThreadPoolScheduler(multiprocessing.cpu_count())
 
-    def random_client_id(self) -> int:
-        # 9223372036854775807 is sys.maxsize for 64-bit systems, with a bit_length of 63.
-        # We explicitly want to use a max of 64-bits though, so we use the number instead of
-        # sys.maxsize, which could be lower on 32-bit systems or higher on 128-bit systems.
-        return random.randrange(9223372036854775807)
+    def generate_client_id(self) -> int:
+        # Previously used a random client ID strategy, which may be appropriate for some people.
+        #   9223372036854775807 is sys.maxsize for 64-bit systems, with a bit_length of 63.
+        #   We explicitly want to use a max of 64-bits though, so we use the number instead of
+        #   sys.maxsize, which could be lower on 32-bit systems or higher on 128-bit systems.
+        # return random.randrange(9223372036854775807)
+        #
+        # After this discussion with Max on Discord (https://discord.com/channels/791995070613159966/818978757648842782/884751007656054804):
+        #   can you generate monotonic ids?
+        #   in case not the result wouldn't be different from what we have rn, which is random display
+        #   so there's still a net benefit for changing the UI
+        #   and if you could use the same id generation scheme (unix time in ms) it would even work well with the UI :slight_smile:
+        #
+        # We go with the time in milliseconds. We get the time in nanoseconds and divide it by 1,000,000 to get
+        # the time in milliseconds.
+        #
+        # But there's more! Because this can be called in a burst, for, say, a dozen orders all within the same
+        # millisecond. And using duplicate client order IDs would be Bad. So we keep track of the last one we
+        # sent, and we just add one if we get an identical value.
+        new_id: int = round(time.time_ns() / 1000000)
+        if new_id <= self._last_generated_client_id:
+            new_id = self._last_generated_client_id + 1
+        self._last_generated_client_id = new_id
+        return new_id
 
     def lookup_group_name(self, group_address: PublicKey) -> str:
         group_address_str = str(group_address)

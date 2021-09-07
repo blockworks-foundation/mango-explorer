@@ -45,7 +45,7 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
         self.address: PublicKey = address
-        self.id: int = context.random_client_id()
+        self.id: int = context.generate_client_id()
         self.subscription_id: int = 0
         self.from_account_info: typing.Callable[[AccountInfo], TSubscriptionInstance] = constructor
         self.publisher: EventSource[TSubscriptionInstance] = EventSource[TSubscriptionInstance]()

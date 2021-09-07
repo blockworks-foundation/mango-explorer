@@ -51,7 +51,7 @@ class SerumMarketOperations(MarketOperations):
         return (signers + cancel + crank + settle).execute(self.context)
 
     def place_order(self, order: Order) -> Order:
-        client_id: int = self.context.random_client_id()
+        client_id: int = self.context.generate_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         open_orders_address = self.market_instruction_builder.open_orders_address or SYSTEM_PROGRAM_ADDRESS
         order_with_client_id: Order = Order(id=0, client_id=client_id, side=order.side, price=order.price,

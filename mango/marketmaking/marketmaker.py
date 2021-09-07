@@ -78,7 +78,7 @@ class MarketMaker:
 
             place_orders = mango.CombinableInstructions.empty()
             for to_place in reconciled.to_place:
-                desired_client_id: int = context.random_client_id()
+                desired_client_id: int = context.generate_client_id()
                 to_place_with_client_id = to_place.with_client_id(desired_client_id)
 
                 self.logger.info(f"Placing {self.market.symbol} {to_place_with_client_id}")

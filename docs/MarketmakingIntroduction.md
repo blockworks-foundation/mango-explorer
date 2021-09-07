@@ -158,7 +158,7 @@ def pulse(self, context: mango.Context, model_state: ModelState):
 
         place_orders = mango.CombinableInstructions.empty()
         for to_place in reconciled.to_place:
-            desired_client_id: int = context.random_client_id()
+            desired_client_id: int = context.generate_client_id()
             to_place_with_client_id = to_place.with_client_id(desired_client_id)
             self.order_tracker.track(to_place_with_client_id)
 

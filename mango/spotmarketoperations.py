@@ -59,7 +59,7 @@ class SpotMarketOperations(MarketOperations):
         return (signers + cancel + crank + settle).execute(self.context)
 
     def place_order(self, order: Order) -> Order:
-        client_id: int = self.context.random_client_id()
+        client_id: int = self.context.generate_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         order_with_client_id: Order = order.with_client_id(client_id).with_owner(
             self.open_orders_address or SYSTEM_PROGRAM_ADDRESS)
