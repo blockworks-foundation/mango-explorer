@@ -141,13 +141,24 @@ UnspecifiedCommitment = Commitment("unspecified")
 UnspecifiedEncoding = "unspecified"
 
 
+class CachedBlockhash(typing.NamedTuple):
+    blockhash: Blockhash
+    timestamp: datetime.datetime
+
+    def viable(self, cache_window: datetime.timedelta) -> bool:
+        expiration: datetime.datetime = self.timestamp + cache_window
+        if datetime.datetime.now() < expiration:
+            return True
+        return False
+
+
 # # 🥭 CompatibleClient class
 #
 # A `CompatibleClient` class that tries to be compatible with the proper Solana Client, but that handles
 # some common operations better from our point of view.
 #
 class CompatibleClient(Client):
-    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter):
+    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter, blockhash_cache_duration: datetime.timedelta = datetime.timedelta(seconds=15)):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster_name: str = cluster_name
@@ -155,9 +166,11 @@ class CompatibleClient(Client):
         self.commitment: Commitment = commitment
         self.skip_preflight: bool = skip_preflight
         self.instruction_reporter: InstructionReporter = instruction_reporter
+        self.blockhash_cache_duration: datetime.timedelta = blockhash_cache_duration
 
         self._request_counter = itertools.count()
         self.encoding: str = "base64"
+        self._cached_blockhash: CachedBlockhash = CachedBlockhash(Blockhash("unset"), datetime.datetime.min)
 
     def is_node_healthy(self) -> bool:
         try:
@@ -227,6 +240,15 @@ class CompatibleClient(Client):
         options = self._build_options(commitment, None, None)
         return self._send_request("getRecentBlockhash", options)
 
+    def get_cached_recent_blockhash(self, commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> Blockhash:
+        if not self._cached_blockhash.viable(self.blockhash_cache_duration):
+            blockhash_resp = self.get_recent_blockhash(commitment)
+            if not blockhash_resp["result"]:
+                raise RuntimeError("Failed to get recent blockhash")
+            blockhash = Blockhash(blockhash_resp["result"]["value"]["blockhash"])
+            self._cached_blockhash = CachedBlockhash(blockhash=blockhash, timestamp=datetime.datetime.now())
+        return self._cached_blockhash.blockhash
+
     def get_token_account_balance(self, pubkey: typing.Union[str, PublicKey], commitment: typing.Optional[Commitment] = UnspecifiedCommitment):
         options = self._build_options(commitment, None, None)
         return self._send_request("getTokenAccountBalance", str(pubkey), options)
@@ -252,14 +274,7 @@ class CompatibleClient(Client):
         return self._send_request("getMultipleAccounts", pubkeys, options)
 
     def send_transaction(self, transaction: Transaction, *signers: Account, opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment)) -> RPCResponse:
-        try:
-            blockhash_resp = self.get_recent_blockhash()
-            if not blockhash_resp["result"]:
-                raise RuntimeError("Failed to get recent blockhash")
-            transaction.recent_blockhash = Blockhash(blockhash_resp["result"]["value"]["blockhash"])
-        except Exception as err:
-            raise RuntimeError("Failed to get recent blockhash") from err
-
+        transaction.recent_blockhash = self.get_cached_recent_blockhash()
         transaction.sign(*signers)
 
         encoded_transaction: str = b64encode(transaction.serialize()).decode("utf-8")
