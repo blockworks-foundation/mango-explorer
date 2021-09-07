@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import argparse
+import datetime
 import copy
 import logging
 import os
@@ -70,6 +71,7 @@ class ContextBuilder:
         parser.add_argument("--mango-program-address", type=PublicKey, default=None, help="Mango program address")
         parser.add_argument("--serum-program-address", type=PublicKey, default=None, help="Serum program address")
         parser.add_argument("--skip-preflight", default=False, action="store_true", help="Skip pre-flight checks")
+        parser.add_argument("--blockhash-cache-duration", type=int, help="How long to cache 'recent' blockhashes")
 
         parser.add_argument("--token-data-file", type=str, default=SplTokenLookup.DefaultDataFilepath,
                             help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
@@ -95,19 +97,21 @@ class ContextBuilder:
         mango_program_address: typing.Optional[PublicKey] = args.mango_program_address
         serum_program_address: typing.Optional[PublicKey] = args.serum_program_address
         skip_preflight: bool = bool(args.skip_preflight)
+        blockhash_cache_duration: typing.Optional[datetime.timedelta] = datetime.timedelta(
+            seconds=args.blockhash_cache_duration) if args.blockhash_cache_duration is not None else None
         token_filename: str = args.token_data_file
 
-        return ContextBuilder._build(name, cluster_name, cluster_url, skip_preflight, group_name, group_address, mango_program_address, serum_program_address, token_filename)
+        return ContextBuilder._build(name, cluster_name, cluster_url, skip_preflight, blockhash_cache_duration, group_name, group_address, mango_program_address, serum_program_address, token_filename)
 
     @staticmethod
     def default():
-        return ContextBuilder._build(None, None, None, False, None, None, None, None, SplTokenLookup.DefaultDataFilepath)
+        return ContextBuilder._build(None, None, None, False, None, None, None, None, None, SplTokenLookup.DefaultDataFilepath)
 
     @staticmethod
     def from_group_name(context: Context, group_name: str) -> Context:
         return ContextBuilder._build(context.name, context.client.cluster_name, context.client.cluster_url,
-                                     context.client.skip_preflight, group_name, None,
-                                     None, None, SplTokenLookup.DefaultDataFilepath)
+                                     context.client.skip_preflight, context.client.compatible_client.blockhash_cache_duration,
+                                     group_name, None, None, None, SplTokenLookup.DefaultDataFilepath)
 
     @staticmethod
     def forced_to_devnet(context: Context) -> Context:
@@ -119,7 +123,8 @@ class ContextBuilder:
                                                                cluster_url,
                                                                context.client.commitment,
                                                                context.client.skip_preflight,
-                                                               context.client.instruction_reporter)
+                                                               context.client.instruction_reporter,
+                                                               context.client.compatible_client.blockhash_cache_duration)
 
         return fresh_context
 
@@ -133,7 +138,8 @@ class ContextBuilder:
                                                                cluster_url,
                                                                context.client.commitment,
                                                                context.client.skip_preflight,
-                                                               context.client.instruction_reporter)
+                                                               context.client.instruction_reporter,
+                                                               context.client.compatible_client.blockhash_cache_duration)
 
         return fresh_context
 
@@ -145,7 +151,8 @@ class ContextBuilder:
     #
     @staticmethod
     def _build(name: typing.Optional[str], cluster_name: typing.Optional[str], cluster_url: typing.Optional[str],
-               skip_preflight: bool, group_name: typing.Optional[str], group_address: typing.Optional[PublicKey],
+               skip_preflight: bool, blockhash_cache_duration: typing.Optional[datetime.timedelta],
+               group_name: typing.Optional[str], group_address: typing.Optional[PublicKey],
                program_address: typing.Optional[PublicKey], serum_program_address: typing.Optional[PublicKey],
                token_filename: str) -> "Context":
         def public_key_or_none(address: typing.Optional[str]) -> typing.Optional[PublicKey]:
@@ -163,6 +170,8 @@ class ContextBuilder:
             if group_data["cluster"] == actual_cluster:
                 default_group_data = group_data
                 break
+
+        actual_blockhash_cache_duration: datetime.timedelta = blockhash_cache_duration or datetime.timedelta(seconds=15)
 
         actual_cluster_url: str = cluster_url or os.environ.get(
             "CLUSTER_URL") or MangoConstants["cluster_urls"][actual_cluster]
@@ -208,4 +217,4 @@ class ContextBuilder:
             all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
 
-        return Context(actual_name, actual_cluster, actual_cluster_url, actual_skip_preflight, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, token_lookup, market_lookup)
+        return Context(actual_name, actual_cluster, actual_cluster_url, actual_skip_preflight, actual_blockhash_cache_duration, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, token_lookup, market_lookup)

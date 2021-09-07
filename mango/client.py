@@ -158,7 +158,7 @@ class CachedBlockhash(typing.NamedTuple):
 # some common operations better from our point of view.
 #
 class CompatibleClient(Client):
-    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter, blockhash_cache_duration: datetime.timedelta = datetime.timedelta(seconds=15)):
+    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter, blockhash_cache_duration: datetime.timedelta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster_name: str = cluster_name
@@ -431,8 +431,9 @@ class BetterClient:
         self.compatible_client.instruction_reporter = value
 
     @staticmethod
-    def from_configuration(name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter) -> "BetterClient":
-        compatible = CompatibleClient(name, cluster_name, cluster_url, commitment, skip_preflight, instruction_reporter)
+    def from_configuration(name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter, blockhash_cache_duration: datetime.timedelta) -> "BetterClient":
+        compatible = CompatibleClient(name, cluster_name, cluster_url, commitment,
+                                      skip_preflight, instruction_reporter, blockhash_cache_duration)
         return BetterClient(compatible)
 
     def is_node_healthy(self) -> bool:
