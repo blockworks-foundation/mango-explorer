@@ -80,6 +80,7 @@ class SerumMarketLookup(MarketLookup):
         if "/" not in symbol:
             return None
 
+        symbol = symbol.upper()
         if symbol.startswith("SERUM:"):
             symbol = symbol.split(":", 1)[1]
 

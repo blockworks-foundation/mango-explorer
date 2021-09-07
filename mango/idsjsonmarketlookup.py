@@ -72,6 +72,7 @@ class IdsJsonMarketLookup(MarketLookup):
     def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:
         check_spots = True
         check_perps = True
+        symbol = symbol.upper()
         if symbol.startswith("SPOT:"):
             symbol = symbol.split(":", 1)[1]
             check_perps = False  # Skip perp markets because we're explicitly told it's a spot

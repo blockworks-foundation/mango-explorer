@@ -137,7 +137,7 @@ class LiquidationProcessor:
             highest = highest_first[0]
             try:
                 self.account_liquidator.liquidate(highest)
-                self.wallet_balancer.balance(prices)
+                self.wallet_balancer.balance(self.context, prices)
 
                 updated_account = Account.load(self.context, highest.account.address, group)
                 updated_report = LiquidatableReport.build(
