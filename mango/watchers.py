@@ -81,7 +81,7 @@ def build_cache_watcher(context: Context, manager: WebSocketSubscriptionManager,
     return latest_cache_observer
 
 
-def build_spot_open_orders_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, wallet: Wallet, account: Account, group: Group, spot_market: SpotMarket) -> Watcher[PlacedOrdersContainer]:
+def build_spot_open_orders_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, wallet: Wallet, account: Account, group: Group, spot_market: SpotMarket) -> Watcher[OpenOrders]:
     market_index = group.find_spot_market_index(spot_market.address)
     open_orders_address = account.spot_open_orders[market_index]
     if open_orders_address is None:
@@ -97,7 +97,7 @@ def build_spot_open_orders_watcher(context: Context, manager: WebSocketSubscript
     manager.add(spot_open_orders_subscription)
     initial_spot_open_orders = OpenOrders.load(
         context, open_orders_address, spot_market.base.decimals, spot_market.quote.decimals)
-    latest_open_orders_observer = LatestItemObserverSubscriber[PlacedOrdersContainer](
+    latest_open_orders_observer = LatestItemObserverSubscriber[OpenOrders](
         initial_spot_open_orders)
     spot_open_orders_subscription.publisher.subscribe(latest_open_orders_observer)
     health_check.add("open_orders_subscription", spot_open_orders_subscription.publisher)

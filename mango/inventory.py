@@ -15,6 +15,7 @@
 
 
 import logging
+import typing
 
 from decimal import Decimal
 
@@ -23,6 +24,7 @@ from .cache import Cache
 from .collateralcalculator import CollateralCalculator, SpotCollateralCalculator, PerpCollateralCalculator
 from .group import Group
 from .market import InventorySource, Market
+from .openorders import OpenOrders
 from .perpmarket import PerpMarket
 from .tokenvalue import TokenValue
 from .watcher import Watcher
@@ -56,8 +58,9 @@ class Inventory:
 
 
 class SpotInventoryAccountWatcher:
-    def __init__(self, market: Market, account_watcher: Watcher[Account], cache_watcher: Watcher[Cache]):
+    def __init__(self, market: Market, account_watcher: Watcher[Account], all_open_orders_watchers: typing.Sequence[Watcher[OpenOrders]], cache_watcher: Watcher[Cache]):
         self.account_watcher: Watcher[Account] = account_watcher
+        self.all_open_orders_watchers: typing.Sequence[Watcher[OpenOrders]] = all_open_orders_watchers
         self.cache_watcher: Watcher[Cache] = cache_watcher
         account: Account = account_watcher.latest
         base_value = TokenValue.find_by_symbol(account.net_assets, market.base.symbol)
@@ -75,7 +78,9 @@ class SpotInventoryAccountWatcher:
         mngo = account.group.find_token_info_by_symbol("MNGO").token
         mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
 
-        available_collateral: TokenValue = self.collateral_calculator.calculate(account, cache)
+        all_open_orders: typing.Dict[str, OpenOrders] = {
+            str(oo_watcher.latest.address): oo_watcher.latest for oo_watcher in self.all_open_orders_watchers}
+        available_collateral: TokenValue = self.collateral_calculator.calculate(account, all_open_orders, cache)
 
         base_value = account.net_assets[self.base_index]
         if base_value is None:
@@ -109,7 +114,7 @@ class PerpInventoryAccountWatcher:
             raise Exception(
                 f"Could not find perp account for {self.market.symbol} in account {account.address} at index {self.perp_account_index}.")
 
-        available_collateral: TokenValue = self.collateral_calculator.calculate(account, cache)
+        available_collateral: TokenValue = self.collateral_calculator.calculate(account, {}, cache)
 
         base_lots = perp_account.base_position
         base_value = self.market.lot_size_converter.quantity_lots_to_value(base_lots)

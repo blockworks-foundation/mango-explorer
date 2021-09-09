@@ -14,12 +14,12 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import enum
-from mango.constants import SYSTEM_PROGRAM_ADDRESS
 import mango
 import typing
 
 from solana.publickey import PublicKey
 
+from ..constants import SYSTEM_PROGRAM_ADDRESS
 from .modelstate import ModelState
 from .modelstatebuilder import ModelStateBuilder, WebsocketModelStateBuilder, SerumPollingModelStateBuilder, SpotPollingModelStateBuilder, PerpPollingModelStateBuilder
 
@@ -89,11 +89,13 @@ def _polling_spot_model_state_builder_factory(group: mango.Group, account: mango
                                               oracle: mango.Oracle) -> ModelStateBuilder:
     market_index: int = group.find_spot_market_index(market.address)
     open_orders_address: typing.Optional[PublicKey] = account.spot_open_orders[market_index]
+    all_open_orders_addresses: typing.Sequence[PublicKey] = list(
+        [oo for oo in account.spot_open_orders if oo is not None])
     if open_orders_address is None:
         raise Exception(
             f"Could not find spot openorders in account {account.address} for market {market.symbol}.")
     return SpotPollingModelStateBuilder(
-        open_orders_address, market, oracle, group.address, group.cache, account.address, open_orders_address)
+        open_orders_address, market, oracle, group.address, group.cache, account.address, open_orders_address, all_open_orders_addresses)
 
 
 def _polling_perp_model_state_builder_factory(group: mango.Group, account: mango.Account, market: mango.PerpMarket,
@@ -137,9 +139,24 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
         cache: mango.Cache = mango.Cache.load(context, group.cache)
         cache_watcher: mango.Watcher[mango.Cache] = mango.build_cache_watcher(
             context, websocket_manager, health_check, cache, group)
-        inventory_watcher = mango.SpotInventoryAccountWatcher(market, latest_account_observer, cache_watcher)
-        latest_open_orders_observer = mango.build_spot_open_orders_watcher(
-            context, websocket_manager, health_check, wallet, account, group, market)
+
+        all_open_orders_watchers: typing.List[mango.Watcher[mango.OpenOrders]] = []
+        for basket_token in account.basket:
+            if basket_token.spot_open_orders is not None:
+                spot_market_symbol: str = f"spot:{basket_token.token_info.token.symbol}/{account.shared_quote_token.token_info.token.symbol}"
+                spot_market = context.market_lookup.find_by_symbol(spot_market_symbol)
+                if spot_market is None:
+                    raise Exception(f"Could not find spot market {spot_market_symbol}")
+                if not isinstance(spot_market, mango.SpotMarket):
+                    raise Exception(f"Market {spot_market_symbol} is not a spot market")
+                oo_watcher = mango.build_spot_open_orders_watcher(
+                    context, websocket_manager, health_check, wallet, account, group, spot_market)
+                all_open_orders_watchers += [oo_watcher]
+                if market.base == spot_market.base and market.quote == spot_market.quote:
+                    latest_open_orders_observer = oo_watcher
+
+        inventory_watcher = mango.SpotInventoryAccountWatcher(
+            market, latest_account_observer, all_open_orders_watchers, cache_watcher)
         latest_bids_watcher = mango.build_serum_orderbook_side_watcher(
             context, websocket_manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.BIDS)
         latest_asks_watcher = mango.build_serum_orderbook_side_watcher(

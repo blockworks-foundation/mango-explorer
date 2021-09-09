@@ -21,6 +21,7 @@ from decimal import Decimal
 
 from .account import Account
 from .cache import Cache, PriceCache
+from .openorders import OpenOrders
 from .spotmarketinfo import SpotMarketInfo
 from .tokenvalue import TokenValue
 
@@ -29,7 +30,7 @@ class CollateralCalculator(metaclass=abc.ABCMeta):
     def __init__(self):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
-    def calculate(self, account: Account, cache: Cache) -> TokenValue:
+    def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], cache: Cache) -> TokenValue:
         raise NotImplementedError("CollateralCalculator.calculate() is not implemented on the base type.")
 
 
@@ -37,7 +38,7 @@ class SerumCollateralCalculator(CollateralCalculator):
     def __init__(self):
         super().__init__()
 
-    def calculate(self, account: Account, cache: Cache) -> TokenValue:
+    def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], cache: Cache) -> TokenValue:
         raise NotImplementedError("SerumCollateralCalculator.calculate() is not implemented.")
 
 
@@ -54,7 +55,7 @@ class SpotCollateralCalculator(CollateralCalculator):
     # Also from Daffy, same thread, when I said there were two `init_asset_weights`, one for spot and one for perp (https://discord.com/channels/791995070613159966/807051268304273408/882030633940054056):
     #   yes I think we ignore perps
     #
-    def calculate(self, account: Account, cache: Cache) -> TokenValue:
+    def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], cache: Cache) -> TokenValue:
         # Quote token calculation:
         #   total_collateral = deposits[QUOTE_INDEX] * deposit_index - borrows[QUOTE_INDEX] * borrow_index
         # Note: the `AccountBasketToken` in the `Account` already factors the deposit and borrow index.
@@ -70,12 +71,18 @@ class SpotCollateralCalculator(CollateralCalculator):
                 raise Exception(
                     f"Could not read spot market of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")
 
+            in_orders: Decimal = Decimal(0)
+            if basket_token.spot_open_orders is not None and str(basket_token.spot_open_orders) in all_open_orders:
+                open_orders: OpenOrders = all_open_orders[str(basket_token.spot_open_orders)]
+                in_orders = open_orders.quote_token_total + \
+                    (open_orders.base_token_total * token_price.price * spot_market.init_asset_weight)
+
             # Base token calculations:
             #     total_collateral += prices[i] * (init_asset_weights[i] * deposits[i] * deposit_index -  init_liab_weights[i] * borrows[i] * borrow_index)
             # Note: the `AccountBasketToken` in the `Account` already factors the deposit and borrow index.
-            weighted: Decimal = token_price.price * ((
+            weighted: Decimal = in_orders + (token_price.price * ((
                 basket_token.deposit.value * spot_market.init_asset_weight) - (
-                    basket_token.borrow.value * spot_market.init_liab_weight))
+                    basket_token.borrow.value * spot_market.init_liab_weight)))
             total += weighted
 
         return TokenValue(account.group.shared_quote_token.token, total)
@@ -94,7 +101,7 @@ class PerpCollateralCalculator(CollateralCalculator):
     # Also from Daffy, same thread, when I said there were two `init_asset_weights`, one for spot and one for perp (https://discord.com/channels/791995070613159966/807051268304273408/882030633940054056):
     #   yes I think we ignore perps
     #
-    def calculate(self, account: Account, cache: Cache) -> TokenValue:
+    def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], cache: Cache) -> TokenValue:
         # Quote token calculation:
         #   total_collateral = deposits[QUOTE_INDEX] * deposit_index - borrows[QUOTE_INDEX] * borrow_index
         # Note: the `AccountBasketToken` in the `Account` already factors the deposit and borrow index.
