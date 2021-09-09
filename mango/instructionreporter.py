@@ -37,7 +37,10 @@ class InstructionReporter:
     def report(self, instruction: TransactionInstruction) -> str:
         report: typing.List[str] = []
         for index, key in enumerate(instruction.keys):
-            report += [f"Key[{index}]: {key.pubkey} {key.is_signer: <5} {key.is_writable: <5}"]
+            is_writable: str = "Writable " if key.is_writable else "Read-Only"
+            is_signer: str = "Signer" if key.is_signer else "      "
+            pubkey: str = str(key.pubkey)
+            report += [f"Key[{index: >2}]: {pubkey: <45} {is_writable} {is_signer}"]
         report += [f"Program ID: {instruction.program_id}"]
         report += ["Data: " + "".join("{:02x}".format(x) for x in instruction.data)]
         return "\n".join(report)
@@ -82,7 +85,8 @@ class MangoInstructionReporter(InstructionReporter):
         parsed = parser.parse(instruction.data)
         instruction_type = InstructionType(int(parsed.variant))
 
-        return str(MangoInstruction(instruction_type, parsed, accounts))
+        details = super().report(instruction)
+        return str(MangoInstruction(instruction_type, parsed, accounts)) + "\nInstruction Details:\n" + details
 
 
 # # 🥭 CompoundInstructionReporter class

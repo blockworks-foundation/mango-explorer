@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
+import pyserum.enums
 import typing
 
 from solana.publickey import PublicKey
@@ -256,7 +257,7 @@ class MangoInstruction:
         elif instruction_type == InstructionType.CacheRootBanks:
             pass
         elif instruction_type == InstructionType.PlaceSpotOrder:
-            additional_data = f"side: {Side.from_value(self.instruction_data.side)}, order_type: {OrderType.from_value(self.instruction_data.order_type)}, limit_price: {self.instruction_data.limit_price}, max_base_quantity: {self.instruction_data.max_base_quantity}, max_quote_quantity: {self.instruction_data.max_quote_quantity}, self_trade_behavior: {self.instruction_data.self_trade_behavior}, client_id: {self.instruction_data.client_id}, limit: {self.instruction_data.limit}"
+            additional_data = f"side: {Side.from_value(self.instruction_data.side)}, order_type: {OrderType.from_value(self.instruction_data.order_type)}, limit_price: {self.instruction_data.limit_price}, max_base_quantity: {self.instruction_data.max_base_quantity}, max_quote_quantity: {self.instruction_data.max_quote_quantity}, self_trade_behavior: {pyserum.enums.SelfTradeBehavior(self.instruction_data.self_trade_behavior).name}, client_id: {self.instruction_data.client_id}, limit: {self.instruction_data.limit}"
         elif instruction_type == InstructionType.AddOracle:
             pass
         elif instruction_type == InstructionType.AddPerpMarket:

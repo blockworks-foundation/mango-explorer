@@ -29,14 +29,15 @@ _MAXIMUM_TRANSACTION_LENGTH = 1280 - 40 - 8
 _SIGNATURE_LENGTH = 64
 
 
-def _split_instructions_into_chunks(signers: typing.Sequence[SolanaAccount], instructions: typing.Sequence[TransactionInstruction]) -> typing.Sequence[typing.Sequence[TransactionInstruction]]:
+def _split_instructions_into_chunks(context: Context, signers: typing.Sequence[SolanaAccount], instructions: typing.Sequence[TransactionInstruction]) -> typing.Sequence[typing.Sequence[TransactionInstruction]]:
     vetted_chunks: typing.List[typing.List[TransactionInstruction]] = []
     current_chunk: typing.List[TransactionInstruction] = []
     for instruction in instructions:
         instruction_size_on_its_own = CombinableInstructions.transaction_size(signers, [instruction])
         if instruction_size_on_its_own >= _MAXIMUM_TRANSACTION_LENGTH:
+            report = context.client.instruction_reporter.report(instruction)
             raise Exception(
-                f"Instruction exceeds maximum size - creates a transaction {instruction_size_on_its_own} bytes long. {instruction}")
+                f"Instruction exceeds maximum size - creates a transaction {instruction_size_on_its_own} bytes long:\n{report}")
 
         in_progress_chunk = current_chunk + [instruction]
         transaction_size = CombinableInstructions.transaction_size(signers, in_progress_chunk)
@@ -116,7 +117,7 @@ class CombinableInstructions():
 
     def execute(self, context: Context, on_exception_continue: bool = False) -> typing.Sequence[str]:
         chunks: typing.Sequence[typing.Sequence[TransactionInstruction]
-                                ] = _split_instructions_into_chunks(self.signers, self.instructions)
+                                ] = _split_instructions_into_chunks(context, self.signers, self.instructions)
 
         if len(chunks) == 1 and len(chunks[0]) == 0:
             self.logger.info("No instructions to run.")
