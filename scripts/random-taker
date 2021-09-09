@@ -10,7 +10,7 @@ do
     cancel-my-orders --name "Random Taker ${MARKET} (cancel)" --market $MARKET --log-level ERROR
 
     RANDOM_POSITION_SIZE=$(echo "scale=4; ($(echo "$RANDOM % 1000" | bc) / 1000) * $POSITION_SIZE_CEILING" | bc)
-    CURRENT_PRICE=$(fetch-price --provider market --symbol $ORACLE_MARKET --log-level ERROR | cut -d"'" -f 2 | sed 's/,//')
+    CURRENT_PRICE=$(fetch-price --provider ftx --symbol $ORACLE_MARKET --log-level ERROR | cut -d"'" -f 2 | sed 's/,//')
     place-order --name "Random Taker ${MARKET} (place buy)" --market $MARKET --order-type IOC --log-level ERROR \
         --side BUY --quantity $RANDOM_POSITION_SIZE --price $(echo "$CURRENT_PRICE + $IMMEDIATE_BUY_ADJUSTMENT" | bc)
 
@@ -19,7 +19,7 @@ do
     sleep ${PAUSE_FOR}
 
     RANDOM_POSITION_SIZE=$(echo "scale=4; ($(echo "$RANDOM % 1000" | bc) / 1000) * $POSITION_SIZE_CEILING" | bc)
-    CURRENT_PRICE=$(fetch-price --provider market --symbol $ORACLE_MARKET --log-level ERROR | cut -d"'" -f 2 | sed 's/,//')
+    CURRENT_PRICE=$(fetch-price --provider ftx --symbol $ORACLE_MARKET --log-level ERROR | cut -d"'" -f 2 | sed 's/,//')
     place-order --name "Random Taker ${MARKET} (place sell)" --market $MARKET --order-type IOC --log-level ERROR \
         --side SELL --quantity $RANDOM_POSITION_SIZE --price $(echo "$CURRENT_PRICE - $IMMEDIATE_BUY_ADJUSTMENT" | bc)
 
