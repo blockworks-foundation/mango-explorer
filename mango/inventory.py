@@ -117,7 +117,7 @@ class PerpInventoryAccountWatcher:
         available_collateral: TokenValue = self.collateral_calculator.calculate(account, {}, cache)
 
         base_lots = perp_account.base_position
-        base_value = self.market.lot_size_converter.quantity_lots_to_value(base_lots)
+        base_value = self.market.lot_size_converter.base_size_lots_to_number(base_lots)
         base_token_value = TokenValue(self.market.base, base_value)
         quote_token_value = account.net_assets[self.quote_index]
         if quote_token_value is None:

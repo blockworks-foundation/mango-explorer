@@ -163,8 +163,8 @@ def event_builder(lot_size_converter: LotSizeConverter, event_layout, original_i
         if event_layout.maker is None and event_layout.taker is None:
             return None
         side: Side = Side.from_value(event_layout.taker_side)
-        quantity: Decimal = lot_size_converter.quantity_lots_to_value(event_layout.quantity)
-        price: Decimal = lot_size_converter.price_lots_to_value(event_layout.price)
+        quantity: Decimal = lot_size_converter.base_size_lots_to_number(event_layout.quantity)
+        price: Decimal = lot_size_converter.quote_size_lots_to_number(event_layout.price)
         return PerpFillEvent(event_layout.event_type, original_index, event_layout.timestamp, side,
                              price, quantity, event_layout.best_initial,
                              event_layout.maker_slot, event_layout.maker_out, event_layout.maker,

@@ -305,7 +305,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         placed_orders_container: mango.PlacedOrdersContainer = perp_account.open_orders
 
         base_lots = perp_account.base_position
-        base_value = self.market.lot_size_converter.quantity_lots_to_value(base_lots)
+        base_value = self.market.lot_size_converter.base_size_lots_to_number(base_lots)
         base_token_value = mango.TokenValue(self.market.base, base_value)
         quote_token_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.quote.symbol)
         available_collateral: TokenValue = self.collateral_calculator.calculate(account, {}, cache)
