@@ -18,14 +18,12 @@ import logging
 import typing
 
 from .version import Version
-from .layouts import layouts
 
 
 # # 🥭 MangoAccountFlags class
 #
 # The Mango prefix is because there's also `SerumAccountFlags` for the standard Serum flags.
 #
-
 class MangoAccountFlags:
     def __init__(self, version: Version, initialized: bool, group: bool, margin_account: bool, srm_account: bool):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -36,7 +34,7 @@ class MangoAccountFlags:
         self.srm_account = srm_account
 
     @staticmethod
-    def from_layout(layout: layouts.MANGO_ACCOUNT_FLAGS) -> "MangoAccountFlags":
+    def from_layout(layout: typing.Any) -> "MangoAccountFlags":
         return MangoAccountFlags(Version.UNSPECIFIED, layout.initialized, layout.group,
                                  layout.margin_account, layout.srm_account)
 

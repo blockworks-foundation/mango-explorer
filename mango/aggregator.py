@@ -16,6 +16,7 @@
 
 import datetime
 import logging
+import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
@@ -45,7 +46,7 @@ class AggregatorConfig:
         self.reward_token_account: PublicKey = reward_token_account
 
     @staticmethod
-    def from_layout(layout: layouts.AGGREGATOR_CONFIG) -> "AggregatorConfig":
+    def from_layout(layout: typing.Any) -> "AggregatorConfig":
         return AggregatorConfig(Version.UNSPECIFIED, layout.description, layout.decimals,
                                 layout.restart_delay, layout.max_submissions, layout.min_submissions,
                                 layout.reward_amount, layout.reward_token_account)
@@ -70,7 +71,7 @@ class Round:
         self.updated_at: datetime.datetime = updated_at
 
     @staticmethod
-    def from_layout(layout: layouts.ROUND) -> "Round":
+    def from_layout(layout: typing.Any) -> "Round":
         return Round(Version.UNSPECIFIED, layout.id, layout.created_at, layout.updated_at)
 
     def __str__(self) -> str:
@@ -93,7 +94,7 @@ class Answer:
         self.updated_at: datetime.datetime = updated_at
 
     @staticmethod
-    def from_layout(layout: layouts.ANSWER) -> "Answer":
+    def from_layout(layout: typing.Any) -> "Answer":
         return Answer(Version.UNSPECIFIED, layout.round_id, layout.median, layout.created_at, layout.updated_at)
 
     def __str__(self) -> str:
@@ -126,7 +127,7 @@ class Aggregator(AddressableAccount):
         return self.answer.median / (10 ** self.config.decimals)
 
     @staticmethod
-    def from_layout(layout: layouts.AGGREGATOR, account_info: AccountInfo, name: str) -> "Aggregator":
+    def from_layout(layout: typing.Any, account_info: AccountInfo, name: str) -> "Aggregator":
         config = AggregatorConfig.from_layout(layout.config)
         initialized = bool(layout.initialized)
         round_ = Round.from_layout(layout.round)

@@ -17,7 +17,6 @@
 import logging
 import typing
 
-from .layouts import layouts
 from .version import Version
 
 
@@ -25,7 +24,6 @@ from .version import Version
 #
 # The Serum prefix is because there's also `MangoAccountFlags` for the Mango-specific flags.
 #
-
 class SerumAccountFlags:
     def __init__(self, version: Version, initialized: bool, market: bool, open_orders: bool,
                  request_queue: bool, event_queue: bool, bids: bool, asks: bool, disabled: bool):
@@ -41,7 +39,7 @@ class SerumAccountFlags:
         self.disabled: bool = disabled
 
     @staticmethod
-    def from_layout(layout: layouts.SERUM_ACCOUNT_FLAGS) -> "SerumAccountFlags":
+    def from_layout(layout: typing.Any) -> "SerumAccountFlags":
         return SerumAccountFlags(Version.UNSPECIFIED, layout.initialized, layout.market,
                                  layout.open_orders, layout.request_queue, layout.event_queue,
                                  layout.bids, layout.asks, layout.disabled)

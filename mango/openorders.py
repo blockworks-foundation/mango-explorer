@@ -62,7 +62,7 @@ class OpenOrders(AddressableAccount):
         return OpenOrdersAccount.from_bytes(self.address, self.account_info.data)
 
     @staticmethod
-    def from_layout(layout: layouts.OPEN_ORDERS, account_info: AccountInfo,
+    def from_layout(layout: typing.Any, account_info: AccountInfo,
                     base_decimals: Decimal, quote_decimals: Decimal) -> "OpenOrders":
         account_flags = SerumAccountFlags.from_layout(layout.account_flags)
         program_id = account_info.owner

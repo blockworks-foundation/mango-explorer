@@ -50,7 +50,7 @@ from solana.publickey import PublicKey
 
 class DecimalAdapter(construct.Adapter):
     def __init__(self, size: int = 8):
-        construct.Adapter.__init__(self, construct.BytesInteger(size, swapped=True))
+        construct.Adapter.__init__(self, construct.BytesInteger(size, swapped=True))  # type: ignore[call-arg]
 
     def _decode(self, obj, context, path) -> Decimal:
         return Decimal(obj)
@@ -84,7 +84,7 @@ class DecimalAdapter(construct.Adapter):
 class FloatAdapter(construct.Adapter):
     def __init__(self, size: int = 16):
         self.size = size
-        construct.Adapter.__init__(self, construct.BytesInteger(size, swapped=True))
+        construct.Adapter.__init__(self, construct.BytesInteger(size, swapped=True))  # type: ignore[call-arg]
 
         # Our size is in bytes but we want to work with bits here.
         bit_size = self.size * 8
@@ -641,8 +641,9 @@ def build_margin_account_parser_for_length(length: int) -> construct.Struct:
         tried_sizes += [parser.sizeof()]
         if parser.sizeof() > length:
             raise Exception(
-                f"Could not create MarginAccount parser for length ({length}) - tried sizes ({tried_sizes})")
+                f"Could not create MarginAccount parser for length {length} - tried sizes ({tried_sizes})")
 
+    raise Exception(f"Could not create MarginAccount parser for length {length}.")
 
 # # Instruction Structs
 

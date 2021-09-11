@@ -181,8 +181,9 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         self.reporter(f"BUY order market: {spot_market.address} {market}")
 
         asks = market.load_asks()
-        top_ask = next(asks.orders())
-        top_price = Decimal(top_ask.info.price)
+        orders = list(asks.orders())
+        top_ask = min([order.info.price for order in orders if order.side == Side.SELL])
+        top_price = Decimal(top_ask)
         increase_factor = Decimal(1) + self.price_adjustment_factor
         price = top_price * increase_factor
         self.reporter(f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_price}")
@@ -201,9 +202,9 @@ class SerumImmediateTradeExecutor(TradeExecutor):
         self.reporter(f"SELL order market: {spot_market.address} {market}")
 
         bids = market.load_bids()
-        bid_orders = list(bids.orders())
-        top_bid = bid_orders[len(bid_orders) - 1]
-        top_price = Decimal(top_bid.info.price)
+        orders = list(bids.orders())
+        top_bid = max([order.info.price for order in orders if order.side == Side.BUY])
+        top_price = Decimal(top_bid)
         decrease_factor = Decimal(1) - self.price_adjustment_factor
         price = top_price * decrease_factor
         self.reporter(f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_price}")

@@ -1,14 +1,13 @@
+import construct
 import datetime
+import mango
 
 from decimal import Decimal
-from typing import NamedTuple
 from pyserum import market
 from pyserum.market.state import MarketState
 from solana.account import Account
 from solana.publickey import PublicKey
 from solana.rpc.types import RPCResponse
-
-import mango
 
 
 class MockClient(mango.CompatibleClient):
@@ -55,10 +54,9 @@ def fake_index() -> mango.Index:
 
 
 def fake_market() -> market.Market:
-    Container = NamedTuple("Container", [("own_address", PublicKey), ("vault_signer_nonce", int)])
-    container = Container(own_address=fake_seeded_public_key("market address"), vault_signer_nonce=2)
+    container = construct.Container({"own_address": fake_seeded_public_key("market address"), "vault_signer_nonce": 2})
     state = MarketState(container, fake_seeded_public_key("program ID"), 6, 6)
-    return market.Market(None, state)
+    return market.Market(MockClient(), state)
 
 
 def fake_token_account() -> mango.TokenAccount:

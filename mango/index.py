@@ -16,10 +16,10 @@
 
 import datetime
 import logging
+import typing
 
 from decimal import Decimal
 
-from .layouts import layouts
 from .token import Token
 from .tokenvalue import TokenValue
 from .version import Version
@@ -27,8 +27,6 @@ from .version import Version
 
 # # 🥭 Index class
 #
-
-
 class Index:
     def __init__(self, version: Version, token: Token, last_update: datetime.datetime, borrow: TokenValue, deposit: TokenValue):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -39,7 +37,7 @@ class Index:
         self.deposit: TokenValue = deposit
 
     @staticmethod
-    def from_layout(layout: layouts.INDEX, token: Token) -> "Index":
+    def from_layout(layout: typing.Any, token: Token) -> "Index":
         borrow = TokenValue(token, layout.borrow / Decimal(10 ** token.decimals))
         deposit = TokenValue(token, layout.deposit / Decimal(10 ** token.decimals))
         return Index(Version.UNSPECIFIED, token, layout.last_update, borrow, deposit)

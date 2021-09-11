@@ -88,7 +88,7 @@ class TokenAccount(AddressableAccount):
         return largest_account
 
     @staticmethod
-    def from_layout(layout: layouts.TOKEN_ACCOUNT, account_info: AccountInfo, token: Token) -> "TokenAccount":
+    def from_layout(layout: typing.Any, account_info: AccountInfo, token: Token) -> "TokenAccount":
         token_value = TokenValue(token, token.shift_to_decimals(layout.amount))
         return TokenAccount(account_info, Version.UNSPECIFIED, layout.owner, token_value)
 

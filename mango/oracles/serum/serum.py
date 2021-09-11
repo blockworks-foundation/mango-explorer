@@ -48,7 +48,7 @@ class SerumOracle(Oracle):
         super().__init__(name, spot_market)
         self.spot_market: SpotMarket = spot_market
         self.source: OracleSource = OracleSource("Serum", name, spot_market)
-        self._serum_market: PySerumMarket = None
+        self._serum_market: typing.Optional[PySerumMarket] = None
 
     def fetch_price(self, context: Context) -> Price:
         if self._serum_market is None:

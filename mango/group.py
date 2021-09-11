@@ -129,7 +129,7 @@ class Group(AddressableAccount):
     def parse(context: Context, account_info: AccountInfo) -> "Group":
         data = account_info.data
         if len(data) == layouts.GROUP_V1.sizeof():
-            layout = layouts.GROUP_V1.parse(data)
+            layout: typing.Any = layouts.GROUP_V1.parse(data)
             version: Version = Version.V1
         elif len(data) == layouts.GROUP_V2.sizeof():
             version = Version.V2

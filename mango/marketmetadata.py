@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import logging
+import typing
 
 from decimal import Decimal
 from pyserum.market import Market as PySerumMarket
@@ -24,10 +25,9 @@ from .context import Context
 from .market import Market
 from .spotmarket import SpotMarket
 
+
 # # 🥭 MarketMetadata class
 #
-
-
 class MarketMetadata:
     def __init__(self, name: str, address: PublicKey, base: BasketToken, quote: BasketToken,
                  spot: Market, oracle: PublicKey, decimals: Decimal):
@@ -43,7 +43,7 @@ class MarketMetadata:
         self.oracle: PublicKey = oracle
         self.decimals: Decimal = decimals
         self.symbol: str = f"{base.token.symbol}/{quote.token.symbol}"
-        self._market = None
+        self._market: typing.Optional[PySerumMarket] = None
 
     def fetch_market(self, context: Context) -> PySerumMarket:
         if self._market is None:

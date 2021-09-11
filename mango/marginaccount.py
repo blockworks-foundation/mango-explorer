@@ -97,7 +97,7 @@ class MarginAccount(AddressableAccount):
     def parse(account_info: AccountInfo, group: Group) -> "MarginAccount":
         data = account_info.data
         if len(data) == layouts.MARGIN_ACCOUNT_V1.sizeof():
-            layout = layouts.MARGIN_ACCOUNT_V1.parse(data)
+            layout: typing.Any = layouts.MARGIN_ACCOUNT_V1.parse(data)
             version: Version = Version.V1
         elif len(data) == layouts.MARGIN_ACCOUNT_V2.sizeof():
             version = Version.V2
