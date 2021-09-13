@@ -44,18 +44,18 @@ class LiquidatableState(enum.Flag):
 #
 
 class LiquidatableReport:
-    def __init__(self, group: Group, prices: typing.List[TokenValue], margin_account: MarginAccount, balance_sheet: BalanceSheet, balances: typing.List[TokenValue], state: LiquidatableState, worthwhile_threshold: Decimal):
+    def __init__(self, group: Group, prices: typing.Sequence[TokenValue], margin_account: MarginAccount, balance_sheet: BalanceSheet, balances: typing.Sequence[TokenValue], state: LiquidatableState, worthwhile_threshold: Decimal):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.group: Group = group
-        self.prices: typing.List[TokenValue] = prices
+        self.prices: typing.Sequence[TokenValue] = prices
         self.margin_account: MarginAccount = margin_account
         self.balance_sheet: BalanceSheet = balance_sheet
-        self.balances: typing.List[TokenValue] = balances
+        self.balances: typing.Sequence[TokenValue] = balances
         self.state: LiquidatableState = state
         self.worthwhile_threshold: Decimal = worthwhile_threshold
 
     @staticmethod
-    def build(group: Group, prices: typing.List[TokenValue], margin_account: MarginAccount, worthwhile_threshold: Decimal) -> "LiquidatableReport":
+    def build(group: Group, prices: typing.Sequence[TokenValue], margin_account: MarginAccount, worthwhile_threshold: Decimal) -> "LiquidatableReport":
         balance_sheet = margin_account.get_balance_sheet_totals(group, prices)
         balances = margin_account.get_intrinsic_balances(group)
 
@@ -81,3 +81,19 @@ class LiquidatableReport:
             state |= LiquidatableState.LIQUIDATABLE
 
         return LiquidatableReport(group, prices, margin_account, balance_sheet, balances, state, worthwhile_threshold)
+
+    def __str__(self) -> str:
+        report = ["Margin account balances:"]
+        for value in self.balances:
+            report += [f"{value.value:>18,.8f} {value.token.name}"]
+        report += ["Prices:"]
+        for value in self.prices:
+            report += [f"{value.value:>18,.8f} {value.token.name}"]
+        report += [str(self.balance_sheet)]
+        rendered_report: str = "    \n".join(report)
+        return f"""« 𝙻𝚒𝚚𝚞𝚒𝚍𝚊𝚝𝚊𝚋𝚕𝚎𝚁𝚎𝚙𝚘𝚛𝚝 [{self.margin_account.address}] {self.state}, threshold: {self.worthwhile_threshold}:
+    {rendered_report}
+»"""
+
+    def __repr__(self) -> str:
+        return f"{self}"

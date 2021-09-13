@@ -108,6 +108,7 @@ try:
     logging.info("Wallet accounts OK.")
 
     liquidations_publisher = mango.EventSource[mango.LiquidationEvent]()
+    liquidations_publisher.subscribe(mango.PrintingObserverSubscriber(False))
     for notification_target in args.notify_liquidations:
         liquidations_publisher.subscribe(on_next=notification_target.send)
     for successful_notification_target in args.notify_successful_liquidations:

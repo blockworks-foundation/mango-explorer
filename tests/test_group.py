@@ -62,10 +62,13 @@ def test_group5_parse():
     # We need to be a little more involved in creating the Context here.
     group_5_context = mango.Context(cluster="test",
                                     cluster_url="http://localhost",
+                                    skip_preflight=True,
                                     program_id=fake_seeded_public_key("program ID"),
                                     dex_program_id=fake_seeded_public_key("DEX program ID"),
                                     group_name="BTC_ETH_SOL_SRM_USDC",
-                                    group_id=fake_seeded_public_key("group ID"))
+                                    group_id=fake_seeded_public_key("group ID"),
+                                    gma_chunk_size=Decimal(30),
+                                    gma_chunk_pause=Decimal(45))
     group_5_public_key = fake_seeded_public_key("group5")
     owner_5_public_key = fake_seeded_public_key("owner5")
     encoded_5 = "AwAAAAAAAACCaOmpoURMK6XHelGTaFawcuQ/78/15LAemWI8jrt3SRKLy2R9i60eclDjuDS8+p/ZhvTUd9G7uQVOYCsR6+BhBpuIV/6rgYT7aH9jRhjANdrEOdwa6ztVmKDwAAAAAAEGgxCGGpgyfQVQV02EQYqm4QwzUt2qf9f1gVLM7rI4h8b6evO+2606PWXzaqvJdDGxu+TC0vbg5HymAgNFL11hDMpGlEl+w4+GTcSIxBgL21a381cY189pDZlNnJs4yeZo9SkiFPWIiqiO2WDuvWSwJtkzGT2AyosXbQAxoertF39z/OIM0RaqoX0m/ygot2ZFTFO709eZT8FMhrd6JbCWncHjVmiq7bm5jp3hx5bGZK9TJQh8fiOUaZqKsEnbvv2kh1ev9CnkA2y5WuIKYi7x4xgW5qI0rSiXLyQt2ih2OFbht2AAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAACqqrZgAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAVuG3YAAAAADu/h/j7AEAAAEAAAAAAAAAOTC1S6QAAAABAAAAAAAAAGvPt2AAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAABW4bdgAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAh6eVoSNiIJyPgV+TTHYeuVF9BY6e+SWFq+rlAay+FQY5wP5yG8+DquGM1xrK84Afdgb2FpOOvSfIrnYyhDEpNITC+xiu1hn1RmMmU+8GAp8CqGS/OCmGcYG7IN8dcVwwowmj13Uh9wkF+yqInUo8aluBd5TeyepC6vUuYKD3Pe/1VhAAerKXFlUrrmASDzmDbti5LK84FkCMnJGZhT0p0I7UP7h6F0+711AHXIjW6HvnBKF0BoWfajiqsxjCrdJBlCNajxBr0p+Nz8IPWfXR0m64sDFoIgeYv6BNfv0ZV4dafre5nIqEzPfWXGEWbQEAOFBe5S6+0UIkeaoE8kdnAwAAAAAAAAAADUJgR5d1JfsqikNyo9yTAa1U8KuCHb6XNmKlZ4hG4TmFDy1uAqR6+CTQmradxC1wyyjL+iSft+5XudJWwSdi7wAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOMVOUDhnHRrc3hIGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKCGAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoJmZmZmZGQEAAAAAAAAAADAzMzMzMzMBAAAAAAAAAJ3B41Zoqu25uY6d4ceWxmSvUyUIfH4jlGmairBJ27792rffkhBFGboGuzubU1K3DA2Fg4Pi2GgFoUkIjdn2JO0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgYJBgYCAgICAAAAAAAAAA=="

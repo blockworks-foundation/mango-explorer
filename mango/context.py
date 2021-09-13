@@ -46,14 +46,19 @@ from .token import TokenLookup
 # * GROUP_NAME (defaults to: BTC_ETH_USDT)
 #
 
-default_cluster = os.environ.get("CLUSTER") or "mainnet-beta"
-default_cluster_url = os.environ.get("CLUSTER_URL") or MangoConstants["cluster_urls"][default_cluster]
+default_cluster: str = os.environ.get("CLUSTER") or "mainnet-beta"
+default_cluster_url: str = os.environ.get("CLUSTER_URL") or MangoConstants["cluster_urls"][default_cluster]
+default_skip_preflight: bool = False
 
-default_program_id = PublicKey(MangoConstants[default_cluster]["mango_program_id"])
-default_dex_program_id = PublicKey(MangoConstants[default_cluster]["dex_program_id"])
+default_program_id: PublicKey = PublicKey(MangoConstants[default_cluster]["mango_program_id"])
+default_dex_program_id: PublicKey = PublicKey(MangoConstants[default_cluster]["dex_program_id"])
 
-default_group_name = os.environ.get("GROUP_NAME") or "BTC_ETH_SOL_SRM_USDC"
-default_group_id = PublicKey(MangoConstants[default_cluster]["mango_groups"][default_group_name]["mango_group_pk"])
+default_group_name: str = os.environ.get("GROUP_NAME") or "BTC_ETH_SOL_SRM_USDC"
+default_group_id: PublicKey = PublicKey(
+    MangoConstants[default_cluster]["mango_groups"][default_group_name]["mango_group_pk"])
+
+default_gma_chunk_size: Decimal = Decimal(100)
+default_gma_chunk_pause: Decimal = Decimal(0)
 
 
 # The old program ID is used for the 3-token Group, but since the program ID is stored
@@ -73,23 +78,27 @@ _pool_scheduler = ThreadPoolScheduler(multiprocessing.cpu_count())
 # A `Context` object to manage Solana connection and Mango configuration.
 #
 class Context:
-    def __init__(self, cluster: str, cluster_url: str, program_id: PublicKey, dex_program_id: PublicKey,
-                 group_name: str, group_id: PublicKey, token_filename: str = TokenLookup.DEFAULT_FILE_NAME):
+    def __init__(self, cluster: str, cluster_url: str, skip_preflight: bool, program_id: PublicKey,
+                 dex_program_id: PublicKey, group_name: str, group_id: PublicKey,
+                 gma_chunk_size: Decimal, gma_chunk_pause: Decimal,
+                 token_filename: str = TokenLookup.DEFAULT_FILE_NAME):
         configured_program_id = program_id
         if group_id == _OLD_3_TOKEN_GROUP_ID:
             configured_program_id = _OLD_3_TOKEN_PROGRAM_ID
 
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.client: BetterClient = BetterClient.from_configuration(
-            "Mango Explorer", cluster, cluster_url, Commitment("processed"), False)
+            "Mango Explorer", cluster, cluster_url, Commitment("processed"), skip_preflight)
         self.cluster: str = cluster
         self.cluster_url: str = cluster_url
         self.program_id: PublicKey = configured_program_id
         self.dex_program_id: PublicKey = dex_program_id
         self.group_name: str = group_name
         self.group_id: PublicKey = group_id
+        self.gma_chunk_size: Decimal = gma_chunk_size
+        self.gma_chunk_pause: Decimal = gma_chunk_pause
         self.commitment: Commitment = Commitment("processed")
-        self.transaction_options: TxOpts = TxOpts(preflight_commitment=self.commitment)
+        self.transaction_options: TxOpts = TxOpts(preflight_commitment=self.commitment, skip_preflight=skip_preflight)
         self.encoding: str = "base64"
         self.token_lookup: TokenLookup = TokenLookup.load(token_filename)
 
@@ -108,8 +117,9 @@ class Context:
 
     @staticmethod
     def default():
-        return Context(default_cluster, default_cluster_url, default_program_id,
-                       default_dex_program_id, default_group_name, default_group_id)
+        return Context(default_cluster, default_cluster_url, default_skip_preflight, default_program_id,
+                       default_dex_program_id, default_group_name, default_group_id, default_gma_chunk_size,
+                       default_gma_chunk_pause)
 
     def fetch_sol_balance(self, account_public_key: PublicKey) -> Decimal:
         return self.client.get_balance(account_public_key, commitment=self.commitment)
@@ -167,10 +177,10 @@ class Context:
         dex_program_id = PublicKey(MangoConstants[cluster]["dex_program_id"])
         group_id = PublicKey(MangoConstants[cluster]["mango_groups"][self.group_name]["mango_group_pk"])
 
-        return Context(cluster, cluster_url, program_id, dex_program_id, self.group_name, group_id)
+        return Context(cluster, cluster_url, self.client.skip_preflight, program_id, dex_program_id, self.group_name, group_id, self.gma_chunk_size, self.gma_chunk_pause)
 
     def new_from_cluster_url(self, cluster_url: str) -> "Context":
-        return Context(self.cluster, cluster_url, self.program_id, self.dex_program_id, self.group_name, self.group_id)
+        return Context(self.cluster, cluster_url, self.client.skip_preflight, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.gma_chunk_size, self.gma_chunk_pause)
 
     def new_from_group_name(self, group_name: str) -> "Context":
         group_id = PublicKey(MangoConstants[self.cluster]["mango_groups"][group_name]["mango_group_pk"])
@@ -180,7 +190,7 @@ class Context:
         if self.group_id == _OLD_3_TOKEN_GROUP_ID:
             program_id = PublicKey(MangoConstants[self.cluster]["mango_program_id"])
 
-        return Context(self.cluster, self.cluster_url, program_id, self.dex_program_id, group_name, group_id)
+        return Context(self.cluster, self.cluster_url, self.client.skip_preflight, program_id, self.dex_program_id, group_name, group_id, self.gma_chunk_size, self.gma_chunk_pause)
 
     def new_from_group_id(self, group_id: PublicKey) -> "Context":
         actual_group_name = "« Unknown Group »"
@@ -195,33 +205,7 @@ class Context:
         if self.group_id == _OLD_3_TOKEN_GROUP_ID:
             program_id = PublicKey(MangoConstants[self.cluster]["mango_program_id"])
 
-        return Context(self.cluster, self.cluster_url, program_id, self.dex_program_id, actual_group_name, group_id)
-
-    @staticmethod
-    def from_command_line(cluster: str, cluster_url: str, program_id: PublicKey,
-                          dex_program_id: PublicKey, group_name: str,
-                          group_id: PublicKey) -> "Context":
-        # Here we should have values for all our parameters (because they'll either be specified
-        # on the command-line or will be the default_* value) but we may be in the situation where
-        # a group name is specified but not a group ID, and in that case we want to look up the
-        # group ID.
-        #
-        # In that situation, the group_name will not be default_group_name but the group_id will
-        # still be default_group_id. In that situation we want to override what we were passed
-        # as the group_id.
-        if (group_name != default_group_name) and (group_id == default_group_id):
-            group_id = PublicKey(MangoConstants[cluster]["mango_groups"][group_name]["mango_group_pk"])
-
-        return Context(cluster, cluster_url, program_id, dex_program_id, group_name, group_id)
-
-    @staticmethod
-    def from_cluster_and_group_name(cluster: str, group_name: str) -> "Context":
-        cluster_url = MangoConstants["cluster_urls"][cluster]
-        program_id = PublicKey(MangoConstants[cluster]["mango_program_id"])
-        dex_program_id = PublicKey(MangoConstants[cluster]["dex_program_id"])
-        group_id = PublicKey(MangoConstants[cluster]["mango_groups"][group_name]["mango_group_pk"])
-
-        return Context(cluster, cluster_url, program_id, dex_program_id, group_name, group_id)
+        return Context(self.cluster, self.cluster_url, self.client.skip_preflight, program_id, self.dex_program_id, actual_group_name, group_id, self.gma_chunk_size, self.gma_chunk_pause)
 
     # Configuring a `Context` is a common operation for command-line programs and can involve a
     # lot of duplicate code.
@@ -242,7 +226,12 @@ class Context:
                             help="Mango group name")
         parser.add_argument("--group-id", type=str, default=default_group_id,
                             help="Mango group ID/address")
-
+        parser.add_argument("--gma-chunk-size", type=Decimal, default=default_gma_chunk_size,
+                            help="Maximum number of addresses to send in a single call to getMultipleAccounts()")
+        parser.add_argument("--gma-chunk-pause", type=Decimal, default=default_gma_chunk_pause,
+                            help="number of seconds to pause between successive getMultipleAccounts() calls to avoid rate limiting")
+        parser.add_argument("--skip-preflight", default=default_skip_preflight,
+                            action="store_true", help="Skip pre-flight checks")
         parser.add_argument("--token-data-file", type=str, default="solana.tokenlist.json",
                             help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
 
@@ -281,16 +270,18 @@ class Context:
         if group_id == PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV"):
             program_id = PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
 
-        return Context(args.cluster, cluster_url, program_id, args.dex_program_id, args.group_name, group_id)
+        return Context(args.cluster, cluster_url, args.skip_preflight, program_id, args.dex_program_id, args.group_name, group_id, args.gma_chunk_size, args.gma_chunk_pause)
 
     def __str__(self) -> str:
         return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝:
     Cluster: {self.cluster}
     Cluster URL: {self.cluster_url}
+    Skip Preflight: {self.client.skip_preflight}
     Program ID: {self.program_id}
     DEX Program ID: {self.dex_program_id}
     Group Name: {self.group_name}
     Group ID: {self.group_id}
+    Get Multiple Accounts: {self.gma_chunk_size} per call, {self.gma_chunk_pause} between calls
 »"""
 
     def __repr__(self) -> str:

@@ -121,15 +121,6 @@ class ActualAccountLiquidator(AccountLiquidator):
         for builder in instruction_builders:
             transaction.add(builder.build())
 
-        for instruction in transaction.instructions:
-            self.logger.debug("INSTRUCTION")
-            self.logger.debug("    Keys:")
-            for key in instruction.keys:
-                self.logger.debug("        ", f"{key.pubkey}".ljust(
-                    45), f"{key.is_signer}".ljust(6), f"{key.is_writable}".ljust(6))
-            self.logger.debug("    Data:", " ".join(f"{x:02x}" for x in instruction.data))
-            self.logger.debug("    Program ID:", instruction.program_id)
-
         transaction_id: str = self.context.client.send_transaction(transaction, self.wallet.account)
         return [transaction_id]
 
@@ -198,10 +189,8 @@ class ReportingAccountLiquidator(AccountLiquidator):
         self.logger.info("Wallet balances before:")
         TokenValue.report(balances_before, self.logger.info)
 
-        self.logger.info("Margin account balances before:")
-        TokenValue.report(liquidatable_report.balances, self.logger.info)
         self.logger.info(
-            f"Liquidating margin account: {liquidatable_report.margin_account}\n{liquidatable_report.balance_sheet}")
+            f"Liquidating margin account {liquidatable_report.margin_account.address}:\n{liquidatable_report}\n{liquidatable_report.margin_account}")
         try:
             transaction_ids = self.inner.liquidate(liquidatable_report)
         except TransactionException as exception:
@@ -223,46 +212,49 @@ class ReportingAccountLiquidator(AccountLiquidator):
 
         if transaction_ids is None or len(transaction_ids) == 0:
             self.logger.info("No transaction sent.")
-        else:
-            self.logger.info(f"Transaction IDs: {transaction_ids} - waiting for confirmation...")
+            return None
 
-            transactions = self.context.client.wait_for_confirmation(transaction_ids)
-            if transactions is None:
-                self.logger.warning(
-                    f"Could not process 'after' liquidation stage - no data for transaction {transaction_ids}")
-                return transaction_ids
+        self.logger.info(f"Transaction IDs: {transaction_ids} - waiting for confirmation...")
 
-            all_succeeded: bool = True
-            for individual_response in transactions:
-                transaction_scout = TransactionScout.from_transaction_response(self.context, individual_response)
-                if not transaction_scout.succeeded:
-                    all_succeeded = False
+        transactions = self.context.client.wait_for_confirmation(transaction_ids)
+        if transactions is None:
+            self.logger.warning(
+                f"Could not process 'after' liquidation stage - no data for transaction {transaction_ids}")
+            return transaction_ids
 
-            group_after = Group.load(self.context)
-            margin_account_after_liquidation = MarginAccount.load(
-                self.context, liquidatable_report.margin_account.address, group_after)
-            intrinsic_balances_after = margin_account_after_liquidation.get_intrinsic_balances(group_after)
-            self.logger.info("Margin account balances after:")
-            TokenValue.report(intrinsic_balances_after, self.logger.info)
+        all_succeeded: bool = True
+        for individual_response in transactions:
+            transaction_scout = TransactionScout.from_transaction_response(self.context, individual_response)
+            if not transaction_scout.succeeded:
+                all_succeeded = False
 
-            self.logger.info("Wallet Balances After:")
-            balances_after = group_after.fetch_balances(self.context, self.wallet.address)
-            TokenValue.report(balances_after, self.logger.info)
+        group_after = Group.load(self.context)
+        margin_account_after_liquidation = MarginAccount.load(
+            self.context, liquidatable_report.margin_account.address, group_after)
+        intrinsic_balances_after = margin_account_after_liquidation.get_intrinsic_balances(group_after)
+        self.logger.info("Margin account balances after:")
+        TokenValue.report(intrinsic_balances_after, self.logger.info)
 
-            liquidation_event = LiquidationEvent(datetime.datetime.now(),
-                                                 self.liquidator_name,
-                                                 self.context.group_name,
-                                                 all_succeeded,
-                                                 transaction_ids,
-                                                 self.wallet.address,
-                                                 margin_account_after_liquidation.address,
-                                                 balances_before,
-                                                 balances_after)
+        self.logger.info("Wallet Balances After:")
+        balances_after = group_after.fetch_balances(self.context, self.wallet.address)
+        TokenValue.report(balances_after, self.logger.info)
 
-            self.logger.info("Wallet Balances Changes:")
-            changes = TokenValue.changes(balances_before, balances_after)
-            TokenValue.report(changes, self.logger.info)
+        liquidation_event = LiquidationEvent(datetime.datetime.now(),
+                                             self.liquidator_name,
+                                             self.context.group_name,
+                                             all_succeeded,
+                                             transaction_ids,
+                                             self.wallet.address,
+                                             margin_account_after_liquidation.address,
+                                             balances_before,
+                                             balances_after)
 
-            self.liquidations_publisher.publish(liquidation_event)
+        self.logger.info("Wallet Balances Changes:")
+        changes = TokenValue.changes(balances_before, balances_after)
+        TokenValue.report(changes, self.logger.info)
 
-        return transaction_ids
+        self.liquidations_publisher.publish(liquidation_event)
+
+        if all_succeeded:
+            return transaction_ids
+        return None

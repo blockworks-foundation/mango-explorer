@@ -237,7 +237,8 @@ class CompatibleClient(Client):
     def get_multiple_accounts(self, pubkeys: typing.Sequence[PublicKey], commitment: Commitment = UnspecifiedCommitment,
                               encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> RPCResponse:
         options = self._build_options_with_encoding(commitment, encoding, data_slice)
-        return self._send_request("getMultipleAccounts", pubkeys, options)
+        pubkey_strings: typing.Sequence[str] = list([str(pubkey) for pubkey in pubkeys])
+        return self._send_request("getMultipleAccounts", pubkey_strings, options)
 
     def send_transaction(self, transaction: Transaction, *signers: Account, opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment)) -> RPCResponse:
         try:

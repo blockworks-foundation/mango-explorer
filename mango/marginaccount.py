@@ -44,9 +44,9 @@ from .version import Version
 class MarginAccount(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, account_flags: MangoAccountFlags,
                  info: str, has_borrows: bool, mango_group: PublicKey, owner: PublicKey,
-                 being_liquidated: bool, deposits: typing.List[TokenValue],
-                 borrows: typing.List[TokenValue],
-                 open_orders: typing.List[typing.Optional[PublicKey]]):
+                 being_liquidated: bool, deposits: typing.Sequence[TokenValue],
+                 borrows: typing.Sequence[TokenValue],
+                 open_orders: typing.Sequence[typing.Optional[PublicKey]]):
         super().__init__(account_info)
         self.version: Version = version
         self.account_flags: MangoAccountFlags = account_flags
@@ -55,9 +55,9 @@ class MarginAccount(AddressableAccount):
         self.mango_group: PublicKey = mango_group
         self.owner: PublicKey = owner
         self.being_liquidated: bool = being_liquidated
-        self.deposits: typing.List[TokenValue] = deposits
-        self.borrows: typing.List[TokenValue] = borrows
-        self.open_orders: typing.List[typing.Optional[PublicKey]] = open_orders
+        self.deposits: typing.Sequence[TokenValue] = deposits
+        self.borrows: typing.Sequence[TokenValue] = borrows
+        self.open_orders: typing.Sequence[typing.Optional[PublicKey]] = open_orders
         self.open_orders_accounts: typing.List[typing.Optional[OpenOrders]] = [None] * len(open_orders)
 
     @staticmethod
@@ -119,39 +119,18 @@ class MarginAccount(AddressableAccount):
         return margin_account
 
     @staticmethod
-    def load_all_for_group(context: Context, program_id: PublicKey, group: Group) -> typing.List["MarginAccount"]:
-        filters = [
-            MemcmpOpts(
-                offset=layouts.MANGO_ACCOUNT_FLAGS.sizeof(),  # mango_group is just after the MangoAccountFlags, which is the first entry
-                bytes=encode_key(group.address)
-            )
-        ]
-
+    def load_all_for_group_with_open_orders(context: Context, group: Group) -> typing.Sequence["MarginAccount"]:
+        data_size: int = layouts.MARGIN_ACCOUNT_V2.sizeof()
         if group.version == Version.V1:
-            parser = layouts.MARGIN_ACCOUNT_V1
-        else:
-            parser = layouts.MARGIN_ACCOUNT_V2
+            data_size = layouts.MARGIN_ACCOUNT_V1.sizeof()
 
-        results = context.client.get_program_accounts(program_id, data_size=parser.sizeof(), memcmp_opts=filters)
-        margin_accounts = []
-        for margin_account_data in results:
-            address = PublicKey(margin_account_data["pubkey"])
-            account = AccountInfo._from_response_values(margin_account_data["account"], address)
-            margin_account = MarginAccount.parse(account, group)
-            margin_accounts += [margin_account]
-        return margin_accounts
-
-    @staticmethod
-    def load_all_for_group_with_open_orders(context: Context, program_id: PublicKey, group: Group) -> typing.List["MarginAccount"]:
-        margin_accounts = MarginAccount.load_all_for_group(context, program_id, group)
-        open_orders = OpenOrders.load_raw_open_orders_account_infos(context, group)
-        for margin_account in margin_accounts:
-            margin_account.install_open_orders_accounts(group, open_orders)
+        margin_accounts: typing.Sequence[MarginAccount] = MarginAccount._load_all_with_openorders(
+            context, group, [], data_size)
 
         return margin_accounts
 
     @staticmethod
-    def load_all_for_owner(context: Context, owner: PublicKey, group: typing.Optional[Group] = None) -> typing.List["MarginAccount"]:
+    def load_all_for_owner(context: Context, owner: PublicKey, group: typing.Optional[Group] = None) -> typing.Sequence["MarginAccount"]:
         if group is None:
             group = Group.load(context)
 
@@ -181,7 +160,7 @@ class MarginAccount(AddressableAccount):
         return margin_accounts
 
     @classmethod
-    def filter_out_unripe(cls, margin_accounts: typing.List["MarginAccount"], group: Group, prices: typing.List[TokenValue]) -> typing.List["MarginAccount"]:
+    def filter_out_unripe(cls, margin_accounts: typing.Sequence["MarginAccount"], group: Group, prices: typing.Sequence[TokenValue]) -> typing.Sequence["MarginAccount"]:
         logger: logging.Logger = logging.getLogger(cls.__name__)
 
         ripe_accounts: typing.List[MarginAccount] = []
@@ -211,7 +190,7 @@ class MarginAccount(AddressableAccount):
                                                group.shared_quote_token.token.decimals)
                 self.open_orders_accounts[index] = open_orders
 
-    def get_intrinsic_balance_sheets(self, group: Group) -> typing.List[BalanceSheet]:
+    def get_intrinsic_balance_sheets(self, group: Group) -> typing.Sequence[BalanceSheet]:
         settled_assets: typing.List[Decimal] = [Decimal(0)] * len(group.basket_tokens)
         liabilities: typing.List[Decimal] = [Decimal(0)] * len(group.basket_tokens)
         for index, token in enumerate(group.basket_tokens):
@@ -232,7 +211,7 @@ class MarginAccount(AddressableAccount):
 
         return balance_sheets
 
-    def get_priced_balance_sheets(self, group: Group, prices: typing.List[TokenValue]) -> typing.List[BalanceSheet]:
+    def get_priced_balance_sheets(self, group: Group, prices: typing.Sequence[TokenValue]) -> typing.Sequence[BalanceSheet]:
         priced: typing.List[BalanceSheet] = []
         balance_sheets = self.get_intrinsic_balance_sheets(group)
         for balance_sheet in balance_sheets:
@@ -249,7 +228,7 @@ class MarginAccount(AddressableAccount):
 
         return priced
 
-    def get_balance_sheet_totals(self, group: Group, prices: typing.List[TokenValue]) -> BalanceSheet:
+    def get_balance_sheet_totals(self, group: Group, prices: typing.Sequence[TokenValue]) -> BalanceSheet:
         liabilities = Decimal(0)
         settled_assets = Decimal(0)
         unsettled_assets = Decimal(0)
@@ -271,7 +250,7 @@ class MarginAccount(AddressableAccount):
         summary_token = Token(summary_name, f"{summary_name} Summary", SYSTEM_PROGRAM_ADDRESS, Decimal(0))
         return BalanceSheet(summary_token, liabilities, settled_assets, unsettled_assets)
 
-    def get_intrinsic_balances(self, group: Group) -> typing.List[TokenValue]:
+    def get_intrinsic_balances(self, group: Group) -> typing.Sequence[TokenValue]:
         balance_sheets = self.get_intrinsic_balance_sheets(group)
         balances: typing.List[TokenValue] = []
         for index, balance_sheet in enumerate(balance_sheets):
@@ -281,28 +260,20 @@ class MarginAccount(AddressableAccount):
 
         return balances
 
-    # The old way of fetching ripe margin accounts was to fetch them all then inspect them to see
-    # if they were ripe. That was a big performance problem - fetching all groups was quite a penalty.
-    #
-    # This is still how it's done in load_ripe_v1().
-    #
-    # The newer mechanism is to look for the has_borrows flag in the ManrginAccount. That should
-    # mean fewer MarginAccounts need to be fetched.
-    #
-    # This newer method is implemented in load_ripe_v2()
     @staticmethod
-    def load_ripe(context: Context, group: Group) -> typing.List["MarginAccount"]:
+    def load_ripe(context: Context, group: Group) -> typing.Sequence["MarginAccount"]:
         if group.version == Version.V1:
             return MarginAccount._load_ripe_v1(context, group)
         else:
             return MarginAccount._load_ripe_v2(context, group)
 
     @classmethod
-    def _load_ripe_v1(cls, context: Context, group: Group) -> typing.List["MarginAccount"]:
+    def _load_ripe_v1(cls, context: Context, group: Group) -> typing.Sequence["MarginAccount"]:
         started_at = time.time()
         logger: logging.Logger = logging.getLogger(cls.__name__)
 
-        margin_accounts = MarginAccount.load_all_for_group_with_open_orders(context, context.program_id, group)
+        margin_accounts: typing.Sequence[MarginAccount] = MarginAccount._load_all_with_openorders(
+            context, group, [], layouts.MARGIN_ACCOUNT_V1.sizeof())
         logger.info(f"Fetched {len(margin_accounts)} V1 margin accounts to process.")
 
         prices = group.fetch_token_prices(context)
@@ -313,17 +284,32 @@ class MarginAccount(AddressableAccount):
         return ripe_accounts
 
     @classmethod
-    def _load_ripe_v2(cls, context: Context, group: Group) -> typing.List["MarginAccount"]:
+    def _load_ripe_v2(cls, context: Context, group: Group) -> typing.Sequence["MarginAccount"]:
         started_at = time.time()
         logger: logging.Logger = logging.getLogger(cls.__name__)
 
-        filters = [
+        margin_accounts: typing.Sequence[MarginAccount] = MarginAccount._load_all_with_openorders(context, group, [
             # 'has_borrows' offset is: 8 + 32 + 32 + (5 * 16) + (5 * 16) + (4 * 32) + 1
             # = 361
             MemcmpOpts(
                 offset=361,
                 bytes=encode_int(1)
-            ),
+            )
+        ], layouts.MARGIN_ACCOUNT_V2.sizeof())
+
+        prices = group.fetch_token_prices(context)
+        ripe_accounts = MarginAccount.filter_out_unripe(margin_accounts, group, prices)
+
+        time_taken = time.time() - started_at
+        logger.info(f"Loading ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
+        return ripe_accounts
+
+    @classmethod
+    def _load_all_with_openorders(cls, context: Context, group: Group, filters: typing.Sequence[MemcmpOpts], data_size: int) -> typing.Sequence["MarginAccount"]:
+        logger: logging.Logger = logging.getLogger(cls.__name__)
+
+        filters = [
+            *filters,
             MemcmpOpts(
                 offset=layouts.MANGO_ACCOUNT_FLAGS.sizeof(),  # mango_group is just after the MangoAccountFlags, which is the first entry
                 bytes=encode_key(group.address)
@@ -332,8 +318,8 @@ class MarginAccount(AddressableAccount):
 
         data_size = layouts.MARGIN_ACCOUNT_V2.sizeof()
         results = context.client.get_program_accounts(context.program_id, data_size=data_size, memcmp_opts=filters)
-        margin_accounts = []
-        open_orders_addresses = []
+        margin_accounts: typing.List[MarginAccount] = []
+        open_orders_addresses: typing.List[typing.Optional[PublicKey]] = []
         for margin_account_data in results:
             address = PublicKey(margin_account_data["pubkey"])
             account = AccountInfo._from_response_values(margin_account_data["account"], address)
@@ -341,36 +327,22 @@ class MarginAccount(AddressableAccount):
             open_orders_addresses += margin_account.open_orders
             margin_accounts += [margin_account]
 
-        logger.info(f"Fetched {len(margin_accounts)} V2 margin accounts to process.")
+        logger.info(f"Fetched {len(margin_accounts)} margin accounts to process.")
 
-        # It looks like this will be more efficient - just specify only the addresses we
-        # need, and install them.
-        #
-        # Unfortunately there's a limit of 100 for the getMultipleAccounts() RPC call,
-        # and doing it repeatedly requires some pauses because of rate limits.
-        #
-        # It's quicker (so far) to bring back every openorders account for the group.
-        #
-        # open_orders_addresses = [oo for oo in open_orders_addresses if oo is not None]
+        # Just specify only the addresses we need, and install them.
+        concrete_open_orders_addresses: typing.Sequence[PublicKey] = [
+            oo for oo in open_orders_addresses if oo is not None]
+        logger.info(f"Now fetching {len(concrete_open_orders_addresses)} OpenOrders accounts.")
 
-        # open_orders_account_infos = AccountInfo.load_multiple(self.context, open_orders_addresses)
-        # open_orders_account_infos_by_address = {key: value for key, value in [(str(account_info.address), account_info) for account_info in open_orders_account_infos]}
+        open_orders_account_infos = AccountInfo.load_multiple(context, concrete_open_orders_addresses)
+        logger.info(f"{len(open_orders_account_infos)} OpenOrders accounts fetched.")
+        open_orders_account_infos_by_address = {
+            str(account_info.address): account_info for account_info in open_orders_account_infos}
 
-        # for margin_account in margin_accounts:
-        #     margin_account.install_open_orders_accounts(self, open_orders_account_infos_by_address)
-
-        # This just fetches every openorder account for the group.
-        open_orders = OpenOrders.load_raw_open_orders_account_infos(context, group)
-        logger.info(f"Fetched {len(open_orders)} openorders accounts.")
         for margin_account in margin_accounts:
-            margin_account.install_open_orders_accounts(group, open_orders)
+            margin_account.install_open_orders_accounts(group, open_orders_account_infos_by_address)
 
-        prices = group.fetch_token_prices(context)
-        ripe_accounts = MarginAccount.filter_out_unripe(margin_accounts, group, prices)
-
-        time_taken = time.time() - started_at
-        logger.info(f"Loading ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
-        return ripe_accounts
+        return margin_accounts
 
     def __str__(self) -> str:
         info = f"'{self.info}'" if self.info else "(𝑢𝑛-𝑛𝑎𝑚𝑒𝑑)"

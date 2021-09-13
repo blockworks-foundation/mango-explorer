@@ -380,7 +380,7 @@ class LiquidateInstructionBuilder(InstructionBuilder):
         return transaction
 
     @classmethod
-    def from_margin_account_and_market(cls, context: Context, group: Group, wallet: Wallet, margin_account: MarginAccount, prices: typing.List[TokenValue]) -> typing.Optional["LiquidateInstructionBuilder"]:
+    def from_margin_account_and_market(cls, context: Context, group: Group, wallet: Wallet, margin_account: MarginAccount, prices: typing.Sequence[TokenValue]) -> typing.Optional["LiquidateInstructionBuilder"]:
         logger: logging.Logger = logging.getLogger(cls.__name__)
 
         oracles = list([mkt.oracle for mkt in group.markets])

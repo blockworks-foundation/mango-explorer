@@ -38,10 +38,13 @@ def fake_token() -> mango.Token:
 def fake_context() -> mango.Context:
     context = mango.Context(cluster="test",
                             cluster_url="http://localhost",
+                            skip_preflight=False,
                             program_id=fake_seeded_public_key("program ID"),
                             dex_program_id=fake_seeded_public_key("DEX program ID"),
                             group_name="TEST_GROUP",
-                            group_id=fake_seeded_public_key("group ID"))
+                            group_id=fake_seeded_public_key("group ID"),
+                            gma_chunk_size=Decimal(20),
+                            gma_chunk_pause=Decimal(25))
     context.client = mango.BetterClient(MockClient())
     return context
 

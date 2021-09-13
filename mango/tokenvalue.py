@@ -63,12 +63,12 @@ class TokenValue:
         return value
 
     @staticmethod
-    def report(values: typing.List["TokenValue"], reporter: typing.Callable[[str], None] = print) -> None:
+    def report(values: typing.Sequence["TokenValue"], reporter: typing.Callable[[str], None] = print) -> None:
         for value in values:
             reporter(f"{value.value:>18,.8f} {value.token.name}")
 
     @staticmethod
-    def find_by_symbol(values: typing.List["TokenValue"], symbol: str) -> "TokenValue":
+    def find_by_symbol(values: typing.Sequence["TokenValue"], symbol: str) -> "TokenValue":
         found = [value for value in values if value.token.symbol_matches(symbol)]
         if len(found) == 0:
             raise Exception(f"Token '{symbol}' not found in token values: {values}")
@@ -79,7 +79,7 @@ class TokenValue:
         return found[0]
 
     @staticmethod
-    def find_by_mint(values: typing.List["TokenValue"], mint: PublicKey) -> "TokenValue":
+    def find_by_mint(values: typing.Sequence["TokenValue"], mint: PublicKey) -> "TokenValue":
         found = [value for value in values if value.token.mint == mint]
         if len(found) == 0:
             raise Exception(f"Token '{mint}' not found in token values: {values}")
@@ -90,11 +90,11 @@ class TokenValue:
         return found[0]
 
     @staticmethod
-    def find_by_token(values: typing.List["TokenValue"], token: Token) -> "TokenValue":
+    def find_by_token(values: typing.Sequence["TokenValue"], token: Token) -> "TokenValue":
         return TokenValue.find_by_mint(values, token.mint)
 
     @staticmethod
-    def changes(before: typing.List["TokenValue"], after: typing.List["TokenValue"]) -> typing.List["TokenValue"]:
+    def changes(before: typing.Sequence["TokenValue"], after: typing.Sequence["TokenValue"]) -> typing.Sequence["TokenValue"]:
         changes: typing.List[TokenValue] = []
         for before_balance in before:
             after_balance = TokenValue.find_by_token(after, before_balance.token)

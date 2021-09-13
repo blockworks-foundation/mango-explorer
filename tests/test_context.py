@@ -1,5 +1,6 @@
 from .context import mango
 
+from decimal import Decimal
 from solana.publickey import PublicKey
 
 
@@ -10,6 +11,8 @@ def context_has_default_values(ctx):
     assert ctx.dex_program_id == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
     assert ctx.group_name == "BTC_ETH_SOL_SRM_USDC"
     assert ctx.group_id == PublicKey("2oogpTYm1sp6LPZAWD3bp2wsFpnV2kXL1s52yyFhW5vp")
+    assert ctx.gma_chunk_size == Decimal(100)
+    assert ctx.gma_chunk_pause == Decimal(0)
 
 
 def test_context_default_exists():
