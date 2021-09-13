@@ -51,11 +51,8 @@ class TokenValue:
 
         total_value = Decimal(0)
         for token_account in token_accounts:
-            result = context.client.get_token_account_balance(token_account["pubkey"])
-            value = Decimal(result["amount"])
-            decimal_places = result["decimals"]
-            divisor = Decimal(10 ** decimal_places)
-            total_value += value / divisor
+            token_balance: Decimal = context.client.get_token_account_balance(token_account["pubkey"])
+            total_value += token_balance
 
         return TokenValue(token, total_value)
 

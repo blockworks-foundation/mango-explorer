@@ -28,7 +28,6 @@ from .marketinstructionbuilder import MarketInstructionBuilder
 from .orders import Order
 from .publickey import encode_public_key_for_sorting
 from .spotmarket import SpotMarket
-from .tokenaccount import TokenAccount
 from .wallet import Wallet
 
 
@@ -60,13 +59,10 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         raw_market: PySerumMarket = PySerumMarket.load(
             context.client.compatible_client, spot_market.address, context.serum_program_address)
 
-        fee_discount_token_address: typing.Optional[PublicKey] = None
-        srm_token = context.token_lookup.find_by_symbol("SRM")
-        if srm_token is not None:
-            fee_discount_token_account = TokenAccount.fetch_largest_for_owner_and_token(
-                context, wallet.address, srm_token)
-            if fee_discount_token_account is not None:
-                fee_discount_token_address = fee_discount_token_account.address
+        msrm_balance = context.client.get_token_account_balance(group.msrm_vault)
+        fee_discount_token_address: PublicKey = group.srm_vault
+        if msrm_balance > 0:
+            fee_discount_token_address = group.msrm_vault
 
         market_index = group.find_spot_market_index(spot_market.address)
 

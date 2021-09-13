@@ -476,9 +476,12 @@ class BetterClient:
         response = self.compatible_client.get_recent_blockhash(commitment)
         return Blockhash(response["result"]["value"]["blockhash"])
 
-    def get_token_account_balance(self, pubkey: typing.Union[str, PublicKey], commitment: Commitment = UnspecifiedCommitment) -> typing.Dict:
+    def get_token_account_balance(self, pubkey: typing.Union[str, PublicKey], commitment: Commitment = UnspecifiedCommitment) -> Decimal:
         response = self.compatible_client.get_token_account_balance(pubkey, commitment)
-        return response["result"]["value"]
+        value = Decimal(response["result"]["value"]["amount"])
+        decimal_places = response["result"]["value"]["decimals"]
+        divisor = Decimal(10 ** decimal_places)
+        return value / divisor
 
     def get_token_accounts_by_owner(self, owner: PublicKey, token_account_options: TokenAccountOpts, commitment: Commitment = UnspecifiedCommitment,) -> typing.Sequence[typing.Dict]:
         response = self.compatible_client.get_token_accounts_by_owner(owner, token_account_options, commitment)

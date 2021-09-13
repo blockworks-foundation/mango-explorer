@@ -174,7 +174,7 @@ class ContextBuilder:
                 default_group_data = group_data
                 break
 
-        actual_blockhash_cache_duration: datetime.timedelta = blockhash_cache_duration or datetime.timedelta(seconds=15)
+        actual_blockhash_cache_duration: datetime.timedelta = blockhash_cache_duration or datetime.timedelta(seconds=0)
 
         actual_cluster_url: str = cluster_url or os.environ.get(
             "CLUSTER_URL") or MangoConstants["cluster_urls"][actual_cluster]
