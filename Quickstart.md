@@ -480,7 +480,7 @@ This is a long-running process, so we'll need to use Control-C to cancel it when
 
 Here goes:
 ```
-# mango-explorer liquidator --target "BTC:0.004" --target "ETH:0.06" --target "SOL:2.65" --target "SRM:30" --dry-run
+# mango-explorer liquidator --target "BTC:0.004" --target "ETH:0.06" --target "SOL:2.65" --target "SRM:30" --gma-chunk-pause 1 --dry-run
 2021-05-08 14:36:34 ⚠ root
 ⚠ WARNING ⚠
 
@@ -609,6 +609,7 @@ Some important things to note from the simulated run:
 * It prints out some summary information about the wallet account and child accounts.
 * It loops once per minute, assessing which margin accounts are liquidatable (none, in the above run)
 * It sleeps for as long as it can between runs
+* It pauses 1 second between `getMultipleAccounts()` call so it isn't rate limited. (You may be able to reduce this figure depending on which RPC server you use.)
 * You can't see it in the above (because no liquidations occurred) but it will automatically balance the wallet after every liquidation.
 
 
