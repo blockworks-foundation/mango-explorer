@@ -20,6 +20,7 @@ import logging
 import os
 import typing
 
+from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .client import BetterClient
@@ -72,6 +73,10 @@ class ContextBuilder:
         parser.add_argument("--serum-program-address", type=PublicKey, default=None, help="Serum program address")
         parser.add_argument("--skip-preflight", default=False, action="store_true", help="Skip pre-flight checks")
         parser.add_argument("--blockhash-cache-duration", type=int, help="How long to cache 'recent' blockhashes")
+        parser.add_argument("--gma-chunk-size", type=Decimal, default=None,
+                            help="Maximum number of addresses to send in a single call to getMultipleAccounts()")
+        parser.add_argument("--gma-chunk-pause", type=Decimal, default=None,
+                            help="number of seconds to pause between successive getMultipleAccounts() calls to avoid rate limiting")
 
         parser.add_argument("--token-data-file", type=str, default=SplTokenLookup.DefaultDataFilepath,
                             help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
@@ -99,19 +104,22 @@ class ContextBuilder:
         skip_preflight: bool = bool(args.skip_preflight)
         blockhash_cache_duration: typing.Optional[datetime.timedelta] = datetime.timedelta(
             seconds=args.blockhash_cache_duration) if args.blockhash_cache_duration is not None else None
+        gma_chunk_size: typing.Optional[Decimal] = args.gma_chunk_size
+        gma_chunk_pause: typing.Optional[Decimal] = args.gma_chunk_pause
         token_filename: str = args.token_data_file
 
-        return ContextBuilder._build(name, cluster_name, cluster_url, skip_preflight, blockhash_cache_duration, group_name, group_address, mango_program_address, serum_program_address, token_filename)
+        return ContextBuilder._build(name, cluster_name, cluster_url, skip_preflight, blockhash_cache_duration, group_name, group_address, mango_program_address, serum_program_address, gma_chunk_size, gma_chunk_pause, token_filename)
 
     @staticmethod
     def default():
-        return ContextBuilder._build(None, None, None, False, None, None, None, None, None, SplTokenLookup.DefaultDataFilepath)
+        return ContextBuilder._build(None, None, None, False, None, None, None, None, None, None, None, SplTokenLookup.DefaultDataFilepath)
 
     @staticmethod
     def from_group_name(context: Context, group_name: str) -> Context:
         return ContextBuilder._build(context.name, context.client.cluster_name, context.client.cluster_url,
                                      context.client.skip_preflight, context.client.compatible_client.blockhash_cache_duration,
-                                     group_name, None, None, None, SplTokenLookup.DefaultDataFilepath)
+                                     group_name, None, None, None, context.gma_chunk_size, context.gma_chunk_pause,
+                                     SplTokenLookup.DefaultDataFilepath)
 
     @staticmethod
     def forced_to_devnet(context: Context) -> Context:
@@ -154,6 +162,7 @@ class ContextBuilder:
                skip_preflight: bool, blockhash_cache_duration: typing.Optional[datetime.timedelta],
                group_name: typing.Optional[str], group_address: typing.Optional[PublicKey],
                program_address: typing.Optional[PublicKey], serum_program_address: typing.Optional[PublicKey],
+               gma_chunk_size: typing.Optional[Decimal], gma_chunk_pause: typing.Optional[Decimal],
                token_filename: str) -> "Context":
         def public_key_or_none(address: typing.Optional[str]) -> typing.Optional[PublicKey]:
             if address is not None and address != "":
@@ -193,6 +202,9 @@ class ContextBuilder:
         actual_serum_program_address: PublicKey = serum_program_address or public_key_or_none(os.environ.get(
             "SERUM_PROGRAM_ADDRESS")) or PublicKey(found_group_data["serumProgramId"])
 
+        actual_gma_chunk_size: Decimal = gma_chunk_size or Decimal(100)
+        actual_gma_chunk_pause: Decimal = gma_chunk_pause or Decimal(0)
+
         ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(actual_cluster, actual_group_name)
         all_token_lookup = ids_json_token_lookup
         if actual_cluster == "mainnet":
@@ -217,4 +229,4 @@ class ContextBuilder:
             all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
 
-        return Context(actual_name, actual_cluster, actual_cluster_url, actual_skip_preflight, actual_blockhash_cache_duration, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, token_lookup, market_lookup)
+        return Context(actual_name, actual_cluster, actual_cluster_url, actual_skip_preflight, actual_blockhash_cache_duration, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, token_lookup, market_lookup)

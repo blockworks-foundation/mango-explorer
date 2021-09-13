@@ -66,17 +66,18 @@ class AccountInfo:
         return AccountInfo._from_response_values(result["value"], address)
 
     @staticmethod
-    def load_multiple(context: Context, addresses: typing.Sequence[PublicKey], chunk_size: int = 100, sleep_between_calls: float = 0.0) -> typing.Sequence["AccountInfo"]:
+    def load_multiple(context: Context, addresses: typing.Sequence[PublicKey]) -> typing.List["AccountInfo"]:
         # This is a tricky one to get right.
         # Some errors this can generate:
         #  413 Client Error: Payload Too Large for url
         #  Error response from server: 'Too many inputs provided; max 100', code: -32602
-        address_strings: typing.Sequence[str] = list(map(PublicKey.__str__, addresses))
+        chunk_size: int = int(context.gma_chunk_size)
+        sleep_between_calls: float = float(context.gma_chunk_pause)
         multiple: typing.List[AccountInfo] = []
-        chunks = AccountInfo._split_list_into_chunks(address_strings, chunk_size)
+        chunks: typing.Sequence[typing.Sequence[PublicKey]] = AccountInfo._split_list_into_chunks(addresses, chunk_size)
         for counter, chunk in enumerate(chunks):
-            results = context.client.get_multiple_accounts([*chunk])
-            response_value_list = zip(results, addresses)
+            result: typing.Sequence[typing.Dict] = context.client.get_multiple_accounts(chunk)
+            response_value_list = zip(result, chunk)
             multiple += list(map(lambda pair: AccountInfo._from_response_values(pair[0], pair[1]), response_value_list))
             if (sleep_between_calls > 0.0) and (counter < (len(chunks) - 1)):
                 time.sleep(sleep_between_calls)

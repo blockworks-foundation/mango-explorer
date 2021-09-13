@@ -1,5 +1,6 @@
 from .context import mango
 
+from decimal import Decimal
 from solana.publickey import PublicKey
 
 
@@ -8,6 +9,8 @@ def context_has_default_values(ctx: mango.Context):
     assert ctx.serum_program_address == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
     assert ctx.group_name == "mainnet.1"
     assert ctx.group_address == PublicKey("98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue")
+    assert ctx.gma_chunk_size == Decimal(100)
+    assert ctx.gma_chunk_pause == Decimal(0)
 
 
 def test_context_default_exists():

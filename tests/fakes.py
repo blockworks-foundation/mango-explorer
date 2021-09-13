@@ -64,6 +64,8 @@ def fake_context() -> mango.Context:
                             serum_program_address=fake_seeded_public_key("Serum program address"),
                             group_name="TEST_GROUP",
                             group_address=fake_seeded_public_key("group ID"),
+                            gma_chunk_size=Decimal(20),
+                            gma_chunk_pause=Decimal(25),
                             token_lookup=mango.NullTokenLookup(),
                             market_lookup=mango.NullMarketLookup())
     context.client = MockClient()

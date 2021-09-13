@@ -39,6 +39,7 @@ class Context:
     def __init__(self, name: str, cluster_name: str, cluster_url: str, skip_preflight: bool,
                  blockhash_cache_duration: datetime.timedelta, mango_program_address: PublicKey,
                  serum_program_address: PublicKey, group_name: str, group_address: PublicKey,
+                 gma_chunk_size: Decimal, gma_chunk_pause: Decimal,
                  token_lookup: TokenLookup, market_lookup: MarketLookup):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
@@ -50,6 +51,8 @@ class Context:
         self.serum_program_address: PublicKey = serum_program_address
         self.group_name: str = group_name
         self.group_address: PublicKey = group_address
+        self.gma_chunk_size: Decimal = gma_chunk_size
+        self.gma_chunk_pause: Decimal = gma_chunk_pause
         self.token_lookup: TokenLookup = token_lookup
         self.market_lookup: MarketLookup = market_lookup
 
