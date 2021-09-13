@@ -16,7 +16,6 @@
 import argparse
 import datetime
 import copy
-import logging
 import os
 import typing
 
@@ -62,7 +61,7 @@ class ContextBuilder:
     # This function centralises some of it to ensure consistency and readability.
     #
     @staticmethod
-    def add_command_line_parameters(parser: argparse.ArgumentParser, logging_default=logging.INFO) -> None:
+    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--name", type=str, default="Mango Explorer",
                             help="Name of the program (used in reports and alerts)")
         parser.add_argument("--cluster-name", type=str, default=None, help="Solana RPC cluster name")
@@ -80,11 +79,6 @@ class ContextBuilder:
 
         parser.add_argument("--token-data-file", type=str, default=SplTokenLookup.DefaultDataFilepath,
                             help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
-
-        # This isn't really a Context thing but we don't have a better place for it (yet) and we
-        # don't want to duplicate it in every command.
-        parser.add_argument("--log-level", default=logging_default, type=lambda level: getattr(logging, level),
-                            help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
 
     # This function is the converse of `add_command_line_parameters()` - it takes
     # an argument of parsed command-line parameters and expects to see the ones it added

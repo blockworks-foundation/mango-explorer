@@ -21,10 +21,7 @@ mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey, required=True, help="Address of the Solana account to watch")
 parser.add_argument("--account-type", type=str, required=True,
                     help="Underlying object type of the data in the AccountInfo")
-args = parser.parse_args()
-
-logging.getLogger().setLevel(args.log_level)
-logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 

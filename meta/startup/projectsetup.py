@@ -1,6 +1,7 @@
+import argparse
 import decimal
 import logging
-import logging.handlers
+import mango
 import pandas as pd
 
 # Perform some magic around importing notebooks.
@@ -16,27 +17,5 @@ pd.options.display.float_format = '{:,.8f}'.format
 # round(val, 9)
 decimal.getcontext().prec = 36
 
-_log_levels = {
-    logging.CRITICAL: "🛑",
-    logging.ERROR: "🚨",
-    logging.WARNING: "⚠",
-    logging.INFO: "ⓘ",
-    logging.DEBUG: "🐛"
-}
-
-default_log_record_factory = logging.getLogRecordFactory()
-
-
-def emojified_record_factory(*args, **kwargs):
-    record = default_log_record_factory(*args, **kwargs)
-    # Here's where we add our own format keywords.
-    record.level_emoji = _log_levels[record.levelno]
-    return record
-
-
-logging.setLogRecordFactory(emojified_record_factory)
-
-# Make logging a little more verbose than the default.
-logging.basicConfig(level=logging.INFO,
-                    datefmt="%Y-%m-%d %H:%M:%S",
-                    format="%(asctime)s %(level_emoji)s %(name)-12.12s %(message)s")
+default_args: argparse.Namespace = argparse.Namespace(log_level=logging.INFO, log_suppress_timestamp=False)
+mango.setup_logging(default_args)

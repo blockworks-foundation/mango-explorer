@@ -1,7 +1,6 @@
 #!/usr/bin/env pyston3
 
 import argparse
-import logging
 import os
 import os.path
 import sys
@@ -22,10 +21,7 @@ parser.add_argument("--minimum-sol-balance", type=Decimal, default=Decimal("0.1"
                     help="the minimum SOL balance required for the alert. A SOL balance less than this value will trigger a nifitication.")
 parser.add_argument("--notify", type=mango.parse_subscription_target, action="append", default=[],
                     help="The notification target for low balance events")
-args = parser.parse_args()
-
-logging.getLogger().setLevel(args.log_level)
-logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 

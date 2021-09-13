@@ -1,7 +1,6 @@
 #!/usr/bin/env pyston3
 
 import argparse
-import logging
 import os
 import os.path
 import sys
@@ -16,10 +15,7 @@ parser = argparse.ArgumentParser(description="Shows the on-chain data of a parti
 mango.ContextBuilder.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey, required=True,
                     help="address of the account")
-args = parser.parse_args()
-
-logging.getLogger().setLevel(args.log_level)
-logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 

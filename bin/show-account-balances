@@ -17,10 +17,7 @@ mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey,
                     help="Root address to check (if not provided, the wallet address is used)")
-args = parser.parse_args()
-
-logging.getLogger().setLevel(args.log_level)
-logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 
