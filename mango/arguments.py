@@ -33,12 +33,8 @@ def parse_args(parser: argparse.ArgumentParser, logging_default=logging.INFO) ->
     args: argparse.Namespace = parser.parse_args()
 
     log_record_format: str = "%(asctime)s %(level_emoji)s %(name)-12.12s %(message)s"
-    print("args.log_suppress_timestamp", args.log_suppress_timestamp)
     if args.log_suppress_timestamp:
-        print("Here")
         log_record_format = "%(level_emoji)s %(name)-12.12s %(message)s"
-
-    print("log_record_format", log_record_format)
 
     # Make logging a little more verbose than the default.
     logging.basicConfig(level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S", format=log_record_format)
