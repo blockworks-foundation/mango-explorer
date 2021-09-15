@@ -158,18 +158,18 @@ class CachedBlockhash(typing.NamedTuple):
 # some common operations better from our point of view.
 #
 class CompatibleClient(Client):
-    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter, blockhash_cache_duration: datetime.timedelta):
+    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: datetime.timedelta, instruction_reporter: InstructionReporter):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster_name: str = cluster_name
         self.cluster_url: str = cluster_url
         self.commitment: Commitment = commitment
         self.skip_preflight: bool = skip_preflight
-        self.instruction_reporter: InstructionReporter = instruction_reporter
+        self.encoding: str = encoding
         self.blockhash_cache_duration: datetime.timedelta = blockhash_cache_duration
+        self.instruction_reporter: InstructionReporter = instruction_reporter
 
         self._request_counter = itertools.count()
-        self.encoding: str = "base64"
         self._cached_blockhash: CachedBlockhash = CachedBlockhash(Blockhash("unset"), datetime.datetime.min)
 
     def is_node_healthy(self) -> bool:
@@ -432,9 +432,9 @@ class BetterClient:
         self.compatible_client.instruction_reporter = value
 
     @staticmethod
-    def from_configuration(name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, instruction_reporter: InstructionReporter, blockhash_cache_duration: datetime.timedelta) -> "BetterClient":
-        compatible = CompatibleClient(name, cluster_name, cluster_url, commitment,
-                                      skip_preflight, instruction_reporter, blockhash_cache_duration)
+    def from_configuration(name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: datetime.timedelta, instruction_reporter: InstructionReporter) -> "BetterClient":
+        compatible = CompatibleClient(name, cluster_name, cluster_url, commitment, skip_preflight,
+                                      encoding, blockhash_cache_duration, instruction_reporter)
         return BetterClient(compatible)
 
     def is_node_healthy(self) -> bool:

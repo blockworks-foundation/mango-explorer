@@ -36,7 +36,7 @@ from .tokenlookup import TokenLookup
 # A `Context` object to manage Solana connection and Mango configuration.
 #
 class Context:
-    def __init__(self, name: str, cluster_name: str, cluster_url: str, skip_preflight: bool,
+    def __init__(self, name: str, cluster_name: str, cluster_url: str, skip_preflight: bool, encoding: str,
                  blockhash_cache_duration: datetime.timedelta, mango_program_address: PublicKey,
                  serum_program_address: PublicKey, group_name: str, group_address: PublicKey,
                  gma_chunk_size: Decimal, gma_chunk_pause: Decimal,
@@ -46,7 +46,7 @@ class Context:
         instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_addresses(
             mango_program_address, serum_program_address)
         self.client: BetterClient = BetterClient.from_configuration(
-            name, cluster_name, cluster_url, Commitment("processed"), skip_preflight, instruction_reporter, blockhash_cache_duration)
+            name, cluster_name, cluster_url, Commitment("processed"), skip_preflight, encoding, blockhash_cache_duration, instruction_reporter)
         self.mango_program_address: PublicKey = mango_program_address
         self.serum_program_address: PublicKey = serum_program_address
         self.group_name: str = group_name
