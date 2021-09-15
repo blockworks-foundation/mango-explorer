@@ -285,6 +285,14 @@ class CompatibleClient(Client):
             commitment = self.commitment
 
         skip_preflight: bool = opts.skip_preflight or self.skip_preflight
+        encoding: str = self.encoding
+        if encoding == "base64+zstd":
+            # sendTransaction() only supports base64 and base58, according to the docs:
+            #    https://docs.solana.com/developing/clients/jsonrpc-api#sendtransaction
+            # The error implies it accepts more:
+            #    Invalid params: unknown variant `base64+zstd`, expected one of `binary`, `base64`, `base58`, `json`, `jsonParsed`.
+            # but even that list doesn't accept base64+zstd.
+            encoding = "base64"
 
         try:
             response = self._send_request(
@@ -293,7 +301,7 @@ class CompatibleClient(Client):
                 {
                     _SkipPreflightKey: skip_preflight,
                     _PreflightCommitmentKey: commitment,
-                    _EncodingKey: self.encoding,
+                    _EncodingKey: encoding
                 }
             )
             self.logger.debug(f"Transaction ID response: {response}")

@@ -10,3 +10,4 @@ rx>=3.2.0
 rxpy_backpressure>=1.0.0
 solana==0.11.3
 websocket-client>=1.2.1
+zstandard==0.15.2

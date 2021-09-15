@@ -17,6 +17,7 @@
 import base64
 import base58
 import typing
+import zstandard
 
 from solana.publickey import PublicKey
 
@@ -24,6 +25,9 @@ from solana.publickey import PublicKey
 # # 🥭 Decoder
 #
 # This file contains some useful functions for decoding base64 and base58 data.
+
+_decompressor: zstandard.ZstdDecompressor = zstandard.ZstdDecompressor()
+
 
 # ## decode_binary() function
 #
@@ -36,13 +40,15 @@ from solana.publickey import PublicKey
 # Alternatively, it may just be a base58-encoded string.
 #
 # `decode_binary()` decodes the data properly based on which encoding was used.
-
-
 def decode_binary(encoded: typing.Sequence) -> bytes:
     if isinstance(encoded, str):
         return base58.b58decode(encoded)
     elif encoded[1] == "base64":
         return base64.b64decode(encoded[0])
+    elif encoded[1] == "base64+zstd":
+        compressed = base64.b64decode(encoded[0])
+        with _decompressor.stream_reader(compressed) as reader:
+            return reader.read()
     else:
         return base58.b58decode(encoded[0])
 
@@ -51,8 +57,6 @@ def decode_binary(encoded: typing.Sequence) -> bytes:
 #
 # Inverse of `decode_binary()`, this takes a binary list and encodes it (using base 64), then returns the encoded string and the string "base64" in an array.
 #
-
-
 def encode_binary(decoded: bytes) -> typing.Sequence:
     return [base64.b64encode(decoded), "base64"]
 
@@ -60,8 +64,6 @@ def encode_binary(decoded: bytes) -> typing.Sequence:
 # ## encode_key() function
 #
 # Encodes a `PublicKey` in the proper way for RPC calls.
-
-
 def encode_key(key: PublicKey) -> str:
     return str(key)
 
@@ -69,7 +71,5 @@ def encode_key(key: PublicKey) -> str:
 # ## encode_int() function
 #
 # Encodes an `int` in the proper way for RPC calls.
-
-
 def encode_int(value: int) -> str:
     return base58.b58encode_int(value).decode('ascii')
