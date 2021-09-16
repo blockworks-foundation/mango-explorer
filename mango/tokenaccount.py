@@ -53,7 +53,7 @@ class TokenAccount(AddressableAccount):
         return TokenAccount.load(context, new_account_address)
 
     @staticmethod
-    def fetch_all_for_owner_and_token(context: Context, owner_public_key: PublicKey, token: Token) -> typing.List["TokenAccount"]:
+    def fetch_all_for_owner_and_token(context: Context, owner_public_key: PublicKey, token: Token) -> typing.Sequence["TokenAccount"]:
         opts = TokenAccountOpts(mint=token.mint)
 
         token_accounts = context.client.get_token_accounts_by_owner(owner_public_key, opts)
