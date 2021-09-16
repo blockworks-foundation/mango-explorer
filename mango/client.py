@@ -158,12 +158,13 @@ class CachedBlockhash(typing.NamedTuple):
 # some common operations better from our point of view.
 #
 class CompatibleClient(Client):
-    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: datetime.timedelta, instruction_reporter: InstructionReporter):
+    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, blockhash_commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: datetime.timedelta, instruction_reporter: InstructionReporter):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster_name: str = cluster_name
         self.cluster_url: str = cluster_url
         self.commitment: Commitment = commitment
+        self.blockhash_commitment: Commitment = blockhash_commitment
         self.skip_preflight: bool = skip_preflight
         self.encoding: str = encoding
         self.blockhash_cache_duration: datetime.timedelta = blockhash_cache_duration
@@ -275,7 +276,7 @@ class CompatibleClient(Client):
         return self._send_request("getMultipleAccounts", pubkey_strings, options)
 
     def send_transaction(self, transaction: Transaction, *signers: Account, opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment)) -> RPCResponse:
-        transaction.recent_blockhash = self.get_cached_recent_blockhash()
+        transaction.recent_blockhash = self.get_cached_recent_blockhash(self.blockhash_commitment)
         transaction.sign(*signers)
 
         encoded_transaction: str = b64encode(transaction.serialize()).decode("utf-8")
@@ -424,6 +425,14 @@ class BetterClient:
         self.compatible_client.commitment = value
 
     @property
+    def blockhash_commitment(self) -> Commitment:
+        return self.compatible_client.blockhash_commitment
+
+    @blockhash_commitment.setter
+    def blockhash_commitment(self, value: Commitment) -> None:
+        self.compatible_client.blockhash_commitment = value
+
+    @property
     def skip_preflight(self) -> bool:
         return self.compatible_client.skip_preflight
 
@@ -440,8 +449,8 @@ class BetterClient:
         self.compatible_client.instruction_reporter = value
 
     @staticmethod
-    def from_configuration(name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: datetime.timedelta, instruction_reporter: InstructionReporter) -> "BetterClient":
-        compatible = CompatibleClient(name, cluster_name, cluster_url, commitment, skip_preflight,
+    def from_configuration(name: str, cluster_name: str, cluster_url: str, commitment: Commitment, blockhash_commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: datetime.timedelta, instruction_reporter: InstructionReporter) -> "BetterClient":
+        compatible = CompatibleClient(name, cluster_name, cluster_url, commitment, blockhash_commitment, skip_preflight,
                                       encoding, blockhash_cache_duration, instruction_reporter)
         return BetterClient(compatible)
 
