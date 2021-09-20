@@ -145,7 +145,7 @@
         {
           "name": "SOL-PERP",
           "publicKey": "2TgaaVoHgnSeEtXvWTx13zQeTf4hYWAMEiMQdcG6EwHi",
-          "baseSymbol": "BTC",
+          "baseSymbol": "SOL",
           "baseDecimals": 9,
           "quoteDecimals": 6,
           "marketIndex": 3,
