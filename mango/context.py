@@ -273,8 +273,6 @@ class Context:
             cluster_url = MangoConstants["cluster_urls"][args.cluster]
 
         program_id = args.program_id
-        if group_id == PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV"):
-            program_id = PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
 
         return Context(args.cluster, cluster_url, args.commitment, args.encoding, args.skip_preflight, program_id, args.dex_program_id, args.group_name, group_id, args.gma_chunk_size, args.gma_chunk_pause)
 

@@ -296,6 +296,7 @@ class MarginAccount(AddressableAccount):
                 bytes=encode_int(1)
             )
         ], layouts.MARGIN_ACCOUNT_V2.sizeof())
+        logger.info(f"Fetched {len(margin_accounts)} V2 margin accounts to process.")
 
         prices = group.fetch_token_prices(context)
         ripe_accounts = MarginAccount.filter_out_unripe(margin_accounts, group, prices)
@@ -308,15 +309,13 @@ class MarginAccount(AddressableAccount):
     def _load_all_with_openorders(cls, context: Context, group: Group, filters: typing.Sequence[MemcmpOpts], data_size: int) -> typing.Sequence["MarginAccount"]:
         logger: logging.Logger = logging.getLogger(cls.__name__)
 
-        filters = [
-            *filters,
+        filters += [
             MemcmpOpts(
                 offset=layouts.MANGO_ACCOUNT_FLAGS.sizeof(),  # mango_group is just after the MangoAccountFlags, which is the first entry
                 bytes=encode_key(group.address)
             )
         ]
 
-        data_size = layouts.MARGIN_ACCOUNT_V2.sizeof()
         results = context.client.get_program_accounts(context.program_id, data_size=data_size, memcmp_opts=filters)
         margin_accounts: typing.List[MarginAccount] = []
         open_orders_addresses: typing.List[typing.Optional[PublicKey]] = []
