@@ -85,6 +85,15 @@
           "nodeKeys": [
             "GDNCSCaVzhD2L164GwUv8JqTdaHCuYGg21JjXQDtuofk"
           ]
+        },
+        {
+          "symbol": "COPE",
+          "mintKey": "8HGyAAB1yoM1ttS7pXjHMa3dukTFGQggnFFH3hJZgzQh",
+          "decimals": 6,
+          "rootKey": "6cMrtzhWNEEDkcSMx19orcred8h9HyRb31MtbCkKDdf6",
+          "nodeKeys": [
+            "2CpaAtjDt4s9Fps7dyJUaUMeUGBDPAUUui5rxYbVzPfA"
+          ]
         }
       ],
       "oracles": [
@@ -115,6 +124,10 @@
         {
           "symbol": "RAY",
           "publicKey": "AnLf8tVYCM816gmBjiy8n53eXKKEDydT5piYjjQDPgTB"
+        },
+        {
+          "symbol": "COPE",
+          "publicKey": "9xYBiDWYsh2fHzpsz3aaCnNHCKWBNtfEDLtU6kS4aFD9"
         }
       ],
       "perpMarkets": [
@@ -218,6 +231,17 @@
           "bidsKey": "AvKStCiY8LTp3oDFrMkiHHxxhxk4sQUWnGVcetm4kRpy",
           "asksKey": "Hj9kckvMX96mQokfMBzNCYEYMLEBYKQ9WwSc1GxasW11",
           "eventsKey": "58KcficuUqPDcMittSddhT8LzsPJoH46YP4uURoMo5EB"
+        },
+        {
+          "name": "COPE/USDC",
+          "publicKey": "6fc7v3PmjZG9Lk2XTot6BywGyYLkBQuzuFKd4FpCsPxk",
+          "baseSymbol": "RAY",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 7,
+          "bidsKey": "FLjCjU5wLUsqF6FeYJaH5JtTTFSTZzTCingxN1uyr9zn",
+          "asksKey": "7TcstD7AdWqjuFoRVK24zFv66v1qyMYDNDT1V5RNWKRz",
+          "eventsKey": "2dQ1Spgc7rGSuE1t3Fb9RL7zvGc7F7pH9XwJ46u3QiJr"
         }
       ]
     },
