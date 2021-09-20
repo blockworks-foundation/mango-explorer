@@ -12,7 +12,7 @@ from solana.rpc.types import RPCResponse
 
 class MockClient(mango.CompatibleClient):
     def __init__(self):
-        super().__init__("Test", "local", "http://localhost", "processed", False)
+        super().__init__("Test", "local", "http://localhost", "processed", "base64", False)
         self.token_accounts_by_owner = []
 
     def get_token_accounts_by_owner(self, *args, **kwargs) -> RPCResponse:
@@ -38,6 +38,8 @@ def fake_token() -> mango.Token:
 def fake_context() -> mango.Context:
     context = mango.Context(cluster="test",
                             cluster_url="http://localhost",
+                            commitment="fake-commitment",
+                            encoding="fake-encoding",
                             skip_preflight=False,
                             program_id=fake_seeded_public_key("program ID"),
                             dex_program_id=fake_seeded_public_key("DEX program ID"),

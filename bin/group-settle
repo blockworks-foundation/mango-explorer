@@ -78,10 +78,10 @@ try:
     if args.dry_run:
         print("Skipping transaction processing - dry run is set.")
     else:
-        transaction_ids = context.client.send_transaction(transaction, *signers)
+        transaction_id = context.client.send_transaction(transaction, *signers)
         if args.wait:
-            print(f"Waiting on {transaction_ids}")
-            context.client.wait_for_confirmation(transaction_ids)
+            print(f"Waiting on {transaction_id}")
+            context.client.wait_for_confirmation([transaction_id])
 
     logging.info("Settlement completed.")
 except Exception as exception:

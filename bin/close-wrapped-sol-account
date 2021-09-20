@@ -42,8 +42,8 @@ transaction.add(close_instruction.build())
 
 print(f"Closing account: {args.address} with balance {token_account.value.value} lamports.")
 
-transaction_ids = context.client.send_transaction(transaction, *signers)
-print(f"Waiting on transaction IDs: {transaction_ids}")
+transaction_id = context.client.send_transaction(transaction, *signers)
+print(f"Waiting on transaction ID: {transaction_id}")
 
-context.client.wait_for_confirmation(transaction_ids)
+context.client.wait_for_confirmation([transaction_id])
 print("Account closed.")

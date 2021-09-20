@@ -62,6 +62,8 @@ def test_group5_parse():
     # We need to be a little more involved in creating the Context here.
     group_5_context = mango.Context(cluster="test",
                                     cluster_url="http://localhost",
+                                    commitment="fake-commitment",
+                                    encoding="fake-encoding",
                                     skip_preflight=True,
                                     program_id=fake_seeded_public_key("program ID"),
                                     dex_program_id=fake_seeded_public_key("DEX program ID"),

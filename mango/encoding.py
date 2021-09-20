@@ -17,6 +17,7 @@
 import base64
 import base58
 import typing
+import zstandard
 
 from solana.publickey import PublicKey
 
@@ -24,6 +25,9 @@ from solana.publickey import PublicKey
 # # 🥭 Decoder
 #
 # This file contains some useful functions for decoding base64 and base58 data.
+
+_decompressor: zstandard.ZstdDecompressor = zstandard.ZstdDecompressor()
+
 
 # ## decode_binary() function
 #
@@ -36,13 +40,15 @@ from solana.publickey import PublicKey
 # Alternatively, it may just be a base58-encoded string.
 #
 # `decode_binary()` decodes the data properly based on which encoding was used.
-
-
-def decode_binary(encoded: typing.List) -> bytes:
+def decode_binary(encoded: typing.Sequence) -> bytes:
     if isinstance(encoded, str):
         return base58.b58decode(encoded)
     elif encoded[1] == "base64":
         return base64.b64decode(encoded[0])
+    elif encoded[1] == "base64+zstd":
+        compressed = base64.b64decode(encoded[0])
+        with _decompressor.stream_reader(compressed) as reader:
+            return reader.read()
     else:
         return base58.b58decode(encoded[0])
 

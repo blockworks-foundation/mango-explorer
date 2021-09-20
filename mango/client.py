@@ -135,7 +135,7 @@ UnspecifiedEncoding = "unspecified"
 # some common operations better from our point of view.
 #
 class CompatibleClient(Client):
-    def __init__(self, name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool):
+    def __init__(self, name: str, cluster: str, cluster_url: str, commitment: Commitment, encoding: str, skip_preflight: bool):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster: str = cluster
@@ -145,7 +145,7 @@ class CompatibleClient(Client):
 
         self.commitment: Commitment = commitment
         self.skip_preflight: bool = skip_preflight
-        self.encoding: str = "base64"
+        self.encoding: str = encoding
 
     def is_node_healthy(self) -> bool:
         try:
@@ -258,6 +258,14 @@ class CompatibleClient(Client):
             commitment = self.commitment
 
         skip_preflight: bool = opts.skip_preflight or self.skip_preflight
+        encoding: str = self.encoding
+        if encoding == "base64+zstd":
+            # sendTransaction() only supports base64 and base58, according to the docs:
+            #    https://docs.solana.com/developing/clients/jsonrpc-api#sendtransaction
+            # The error implies it accepts more:
+            #    Invalid params: unknown variant `base64+zstd`, expected one of `binary`, `base64`, `base58`, `json`, `jsonParsed`.
+            # but even that list doesn't accept base64+zstd.
+            encoding = "base64"
 
         return self._send_request(
             "sendTransaction",
@@ -265,7 +273,7 @@ class CompatibleClient(Client):
             {
                 _SkipPreflightKey: skip_preflight,
                 _PreflightCommitmentKey: commitment,
-                _EncodingKey: self.encoding,
+                _EncodingKey: encoding,
             }
         )
 
@@ -316,7 +324,9 @@ class CompatibleClient(Client):
         else:
             options[_CommitmentKey] = commitment
 
-        if encoding:
+        if encoding is None or encoding == UnspecifiedEncoding:
+            options[_EncodingKey] = self.encoding
+        else:
             options[_EncodingKey] = encoding
 
         if data_slice:
@@ -388,8 +398,8 @@ class BetterClient:
         self.compatible_client.skip_preflight = value
 
     @staticmethod
-    def from_configuration(name: str, cluster: str, cluster_url: str, commitment: Commitment, skip_preflight: bool) -> "BetterClient":
-        compatible = CompatibleClient(name, cluster, cluster_url, commitment, skip_preflight)
+    def from_configuration(name: str, cluster: str, cluster_url: str, commitment: Commitment, encoding: str, skip_preflight: bool) -> "BetterClient":
+        compatible = CompatibleClient(name, cluster, cluster_url, commitment, encoding, skip_preflight)
         return BetterClient(compatible)
 
     def is_node_healthy(self) -> bool:

@@ -49,6 +49,8 @@ from .token import TokenLookup
 default_cluster: str = os.environ.get("CLUSTER") or "mainnet-beta"
 default_cluster_url: str = os.environ.get("CLUSTER_URL") or MangoConstants["cluster_urls"][default_cluster]
 default_skip_preflight: bool = False
+default_commitment: str = "processed"
+default_encoding: str = "base64"
 
 default_program_id: PublicKey = PublicKey(MangoConstants[default_cluster]["mango_program_id"])
 default_dex_program_id: PublicKey = PublicKey(MangoConstants[default_cluster]["dex_program_id"])
@@ -78,7 +80,8 @@ _pool_scheduler = ThreadPoolScheduler(multiprocessing.cpu_count())
 # A `Context` object to manage Solana connection and Mango configuration.
 #
 class Context:
-    def __init__(self, cluster: str, cluster_url: str, skip_preflight: bool, program_id: PublicKey,
+    def __init__(self, cluster: str, cluster_url: str, commitment: str,
+                 encoding: str, skip_preflight: bool, program_id: PublicKey,
                  dex_program_id: PublicKey, group_name: str, group_id: PublicKey,
                  gma_chunk_size: Decimal, gma_chunk_pause: Decimal,
                  token_filename: str = TokenLookup.DEFAULT_FILE_NAME):
@@ -88,7 +91,7 @@ class Context:
 
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.client: BetterClient = BetterClient.from_configuration(
-            "Mango Explorer", cluster, cluster_url, Commitment("processed"), skip_preflight)
+            "Mango Explorer", cluster, cluster_url, Commitment(commitment), encoding, skip_preflight)
         self.cluster: str = cluster
         self.cluster_url: str = cluster_url
         self.program_id: PublicKey = configured_program_id
@@ -97,9 +100,8 @@ class Context:
         self.group_id: PublicKey = group_id
         self.gma_chunk_size: Decimal = gma_chunk_size
         self.gma_chunk_pause: Decimal = gma_chunk_pause
-        self.commitment: Commitment = Commitment("processed")
-        self.transaction_options: TxOpts = TxOpts(preflight_commitment=self.commitment, skip_preflight=skip_preflight)
-        self.encoding: str = "base64"
+        self.transaction_options: TxOpts = TxOpts(
+            preflight_commitment=self.client.commitment, skip_preflight=skip_preflight)
         self.token_lookup: TokenLookup = TokenLookup.load(token_filename)
 
         spot_market_lookup: SpotMarketLookup = SpotMarketLookup.load(token_filename)
@@ -117,12 +119,12 @@ class Context:
 
     @staticmethod
     def default():
-        return Context(default_cluster, default_cluster_url, default_skip_preflight, default_program_id,
-                       default_dex_program_id, default_group_name, default_group_id, default_gma_chunk_size,
-                       default_gma_chunk_pause)
+        return Context(default_cluster, default_cluster_url, default_commitment, default_encoding,
+                       default_skip_preflight, default_program_id, default_dex_program_id, default_group_name,
+                       default_group_id, default_gma_chunk_size, default_gma_chunk_pause)
 
     def fetch_sol_balance(self, account_public_key: PublicKey) -> Decimal:
-        return self.client.get_balance(account_public_key, commitment=self.commitment)
+        return self.client.get_balance(account_public_key, commitment=self.client.commitment)
 
     def unwrap_or_raise_exception(self, response: RPCResponse) -> typing.Any:
         if "error" in response:
@@ -177,10 +179,10 @@ class Context:
         dex_program_id = PublicKey(MangoConstants[cluster]["dex_program_id"])
         group_id = PublicKey(MangoConstants[cluster]["mango_groups"][self.group_name]["mango_group_pk"])
 
-        return Context(cluster, cluster_url, self.client.skip_preflight, program_id, dex_program_id, self.group_name, group_id, self.gma_chunk_size, self.gma_chunk_pause)
+        return Context(cluster, cluster_url, self.client.commitment, self.client.encoding, self.client.skip_preflight, program_id, dex_program_id, self.group_name, group_id, self.gma_chunk_size, self.gma_chunk_pause)
 
     def new_from_cluster_url(self, cluster_url: str) -> "Context":
-        return Context(self.cluster, cluster_url, self.client.skip_preflight, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.gma_chunk_size, self.gma_chunk_pause)
+        return Context(self.cluster, cluster_url, self.client.commitment, self.client.encoding, self.client.skip_preflight, self.program_id, self.dex_program_id, self.group_name, self.group_id, self.gma_chunk_size, self.gma_chunk_pause)
 
     def new_from_group_name(self, group_name: str) -> "Context":
         group_id = PublicKey(MangoConstants[self.cluster]["mango_groups"][group_name]["mango_group_pk"])
@@ -190,7 +192,7 @@ class Context:
         if self.group_id == _OLD_3_TOKEN_GROUP_ID:
             program_id = PublicKey(MangoConstants[self.cluster]["mango_program_id"])
 
-        return Context(self.cluster, self.cluster_url, self.client.skip_preflight, program_id, self.dex_program_id, group_name, group_id, self.gma_chunk_size, self.gma_chunk_pause)
+        return Context(self.cluster, self.cluster_url, self.client.commitment, self.client.encoding, self.client.skip_preflight, program_id, self.dex_program_id, group_name, group_id, self.gma_chunk_size, self.gma_chunk_pause)
 
     def new_from_group_id(self, group_id: PublicKey) -> "Context":
         actual_group_name = "« Unknown Group »"
@@ -205,7 +207,7 @@ class Context:
         if self.group_id == _OLD_3_TOKEN_GROUP_ID:
             program_id = PublicKey(MangoConstants[self.cluster]["mango_program_id"])
 
-        return Context(self.cluster, self.cluster_url, self.client.skip_preflight, program_id, self.dex_program_id, actual_group_name, group_id, self.gma_chunk_size, self.gma_chunk_pause)
+        return Context(self.cluster, self.cluster_url, self.client.commitment, self.client.encoding, self.client.skip_preflight, program_id, self.dex_program_id, actual_group_name, group_id, self.gma_chunk_size, self.gma_chunk_pause)
 
     # Configuring a `Context` is a common operation for command-line programs and can involve a
     # lot of duplicate code.
@@ -230,6 +232,10 @@ class Context:
                             help="Maximum number of addresses to send in a single call to getMultipleAccounts()")
         parser.add_argument("--gma-chunk-pause", type=Decimal, default=default_gma_chunk_pause,
                             help="number of seconds to pause between successive getMultipleAccounts() calls to avoid rate limiting")
+        parser.add_argument("--commitment", type=str, default=default_commitment,
+                            help="Commitment to use when sending transactions (can be 'finalized', 'confirmed' or 'processed')")
+        parser.add_argument("--encoding", type=str, default=default_encoding,
+                            help="Encoding to request when receiving data from Solana (options are 'base58' (slow), 'base64', 'base64+zstd', or 'jsonParsed')")
         parser.add_argument("--skip-preflight", default=default_skip_preflight,
                             action="store_true", help="Skip pre-flight checks")
         parser.add_argument("--token-data-file", type=str, default="solana.tokenlist.json",
@@ -270,12 +276,14 @@ class Context:
         if group_id == PublicKey("7pVYhpKUHw88neQHxgExSH6cerMZ1Axx1ALQP9sxtvQV"):
             program_id = PublicKey("JD3bq9hGdy38PuWQ4h2YJpELmHVGPPfFSuFkpzAd9zfu")
 
-        return Context(args.cluster, cluster_url, args.skip_preflight, program_id, args.dex_program_id, args.group_name, group_id, args.gma_chunk_size, args.gma_chunk_pause)
+        return Context(args.cluster, cluster_url, args.commitment, args.encoding, args.skip_preflight, program_id, args.dex_program_id, args.group_name, group_id, args.gma_chunk_size, args.gma_chunk_pause)
 
     def __str__(self) -> str:
         return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝:
     Cluster: {self.cluster}
     Cluster URL: {self.cluster_url}
+    Commitment: {self.client.commitment}
+    Encoding: {self.client.encoding}
     Skip Preflight: {self.client.skip_preflight}
     Program ID: {self.program_id}
     DEX Program ID: {self.dex_program_id}

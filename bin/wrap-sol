@@ -57,7 +57,8 @@ else:
     close_instruction = mango.CloseSplAccountInstructionBuilder(context, wallet, wrapped_sol_account.public_key())
     transaction.add(close_instruction.build())
 
-transaction_ids = context.client.send_transaction(transaction, *signers)
+transaction_id = context.client.send_transaction(transaction, *signers)
+print(f"Waiting on transaction ID: {transaction_id}")
 
-context.client.wait_for_confirmation(transaction_ids)
+context.client.wait_for_confirmation([transaction_id])
 print("Transaction confirmed.")
