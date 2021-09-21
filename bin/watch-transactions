@@ -20,10 +20,10 @@ sys.path.insert(0, os.path.abspath(
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(
-    description="Polls Mango transactions through the Transaction Scout to display information about each transaction.")
+    description="Watches Mango transactions through the Transaction Scout to display information about each transaction.")
 mango.Context.add_command_line_parameters(parser)
 parser.add_argument("--pulse-interval", type=int, default=60,
-                    help="number of seconds between each 'pulse' of the transaction poller")
+                    help="number of seconds between each 'pulse' of the transaction watcher")
 parser.add_argument("--instruction-type", type=lambda ins: mango.InstructionType[ins],
                     choices=list(mango.InstructionType),
                     help="The signature of the transaction to look up")
@@ -91,7 +91,7 @@ def summariser(context: mango.Context) -> typing.Callable[[mango.TransactionScou
 instruction_type = args.instruction_type
 sender = args.sender
 pulse_interval: int = args.pulse_interval
-health_filename: str = "/var/tmp/mango_healthcheck_poll_transactions_pulse"
+health_filename: str = "/var/tmp/mango_healthcheck_watch_transactions_pulse"
 
 context = mango.Context.from_command_line_parameters(args)
 
