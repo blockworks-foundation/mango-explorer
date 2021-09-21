@@ -100,7 +100,7 @@ logging.info(f"Pulse every: {pulse_interval} seconds")
 logging.info(f"Filter to instruction type: {instruction_type}")
 
 pipeline_start: rx.subject.Subject = rx.subject.Subject()
-pipeline: rx.core.typing.Observable = pipeline_start
+pipeline: rx.core.Observable = pipeline_start
 
 pipeline = pipeline.pipe(
     #  ops.map(debug_print_item("Signature:")),
@@ -148,10 +148,10 @@ logging.info(f"Starting from signature: {since_signature}")
 while True:
     signatures = context.client.get_confirmed_signatures_for_address2(context.group_id)
     oldest_first = reversed(list(itertools.takewhile(lambda sig: sig != since_signature, signatures)))
-    since_signature: str = signatures[0]
+    since_signature = signatures[0]
     logging.info(f"Signature fetch complete - latest signature: {since_signature}")
     for signature in oldest_first:
         pipeline_start.on_next(signature)
     Path(health_filename).touch(mode=0o666, exist_ok=True)
-    logging.debug(f"Pulse complete.")
+    logging.debug("Pulse complete.")
     time.sleep(pulse_interval)

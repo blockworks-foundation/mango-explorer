@@ -306,7 +306,7 @@ class MarginAccount(AddressableAccount):
         return ripe_accounts
 
     @classmethod
-    def _load_all_with_openorders(cls, context: Context, group: Group, filters: typing.Sequence[MemcmpOpts], data_size: int) -> typing.Sequence["MarginAccount"]:
+    def _load_all_with_openorders(cls, context: Context, group: Group, filters: typing.List[MemcmpOpts], data_size: int) -> typing.Sequence["MarginAccount"]:
         logger: logging.Logger = logging.getLogger(cls.__name__)
 
         filters += [
