@@ -80,7 +80,7 @@ def add_subscription_for_parameter(context: mango.Context, manager: mango.WebSoc
         rx.operators.observe_on(context.create_thread_pool_scheduler()),
         rx.operators.map(log_account),
         rx.operators.filter(account_fails_balance_check),
-        rx.operators.throttle_first(20),
+        rx.operators.throttle_first(timer_limit),
         rx.operators.catch(mango.observable_pipeline_error_reporter),
         rx.operators.retry()
     ).subscribe(notifier(name))
