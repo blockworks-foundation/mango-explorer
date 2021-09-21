@@ -80,3 +80,7 @@ logging.setLogRecordFactory(emojified_record_factory)
 logging.basicConfig(level=logging.INFO,
                     datefmt="%Y-%m-%d %H:%M:%S",
                     format="%(asctime)s %(level_emoji)s %(name)-12.12s %(message)s")
+
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("solanaweb3").setLevel(logging.WARNING)

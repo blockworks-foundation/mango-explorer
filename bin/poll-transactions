@@ -1,0 +1,157 @@
+#!/usr/bin/env pyston3
+
+import argparse
+import itertools
+import logging
+import os
+import os.path
+import rx
+import rx.subject
+import rx.operators as ops
+import sys
+import time
+import typing
+
+from pathlib import Path
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(
+    description="Polls Mango transactions through the Transaction Scout to display information about each transaction.")
+mango.Context.add_command_line_parameters(parser)
+parser.add_argument("--pulse-interval", type=int, default=60,
+                    help="number of seconds between each 'pulse' of the transaction poller")
+parser.add_argument("--instruction-type", type=lambda ins: mango.InstructionType[ins],
+                    choices=list(mango.InstructionType),
+                    help="The signature of the transaction to look up")
+parser.add_argument("--sender", type=PublicKey,
+                    help="Only transactions sent by this PublicKey will be returned")
+parser.add_argument("--notify-transactions", type=mango.parse_subscription_target, action="append", default=[],
+                    help="The notification target for transaction information")
+parser.add_argument("--notify-successful-transactions", type=mango.parse_subscription_target,
+                    action="append", default=[], help="The notification target for successful transactions")
+parser.add_argument("--notify-failed-transactions", type=mango.parse_subscription_target,
+                    action="append", default=[], help="The notification target for failed transactions")
+parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
+                    help="The notification target for errors")
+parser.add_argument("--summarise", action="store_true", default=False,
+                    help="create a short summary rather than the full TransactionScout details")
+args = parser.parse_args()
+
+logging.getLogger().setLevel(args.log_level)
+for notify in args.notify_errors:
+    handler = mango.NotificationHandler(notify)
+    handler.setLevel(logging.ERROR)
+    logging.getLogger().addHandler(handler)
+
+logging.warning(mango.WARNING_DISCLAIMER_TEXT)
+
+
+def summariser(context: mango.Context) -> typing.Callable[[mango.TransactionScout], str]:
+    def summarise(transaction_scout: mango.TransactionScout) -> str:
+        instruction_details: typing.List[str] = []
+        instruction_targets: typing.List[str] = []
+        for ins in transaction_scout.instructions:
+            params = ins.describe_parameters()
+            if params == "":
+                instruction_details += [f"[{ins.instruction_type.name}]"]
+            else:
+                instruction_details += [f"[{ins.instruction_type.name}: {params}]"]
+            target = ins.describe_target()
+            if target is not None:
+                instruction_targets += [str(target)]
+
+        instructions = ", ".join(instruction_details)
+        targets = ", ".join(instruction_targets) or "None"
+        changes = mango.OwnedTokenValue.changes(
+            transaction_scout.pre_token_balances, transaction_scout.post_token_balances)
+
+        in_tokens = []
+        for ins in transaction_scout.instructions:
+            if ins.token_in_account is not None:
+                in_tokens += [mango.OwnedTokenValue.find_by_owner(changes, ins.token_in_account)]
+
+        out_tokens = []
+        for ins in transaction_scout.instructions:
+            if ins.token_out_account is not None:
+                out_tokens += [mango.OwnedTokenValue.find_by_owner(changes, ins.token_out_account)]
+
+        changed_tokens = in_tokens + out_tokens
+        changed_tokens_text = ", ".join(
+            [f"{tok.token_value.value:,.8f} {tok.token_value.token.name}" for tok in changed_tokens]) or "None"
+
+        success_marker = "✅" if transaction_scout.succeeded else "❌"
+        return f"« 🥭 {transaction_scout.timestamp} {success_marker} {transaction_scout.group_name} {instructions}\n    From: {transaction_scout.sender}\n    Target(s): {targets}\n    Token Changes: {changed_tokens_text}\n    {transaction_scout.signatures} »"
+    return summarise
+
+
+instruction_type = args.instruction_type
+sender = args.sender
+pulse_interval: int = args.pulse_interval
+health_filename: str = "/var/tmp/mango_healthcheck_poll_transactions_pulse"
+
+context = mango.Context.from_command_line_parameters(args)
+
+logging.info(f"Context: {context}")
+logging.info(f"Pulse every: {pulse_interval} seconds")
+logging.info(f"Filter to instruction type: {instruction_type}")
+
+pipeline_start: rx.subject.Subject = rx.subject.Subject()
+pipeline: rx.core.typing.Observable = pipeline_start
+
+pipeline = pipeline.pipe(
+    #  ops.map(debug_print_item("Signature:")),
+    ops.map(lambda sig: mango.TransactionScout.load_if_available(context, sig)),
+    ops.filter(lambda item: item is not None),
+)
+
+if sender is not None:
+    pipeline = pipeline.pipe(
+        ops.filter(lambda item: item.sender == sender)
+    )
+
+if instruction_type is not None:
+    pipeline = pipeline.pipe(
+        ops.filter(lambda item: item.has_any_instruction_of_type(instruction_type))
+    )
+
+if args.summarise:
+    pipeline = pipeline.pipe(
+        ops.map(summariser(context))
+    )
+
+fan_out = rx.subject.Subject()
+fan_out.subscribe(mango.PrintingObserverSubscriber(False))
+
+for notify in args.notify_transactions:
+    fan_out.subscribe(on_next=notify.send)
+for notification_target in args.notify_successful_transactions:
+    filtering = mango.FilteringNotificationTarget(
+        notification_target, lambda item: isinstance(item, mango.TransactionScout) and item.succeeded)
+    fan_out.subscribe(on_next=filtering.send)
+for notification_target in args.notify_failed_transactions:
+    filtering = mango.FilteringNotificationTarget(notification_target, lambda item: isinstance(
+        item, mango.TransactionScout) and not item.succeeded)
+    fan_out.subscribe(on_next=filtering.send)
+
+logging.info("Pipeline prepared")
+
+pipeline.subscribe(fan_out)
+
+signatures: typing.Sequence[str] = context.client.get_confirmed_signatures_for_address2(context.group_id)
+since_signature: str = signatures[0]
+logging.info(f"Starting from signature: {since_signature}")
+
+while True:
+    signatures = context.client.get_confirmed_signatures_for_address2(context.group_id)
+    oldest_first = reversed(list(itertools.takewhile(lambda sig: sig != since_signature, signatures)))
+    since_signature: str = signatures[0]
+    logging.info(f"Signature fetch complete - latest signature: {since_signature}")
+    for signature in oldest_first:
+        pipeline_start.on_next(signature)
+    Path(health_filename).touch(mode=0o666, exist_ok=True)
+    logging.debug(f"Pulse complete.")
+    time.sleep(pulse_interval)

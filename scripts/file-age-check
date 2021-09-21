@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# This command takes a time (integer, in seconds) and a list of filenames and exits successfully if the
+# modification time of all of the files is sooner than the current time minus the time given.
+#
+# This is useful for health checks that can be observed outside a container environment. For example, if
+# an iteration of a market-maker writes to a 'health' file after every iteration, then a process (like a
+# Kubernetes liveness check) can test that file to see if it has been updated within the last couple of
+# minutes, and fail a 'liveness' check if it hasn't been.
+#
+let SECONDS_OLD=${1:-30}
+
+let CURRENT_TIME=$(date +'%s')
+
+for FILENAME in "${@:2}"
+do
+    let FILE_TIMESTAMP=$(date -r ${FILENAME} +'%s')
+    let FILE_AGE=${CURRENT_TIME}-${FILE_TIMESTAMP}
+
+    if [ ${FILE_AGE} -gt ${SECONDS_OLD} ]; then
+        printf "File %s is too old.\n" ${FILENAME}
+        exit 1
+    else
+        printf "File %s is new enough.\n" ${FILENAME}
+    fi
+done
