@@ -30,8 +30,8 @@ from .roundtolotsizeelement import RoundToLotSizeElement
 
 _DEFAULT_CHAIN = [
     "confidenceinterval",
-    "biasquoteonposition",
     "minimumcharge",
+    "biasquoteonposition",
     "preventpostonlycrossingbook",
     "roundtolotsize"
 ]

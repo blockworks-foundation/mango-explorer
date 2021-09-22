@@ -44,15 +44,20 @@ class MinimumChargeElement(Element):
         new_orders: typing.List[mango.Order] = []
         for order in orders:
             minimum_charge = model_state.price.mid_price * self.minimum_charge_ratio
-            current_charge = (model_state.price.mid_price - order.price).copy_abs()
-            if current_charge > minimum_charge:
+            new_price: typing.Optional[Decimal] = None
+            if order.side == mango.Side.BUY:
+                current_charge = model_state.price.mid_price - order.price
+                if current_charge < minimum_charge:
+                    new_price = model_state.price.mid_price - minimum_charge
+            else:
+                current_charge = order.price - model_state.price.mid_price
+                if current_charge < minimum_charge:
+                    new_price = model_state.price.mid_price + minimum_charge
+
+            if new_price is None:
                 # All OK with current order
                 new_orders += [order]
             else:
-                if order.side == mango.Side.BUY:
-                    new_price: Decimal = model_state.price.mid_price - minimum_charge
-                else:
-                    new_price = model_state.price.mid_price + minimum_charge
                 new_order = order.with_price(new_price)
                 self.logger.debug(f"""Order change - price is less than minimum charge:
     Old: {order}

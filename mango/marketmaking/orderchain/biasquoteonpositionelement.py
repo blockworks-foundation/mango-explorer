@@ -66,8 +66,8 @@ class BiasQuoteOnPositionElement(Element):
         new_order: mango.Order = order.with_price(new_price)
         bias_description = "BUY more" if bias > 1 else "SELL more"
         self.logger.debug(f"""Order change - quote_position_bias {self.quote_position_bias} on inventory {base_inventory_value} / {order.quantity} creates a ({bias_description}) bias factor of {bias}:
-Old: {order}
-New: {new_order}""")
+    Old: {order}
+    New: {new_order}""")
         return new_order
 
     def __str__(self) -> str:
