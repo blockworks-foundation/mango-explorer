@@ -15,7 +15,7 @@
 
 import typing
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from solana.publickey import PublicKey
 
@@ -25,50 +25,76 @@ from .context import Context
 from .group import Group
 from .layouts import layouts
 from .metadata import Metadata
+from .token import Token
 from .tokeninfo import TokenInfo
+from .tokenvalue import TokenValue
 from .version import Version
 
 
 class LiquidityMiningInfo:
-    def __init__(self, version: Version, rate: Decimal, max_depth_bps: Decimal, period_start: Decimal,
-                 target_period_length: Decimal, mngo_left: Decimal, mngo_per_period: Decimal):
+    def __init__(self, version: Version, rate: Decimal, max_depth_bps: Decimal, period_start: datetime,
+                 target_period_length: timedelta, mngo_left: TokenValue, mngo_per_period: TokenValue):
         self.version: Version = version
 
         self.rate: Decimal = rate
         self.max_depth_bps: Decimal = max_depth_bps
-        self.period_start: Decimal = period_start
-        self.target_period_length: Decimal = target_period_length
-        self.mngo_left: Decimal = mngo_left
-        self.mngo_per_period: Decimal = mngo_per_period
+        self.period_start: datetime = period_start
+        self.target_period_length: timedelta = target_period_length
+        self.mngo_left: TokenValue = mngo_left
+        self.mngo_per_period: TokenValue = mngo_per_period
 
     @staticmethod
-    def from_layout(layout: typing.Any, version: Version) -> "LiquidityMiningInfo":
+    def from_layout(layout: typing.Any, version: Version, mngo: Token) -> "LiquidityMiningInfo":
         rate: Decimal = layout.rate
         max_depth_bps: Decimal = layout.max_depth_bps
-        period_start: Decimal = layout.period_start
-        target_period_length: Decimal = layout.target_period_length
-        mngo_left: Decimal = layout.mngo_left
-        mngo_per_period: Decimal = layout.mngo_per_period
+        period_start: datetime = layout.period_start
+        target_period_length: timedelta = timedelta(seconds=float(layout.target_period_length))
+        mngo_left: TokenValue = TokenValue(mngo, mngo.shift_to_decimals(layout.mngo_left))
+        mngo_per_period: TokenValue = TokenValue(mngo, mngo.shift_to_decimals(layout.mngo_per_period))
 
         return LiquidityMiningInfo(version, rate, max_depth_bps, period_start, target_period_length,
                                    mngo_left, mngo_per_period)
 
     def __str__(self) -> str:
+        # Some calculations here are basd on this message from 0xHiroku#0491 on Discord:
+        #   https://discord.com/channels/791995070613159966/873184582948765736/889864341451599912
+        #
+        #   // mngoLeft, mngoPerPeriod, periodStart, targetPeriodLength from PerpMarket.liquidityMiningInfo
+        #
+        #   portion_given = 1 - mngoLeft / mngoPerPeriod
+        #   elapsed = (<current_time> - periodStart) / targetPeriodLength
+        #   est_next = elapsed / portion_given - elapsed
+        now: datetime = datetime.now().replace(microsecond=0)
+        mngo_distributed: TokenValue = self.mngo_per_period - self.mngo_left
+        proportion_distributed: Decimal = mngo_distributed.value / self.mngo_per_period.value
+        elapsed: timedelta = now - self.period_start
+        elapsed_seconds: float = elapsed.total_seconds()
+        rounded_elapsed: timedelta = timedelta(seconds=int(elapsed_seconds))
+        estimated_duration_seconds: float = (elapsed_seconds / float(proportion_distributed))
+        estimated_duration: timedelta = timedelta(seconds=int(estimated_duration_seconds))
+        estimated_remaining_seconds: float = (elapsed_seconds / float(proportion_distributed)) - elapsed_seconds
+        estimated_remaining: timedelta = timedelta(seconds=int(estimated_remaining_seconds))
+        estimated_end: datetime = now + estimated_duration
         return f"""« 𝙻𝚒𝚚𝚞𝚒𝚍𝚒𝚝𝚢𝙼𝚒𝚗𝚒𝚗𝚐𝙸𝚗𝚏𝚘 {self.version}
-    Rate: {self.rate}
-    Max Depth Bps: {self.max_depth_bps}
-    Period Start: {self.period_start}
-    Target Period Length: {self.target_period_length}
-    MNGO Left: {self.mngo_left}
-    MNGO Per Period: {self.mngo_per_period}
+    Period Start     : {self.period_start}
+    Period End (Est.): {estimated_end}
+    Target Duration  : {self.target_period_length} hours
+    Elapsed          : {rounded_elapsed} hours
+    Duration (Est.)  : {estimated_duration} hours
+    Remaining (Est.) : {estimated_remaining} hours
+    Max Depth Bps    : {self.max_depth_bps}
+    MNGO Per Period  : {self.mngo_per_period}
+    MNGO Remaining   : {self.mngo_left}
+    MNGO Distributed : {mngo_distributed}
+    % Distributed    : {proportion_distributed:.2%}
+    Rate             : {self.rate}
 »"""
+
 
 # # 🥭 PerpMarketDetails class
 #
 # `PerpMarketDetails` holds details of a particular perp market.
 #
-
-
 class PerpMarketDetails(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
                  meta_data: Metadata, group: Group, bids: PublicKey, asks: PublicKey,
@@ -122,8 +148,9 @@ class PerpMarketDetails(AddressableAccount):
         seq_num: Decimal = layout.seq_num
 
         fees_accrued: Decimal = layout.fees_accrued
+        mngo = group.find_token_info_by_symbol("MNGO")
         liquidity_mining_info: LiquidityMiningInfo = LiquidityMiningInfo.from_layout(
-            layout.liquidity_mining_info, Version.V1)
+            layout.liquidity_mining_info, Version.V1, mngo.token)
         mngo_vault: PublicKey = layout.mngo_vault
 
         return PerpMarketDetails(account_info, version, meta_data, group, bids, asks, event_queue,

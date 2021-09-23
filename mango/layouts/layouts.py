@@ -691,7 +691,7 @@ LIQUIDITY_MINING_INFO = construct.Struct(
 
     "max_depth_bps" / FloatI80F48Adapter(),
 
-    "period_start" / DecimalAdapter(),
+    "period_start" / DatetimeAdapter(),
 
     "target_period_length" / DecimalAdapter(),
 
