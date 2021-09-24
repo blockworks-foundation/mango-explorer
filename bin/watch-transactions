@@ -12,6 +12,7 @@ import sys
 import time
 import typing
 
+from datetime import datetime, timedelta
 from pathlib import Path
 from solana.publickey import PublicKey
 
@@ -102,10 +103,21 @@ logging.info(f"Filter to instruction type: {instruction_type}")
 pipeline_start: rx.subject.Subject = rx.subject.Subject()
 pipeline: rx.core.Observable = pipeline_start
 
+# Sometimes, stopping at the 'last seen' signature doesn't work. I think this is whenever the last-seen
+# signature isn't actually on the node that's returning signatures because it is so far behind.
+#
+# This leads to the program trying to send the entire history, checking in vain for the signature that
+# isn't in the history.
+#
+# To mitigate this, have a cutoff that limits how far back we go.
+#
+oldest_cutoff: datetime = datetime.now() - timedelta(seconds=(pulse_interval * 2))
+
 pipeline = pipeline.pipe(
     #  ops.map(debug_print_item("Signature:")),
     ops.map(lambda sig: mango.TransactionScout.load_if_available(context, sig)),
     ops.filter(lambda item: item is not None),
+    ops.filter(lambda item: item.timestamp > oldest_cutoff)
 )
 
 if sender is not None:
@@ -149,6 +161,7 @@ while True:
     signatures = context.client.get_confirmed_signatures_for_address2(context.group_id)
     oldest_first = reversed(list(itertools.takewhile(lambda sig: sig != since_signature, signatures)))
     since_signature = signatures[0]
+    oldest_cutoff = datetime.now() - timedelta(seconds=(pulse_interval * 2))
     logging.info(f"Signature fetch complete - latest signature: {since_signature}")
     for signature in oldest_first:
         pipeline_start.on_next(signature)

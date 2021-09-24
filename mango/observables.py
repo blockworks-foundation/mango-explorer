@@ -34,8 +34,6 @@ from rxpy_backpressure import BackPressure
 #
 # This class can subscribe to an `Observable` and print out each item.
 #
-
-
 class PrintingObserverSubscriber(rx.core.typing.Observer):
     def __init__(self, report_no_output: bool) -> None:
         super().__init__()
@@ -58,7 +56,6 @@ class PrintingObserverSubscriber(rx.core.typing.Observer):
 #
 # Just like `PrintingObserverSubscriber` but it puts a timestamp on each printout.
 #
-
 class TimestampedPrintingObserverSubscriber(PrintingObserverSubscriber):
     def __init__(self, report_no_output: bool) -> None:
         super().__init__(report_no_output)
@@ -71,8 +68,6 @@ class TimestampedPrintingObserverSubscriber(PrintingObserverSubscriber):
 #
 # This class can subscribe to an `Observable` and collect each item.
 #
-
-
 class CollectingObserverSubscriber(rx.core.typing.Observer):
     def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -90,11 +85,9 @@ class CollectingObserverSubscriber(rx.core.typing.Observer):
 
 # # 🥭 CaptureFirstItem class
 #
-# This captures the first item to pass through the pipeline, allowing it to be instpected
+# This captures the first item to pass through the pipeline, allowing it to be inspected
 # later.
 #
-
-
 class CaptureFirstItem:
     def __init__(self):
         self.captured: typing.Any = None
@@ -116,8 +109,6 @@ class CaptureFirstItem:
 # This is mostly for libraries (like `rxpy_backpressure`) that take observers but not their
 # component functions.
 #
-
-
 class FunctionObserver(rx.core.typing.Observer):
     def __init__(self,
                  on_next: typing.Callable[[typing.Any], None],
@@ -155,7 +146,6 @@ class FunctionObserver(rx.core.typing.Observer):
 # take multiple seconds to complete. In that case, the latest item will be immediately
 # emitted and the in-between items skipped.
 #
-
 def create_backpressure_skipping_observer(on_next: typing.Callable[[typing.Any], None], on_error: typing.Callable[[Exception], None] = lambda _: None, on_completed: typing.Callable[[], None] = lambda: None) -> rx.core.typing.Observer:
     observer = FunctionObserver(on_next=on_next, on_error=on_error, on_completed=on_completed)
     return BackPressure.LATEST(observer)
@@ -174,7 +164,6 @@ def create_backpressure_skipping_observer(on_next: typing.Callable[[typing.Any],
 # ).subscribe(some_subscriber)
 # ```
 #
-
 def debug_print_item(title: str) -> typing.Callable[[typing.Any], typing.Any]:
     def _debug_print_item(item: typing.Any) -> typing.Any:
         print(title, item)
@@ -186,7 +175,6 @@ def debug_print_item(title: str) -> typing.Callable[[typing.Any], typing.Any]:
 #
 # Logs subscription exceptions to the root logger.
 #
-
 def log_subscription_error(error: Exception) -> None:
     logging.error(f"Observable subscription error: {error}")
 
@@ -220,7 +208,6 @@ def log_subscription_error(error: Exception) -> None:
 # sub1.subscribe(lambda item: print(item), on_error = lambda error: print(f"Error : {error}"))
 # ```
 #
-
 def observable_pipeline_error_reporter(ex, _):
     logging.error(f"Intercepted error in observable pipeline: {ex}")
     raise ex
@@ -230,7 +217,6 @@ def observable_pipeline_error_reporter(ex, _):
 #
 # A strongly(ish)-typed event source that can handle many subscribers.
 #
-
 TEventDatum = typing.TypeVar('TEventDatum')
 
 
@@ -263,7 +249,6 @@ class EventSource(rx.subject.Subject, typing.Generic[TEventDatum]):
 # A `Disposable` class that can 'fan out' `dispose()` calls to perform additional
 # cleanup actions.
 #
-
 class DisposePropagator(Disposable):
     def __init__(self):
         self.handlers: typing.List[typing.Callable[[], None]] = []
