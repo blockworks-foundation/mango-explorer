@@ -211,15 +211,15 @@ SOL tokens are needed for running operations on the Solana blockchain, similar t
 
 To do this, run the command:
 ```
-# mango-explorer solana airdrop 10 6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB --url devnet
+# mango-explorer solana airdrop 1 6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB --url devnet
 ```
-This will transfer 10 SOL to **6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB**, the address shown above when creating the wallet. You should substitute the public key of the account you created. (You can run this command again and again to get more devnet SOL, should you ever need it.) You should see output like:
+This will transfer 1 SOL to **6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB**, the address shown above when creating the wallet. You should substitute the public key of the account you created. (You can run this command again and again to get more devnet SOL, should you ever need it.) You should see output like:
 ```
-Requesting airdrop of 10 SOL
+Requesting airdrop of 1 SOL
 
 Signature: 3sGEkKZ3L1WUdXbFgpB1KtrKAHunrHSomfEFaFVyJiQYxCRRgEqnSJWbLFcgEbaWQ7VtB52GNvVxbW73KdFZxAwu
 
-10 SOL
+1 SOL
 ```
 
 When the transfer completes (it’s very fast!) it appears in the wallet and you can check that using the `show-account-balances` command:
@@ -248,7 +248,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 2021-08-27 19:16:34 ⓘ root         Address: 6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB
 
 Token Balances [6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB]:
-Pure SOL            10.00000000
+Pure SOL            1.00000000
 ```
 
 This shows 10 SOL and no other tokens, as you’d expect (since we haven’t acquired any of those yet).
@@ -411,7 +411,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 2021-08-27 19:23:54 ⓘ root         Address: 6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB
 
 Token Balances [6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB]:
-Pure SOL             9.96715468
+Pure SOL             0.96715468
 USDC            10,000.00000000
 
 Account Balances [E7R5k4tQKr2Doi3LvXLtSonRdgvXVGNFtL7fab2d2GjU]:
@@ -460,7 +460,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 2021-08-27 19:25:21 ⓘ root         Address: 6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB
 
 Token Balances [6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB]:
-Pure SOL             9.96714968
+Pure SOL             0.96714968
 
 Account Balances [E7R5k4tQKr2Doi3LvXLtSonRdgvXVGNFtL7fab2d2GjU]:
 USDC:
