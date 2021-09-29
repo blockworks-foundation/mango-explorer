@@ -87,7 +87,7 @@ class ModelState:
     @property
     def top_bid(self) -> typing.Optional[mango.Order]:
         if self.bids_watcher.latest:
-            return self.bids_watcher.latest[0]
+            return self.bids_watcher.latest[-1]
         else:
             return None
 

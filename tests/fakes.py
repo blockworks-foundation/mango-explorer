@@ -96,8 +96,10 @@ def fake_spot_market_stub() -> mango.SpotMarketStub:
     return mango.SpotMarketStub(fake_seeded_public_key("program ID"), fake_seeded_public_key("spot market"), fake_token("BASE"), fake_token("QUOTE"), fake_seeded_public_key("group address"))
 
 
-def fake_loaded_market() -> mango.LoadedMarket:
-    return mango.LoadedMarket(fake_seeded_public_key("program ID"), fake_seeded_public_key("perp market"), mango.InventorySource.ACCOUNT, fake_token("BASE"), fake_token("QUOTE"), mango.NullLotSizeConverter())
+def fake_loaded_market(base_lot_size: Decimal = Decimal(1), quote_lot_size: Decimal = Decimal(1)) -> mango.LoadedMarket:
+    base = fake_token("BASE")
+    quote = fake_token("QUOTE")
+    return mango.LoadedMarket(fake_seeded_public_key("program ID"), fake_seeded_public_key("perp market"), mango.InventorySource.ACCOUNT, base, quote, mango.LotSizeConverter(base, base_lot_size, quote, quote_lot_size))
 
 
 def fake_token_account() -> mango.TokenAccount:
