@@ -28,14 +28,17 @@ class LotSizeConverter():
         self.quote_lot_size: Decimal = quote_lot_size
 
     @property
+    def min_order_size(self) -> Decimal:
+        return self.base_size_lots_to_number(Decimal(1))
+
+    @property
     def tick_size(self) -> Decimal:
         return self.price_lots_to_number(Decimal(1))
 
     def price_lots_to_number(self, price_lots: Decimal) -> Decimal:
-        price: int = round(price_lots)
-        base_factor: Decimal = 10 ** self.base.decimals
-        quote_factor: Decimal = 10 ** self.quote.decimals
-        return (Decimal(price) * self.quote_lot_size * base_factor) / (self.base_lot_size * quote_factor)
+        adjusted = 10 ** (self.base.decimals - self.quote.decimals)
+        lots_to_native = self.quote_lot_size / self.base_lot_size
+        return (price_lots * lots_to_native) * adjusted
 
     def price_number_to_lots(self, price: Decimal) -> int:
         base_factor: Decimal = 10 ** self.base.decimals

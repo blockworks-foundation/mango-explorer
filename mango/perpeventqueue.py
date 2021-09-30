@@ -53,14 +53,14 @@ class PerpEvent(metaclass=abc.ABCMeta):
 # `PerpOutEvent` stores details of a perp 'fill' event.
 #
 class PerpFillEvent(PerpEvent):
-    def __init__(self, event_type: int, original_index: Decimal, timestamp: datetime, side: Side,
+    def __init__(self, event_type: int, original_index: Decimal, timestamp: datetime, taker_side: Side,
                  price: Decimal, quantity: Decimal, best_initial: Decimal, maker_slot: Decimal,
                  maker_out: bool, maker: PublicKey, maker_order_id: Decimal,
                  maker_client_order_id: Decimal, taker: PublicKey, taker_order_id: Decimal,
                  taker_client_order_id: Decimal):
         super().__init__(event_type, original_index)
         self.timestamp: datetime = timestamp
-        self.side: Side = side
+        self.taker_side: Side = taker_side
         self.price: Decimal = price
         self.quantity: Decimal = quantity
 
@@ -81,7 +81,7 @@ class PerpFillEvent(PerpEvent):
         return [self.maker, self.taker]
 
     def __str__(self) -> str:
-        return f"""« 𝙿𝚎𝚛𝚙𝙵𝚒𝚕𝚕𝙴𝚟𝚎𝚗𝚝 [{self.original_index}] [{self.timestamp}] {self.side} {self.quantity:,.8f} at {self.price:,.8f}
+        return f"""« 𝙿𝚎𝚛𝚙𝙵𝚒𝚕𝚕𝙴𝚟𝚎𝚗𝚝 [{self.original_index}] [{self.timestamp}] {self.taker_side} {self.quantity:,.8f} at {self.price:,.8f}
     Maker: {self.maker}, {self.maker_order_id} / {self.maker_client_order_id}
     Taker: {self.taker}, {self.taker_order_id} / {self.taker_client_order_id}
     Best Initial: {self.best_initial}
@@ -162,10 +162,10 @@ def event_builder(lot_size_converter: LotSizeConverter, event_layout, original_i
     if event_layout.event_type == b'\x00':
         if event_layout.maker is None and event_layout.taker is None:
             return None
-        side: Side = Side.from_value(event_layout.taker_side)
+        taker_side: Side = Side.from_value(event_layout.taker_side)
         quantity: Decimal = lot_size_converter.base_size_lots_to_number(event_layout.quantity)
-        price: Decimal = lot_size_converter.quote_size_lots_to_number(event_layout.price)
-        return PerpFillEvent(event_layout.event_type, original_index, event_layout.timestamp, side,
+        price: Decimal = lot_size_converter.price_lots_to_number(event_layout.price)
+        return PerpFillEvent(event_layout.event_type, original_index, event_layout.timestamp, taker_side,
                              price, quantity, event_layout.best_initial,
                              event_layout.maker_slot, event_layout.maker_out, event_layout.maker,
                              event_layout.maker_order_id, event_layout.maker_client_order_id,

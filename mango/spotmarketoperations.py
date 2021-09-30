@@ -37,7 +37,7 @@ from .wallet import Wallet
 #
 class SpotMarketOperations(MarketOperations):
     def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, market_instruction_builder: SpotMarketInstructionBuilder):
-        super().__init__()
+        super().__init__(spot_market)
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.group: Group = group

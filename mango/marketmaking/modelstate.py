@@ -86,15 +86,17 @@ class ModelState:
     # The top bid is the highest price someone is willing to pay to BUY
     @property
     def top_bid(self) -> typing.Optional[mango.Order]:
-        if self.bids_watcher.latest:
-            return self.bids_watcher.latest[-1]
+        if self.bids_watcher.latest and len(self.bids_watcher.latest) > 0:
+            # Top-of-book is always at index 0 for us.
+            return self.bids_watcher.latest[0]
         else:
             return None
 
     # The top ask is the lowest price someone is willing to pay to SELL
     @property
     def top_ask(self) -> typing.Optional[mango.Order]:
-        if self.asks_watcher.latest:
+        if self.asks_watcher.latest and len(self.asks_watcher.latest) > 0:
+            # Top-of-book is always at index 0 for us.
             return self.asks_watcher.latest[0]
         else:
             return None

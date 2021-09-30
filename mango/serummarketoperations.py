@@ -35,7 +35,7 @@ from .wallet import Wallet
 #
 class SerumMarketOperations(MarketOperations):
     def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket, market_instruction_builder: SerumMarketInstructionBuilder):
-        super().__init__()
+        super().__init__(serum_market)
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.serum_market: SerumMarket = serum_market

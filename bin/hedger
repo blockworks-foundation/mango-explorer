@@ -4,10 +4,12 @@ import argparse
 import logging
 import os
 import os.path
+import rx.operators
 import sys
 import threading
 
 from decimal import Decimal
+from rx.core.abc.disposable import Disposable
 from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
@@ -80,9 +82,28 @@ event_subscription = mango.WebSocketAccountSubscription(
 manager.add(event_subscription)
 health_check.add("hedger_watched_events_pong_subscription", event_subscription.pong)
 
-hedger: mango.marketmaking.Hedger = mango.marketmaking.Hedger(context, account, watched_market, hedging_market, perp_event_queue, event_subscription.publisher,
-                                                              hedging_market_operations, args.max_price_slippage_factor)
-disposer.add_disposable(hedger)
+splitter: mango.UnseenPerpEventChangesTracker = mango.UnseenPerpEventChangesTracker(perp_event_queue)
+hedger: mango.PerpHedger = mango.PerpHedger(
+    account.address, hedging_market_operations, args.max_price_slippage_factor)
+
+hedger_subscription: Disposable = event_subscription.publisher.pipe(
+    # Passes on distinct unseen events
+    rx.operators.flat_map(splitter.unseen),
+
+    # Only fills after this filter
+    rx.operators.filter(lambda unseen_event: isinstance(unseen_event, mango.PerpFillEvent)),
+
+    # Only fills from our account after this filter
+    rx.operators.filter(lambda fill: (fill.maker == account.address) or (fill.taker == account.address)),
+
+    # Only fills where we didn't trade with outself
+    rx.operators.filter(lambda fill: fill.maker != fill.taker),
+
+    # We've got a fill we want to hedge, so do it.
+    rx.operators.map(lambda fill: hedger.hedge(context, fill))
+).subscribe(mango.PrintingObserverSubscriber(False))
+
+disposer.add_disposable(hedger_subscription)
 manager.open()
 
 logging.info(f"Current assets in account {account.address} (owner: {account.owner}):")

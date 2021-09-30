@@ -18,9 +18,11 @@ import abc
 import enum
 import logging
 
+from decimal import Decimal
 from solana.publickey import PublicKey
 
-from .lotsizeconverter import LotSizeConverter
+from .constants import SYSTEM_PROGRAM_ADDRESS
+from .lotsizeconverter import LotSizeConverter, NullLotSizeConverter
 from .token import Token
 
 
@@ -58,3 +60,23 @@ class Market(metaclass=abc.ABCMeta):
 
     def __repr__(self) -> str:
         return f"{self}"
+
+
+# # 🥭 DryRunMarket class
+#
+# A fake `Market` that can be safely used in dry runs.
+#
+class DryRunMarket(Market):
+    def __init__(self, market_name: str):
+        program_address: PublicKey = SYSTEM_PROGRAM_ADDRESS
+        address: PublicKey = SYSTEM_PROGRAM_ADDRESS
+        inventory_source: InventorySource = InventorySource.SPL_TOKENS
+        base: Token = Token("DRYRUNBASE", "DryRunBase", SYSTEM_PROGRAM_ADDRESS, Decimal(6))
+        quote: Token = Token("DRYRUNQUOTE", "DryRunQuote", SYSTEM_PROGRAM_ADDRESS, Decimal(6))
+        lot_size_converter: LotSizeConverter = NullLotSizeConverter()
+        super().__init__(program_address, address, inventory_source, base, quote, lot_size_converter)
+        self.market_name: str = market_name
+
+    @property
+    def symbol(self) -> str:
+        return self.market_name

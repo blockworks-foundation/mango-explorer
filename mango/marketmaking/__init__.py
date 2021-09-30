@@ -1,4 +1,3 @@
-from .hedger import Hedger
 from .marketmaker import MarketMaker
 from .modelstate import ModelState
 from .modelstatebuilder import ModelStateBuilder, WebsocketModelStateBuilder, PollingModelStateBuilder, SerumPollingModelStateBuilder, SpotPollingModelStateBuilder, PerpPollingModelStateBuilder

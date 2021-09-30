@@ -22,6 +22,7 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .constants import SYSTEM_PROGRAM_ADDRESS
+from .market import Market, DryRunMarket
 from .orders import Order
 
 
@@ -51,8 +52,9 @@ from .orders import Order
 # ```
 #
 class MarketOperations(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self, market: Market):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.market: Market = market
 
     @abc.abstractmethod
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
@@ -97,7 +99,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
 #
 class DryRunMarketOperations(MarketOperations):
     def __init__(self, market_name: str):
-        super().__init__()
+        super().__init__(DryRunMarket(market_name))
         self.market_name: str = market_name
 
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:

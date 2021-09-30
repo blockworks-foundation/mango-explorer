@@ -151,6 +151,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
         quote_inventory_token_account = mango.TokenAccount.parse(
             account_infos[4], self.quote_inventory_token_account.value.token)
 
+        # Both these will have top-of-book at index 0.
         bids: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
             account_infos[5], self.market.underlying_serum_market)
         asks: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
@@ -248,6 +249,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
                                                      base_value,
                                                      quote_value)
 
+        # Both these will have top-of-book at index 0.
         bids: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
             account_infos[3], self.market.underlying_serum_market)
         asks: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
@@ -315,6 +317,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
                                                      base_token_value,
                                                      quote_token_value)
 
+        # Both these will have top-of-book at index 0.
         bids: mango.PerpOrderBookSide = mango.PerpOrderBookSide.parse(
             context, account_infos[3], self.market.underlying_perp_market)
         asks: mango.PerpOrderBookSide = mango.PerpOrderBookSide.parse(

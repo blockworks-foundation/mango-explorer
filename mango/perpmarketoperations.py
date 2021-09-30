@@ -38,7 +38,7 @@ class PerpMarketOperations(MarketOperations):
     def __init__(self, market_name: str, context: Context, wallet: Wallet,
                  market_instruction_builder: PerpMarketInstructionBuilder,
                  account: Account, perp_market: PerpMarket):
-        super().__init__()
+        super().__init__(perp_market)
         self.market_name: str = market_name
         self.context: Context = context
         self.wallet: Wallet = wallet
