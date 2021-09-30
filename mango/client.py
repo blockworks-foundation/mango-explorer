@@ -63,6 +63,35 @@ class TooManyRequestsRateLimitException(RateLimitException):
     pass
 
 
+# # 🥭 BlockhashNotFoundException class
+#
+# A `BlockhashNotFoundException` exception allows trapping and handling exceptions when a blockhash is sent that
+# the node doesn't understand. This can happen when the blockhash is too old (and the node no longer
+# considers it 'recent') or when it's too new (and hasn't yet made it to the node that is responding).
+#
+class BlockhashNotFoundException(Exception):
+    def __init__(self, cluster_url: str, blockhash: typing.Optional[Blockhash] = None):
+        self.cluster_url: str = cluster_url
+        self.blockhash = blockhash
+
+    def __str__(self) -> str:
+        return f"« 𝙱𝚕𝚘𝚌𝚔𝚑𝚊𝚜𝚑𝙽𝚘𝚝𝙵𝚘𝚞𝚗𝚍𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.blockhash}] on {self.cluster_url} »"
+
+
+# # 🥭 NodeIsBehindException class
+#
+# A `NodeIsBehindException` exception allows trapping and handling exceptions when a node is behind by too
+# many slots.
+#
+class NodeIsBehindException(Exception):
+    def __init__(self, cluster_url: str, slots_behind: int):
+        self.cluster_url: str = cluster_url
+        self.slots_behind = slots_behind
+
+    def __str__(self) -> str:
+        return f"« 𝙽𝚘𝚍𝚎𝙸𝚜𝙱𝚎𝚑𝚒𝚗𝚍𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [behind by {self.slots_behind}] on {self.cluster_url} »"
+
+
 # # 🥭 TransactionException class
 #
 # A `TransactionException` exception that can provide additional error data, or at least better output
@@ -307,6 +336,9 @@ class CompatibleClient(Client):
             )
             self.logger.debug(f"Transaction ID response: {response}")
             return response
+        except BlockhashNotFoundException as blockhash_not_found_exception:
+            raise BlockhashNotFoundException(blockhash_not_found_exception.cluster_url,
+                                             transaction.recent_blockhash) from blockhash_not_found_exception
         except TransactionException as transaction_exception:
             raise TransactionException(transaction, transaction_exception.message, transaction_exception.code,
                                        transaction_exception.name, transaction_exception.rpc_method,
@@ -344,9 +376,14 @@ class CompatibleClient(Client):
                 error_message: str = response["error"]["message"] if "message" in response["error"] else "No message"
                 exception_message: str = f"Transaction failed with: '{error_message}'"
                 error_code: int = response["error"]["code"] if "code" in response["error"] else -1
+                if error_code == -32005:
+                    slots_behind: int = response["error"]["data"]["numSlotsBehind"] if "numSlotsBehind" in response["error"]["data"] else -1
+                    raise NodeIsBehindException(self.cluster_url, slots_behind)
                 error_data: typing.Dict = response["error"]["data"] if "data" in response["error"] else {}
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
                 error_err = error_data["err"] if "err" in error_data else "No error text returned"
+                if error_err == "BlockhashNotFound":
+                    raise BlockhashNotFoundException(self.cluster_url)
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
                 raise TransactionException(None, exception_message, error_code, self.name, method, data,
                                            response_text, error_accounts, error_err, error_logs)
