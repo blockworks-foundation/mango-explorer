@@ -11,6 +11,9 @@ report.state
 __pycache__
 .mypy_cache
 
+# Don't check in any dev .version file
+.version
+
 # Don't check in any experimental commands
 bin/experimental*
 

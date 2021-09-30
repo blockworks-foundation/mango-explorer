@@ -1,3 +1,4 @@
 .git
+.version
 wallet.json
 private.py
