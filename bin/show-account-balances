@@ -26,7 +26,6 @@ if address is None:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     address = wallet.address
 
-logging.info(f"Context: {context}")
 logging.info(f"Address: {address}")
 
 group = mango.Group.load(context)

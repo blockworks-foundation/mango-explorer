@@ -40,7 +40,6 @@ try:
 
     liquidator_name = args.name
 
-    logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
 
     group = mango.Group.load(context)

@@ -86,7 +86,6 @@ try:
     throttle_ripe_update_to_seconds = args.throttle_ripe_update_to_seconds
     liquidator_name = args.name
 
-    logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
 
     group = mango.Group.load(context)

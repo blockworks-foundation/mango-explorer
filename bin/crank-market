@@ -25,7 +25,6 @@ parser.add_argument("--dry-run", action="store_true", default=False,
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
-logging.info(f"Context: {context}")
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_address)
 account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)

@@ -35,7 +35,6 @@ wallet: mango.Wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 action_threshold: Decimal = args.action_threshold
 adjustment_factor: Decimal = args.adjustment_factor
 
-logging.info(f"Context: {context}")
 logging.info(f"Wallet address: {wallet.address}")
 
 targets: typing.Sequence[mango.FixedTargetBalance] = args.target

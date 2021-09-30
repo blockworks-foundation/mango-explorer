@@ -15,6 +15,8 @@
 
 import argparse
 import logging
+import os
+import sys
 import typing
 
 from .constants import WARNING_DISCLAIMER_TEXT
@@ -63,5 +65,12 @@ def parse_args(parser: argparse.ArgumentParser, logging_default=logging.INFO) ->
 
     logging.getLogger().setLevel(args.log_level)
     logging.warning(WARNING_DISCLAIMER_TEXT)
+
+    all_arguments: typing.List[str] = []
+    for arg in vars(args):
+        all_arguments += [f"    --{arg} {getattr(args, arg)}"]
+    all_arguments.sort()
+    all_arguments_rendered = "\n".join(all_arguments)
+    logging.debug(f"{os.path.basename(sys.argv[0])} arguments:\n{all_arguments_rendered}")
 
     return args

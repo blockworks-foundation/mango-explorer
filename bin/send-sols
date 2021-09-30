@@ -32,7 +32,6 @@ try:
     context = mango.ContextBuilder.from_command_line_parameters(args)
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-    logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
 
     sol_balance = context.client.get_balance(wallet.address)

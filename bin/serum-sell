@@ -34,7 +34,6 @@ try:
 
     adjustment_factor = args.adjustment_factor
 
-    logging.info(f"Context: {context}")
     logging.info(f"Wallet address: {wallet.address}")
 
     symbol = args.symbol.upper()

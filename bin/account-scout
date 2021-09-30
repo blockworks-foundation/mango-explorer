@@ -31,7 +31,6 @@ try:
 
     context = mango.ContextBuilder.from_command_line_parameters(args)
 
-    logging.info(f"Context: {context}")
     logging.info(f"Address: {address}")
 
     group = mango.Group.load(context)

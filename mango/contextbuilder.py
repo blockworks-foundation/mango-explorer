@@ -16,6 +16,7 @@
 import argparse
 import datetime
 import copy
+import logging
 import os
 import typing
 
@@ -111,7 +112,11 @@ class ContextBuilder:
         gma_chunk_pause: typing.Optional[Decimal] = args.gma_chunk_pause
         token_filename: str = args.token_data_file
 
-        return ContextBuilder._build(name, cluster_name, cluster_url, skip_preflight, commitment, blockhash_commitment, encoding, blockhash_cache_duration, group_name, group_address, mango_program_address, serum_program_address, gma_chunk_size, gma_chunk_pause, token_filename)
+        context: Context = ContextBuilder._build(name, cluster_name, cluster_url, skip_preflight, commitment, blockhash_commitment, encoding, blockhash_cache_duration,
+                                                 group_name, group_address, mango_program_address, serum_program_address, gma_chunk_size, gma_chunk_pause, token_filename)
+        logging.debug(f"{context}")
+
+        return context
 
     @staticmethod
     def default():

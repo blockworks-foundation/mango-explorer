@@ -29,7 +29,6 @@ wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_address)
 account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
 
-logging.info(f"Context: {context}")
 logging.info(f"Wallet address: {wallet.address}")
 
 market_symbol = args.market.upper()

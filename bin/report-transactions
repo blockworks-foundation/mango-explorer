@@ -96,7 +96,6 @@ try:
 
     context = mango.ContextBuilder.from_command_line_parameters(args)
 
-    logging.info(f"Context: {context}")
     logging.info(f"Since signature: {since_signature}")
     logging.info(f"Filter to instruction type: {instruction_type}")
 
