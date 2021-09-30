@@ -391,8 +391,8 @@ class CompatibleClient(Client):
             self.logger.debug(f"Transaction ID response: {response}")
             return response
         except BlockhashNotFoundException as blockhash_not_found_exception:
-            raise BlockhashNotFoundException(blockhash_not_found_exception.name, blockhash_not_found_exception.cluster_url,
-                                             transaction.recent_blockhash) from blockhash_not_found_exception
+            blockhash_not_found_exception.blockhash = transaction.recent_blockhash
+            raise
         except TransactionException as transaction_exception:
             raise TransactionException(transaction, transaction_exception.message, transaction_exception.code,
                                        transaction_exception.name, transaction_exception.cluster_url, transaction_exception.rpc_method,
