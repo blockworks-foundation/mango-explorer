@@ -37,12 +37,31 @@ from .constants import SOL_DECIMAL_DIVISOR
 from .instructionreporter import InstructionReporter
 
 
+# # 🥭 ClientException class
+#
+# A `ClientException` exception base class that allows trapping and handling rate limiting
+# independent of other error handling.
+#
+class ClientException(Exception):
+    def __init__(self, message: str, name: str, cluster_url: str):
+        super().__init__(message)
+        self.message: str = message
+        self.name: str = name
+        self.cluster_url: str = cluster_url
+
+    def __str__(self) -> str:
+        return f"« {type(self)} '{self.message}' from '{self.name}' on {self.cluster_url} »"
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
 # # 🥭 RateLimitException class
 #
 # A `RateLimitException` exception base class that allows trapping and handling rate limiting
 # independent of other error handling.
 #
-class RateLimitException(Exception):
+class RateLimitException(ClientException):
     pass
 
 
@@ -70,16 +89,14 @@ class TooManyRequestsRateLimitException(RateLimitException):
 # the node doesn't understand. This can happen when the blockhash is too old (and the node no longer
 # considers it 'recent') or when it's too new (and hasn't yet made it to the node that is responding).
 #
-class BlockhashNotFoundException(Exception):
-    def __init__(self, cluster_url: str, blockhash: typing.Optional[Blockhash] = None):
+class BlockhashNotFoundException(ClientException):
+    def __init__(self, name: str, cluster_url: str, blockhash: typing.Optional[Blockhash] = None):
         message: str = f"Blockhash '{blockhash}' not found on {cluster_url}."
-        super().__init__(message)
-        self.message: str = message
-        self.cluster_url: str = cluster_url
+        super().__init__(message, name, cluster_url)
         self.blockhash: typing.Optional[Blockhash] = blockhash
 
     def __str__(self) -> str:
-        return f"« 𝙱𝚕𝚘𝚌𝚔𝚑𝚊𝚜𝚑𝙽𝚘𝚝𝙵𝚘𝚞𝚗𝚍𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.blockhash}] on {self.cluster_url} »"
+        return f"« BlockhashNotFoundException '{self.message}' [{self.blockhash}] from '{self.name}' on {self.cluster_url} »"
 
 
 # # 🥭 NodeIsBehindException class
@@ -87,16 +104,14 @@ class BlockhashNotFoundException(Exception):
 # A `NodeIsBehindException` exception allows trapping and handling exceptions when a node is behind by too
 # many slots.
 #
-class NodeIsBehindException(Exception):
-    def __init__(self, cluster_url: str, slots_behind: int):
+class NodeIsBehindException(ClientException):
+    def __init__(self, name: str, cluster_url: str, slots_behind: int):
         message: str = f"Node is behind by {slots_behind} slots."
-        super().__init__(message)
-        self.message: str = message
-        self.cluster_url: str = cluster_url
+        super().__init__(message, name, cluster_url)
         self.slots_behind: int = slots_behind
 
     def __str__(self) -> str:
-        return f"« 𝙽𝚘𝚍𝚎𝙸𝚜𝙱𝚎𝚑𝚒𝚗𝚍𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [behind by {self.slots_behind}] on {self.cluster_url} »"
+        return f"« NodeIsBehindException '{self.message}' [behind by {self.slots_behind}] from '{self.name}' on {self.cluster_url} »"
 
 
 # # 🥭 FailedToFetchBlockhashException class
@@ -104,15 +119,13 @@ class NodeIsBehindException(Exception):
 # A `FailedToFetchBlockhashException` exception allows trapping and handling exceptions when we fail
 # to fetch a recent or distinct blockhash.
 #
-class FailedToFetchBlockhashException(Exception):
-    def __init__(self, message: str, cluster_url: str, attempts: int):
-        super().__init__(message)
-        self.message: str = message
-        self.cluster_url: str = cluster_url
+class FailedToFetchBlockhashException(ClientException):
+    def __init__(self, message: str, name: str, cluster_url: str, attempts: int):
+        super().__init__(message, name, cluster_url)
         self.attempts: int = attempts
 
     def __str__(self) -> str:
-        return f"« 𝙵𝚊𝚒𝚕𝚎𝚍𝚃𝚘𝙵𝚎𝚝𝚌𝚑𝙱𝚕𝚘𝚌𝚔𝚑𝚊𝚜𝚑𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 {self.message} [tried {self.attempts} times] on {self.cluster_url} »"
+        return f"« FailedToFetchBlockhashException '{self.message}' [tried {self.attempts} times] from '{self.name}' on {self.cluster_url} »"
 
 
 # # 🥭 TransactionException class
@@ -120,13 +133,11 @@ class FailedToFetchBlockhashException(Exception):
 # A `TransactionException` exception that can provide additional error data, or at least better output
 # of problems at the right place.
 #
-class TransactionException(Exception):
-    def __init__(self, transaction: typing.Optional[Transaction], message: str, code: int, name: str, rpc_method: str, request_text: str, response_text: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None], instruction_reporter: InstructionReporter = InstructionReporter()):
-        super().__init__(message)
+class TransactionException(ClientException):
+    def __init__(self, transaction: typing.Optional[Transaction], message: str, code: int, name: str, cluster_url: str, rpc_method: str, request_text: str, response_text: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None], instruction_reporter: InstructionReporter = InstructionReporter()):
+        super().__init__(message, name, cluster_url)
         self.transaction: typing.Optional[Transaction] = transaction
-        self.message: str = message
         self.code: int = code
-        self.name: str = name
         self.rpc_method: str = rpc_method
         self.request_text: str = request_text
         self.response_text: str = response_text
@@ -308,13 +319,13 @@ class CompatibleClient(Client):
                     return blockhash
             time.sleep(pause)
         raise FailedToFetchBlockhashException(
-            f"Failed to get fresh recent blockhash after {len(pauses)} - {pauses}.", self.cluster_url, len(pauses))
+            f"Failed to get fresh recent blockhash after {len(pauses)} - {pauses}.", self.name, self.cluster_url, len(pauses))
 
     def get_cached_recent_blockhash(self, commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> Blockhash:
         if self.blockhash_cache_duration.total_seconds() == 0:
             blockhash_resp = self.get_recent_blockhash(commitment)
             if not blockhash_resp["result"]:
-                raise FailedToFetchBlockhashException("Failed to get recent blockhash.", self.cluster_url, 1)
+                raise FailedToFetchBlockhashException("Failed to get recent blockhash.", self.name, self.cluster_url, 1)
             return Blockhash(blockhash_resp["result"]["value"]["blockhash"])
 
         if not self._cached_blockhash.viable(self.blockhash_cache_duration):
@@ -380,11 +391,11 @@ class CompatibleClient(Client):
             self.logger.debug(f"Transaction ID response: {response}")
             return response
         except BlockhashNotFoundException as blockhash_not_found_exception:
-            raise BlockhashNotFoundException(blockhash_not_found_exception.cluster_url,
+            raise BlockhashNotFoundException(blockhash_not_found_exception.name, blockhash_not_found_exception.cluster_url,
                                              transaction.recent_blockhash) from blockhash_not_found_exception
         except TransactionException as transaction_exception:
             raise TransactionException(transaction, transaction_exception.message, transaction_exception.code,
-                                       transaction_exception.name, transaction_exception.rpc_method,
+                                       transaction_exception.name, transaction_exception.cluster_url, transaction_exception.rpc_method,
                                        transaction_exception.request_text, transaction_exception.response_text,
                                        transaction_exception.accounts, transaction_exception.errors,
                                        transaction_exception.logs, self.instruction_reporter) from None
@@ -400,9 +411,11 @@ class CompatibleClient(Client):
         #
         # "You will see HTTP respose codes 429 for too many requests or 413 for too much bandwidth."
         if raw_response.status_code == 413:
-            raise TooMuchBandwidthRateLimitException(f"Rate limited (too much bandwidth) calling method '{method}'.")
+            raise TooMuchBandwidthRateLimitException(
+                f"Rate limited (too much bandwidth) calling method '{method}'.", self.name, self.cluster_url)
         elif raw_response.status_code == 429:
-            raise TooManyRequestsRateLimitException(f"Rate limited (too many requests) calling method '{method}'.")
+            raise TooManyRequestsRateLimitException(
+                f"Rate limited (too many requests) calling method '{method}'.", self.name, self.cluster_url)
 
         # Not a rate-limit problem, but maybe there was some other error?
         raw_response.raise_for_status()
@@ -414,22 +427,22 @@ class CompatibleClient(Client):
         if "error" in response:
             if response["error"] is str:
                 message: str = typing.cast(str, response["error"])
-                raise Exception(f"Transaction failed: '{message}'")
+                raise ClientException(f"Transaction failed: '{message}'", self.name, self.cluster_url)
             else:
                 error_message: str = response["error"]["message"] if "message" in response["error"] else "No message"
                 exception_message: str = f"Transaction failed with: '{error_message}'"
                 error_code: int = response["error"]["code"] if "code" in response["error"] else -1
                 if error_code == -32005:
                     slots_behind: int = response["error"]["data"]["numSlotsBehind"] if "numSlotsBehind" in response["error"]["data"] else -1
-                    raise NodeIsBehindException(self.cluster_url, slots_behind)
+                    raise NodeIsBehindException(self.name, self.cluster_url, slots_behind)
                 error_data: typing.Dict = response["error"]["data"] if "data" in response["error"] else {}
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
                 error_err = error_data["err"] if "err" in error_data else "No error text returned"
                 if error_err == "BlockhashNotFound":
-                    raise BlockhashNotFoundException(self.cluster_url)
+                    raise BlockhashNotFoundException(self.name, self.cluster_url)
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
-                raise TransactionException(None, exception_message, error_code, self.name, method, data,
-                                           response_text, error_accounts, error_err, error_logs)
+                raise TransactionException(None, exception_message, error_code, self.name, self.cluster_url,
+                                           method, data, response_text, error_accounts, error_err, error_logs)
 
         # The call succeeded.
         return typing.cast(RPCResponse, response)
