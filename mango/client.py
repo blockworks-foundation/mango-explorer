@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import collections
 import datetime
 import itertools
 import json
@@ -71,8 +72,11 @@ class TooManyRequestsRateLimitException(RateLimitException):
 #
 class BlockhashNotFoundException(Exception):
     def __init__(self, cluster_url: str, blockhash: typing.Optional[Blockhash] = None):
+        message: str = f"Blockhash '{blockhash}' not found on {cluster_url}."
+        super().__init__(message)
+        self.message: str = message
         self.cluster_url: str = cluster_url
-        self.blockhash = blockhash
+        self.blockhash: typing.Optional[Blockhash] = blockhash
 
     def __str__(self) -> str:
         return f"« 𝙱𝚕𝚘𝚌𝚔𝚑𝚊𝚜𝚑𝙽𝚘𝚝𝙵𝚘𝚞𝚗𝚍𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [{self.blockhash}] on {self.cluster_url} »"
@@ -85,11 +89,30 @@ class BlockhashNotFoundException(Exception):
 #
 class NodeIsBehindException(Exception):
     def __init__(self, cluster_url: str, slots_behind: int):
+        message: str = f"Node is behind by {slots_behind} slots."
+        super().__init__(message)
+        self.message: str = message
         self.cluster_url: str = cluster_url
-        self.slots_behind = slots_behind
+        self.slots_behind: int = slots_behind
 
     def __str__(self) -> str:
         return f"« 𝙽𝚘𝚍𝚎𝙸𝚜𝙱𝚎𝚑𝚒𝚗𝚍𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 [behind by {self.slots_behind}] on {self.cluster_url} »"
+
+
+# # 🥭 FailedToFetchBlockhashException class
+#
+# A `FailedToFetchBlockhashException` exception allows trapping and handling exceptions when we fail
+# to fetch a recent or distinct blockhash.
+#
+class FailedToFetchBlockhashException(Exception):
+    def __init__(self, message: str, cluster_url: str, attempts: int):
+        super().__init__(message)
+        self.message: str = message
+        self.cluster_url: str = cluster_url
+        self.attempts: int = attempts
+
+    def __str__(self) -> str:
+        return f"« 𝙵𝚊𝚒𝚕𝚎𝚍𝚃𝚘𝙵𝚎𝚝𝚌𝚑𝙱𝚕𝚘𝚌𝚔𝚑𝚊𝚜𝚑𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 {self.message} [tried {self.attempts} times] on {self.cluster_url} »"
 
 
 # # 🥭 TransactionException class
@@ -202,6 +225,9 @@ class CompatibleClient(Client):
         self._request_counter = itertools.count()
         self._cached_blockhash: CachedBlockhash = CachedBlockhash(Blockhash("unset"), datetime.datetime.min)
 
+        # Keep a note of the last 10 blockhashes, if we're using caching
+        self._previous_blockhashes: collections.deque = collections.deque([], 10)
+
     def is_node_healthy(self) -> bool:
         try:
             response = requests.get(f"{self.cluster_url}/health")
@@ -270,12 +296,29 @@ class CompatibleClient(Client):
         options = self._build_options(commitment, None, None)
         return self._send_request("getRecentBlockhash", options)
 
+    def get_fresh_recent_blockhash(self, commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> Blockhash:
+        # Last one should be zero so we're not pausing when we're not retrying.
+        pauses: typing.Sequence[float] = [0.1, 0.1, 0.3, 0.5, 0]
+        for pause in pauses:
+            blockhash_resp = self.get_recent_blockhash(commitment)
+            if blockhash_resp["result"]:
+                blockhash = Blockhash(blockhash_resp["result"]["value"]["blockhash"])
+                if blockhash not in self._previous_blockhashes:
+                    self._previous_blockhashes.append(blockhash)
+                    return blockhash
+            time.sleep(pause)
+        raise FailedToFetchBlockhashException(
+            f"Failed to get fresh recent blockhash after {len(pauses)} - {pauses}.", self.cluster_url, len(pauses))
+
     def get_cached_recent_blockhash(self, commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> Blockhash:
-        if not self._cached_blockhash.viable(self.blockhash_cache_duration):
+        if self.blockhash_cache_duration.total_seconds() == 0:
             blockhash_resp = self.get_recent_blockhash(commitment)
             if not blockhash_resp["result"]:
-                raise RuntimeError("Failed to get recent blockhash")
-            blockhash = Blockhash(blockhash_resp["result"]["value"]["blockhash"])
+                raise FailedToFetchBlockhashException("Failed to get recent blockhash.", self.cluster_url, 1)
+            return Blockhash(blockhash_resp["result"]["value"]["blockhash"])
+
+        if not self._cached_blockhash.viable(self.blockhash_cache_duration):
+            blockhash: Blockhash = self.get_fresh_recent_blockhash(commitment)
             self._cached_blockhash = CachedBlockhash(blockhash=blockhash, timestamp=datetime.datetime.now())
         return self._cached_blockhash.blockhash
 
