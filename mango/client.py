@@ -309,7 +309,7 @@ class CompatibleClient(Client):
 
     def get_fresh_recent_blockhash(self, commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> Blockhash:
         # Last one should be zero so we're not pausing when we're not retrying.
-        pauses: typing.Sequence[float] = [0.1, 0.1, 0.3, 0.5, 0]
+        pauses: typing.Sequence[float] = [0.1, 0.2, 0.4, 0.5, 0]
         for pause in pauses:
             blockhash_resp = self.get_recent_blockhash(commitment)
             if blockhash_resp["result"]:
@@ -319,7 +319,7 @@ class CompatibleClient(Client):
                     return blockhash
             time.sleep(pause)
         raise FailedToFetchBlockhashException(
-            f"Failed to get fresh recent blockhash after {len(pauses)} - {pauses}.", self.name, self.cluster_url, len(pauses))
+            f"Failed to get fresh recent blockhash after {len(pauses)} attempts - {pauses}.", self.name, self.cluster_url, len(pauses))
 
     def get_cached_recent_blockhash(self, commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> Blockhash:
         if self.blockhash_cache_duration.total_seconds() == 0:
