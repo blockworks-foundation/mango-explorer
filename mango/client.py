@@ -96,7 +96,7 @@ class BlockhashNotFoundException(ClientException):
         self.blockhash: typing.Optional[Blockhash] = blockhash
 
     def __str__(self) -> str:
-        return f"« BlockhashNotFoundException '{self.message}' [{self.blockhash}] from '{self.name}' on {self.cluster_url} »"
+        return f"« BlockhashNotFoundException '{self.name}' [{self.blockhash}] on {self.cluster_url} »"
 
 
 # # 🥭 NodeIsBehindException class
@@ -111,7 +111,7 @@ class NodeIsBehindException(ClientException):
         self.slots_behind: int = slots_behind
 
     def __str__(self) -> str:
-        return f"« NodeIsBehindException '{self.message}' [behind by {self.slots_behind}] from '{self.name}' on {self.cluster_url} »"
+        return f"« NodeIsBehindException '{self.name}' [behind by {self.slots_behind} slots] on {self.cluster_url} »"
 
 
 # # 🥭 FailedToFetchBlockhashException class
@@ -120,12 +120,16 @@ class NodeIsBehindException(ClientException):
 # to fetch a recent or distinct blockhash.
 #
 class FailedToFetchBlockhashException(ClientException):
-    def __init__(self, message: str, name: str, cluster_url: str, attempts: int):
+    def __init__(self, message: str, name: str, cluster_url: str, pauses: typing.Sequence[float]):
         super().__init__(message, name, cluster_url)
-        self.attempts: int = attempts
+        self.pauses: typing.Sequence[float] = pauses
 
     def __str__(self) -> str:
-        return f"« FailedToFetchBlockhashException '{self.message}' [tried {self.attempts} times] from '{self.name}' on {self.cluster_url} »"
+        if len(self.pauses) == 0:
+            return f"« FailedToFetchBlockhashException '{self.name}' Failed to get recent blockhash on {self.cluster_url} »"
+
+        pauses_text = ",".join(f"{pause}" for pause in self.pauses[:-1])
+        return f"« FailedToFetchBlockhashException '{self.name}' Failed to get a fresh, recent blockhash after {len(self.pauses)} attempts - paused {pauses_text} seconds between attempts on {self.cluster_url} »"
 
 
 # # 🥭 TransactionException class
@@ -318,14 +322,16 @@ class CompatibleClient(Client):
                     self._previous_blockhashes.append(blockhash)
                     return blockhash
             time.sleep(pause)
+
         raise FailedToFetchBlockhashException(
-            f"Failed to get fresh recent blockhash after {len(pauses)} attempts - {pauses}.", self.name, self.cluster_url, len(pauses))
+            f"Failed to get fresh recent blockhash after {len(pauses)} attempts.", self.name, self.cluster_url, pauses)
 
     def get_cached_recent_blockhash(self, commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> Blockhash:
         if self.blockhash_cache_duration.total_seconds() == 0:
             blockhash_resp = self.get_recent_blockhash(commitment)
             if not blockhash_resp["result"]:
-                raise FailedToFetchBlockhashException("Failed to get recent blockhash.", self.name, self.cluster_url, 1)
+                raise FailedToFetchBlockhashException(
+                    "Failed to get recent blockhash.", self.name, self.cluster_url, [])
             return Blockhash(blockhash_resp["result"]["value"]["blockhash"])
 
         if not self._cached_blockhash.viable(self.blockhash_cache_duration):
@@ -378,32 +384,25 @@ class CompatibleClient(Client):
             # but even that list doesn't accept base64+zstd.
             encoding = "base64"
 
-        try:
-            response = self._send_request(
-                "sendTransaction",
-                encoded_transaction,
-                {
-                    _SkipPreflightKey: skip_preflight,
-                    _PreflightCommitmentKey: commitment,
-                    _EncodingKey: encoding
-                }
-            )
-            self.logger.debug(f"Transaction ID response: {response}")
-            return response
-        except BlockhashNotFoundException as blockhash_not_found_exception:
-            blockhash_not_found_exception.blockhash = transaction.recent_blockhash
-            raise
-        except TransactionException as transaction_exception:
-            raise TransactionException(transaction, transaction_exception.message, transaction_exception.code,
-                                       transaction_exception.name, transaction_exception.cluster_url, transaction_exception.rpc_method,
-                                       transaction_exception.request_text, transaction_exception.response_text,
-                                       transaction_exception.accounts, transaction_exception.errors,
-                                       transaction_exception.logs, self.instruction_reporter) from None
+        response = self._send_request(
+            "sendTransaction",
+            encoded_transaction,
+            {
+                _SkipPreflightKey: skip_preflight,
+                _PreflightCommitmentKey: commitment,
+                _EncodingKey: encoding
+            },
+            transaction=transaction,
+            blockhash=transaction.recent_blockhash
+        )
+        self.logger.debug(f"Transaction ID response: {response}")
+        return response
 
-    def _send_request(self, method: str, *params: typing.Any) -> RPCResponse:
+    # def _send_request(self, method: str, transaction: typing.Optional[Transaction] = None, blockhash: typing.Optional[Blockhash] = None, *params: typing.Any) -> RPCResponse:
+    def _send_request(self, method: str, *args: typing.Any, **kwargs) -> RPCResponse:
         request_id = next(self._request_counter) + 1
         headers = {"Content-Type": "application/json"}
-        data = json.dumps({"jsonrpc": "2.0", "id": request_id, "method": method, "params": params})
+        data = json.dumps({"jsonrpc": "2.0", "id": request_id, "method": method, "params": args})
         raw_response = requests.post(self.cluster_url, headers=headers, data=data)
 
         # Some custom exceptions specifically for rate-limiting. This allows calling code to handle this
@@ -439,9 +438,11 @@ class CompatibleClient(Client):
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
                 error_err = error_data["err"] if "err" in error_data else "No error text returned"
                 if error_err == "BlockhashNotFound":
-                    raise BlockhashNotFoundException(self.name, self.cluster_url)
+                    blockhash: typing.Optional[Blockhash] = kwargs["blockhash"] if "blockhash" in kwargs else None
+                    raise BlockhashNotFoundException(self.name, self.cluster_url, blockhash)
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
-                raise TransactionException(None, exception_message, error_code, self.name, self.cluster_url,
+                transaction: typing.Optional[Transaction] = kwargs["transaction"] if "transaction" in kwargs else None
+                raise TransactionException(transaction, exception_message, error_code, self.name, self.cluster_url,
                                            method, data, response_text, error_accounts, error_err, error_logs)
 
         # The call succeeded.

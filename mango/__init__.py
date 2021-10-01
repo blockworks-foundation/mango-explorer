@@ -8,7 +8,7 @@ from .addressableaccount import AddressableAccount
 from .arguments import parse_args
 from .balancesheet import BalanceSheet
 from .cache import PriceCache, RootBankCache, PerpMarketCache, Cache
-from .client import CompatibleClient, BetterClient
+from .client import ClientException, RateLimitException, TooMuchBandwidthRateLimitException, TooManyRequestsRateLimitException, BlockhashNotFoundException, NodeIsBehindException, FailedToFetchBlockhashException, TransactionException, CompatibleClient, BetterClient
 from .collateralcalculator import CollateralCalculator, SerumCollateralCalculator, SpotCollateralCalculator, PerpCollateralCalculator
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS, SOL_MINT_ADDRESS, SOL_DECIMALS, SOL_DECIMAL_DIVISOR, WARNING_DISCLAIMER_TEXT, MangoConstants

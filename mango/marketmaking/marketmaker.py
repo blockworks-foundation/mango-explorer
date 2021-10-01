@@ -95,6 +95,10 @@ class MarketMaker:
             (payer + cancellations + place_orders + crank + settle + redeem).execute(context)
 
             self.pulse_complete.on_next(datetime.now())
+        except (mango.RateLimitException, mango.NodeIsBehindException, mango.BlockhashNotFoundException, mango.FailedToFetchBlockhashException) as common_exception:
+            # Don't bother with a long traceback for these common problems.
+            self.logger.error(f"[{context.name}] Market-maker problem on pulse: {common_exception}")
+            self.pulse_error.on_next(common_exception)
         except Exception as exception:
             self.logger.error(f"[{context.name}] Market-maker error on pulse:\n{traceback.format_exc()}")
             self.pulse_error.on_next(exception)
