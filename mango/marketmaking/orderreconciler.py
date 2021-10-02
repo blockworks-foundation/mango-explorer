@@ -19,7 +19,7 @@ import logging
 import mango
 import typing
 
-from .modelstate import ModelState
+from ..modelstate import ModelState
 from .reconciledorders import ReconciledOrders
 
 

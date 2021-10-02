@@ -22,6 +22,7 @@ from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
 from .layouts import layouts
+from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .marketlookup import MarketLookup
 from .metadata import Metadata
 from .perpmarketinfo import PerpMarketInfo
@@ -39,11 +40,12 @@ from .version import Version
 # `GroupBasketMarket` gathers basket items together instead of separate arrays.
 #
 class GroupBasketMarket:
-    def __init__(self, base_token_info: TokenInfo, quote_token_info: TokenInfo, spot_market_info: SpotMarketInfo, perp_market_info: PerpMarketInfo, oracle: PublicKey):
+    def __init__(self, base_token_info: TokenInfo, quote_token_info: TokenInfo, spot_market_info: SpotMarketInfo, perp_market_info: typing.Optional[PerpMarketInfo], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey):
         self.base_token_info: TokenInfo = base_token_info
         self.quote_token_info: TokenInfo = quote_token_info
         self.spot_market_info: SpotMarketInfo = spot_market_info
-        self.perp_market_info: PerpMarketInfo = perp_market_info
+        self.perp_market_info: typing.Optional[PerpMarketInfo] = perp_market_info
+        self.perp_lot_size_converter: LotSizeConverter = perp_lot_size_converter
         self.oracle: PublicKey = oracle
 
     def __str__(self) -> str:
@@ -141,11 +143,24 @@ class Group(AddressableAccount):
         in_basket: typing.List[bool] = []
         for index, base_token_info in enumerate(tokens[:-1]):
             if base_token_info is not None:
-                spot_market_info: SpotMarketInfo = SpotMarketInfo.from_layout(layout.spot_markets[index])
-                perp_market_info: PerpMarketInfo = PerpMarketInfo.from_layout(layout.perp_markets[index])
+                spot_market_info: typing.Optional[SpotMarketInfo] = SpotMarketInfo.from_layout_or_none(
+                    layout.spot_markets[index])
+                if spot_market_info is None:
+                    raise Exception(f"Could not find spot market at index {index} of group layout.")
+                # spot_lot_size_converter: LotSizeConverter = RaisingLotSizeConverter()
+                # if spot_market_info is not None:
+                #     spot_lot_size_converter = LotSizeConverter(
+                #         base_token_info.token, spot_market_info.base_lot_size, quote_token_info.token, spot_market_info.)
+                perp_market_info: typing.Optional[PerpMarketInfo] = PerpMarketInfo.from_layout_or_none(
+                    layout.perp_markets[index])
+                perp_lot_size_converter: LotSizeConverter = RaisingLotSizeConverter()
+                if perp_market_info is not None:
+                    perp_lot_size_converter = LotSizeConverter(
+                        base_token_info.token, perp_market_info.base_lot_size, quote_token_info.token, perp_market_info.quote_lot_size)
+
                 oracle: PublicKey = layout.oracles[index]
                 item: GroupBasketMarket = GroupBasketMarket(
-                    base_token_info, quote_token_info, spot_market_info, perp_market_info, oracle)
+                    base_token_info, quote_token_info, spot_market_info, perp_market_info, perp_lot_size_converter, oracle)
                 basket += [item]
                 in_basket += [True]
             else:

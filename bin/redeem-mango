@@ -6,6 +6,7 @@ import os.path
 import sys
 import typing
 
+from decimal import Decimal
 from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
@@ -15,11 +16,16 @@ import mango  # nopep8
 
 def report_accrued(basket_token: mango.AccountBasketBaseToken):
     symbol: str = basket_token.token_info.token.symbol
-    accrued: mango.TokenValue = basket_token.perp_account.mngo_accrued
+    if basket_token.perp_account is None:
+        accrued: mango.TokenValue = mango.TokenValue(basket_token.token_info.token, Decimal(0))
+    else:
+        accrued = basket_token.perp_account.mngo_accrued
     print(f"Accrued in perp market [{symbol:>5}]: {accrued}")
 
 
 def load_perp_market(context: mango.Context, group: mango.Group, group_basket_market: mango.GroupBasketMarket):
+    if group_basket_market.perp_market_info is None:
+        raise Exception(f"No perp market available for group basket market: {group_basket_market}")
     perp_market_details = mango.PerpMarketDetails.load(context, group_basket_market.perp_market_info.address, group)
     perp_market = mango.PerpMarket(context.mango_program_address, group_basket_market.perp_market_info.address,
                                    group_basket_market.base_token_info.token,

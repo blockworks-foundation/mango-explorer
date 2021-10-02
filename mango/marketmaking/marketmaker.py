@@ -22,7 +22,6 @@ import typing
 from datetime import datetime
 from decimal import Decimal
 
-from .modelstate import ModelState
 from ..observables import EventSource
 from .orderreconciler import OrderReconciler
 from .orderchain.chain import Chain
@@ -51,7 +50,7 @@ class MarketMaker:
         self.buy_client_ids: typing.List[int] = []
         self.sell_client_ids: typing.List[int] = []
 
-    def pulse(self, context: mango.Context, model_state: ModelState):
+    def pulse(self, context: mango.Context, model_state: mango.ModelState):
         try:
             payer = mango.CombinableInstructions.from_wallet(self.wallet)
 

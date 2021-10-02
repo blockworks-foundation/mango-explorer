@@ -22,7 +22,7 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-from .modelstate import ModelState
+from ..modelstate import ModelState
 from ..tokenvalue import TokenValue
 
 

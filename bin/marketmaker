@@ -10,12 +10,12 @@ import sys
 import threading
 
 from decimal import Decimal
-from rx.core.abc.disposable import Disposable
 from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
+import mango.hedging  # nopep8
 import mango.marketmaking  # nopep8
 from mango.marketmaking.orderchain import chain  # nopep8
 from mango.marketmaking.orderchain import chainbuilder  # nopep8
@@ -97,10 +97,12 @@ if market.quote != group.shared_quote_token.token:
 cleanup(context, wallet, account, market, args.dry_run)
 
 
+hedger: mango.hedging.Hedger = mango.hedging.NullHedger()
 if args.hedge_market is not None:
     if not isinstance(market, mango.PerpMarket):
         raise Exception(f"Cannot hedge - market {market.symbol} is not a perp market.")
-    watched_market: mango.PerpMarket = market
+
+    underlying_market: mango.PerpMarket = market
 
     hedging_market_symbol = args.hedge_market.upper()
     hedging_market_stub = context.market_lookup.find_by_symbol(hedging_market_symbol)
@@ -116,51 +118,8 @@ if args.hedge_market is not None:
     hedging_market_operations: mango.MarketOperations = mango.create_market_operations(
         context, wallet, account, hedging_market, args.dry_run)
 
-    perp_event_queue: mango.PerpEventQueue = mango.PerpEventQueue.load(
-        context, watched_market.underlying_perp_market.event_queue, watched_market.lot_size_converter)
-
-    event_queue_source: mango.EventSource[mango.PerpEventQueue]
-    if args.update_mode == mango.marketmaking.ModelUpdateMode.WEBSOCKET:
-        event_subscription = mango.WebSocketAccountSubscription(
-            context, watched_market.underlying_perp_market.event_queue,
-            lambda account_info: mango.PerpEventQueue.parse(account_info, watched_market.lot_size_converter))
-        manager.add(event_subscription)
-        health_check.add("hedger_watched_events_pong_subscription", event_subscription.pong)
-        event_queue_source = event_subscription.publisher
-    else:
-        event_queue_observable: rx.Observable = rx.interval(args.event_queue_poll_interval).pipe(
-            rx.operators.observe_on(context.create_thread_pool_scheduler()),
-            rx.operators.catch(mango.observable_pipeline_error_reporter),
-            rx.operators.retry(),
-            rx.operators.start_with(-1),
-            rx.operators.map(lambda _: mango.PerpEventQueue.load(
-                context, watched_market.underlying_perp_market.event_queue, watched_market.lot_size_converter))
-        )
-        event_queue_source = mango.EventSource[mango.PerpEventQueue]()
-        event_queue_observable.subscribe(event_queue_source)
-        health_check.add("hedger_watched_events_pong_subscription", event_queue_source)
-
-    splitter: mango.UnseenPerpEventChangesTracker = mango.UnseenPerpEventChangesTracker(perp_event_queue)
-    hedger: mango.PerpHedger = mango.PerpHedger(
-        account.address, hedging_market_operations, args.max_price_slippage_factor)
-
-    hedger_subscription: Disposable = event_queue_observable.pipe(
-        # Passes on distinct unseen events
-        rx.operators.flat_map(splitter.unseen),
-
-        # Only fills after this filter
-        rx.operators.filter(lambda unseen_event: isinstance(unseen_event, mango.PerpFillEvent)),
-
-        # Only fills from our account after this filter
-        rx.operators.filter(lambda fill: (fill.maker == account.address) or (fill.taker == account.address)),
-
-        # Only fills where we didn't trade with outself
-        rx.operators.filter(lambda fill: fill.maker != fill.taker),
-
-        # We've got a fill we want to hedge, so do it.
-        rx.operators.map(lambda fill: hedger.hedge(context, fill))
-    ).subscribe(mango.PrintingObserverSubscriber(False))
-    disposer.add_disposable(hedger_subscription)
+    hedger = mango.hedging.PerpToSpotHedger(group, underlying_market, hedging_market,
+                                            hedging_market_operations, args.max_price_slippage_factor)
 
 
 order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
@@ -191,13 +150,20 @@ mango.TokenValue.report([asset for asset in account.net_assets if asset is not N
 
 manager.open()
 
+
+def pulse_action(_) -> None:
+    model_state: mango.ModelState = model_state_builder.build(context)
+    market_maker.pulse(context, model_state)
+    hedger.pulse(context, model_state)
+
+
 pulse_disposable = rx.interval(args.pulse_interval).pipe(
     rx.operators.observe_on(context.create_thread_pool_scheduler()),
     rx.operators.start_with(-1),
     rx.operators.catch(mango.observable_pipeline_error_reporter),
     rx.operators.retry()
 ).subscribe(
-    on_next=lambda _: market_maker.pulse(context, model_state_builder.build(context)))
+    on_next=pulse_action)
 disposer.add_disposable(pulse_disposable)
 
 # Wait - don't exit. Exiting will be handled by signals/interrupts.

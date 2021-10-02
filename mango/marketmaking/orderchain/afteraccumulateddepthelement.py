@@ -22,7 +22,7 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .element import Element
-from ..modelstate import ModelState
+from ...modelstate import ModelState
 
 
 # # 🥭 AfterAccumulatedDepthElement class

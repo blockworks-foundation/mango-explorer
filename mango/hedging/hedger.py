@@ -13,38 +13,30 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
 import abc
-import argparse
 import logging
 import mango
-import typing
 
-from ...modelstate import ModelState
+from datetime import datetime
+
+from ..observables import EventSource
 
 
-# # 🥭 Element class
+# # 🥭 Hedger class
 #
-# A base class for a part of a chain that can take in a sequence of elements and process them, changing
-# them as desired.
+# A base hedger class to allow hedging across markets.
 #
-# Only `Order`s returned from `process()` method are passed to the next element of the chain.
-#
-class Element(metaclass=abc.ABCMeta):
-    def __init__(self, args: argparse.Namespace):
+class Hedger(metaclass=abc.ABCMeta):
+    def __init__(self):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.args: argparse.Namespace = args
+        self.pulse_complete: EventSource[datetime] = EventSource[datetime]()
+        self.pulse_error: EventSource[Exception] = EventSource[Exception]()
 
-    @staticmethod
-    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        pass
+    def pulse(self, context: mango.Context, model_state: mango.ModelState):
+        raise NotImplementedError("Hedger.pulse() is not implemented on the base type.")
 
-    @abc.abstractmethod
-    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
-        raise NotImplementedError("Element.process() is not implemented on the base type.")
+    def __str__(self) -> str:
+        return "« 𝙷𝚎𝚍𝚐𝚎𝚛 »"
 
     def __repr__(self) -> str:
         return f"{self}"
-
-    def __str__(self) -> str:
-        return """« 𝙴𝚕𝚎𝚖𝚎𝚗𝚝 »"""

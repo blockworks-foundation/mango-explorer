@@ -1,5 +1,4 @@
 from .marketmaker import MarketMaker
-from .modelstate import ModelState
 from .modelstatebuilder import ModelStateBuilder, WebsocketModelStateBuilder, PollingModelStateBuilder, SerumPollingModelStateBuilder, SpotPollingModelStateBuilder, PerpPollingModelStateBuilder
 from .modelstatebuilderfactory import ModelUpdateMode, model_state_builder_factory
 from .orderreconciler import OrderReconciler, NullOrderReconciler

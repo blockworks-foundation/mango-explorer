@@ -18,8 +18,8 @@ import logging
 import mango
 import typing
 
-from ..modelstate import ModelState
 from .element import Element
+from ...modelstate import ModelState
 
 
 # # 🥭 Chain class

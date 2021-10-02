@@ -19,7 +19,7 @@ import typing
 
 from decimal import Decimal
 
-from .modelstate import ModelState
+from ..modelstate import ModelState
 from .orderreconciler import OrderReconciler
 from .reconciledorders import ReconciledOrders
 

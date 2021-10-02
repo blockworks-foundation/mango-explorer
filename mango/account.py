@@ -137,6 +137,10 @@ class Account(AddressableAccount):
                 placed_order = PlacedOrder(id, client_id, side)
                 placed_orders_all_markets[int(order_market)] += [placed_order]
 
+        quote_token_info: typing.Optional[TokenInfo] = group.tokens[-1]
+        if quote_token_info is None:
+            raise Exception(f"Could not determine quote token in group {group.address}")
+
         for index, token_info in enumerate(group.tokens[:-1]):
             if token_info:
                 intrinsic_deposit = token_info.root_bank.deposit_index * layout.deposits[index]
@@ -144,8 +148,16 @@ class Account(AddressableAccount):
                 intrinsic_borrow = token_info.root_bank.borrow_index * layout.borrows[index]
                 borrow = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_borrow))
                 perp_open_orders = PerpOpenOrders(placed_orders_all_markets[index])
+                group_basket_market = group.markets[index]
+                if group_basket_market is None:
+                    raise Exception(f"Could not find group basket market at index {index}.")
                 perp_account = PerpAccount.from_layout(
-                    layout.perp_accounts[index], perp_open_orders, mngo_token_info.token)
+                    layout.perp_accounts[index],
+                    token_info.token,
+                    quote_token_info.token,
+                    perp_open_orders,
+                    group_basket_market.perp_lot_size_converter,
+                    mngo_token_info.token)
                 spot_open_orders = layout.spot_open_orders[index]
                 basket_item: AccountBasketBaseToken = AccountBasketBaseToken(
                     token_info, deposit, borrow, spot_open_orders, perp_account)
@@ -153,10 +165,6 @@ class Account(AddressableAccount):
                 active_in_basket += [True]
             else:
                 active_in_basket += [False]
-
-        quote_token_info: typing.Optional[TokenInfo] = group.tokens[-1]
-        if quote_token_info is None:
-            raise Exception(f"Could not determine quote token in group {group.address}")
 
         intrinsic_quote_deposit = quote_token_info.root_bank.deposit_index * layout.deposits[-1]
         quote_deposit = TokenValue(quote_token_info.token,

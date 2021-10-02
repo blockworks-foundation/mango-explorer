@@ -20,7 +20,7 @@ import typing
 from decimal import Decimal
 
 from .element import Element
-from ..modelstate import ModelState
+from ...modelstate import ModelState
 
 
 # # 🥭 FixedPositionSizeElement class

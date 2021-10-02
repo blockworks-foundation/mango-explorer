@@ -20,7 +20,7 @@ import typing
 from solana.publickey import PublicKey
 
 from ..constants import SYSTEM_PROGRAM_ADDRESS
-from .modelstate import ModelState
+from ..modelstate import ModelState
 from .modelstatebuilder import ModelStateBuilder, WebsocketModelStateBuilder, SerumPollingModelStateBuilder, SpotPollingModelStateBuilder, PerpPollingModelStateBuilder
 
 
