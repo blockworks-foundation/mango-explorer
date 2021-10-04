@@ -59,6 +59,10 @@ class LotSizeConverter():
         quote_factor: Decimal = 10 ** self.quote.decimals
         return Decimal(size * self.quote_lot_size) / quote_factor
 
+    def quote_lots_to_number(self, size_lots: Decimal) -> Decimal:
+        quote_factor: Decimal = 10 ** self.quote.decimals
+        return Decimal(size_lots * self.quote_lot_size) / quote_factor
+
     def quote_size_number_to_lots(self, size: Decimal) -> int:
         quote_factor: Decimal = 10 ** self.quote.decimals
         return int(round(size * quote_factor) / self.quote_lot_size)

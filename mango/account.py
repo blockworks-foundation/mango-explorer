@@ -26,6 +26,7 @@ from .encoding import encode_key
 from .group import Group
 from .layouts import layouts
 from .metadata import Metadata
+from .openorders import OpenOrders
 from .orders import Side
 from .perpaccount import PerpAccount
 from .perpopenorders import PerpOpenOrders
@@ -67,10 +68,11 @@ class AccountBasketToken:
 # account.
 #
 class AccountBasketBaseToken(AccountBasketToken):
-    def __init__(self, token_info: TokenInfo, deposit: TokenValue, borrow: TokenValue, spot_open_orders: typing.Optional[PublicKey], perp_account: PerpAccount):
+    def __init__(self, token_info: TokenInfo, quote_token_info: TokenInfo, deposit: TokenValue, borrow: TokenValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]):
         super().__init__(token_info, deposit, borrow)
+        self.quote_token_info: TokenInfo = quote_token_info
         self.spot_open_orders: typing.Optional[PublicKey] = spot_open_orders
-        self.perp_account: PerpAccount = perp_account
+        self.perp_account: typing.Optional[PerpAccount] = perp_account
 
     def __str__(self) -> str:
         perp_account: str = "None"
@@ -98,8 +100,8 @@ TMappedAccountBasketValue = typing.TypeVar("TMappedAccountBasketValue")
 #
 class Account(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
-                 meta_data: Metadata, group: Group, owner: PublicKey, info: str,
-                 shared_quote_token: AccountBasketToken,
+                 meta_data: Metadata, group_name: str, group_address: PublicKey, owner: PublicKey,
+                 info: str, shared_quote_token: AccountBasketToken,
                  in_margin_basket: typing.Sequence[bool],
                  basket_indices: typing.Sequence[bool],
                  basket: typing.Sequence[AccountBasketBaseToken],
@@ -108,7 +110,8 @@ class Account(AddressableAccount):
         self.version: Version = version
 
         self.meta_data: Metadata = meta_data
-        self.group: Group = group
+        self.group_name: str = group_name
+        self.group_address: PublicKey = group_address
         self.owner: PublicKey = owner
         self.info: str = info
         self.shared_quote_token: AccountBasketToken = shared_quote_token
@@ -160,7 +163,7 @@ class Account(AddressableAccount):
                     mngo_token_info.token)
                 spot_open_orders = layout.spot_open_orders[index]
                 basket_item: AccountBasketBaseToken = AccountBasketBaseToken(
-                    token_info, deposit, borrow, spot_open_orders, perp_account)
+                    token_info, quote_token_info, deposit, borrow, spot_open_orders, perp_account)
                 basket += [basket_item]
                 active_in_basket += [True]
             else:
@@ -178,7 +181,7 @@ class Account(AddressableAccount):
         being_liquidated: bool = bool(layout.being_liquidated)
         is_bankrupt: bool = bool(layout.is_bankrupt)
 
-        return Account(account_info, version, meta_data, group, owner, info, quote, in_margin_basket, active_in_basket, basket, msrm_amount, being_liquidated, is_bankrupt)
+        return Account(account_info, version, meta_data, group.name, group.address, owner, info, quote, in_margin_basket, active_in_basket, basket, msrm_amount, being_liquidated, is_bankrupt)
 
     @staticmethod
     def parse(account_info: AccountInfo, group: Group) -> "Account":
@@ -281,6 +284,21 @@ class Account(AddressableAccount):
 
         raise Exception(f"Could not find token {token} in basket in group {self.address}")
 
+    def load_all_spot_open_orders(self, context: Context) -> typing.Dict[str, OpenOrders]:
+        spot_open_orders_addresses = list(
+            [basket_token.spot_open_orders for basket_token in self.basket if basket_token.spot_open_orders is not None])
+        spot_open_orders_account_infos = AccountInfo.load_multiple(context, spot_open_orders_addresses)
+        spot_open_orders_account_infos_by_address = {
+            str(account_info.address): account_info for account_info in spot_open_orders_account_infos}
+        spot_open_orders: typing.Dict[str, OpenOrders] = {}
+        for basket_token in self.basket:
+            if basket_token.spot_open_orders is not None:
+                account_info = spot_open_orders_account_infos_by_address[str(basket_token.spot_open_orders)]
+                oo = OpenOrders.parse(account_info, basket_token.token_info.token.decimals,
+                                      self.shared_quote_token.token_info.decimals)
+                spot_open_orders[str(basket_token.spot_open_orders)] = oo
+        return spot_open_orders
+
     def update_spot_open_orders_for_market(self, spot_market_index: int, spot_open_orders: PublicKey) -> None:
         indexable_basket: typing.Sequence[typing.Optional[AccountBasketBaseToken]] = Account._map_sequence_to_basket_indices(
             self.basket, self.basket_indices, lambda item: item)
@@ -302,7 +320,7 @@ class Account(AddressableAccount):
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {info}, {self.version} [{self.address}]
     {self.meta_data}
     Owner: {self.owner}
-    Group: « 𝙶𝚛𝚘𝚞𝚙 '{self.group.name}' {self.group.version} [{self.group.address}] »
+    Group: « 𝙶𝚛𝚘𝚞𝚙 '{self.group_name}' [{self.group_address}] »
     MSRM: {self.msrm_amount}
     Bankrupt? {self.is_bankrupt}
     Being Liquidated? {self.being_liquidated}

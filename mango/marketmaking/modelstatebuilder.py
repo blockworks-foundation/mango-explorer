@@ -25,11 +25,16 @@ from solana.publickey import PublicKey
 from ..modelstate import ModelState
 from ..tokenvalue import TokenValue
 
+from ..calculators.collateralcalculator import CollateralCalculator
+from ..calculators.perpcollateralcalculator import PerpCollateralCalculator
+from ..calculators.spotcollateralcalculator import SpotCollateralCalculator
 
 # # 🥭 ModelStateBuilder class
 #
 # Base class for building a `ModelState` through polling or websockets.
 #
+
+
 class ModelStateBuilder(metaclass=abc.ABCMeta):
     def __init__(self):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -200,7 +205,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
         self.open_orders_address: PublicKey = open_orders_address
         self.all_open_orders_addresses: typing.Sequence[PublicKey] = all_open_orders_addresses
 
-        self.collateral_calculator: mango.CollateralCalculator = mango.SpotCollateralCalculator()
+        self.collateral_calculator: CollateralCalculator = SpotCollateralCalculator()
 
     def poll(self, context: mango.Context) -> ModelState:
         addresses: typing.List[PublicKey] = [
@@ -236,13 +241,13 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
         placed_orders_container: mango.PlacedOrdersContainer = all_open_orders[str(self.open_orders_address)]
 
         # Spot markets don't accrue MNGO liquidity incentives
-        mngo = account.group.find_token_info_by_symbol("MNGO").token
+        mngo = group.find_token_info_by_symbol("MNGO").token
         mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
 
         base_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.base.symbol)
         quote_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.quote.symbol)
 
-        available_collateral: TokenValue = self.collateral_calculator.calculate(account, all_open_orders, cache)
+        available_collateral: TokenValue = self.collateral_calculator.calculate(account, all_open_orders, group, cache)
         inventory: mango.Inventory = mango.Inventory(mango.InventorySource.ACCOUNT,
                                                      mngo_accrued,
                                                      available_collateral,
@@ -285,7 +290,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         self.cache_address: PublicKey = cache_address
         self.account_address: PublicKey = account_address
 
-        self.collateral_calculator: mango.CollateralCalculator = mango.PerpCollateralCalculator()
+        self.collateral_calculator: CollateralCalculator = PerpCollateralCalculator()
 
     def poll(self, context: mango.Context) -> ModelState:
         addresses: typing.List[PublicKey] = [
@@ -310,7 +315,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         base_value = self.market.lot_size_converter.base_size_lots_to_number(base_lots)
         base_token_value = mango.TokenValue(self.market.base, base_value)
         quote_token_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.quote.symbol)
-        available_collateral: TokenValue = self.collateral_calculator.calculate(account, {}, cache)
+        available_collateral: TokenValue = self.collateral_calculator.calculate(account, {}, group, cache)
         inventory: mango.Inventory = mango.Inventory(mango.InventorySource.ACCOUNT,
                                                      perp_account.mngo_accrued,
                                                      available_collateral,

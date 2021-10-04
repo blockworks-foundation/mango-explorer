@@ -156,7 +156,7 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
                     latest_open_orders_observer = oo_watcher
 
         inventory_watcher = mango.SpotInventoryAccountWatcher(
-            market, latest_account_observer, all_open_orders_watchers, cache_watcher)
+            market, latest_account_observer, latest_group_observer, all_open_orders_watchers, cache_watcher)
         latest_bids_watcher = mango.build_serum_orderbook_side_watcher(
             context, websocket_manager, health_check, market.underlying_serum_market, mango.OrderBookSideType.BIDS)
         latest_asks_watcher = mango.build_serum_orderbook_side_watcher(
@@ -165,7 +165,8 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
         order_owner = account.address
         cache = mango.Cache.load(context, group.cache)
         cache_watcher = mango.build_cache_watcher(context, websocket_manager, health_check, cache, group)
-        inventory_watcher = mango.PerpInventoryAccountWatcher(market, latest_account_observer, cache_watcher, group)
+        inventory_watcher = mango.PerpInventoryAccountWatcher(
+            market, latest_account_observer, latest_group_observer, cache_watcher, group)
         latest_open_orders_observer = mango.build_perp_open_orders_watcher(
             context, websocket_manager, health_check, market, account, group, account_subscription)
         latest_bids_watcher = mango.build_perp_orderbook_side_watcher(

@@ -21,7 +21,9 @@ from decimal import Decimal
 
 from .account import Account
 from .cache import Cache
-from .collateralcalculator import CollateralCalculator, SpotCollateralCalculator, PerpCollateralCalculator
+from .calculators.collateralcalculator import CollateralCalculator
+from .calculators.spotcollateralcalculator import SpotCollateralCalculator
+from .calculators.perpcollateralcalculator import PerpCollateralCalculator
 from .group import Group
 from .market import InventorySource, Market
 from .openorders import OpenOrders
@@ -58,8 +60,9 @@ class Inventory:
 
 
 class SpotInventoryAccountWatcher:
-    def __init__(self, market: Market, account_watcher: Watcher[Account], all_open_orders_watchers: typing.Sequence[Watcher[OpenOrders]], cache_watcher: Watcher[Cache]):
+    def __init__(self, market: Market, account_watcher: Watcher[Account], group_watcher: Watcher[Group], all_open_orders_watchers: typing.Sequence[Watcher[OpenOrders]], cache_watcher: Watcher[Cache]):
         self.account_watcher: Watcher[Account] = account_watcher
+        self.group_watcher: Watcher[Group] = group_watcher
         self.all_open_orders_watchers: typing.Sequence[Watcher[OpenOrders]] = all_open_orders_watchers
         self.cache_watcher: Watcher[Cache] = cache_watcher
         account: Account = account_watcher.latest
@@ -72,15 +75,16 @@ class SpotInventoryAccountWatcher:
     @property
     def latest(self) -> Inventory:
         account: Account = self.account_watcher.latest
+        group: Group = self.group_watcher.latest
         cache: Cache = self.cache_watcher.latest
 
         # Spot markets don't accrue MNGO liquidity incentives
-        mngo = account.group.find_token_info_by_symbol("MNGO").token
+        mngo = group.find_token_info_by_symbol("MNGO").token
         mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
 
         all_open_orders: typing.Dict[str, OpenOrders] = {
             str(oo_watcher.latest.address): oo_watcher.latest for oo_watcher in self.all_open_orders_watchers}
-        available_collateral: TokenValue = self.collateral_calculator.calculate(account, all_open_orders, cache)
+        available_collateral: TokenValue = self.collateral_calculator.calculate(account, all_open_orders, group, cache)
 
         base_value = account.net_assets[self.base_index]
         if base_value is None:
@@ -95,9 +99,10 @@ class SpotInventoryAccountWatcher:
 
 
 class PerpInventoryAccountWatcher:
-    def __init__(self, market: PerpMarket, account_watcher: Watcher[Account], cache_watcher: Watcher[Cache], group: Group):
+    def __init__(self, market: PerpMarket, account_watcher: Watcher[Account], group_watcher: Watcher[Group], cache_watcher: Watcher[Cache], group: Group):
         self.market: PerpMarket = market
         self.account_watcher: Watcher[Account] = account_watcher
+        self.group_watcher: Watcher[Group] = group_watcher
         self.cache_watcher: Watcher[Cache] = cache_watcher
         self.perp_account_index: int = group.find_perp_market_index(market.address)
         account: Account = account_watcher.latest
@@ -108,13 +113,14 @@ class PerpInventoryAccountWatcher:
     @property
     def latest(self) -> Inventory:
         account: Account = self.account_watcher.latest
+        group: Group = self.group_watcher.latest
         cache: Cache = self.cache_watcher.latest
         perp_account = account.perp_accounts[self.perp_account_index]
         if perp_account is None:
             raise Exception(
                 f"Could not find perp account for {self.market.symbol} in account {account.address} at index {self.perp_account_index}.")
 
-        available_collateral: TokenValue = self.collateral_calculator.calculate(account, {}, cache)
+        available_collateral: TokenValue = self.collateral_calculator.calculate(account, {}, group, cache)
 
         base_lots = perp_account.base_position
         base_value = self.market.lot_size_converter.base_size_lots_to_number(base_lots)

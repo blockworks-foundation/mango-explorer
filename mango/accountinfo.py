@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
+import json
 import logging
 import time
 import typing
@@ -46,6 +47,18 @@ class AccountInfo:
     def encoded_data(self) -> typing.Sequence:
         return encode_binary(self.data)
 
+    def save_json(self, filename: str) -> None:
+        data = {
+            "address": str(self.address),
+            "executable": self.executable,
+            "lamports": str(self.lamports),
+            "owner": str(self.owner),
+            "rent_epoch": str(self.rent_epoch),
+            "data": encode_binary(self.data)
+        }
+        with open(filename, "w") as json_file:
+            json.dump(data, json_file, indent=4)
+
     def __str__(self) -> str:
         return f"""« AccountInfo [{self.address}]:
     Owner: {self.owner}
@@ -64,6 +77,18 @@ class AccountInfo:
             return None
 
         return AccountInfo._from_response_values(result["value"], address)
+
+    @staticmethod
+    def load_json(filename: str) -> "AccountInfo":
+        with open(filename) as json_file:
+            accountinfo_data = json.load(json_file)
+            address: PublicKey = PublicKey(accountinfo_data["address"])
+            executable: bool = accountinfo_data["executable"]
+            lamports: Decimal = Decimal(accountinfo_data["lamports"])
+            owner: PublicKey = PublicKey(accountinfo_data["owner"])
+            rent_epoch: Decimal = Decimal(accountinfo_data["lamports"])
+            data: bytes = decode_binary(accountinfo_data["data"])
+            return AccountInfo(address, executable, lamports, owner, rent_epoch, data)
 
     @staticmethod
     def load_multiple(context: Context, addresses: typing.Sequence[PublicKey]) -> typing.List["AccountInfo"]:

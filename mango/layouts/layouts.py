@@ -164,7 +164,7 @@ class DatetimeAdapter(construct.Adapter):
 class FloatI80F48Adapter(construct.Adapter):
     def __init__(self):
         self.size = 16
-        construct.Adapter.__init__(self, construct.BytesInteger(self.size, swapped=True))
+        construct.Adapter.__init__(self, construct.BytesInteger(self.size, signed=True, swapped=True))
 
         # For our string of bits, our 'fixed point' is between the 10th byte and 11th byte. We want
         # the last 6 bytes to be fractional, so:
@@ -464,17 +464,17 @@ PERP_MARKET_INFO = construct.Struct(
 #     pub signer_nonce: u64,
 #     pub signer_key: Pubkey,
 #     pub admin: Pubkey,          // Used to add new markets and adjust risk params
-#     pub serum_program_address: Pubkey, // Consider allowing more
+#     pub dex_program_id: Pubkey, // Consider allowing more
 #     pub mango_cache: Pubkey,
 #     pub valid_interval: u64,
 #
-#     // DAO vault is funded by the Mango DAO with USDC and can be withdrawn by the DAO
-#     pub dao_vault: Pubkey,
+#     // insurance vault is funded by the Mango DAO with USDC and can be withdrawn by the DAO
+#     pub insurance_vault: Pubkey,
 #     pub srm_vault: Pubkey,
 #     pub msrm_vault: Pubkey,
+#     pub fees_vault: Pubkey,
 #
-#     pub padding: [u8; 64], // padding used for future expansions
-#
+#     pub padding: [u8; 32], // padding used for future expansions
 # }
 # ```
 GROUP = construct.Struct(
@@ -490,10 +490,11 @@ GROUP = construct.Struct(
     "serum_program_address" / PublicKeyAdapter(),
     "cache" / PublicKeyAdapter(),
     "valid_interval" / DecimalAdapter(),
-    "dao_vault" / PublicKeyAdapter(),
+    "insurance_vault" / PublicKeyAdapter(),
     "srm_vault" / PublicKeyAdapter(),
     "msrm_vault" / PublicKeyAdapter(),
-    construct.Padding(64)
+    "fees_vault" / PublicKeyAdapter(),
+    construct.Padding(32)
 )
 
 # # 🥭 ROOT_BANK

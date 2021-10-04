@@ -54,6 +54,14 @@ class OpenOrders(AddressableAccount):
         self.placed_orders: typing.Sequence[PlacedOrder] = placed_orders
         self.referrer_rebate_accrued: Decimal = referrer_rebate_accrued
 
+    @property
+    def base_token_locked(self) -> Decimal:
+        return self.base_token_total - self.base_token_free
+
+    @property
+    def quote_token_locked(self) -> Decimal:
+        return self.quote_token_total - self.quote_token_free
+
     # Sometimes pyserum wants to take its own PySerumOpenOrdersAccount as a parameter (e.g. in settle_funds())
     def to_pyserum(self) -> PySerumOpenOrdersAccount:
         return PySerumOpenOrdersAccount.from_bytes(self.address, self.account_info.data)

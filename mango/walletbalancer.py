@@ -22,6 +22,7 @@ from decimal import Decimal
 
 from .account import Account
 from .context import Context
+from .group import Group
 from .token import Token
 from .tokenvalue import TokenValue
 from .tradeexecutor import TradeExecutor
@@ -374,9 +375,10 @@ class LiveWalletBalancer(WalletBalancer):
 # This is the high-level class that does much of the work.
 #
 class LiveAccountBalancer(WalletBalancer):
-    def __init__(self, account: Account, trade_executor: TradeExecutor, targets: typing.Sequence[TargetBalance], action_threshold: Decimal):
+    def __init__(self, account: Account, group: Group, trade_executor: TradeExecutor, targets: typing.Sequence[TargetBalance], action_threshold: Decimal):
         super().__init__()
         self.account: Account = account
+        self.group: Group = group
         self.trade_executor: TradeExecutor = trade_executor
         self.targets: typing.Sequence[TargetBalance] = targets
         self.action_threshold: Decimal = action_threshold
@@ -414,13 +416,13 @@ class LiveAccountBalancer(WalletBalancer):
         sorted_changes = sort_changes_for_trades(filtered_changes)
         self._make_changes(sorted_changes)
 
-        updated_account: Account = Account.load(context, self.account.address, self.account.group)
+        updated_account: Account = Account.load(context, self.account.address, self.group)
         updated_balances = [
             basket_token.net_value for basket_token in updated_account.basket_tokens if basket_token is not None]
         self.logger.info(f"Finishing balances: {padding}{balances_report(updated_balances)}")
 
     def _make_changes(self, balance_changes: typing.Sequence[TokenValue]):
-        quote = self.account.group.shared_quote_token.token.symbol
+        quote = self.account.shared_quote_token.token_info.token.symbol
         for change in balance_changes:
             market_symbol = f"{change.token.symbol}/{quote}"
             if change.value < 0:

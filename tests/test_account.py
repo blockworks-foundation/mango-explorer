@@ -23,18 +23,18 @@ def test_construction():
     borrow2 = fake_token_value(Decimal("0.2"))
     borrow3 = fake_token_value(Decimal("0.3"))
     basket = [
-        mango.AccountBasketBaseToken(fake_token_info(), deposit1, borrow1,
+        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), deposit1, borrow1,
                                      fake_seeded_public_key("spot openorders 1"), fake_seeded_public_key("perp1")),
-        mango.AccountBasketBaseToken(fake_token_info(), deposit2, borrow2,
+        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), deposit2, borrow2,
                                      fake_seeded_public_key("spot openorders 2"), fake_seeded_public_key("perp2")),
-        mango.AccountBasketBaseToken(fake_token_info(), deposit3, borrow3,
+        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), deposit3, borrow3,
                                      fake_seeded_public_key("spot openorders 3"), fake_seeded_public_key("perp3")),
     ]
     msrm_amount = Decimal(0)
     being_liquidated = False
     is_bankrupt = False
 
-    actual = mango.Account(account_info, mango.Version.V1, meta_data, group, owner, info, quote,
+    actual = mango.Account(account_info, mango.Version.V1, meta_data, group, "Test Group", owner, info, quote,
                            in_margin_basket, active_in_basket, basket, msrm_amount, being_liquidated,
                            is_bankrupt)
 
@@ -42,7 +42,6 @@ def test_construction():
     assert actual.logger is not None
     assert actual.version == mango.Version.V1
     assert actual.meta_data == meta_data
-    assert actual.group == group
     assert actual.owner == owner
     assert actual.basket_indices == active_in_basket
     assert actual.in_margin_basket == in_margin_basket

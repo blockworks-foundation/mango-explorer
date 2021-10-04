@@ -341,7 +341,7 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, accou
     instructions = [
         TransactionInstruction(
             keys=[
-                AccountMeta(is_signer=False, is_writable=False, pubkey=account.group.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=account.group_address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
                 AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.address),

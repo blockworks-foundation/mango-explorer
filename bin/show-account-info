@@ -13,8 +13,9 @@ import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
 mango.ContextBuilder.add_command_line_parameters(parser)
-parser.add_argument("--address", type=PublicKey, required=True,
-                    help="address of the account")
+parser.add_argument("--address", type=PublicKey, required=True, help="address of the account")
+parser.add_argument("--filename", type=str, required=False,
+                    help="filename for saving the JSON-formatted AccountInfo data")
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -23,5 +24,8 @@ account_info = mango.AccountInfo.load(context, args.address)
 if account_info is None:
     print(f"No account at '{args.address}'")
 else:
-    print(account_info)
-    print("Account Data:", account_info.encoded_data())
+    if args.filename is not None:
+        account_info.save_json(args.filename)
+    else:
+        print(account_info)
+        print("Account Data:", account_info.encoded_data())

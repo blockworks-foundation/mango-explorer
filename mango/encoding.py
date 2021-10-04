@@ -58,7 +58,7 @@ def decode_binary(encoded: typing.Sequence) -> bytes:
 # Inverse of `decode_binary()`, this takes a binary list and encodes it (using base 64), then returns the encoded string and the string "base64" in an array.
 #
 def encode_binary(decoded: bytes) -> typing.Sequence:
-    return [base64.b64encode(decoded), "base64"]
+    return [base64.b64encode(decoded).decode(), "base64"]
 
 
 # ## encode_key() function

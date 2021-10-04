@@ -40,6 +40,7 @@ def test_group_layout():
     assert group.serum_program_address == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
     assert group.cache == PublicKey("PJhM2enPpZH7E9wgw7Sqt8S2p4mr3Bc7SycawQwfY7b")
     assert group.valid_interval == 5
-    assert group.dao_vault == PublicKey("14gfuPWjUQnYXpsxs4WgsjafUrJctKkR9AMFH7fjvTgR")
+    assert group.insurance_vault == PublicKey("14gfuPWjUQnYXpsxs4WgsjafUrJctKkR9AMFH7fjvTgR")
     assert group.srm_vault == PublicKey("23Z3FWjXdt18FiZUwfsnQkUDvF14MneS7uoMYytfNe3G")
     assert group.msrm_vault == PublicKey("Qjf6vWMKPwEMLMM6ci9tudUWZ2t8zVXHqHverDWFx9S")
+    assert group.fees_vault is None

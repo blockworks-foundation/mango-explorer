@@ -15,6 +15,7 @@
 
 
 import logging
+import numbers
 import typing
 
 from decimal import Decimal
@@ -36,6 +37,8 @@ class TokenValue:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.token = token
         self.value = value
+        if not isinstance(self.value, Decimal):
+            raise Exception(f"Value is {type(self.value)}, not Decimal: {self.value}")
 
     def shift_to_native(self) -> "TokenValue":
         new_value = self.token.shift_to_native(self.value)
@@ -117,10 +120,42 @@ class TokenValue:
                 f"Cannot subtract TokenValues from different tokens ({self.token} and {token_value_to_subtract.token}).")
         return TokenValue(self.token, self.value - token_value_to_subtract.value)
 
+    def __mul__(self, token_value_to_multiply: "TokenValue") -> "TokenValue":
+        # Multiplying by another TokenValue is assumed to be a token value multiplied by a token price.
+        # The result should be denominated in the currency of the price.
+        return TokenValue(token_value_to_multiply.token, self.value * token_value_to_multiply.value)
+
+    def __lt__(self, other):
+        if isinstance(other, numbers.Number):
+            return self.value < other
+
+        if not isinstance(other, TokenValue):
+            return NotImplemented
+
+        if self.token != other.token:
+            raise Exception(
+                f"Cannot compare token values when one token is {self.token.symbol} and the other is {other.token.symbol}.")
+        return self.value < other.value
+
+    def __gt__(self, other):
+        if isinstance(other, numbers.Number):
+            return self.value > other
+
+        if not isinstance(other, TokenValue):
+            return NotImplemented
+
+        if self.token != other.token:
+            raise Exception(
+                f"Cannot compare token values when one token is {self.token.symbol} and the other is {other.token.symbol}.")
+        return self.value > other.value
+
     def __eq__(self, other: typing.Any) -> bool:
         if isinstance(other, TokenValue) and self.token == other.token and self.value == other.value:
             return True
         return False
+
+    def __format__(self, format_spec):
+        return format(str(self), format_spec)
 
     def __str__(self) -> str:
         name = "« 𝚄𝚗-𝙽𝚊𝚖𝚎𝚍 𝚃𝚘𝚔𝚎𝚗 »"

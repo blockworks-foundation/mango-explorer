@@ -18,6 +18,8 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
+from .constants import SYSTEM_PROGRAM_ADDRESS
+
 
 # # 🥭 PerpMarketInfo class
 #
@@ -41,10 +43,11 @@ class PerpMarketInfo():
         liquidation_fee: Decimal = round(layout.liquidation_fee, 8)
         base_lot_size: Decimal = layout.base_lot_size
         quote_lot_size: Decimal = layout.quote_lot_size
+
         return PerpMarketInfo(perp_market, maint_asset_weight, init_asset_weight, maint_liab_weight, init_liab_weight, liquidation_fee, base_lot_size, quote_lot_size)
 
     def from_layout_or_none(layout: typing.Any) -> typing.Optional["PerpMarketInfo"]:
-        if layout.perp_market is None:
+        if (layout.perp_market is None) or (layout.perp_market == SYSTEM_PROGRAM_ADDRESS):
             return None
 
         return PerpMarketInfo.from_layout(layout)

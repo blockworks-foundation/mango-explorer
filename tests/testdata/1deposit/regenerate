@@ -1,0 +1,18 @@
+#! /usr/bin/env bash
+
+export CLUSTER_NAME=devnet
+
+# 1 BTC deposit
+show-account-info --address ASo5EzLWSUJo2RKvMut2G3C87rsuSSPWKSXiXpSUJtR4 --filename account.json
+
+show-account-info --address HUBX4iwWEUK5VrXXXcB7uhuKrfT4fpu2T9iZbg712JrN --filename root_bank0.json
+show-account-info --address CY4nMV9huW5KCYFxWChrmoLwGCsZiXoiREeo2PMrBm5o --filename root_bank1.json
+show-account-info --address BeEoyDq1v2DYJCoXDQAJKfmrsoRRvfmV856f2ijkXbtp --filename root_bank2.json
+show-account-info --address AxwY5sgwSq5Uh8GD6A6ZtSzGd5fqvW2hwgGLLgZ4v2eW --filename root_bank3.json
+show-account-info --address 8GC81raaLjhTx3yedctxCJW46qdmmSRybH2s1eFYFFxT --filename root_bank4.json
+show-account-info --address 73W29LAZog2zSyE1uNYivBW8SMZQX3WBX4qfTMrMJxW2 --filename root_bank5.json
+show-account-info --address 49S76N83tSBBozugLtNYrMojFqDb3VvYq4wBB6bcAhfV --filename root_bank6.json
+show-account-info --address 7JTHE8C1kvB4h67RVvhdHjDqHXsWkSeoKcBsHV7wVhu --filename root_bank7.json
+
+show-account-info --address Ec2enZyoC4nGpEfu2sUNAa2nUGJHWxoUWYSEJ2hNTWTA --filename group.json
+show-account-info --address 8mFQbdXsFXt3R3cu3oSNS3bDZRwJRP18vyzd9J278J9z --filename cache.json

@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath(
 import mango  # nopep8
 
 
-def report_accrued(basket_token: mango.AccountBasketBaseToken):
+def report_accrued(basket_token: mango.AccountBasketBaseToken) -> None:
     symbol: str = basket_token.token_info.token.symbol
     if basket_token.perp_account is None:
         accrued: mango.TokenValue = mango.TokenValue(basket_token.token_info.token, Decimal(0))
@@ -47,7 +47,7 @@ def build_redeem_instruction_for_account(context: mango.Context, wallet: mango.W
                                          mngo: mango.TokenInfo, account: mango.Account,
                                          perp_market: mango.PerpMarket,
                                          basket_token: typing.Optional[mango.AccountBasketBaseToken]):
-    if (basket_token is None) or basket_token.perp_account.mngo_accrued.value == 0:
+    if (basket_token is None) or (basket_token.perp_account is None) or basket_token.perp_account.mngo_accrued.value == 0:
         return mango.CombinableInstructions.empty()
 
     report_accrued(basket_token)

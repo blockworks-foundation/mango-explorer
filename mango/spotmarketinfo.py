@@ -18,6 +18,8 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
+from .constants import SYSTEM_PROGRAM_ADDRESS
+
 
 # # 🥭 SpotMarketInfo class
 #
@@ -38,7 +40,7 @@ class SpotMarketInfo():
         return SpotMarketInfo(spot_market, maint_asset_weight, init_asset_weight, maint_liab_weight, init_liab_weight)
 
     def from_layout_or_none(layout: typing.Any) -> typing.Optional["SpotMarketInfo"]:
-        if layout.spot_market is None:
+        if (layout.spot_market is None) or (layout.spot_market == SYSTEM_PROGRAM_ADDRESS):
             return None
 
         return SpotMarketInfo.from_layout(layout)

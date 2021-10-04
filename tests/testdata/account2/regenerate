@@ -1,0 +1,22 @@
+#! /usr/bin/env bash
+
+export CLUSTER_NAME=mainnet
+show-account-info --address AMzanZxMirPCgGcBoH9kw4Jzi9LFMomyUCXbpzDeL2T8 --filename root_bank0.json
+show-account-info --address 8HjXYFntHMDNJKCJpHFufDaFYXfuAk6c6odfFnWc4xWy --filename root_bank1.json
+show-account-info --address 8VwAANqu3t4KQKpMq7wrS6yg5GTHwJBFsrK4Tk2cFN3q --filename root_bank2.json
+show-account-info --address FDpHjPQnUkmYVpAEVBpzb3sQgjZM7fanJoRb1VVtjF6u --filename root_bank3.json
+show-account-info --address 7jH1uLmiB2zbHNe6juZZYjQCrvquakTwd3yMaQpeP8rR --filename root_bank4.json
+show-account-info --address 4GYDmgvMpBx2n2iSmaS1xhZnwebR2gJ5V7UYUBA1PkJi --filename root_bank5.json
+show-account-info --address AjMbjA1JsHh574Eo1RRV2XXtB8St139oBXKPXPo2HLdU --filename root_bank6.json
+show-account-info --address 7TNHrBUDH3FL9uy9hxjmRcKNNaCBG9sYPuDJSJuj3LGs --filename root_bank7.json
+show-account-info --address 6cMrtzhWNEEDkcSMx19orcred8h9HyRb31MtbCkKDdf6 --filename root_bank8.json
+
+show-account-info --address 98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue --filename group.json
+show-account-info --address EBDRoayCDDUvDgCimta45ajQeXbexv7aKqJubruqpyvu --filename cache.json
+
+show-account-info --address 2AHpoNPb8hYeXatFBy7jy79Q1PyLmJd4rRunpozR4TRj --filename openorders0.json
+show-account-info --address 3Zpr7fQL2yj1w8fipHhNuBjWfpSXqJ7eLFk5sd8N2t7C --filename openorders1.json
+
+# From Nicky
+# 'this mango account should be 29.2%'
+show-account-info --address AWFvEE8FXUqtDHLGWdoEyDiJPcnxGhen61LAAKk8PJJC --filename account.json

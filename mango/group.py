@@ -20,10 +20,11 @@ from solana.publickey import PublicKey
 
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
+from .cache import Cache, PriceCache, PerpMarketCache
 from .context import Context
 from .layouts import layouts
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
-from .marketlookup import MarketLookup
+
 from .metadata import Metadata
 from .perpmarketinfo import PerpMarketInfo
 from .rootbank import RootBank
@@ -84,7 +85,7 @@ class Group(AddressableAccount):
                  basket: typing.Sequence[GroupBasketMarket],
                  signer_nonce: Decimal, signer_key: PublicKey,
                  admin: PublicKey, serum_program_address: PublicKey, cache: PublicKey, valid_interval: Decimal,
-                 dao_vault: PublicKey, srm_vault: PublicKey, msrm_vault: PublicKey):
+                 insurance_vault: PublicKey, srm_vault: PublicKey, msrm_vault: PublicKey, fees_vault: PublicKey):
         super().__init__(account_info)
         self.version: Version = version
         self.name: str = name
@@ -99,9 +100,10 @@ class Group(AddressableAccount):
         self.serum_program_address: PublicKey = serum_program_address
         self.cache: PublicKey = cache
         self.valid_interval: Decimal = valid_interval
-        self.dao_vault: PublicKey = dao_vault
+        self.insurance_vault: PublicKey = insurance_vault
         self.srm_vault: PublicKey = srm_vault
         self.msrm_vault: PublicKey = msrm_vault
+        self.fees_vault: PublicKey = fees_vault
 
     @property
     def base_tokens(self) -> typing.Sequence[typing.Optional[TokenInfo]]:
@@ -128,11 +130,8 @@ class Group(AddressableAccount):
         return Group._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item)
 
     @staticmethod
-    def from_layout(context: Context, layout: typing.Any, name: str, account_info: AccountInfo, version: Version, token_lookup: TokenLookup, market_lookup: MarketLookup) -> "Group":
+    def from_layout(layout: typing.Any, name: str, account_info: AccountInfo, version: Version, root_banks: typing.Sequence[RootBank], token_lookup: TokenLookup) -> "Group":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
-
-        root_bank_addresses = [ti.root_bank for ti in layout.tokens if ti is not None and ti.root_bank is not None]
-        root_banks = RootBank.load_multiple(context, root_bank_addresses)
         tokens: typing.List[typing.Optional[TokenInfo]] = [
             TokenInfo.from_layout_or_none(t, token_lookup, root_banks) for t in layout.tokens]
 
@@ -147,10 +146,6 @@ class Group(AddressableAccount):
                     layout.spot_markets[index])
                 if spot_market_info is None:
                     raise Exception(f"Could not find spot market at index {index} of group layout.")
-                # spot_lot_size_converter: LotSizeConverter = RaisingLotSizeConverter()
-                # if spot_market_info is not None:
-                #     spot_lot_size_converter = LotSizeConverter(
-                #         base_token_info.token, spot_market_info.base_lot_size, quote_token_info.token, spot_market_info.)
                 perp_market_info: typing.Optional[PerpMarketInfo] = PerpMarketInfo.from_layout_or_none(
                     layout.perp_markets[index])
                 perp_lot_size_converter: LotSizeConverter = RaisingLotSizeConverter()
@@ -172,11 +167,12 @@ class Group(AddressableAccount):
         serum_program_address: PublicKey = layout.serum_program_address
         cache: PublicKey = layout.cache
         valid_interval: Decimal = layout.valid_interval
-        dao_vault: PublicKey = layout.dao_vault
+        insurance_vault: PublicKey = layout.insurance_vault
         srm_vault: PublicKey = layout.srm_vault
         msrm_vault: PublicKey = layout.msrm_vault
+        fees_vault: PublicKey = layout.fees_vault
 
-        return Group(account_info, version, name, meta_data, quote_token_info, in_basket, basket, signer_nonce, signer_key, admin, serum_program_address, cache, valid_interval, dao_vault, srm_vault, msrm_vault)
+        return Group(account_info, version, name, meta_data, quote_token_info, in_basket, basket, signer_nonce, signer_key, admin, serum_program_address, cache, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault)
 
     @staticmethod
     def parse(context: Context, account_info: AccountInfo) -> "Group":
@@ -185,9 +181,21 @@ class Group(AddressableAccount):
             raise Exception(
                 f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP.sizeof()})")
 
-        layout = layouts.GROUP.parse(data)
         name = context.lookup_group_name(account_info.address)
-        return Group.from_layout(context, layout, name, account_info, Version.V3, context.token_lookup, context.market_lookup)
+        layout = layouts.GROUP.parse(data)
+        root_bank_addresses = [ti.root_bank for ti in layout.tokens if ti is not None and ti.root_bank is not None]
+        root_banks = RootBank.load_multiple(context, root_bank_addresses)
+        return Group.parse_locally(account_info, name, root_banks, context.token_lookup)
+
+    @staticmethod
+    def parse_locally(account_info: AccountInfo, name: str, root_banks: typing.Sequence[RootBank], token_lookup: TokenLookup) -> "Group":
+        data = account_info.data
+        if len(data) != layouts.GROUP.sizeof():
+            raise Exception(
+                f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP.sizeof()})")
+
+        layout = layouts.GROUP.parse(data)
+        return Group.from_layout(layout, name, account_info, Version.V3, root_banks, token_lookup)
 
     @staticmethod
     def _map_sequence_to_basket_indices(items: typing.Sequence[GroupBasketMarket], in_basket: typing.Sequence[bool], selector: typing.Callable[[typing.Any], TMappedGroupBasketValue]) -> typing.Sequence[typing.Optional[TMappedGroupBasketValue]]:
@@ -231,6 +239,20 @@ class Group(AddressableAccount):
 
         raise Exception(f"Could not find base token {base_token} in group {self.address}")
 
+    def find_token_market_index_or_none(self, token: Token) -> typing.Optional[int]:
+        for index, bt in enumerate(self.base_tokens):
+            if bt is not None and bt.token == token:
+                return index
+
+        return None
+
+    def find_token_market_index(self, token: Token) -> int:
+        index = self.find_token_market_index_or_none(token)
+        if index is not None:
+            return index
+
+        raise Exception(f"Could not find token {token} in group {self.address}")
+
     def find_token_info_by_token(self, token: Token) -> TokenInfo:
         for token_info in self.tokens:
             if token_info is not None and token_info.token == token:
@@ -244,6 +266,28 @@ class Group(AddressableAccount):
                 return token_info
 
         raise Exception(f"Could not find token info for symbol '{symbol}' in group {self.address}")
+
+    def token_price_from_cache(self, cache: Cache, token: Token) -> TokenValue:
+        if token == self.shared_quote_token.token:
+            # The price of 1 unit of the shared quote token is always 1.
+            return TokenValue(token, Decimal(1))
+
+        token_index: int = self.find_token_market_index(token)
+        cached_price: typing.Optional[PriceCache] = cache.price_cache[token_index]
+        if cached_price is None:
+            raise Exception(f"Could not find price index of basket token {token.symbol}.")
+
+        price: Decimal = cached_price.price
+        decimals_difference = token.decimals - self.shared_quote_token.decimals
+        if decimals_difference != 0:
+            adjustment = 10 ** decimals_difference
+            price = price * adjustment
+
+        return TokenValue(self.shared_quote_token.token, price)
+
+    def perp_market_cache_from_cache(self, cache: Cache, token: Token) -> typing.Optional[PerpMarketCache]:
+        token_index: int = self.find_token_market_index(token)
+        return cache.perp_market_cache[token_index]
 
     def fetch_balances(self, context: Context, root_address: PublicKey) -> typing.Sequence[TokenValue]:
         balances: typing.List[TokenValue] = []
@@ -266,9 +310,10 @@ class Group(AddressableAccount):
     Admin: {self.admin}
     DEX Program ID: {self.serum_program_address}
     Cache: {self.cache}
-    DAO Vault: {self.dao_vault}
+    Insurance Vault: {self.insurance_vault}
     SRM Vault: {self.srm_vault}
     MSRM Vault: {self.msrm_vault}
+    Fees Vault: {self.fees_vault}
     Valid Interval: {self.valid_interval}
     Basket [{basket_count} markets]:
         {basket}

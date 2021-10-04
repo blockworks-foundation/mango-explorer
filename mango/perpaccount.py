@@ -33,7 +33,7 @@ class PerpAccount:
                  short_settled_funding: Decimal, bids_quantity: Decimal, asks_quantity: Decimal,
                  taker_base: Decimal, taker_quote: Decimal, mngo_accrued: TokenValue,
                  open_orders: PerpOpenOrders, lot_size_converter: LotSizeConverter,
-                 base_token_value: TokenValue):
+                 base_token_value: TokenValue, quote_position_raw: Decimal):
         self.base_position: Decimal = base_position
         self.quote_position: Decimal = quote_position
         self.long_settled_funding: Decimal = long_settled_funding
@@ -46,6 +46,7 @@ class PerpAccount:
         self.open_orders: PerpOpenOrders = open_orders
         self.lot_size_converter: LotSizeConverter = lot_size_converter
         self.base_token_value: TokenValue = base_token_value
+        self.quote_position_raw: Decimal = quote_position_raw
 
     @staticmethod
     def from_layout(layout: typing.Any, base_token: Token, quote_token: Token, open_orders: PerpOpenOrders, lot_size_converter: LotSizeConverter, mngo_token: Token) -> "PerpAccount":
@@ -63,9 +64,11 @@ class PerpAccount:
         base_position_raw = (base_position + taker_base) * lot_size_converter.base_lot_size
         base_token_value: TokenValue = TokenValue(base_token, base_token.shift_to_decimals(base_position_raw))
 
+        quote_position_raw: Decimal = quote_token.shift_to_decimals(quote_position)
+
         return PerpAccount(base_position, quote_position, long_settled_funding, short_settled_funding,
                            bids_quantity, asks_quantity, taker_base, taker_quote, mngo_accrued, open_orders,
-                           lot_size_converter, base_token_value)
+                           lot_size_converter, base_token_value, quote_position_raw)
 
     @property
     def empty(self) -> bool:
