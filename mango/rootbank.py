@@ -164,8 +164,8 @@ class RootBank(AddressableAccount):
     def __str__(self) -> str:
         return f"""« 𝚁𝚘𝚘𝚝𝙱𝚊𝚗𝚔 [{self.version}] {self.address}
     {self.meta_data}
-    Optimal Util: {self.optimal_util}
-    Optimal Rate: {self.optimal_rate}
+    Optimal Util: {self.optimal_util:,.4f}
+    Optimal Rate: {self.optimal_rate:,.4f}
     Max Rate: {self.max_rate}
     Node Banks:
         {self.node_banks}
