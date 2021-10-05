@@ -131,8 +131,8 @@ def fake_account():
     return None
 
 
-def fake_price(market: mango.Market = fake_loaded_market(), price: Decimal = Decimal(100)):
-    return mango.Price(mango.OracleSource("test", "test", mango.SupportedOracleFeature.MID_PRICE, market), datetime.datetime.now(), market, price, price, price, Decimal(0))
+def fake_price(market: mango.Market = fake_loaded_market(), price: Decimal = Decimal(100), bid: Decimal = Decimal(99), ask: Decimal = Decimal(101)):
+    return mango.Price(mango.OracleSource("test", "test", mango.SupportedOracleFeature.TOP_BID_AND_OFFER, market), datetime.datetime.now(), market, bid, price, ask, Decimal(0))
 
 
 def fake_placed_orders_container():
@@ -140,7 +140,7 @@ def fake_placed_orders_container():
 
 
 def fake_inventory():
-    return None
+    return mango.Inventory(mango.InventorySource.SPL_TOKENS, fake_token_value(Decimal(1)), fake_token_value(Decimal(100)), fake_token_value(Decimal(10)), fake_token_value(Decimal(10)))
 
 
 def fake_bids():

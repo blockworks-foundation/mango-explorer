@@ -38,6 +38,7 @@ class RatiosElement(Element):
         self.spread_ratios: typing.Sequence[Decimal] = args.ratios_spread or [DEFAULT_SPREAD_RATIO]
         self.position_size_ratios: typing.Sequence[Decimal] = args.ratios_position_size or [DEFAULT_POSITION_SIZE_RATIO]
         self.order_type: mango.OrderType = args.order_type
+        self.from_bid_ask: bool = args.ratios_from_bid_ask
 
         if len(self.spread_ratios) == 0:
             raise Exception("No spread ratios specified. Try the --ratios-spread parameter?")
@@ -54,6 +55,8 @@ class RatiosElement(Element):
                             help="ratio to apply to the mid-price to create the BUY and SELL price (can be specified multiple times but every occurrance must have a matching --position-size-ratio occurrance)")
         parser.add_argument("--ratios-position-size", type=Decimal, action="append",
                             help="ratio to apply to the available collateral to create the position size (can be specified multiple times but every occurrance must have a matching --spread-ratio occurrance)")
+        parser.add_argument("--ratios-from-bid-ask", action="store_true", default=False,
+                            help="calculate ratios from bid or ask, not mid price (default: False, which will use the mid price)")
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
@@ -64,8 +67,14 @@ class RatiosElement(Element):
             base_position_size = quote_value_to_risk / price.mid_price
 
             spread_ratio = self.spread_ratios[counter]
-            bid: Decimal = price.mid_price - (price.mid_price * spread_ratio)
-            ask: Decimal = price.mid_price + (price.mid_price * spread_ratio)
+            bid_price_base: Decimal = price.mid_price
+            ask_price_base: Decimal = price.mid_price
+            if self.from_bid_ask:
+                bid_price_base = price.top_bid
+                ask_price_base = price.top_ask
+
+            bid: Decimal = bid_price_base - (bid_price_base * spread_ratio)
+            ask: Decimal = ask_price_base + (ask_price_base * spread_ratio)
 
             bid_order = mango.Order.from_basic_info(mango.Side.BUY, price=bid,
                                                     quantity=base_position_size, order_type=self.order_type)
@@ -81,4 +90,5 @@ class RatiosElement(Element):
     def __str__(self) -> str:
         spread_ratios = ", ".join(map(str, self.spread_ratios)) or "None"
         position_size_ratios = ", ".join(map(str, self.position_size_ratios)) or "None"
-        return f"« 𝚁𝚊𝚝𝚒𝚘𝚜𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using ratios - spread(s): {spread_ratios}, position size(s): {position_size_ratios} »"
+        from_description = "from bid/ask" if self.from_bid_ask else "from mid price"
+        return f"« 𝚁𝚊𝚝𝚒𝚘𝚜𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using ratios - spread(s): {spread_ratios} {from_description}, position size(s): {position_size_ratios} »"

@@ -31,28 +31,39 @@ from ...modelstate import ModelState
 class MinimumChargeElement(Element):
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
-        self.minimum_charge_ratio: Decimal = args.minimumcharge_ratio
+        self.minimumcharge_ratio: Decimal = args.minimumcharge_ratio
+        self.minimumcharge_from_bid_ask: Decimal = args.minimumcharge_from_bid_ask
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--minimumcharge-ratio", type=Decimal, default=Decimal("0.0005"),
                             help="minimum fraction of the price to be accept as a spread")
+        parser.add_argument("--minimumcharge-from-bid-ask", action="store_true", default=False,
+                            help="calculate minimum charge from bid or ask, not mid price (default: False, which will use the mid price)")
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         # From Daffy on 26th July 2021: max(pyth_conf * 2, price * min_charge)
         # (Private chat link: https://discord.com/channels/@me/832570058861314048/869208592648134666)
         new_orders: typing.List[mango.Order] = []
         for order in orders:
-            minimum_charge = model_state.price.mid_price * self.minimum_charge_ratio
+            minimum_charge: Decimal
             new_price: typing.Optional[Decimal] = None
             if order.side == mango.Side.BUY:
-                current_charge = model_state.price.mid_price - order.price
+                buy_price: Decimal = model_state.price.mid_price
+                if self.minimumcharge_from_bid_ask:
+                    buy_price = model_state.price.top_bid
+                minimum_charge = buy_price * self.minimumcharge_ratio
+                current_charge = buy_price - order.price
                 if current_charge < minimum_charge:
-                    new_price = model_state.price.mid_price - minimum_charge
+                    new_price = buy_price - minimum_charge
             else:
-                current_charge = order.price - model_state.price.mid_price
+                sell_price: Decimal = model_state.price.mid_price
+                if self.minimumcharge_from_bid_ask:
+                    sell_price = model_state.price.top_ask
+                minimum_charge = sell_price * self.minimumcharge_ratio
+                current_charge = order.price - sell_price
                 if current_charge < minimum_charge:
-                    new_price = model_state.price.mid_price + minimum_charge
+                    new_price = sell_price + minimum_charge
 
             if new_price is None:
                 # All OK with current order
@@ -67,4 +78,4 @@ class MinimumChargeElement(Element):
         return new_orders
 
     def __str__(self) -> str:
-        return f"« 𝙼𝚒𝚗𝚒𝚖𝚞𝚖𝙲𝚑𝚊𝚛𝚐𝚎𝙴𝚕𝚎𝚖𝚎𝚗𝚝 - minimum charge ratio: {self.minimum_charge_ratio} »"
+        return f"« 𝙼𝚒𝚗𝚒𝚖𝚞𝚖𝙲𝚑𝚊𝚛𝚐𝚎𝙴𝚕𝚎𝚖𝚎𝚗𝚝 - minimum charge ratio: {self.minimumcharge_ratio} »"

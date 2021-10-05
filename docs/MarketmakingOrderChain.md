@@ -163,9 +163,13 @@ to a chain on ETH/USDC will force the spread on BUY and SELL orders to be 0.5 US
 
 > Accepts parameter: `--minimumcharge-ratio`
 
+> Accepts parameter: `--minimumcharge-from-bid-ask`
+
 This ensures that there’s a minimum value of spread to be paid by the taker.
 
 It’s possible that the configuration may lead to too small a spread to be profitable. You can use the `--minimumcharge-ratio` parameter to enforce a minimum spread. The default of 0.0005 is 0.05%.
+
+The default is to perform calculations based on the mid price. The `--minimumcharge-from-bid-ask` parameter specifies calculations are to be performed using the bid price (for BUYs) or ask price (for SELLs), not the mid price.
 
 
 ### `PreventPostOnlyCrossingBookElement`
@@ -183,9 +187,13 @@ This ensures that POST_ONLY orders that would corss the orderbook (and so be can
 
 > Accepts parameter: `--ratios-position-size`
 
+> Accepts parameter: `--ratios-from-bid-ask`
+
 The `RatiosElement` builds orders using the specified ratio of available collateral for the position size and the specified ratio of the price for the spread. The position size is specified using the `--ratios-position-size` parameter, and the spread is specified using the `--ratios-spread` parameter.
 
 It is possible to 'layer' orders by specifying the `--ratios-position-size` and `--ratios-spread` parameters multiple times. **Note**: both parameters must be specified the same number of times - for example, it is an error to specify 3 position size ratios and only 2 spread ratios.
+
+The default is to perform calculations based on the mid price. The `--ratios-from-bid-ask` parameter specifies spread calculations are to be performed using the bid price (for BUYs) or ask price (for SELLs), not the mid price.
 
 
 ### `RoundToLotSizeElement`
