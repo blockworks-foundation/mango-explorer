@@ -86,12 +86,18 @@ class NodeBank(AddressableAccount):
 #
 class RootBank(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
+                 optimal_util: Decimal, optimal_rate: Decimal, max_rate: Decimal,
                  node_banks: typing.Sequence[PublicKey], deposit_index: Decimal,
                  borrow_index: Decimal, last_updated: datetime):
         super().__init__(account_info)
         self.version: Version = version
 
         self.meta_data: Metadata = meta_data
+
+        self.optimal_util: Decimal = optimal_util
+        self.optimal_rate: Decimal = optimal_rate
+        self.max_rate: Decimal = max_rate
+
         self.node_banks: typing.Sequence[PublicKey] = node_banks
         self.deposit_index: Decimal = deposit_index
         self.borrow_index: Decimal = borrow_index
@@ -104,13 +110,18 @@ class RootBank(AddressableAccount):
     @staticmethod
     def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version) -> "RootBank":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
+
+        optimal_util: Decimal = layout.optimal_util
+        optimal_rate: Decimal = layout.optimal_rate
+        max_rate: Decimal = layout.max_rate
+
         num_node_banks: Decimal = layout.num_node_banks
         node_banks: typing.Sequence[PublicKey] = layout.node_banks[0:int(num_node_banks)]
         deposit_index: Decimal = layout.deposit_index
         borrow_index: Decimal = layout.borrow_index
         last_updated: datetime = layout.last_updated
 
-        return RootBank(account_info, version, meta_data, node_banks, deposit_index, borrow_index, last_updated)
+        return RootBank(account_info, version, meta_data, optimal_util, optimal_rate, max_rate, node_banks, deposit_index, borrow_index, last_updated)
 
     @staticmethod
     def parse(account_info: AccountInfo) -> "RootBank":
@@ -153,6 +164,9 @@ class RootBank(AddressableAccount):
     def __str__(self) -> str:
         return f"""« 𝚁𝚘𝚘𝚝𝙱𝚊𝚗𝚔 [{self.version}] {self.address}
     {self.meta_data}
+    Optimal Util: {self.optimal_util}
+    Optimal Rate: {self.optimal_rate}
+    Max Rate: {self.max_rate}
     Node Banks:
         {self.node_banks}
     Deposit Index: {self.deposit_index}
