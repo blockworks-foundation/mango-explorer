@@ -31,13 +31,18 @@ from .hedger import Hedger
 class PerpToSpotHedger(Hedger):
     def __init__(self, group: mango.Group, underlying_market: mango.PerpMarket,
                  hedging_market: mango.SpotMarket, market_operations: mango.MarketOperations,
-                 max_price_slippage_factor: Decimal):
+                 max_price_slippage_factor: Decimal, max_hedge_chunk_quantity: Decimal):
         super().__init__()
+        if (underlying_market.base != hedging_market.base) or (underlying_market.quote != hedging_market.quote):
+            raise Exception(
+                f"Market {hedging_market.symbol} cannot be used to hedge market {underlying_market.symbol}.")
+
         self.underlying_market: mango.PerpMarket = underlying_market
         self.hedging_market: mango.SpotMarket = hedging_market
         self.market_operations: mango.MarketOperations = market_operations
         self.buy_price_adjustment_factor: Decimal = Decimal("1") + max_price_slippage_factor
         self.sell_price_adjustment_factor: Decimal = Decimal("1") - max_price_slippage_factor
+        self.max_hedge_chunk_quantity: Decimal = max_hedge_chunk_quantity
         self.market_index: int = group.find_perp_market_index(underlying_market.address)
 
     def pulse(self, context: mango.Context, model_state: mango.ModelState):
@@ -72,6 +77,10 @@ class PerpToSpotHedger(Hedger):
 
                 adjusted_price: Decimal = model_state.price.mid_price * price_adjustment_factor
                 quantity: Decimal = abs(delta)
+                if (self.max_hedge_chunk_quantity > 0) and (quantity > self.max_hedge_chunk_quantity):
+                    self.logger.debug(
+                        f"Quantity to hedge ({quantity:,.8f}) is bigger than maximum quantity to hedge in one chunk {self.max_hedge_chunk_quantity:,.8f} - reducing quantity to {self.max_hedge_chunk_quantity:,.8f}.")
+                    quantity = self.max_hedge_chunk_quantity
                 order: mango.Order = mango.Order.from_basic_info(side, adjusted_price, quantity, mango.OrderType.IOC)
                 self.logger.info(
                     f"Hedging perp position {perp_position} and token balance {token_balance} with {side} of {quantity:,.8f} at {up_or_down} {adjusted_price:,.8f} on {self.hedging_market.symbol}\n\t{order}")

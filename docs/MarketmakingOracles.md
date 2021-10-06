@@ -7,7 +7,7 @@ The [Marketmaking Introduction](MarketmakingIntroduction.md) talks a bit about m
 Marketmakers usually want some external pricing information to derive the prices they use for bids and asks. This external price information is fetched and passed to the marketmaker by 'oracles'. An oracle is really just an external source of price information as far as the marketmaker is concerned.
 
 
-# Oracle Implementations
+# 🤔 Oracle Implementations
 
 `mango-explorer` provides the following oracle implementations:
 - `ftx` (uses [FTX](https://ftx.com) price data)
@@ -18,7 +18,7 @@ Marketmakers usually want some external pricing information to derive the prices
 Specifics to each of these implementations are detailed later in the 'Oracle Reference' section.
 
 
-# Fetching Prices
+# 🏷️ Fetching Prices
 
 You can see an example of using an oracle to fetch the current price by using the following command:
 ```
@@ -30,7 +30,7 @@ $ fetch-price --symbol BTC-PERP --provider market
 ```
 
 
-# In Practice
+# 🎽 In Practice
 
 There's one more wrinkle. Most of the time you want the marketmaker to use the oracle for the *current* market, but that's not necessarily always the case. Where normally you could specify:
 ```
@@ -45,7 +45,7 @@ $ marketmaker --market BTC-PERP --oracle-provider market --oracle-market BTC/USD
 **WARNING** You can also do very stupic things with this, like use ETH/USDC prices for quoting on BTC/USDC. Please be careful!
 
 
-# Oracle Reference
+# 📖 Oracle Reference
 
 ## FTX
 

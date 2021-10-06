@@ -38,11 +38,11 @@ parser.add_argument("--redeem-threshold", type=Decimal,
                     help="threshold above which liquidity incentives will be automatically moved to the account (default: no moving)")
 parser.add_argument("--pulse-interval", type=int, default=10,
                     help="number of seconds between each 'pulse' of the market maker")
-parser.add_argument("--event-queue-poll-interval", type=int, default=10,
-                    help="number of seconds between each 'poll' of the event queue (only used if --update-mode is POLL)")
-parser.add_argument("--hedge-market", type=str, help="spot market symbol to use for hedging (e.g. ETH/USDC)")
-parser.add_argument("--max-price-slippage-factor", type=Decimal, default=Decimal("0.05"),
+parser.add_argument("--hedging-market", type=str, help="spot market symbol to use for hedging (e.g. ETH/USDC)")
+parser.add_argument("--hedging-max-price-slippage-factor", type=Decimal, default=Decimal("0.05"),
                     help="the maximum value the IOC hedging order price can slip by when hedging (default is 0.05 for 5%%)")
+parser.add_argument("--hedging-max-chunk-quantity", type=Decimal, default=Decimal(0),
+                    help="the maximum quantity of the hedge asset that will be traded in a single pulse. Trades larger than this size will be 'chunked' and spread across subsequent hedge pulses.")
 parser.add_argument("--account-address", type=PublicKey,
                     help="address of the specific account to use, if more than one available")
 parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
@@ -98,13 +98,13 @@ cleanup(context, wallet, account, market, args.dry_run)
 
 
 hedger: mango.hedging.Hedger = mango.hedging.NullHedger()
-if args.hedge_market is not None:
+if args.hedging_market is not None:
     if not isinstance(market, mango.PerpMarket):
         raise Exception(f"Cannot hedge - market {market.symbol} is not a perp market.")
 
     underlying_market: mango.PerpMarket = market
 
-    hedging_market_symbol = args.hedge_market.upper()
+    hedging_market_symbol = args.hedging_market.upper()
     hedging_market_stub = context.market_lookup.find_by_symbol(hedging_market_symbol)
     if hedging_market_stub is None:
         raise Exception(f"Could not find market {hedging_market_symbol}")
@@ -119,7 +119,8 @@ if args.hedge_market is not None:
         context, wallet, account, hedging_market, args.dry_run)
 
     hedger = mango.hedging.PerpToSpotHedger(group, underlying_market, hedging_market,
-                                            hedging_market_operations, args.max_price_slippage_factor)
+                                            hedging_market_operations, args.hedging_max_price_slippage_factor,
+                                            args.hedging_max_chunk_quantity)
 
 
 order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
