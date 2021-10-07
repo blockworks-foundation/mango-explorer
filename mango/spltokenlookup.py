@@ -21,6 +21,7 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
+from .constants import DATA_PATH
 from .token import Token
 from .tokenlookup import TokenLookup
 
@@ -40,7 +41,7 @@ from .tokenlookup import TokenLookup
 #
 
 class SplTokenLookup(TokenLookup):
-    DefaultDataFilepath = os.path.join(os.path.dirname(__file__), "../data/solana.tokenlist.json")
+    DefaultDataFilepath = os.path.join(DATA_PATH, "solana.tokenlist.json")
 
     def __init__(self, filename: str, token_data: typing.Dict) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)

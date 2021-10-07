@@ -19,7 +19,7 @@ import os
 import sys
 import typing
 
-from .constants import WARNING_DISCLAIMER_TEXT
+from .constants import WARNING_DISCLAIMER_TEXT, DATA_PATH
 
 
 # # 🥭 parse_args
@@ -74,7 +74,7 @@ def parse_args(parser: argparse.ArgumentParser, logging_default=logging.INFO) ->
         all_arguments_rendered = "\n".join(all_arguments)
         logging.debug(f"{os.path.basename(sys.argv[0])} arguments:\n{all_arguments_rendered}")
 
-        version_filename: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.version"))
+        version_filename: str = os.path.abspath(os.path.join(DATA_PATH, "../.version"))
         if os.path.isfile(version_filename):
             with open(version_filename) as version_file:
                 version_text = version_file.read()

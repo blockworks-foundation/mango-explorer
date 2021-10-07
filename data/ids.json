@@ -2,7 +2,7 @@
   "cluster_urls": {
     "devnet": "https://mango.devnet.rpcpool.com",
     "localnet": "http://127.0.0.1:8899",
-    "mainnet": "https://mango.rpcpool.com/",
+    "mainnet": "https://mango.rpcpool.com/946ef7337da3f5b8d3e4a34e7f88",
     "testnet": "https://testnet.solana.com"
   },
   "groups": [
@@ -228,14 +228,14 @@
           "baseDecimals": 6,
           "quoteDecimals": 6,
           "marketIndex": 6,
-          "bidsKey": "AvKStCiY8LTp3oDFrMkiHHxxhxk4sQUWnGVcetm4kRpy",
-          "asksKey": "Hj9kckvMX96mQokfMBzNCYEYMLEBYKQ9WwSc1GxasW11",
-          "eventsKey": "58KcficuUqPDcMittSddhT8LzsPJoH46YP4uURoMo5EB"
+          "bidsKey": "Hf84mYadE1VqSvVWAvCWc9wqLXak4RwXiPb4A91EAUn5",
+          "asksKey": "DC1HsWWRCXVg3wk2NndS5LTbce3axwUwUZH1RgnV4oDN",
+          "eventsKey": "H9dZt8kvz1Fe5FyRisb77KcYTaN8LEbuVAfJSnAaEABz"
         },
         {
           "name": "COPE/USDC",
           "publicKey": "6fc7v3PmjZG9Lk2XTot6BywGyYLkBQuzuFKd4FpCsPxk",
-          "baseSymbol": "RAY",
+          "baseSymbol": "COPE",
           "baseDecimals": 6,
           "quoteDecimals": 6,
           "marketIndex": 7,
