@@ -11,11 +11,5 @@
         "--max-line-length",
         "120"
     ],
-    "shebang.associations": [
-        {
-            "pattern": "^#!/usr/bin/env pyston3$",
-            "language": "python"
-        }
-    ],
     "python.analysis.completeFunctionParens": true
 }

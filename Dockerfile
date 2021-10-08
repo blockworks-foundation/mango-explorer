@@ -2,17 +2,12 @@ FROM jupyter/scipy-notebook:latest
 
 USER root
 RUN apt-get update && apt-get -y install bc jq curl libxml2-dev libxslt-dev libffi-dev zlib1g-dev
-RUN curl -SL -o /var/tmp/pyston_2.2_20.04.deb https://github.com/pyston/pyston/releases/download/pyston_2.2/pyston_2.2_20.04.deb
-RUN apt-get -y install /var/tmp/pyston_2.2_20.04.deb
-RUN rm -f /var/tmp/pyston_2.2_20.04.deb
 USER ${NB_UID}
 
 COPY --chown=${NB_UID}:${NB_GID} requirements.txt /tmp/
 RUN pip install --quiet --no-cache-dir --requirement /tmp/requirements.txt && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
-
-RUN pip-pyston install --requirement /tmp/requirements.txt
 
 RUN sh -c "$(curl -sSfL https://release.solana.com/v1.8.0/install)"
 

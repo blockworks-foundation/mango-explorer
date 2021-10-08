@@ -57,7 +57,6 @@ Requirements:
 * [Python Construct Library](https://construct.readthedocs.io/en/latest/)
 * [Python Observables](https://rxpy.readthedocs.io/en/latest/)
 * [RxPy Backpressure](https://github.com/daliclass/rxpy-backpressure)
-* [Pyston](https://www.pyston.org/)
 
 
 # Support

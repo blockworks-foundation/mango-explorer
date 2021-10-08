@@ -88,9 +88,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 """
 
 
+# # _build_data_path
+#
+# The code needs access to some data files, such as the ids.json file that's used in multiple Mango projects. In
+# this project all these data files are kept in the /data directory, relative to the project root.
+#
+# Some situations can make it tricky accessing files in that known location though. (In particular, Nuitka
+# compilation to a standalone executable seems to make accessing internal paths with '..' in them impossible.)
+#
+# This function provides a consistent way to determine the correct data path for use throughout `mango-explorer`.
+#
 def _build_data_path() -> str:
     possibilities: typing.Sequence[str] = ["../data", "data", ".", "../../data", "../../../data"]
-    attempts: typing.Sequence[str] = []
+    attempts: typing.List[str] = []
     file_root: str = os.path.dirname(__file__)
     for possibility in possibilities:
         data_path: str = os.path.normpath(os.path.join(file_root, possibility))

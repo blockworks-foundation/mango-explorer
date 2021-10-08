@@ -1,4 +1,4 @@
-#!/usr/bin/env pyston3
+#!/usr/bin/env python3
 
 import argparse
 import logging
@@ -55,7 +55,7 @@ destination: PublicKey
 if account_info.owner == mango.SYSTEM_PROGRAM_ADDRESS:
     # This is a root wallet account - get the token account to use.
     destination = mango.TokenAccount.find_or_create_token_address_to_use(context, wallet, args.address, token)
-elif account_info.owner == mango.TOKEN_PROGRAM_ID and len(account_info.data) == ACCOUNT_LEN:
+elif account_info.owner == TOKEN_PROGRAM_ID and len(account_info.data) == ACCOUNT_LEN:
     # This is not a root wallet account, this is an SPL token account.
     destination = args.address
 else:
