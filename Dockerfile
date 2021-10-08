@@ -14,7 +14,7 @@ RUN pip install --quiet --no-cache-dir --requirement /tmp/requirements.txt && \
 
 RUN pip-pyston install --requirement /tmp/requirements.txt
 
-RUN sh -c "$(curl -sSfL https://release.solana.com/v1.7.1/install)"
+RUN sh -c "$(curl -sSfL https://release.solana.com/v1.8.0/install)"
 
 # Create our profile directory.
 RUN ipython profile create
