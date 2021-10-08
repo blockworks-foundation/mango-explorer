@@ -16,6 +16,7 @@
 
 import decimal
 import json
+import logging
 import os.path
 import typing
 
@@ -88,14 +89,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 
 def _build_data_path() -> str:
-    possibilities: typing.Sequence[str] = ["data", "../data"]
+    possibilities: typing.Sequence[str] = ["../data", "data", ".", "../../data", "../../../data"]
+    attempts: typing.Sequence[str] = []
+    file_root: str = os.path.dirname(__file__)
     for possibility in possibilities:
-        data_path: str = os.path.join(os.path.dirname(__file__), possibility)
-        ids_path: str = os.path.join(data_path, "ids.json")
-        if os.path.isfile(ids_path):
-            return data_path
+        data_path: str = os.path.normpath(os.path.join(file_root, possibility))
+        attempts += [data_path]
+        try:
+            logging.debug(f"Trying to find ids.json in data path: {data_path}")
 
-    raise Exception(f"Could not determine data path - ids.json not found in: {possibilities}")
+            attempted_ids_path: str = os.path.normpath(os.path.join(data_path, "ids.json"))
+            with open(attempted_ids_path) as ids_file:
+                logging.debug(f"Success with ids.json at: {attempted_ids_path}")
+                json.load(ids_file)
+                return data_path
+        except:
+            logging.debug(f"Failure - no ids.json at: {attempted_ids_path}")
+
+    raise Exception(f"Could not determine data path - ids.json not found in: {attempts}")
 
 
 # # DATA_PATH

@@ -47,6 +47,9 @@ docker-experimental-push:
 
 docker-experimental: docker-experimental-build docker-experimental-push
 
+marketmaker-binary:
+	NUITKA_CACHE_DIR=/var/tmp/nuitka python3 -m nuitka --plugin-enable=numpy --plugin-enable=pylint-warnings --include-data-file=data/*=data/ --output-dir=dist --remove-output --standalone --onefile bin/marketmaker
+
 
 # Absolutely awesome: http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 help:
