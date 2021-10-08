@@ -50,6 +50,7 @@ class ChainBuilder:
         # OrderType is used by multiple elements so specify it here rather than have them fighting over which
         # one specifies it.
         # Now add args for all the elements.
+        AfterAccumulatedDepthElement.add_command_line_parameters(parser)
         BiasQuoteOnPositionElement.add_command_line_parameters(parser)
         ConfidenceIntervalElement.add_command_line_parameters(parser)
         FixedSpreadElement.add_command_line_parameters(parser)
@@ -82,22 +83,22 @@ class ChainBuilder:
     def _create_element_by_name(args: argparse.Namespace, name: str) -> Element:
         proper_name: str = name.upper()
         if proper_name == "AFTERACCUMULATEDDEPTH":
-            return AfterAccumulatedDepthElement(args)
+            return AfterAccumulatedDepthElement.from_command_line_parameters(args)
         elif proper_name == "BIASQUOTEONPOSITION":
-            return BiasQuoteOnPositionElement(args)
+            return BiasQuoteOnPositionElement.from_command_line_parameters(args)
         elif proper_name == "CONFIDENCEINTERVAL":
-            return ConfidenceIntervalElement(args)
+            return ConfidenceIntervalElement.from_command_line_parameters(args)
         elif proper_name == "FIXEDSPREAD":
-            return FixedSpreadElement(args)
+            return FixedSpreadElement.from_command_line_parameters(args)
         elif proper_name == "FIXEDPOSITIONSIZE":
-            return FixedPositionSizeElement(args)
+            return FixedPositionSizeElement.from_command_line_parameters(args)
         elif proper_name == "MINIMUMCHARGE":
-            return MinimumChargeElement(args)
+            return MinimumChargeElement.from_command_line_parameters(args)
         elif proper_name == "PREVENTPOSTONLYCROSSINGBOOK":
-            return PreventPostOnlyCrossingBookElement(args)
+            return PreventPostOnlyCrossingBookElement.from_command_line_parameters(args)
         elif proper_name == "RATIOS":
-            return RatiosElement(args)
+            return RatiosElement.from_command_line_parameters(args)
         elif proper_name == "ROUNDTOLOTSIZE":
-            return RoundToLotSizeElement(args)
+            return RoundToLotSizeElement.from_command_line_parameters(args)
         else:
             raise Exception(f"Unknown chain element: '{proper_name}'")

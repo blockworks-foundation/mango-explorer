@@ -29,14 +29,18 @@ from ...modelstate import ModelState
 # more (if too much inventory) or buy more (if too little inventory).
 #
 class BiasQuoteOnPositionElement(Element):
-    def __init__(self, args: argparse.Namespace):
-        super().__init__(args)
-        self.quote_position_bias: Decimal = args.biasquoteonposition_bias or Decimal(0)
+    def __init__(self, bias: Decimal):
+        super().__init__()
+        self.quote_position_bias: Decimal = bias
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--biasquoteonposition-bias", type=Decimal, default=Decimal(0),
                             help="bias to apply to quotes based on inventory position")
+
+    @staticmethod
+    def from_command_line_parameters(args: argparse.Namespace) -> "BiasQuoteOnPositionElement":
+        return BiasQuoteOnPositionElement(args.biasquoteonposition_bias or Decimal(0))
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         if self.quote_position_bias == 0:

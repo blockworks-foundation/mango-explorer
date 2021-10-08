@@ -33,12 +33,12 @@ DEFAULT_POSITION_SIZE_RATIO = Decimal("0.01")
 # ratio and a position size ratio.
 #
 class RatiosElement(Element):
-    def __init__(self, args: argparse.Namespace):
-        super().__init__(args)
-        self.spread_ratios: typing.Sequence[Decimal] = args.ratios_spread or [DEFAULT_SPREAD_RATIO]
-        self.position_size_ratios: typing.Sequence[Decimal] = args.ratios_position_size or [DEFAULT_POSITION_SIZE_RATIO]
-        self.order_type: mango.OrderType = args.order_type
-        self.from_bid_ask: bool = args.ratios_from_bid_ask
+    def __init__(self, order_type: mango.OrderType, spread_ratios: typing.Sequence[Decimal], position_size_ratios: typing.Sequence[Decimal], from_bid_ask: bool):
+        super().__init__()
+        self.order_type: mango.OrderType = order_type
+        self.spread_ratios: typing.Sequence[Decimal] = spread_ratios
+        self.position_size_ratios: typing.Sequence[Decimal] = position_size_ratios
+        self.from_bid_ask: bool = from_bid_ask
 
         if len(self.spread_ratios) == 0:
             raise Exception("No spread ratios specified. Try the --ratios-spread parameter?")
@@ -57,6 +57,14 @@ class RatiosElement(Element):
                             help="ratio to apply to the available collateral to create the position size (can be specified multiple times but every occurrance must have a matching --spread-ratio occurrance)")
         parser.add_argument("--ratios-from-bid-ask", action="store_true", default=False,
                             help="calculate ratios from bid or ask, not mid price (default: False, which will use the mid price)")
+
+    @staticmethod
+    def from_command_line_parameters(args: argparse.Namespace) -> "RatiosElement":
+        order_type: mango.OrderType = args.order_type
+        spread_ratios: typing.Sequence[Decimal] = args.ratios_spread or [DEFAULT_SPREAD_RATIO]
+        position_size_ratios: typing.Sequence[Decimal] = args.ratios_position_size or [DEFAULT_POSITION_SIZE_RATIO]
+        from_bid_ask: bool = args.ratios_from_bid_ask
+        return RatiosElement(order_type, spread_ratios, position_size_ratios, from_bid_ask)
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price

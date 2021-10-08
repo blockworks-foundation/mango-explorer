@@ -26,29 +26,34 @@ from ...modelstate import ModelState
 # # 🥭 FixedSpreadElement class
 #
 # Ignores any input `Order`s (so probably best at the head of the chain). Builds orders using a fixed spread
-# value and a fixed position size value.
+# value.
 #
 class FixedSpreadElement(Element):
-    def __init__(self, args: argparse.Namespace):
-        super().__init__(args)
-        if args.fixedspread_value is None:
-            raise Exception("No spread value specified. Try the --fixedspread-value parameter?")
-
-        self.spread_value: Decimal = args.fixedspread_value / 2
+    def __init__(self, spread: Decimal):
+        super().__init__()
+        self.half_spread: Decimal = spread / 2
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--fixedspread-value", type=Decimal,
                             help="fixed value to apply to the mid-price to create the BUY and SELL price (only works well with a single 'level' of orders - one BUY and one SELL)")
 
+    @staticmethod
+    def from_command_line_parameters(args: argparse.Namespace) -> "FixedSpreadElement":
+        if args.fixedspread_value is None:
+            raise Exception("No spread value specified. Try the --fixedspread-value parameter?")
+
+        spread: Decimal = args.fixedspread_value
+        return FixedSpreadElement(spread)
+
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
         new_orders: typing.List[mango.Order] = []
         for order in orders:
-            new_price: Decimal = price.mid_price - self.spread_value if order.side == mango.Side.BUY else price.mid_price + self.spread_value
+            new_price: Decimal = price.mid_price - self.half_spread if order.side == mango.Side.BUY else price.mid_price + self.half_spread
             new_order: mango.Order = order.with_price(new_price)
 
-            self.logger.debug(f"""Order change - using fixed spread of {self.spread_value}:
+            self.logger.debug(f"""Order change - using fixed spread of {self.half_spread * 2}:
     Old: {order}
     New: {new_order}""")
             new_orders += [new_order]
@@ -56,4 +61,4 @@ class FixedSpreadElement(Element):
         return new_orders
 
     def __str__(self) -> str:
-        return f"« 𝙵𝚒𝚡𝚎𝚍𝚂𝚙𝚛𝚎𝚊𝚍𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using spread value {self.spread_value} »"
+        return f"« 𝙵𝚒𝚡𝚎𝚍𝚂𝚙𝚛𝚎𝚊𝚍𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using spread value {self.half_spread * 2} »"

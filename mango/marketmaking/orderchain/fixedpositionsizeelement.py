@@ -29,17 +29,22 @@ from ...modelstate import ModelState
 # value and a fixed position size value.
 #
 class FixedPositionSizeElement(Element):
-    def __init__(self, args: argparse.Namespace):
-        super().__init__(args)
-        if args.fixedpositionsize_value is None:
-            raise Exception("No position-size value specified. Try the --fixedpositionsize-value parameter?")
-
-        self.position_size: Decimal = args.fixedpositionsize_value
+    def __init__(self, position_size: Decimal):
+        super().__init__()
+        self.position_size: Decimal = position_size
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--fixedpositionsize-value", type=Decimal,
                             help="fixed value to use as the position size (only works well with a single 'level' of orders - one BUY and one SELL)")
+
+    @staticmethod
+    def from_command_line_parameters(args: argparse.Namespace) -> "FixedPositionSizeElement":
+        if args.fixedpositionsize_value is None:
+            raise Exception("No position-size value specified. Try the --fixedpositionsize-value parameter?")
+
+        position_size: Decimal = args.fixedpositionsize_value
+        return FixedPositionSizeElement(position_size)
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         new_orders: typing.List[mango.Order] = []

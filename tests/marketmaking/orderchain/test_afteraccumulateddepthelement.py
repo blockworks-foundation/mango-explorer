@@ -28,23 +28,27 @@ asks: typing.Sequence[mango.Order] = [
 model_state = fake_model_state(bids=bids, asks=asks)
 
 
-def test_bid_price_updated():
+def test_from_args():
     args: argparse.Namespace = argparse.Namespace()
+    actual: AfterAccumulatedDepthElement = AfterAccumulatedDepthElement.from_command_line_parameters(args)
+    assert actual is not None
+
+
+def test_bid_price_updated():
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(78), quantity=Decimal(7), side=mango.Side.BUY)
 
-    actual: AfterAccumulatedDepthElement = AfterAccumulatedDepthElement(args)
+    actual: AfterAccumulatedDepthElement = AfterAccumulatedDepthElement()
     result = actual.process(context, model_state, [order])
 
     assert result[0].price == 74
 
 
 def test_ask_price_updated():
-    args: argparse.Namespace = argparse.Namespace()
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(82), quantity=Decimal(6), side=mango.Side.SELL)
 
-    actual: AfterAccumulatedDepthElement = AfterAccumulatedDepthElement(args)
+    actual: AfterAccumulatedDepthElement = AfterAccumulatedDepthElement()
     result = actual.process(context, model_state, [order])
 
     assert result[0].price == 86
@@ -69,12 +73,11 @@ def test_accumulation_ignores_own_orders_updated():
         fake_order(price=Decimal(87), quantity=Decimal(7), side=mango.Side.SELL)
     ]
     model_state = fake_model_state(order_owner=order_owner, bids=bids, asks=asks)
-    args: argparse.Namespace = argparse.Namespace()
     context = fake_context()
     buy: mango.Order = fake_order(price=Decimal(78), quantity=Decimal(6), side=mango.Side.BUY)
     sell: mango.Order = fake_order(price=Decimal(82), quantity=Decimal(6), side=mango.Side.SELL)
 
-    actual: AfterAccumulatedDepthElement = AfterAccumulatedDepthElement(args)
+    actual: AfterAccumulatedDepthElement = AfterAccumulatedDepthElement()
     result = actual.process(context, model_state, [buy, sell])
 
     assert result[0].price == 73

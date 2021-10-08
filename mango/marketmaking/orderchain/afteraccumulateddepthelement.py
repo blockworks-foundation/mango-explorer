@@ -36,12 +36,16 @@ from ...modelstate import ModelState
 # its price and the mid-price.
 #
 class AfterAccumulatedDepthElement(Element):
-    def __init__(self, args: argparse.Namespace):
-        super().__init__(args)
+    def __init__(self):
+        super().__init__()
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
         pass
+
+    @staticmethod
+    def from_command_line_parameters(args: argparse.Namespace) -> "AfterAccumulatedDepthElement":
+        return AfterAccumulatedDepthElement()
 
     def _accumulated_quantity_exceeds_order(self, orders: typing.Sequence[mango.Order], owner: PublicKey, quantity: Decimal) -> typing.Optional[mango.Order]:
         accumulated_quantity: Decimal = Decimal(0)

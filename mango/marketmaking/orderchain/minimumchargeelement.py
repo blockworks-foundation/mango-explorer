@@ -29,10 +29,10 @@ from ...modelstate import ModelState
 # of a charge if that `Order` is filled.
 #
 class MinimumChargeElement(Element):
-    def __init__(self, args: argparse.Namespace):
-        super().__init__(args)
-        self.minimumcharge_ratio: Decimal = args.minimumcharge_ratio
-        self.minimumcharge_from_bid_ask: Decimal = args.minimumcharge_from_bid_ask
+    def __init__(self, ratio: Decimal, from_bid_ask: bool):
+        super().__init__()
+        self.minimumcharge_ratio: Decimal = ratio
+        self.minimumcharge_from_bid_ask: bool = from_bid_ask
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
@@ -40,6 +40,12 @@ class MinimumChargeElement(Element):
                             help="minimum fraction of the price to be accept as a spread")
         parser.add_argument("--minimumcharge-from-bid-ask", action="store_true", default=False,
                             help="calculate minimum charge from bid or ask, not mid price (default: False, which will use the mid price)")
+
+    @staticmethod
+    def from_command_line_parameters(args: argparse.Namespace) -> "MinimumChargeElement":
+        minimumcharge_ratio: Decimal = args.minimumcharge_ratio
+        minimumcharge_from_bid_ask: bool = args.minimumcharge_from_bid_ask
+        return MinimumChargeElement(minimumcharge_ratio, minimumcharge_from_bid_ask)
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         # From Daffy on 26th July 2021: max(pyth_conf * 2, price * min_charge)

@@ -29,12 +29,16 @@ from ...modelstate import ModelState
 # of a charge if that `Order` is filled.
 #
 class PreventPostOnlyCrossingBookElement(Element):
-    def __init__(self, args: argparse.Namespace):
-        super().__init__(args)
+    def __init__(self):
+        super().__init__()
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
         pass
+
+    @staticmethod
+    def from_command_line_parameters(args: argparse.Namespace) -> "PreventPostOnlyCrossingBookElement":
+        return PreventPostOnlyCrossingBookElement()
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         new_orders: typing.List[mango.Order] = []

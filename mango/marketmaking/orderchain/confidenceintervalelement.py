@@ -29,17 +29,11 @@ from ...modelstate import ModelState
 # size ratio but with a spread based on the confidence in the oracle price.
 #
 class ConfidenceIntervalElement(Element):
-    def __init__(self, args: argparse.Namespace):
-        super().__init__(args)
-        if args.confidenceinterval_position_size_ratio is None or args.confidenceinterval_position_size_ratio == 0:
-            raise Exception("No position-size ratio specified.")
-
-        self.position_size_ratio: Decimal = args.confidenceinterval_position_size_ratio
-        confidence_interval_levels: typing.Sequence[Decimal] = args.confidenceinterval_level
-        if len(confidence_interval_levels) == 0:
-            confidence_interval_levels = [Decimal(2)]
+    def __init__(self, order_type: mango.OrderType, position_size_ratio: Decimal, confidence_interval_levels: typing.Sequence[Decimal]):
+        super().__init__()
+        self.order_type: mango.OrderType = order_type
+        self.position_size_ratio: Decimal = position_size_ratio
         self.confidence_interval_levels: typing.Sequence[Decimal] = confidence_interval_levels
-        self.order_type: mango.OrderType = args.order_type
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
@@ -47,6 +41,19 @@ class ConfidenceIntervalElement(Element):
                             help="the levels of weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread (can be specified multiple times to give multiple levels)")
         parser.add_argument("--confidenceinterval-position-size-ratio", type=Decimal,
                             help="fraction of the token inventory to be bought or sold in each order")
+
+    @staticmethod
+    def from_command_line_parameters(args: argparse.Namespace) -> "ConfidenceIntervalElement":
+        if args.confidenceinterval_position_size_ratio is None or args.confidenceinterval_position_size_ratio == 0:
+            raise Exception("No position-size ratio specified.")
+
+        order_type: mango.OrderType = args.order_type
+        position_size_ratio: Decimal = args.confidenceinterval_position_size_ratio
+        confidence_interval_levels: typing.Sequence[Decimal] = args.confidenceinterval_level
+        if len(confidence_interval_levels) == 0:
+            confidence_interval_levels = [Decimal(2)]
+
+        return ConfidenceIntervalElement(order_type, position_size_ratio, confidence_interval_levels)
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
