@@ -57,7 +57,7 @@ class SerumMarketLookup(MarketLookup):
 
     @staticmethod
     def load(serum_program_address: PublicKey, token_data_filename: str) -> "SerumMarketLookup":
-        with open(token_data_filename) as json_file:
+        with open(token_data_filename, errors='ignore') as json_file:
             token_data = json.load(json_file)
             return SerumMarketLookup(serum_program_address, token_data)
 

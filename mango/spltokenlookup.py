@@ -79,7 +79,7 @@ class SplTokenLookup(TokenLookup):
 
     @staticmethod
     def load(filename: str) -> "TokenLookup":
-        with open(filename) as json_file:
+        with open(filename, errors='ignore') as json_file:
             token_data = json.load(json_file)
             return SplTokenLookup(filename, token_data)
 
