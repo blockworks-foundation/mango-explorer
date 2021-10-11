@@ -16,8 +16,8 @@
 import logging
 import typing
 
-from solana.account import Account as SolanaAccount
 from solana.blockhash import Blockhash
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.transaction import Transaction, TransactionInstruction
 
@@ -29,7 +29,7 @@ _MAXIMUM_TRANSACTION_LENGTH = 1280 - 40 - 8
 _SIGNATURE_LENGTH = 64
 
 
-def _split_instructions_into_chunks(context: Context, signers: typing.Sequence[SolanaAccount], instructions: typing.Sequence[TransactionInstruction]) -> typing.Sequence[typing.Sequence[TransactionInstruction]]:
+def _split_instructions_into_chunks(context: Context, signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> typing.Sequence[typing.Sequence[TransactionInstruction]]:
     vetted_chunks: typing.List[typing.List[TransactionInstruction]] = []
     current_chunk: typing.List[TransactionInstruction] = []
     for instruction in instructions:
@@ -69,9 +69,9 @@ def _split_instructions_into_chunks(context: Context, signers: typing.Sequence[S
 #
 
 class CombinableInstructions():
-    def __init__(self, signers: typing.Sequence[SolanaAccount], instructions: typing.Sequence[TransactionInstruction]):
+    def __init__(self, signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.signers: typing.Sequence[SolanaAccount] = signers
+        self.signers: typing.Sequence[Keypair] = signers
         self.instructions: typing.Sequence[TransactionInstruction] = instructions
 
     @staticmethod
@@ -79,12 +79,12 @@ class CombinableInstructions():
         return CombinableInstructions(signers=[], instructions=[])
 
     @staticmethod
-    def from_signers(signers: typing.Sequence[SolanaAccount]) -> "CombinableInstructions":
+    def from_signers(signers: typing.Sequence[Keypair]) -> "CombinableInstructions":
         return CombinableInstructions(signers=signers, instructions=[])
 
     @staticmethod
     def from_wallet(wallet: Wallet) -> "CombinableInstructions":
-        return CombinableInstructions(signers=[wallet.account], instructions=[])
+        return CombinableInstructions(signers=[wallet.keypair], instructions=[])
 
     @staticmethod
     def from_instruction(instruction: TransactionInstruction) -> "CombinableInstructions":
@@ -93,7 +93,7 @@ class CombinableInstructions():
     # This is a quick-and-dirty way to find out the size the transaction will be. There's an upper limit
     # on transaction size of 1232 so we need to keep all transactions below this size.
     @staticmethod
-    def transaction_size(signers: typing.Sequence[SolanaAccount], instructions: typing.Sequence[TransactionInstruction]) -> int:
+    def transaction_size(signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> int:
         inspector = Transaction()
         inspector.recent_blockhash = Blockhash(str(PublicKey(3)))
         inspector.instructions.extend(instructions)
@@ -146,7 +146,7 @@ class CombinableInstructions():
     def __str__(self) -> str:
         report: typing.List[str] = []
         for index, signer in enumerate(self.signers):
-            report += [f"Signer[{index}]: {signer.public_key()}"]
+            report += [f"Signer[{index}]: {signer.public_key}"]
 
         instruction_reporter: InstructionReporter = InstructionReporter()
         for instruction in self.instructions:

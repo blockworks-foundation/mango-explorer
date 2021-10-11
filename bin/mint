@@ -31,7 +31,7 @@ token = context.token_lookup.find_by_symbol(args.symbol.upper())
 if token is None:
     raise Exception(f"Could not find token with symbol '{args.symbol}'.")
 
-spl_token = SplToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.account)
+spl_token = SplToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair)
 
 # Is the address an actual token account? Or is it the SOL address of the owner?
 account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(context, args.address)
@@ -46,6 +46,6 @@ if account_info.owner == mango.SYSTEM_PROGRAM_ADDRESS:
 quantity = token.shift_to_native(args.quantity)
 
 print(f"Minting {args.quantity} {args.symbol} to {destination}")
-response = spl_token.mint_to(destination, wallet.address, int(quantity), multi_signers=[wallet.account])
+response = spl_token.mint_to(destination, wallet.address, int(quantity), multi_signers=[wallet.keypair])
 
 print(response["result"])

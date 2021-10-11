@@ -112,24 +112,24 @@ class ContextBuilder:
         gma_chunk_pause: typing.Optional[Decimal] = args.gma_chunk_pause
         token_filename: str = args.token_data_file
 
-        context: Context = ContextBuilder._build(name, cluster_name, cluster_url, skip_preflight, commitment, blockhash_commitment, encoding, blockhash_cache_duration,
-                                                 group_name, group_address, mango_program_address, serum_program_address, gma_chunk_size, gma_chunk_pause, token_filename)
+        context: Context = ContextBuilder.build(name, cluster_name, cluster_url, skip_preflight, commitment, blockhash_commitment, encoding, blockhash_cache_duration,
+                                                group_name, group_address, mango_program_address, serum_program_address, gma_chunk_size, gma_chunk_pause, token_filename)
         logging.debug(f"{context}")
 
         return context
 
     @staticmethod
     def default():
-        return ContextBuilder._build(None, None, None, False, None, None, None, None, None, None, None, None, None, None, SplTokenLookup.DefaultDataFilepath)
+        return ContextBuilder.build()
 
     @staticmethod
     def from_group_name(context: Context, group_name: str) -> Context:
-        return ContextBuilder._build(context.name, context.client.cluster_name, context.client.cluster_url,
-                                     context.client.skip_preflight, context.client.commitment,
-                                     context.client.blockhash_commitment, context.client.encoding,
-                                     context.client.compatible_client.blockhash_cache_duration,
-                                     group_name, None, None, None, context.gma_chunk_size, context.gma_chunk_pause,
-                                     SplTokenLookup.DefaultDataFilepath)
+        return ContextBuilder.build(context.name, context.client.cluster_name, context.client.cluster_url,
+                                    context.client.skip_preflight, context.client.commitment,
+                                    context.client.blockhash_commitment, context.client.encoding,
+                                    context.client.compatible_client.blockhash_cache_duration,
+                                    group_name, None, None, None, context.gma_chunk_size, context.gma_chunk_pause,
+                                    SplTokenLookup.DefaultDataFilepath)
 
     @staticmethod
     def forced_to_devnet(context: Context) -> Context:
@@ -165,21 +165,15 @@ class ContextBuilder:
 
         return fresh_context
 
-    # This function is the converse of `add_command_line_parameters()` - it takes
-    # an argument of parsed command-line parameters and expects to see the ones it added
-    # to that collection in the `add_command_line_parameters()` call.
-    #
-    # It then uses those parameters to create a properly-configured `Context` object.
-    #
     @staticmethod
-    def _build(name: typing.Optional[str], cluster_name: typing.Optional[str], cluster_url: typing.Optional[str],
-               skip_preflight: bool, commitment: typing.Optional[str],
-               blockhash_commitment: typing.Optional[str], encoding: typing.Optional[str],
-               blockhash_cache_duration: typing.Optional[datetime.timedelta],
-               group_name: typing.Optional[str], group_address: typing.Optional[PublicKey],
-               program_address: typing.Optional[PublicKey], serum_program_address: typing.Optional[PublicKey],
-               gma_chunk_size: typing.Optional[Decimal], gma_chunk_pause: typing.Optional[Decimal],
-               token_filename: str) -> "Context":
+    def build(name: typing.Optional[str] = None, cluster_name: typing.Optional[str] = None,
+              cluster_url: typing.Optional[str] = None, skip_preflight: bool = False,
+              commitment: typing.Optional[str] = None, blockhash_commitment: typing.Optional[str] = None,
+              encoding: typing.Optional[str] = None, blockhash_cache_duration: typing.Optional[datetime.timedelta] = None,
+              group_name: typing.Optional[str] = None, group_address: typing.Optional[PublicKey] = None,
+              program_address: typing.Optional[PublicKey] = None, serum_program_address: typing.Optional[PublicKey] = None,
+              gma_chunk_size: typing.Optional[Decimal] = None, gma_chunk_pause: typing.Optional[Decimal] = None,
+              token_filename: str = SplTokenLookup.DefaultDataFilepath) -> "Context":
         def public_key_or_none(address: typing.Optional[str]) -> typing.Optional[PublicKey]:
             if address is not None and address != "":
                 return PublicKey(address)

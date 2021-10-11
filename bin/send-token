@@ -41,7 +41,7 @@ token = context.token_lookup.find_by_symbol(args.symbol.upper())
 if token is None:
     raise Exception(f"Could not find details of token with symbol {args.symbol}.")
 
-spl_token = Token(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.account)
+spl_token = Token(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair)
 source_accounts = spl_token.get_accounts(wallet.address)
 source_account = source_accounts["result"]["value"][0]
 source = PublicKey(source_account["pubkey"])
@@ -61,7 +61,7 @@ elif account_info.owner == TOKEN_PROGRAM_ID and len(account_info.data) == ACCOUN
 else:
     raise Exception(f"Account {args.address} is neither a root wallet account nor an SPL token account.")
 
-owner = wallet.account
+owner = wallet.keypair
 amount = int(args.quantity * Decimal(10 ** token.decimals))
 
 print("Balance:", source_account["account"]["data"]["parsed"]

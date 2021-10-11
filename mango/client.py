@@ -25,8 +25,8 @@ import typing
 
 from base64 import b64encode
 from decimal import Decimal
-from solana.account import Account
 from solana.blockhash import Blockhash
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.commitment import Commitment
@@ -267,9 +267,9 @@ class CompatibleClient(Client):
         options = self._build_options_with_encoding(commitment, encoding, data_slice)
         return self._send_request("getAccountInfo", str(pubkey), options)
 
-    def get_confirmed_signature_for_address2(self, account: typing.Union[str, Account, PublicKey], before: typing.Optional[str] = None, limit: typing.Optional[int] = None) -> RPCResponse:
-        if isinstance(account, Account):
-            account = str(account.public_key())
+    def get_confirmed_signature_for_address2(self, account: typing.Union[str, Keypair, PublicKey], before: typing.Optional[str] = None, limit: typing.Optional[int] = None) -> RPCResponse:
+        if isinstance(account, Keypair):
+            account = str(account.public_key)
 
         if isinstance(account, PublicKey):
             account = str(account)
@@ -358,17 +358,19 @@ class CompatibleClient(Client):
 
         return self._send_request("getTokenAccountsByOwner", str(owner), account_options, options)
 
-    def get_multiple_accounts(self, pubkeys: typing.Sequence[PublicKey], commitment: Commitment = UnspecifiedCommitment,
+    def get_multiple_accounts(self, pubkeys: typing.Sequence[typing.Union[PublicKey, str]], commitment: typing.Optional[Commitment] = UnspecifiedCommitment,
                               encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> RPCResponse:
         options = self._build_options_with_encoding(commitment, encoding, data_slice)
         pubkey_strings: typing.Sequence[str] = list([str(pubkey) for pubkey in pubkeys])
         return self._send_request("getMultipleAccounts", pubkey_strings, options)
 
-    def send_transaction(self, transaction: Transaction, *signers: Account, opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment)) -> RPCResponse:
-        transaction.recent_blockhash = self.get_cached_recent_blockhash(self.blockhash_commitment)
-        transaction.sign(*signers)
+    def send_transaction(self, txn: Transaction, *signers: Keypair, opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment), recent_blockhash: typing.Optional[Blockhash] = None) -> RPCResponse:
+        if recent_blockhash is None:
+            recent_blockhash = self.get_cached_recent_blockhash(self.blockhash_commitment)
+        txn.recent_blockhash = recent_blockhash
+        txn.sign(*signers)
 
-        encoded_transaction: str = b64encode(transaction.serialize()).decode("utf-8")
+        encoded_transaction: str = b64encode(txn.serialize()).decode("utf-8")
 
         commitment: Commitment = opts.preflight_commitment
         if commitment == UnspecifiedCommitment:
@@ -392,10 +394,13 @@ class CompatibleClient(Client):
                 _PreflightCommitmentKey: commitment,
                 _EncodingKey: encoding
             },
-            transaction=transaction,
-            blockhash=transaction.recent_blockhash
+            transaction=txn,
+            blockhash=txn.recent_blockhash
         )
-        self.logger.debug(f"Transaction ID response: {response}")
+
+        if ("id" in response) and ("result" in response):
+            self.logger.debug(f"Transaction signature[{response['id']}]: {response['result']}")
+
         return response
 
     # def _send_request(self, method: str, transaction: typing.Optional[Transaction] = None, blockhash: typing.Optional[Blockhash] = None, *params: typing.Any) -> RPCResponse:
@@ -561,7 +566,7 @@ class BetterClient:
         response = self.compatible_client.get_account_info(pubkey, commitment, encoding, data_slice)
         return response["result"]
 
-    def get_confirmed_signatures_for_address2(self, account: typing.Union[str, Account, PublicKey], before: typing.Optional[str] = None, limit: typing.Optional[int] = None) -> typing.Sequence[str]:
+    def get_confirmed_signatures_for_address2(self, account: typing.Union[str, Keypair, PublicKey], before: typing.Optional[str] = None, limit: typing.Optional[int] = None) -> typing.Sequence[str]:
         response = self.compatible_client.get_confirmed_signature_for_address2(account, before, limit)
         return [result["signature"] for result in response["result"]]
 
@@ -603,7 +608,7 @@ class BetterClient:
         response = self.compatible_client.get_multiple_accounts(pubkeys, commitment, encoding, data_slice)
         return response["result"]["value"]
 
-    def send_transaction(self, transaction: Transaction, *signers: Account, opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment)) -> str:
+    def send_transaction(self, transaction: Transaction, *signers: Keypair, opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment)) -> str:
         response = self.compatible_client.send_transaction(
             transaction, *signers, opts=opts)
         return response["result"]

@@ -1,0 +1,35 @@
+[tool.poetry]
+version = "0.1.0"
+name = "mango-explorer"
+homepage = "https://mango.markets"
+repository = "https://github.com/blockworks-foundation/mango-explorer"
+description = "Python integration for https://mango.markets"
+authors = ["Geoff Taylor <geoff@mango.markets>"]
+license = "MIT"
+readme = "README.md"
+documentation = "https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD"
+include = ["bin/*", "data/*"]
+packages = [
+    { include = "mango" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+mypy = "^0.910"
+pyserum = "^0.4.0-alpha.1"
+pytest = "^6.2.5"
+requests = "^2.26.0"
+Rx = "^3.2.0"
+rxpy-backpressure = "^1.0.0"
+solana = "^0.16.0"
+websocket-client = "^1.2.1"
+zstandard = "^0.15.2"
+
+[tool.poetry.dev-dependencies]
+autopep8 = "^1.5.7"
+mypy = "^0.910"
+pytest = "^6.2.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

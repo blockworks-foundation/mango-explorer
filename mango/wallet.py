@@ -21,7 +21,8 @@ import os
 import os.path
 import typing
 
-from solana.account import Account
+from solana.account import Account as SolanaAccount
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 
 
@@ -39,11 +40,14 @@ from solana.publickey import PublicKey
 # ```
 #
 # Alternatively (useful for some environments) the bytes can be loaded from the environment.
-# The environment key is "SECRET_KEY", so it would be stored in the environment using something
+# The environment key is "KEYPAIR", so it would be stored in the environment using something
 # like:
 # ```
-# export SECRET_KEY="[200,48,184,13... for another 60 bytes...]"
+# export KEYPAIR="[200,48,184,13... for another 60 bytes...]"
 # ```
+# Alternatively, the environment key "SECRET_KEY" is accepted as an alias for KEYPAIR and may
+# be used instead. (If both are specified, "KEYPAIR" is used.)
+#
 # **TODO:** It would be good to be able to load a `Wallet` from a mnemonic string. I haven't
 # yet found a Python library that can generate a BIP44 derived seed for Solana that matches
 # the derived seeds created by Sollet and Ledger.
@@ -54,14 +58,19 @@ _DEFAULT_WALLET_FILENAME: str = "id.json"
 
 
 class Wallet:
-    def __init__(self, secret_key):
+    def __init__(self, secret_key: bytes):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.secret_key = secret_key[0:32]
-        self.account = Account(self.secret_key)
+        self.secret_key: bytes = secret_key[0:32]
+        self.keypair: Keypair = Keypair(self.secret_key)
 
     @property
     def address(self) -> PublicKey:
-        return self.account.public_key()
+        return self.keypair.public_key
+
+    def to_deprecated_solana_account(self) -> SolanaAccount:
+        # Solana Account is deprecated, so we use keypair everywhere. Some libraries like PySerum haven't
+        # caught up yet though, so this gives us a way to access the Solana Account object consistently.
+        return SolanaAccount(self.keypair.secret_key[0:32])
 
     def save(self, filename: str, overwrite: bool = False) -> None:
         if os.path.isfile(filename) and not overwrite:
@@ -82,8 +91,8 @@ class Wallet:
 
     @staticmethod
     def create() -> "Wallet":
-        new_account = Account()
-        new_secret_key = new_account.secret_key()
+        new_account = Keypair()
+        new_secret_key = new_account.secret_key
         return Wallet(new_secret_key)
 
     # Configuring a `Wallet` is a common operation for command-line programs and can involve a
@@ -102,12 +111,11 @@ class Wallet:
     #
     # It then uses those parameters to create a properly-configured `Wallet` object.
     #
-
     @staticmethod
     def from_command_line_parameters(args: argparse.Namespace) -> typing.Optional["Wallet"]:
         # We always have an args.id_file (because we specify a default) so check for the environment
         # variable and give it priority.
-        environment_secret_key = os.environ.get("SECRET_KEY")
+        environment_secret_key = os.environ.get("KEYPAIR") or os.environ.get("SECRET_KEY")
         if environment_secret_key is not None:
             secret_key_bytes = json.loads(environment_secret_key)
             if len(secret_key_bytes) >= 32:
@@ -127,3 +135,9 @@ class Wallet:
             raise Exception("No wallet file or environment variables available.")
 
         return wallet
+
+    def __str__(self) -> str:
+        return f"« 𝚆𝚊𝚕𝚕𝚎𝚝 for {self.address} »"
+
+    def __repr__(self) -> str:
+        return f"{self}"

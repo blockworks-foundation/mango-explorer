@@ -1,41 +1,23 @@
-FROM jupyter/scipy-notebook:latest
-
-USER root
-RUN apt-get update && apt-get -y install bc jq curl libxml2-dev libxslt-dev libffi-dev zlib1g-dev
-USER ${NB_UID}
-
-COPY --chown=${NB_UID}:${NB_GID} requirements.txt /tmp/
-RUN pip install --quiet --no-cache-dir --requirement /tmp/requirements.txt && \
-    fix-permissions "${CONDA_DIR}" && \
-    fix-permissions "/home/${NB_USER}"
+FROM python:3.9-buster
 
 RUN sh -c "$(curl -sSfL https://release.solana.com/v1.8.0/install)"
 
-# Create our profile directory.
-RUN ipython profile create
+RUN apt-get update && apt-get -y install bc curl zlib1g-dev
 
-# Install the extensions we want
-RUN jupyter contrib nbextension install --user
-RUN jupyter nbextension enable codefolding/edit && \
-    jupyter nbextension enable codefolding/main && \
-    jupyter nbextension enable highlighter/highlighter && \
-    jupyter nbextension enable select_keymap/main && \
-    jupyter nbextension enable toc2/main && \
-    jupyter nbextension enable varInspector/main
+RUN mkdir /app 
+COPY ./pyproject.toml ./poetry.lock .
 
-RUN jq '. += {"select_keymap_local_storage": false, "stored_keymap": "sublime"}' \
-        /home/jovyan/.jupyter/nbconfig/notebook.json > \
-        /home/jovyan/.jupyter/nbconfig/newnotebook.json && \
-    mv -f /home/jovyan/.jupyter/nbconfig/newnotebook.json /home/jovyan/.jupyter/nbconfig/notebook.json
+WORKDIR /app
+ENV PYTHONPATH=${PYTHONPATH}:/app
+ENV PATH="/app/bin:${PATH}:/app/scripts:${HOME}/.local/share/solana/install/active_release/bin"
 
-# Copy across our magic/startup scripts.
-COPY meta/startup /home/jovyan/.ipython/profile_default/startup
-COPY meta/jupyter/custom /home/jovyan/.jupyter/custom
+RUN pip install --upgrade pip && pip --no-cache-dir install poetry
+
+RUN poetry config virtualenvs.create false
+RUN poetry install --no-dev --no-root
 
 ARG LAST_COMMIT=""
-RUN echo ${LAST_COMMIT} > /home/jovyan/work/.version
+RUN echo ${LAST_COMMIT} > /app/.version
 
-ENV PATH="/home/jovyan/work/bin:${PATH}:/home/jovyan/work/scripts:/home/jovyan/.local/share/solana/install/active_release/bin"
-ADD . /home/jovyan/work
-
-WORKDIR /home/jovyan/work
+# Have this as the last step since the code here is the most-frequently changing
+COPY . /app

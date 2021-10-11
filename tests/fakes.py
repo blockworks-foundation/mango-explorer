@@ -7,7 +7,7 @@ import typing
 from decimal import Decimal
 from pyserum.market import Market as PySerumMarket
 from pyserum.market.state import MarketState as PySerumMarketState
-from solana.account import Account
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.types import RPCResponse
 
@@ -114,8 +114,8 @@ def fake_token_value(value: Decimal = Decimal(100)) -> mango.TokenValue:
 
 
 def fake_wallet() -> mango.Wallet:
-    wallet = mango.Wallet([1] * 64)
-    wallet.account = Account()
+    wallet = mango.Wallet(bytes([1] * 64))
+    wallet.keypair = Keypair()
     return wallet
 
 

@@ -115,7 +115,7 @@ def build_serum_open_orders_watcher(context: Context, manager: WebSocketSubscrip
         create_open_orders = build_create_serum_open_orders_instructions(
             context, wallet, raw_market)
 
-        open_orders_address = create_open_orders.signers[0].public_key()
+        open_orders_address = create_open_orders.signers[0].public_key
 
         logging.info(f"Creating OpenOrders account for market {serum_market.symbol} at {open_orders_address}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(wallet)

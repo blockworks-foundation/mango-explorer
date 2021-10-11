@@ -89,7 +89,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
             raise Exception(f"Cannot cancel order with client ID {order.client_id} - no OpenOrders account.")
 
         raw_instruction = self.raw_market.make_cancel_order_by_client_id_instruction(
-            self.wallet.account, self.open_orders_address, order.client_id
+            self.wallet.to_deprecated_solana_account(), self.open_orders_address, order.client_id
         )
         return CombinableInstructions.from_instruction(raw_instruction)
 
@@ -106,7 +106,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         payer_token_account = self.quote_token_account if order.side == Side.BUY else self.base_token_account
 
         raw_instruction = self.raw_market.make_place_order_instruction(payer_token_account.address,
-                                                                       self.wallet.account,
+                                                                       self.wallet.to_deprecated_solana_account(),
                                                                        serum_order_type,
                                                                        serum_side,
                                                                        float(order.price),
@@ -143,7 +143,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
 
     def build_create_openorders_instructions(self) -> CombinableInstructions:
         create_open_orders = build_create_serum_open_orders_instructions(self.context, self.wallet, self.raw_market)
-        self.open_orders_address = create_open_orders.signers[0].public_key()
+        self.open_orders_address = create_open_orders.signers[0].public_key
         return create_open_orders
 
     def build_redeem_instructions(self) -> CombinableInstructions:

@@ -136,7 +136,7 @@ Next, we’ll set up an `alias` to make running the container easier. There are 
 `docker` command and they’re the same every time so to save typing them over and over, run:
 ```
 # alias mango-explorer="docker run --rm -it --name=mango-explorer \
-    -v $HOME/mango-explorer/id.json:/home/jovyan/work/id.json \
+    -v $HOME/mango-explorer/id.json:/app/id.json \
     opinionatedgeek/mango-explorer-v3:latest"
 ```
 It’s probably a good idea to put this alias in your `.profile` or `.bashrc` (or use whatever mechanism your shell uses for such things).
@@ -146,9 +146,9 @@ It’s probably a good idea to put this alias in your `.profile` or `.bashrc` (o
 
 Run the following command to create your wallet:
 ```
-# mango-explorer solana-keygen new --force --outfile /home/jovyan/work/id.json
+# mango-explorer solana-keygen new --force --outfile /app/id.json
 ```
-(/home/jovyan/work/id.json is not a typo in the command - it’s the path to the ID file in the docker container’s context - it’s mapped to the ~/mango-explorer/id.json file.)
+(/app/id.json is not a typo in the command - it’s the path to the ID file in the docker container’s context - it’s mapped to the ~/mango-explorer/id.json file.)
 
 This will ask you for a passphrase to protect your wallet - just press ENTER for no passphrase (`mango-explorer` assumes no passphrase on key files).
 
@@ -163,7 +163,7 @@ keypair file itself, which is stored as insecure plain text
 
 BIP39 Passphrase (empty for none):
 
-Wrote new keypair to /home/jovyan/work/id.json
+Wrote new keypair to /app/id.json
 ==================================================================================
 pubkey: 6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB
 ==================================================================================

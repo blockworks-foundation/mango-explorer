@@ -23,13 +23,13 @@ from pyserum.enums import OrderType as PySerumOrderType, Side as PySerumSide
 from pyserum.instructions import settle_funds as pyserum_settle_funds, SettleFundsParams as PySerumSettleFundsParams
 from pyserum.market import Market as PySerumMarket
 from pyserum.open_orders_account import make_create_account_instruction as pyserum_make_create_account_instruction
-from solana.account import Account as SolanaAccount
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.system_program import CreateAccountParams, create_account
 from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
-from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, create_associated_token_account, initialize_account, transfer2
+from spl.token.instructions import CloseAccountParams, InitializeAccountParams, TransferParams, close_account, create_associated_token_account, initialize_account, transfer
 
 from .account import Account
 from .combinableinstructions import CombinableInstructions
@@ -67,9 +67,9 @@ from .wallet import Wallet
 #
 def build_create_solana_account_instructions(context: Context, wallet: Wallet, mango_program_address: PublicKey, size: int, lamports: int = 0) -> CombinableInstructions:
     minimum_balance = context.client.get_minimum_balance_for_rent_exemption(size)
-    account = SolanaAccount()
+    account = Keypair()
     create_instruction = create_account(
-        CreateAccountParams(wallet.address, account.public_key(), lamports + minimum_balance, size, mango_program_address))
+        CreateAccountParams(wallet.address, account.public_key, lamports + minimum_balance, size, mango_program_address))
     return CombinableInstructions(signers=[account], instructions=[create_instruction])
 
 
@@ -86,7 +86,7 @@ def build_create_spl_account_instructions(context: Context, wallet: Wallet, toke
     create_account_instructions = build_create_solana_account_instructions(
         context, wallet, TOKEN_PROGRAM_ID, ACCOUNT_LEN, lamports)
     initialize_instruction = initialize_account(InitializeAccountParams(
-        TOKEN_PROGRAM_ID, create_account_instructions.signers[0].public_key(), token.mint, wallet.address))
+        TOKEN_PROGRAM_ID, create_account_instructions.signers[0].public_key, token.mint, wallet.address))
     return create_account_instructions + CombinableInstructions(signers=[], instructions=[initialize_instruction])
 
 
@@ -96,7 +96,6 @@ def build_create_spl_account_instructions(context: Context, wallet: Wallet, toke
 # token account now. `build_create_spl_account_instructions()` should be reserved for cases where
 # you specifically don't want the associated token account.
 #
-
 def build_create_associated_spl_account_instructions(context: Context, wallet: Wallet, token: Token) -> CombinableInstructions:
     create_account_instructions = create_associated_token_account(wallet.address, wallet.address, token.mint)
     return CombinableInstructions(signers=[], instructions=[create_account_instructions])
@@ -106,11 +105,9 @@ def build_create_associated_spl_account_instructions(context: Context, wallet: W
 #
 # Creates an instruction to transfer SPL tokens from one account to another.
 #
-
 def build_transfer_spl_tokens_instructions(context: Context, wallet: Wallet, token: Token, source: PublicKey, destination: PublicKey, quantity: Decimal) -> CombinableInstructions:
     amount = int(quantity * (10 ** token.decimals))
-    instructions = [transfer2(Transfer2Params(TOKEN_PROGRAM_ID, source, token.mint,
-                              destination, wallet.address, amount, int(token.decimals)))]
+    instructions = [transfer(TransferParams(TOKEN_PROGRAM_ID, source, destination, wallet.address, amount, []))]
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
@@ -127,11 +124,11 @@ def build_close_spl_account_instructions(context: Context, wallet: Wallet, addre
 # Creates a Serum openorders-creating instruction.
 #
 def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet, market: PySerumMarket) -> CombinableInstructions:
-    new_open_orders_account = SolanaAccount()
+    new_open_orders_account = Keypair()
     minimum_balance = context.client.get_minimum_balance_for_rent_exemption(layouts.OPEN_ORDERS.sizeof())
     instruction = pyserum_make_create_account_instruction(
         owner_address=wallet.address,
-        new_account_address=new_open_orders_account.public_key(),
+        new_account_address=new_open_orders_account.public_key,
         lamports=minimum_balance,
         program_id=market.state.program_id(),
     )
@@ -149,7 +146,7 @@ def build_serum_place_order_instructions(context: Context, wallet: Wallet, marke
 
     instruction = market.make_place_order_instruction(
         source,
-        wallet.account,
+        wallet.to_deprecated_solana_account(),
         serum_order_type,
         serum_side,
         float(price),
@@ -181,7 +178,7 @@ def build_serum_consume_events_instructions(context: Context, market_address: Pu
 
     # The interface accepts (and currently requires) two accounts at the end, but
     # it doesn't actually use them.
-    random_account = SolanaAccount().public_key()
+    random_account = Keypair().public_key
     instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=True))
     instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=True))
     return CombinableInstructions(signers=[], instructions=[instruction])
@@ -444,7 +441,7 @@ def build_mango_consume_events_instructions(context: Context, group: Group, perp
 def build_create_account_instructions(context: Context, wallet: Wallet, group: Group) -> CombinableInstructions:
     create_account_instructions = build_create_solana_account_instructions(
         context, wallet, context.mango_program_address, layouts.MANGO_ACCOUNT.sizeof())
-    mango_account_address = create_account_instructions.signers[0].public_key()
+    mango_account_address = create_account_instructions.signers[0].public_key
 
     # /// 0. `[]` mango_group_ai - Group that this mango account is for
     # /// 1. `[writable]` mango_account_ai - the mango account data
@@ -556,7 +553,7 @@ def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: 
         context, wallet, context.serum_program_address, layouts.OPEN_ORDERS.sizeof())
     instructions += create_open_orders
 
-    open_orders_address = create_open_orders.signers[0].public_key()
+    open_orders_address = create_open_orders.signers[0].public_key
 
     initialise_open_orders_instruction = TransactionInstruction(
         keys=[
@@ -622,7 +619,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
         create_open_orders = build_spot_openorders_instructions(context, wallet, group, account, market)
         instructions += create_open_orders
 
-        open_orders_address = create_open_orders.signers[0].public_key()
+        open_orders_address = create_open_orders.signers[0].public_key
 
         # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
         # the Account so that future uses (like later in this method) have access to it in the right place.

@@ -35,7 +35,7 @@ token = context.token_lookup.find_by_symbol(args.symbol.upper())
 if token is None:
     raise Exception(f"Could not find token with symbol '{args.symbol}'.")
 
-token_account = mango.TokenAccount.fetch_or_create_largest_for_owner_and_token(context, wallet.account, token)
+token_account = mango.TokenAccount.fetch_or_create_largest_for_owner_and_token(context, wallet.keypair, token)
 withdrawal_value = mango.TokenValue(token, args.quantity)
 withdrawal_token_account = mango.TokenAccount(
     token_account.account_info, token_account.version, token_account.owner, withdrawal_value)

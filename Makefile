@@ -2,11 +2,11 @@
 commands := $(wildcard bin/*)
 
 setup: ## Install all the build and lint dependencies
-	pip install -r requirements.txt
+	poetry install
 	echo "y" | mypy --install-types
 
 upgrade: ## Upgrade all the build and lint dependencies
-	pip install --upgrade -r requirements.txt
+	poetry upgrade
 	echo "y" | mypy --install-types
 
 test: ## Run all the tests
@@ -30,6 +30,12 @@ flake8:
 lint: flake8 mypy
 
 ci: lint test ## Run all the tests and code checks
+
+package: test lint
+	poetry build
+
+publish-package:
+	poetry publish
 
 docker-build:
 	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer-v3:latest

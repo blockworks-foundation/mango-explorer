@@ -59,11 +59,12 @@
       "symbol": "SOL",
       "name": "Wrapped SOL",
       "decimals": 6,
-      "logoURI": "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/solana/info/logo.png",
+      "logoURI": "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png",
       "tags": [],
       "extensions": {
+        "coingeckoId": "solana",
         "website": "https://solana.com/",
-        "serumV3Usdc": "uaajXobeb1hmTB6StRoa8Yqn6czjtWtFeVfZeJY6YFC"
+        "serumV3Usdc": "5xWpt56U1NCuHoAEtpLeUrQcxDkEpNfScjfLFaRzLPgR"
       }
     },
     {
@@ -72,7 +73,7 @@
       "symbol": "USDC",
       "name": "USD Coin",
       "decimals": 6,
-      "logoURI": "https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
+      "logoURI": "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
       "tags": [
         "stablecoin"
       ],
@@ -87,43 +88,88 @@
       "symbol": "BTC",
       "name": "Wrapped Bitcoin (Sollet)",
       "decimals": 6,
-      "logoURI": "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/bitcoin/info/logo.png",
+      "logoURI": "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E/logo.png",
       "tags": [
         "wrapped-sollet",
         "ethereum"
       ],
       "extensions": {
+        "coingeckoId": "bitcoin",
         "bridgeContract": "https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a",
-        "serumV3Usdc": "9LBavtqDpEoX623j8z4sotHMDbv7PcTXUW3LQQtepKvR"
+        "serumV3Usdc": "DW83EpHFywBxCHmyARxwj3nzxJd7MUdSeznmrdzZKNZB"
       }
     },
     {
       "chainId": 901,
-      "address": "Cu84KB3tDL6SbFgToHMLYVDJJXdJjenNzSKikeAvzmkA",
+      "address": "BkAraCyL9TTLbeMY3L1VWrPcv32DvSi5QDDQjik1J6Ac",
       "symbol": "ETH",
       "name": "Wrapped Ethereum (Sollet)",
       "decimals": 6,
-      "logoURI": "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+      "logoURI": "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk/logo.png",
       "tags": [
         "wrapped-sollet",
         "ethereum"
       ],
       "extensions": {
+        "coingeckoId": "ethereum",
         "bridgeContract": "https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a",
         "serumV3Usdc": "2n81EqJgsTE5PoPX5H8adQ4EaVe5kXnFuxwdCAYfaExH"
       }
     },
     {
       "chainId": 901,
-      "address": "AvtB6w9xboLwA145E221vhof5TddhqsChYcx7Fy3xVMH",
+      "address": "249LDNPLLL29nRq8kjBTg9hKdXMcZf4vK2UvxszZYcuZ",
       "symbol": "SRM",
       "name": "Serum",
       "decimals": 6,
-      "logoURI": "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/ethereum/assets/0x476c5E26a75bd202a9683ffD34359C0CC15be0fF/logo.png",
+      "logoURI": "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt/logo.png",
       "tags": [],
       "extensions": {
+        "coingeckoId": "serum",
         "website": "https://projectserum.com/",
         "serumV3Usdc": "23tRuJ3zUvXYQEnTDAcWHPDfmYvrWanpM2sJnmhL53X5"
+      }
+    },
+    {
+      "chainId": 901,
+      "address": "Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC",
+      "symbol": "MNGO",
+      "name": "Mango",
+      "decimals": 6,
+      "logoURI": "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac/token.png",
+      "tags": [],
+      "extensions": {
+        "coingeckoId": "mango-markets",
+        "website": "https://mango.markets/",
+        "serumV3Usdc": "8W8Hrj16TZhM4RrFzHBuyWGbh396ig3hJtLPJRGmxPVG"
+      }
+    },
+    {
+      "chainId": 901,
+      "address": "3YFQ7UYJ7sNGpXTKBxM3bYLVxKpzVudXAe4gLExh5b3n",
+      "symbol": "RAY",
+      "name": "Raydium",
+      "decimals": 6,
+      "logoURI": "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png",
+      "tags": [],
+      "extensions": {
+        "coingeckoId": "raydium",
+        "website": "https://raydium.io/",
+        "serumV3Usdc": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R"
+      }
+    },
+    {
+      "chainId": 901,
+      "address": "DAwBSXe6w9g37wdE2tCrFbho3QHKZi4PjuBytQCULap2",
+      "symbol": "USDT",
+      "name": "Tether",
+      "decimals": 6,
+      "logoURI": "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.svg",
+      "tags": [],
+      "extensions": {
+        "coingeckoId": "tether",
+        "website": "https://tether.to/",
+        "serumV3Usdc": "E7ch7T7v4DTHcc2YF6ioQow4UPfubbSdpgYqyxoEhiMu"
       }
     }
   ],

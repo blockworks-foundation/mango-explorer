@@ -80,7 +80,7 @@ class SerumMarketOperations(MarketOperations):
     def create_openorders(self) -> PublicKey:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         create_open_orders = self.market_instruction_builder.build_create_openorders_instructions()
-        open_orders_address = create_open_orders.signers[0].public_key()
+        open_orders_address = create_open_orders.signers[0].public_key
         (signers + create_open_orders).execute(self.context)
 
         return open_orders_address

@@ -87,7 +87,7 @@ class SpotMarketOperations(MarketOperations):
     def create_openorders(self) -> PublicKey:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         create_open_orders: CombinableInstructions = self.market_instruction_builder.build_create_openorders_instructions()
-        open_orders_address: PublicKey = create_open_orders.signers[0].public_key()
+        open_orders_address: PublicKey = create_open_orders.signers[0].public_key
         (signers + create_open_orders).execute(self.context)
 
         # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
