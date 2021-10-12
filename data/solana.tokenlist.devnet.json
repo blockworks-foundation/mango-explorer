@@ -132,6 +132,19 @@
     },
     {
       "chainId": 901,
+      "address": "8DJBo4bF4mHNxobjdax3BL9RMh5o71Jf8UiKsf5C5eVH",
+      "symbol": "MSRM",
+      "name": "MegaSerum",
+      "decimals": 0,
+      "logoURI": "https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MSRMcoVyrFxnSgo5uXwone5SKcGhT1KEJMFEkMEWf9L/logo.png",
+      "tags": [],
+      "extensions": {
+        "website": "https://projectserum.com/",
+        "coingeckoId": "megaserum"
+      }
+    },
+    {
+      "chainId": 901,
       "address": "Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC",
       "symbol": "MNGO",
       "name": "Mango",

@@ -677,8 +677,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
             AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY),
             AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
-            AccountMeta(is_signer=False, is_writable=False,
-                        pubkey=group.msrm_vault or group.srm_vault or SYSTEM_PROGRAM_ADDRESS),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=fee_discount_address),
             *list([AccountMeta(is_signer=False, is_writable=(oo_address == open_orders_address),
                                pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders]),
             *fee_discount_address_meta

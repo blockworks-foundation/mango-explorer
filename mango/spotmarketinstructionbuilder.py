@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import logging
 import typing
 
 from decimal import Decimal
@@ -60,9 +61,11 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
             context.client.compatible_client, spot_market.address, context.serum_program_address)
 
         msrm_balance = context.client.get_token_account_balance(group.msrm_vault)
+        logging.debug(f"MSRM balance is: {msrm_balance}")
         fee_discount_token_address: PublicKey = group.srm_vault
         if msrm_balance > 0:
             fee_discount_token_address = group.msrm_vault
+        logging.debug(f"Using fee discount address {fee_discount_token_address}")
 
         market_index = group.find_spot_market_index(spot_market.address)
 
