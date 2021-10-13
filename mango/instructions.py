@@ -578,7 +578,7 @@ def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: 
 # Creates a Mango order-placing instruction using the Serum instruction as the inner instruction. Will create
 # the necessary OpenOrders account if it doesn't already exist.
 #
-# /// Accounts expected by PLACE_SPOT_ORDER instruction (19+openorders):
+# /// Accounts expected by PLACE_SPOT_ORDER_2 instruction (22+openorders):
 # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
 # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
 # { isSigner: true, isWritable: false, pubkey: ownerPk },
@@ -591,19 +591,21 @@ def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: 
 # { isSigner: false, isWritable: true, pubkey: eventQueuePk },
 # { isSigner: false, isWritable: true, pubkey: spotMktBaseVaultPk },
 # { isSigner: false, isWritable: true, pubkey: spotMktQuoteVaultPk },
-# { isSigner: false, isWritable: false, pubkey: rootBankPk },
-# { isSigner: false, isWritable: true, pubkey: nodeBankPk },
-# { isSigner: false, isWritable: true, pubkey: vaultPk },
+# { isSigner: false, isWritable: false, pubkey: baseRootBankPk },
+# { isSigner: false, isWritable: true, pubkey: baseNodeBankPk },
+# { isSigner: false, isWritable: true, pubkey: baseVaultPk },
+# { isSigner: false, isWritable: false, pubkey: quoteRootBankPk },
+# { isSigner: false, isWritable: true, pubkey: quoteNodeBankPk },
+# { isSigner: false, isWritable: true, pubkey: quoteVaultPk },
 # { isSigner: false, isWritable: false, pubkey: TOKEN_PROGRAM_ID },
 # { isSigner: false, isWritable: false, pubkey: signerPk },
-# { isSigner: false, isWritable: false, pubkey: SYSVAR_RENT_PUBKEY },
+# { isSigner: false, isWritable: false, pubkey: dexSignerPk },
 # { isSigner: false, isWritable: false, pubkey: msrmOrSrmVaultPk },
 # ...openOrders.map(({ pubkey, isWritable }) => ({
-#     isSigner: false,
-#     isWritable,
-#     pubkey,
+#   isSigner: false,
+#   isWritable,
+#   pubkey,
 # })),
-
 def build_spot_place_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account,
                                         market: PySerumMarket,
                                         order_type: OrderType, side: Side, price: Decimal,
@@ -675,7 +677,6 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             AccountMeta(is_signer=False, is_writable=True, pubkey=quote_node_bank.vault),
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY),
             AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
             AccountMeta(is_signer=False, is_writable=False,
                         pubkey=fee_discount_address or group.msrm_vault or group.srm_vault or SYSTEM_PROGRAM_ADDRESS),
@@ -684,7 +685,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             *fee_discount_address_meta
         ],
         program_id=context.mango_program_address,
-        data=layouts.PLACE_SPOT_ORDER.build(
+        data=layouts.PLACE_SPOT_ORDER_2.build(
             dict(
                 side=serum_side,
                 limit_price=intrinsic_price,

@@ -1292,21 +1292,63 @@ WITHDRAW = construct.Struct(
 # { isSigner: false, isWritable: true, pubkey: spotMktQuoteVaultPk },
 # { isSigner: false, isWritable: false, pubkey: baseRootBankPk },
 # { isSigner: false, isWritable: true, pubkey: baseNodeBankPk },
-# { isSigner: false, isWritable: true, pubkey: quoteRootBankPk },
+# { isSigner: false, isWritable: true, pubkey: baseVaultPk },
+# { isSigner: false, isWritable: false, pubkey: quoteRootBankPk },
 # { isSigner: false, isWritable: true, pubkey: quoteNodeBankPk },
 # { isSigner: false, isWritable: true, pubkey: quoteVaultPk },
-# { isSigner: false, isWritable: true, pubkey: baseVaultPk },
 # { isSigner: false, isWritable: false, pubkey: TOKEN_PROGRAM_ID },
 # { isSigner: false, isWritable: false, pubkey: signerPk },
 # { isSigner: false, isWritable: false, pubkey: SYSVAR_RENT_PUBKEY },
 # { isSigner: false, isWritable: false, pubkey: dexSignerPk },
-# ...openOrders.map((pubkey) => ({
-#   isSigner: false,
-#   isWritable: true, // TODO: only pass the one writable you are going to place the order on
-#   pubkey,
+# { isSigner: false, isWritable: false, pubkey: msrmOrSrmVaultPk },
+# ...openOrders.map(({ pubkey, isWritable }) => ({
+#     isSigner: false,
+#     isWritable,
+#     pubkey,
 # })),
 PLACE_SPOT_ORDER = construct.Struct(
     "variant" / construct.Const(9, construct.BytesInteger(4, swapped=True)),  # 4
+
+    'side' / DecimalAdapter(4),  # 8
+    "limit_price" / DecimalAdapter(),  # 16
+    'max_base_quantity' / DecimalAdapter(),  # 24
+    'max_quote_quantity' / DecimalAdapter(),  # 32
+    'self_trade_behavior' / DecimalAdapter(4),  # 36
+    'order_type' / DecimalAdapter(4),  # 40
+    'client_id' / DecimalAdapter(),  # 48
+    'limit' / DecimalAdapter(2),  # 50
+)
+
+# Seems identical to PLACE_SPOT_ORDER except for variant.
+# { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+# { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
+# { isSigner: true, isWritable: false, pubkey: ownerPk },
+# { isSigner: false, isWritable: false, pubkey: mangoCachePk },
+# { isSigner: false, isWritable: false, pubkey: serumDexPk },
+# { isSigner: false, isWritable: true, pubkey: spotMarketPk },
+# { isSigner: false, isWritable: true, pubkey: bidsPk },
+# { isSigner: false, isWritable: true, pubkey: asksPk },
+# { isSigner: false, isWritable: true, pubkey: requestQueuePk },
+# { isSigner: false, isWritable: true, pubkey: eventQueuePk },
+# { isSigner: false, isWritable: true, pubkey: spotMktBaseVaultPk },
+# { isSigner: false, isWritable: true, pubkey: spotMktQuoteVaultPk },
+# { isSigner: false, isWritable: false, pubkey: baseRootBankPk },
+# { isSigner: false, isWritable: true, pubkey: baseNodeBankPk },
+# { isSigner: false, isWritable: true, pubkey: baseVaultPk },
+# { isSigner: false, isWritable: false, pubkey: quoteRootBankPk },
+# { isSigner: false, isWritable: true, pubkey: quoteNodeBankPk },
+# { isSigner: false, isWritable: true, pubkey: quoteVaultPk },
+# { isSigner: false, isWritable: false, pubkey: TOKEN_PROGRAM_ID },
+# { isSigner: false, isWritable: false, pubkey: signerPk },
+# { isSigner: false, isWritable: false, pubkey: dexSignerPk },
+# { isSigner: false, isWritable: false, pubkey: msrmOrSrmVaultPk },
+# ...openOrders.map(({ pubkey, isWritable }) => ({
+#   isSigner: false,
+#   isWritable,
+#   pubkey,
+# })),
+PLACE_SPOT_ORDER_2 = construct.Struct(
+    "variant" / construct.Const(41, construct.BytesInteger(4, swapped=True)),  # 4
 
     'side' / DecimalAdapter(4),  # 8
     "limit_price" / DecimalAdapter(),  # 16
@@ -1462,5 +1504,14 @@ InstructionParsersByVariant = {
     33: REDEEM_MNGO,  # REDEEM_MNGO,
     34: UNSPECIFIED,  # ADD_MANGO_ACCOUNT_INFO,
     35: UNSPECIFIED,  # DEPOSIT_MSRM,
-    36: UNSPECIFIED,  # WITHDRAW_MSRM
+    36: UNSPECIFIED,  # WITHDRAW_MSRM,
+    37: UNSPECIFIED,  # CHANGE_PERP_MARKET_PARAMS,
+    38: UNSPECIFIED,  # SET_GROUP_ADMIN,
+    39: UNSPECIFIED,  # CANCEL_ALL_PERP_ORDERS,
+    40: UNSPECIFIED,  # FORCE_SETTLE_QUOTE_POSITIONS,
+    41: PLACE_SPOT_ORDER_2,  # PLACE_SPOT_ORDER_2,
+    42: UNSPECIFIED,  # INIT_ADVANCED_ORDERS,
+    43: UNSPECIFIED,  # ADD_PERP_TRIGGER_ORDER,
+    44: UNSPECIFIED,  # REMOVE_ADVANCED_ORDER,
+    45: UNSPECIFIED,  # EXECUTE_PERP_TRIGGER_ORDER,
 }
