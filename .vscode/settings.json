@@ -11,5 +11,6 @@
         "--max-line-length",
         "120"
     ],
-    "python.analysis.completeFunctionParens": true
+    "python.analysis.completeFunctionParens": true,
+    "python.pythonPath": "${workspaceFolder}/.venv/bin/python"
 }
