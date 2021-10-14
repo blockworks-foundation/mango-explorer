@@ -14,7 +14,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v1
-    - uses: dschep/install-poetry-action@v1.3
+    - uses: snok/install-poetry@v1
+        with:
+            version: 1.1.10
+            virtualenvs-in-project: true
 
     - name: Install dependencies
       run: make setup
