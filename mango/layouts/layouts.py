@@ -146,7 +146,7 @@ class DatetimeAdapter(construct.Adapter):
         construct.Adapter.__init__(self, construct.BytesInteger(8, swapped=True))
 
     def _decode(self, obj, context, path) -> datetime.datetime:
-        return datetime.datetime.fromtimestamp(obj)
+        return datetime.datetime.fromtimestamp(obj, tz=datetime.timezone.utc)
 
     def _encode(self, obj, context, path) -> bytes:
         return bytes(obj)
