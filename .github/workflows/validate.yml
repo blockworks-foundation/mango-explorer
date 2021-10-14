@@ -20,16 +20,10 @@ jobs:
           virtualenvs-in-project: true
 
     - name: Install library
-      run: poetry install --no-interaction .
+      run: poetry install --no-interaction
  
     - name: Activate venv
       run: source .venv/bin/activate
-
-    - name: Mypy test
-      run: .venv/bin/mypy --install-types --non-interactive .
-
-    - name: Install dependencies
-      run: make setup
 
     - name: Run tests
       run: make test
@@ -38,7 +32,7 @@ jobs:
       run: make flake8
 
     - name: Install mypy types
-      run: mypy --install-types --non-interactive .
+      run: .venv/bin/mypy --install-types --non-interactive --no-incremental --cache-dir=/dev/null mango tests
 
     - name: Run mypy
       run: make mypy
