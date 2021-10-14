@@ -1,0 +1,9 @@
+name: Validate changes on push
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  call-validatiow-workflow:
+    uses: blockworks-foundation/mango-explorer/.github/workflows/test-and-lint.yml@main

@@ -1,0 +1,14 @@
+name: Publish to Docker and Pypi on a new version tag
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  call-validatiow-workflow:
+    uses: blockworks-foundation/mango-explorer/.github/workflows/test-and-lint.yml@main
+  call-docker-workflow:
+    uses: blockworks-foundation/mango-explorer/.github/workflows/publish-docker.yml@main
+  call-pypi-workflow:
+    uses: blockworks-foundation/mango-explorer/.github/workflows/publish-pypi.yml@main
