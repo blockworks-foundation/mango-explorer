@@ -5,7 +5,7 @@ RUN sh -c "$(curl -sSfL https://release.solana.com/v1.8.0/install)"
 RUN apt-get update && apt-get -y install bc curl zlib1g-dev
 
 RUN mkdir /app 
-COPY ./pyproject.toml ./poetry.lock .
+COPY ./pyproject.toml ./poetry.lock ./
 
 WORKDIR /app
 ENV PYTHONPATH=${PYTHONPATH}:/app
@@ -20,4 +20,4 @@ ARG LAST_COMMIT=""
 RUN echo ${LAST_COMMIT} > /app/.version
 
 # Have this as the last step since the code here is the most-frequently changing
-COPY . /app
+COPY . /app/
