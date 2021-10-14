@@ -20,7 +20,7 @@ jobs:
           virtualenvs-in-project: true
 
     - name: Install library
-      run: poetry install --no-interaction
+      run: poetry install --no-interaction .
  
     - name: Activate venv
       run: source .venv/bin/activate
