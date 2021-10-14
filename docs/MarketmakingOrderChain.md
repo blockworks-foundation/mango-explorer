@@ -179,6 +179,17 @@ The default is to perform calculations based on the mid price. The `--minimumcha
 This ensures that POST_ONLY orders that would corss the orderbook (and so be cancelled instead of put on the book) are placed *just* inside the spread by 1 tick.
 
 
+### `QuoteSingleSideElement`
+
+> Specified using: `--chain quotesingleside`
+
+> Accepts parameter: `--quotesingleside-side`
+
+Sometimes you may only want your marketmaker to place SELL orders. Or only place BUY orders. The `QuoteSingleSideElement` allows you to specify a single side, and will filter out all desired orders that are not for that side.
+
+For example, you can set the 'order chain' to have a `RatiosElement` asking for orders with spreads at 0.5%, 0.7%, and 0.9% (which would produce 6 orders - 3 BUYs and 3 SELLs), and then use a `QuoteSingleSideElement` with a `side` of `SELL` which would remove the 3 BUYs from the desired orders leaving only the 3 SELLs.
+
+
 ### `RatiosElement`
 
 > Specified using: `--chain ratios`

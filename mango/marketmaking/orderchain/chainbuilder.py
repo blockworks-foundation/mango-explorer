@@ -22,11 +22,12 @@ from .chain import Chain
 from .confidenceintervalelement import ConfidenceIntervalElement
 from .element import Element
 from .fixedpositionsizeelement import FixedPositionSizeElement
-from .ratioselement import RatiosElement
 from .fixedspreadelement import FixedSpreadElement
 from .minimumchargeelement import MinimumChargeElement
 from .preventpostonlycrossingbookelement import PreventPostOnlyCrossingBookElement
+from .quotesinglesideelement import QuoteSingleSideElement
 from .roundtolotsizeelement import RoundToLotSizeElement
+from .ratioselement import RatiosElement
 
 _DEFAULT_CHAIN = [
     "confidenceinterval",
@@ -57,6 +58,7 @@ class ChainBuilder:
         FixedPositionSizeElement.add_command_line_parameters(parser)
         MinimumChargeElement.add_command_line_parameters(parser)
         PreventPostOnlyCrossingBookElement.add_command_line_parameters(parser)
+        QuoteSingleSideElement.add_command_line_parameters(parser)
         RatiosElement.add_command_line_parameters(parser)
         RoundToLotSizeElement.add_command_line_parameters(parser)
 
@@ -96,6 +98,8 @@ class ChainBuilder:
             return MinimumChargeElement.from_command_line_parameters(args)
         elif proper_name == "PREVENTPOSTONLYCROSSINGBOOK":
             return PreventPostOnlyCrossingBookElement.from_command_line_parameters(args)
+        elif proper_name == "QUOTESINGLESIDE":
+            return QuoteSingleSideElement.from_command_line_parameters(args)
         elif proper_name == "RATIOS":
             return RatiosElement.from_command_line_parameters(args)
         elif proper_name == "ROUNDTOLOTSIZE":
