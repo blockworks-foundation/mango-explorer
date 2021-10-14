@@ -75,4 +75,4 @@ def test_root_bank_loaded():
     # Typescript says: 1000219.00867863010088498754
     assert actual.borrow_index == Decimal("1000219.00867863010088498754157626536")
     # Typescript says: "Mon, 04 Oct 2021 14:58:05 GMT"
-    assert actual.last_updated.astimezone(timezone.utc) == datetime(2021, 10, 4, 15, 58, 5).astimezone(timezone.utc)
+    assert actual.last_updated == datetime(2021, 10, 4, 14, 58, 5, 0, timezone.utc)
