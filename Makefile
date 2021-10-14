@@ -2,15 +2,13 @@
 commands := $(wildcard bin/*)
 
 setup: ## Install all the build and lint dependencies
-	poetry install
-	echo "y" | mypy --install-types
+	poetry install --no-interaction
 
 upgrade: ## Upgrade all the build and lint dependencies
-	poetry upgrade
-	echo "y" | mypy --install-types
+	poetry upgrade --no-interaction
 
 test: ## Run all the tests
-	pytest -rP tests
+	poetry run pytest -rP tests
 
 #cover: test ## Run all the tests and opens the coverage report
 #	TODO: Coverage
@@ -21,15 +19,15 @@ mypy:
 	for file in bin/* ; do \
         cp $${file} .tmplintdir/$${file##*/}.py ; \
 	done
-	-mypy --no-incremental --cache-dir=/dev/null mango tests .tmplintdir
+	-poetry run mypy --install-types --cache-dir=/dev/null mango tests .tmplintdir
 	rm -rf .tmplintdir
 
 flake8:
-	flake8 --extend-ignore E402,E501,E722,W291,W391 . bin/*
+	poetry run flake8 --extend-ignore E402,E501,E722,W291,W391 . bin/*
 
 lint: flake8 mypy
 
-ci: lint test ## Run all the tests and code checks
+ci: test lint ## Run all the tests and code checks
 
 package: test lint
 	poetry build

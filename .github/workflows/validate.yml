@@ -2,37 +2,30 @@ name: Validate changes
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v1
-    - uses: snok/install-poetry@v1
-      with:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+      - uses: snok/install-poetry@v1
+        with:
           virtualenvs-create: true
           virtualenvs-in-project: true
 
-    - name: Install library
-      run: poetry install --no-interaction
- 
-    - name: Activate venv
-      run: source .venv/bin/activate
+      - name: Install dependencies
+        run: make setup
 
-    - name: Run tests
-      run: make test
+      - name: Activate venv
+        run: source .venv/bin/activate
 
-    - name: Run flake8
-      run: make flake8
+      - name: Run tests
+        run: make test
 
-    - name: Install mypy types
-      run: .venv/bin/mypy --install-types --non-interactive --no-incremental --cache-dir=/dev/null mango tests
-
-    - name: Run mypy
-      run: make mypy
+      - name: Run lint
+        run: make lint
