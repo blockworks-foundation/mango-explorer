@@ -2,7 +2,7 @@ from .context import mango
 from .data import load_root_bank
 from .fakes import fake_account_info, fake_seeded_public_key
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from solana.publickey import PublicKey
 
@@ -75,4 +75,4 @@ def test_root_bank_loaded():
     # Typescript says: 1000219.00867863010088498754
     assert actual.borrow_index == Decimal("1000219.00867863010088498754157626536")
     # Typescript says: "Mon, 04 Oct 2021 14:58:05 GMT"
-    assert actual.last_updated == datetime(2021, 10, 4, 15, 58, 5)
+    assert actual.last_updated.astimezone(timezone.utc) == datetime(2021, 10, 4, 15, 58, 5).astimezone(timezone.utc)
