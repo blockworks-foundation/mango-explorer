@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+    - uses: dschep/install-poetry-action@v1.3
 
     - name: Install dependencies
       run: make setup
