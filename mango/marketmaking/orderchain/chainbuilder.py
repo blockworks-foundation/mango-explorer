@@ -17,6 +17,7 @@ import argparse
 from mango.marketmaking.orderchain.afteraccumulateddepthelement import AfterAccumulatedDepthElement
 import typing
 
+from .biasquoteelement import BiasQuoteElement
 from .biasquoteonpositionelement import BiasQuoteOnPositionElement
 from .chain import Chain
 from .confidenceintervalelement import ConfidenceIntervalElement
@@ -52,6 +53,7 @@ class ChainBuilder:
         # one specifies it.
         # Now add args for all the elements.
         AfterAccumulatedDepthElement.add_command_line_parameters(parser)
+        BiasQuoteElement.add_command_line_parameters(parser)
         BiasQuoteOnPositionElement.add_command_line_parameters(parser)
         ConfidenceIntervalElement.add_command_line_parameters(parser)
         FixedSpreadElement.add_command_line_parameters(parser)
@@ -86,6 +88,8 @@ class ChainBuilder:
         proper_name: str = name.upper()
         if proper_name == "AFTERACCUMULATEDDEPTH":
             return AfterAccumulatedDepthElement.from_command_line_parameters(args)
+        elif proper_name == "BIASQUOTE":
+            return BiasQuoteElement.from_command_line_parameters(args)
         elif proper_name == "BIASQUOTEONPOSITION":
             return BiasQuoteOnPositionElement.from_command_line_parameters(args)
         elif proper_name == "CONFIDENCEINTERVAL":

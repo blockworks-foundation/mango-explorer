@@ -94,6 +94,18 @@ Basically, if an order is for quantity X then this element will start at the top
 E.g. if an order is for 1 BTC, the order will be priced so that there is at least 1 BTC's worth of orders between its price and the mid-price.
 
 
+### `BiasQuoteElement`
+
+> Specified using: `--chain biasquote`
+
+> Accepts parameter: `--biasquote-factor`
+
+This shifts the price of orders by a specified factor.
+
+Prices are multiplied by the factor parameter, so a factor of less than 1 will reduce `Order` prices (tending to SELL more) and a number greater than 1 will increase `Order` prices (tending to BUY more). For example, use a factor of 1.001 to increase prices by 10 bips.
+
+The default factor is 1, meaning no changes will be made to orders.
+
 
 ### `BiasQuoteOnPositionElement`
 
