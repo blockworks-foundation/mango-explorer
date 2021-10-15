@@ -7,8 +7,8 @@ on:
 
 jobs:
   call-validatiow-workflow:
-    uses: blockworks-foundation/mango-explorer/.github/workflows/test-and-lint.yml@main
+    uses: blockworks-foundation/mango-explorer/.github/workflows/test-and-lint.yaml@main
   call-docker-workflow:
-    uses: blockworks-foundation/mango-explorer/.github/workflows/publish-docker.yml@main
+    uses: blockworks-foundation/mango-explorer/.github/workflows/publish-docker.yaml@main
   call-pypi-workflow:
-    uses: blockworks-foundation/mango-explorer/.github/workflows/publish-pypi.yml@main
+    uses: blockworks-foundation/mango-explorer/.github/workflows/publish-pypi.yaml@main

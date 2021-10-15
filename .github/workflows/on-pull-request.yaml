@@ -6,4 +6,4 @@ on:
 
 jobs:
   call-validatiow-workflow:
-    uses: blockworks-foundation/mango-explorer/.github/workflows/test-and-lint.yml@main
+    uses: blockworks-foundation/mango-explorer/.github/workflows/test-and-lint.yaml@main
