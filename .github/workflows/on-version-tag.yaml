@@ -10,11 +10,11 @@ jobs:
     uses: blockworks-foundation/mango-explorer/.github/workflows/test-and-lint.yaml@main
   call-docker-workflow:
     uses: blockworks-foundation/mango-explorer/.github/workflows/publish-docker.yaml@main
-    with:
-      username: ${{ secrets.DOCKER_HUB_USERNAME }}
-      password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+    secrets:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
   call-pypi-workflow:
     uses: blockworks-foundation/mango-explorer/.github/workflows/publish-pypi.yaml@main
-    with:
+    secrets:
       python_version: "3.9"
-      pypi_token: ${{ secrets.PYPI_TOKEN }}
+      PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
