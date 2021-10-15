@@ -10,7 +10,6 @@ from .arguments import parse_args
 from .balancesheet import BalanceSheet
 from .cache import PriceCache, RootBankCache, PerpMarketCache, Cache
 from .client import ClientException, RateLimitException, TooMuchBandwidthRateLimitException, TooManyRequestsRateLimitException, BlockhashNotFoundException, NodeIsBehindException, FailedToFetchBlockhashException, TransactionException, CompatibleClient, BetterClient
-# from .calculators import CollateralCalculator, HealthType, HealthCalculator, PerpCollateralCalculator, SerumCollateralCalculator, SpotCollateralCalculator
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS, SOL_MINT_ADDRESS, SOL_DECIMALS, SOL_DECIMAL_DIVISOR, WARNING_DISCLAIMER_TEXT, MangoConstants
 from .context import Context
@@ -21,6 +20,7 @@ from .encoding import decode_binary, encode_binary, encode_key, encode_int
 from .ensuremarketloaded import ensure_market_loaded, load_market_by_symbol
 from .group import GroupBasketMarket, Group
 from .healthcheck import HealthCheck
+from .idl import IdlParser, lazy_load_cached_idl_parser
 from .idsjsontokenlookup import IdsJsonTokenLookup
 from .idsjsonmarketlookup import IdsJsonMarketLookup
 from .inventory import Inventory, SpotInventoryAccountWatcher, PerpInventoryAccountWatcher
@@ -31,6 +31,7 @@ from .liquidatablereport import LiquidatableState, LiquidatableReport
 from .liquidationevent import LiquidationEvent
 from .liquidationprocessor import LiquidationProcessor, LiquidationProcessorState
 from .loadedmarket import LoadedMarket
+from .logmessages import expand_log_messages
 from .lotsizeconverter import LotSizeConverter, NullLotSizeConverter
 from .mangoinstruction import MangoInstruction
 from .market import InventorySource, Market, DryRunMarket

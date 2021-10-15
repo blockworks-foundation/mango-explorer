@@ -1,0 +1,738 @@
+{
+    "version": "0.0.0",
+    "name": "mango_logs",
+    "instructions": [],
+    "events": [
+        {
+            "name": "FillLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "takerSide",
+                    "type": "u8",
+                    "index": false
+                },
+                {
+                    "name": "makerSlot",
+                    "type": "u8",
+                    "index": false
+                },
+                {
+                    "name": "makerOut",
+                    "type": "bool",
+                    "index": false
+                },
+                {
+                    "name": "timestamp",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "seqNum",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "maker",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "makerOrderId",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "makerClientOrderId",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "makerFee",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "bestInitial",
+                    "type": "i64",
+                    "index": false
+                },
+                {
+                    "name": "makerTimestamp",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "taker",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "takerOrderId",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "takerClientOrderId",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "takerFee",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "price",
+                    "type": "i64",
+                    "index": false
+                },
+                {
+                    "name": "quantity",
+                    "type": "i64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "TokenBalanceLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "mangoAccount",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "deposit",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "borrow",
+                    "type": "i128",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "CachePricesLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "oracleIndexes",
+                    "type": {
+                        "vec": "u64"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "oraclePrices",
+                    "type": {
+                        "vec": "i128"
+                    },
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "CacheRootBanksLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenIndexes",
+                    "type": {
+                        "vec": "u64"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "depositIndexes",
+                    "type": {
+                        "vec": "i128"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "borrowIndexes",
+                    "type": {
+                        "vec": "i128"
+                    },
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "CachePerpMarketsLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndexes",
+                    "type": {
+                        "vec": "u64"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "longFundings",
+                    "type": {
+                        "vec": "i128"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "shortFundings",
+                    "type": {
+                        "vec": "i128"
+                    },
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "SettlePnlLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "mangoAccountA",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "mangoAccountB",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "settlement",
+                    "type": "i128",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "SettleFeesLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "mangoAccount",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "settlement",
+                    "type": "i128",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "LiquidateTokenAndTokenLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liqee",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liqor",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "assetIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "liabIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "assetTransfer",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "liabTransfer",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "assetPrice",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "liabPrice",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "bankruptcy",
+                    "type": "bool",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "LiquidateTokenAndPerpLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liqee",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liqor",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "assetIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "liabIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "assetType",
+                    "type": "u8",
+                    "index": false
+                },
+                {
+                    "name": "liabType",
+                    "type": "u8",
+                    "index": false
+                },
+                {
+                    "name": "assetPrice",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "liabPrice",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "assetTransfer",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "liabTransfer",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "bankruptcy",
+                    "type": "bool",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "LiquidatePerpMarketLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liqee",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liqor",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "price",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "baseTransfer",
+                    "type": "i64",
+                    "index": false
+                },
+                {
+                    "name": "quoteTransfer",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "bankruptcy",
+                    "type": "bool",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "PerpBankruptcyLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liqee",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liqor",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liabIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "insuranceTransfer",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "socializedLoss",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "cacheLongFunding",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "cacheShortFunding",
+                    "type": "i128",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "TokenBankruptcyLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liqee",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liqor",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "liabIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "insuranceTransfer",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "socializedLoss",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "percentageLoss",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "cacheDepositIndex",
+                    "type": "i128",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "UpdateRootBankLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "depositIndex",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "borrowIndex",
+                    "type": "i128",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "UpdateFundingLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "longFunding",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "shortFunding",
+                    "type": "i128",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "OpenOrdersBalanceLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "mangoAccount",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "baseTotal",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "baseFree",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "quoteTotal",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "quoteFree",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "referrerRebatesAccrued",
+                    "type": "u64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "MngoAccrualLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "mangoAccount",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "mngoAccrual",
+                    "type": "u64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "WithdrawLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "mangoAccount",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "owner",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "quantity",
+                    "type": "u64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "DepositLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "mangoAccount",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "owner",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "tokenIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "quantity",
+                    "type": "u64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "RedeemMngoLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "mangoAccount",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "redeemedMngo",
+                    "type": "u64",
+                    "index": false
+                }
+            ]
+        }
+    ]
+}

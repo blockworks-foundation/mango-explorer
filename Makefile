@@ -8,7 +8,7 @@ upgrade: ## Upgrade all the build and lint dependencies
 	poetry upgrade --no-interaction
 
 test: ## Run all the tests
-	poetry run pytest -rP tests
+	SOLENV_NAME= SOLENV_ADDRESS= CLUSTER_NAME= CLUSTER_URL= KEYPAIR= poetry run pytest -rP tests
 
 #cover: test ## Run all the tests and opens the coverage report
 #	TODO: Coverage

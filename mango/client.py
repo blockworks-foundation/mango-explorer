@@ -35,6 +35,7 @@ from solana.transaction import Transaction
 
 from .constants import SOL_DECIMAL_DIVISOR
 from .instructionreporter import InstructionReporter
+from .logmessages import expand_log_messages
 
 
 # # 🥭 ClientException class
@@ -154,9 +155,9 @@ class TransactionException(ClientException):
             if isinstance(item, list):
                 return item
             return [f"{item}"]
-        self.accounts: typing.List[str] = _ensure_list(accounts)
-        self.errors: typing.List[str] = _ensure_list(errors)
-        self.logs: typing.List[str] = _ensure_list(logs)
+        self.accounts: typing.Sequence[str] = _ensure_list(accounts)
+        self.errors: typing.Sequence[str] = _ensure_list(errors)
+        self.logs: typing.Sequence[str] = expand_log_messages(_ensure_list(logs))
         self.instruction_reporter: InstructionReporter = instruction_reporter
 
     def __str__(self) -> str:
