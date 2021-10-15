@@ -66,6 +66,7 @@ class OrderType(enum.Enum):
     LIMIT = "LIMIT"
     IOC = "IOC"
     POST_ONLY = "POST_ONLY"
+    POST_ONLY_SLIDE = "POST_ONLY_SLIDE"
 
     @staticmethod
     def from_value(value: Decimal) -> "OrderType":
@@ -82,6 +83,9 @@ class OrderType(enum.Enum):
         if self == OrderType.IOC:
             return pyserum.enums.OrderType.IOC
         elif self == OrderType.POST_ONLY:
+            return pyserum.enums.OrderType.POST_ONLY
+        elif self == OrderType.POST_ONLY_SLIDE:
+            # Best we can do in this situation
             return pyserum.enums.OrderType.POST_ONLY
         else:
             return pyserum.enums.OrderType.LIMIT
