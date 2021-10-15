@@ -66,6 +66,7 @@ class OrderType(enum.Enum):
     LIMIT = "LIMIT"
     IOC = "IOC"
     POST_ONLY = "POST_ONLY"
+    MARKET = "MARKET"
     POST_ONLY_SLIDE = "POST_ONLY_SLIDE"
 
     @staticmethod
@@ -89,6 +90,28 @@ class OrderType(enum.Enum):
             return pyserum.enums.OrderType.POST_ONLY
         else:
             return pyserum.enums.OrderType.LIMIT
+
+    def to_perp(self) -> int:
+        # From: https://github.com/blockworks-foundation/mango-v3/blob/0c4d26e3e32821d871c5e5986edafbf694a44137/program/src/matching.rs#L212
+        # pub enum OrderType {
+        #     Limit = 0,
+        #     ImmediateOrCancel = 1,
+        #     PostOnly = 2,
+        #     Market = 3,
+        #     PostOnlySlide = 4, // ***
+        # }
+        if self == OrderType.LIMIT:
+            return 0
+        elif self == OrderType.IOC:
+            return 1
+        elif self == OrderType.POST_ONLY:
+            return 2
+        elif self == OrderType.MARKET:
+            return 3
+        elif self == OrderType.POST_ONLY_SLIDE:
+            return 4
+        else:
+            return -1
 
     def __str__(self) -> str:
         return self.value

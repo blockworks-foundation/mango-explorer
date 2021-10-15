@@ -355,8 +355,7 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, accou
 def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market_details: PerpMarketDetails, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType) -> CombinableInstructions:
     # { buy: 0, sell: 1 }
     raw_side: int = 1 if side == Side.SELL else 0
-    # { limit: 0, ioc: 1, postOnly: 2 }
-    raw_order_type: int = 2 if order_type == OrderType.POST_ONLY else 1 if order_type == OrderType.IOC else 0
+    raw_order_type: int = order_type.to_perp()
 
     base_decimals = perp_market_details.base_token.decimals
     quote_decimals = perp_market_details.quote_token.decimals
