@@ -31,11 +31,15 @@ from .hedger import Hedger
 class PerpToSpotHedger(Hedger):
     def __init__(self, group: mango.Group, underlying_market: mango.PerpMarket,
                  hedging_market: mango.SpotMarket, market_operations: mango.MarketOperations,
-                 max_price_slippage_factor: Decimal, max_hedge_chunk_quantity: Decimal):
+                 max_price_slippage_factor: Decimal, max_hedge_chunk_quantity: Decimal,
+                 target_balance: mango.TargetBalance):
         super().__init__()
         if (underlying_market.base != hedging_market.base) or (underlying_market.quote != hedging_market.quote):
             raise Exception(
                 f"Market {hedging_market.symbol} cannot be used to hedge market {underlying_market.symbol}.")
+
+        if target_balance.symbol != hedging_market.base.symbol:
+            raise Exception(f"Cannot target {target_balance.symbol} when hedging on {hedging_market.symbol}")
 
         self.underlying_market: mango.PerpMarket = underlying_market
         self.hedging_market: mango.SpotMarket = hedging_market
@@ -43,6 +47,10 @@ class PerpToSpotHedger(Hedger):
         self.buy_price_adjustment_factor: Decimal = Decimal("1") + max_price_slippage_factor
         self.sell_price_adjustment_factor: Decimal = Decimal("1") - max_price_slippage_factor
         self.max_hedge_chunk_quantity: Decimal = max_hedge_chunk_quantity
+
+        resolved_target: mango.TokenValue = target_balance.resolve(hedging_market.base, Decimal(0), Decimal(0))
+        self.target_balance: Decimal = self.hedging_market.lot_size_converter.round_base(resolved_target.value)
+
         self.market_index: int = group.find_perp_market_index(underlying_market.address)
 
     def pulse(self, context: mango.Context, model_state: mango.ModelState):
@@ -66,7 +74,8 @@ class PerpToSpotHedger(Hedger):
             token_balance_rounded: Decimal = self.hedging_market.lot_size_converter.round_base(token_balance.value)
 
             # When we add the rounded perp position and token balances, we should get zero if we're delta-neutral.
-            delta: Decimal = perp_position_rounded + token_balance_rounded
+            # If we have a target balance, subtract that to get our targetted delta neutral balance.
+            delta: Decimal = perp_position_rounded + token_balance_rounded - self.target_balance
             self.logger.debug(
                 f"Delta from {self.underlying_market.symbol} to {self.hedging_market.symbol} is {delta:,.8f} {basket_token.token_info.token.symbol}")
 

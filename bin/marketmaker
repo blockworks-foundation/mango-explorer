@@ -8,6 +8,7 @@ import rx
 import rx.operators
 import sys
 import threading
+import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
@@ -43,6 +44,8 @@ parser.add_argument("--hedging-max-price-slippage-factor", type=Decimal, default
                     help="the maximum value the IOC hedging order price can slip by when hedging (default is 0.05 for 5%%)")
 parser.add_argument("--hedging-max-chunk-quantity", type=Decimal, default=Decimal(0),
                     help="the maximum quantity of the hedge asset that will be traded in a single pulse. Trades larger than this size will be 'chunked' and spread across subsequent hedge pulses.")
+parser.add_argument("--hedging-target-balance", type=mango.parse_fixed_target_balance, required=False,
+                    help="hedged balance to maintain - format is a token symbol plus target value, separated by a colon (e.g. 'ETH:2.5')")
 parser.add_argument("--account-address", type=PublicKey,
                     help="address of the specific account to use, if more than one available")
 parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
@@ -118,9 +121,12 @@ if args.hedging_market is not None:
     hedging_market_operations: mango.MarketOperations = mango.create_market_operations(
         context, wallet, account, hedging_market, args.dry_run)
 
+    target_balance: typing.Optional[mango.TargetBalance] = args.hedging_target_balance
+    if target_balance is None:
+        target_balance = mango.FixedTargetBalance(hedging_market.base.symbol, Decimal(0))
     hedger = mango.hedging.PerpToSpotHedger(group, underlying_market, hedging_market,
                                             hedging_market_operations, args.hedging_max_price_slippage_factor,
-                                            args.hedging_max_chunk_quantity)
+                                            args.hedging_max_chunk_quantity, target_balance)
 
 
 order_reconciler = mango.marketmaking.ToleranceOrderReconciler(

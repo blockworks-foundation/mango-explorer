@@ -50,7 +50,6 @@ from .oraclefactory import create_oracle_provider
 from .parse_account_info_to_orders import parse_account_info_to_orders
 from .perpaccount import PerpAccount
 from .perpeventqueue import PerpEvent, PerpFillEvent, PerpOutEvent, PerpUnknownEvent, PerpEventQueue, UnseenPerpEventChangesTracker
-from .perphedger import PerpHedger
 from .perpmarket import PerpMarket, PerpMarketStub
 from .perpmarketdetails import PerpMarketDetails
 from .perpmarketinfo import PerpMarketInfo

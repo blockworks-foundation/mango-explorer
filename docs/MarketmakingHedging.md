@@ -83,3 +83,18 @@ This parameter allows you to specify a maximum quantity to trade on a single 'pu
 For example, if the marketmaker wants to hedge 50 SOL, it might be better to spread that out over 5 pulses with 10 SOL each. That gives the spot marketmakers a chance to adjust and put up fresh orders instead of just sweeping all the orders on the book.
 
 Using this may give a better overall price than a single order, or it may introduce a new timing risk as the market moves further away while some of the position is unhedged.
+
+
+> Parameter: `--hedging-target-balance`
+
+> Example Usage: `--hedging-target-balance BTC:2.5`
+
+Sometimes when hedging, it's preferable to have a specific balance to hedge from rather than purely zero.
+
+For example, you might want to add 2.5 BTC to your Mango account, earn interest on it, and use it for collateral for your marketmaking. You wouln't want the hedging functionality to immediately sell it to aim for a neutral position.
+
+Instead you'd want your 2.4 BTC to be your neutral position. If you sold 0.5 BTC-PERP short, instead of the hedger aiming for 0.5 BTC you'd want it to take your 2.5 BTC into account and aim for 3 BTC.
+
+The `--hedging-target-balance` parameter allows you to specify what the target (neutral) position should be. The hedging functionality will then aim to achieve that target, with perp positions and spot balances adding and subtracting from it instead of 0.
+
+The format for the parameter is the same format as target balances for the `balance-account` and `balance-wallet` commands: it's the symbol, followed by a colon, followed by a fixed number. Percentage target balances aren't supported for this parameter, and the symbol must match the symbol of the base token on the `--hedging-market`.
