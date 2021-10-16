@@ -2,6 +2,9 @@ name: Publish to Pypi
 
 on:
   workflow_call:
+    secrets:
+      PYPI_TOKEN:
+        required: true
   workflow_dispatch:
 
 jobs:
