@@ -15,7 +15,7 @@
 
 import typing
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from solana.publickey import PublicKey
 
@@ -64,7 +64,7 @@ class LiquidityMiningInfo:
         #   portion_given = 1 - mngoLeft / mngoPerPeriod
         #   elapsed = (<current_time> - periodStart) / targetPeriodLength
         #   est_next = elapsed / portion_given - elapsed
-        now: datetime = datetime.now().replace(microsecond=0)
+        now: datetime = datetime.now().replace(microsecond=0).astimezone(timezone.utc)
         mngo_distributed: TokenValue = self.mngo_per_period - self.mngo_left
         proportion_distributed: Decimal = mngo_distributed.value / self.mngo_per_period.value
         elapsed: timedelta = now - self.period_start
