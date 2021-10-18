@@ -9,7 +9,7 @@ COPY ./pyproject.toml ./poetry.lock ./
 
 WORKDIR /app
 ENV PYTHONPATH=${PYTHONPATH}:/app
-ENV PATH="/app/bin:${PATH}:/app/scripts:${HOME}/.local/share/solana/install/active_release/bin"
+ENV PATH="/app/bin:${PATH}:/app/scripts:/root/.local/share/solana/install/active_release/bin"
 
 RUN pip install --upgrade pip && pip --no-cache-dir install poetry
 
