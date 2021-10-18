@@ -74,7 +74,7 @@ class LiquidityMiningInfo:
         estimated_duration: timedelta = timedelta(seconds=int(estimated_duration_seconds))
         estimated_remaining_seconds: float = (elapsed_seconds / float(proportion_distributed)) - elapsed_seconds
         estimated_remaining: timedelta = timedelta(seconds=int(estimated_remaining_seconds))
-        estimated_end: datetime = now + estimated_duration
+        estimated_end: datetime = now + estimated_remaining
         return f"""« 𝙻𝚒𝚚𝚞𝚒𝚍𝚒𝚝𝚢𝙼𝚒𝚗𝚒𝚗𝚐𝙸𝚗𝚏𝚘 {self.version}
     Period Start     : {self.period_start}
     Period End (Est.): {estimated_end}
