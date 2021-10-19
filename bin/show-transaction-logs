@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import os.path
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(
+    description="Shows the on-chain logs of a particular transaction (decoding mango-log data).")
+mango.ContextBuilder.add_command_line_parameters(parser)
+parser.add_argument("--signature", type=str, required=True, help="signature of the transaction")
+args: argparse.Namespace = mango.parse_args(parser)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+
+transaction = context.client.get_confirmed_transaction(args.signature)
+
+log_lines = mango.expand_log_messages(transaction["meta"]["logMessages"])
+logs = "\n".join(log_lines)
+print(logs)
