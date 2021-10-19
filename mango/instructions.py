@@ -609,7 +609,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
                                         market: PySerumMarket,
                                         order_type: OrderType, side: Side, price: Decimal,
                                         quantity: Decimal, client_id: int,
-                                        fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
+                                        fee_discount_address: PublicKey) -> CombinableInstructions:
     instructions: CombinableInstructions = CombinableInstructions.empty()
 
     spot_market_address = market.state.public_key()
@@ -651,9 +651,6 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
         market.state.program_id(),
     )
 
-    fee_discount_address_meta: typing.List[AccountMeta] = []
-    if fee_discount_address is not None:
-        fee_discount_address_meta = [AccountMeta(is_signer=False, is_writable=False, pubkey=fee_discount_address)]
     place_spot_instruction = TransactionInstruction(
         keys=[
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
@@ -677,11 +674,9 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
             AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
-            AccountMeta(is_signer=False, is_writable=False,
-                        pubkey=fee_discount_address or group.msrm_vault or group.srm_vault or SYSTEM_PROGRAM_ADDRESS),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=fee_discount_address),
             *list([AccountMeta(is_signer=False, is_writable=(oo_address == open_orders_address),
-                               pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders]),
-            *fee_discount_address_meta
+                               pubkey=oo_address) for oo_address in account.spot_open_orders if oo_address is not None])
         ],
         program_id=context.mango_program_address,
         data=layouts.PLACE_SPOT_ORDER_2.build(

@@ -42,7 +42,7 @@ from .wallet import Wallet
 #
 
 class SpotMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, raw_market: PySerumMarket, market_index: int, fee_discount_token_address: typing.Optional[PublicKey]):
+    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, raw_market: PySerumMarket, market_index: int, fee_discount_token_address: PublicKey):
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
@@ -51,7 +51,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         self.spot_market: SpotMarket = spot_market
         self.raw_market: PySerumMarket = raw_market
         self.market_index: int = market_index
-        self.fee_discount_token_address: typing.Optional[PublicKey] = fee_discount_token_address
+        self.fee_discount_token_address: PublicKey = fee_discount_token_address
 
         self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders[self.market_index]
 
@@ -61,11 +61,15 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
             context.client.compatible_client, spot_market.address, context.serum_program_address)
 
         msrm_balance = context.client.get_token_account_balance(group.msrm_vault)
-        logging.debug(f"MSRM balance is: {msrm_balance}")
-        fee_discount_token_address: PublicKey = group.srm_vault
+        fee_discount_token_address: PublicKey
         if msrm_balance > 0:
             fee_discount_token_address = group.msrm_vault
-        logging.debug(f"Using fee discount address {fee_discount_token_address}")
+            logging.debug(
+                f"MSRM balance is: {msrm_balance} - using MSRM fee discount address {fee_discount_token_address}")
+        else:
+            fee_discount_token_address = group.srm_vault
+            logging.debug(
+                f"MSRM balance is: {msrm_balance} - using SRM fee discount address {fee_discount_token_address}")
 
         market_index = group.find_spot_market_index(spot_market.address)
 
