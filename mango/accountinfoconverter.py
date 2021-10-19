@@ -29,7 +29,7 @@ from .lotsizeconverter import NullLotSizeConverter
 from .openorders import OpenOrders
 from .perpeventqueue import PerpEventQueue
 from .perpmarketdetails import PerpMarketDetails
-from .rootbank import RootBank
+from .rootbank import NodeBank, RootBank
 from .serumeventqueue import SerumEventQueue
 
 
@@ -59,6 +59,8 @@ def build_account_info_converter(context: Context, account_type: str) -> typing.
         return lambda account_info: Cache.parse(account_info)
     elif account_type_upper == "ROOTBANK":
         return lambda account_info: RootBank.parse(account_info)
+    elif account_type_upper == "NODEBANK":
+        return lambda account_info: NodeBank.parse(account_info)
     elif account_type_upper == "PERPMARKETDETAILS":
         def perp_market_details_loader(account_info: AccountInfo) -> PerpMarketDetails:
             layout_perp_market_details = layouts.PERP_MARKET.parse(account_info.data)
