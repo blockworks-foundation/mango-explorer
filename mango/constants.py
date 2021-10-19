@@ -16,7 +16,6 @@
 
 import decimal
 import json
-import logging
 import os.path
 import typing
 
@@ -106,15 +105,12 @@ def _build_data_path() -> str:
         data_path: str = os.path.normpath(os.path.join(file_root, possibility))
         attempts += [data_path]
         try:
-            logging.debug(f"Trying to find ids.json in data path: {data_path}")
-
             attempted_ids_path: str = os.path.normpath(os.path.join(data_path, "ids.json"))
             with open(attempted_ids_path) as ids_file:
-                logging.debug(f"Success with ids.json at: {attempted_ids_path}")
                 json.load(ids_file)
                 return data_path
         except:
-            logging.debug(f"Failure - no ids.json at: {attempted_ids_path}")
+            pass
 
     raise Exception(f"Could not determine data path - ids.json not found in: {attempts}")
 
