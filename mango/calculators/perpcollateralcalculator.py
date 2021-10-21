@@ -18,7 +18,7 @@ import typing
 from decimal import Decimal
 
 from ..account import Account
-from ..cache import Cache, PriceCache
+from ..cache import Cache
 from ..group import Group
 from ..openorders import OpenOrders
 from ..spotmarketinfo import SpotMarketInfo
@@ -45,12 +45,10 @@ class PerpCollateralCalculator(CollateralCalculator):
         #   total_collateral = deposits[QUOTE_INDEX] * deposit_index - borrows[QUOTE_INDEX] * borrow_index
         # Note: the `AccountBasketToken` in the `Account` already factors the deposit and borrow index.
         total: Decimal = account.shared_quote_token.net_value.value
+        collateral_description = [f"{total:,.8f} USDC"]
         for basket_token in account.basket:
             index = group.find_base_token_market_index(basket_token.token_info)
-            token_price: typing.Optional[PriceCache] = cache.price_cache[index]
-            if token_price is None:
-                raise Exception(
-                    f"Could not read price of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")
+            token_price = group.token_price_from_cache(cache, basket_token.token_info.token)
 
             # Not using perp market asset weights yet - stick with spot.
             # perp_market: typing.Optional[PerpMarketInfo] = group.perp_markets[index]
@@ -65,9 +63,13 @@ class PerpCollateralCalculator(CollateralCalculator):
             # Base token calculations:
             #     total_collateral += prices[i] * (init_asset_weights[i] * deposits[i] * deposit_index -  init_liab_weights[i] * borrows[i] * borrow_index)
             # Note: the `AccountBasketToken` in the `Account` already factors the deposit and borrow index.
-            weighted: Decimal = token_price.price * ((
+            weighted: Decimal = token_price.value * ((
                 basket_token.deposit.value * spot_market.init_asset_weight) - (
                     basket_token.borrow.value * spot_market.init_liab_weight))
-            total += weighted
 
+            if weighted != 0:
+                collateral_description += [f"{weighted:,.8f} USDC from {basket_token.token_info.token.symbol}"]
+                total += weighted
+
+        self.logger.debug(f"Weighted collateral: {', '.join(collateral_description)}")
         return TokenValue(group.shared_quote_token.token, total)
