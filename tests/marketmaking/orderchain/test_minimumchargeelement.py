@@ -116,3 +116,25 @@ def test_ask_price_lower_than_mid():
     result = actual.process(context, model_state, [order])
 
     assert result[0].price == 88  # 80 + (80 * 0.1)
+
+
+def test_sol_bid_price_updated():
+    context = fake_context()
+    model_state = fake_model_state(price=fake_price(bid=Decimal(181.9), price=Decimal(182), ask=Decimal(182.1)))
+    order: mango.Order = fake_order(price=Decimal("181.91"), side=mango.Side.BUY)
+
+    actual: MinimumChargeElement = MinimumChargeElement(Decimal("0.0005"), False)
+    result = actual.process(context, model_state, [order])
+
+    assert result[0].price == Decimal("181.909")  # 182 - (182 * 0.0005)
+
+
+def test_sol_ask_price_updated():
+    context = fake_context()
+    model_state = fake_model_state(price=fake_price(bid=Decimal(181.9), price=Decimal(182), ask=Decimal(182.1)))
+    order: mango.Order = fake_order(price=Decimal("182.09"), side=mango.Side.SELL)
+
+    actual: MinimumChargeElement = MinimumChargeElement(Decimal("0.0005"), False)
+    result = actual.process(context, model_state, [order])
+
+    assert result[0].price == Decimal("182.091")  # 182 + (182 * 0.0005)

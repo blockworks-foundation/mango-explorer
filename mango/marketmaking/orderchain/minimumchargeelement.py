@@ -52,31 +52,33 @@ class MinimumChargeElement(Element):
         # (Private chat link: https://discord.com/channels/@me/832570058861314048/869208592648134666)
         new_orders: typing.List[mango.Order] = []
         for order in orders:
-            minimum_charge: Decimal
             new_price: typing.Optional[Decimal] = None
+            charge_from_price: Decimal
+            minimum_charge: Decimal
+            current_charge: Decimal
             if order.side == mango.Side.BUY:
-                buy_price: Decimal = model_state.price.mid_price
+                charge_from_price = model_state.price.mid_price
                 if self.minimumcharge_from_bid_ask:
-                    buy_price = model_state.price.top_bid
-                minimum_charge = buy_price * self.minimumcharge_ratio
-                current_charge = buy_price - order.price
+                    charge_from_price = model_state.price.top_bid
+                minimum_charge = charge_from_price * self.minimumcharge_ratio
+                current_charge = charge_from_price - order.price
                 if current_charge < minimum_charge:
-                    new_price = buy_price - minimum_charge
+                    new_price = charge_from_price - minimum_charge
             else:
-                sell_price: Decimal = model_state.price.mid_price
+                charge_from_price = model_state.price.mid_price
                 if self.minimumcharge_from_bid_ask:
-                    sell_price = model_state.price.top_ask
-                minimum_charge = sell_price * self.minimumcharge_ratio
-                current_charge = order.price - sell_price
+                    charge_from_price = model_state.price.top_ask
+                minimum_charge = charge_from_price * self.minimumcharge_ratio
+                current_charge = order.price - charge_from_price
                 if current_charge < minimum_charge:
-                    new_price = sell_price + minimum_charge
+                    new_price = charge_from_price + minimum_charge
 
             if new_price is None:
                 # All OK with current order
                 new_orders += [order]
             else:
                 new_order = order.with_price(new_price)
-                self.logger.debug(f"""Order change - price is less than minimum charge:
+                self.logger.debug(f"""Order change - old price {order.price:,.8f} distance from {charge_from_price:,.8f} would return {current_charge:,.8f} which is less than minimum charge {minimum_charge:,.8f}:
     Old: {order}
     New: {new_order}""")
                 new_orders += [new_order]

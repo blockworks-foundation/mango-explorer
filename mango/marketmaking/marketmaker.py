@@ -52,6 +52,8 @@ class MarketMaker:
 
     def pulse(self, context: mango.Context, model_state: mango.ModelState):
         try:
+            self.logger.debug(f"[{context.name}] Pulse started with oracle price:\n    {model_state.price}")
+
             payer = mango.CombinableInstructions.from_wallet(self.wallet)
 
             desired_orders = self.desired_orders_chain.process(context, model_state)
