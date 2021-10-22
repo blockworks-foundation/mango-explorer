@@ -6,14 +6,16 @@ on:
       - "v*.*.*"
 
 jobs:
-  call-validatiow-workflow:
+  call-validation-workflow:
     uses: blockworks-foundation/mango-explorer/.github/workflows/test-and-lint.yaml@main
   call-docker-workflow:
+    needs: call-validation-workflow
     uses: blockworks-foundation/mango-explorer/.github/workflows/publish-docker.yaml@main
     secrets:
       DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
       DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
   call-pypi-workflow:
+    needs: call-validation-workflow
     uses: blockworks-foundation/mango-explorer/.github/workflows/publish-pypi.yaml@main
     secrets:
       python_version: "3.9"
