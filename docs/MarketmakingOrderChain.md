@@ -87,11 +87,19 @@ Here's a list of all available `Element`s and the additional configuration param
 
 > Specified using: `--chain afteraccumulateddepth`
 
+> Accepts parameter: `--afteraccumulateddepth-depth`
+
+> Accepts parameter: `--afteraccumulateddepth-adjustment-ticks`
+
 Tries to place an order on the orderbook with sufficient quantity on orders between it and the mid-price.
 
 Basically, if an order is for quantity X then this element will start at the top of the book and move down orders until the accumulated quantity from orders is greater than the quantity of the desired order.
 
 E.g. if an order is for 1 BTC, the order will be priced so that there is at least 1 BTC's worth of orders between its price and the mid-price.
+
+The `--afteraccumulateddepth-depth` parameter can be used to specify a fixed depth to position orders rather than the order quantity. (The order quantity is used if this parameter is not specified.)
+
+The `--afteraccumulateddepth-adjustment-ticks` parameter allows you to specify how far (in ticks) from the accumulated depth to position the order. The default is 1 tick above for a SELL, 1 tick below for a BUY. Use 0 to specify placing the order AT the depth.
 
 
 ### `BiasQuoteElement`
