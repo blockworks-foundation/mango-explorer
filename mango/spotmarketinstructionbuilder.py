@@ -102,6 +102,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
 
     def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         if self.open_orders_address is None:
+            self.logger.debug("Returning empty crank instructions - no spot OpenOrders address provided.")
             return CombinableInstructions.empty()
 
         open_orders_to_crank: typing.Sequence[PublicKey] = [*open_orders_addresses, self.open_orders_address]
