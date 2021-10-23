@@ -153,13 +153,30 @@ The ‘confidence interval’ is Pyth’s expectation of how far from the curren
 
 > Accepts parameter: `--fixedpositionsize-value`
 
-The `FixedPositionSizeElement` overrides the position size of all orders it sees, setting them to the fixed value (in the base currency) specified in the parameter.
+The `FixedPositionSizeElement` overrides the position size of all orders it sees, setting them to the fixed value (in the base currency) specified in the parameter(s).
 
 For example, adding:
 ```
 --chain fixedpositionsize --fixedpositionsize-value 3
 ```
 to a chain on ETH/USDC will force all BUY and SELL orders to have a position size of 3 ETH.
+
+`--fixedpositionsize-value` can be specified multiple times for configurations running multiple layers or levels of `Order`s.
+
+Specifying multiple fixed position sizes is designed to work in an intuitive way - the first BUY and SELL take the first specified position size, the second BUY and SELL take the second specified position size and so on.
+
+But in practice this could be quite confusing, especially if the `Order`s are not well sorted.
+
+So, to provide a consistent and intuitive processing of `Order`s, this element will:
+* Separate BUY and SELL `Order`s
+* Sort the BUY and SELL `Order`s from closest to top-of-book to farthest from top-of-book
+* Process each BUY and SELL pair using the next specified position size (substituting the last specified position size if no other one is available)
+
+The result is if you specify `--fixedpositionsize-value 2 --fixedpositionsize-value 4` the BUY and SELL `Order`s closest to top-of-book will both be given a fixed position size of 2, and the next BUY and SELL `Order`s will be given a fixed position size of 4.
+
+(In fact, in that example, the BUY and SELL nearest the mid-price will be given a position size of 2 and all other `Order`s will be given a position size of 4.)
+
+Note that one consequence of this processing of `Order`s is that the orders returned from this `Element` may be in a different sort-order to the orders that were sent to it.
 
 
 ### `FixedSpreadElement`
