@@ -19,8 +19,8 @@ mypy:
 	for file in bin/* ; do \
         cp $${file} .tmplintdir/$${file##*/}.py ; \
 	done
-	-poetry run mypy --install-types --cache-dir=/dev/null mango tests .tmplintdir
-	rm -rf .tmplintdir
+	-poetry run mypy --install-types mango tests .tmplintdir
+	rm -rf .tmplintdir .mypy_cache
 
 flake8:
 	poetry run flake8 --extend-ignore E402,E501,E722,W291,W391 . bin/*
