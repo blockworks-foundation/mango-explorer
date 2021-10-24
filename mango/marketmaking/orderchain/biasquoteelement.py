@@ -19,7 +19,7 @@ import typing
 
 from decimal import Decimal
 
-from .element import Element
+from .pairwiseelement import PairwiseElement
 from ...modelstate import ModelState
 
 
@@ -28,36 +28,49 @@ from ...modelstate import ModelState
 # Modifies an `Order`s price based. Uses `bias` to shift the price down to sell more (using
 # a `biasquote-bias` of less than 1) or buy more (using a `biasquote-bias` of greater than 1).
 #
-class BiasQuoteElement(Element):
-    def __init__(self, factor: Decimal):
+# Can take multiple bias factors to work with pair-wise orders.
+#
+class BiasQuoteElement(PairwiseElement):
+    def __init__(self, factors: typing.Sequence[Decimal]):
         super().__init__()
-        self.bias_factor: Decimal = factor
+        self.bias_factors: typing.Sequence[Decimal] = factors
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--biasquote-factor", type=Decimal, default=Decimal(0),
-                            help="bias factor to apply to quotes. Prices will be multiplied by this factor, so a number less than 1 will reduce prices and a number greater than 1 will increase prices. For example, use 1.001 to increase prices by 10 bips.")
+        parser.add_argument("--biasquote-factor", type=Decimal, action="append",
+                            help="bias factor to apply to quotes. Prices will be multiplied by this factor, so a number less than 1 will reduce prices and a number greater than 1 will increase prices. For example, use 1.001 to increase prices by 10 bips. Can be specified multiple times to apply to different levels.")
 
     @staticmethod
     def from_command_line_parameters(args: argparse.Namespace) -> "BiasQuoteElement":
-        return BiasQuoteElement(args.biasquote_factor or Decimal(1))
+        bias_factors: typing.Sequence[Decimal] = args.biasquote_factor
+        return BiasQuoteElement(bias_factors or [Decimal(1)])
 
-    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
-        if self.bias_factor == 1:
+    def process_order_pair(self, context: mango.Context, model_state: ModelState, index: int, buy: typing.Optional[mango.Order], sell: typing.Optional[mango.Order]) -> typing.Tuple[typing.Optional[mango.Order], typing.Optional[mango.Order]]:
+        # If no bias is explicitly specified for this element, just use the last specified bias.
+        bias_factor: Decimal = self.bias_factors[index] if index < len(self.bias_factors) else self.bias_factors[-1]
+        bias_description = "BUY more" if bias_factor > 1 else "SELL more"
+
+        if bias_factor == 1:
             # Bias factor of 1 results in no changes to orders.
-            return orders
+            return buy, sell
 
-        new_orders: typing.List[mango.Order] = []
-        for order in orders:
-            new_price: Decimal = order.price * self.bias_factor
-            new_order: mango.Order = order.with_price(new_price)
-            bias_description = "BUY more" if self.bias_factor > 1 else "SELL more"
-            self.logger.debug(f"""Order change - bias factor {self.bias_factor} shifted price to {bias_description}:
-    Old: {order}
-    New: {new_order}""")
-            new_orders += [new_order]
+        new_buy: typing.Optional[mango.Order] = None
+        new_sell: typing.Optional[mango.Order] = None
+        if buy is not None:
+            new_buy_price: Decimal = buy.price * bias_factor
+            new_buy = buy.with_price(new_buy_price)
+            self.logger.debug(f"""Order change - bias factor of {bias_factor} shifted price to {bias_description}:
+    Old: {buy}
+    New: {new_buy}""")
 
-        return new_orders
+        if sell is not None:
+            new_sell_price: Decimal = sell.price * bias_factor
+            new_sell = sell.with_price(new_sell_price)
+            self.logger.debug(f"""Order change - bias factor of {bias_factor} shifted price to {bias_description}:
+    Old: {sell}
+    New: {new_sell}""")
+
+        return new_buy, new_sell
 
     def __str__(self) -> str:
-        return f"« 𝙱𝚒𝚊𝚜𝚀𝚞𝚘𝚝𝚎𝙴𝚕𝚎𝚖𝚎𝚗𝚝 - bias factor: {self.bias_factor} »"
+        return f"« 𝙱𝚒𝚊𝚜𝚀𝚞𝚘𝚝𝚎𝙴𝚕𝚎𝚖𝚎𝚗𝚝 - bias factors: {self.bias_factors} »"

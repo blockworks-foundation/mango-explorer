@@ -19,7 +19,7 @@ import typing
 
 from decimal import Decimal
 
-from .element import Element
+from .pairwiseelement import PairwiseElement
 from ...modelstate import ModelState
 
 
@@ -28,37 +28,46 @@ from ...modelstate import ModelState
 # Ignores any input `Order`s (so probably best at the head of the chain). Builds orders using a fixed spread
 # value.
 #
-class FixedSpreadElement(Element):
-    def __init__(self, spread: Decimal):
+class FixedSpreadElement(PairwiseElement):
+    def __init__(self, spreads: typing.Sequence[Decimal]):
         super().__init__()
-        self.half_spread: Decimal = spread / 2
+        self.spreads: typing.Sequence[Decimal] = spreads
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--fixedspread-value", type=Decimal,
-                            help="fixed value to apply to the mid-price to create the BUY and SELL price (only works well with a single 'level' of orders - one BUY and one SELL)")
+        parser.add_argument("--fixedspread-value", type=Decimal, action="append",
+                            help="fixed value to apply to the mid-price to create the BUY and SELL price. Can be specified multiple times for multiple levels of BUYs and SELLs.")
 
     @staticmethod
     def from_command_line_parameters(args: argparse.Namespace) -> "FixedSpreadElement":
         if args.fixedspread_value is None:
             raise Exception("No spread value specified. Try the --fixedspread-value parameter?")
 
-        spread: Decimal = args.fixedspread_value
-        return FixedSpreadElement(spread)
+        spreads: typing.Sequence[Decimal] = args.fixedspread_value
+        return FixedSpreadElement(spreads)
 
-    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
+    def process_order_pair(self, context: mango.Context, model_state: ModelState, index: int, buy: typing.Optional[mango.Order], sell: typing.Optional[mango.Order]) -> typing.Tuple[typing.Optional[mango.Order], typing.Optional[mango.Order]]:
+        # If no spread is explicitly specified for this element, just use the last specified spread.
+        spread: Decimal = self.spreads[index] if index < len(self.spreads) else self.spreads[-1]
+        half_spread: Decimal = spread / 2
         price: mango.Price = model_state.price
-        new_orders: typing.List[mango.Order] = []
-        for order in orders:
-            new_price: Decimal = price.mid_price - self.half_spread if order.side == mango.Side.BUY else price.mid_price + self.half_spread
-            new_order: mango.Order = order.with_price(new_price)
+        new_buy: typing.Optional[mango.Order] = None
+        new_sell: typing.Optional[mango.Order] = None
+        if buy is not None:
+            new_buy_price: Decimal = price.mid_price - half_spread
+            new_buy = buy.with_price(new_buy_price)
+            self.logger.debug(f"""Order change - using fixed spread of {spread:,.8f} - new BUY price {new_buy_price:,.8f} is {half_spread:,.8f} from mid price {price.mid_price:,.8f}:
+    Old: {buy}
+    New: {new_buy}""")
 
-            self.logger.debug(f"""Order change - using fixed spread of {self.half_spread * 2}:
-    Old: {order}
-    New: {new_order}""")
-            new_orders += [new_order]
+        if sell is not None:
+            new_sell_price: Decimal = price.mid_price + half_spread
+            new_sell = sell.with_price(new_sell_price)
+            self.logger.debug(f"""Order change - using fixed spread of {spread:,.8f} - new SELL price {new_sell_price:,.8f} is {half_spread:,.8f} from mid price {price.mid_price:,.8f}:
+    Old: {sell}
+    New: {new_sell}""")
 
-        return new_orders
+        return new_buy, new_sell
 
     def __str__(self) -> str:
-        return f"« 𝙵𝚒𝚡𝚎𝚍𝚂𝚙𝚛𝚎𝚊𝚍𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using spread value {self.half_spread * 2} »"
+        return f"« 𝙵𝚒𝚡𝚎𝚍𝚂𝚙𝚛𝚎𝚊𝚍𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using spreads {self.spreads} »"

@@ -114,6 +114,21 @@ Prices are multiplied by the factor parameter, so a factor of less than 1 will r
 
 The default factor is 1, meaning no changes will be made to orders.
 
+`--biasquote-factor` can be specified multiple times for configurations running multiple layers or levels of `Order`s.
+
+Specifying multiple bias factors is designed to work in an intuitive way - the first BUY and SELL take the first specified bias factor, the second BUY and SELL take the second specified bias factor and so on.
+
+To do so, this element will:
+* Separate BUY and SELL `Order`s
+* Sort the BUY and SELL `Order`s from closest to top-of-book to farthest from top-of-book
+* Process each BUY and SELL pair using the next specified bias factor (substituting the last specified bias factor if no other one is available)
+
+The result is if you specify `--biasquote-factor 0.0002 --biasquote-factor 0.0004` the BUY and SELL `Order`s closest to top-of-book will both use a bias factor of 0.0002, and the next BUY and SELL `Order`s will use a bias factor of 0.0004.
+
+(In fact, in that example, the BUY and SELL nearest the mid-price will use a bias factor of 0.0002, and all other `Order`s will use a bias factor of 0.0004.)
+
+Note that one consequence of this processing of `Order`s is that the orders returned from this `Element` may be in a different sort-order to the orders that were sent to it.
+
 
 ### `BiasQuoteOnPositionElement`
 
@@ -124,6 +139,21 @@ The default factor is 1, meaning no changes will be made to orders.
 This can shift the price of orders based on how much inventory is held. Too much inventory: bias prices down (so it tends to buy less and sell more). Too little inventory: bias prices up (so it tends to buy more and sell less).
 
 The default bias is 0, meaning no changes will be made to orders. You can change this using the `-biasquoteonposition-bias` parameter. This should be a small, positive number - for example 0.00003 can shift the order price significantly.
+
+`--biasquoteonposition-bias` can be specified multiple times for configurations running multiple layers or levels of `Order`s.
+
+Specifying multiple biases is designed to work in an intuitive way - the first BUY and SELL take the first specified bias, the second BUY and SELL take the second specified bias and so on.
+
+To do so, this element will:
+* Separate BUY and SELL `Order`s
+* Sort the BUY and SELL `Order`s from closest to top-of-book to farthest from top-of-book
+* Process each BUY and SELL pair using the next specified bias (substituting the last specified bias if no other one is available)
+
+The result is if you specify `--biasquoteonposition-bias 0.0002 --biasquoteonposition-bias 0.0004` the BUY and SELL `Order`s closest to top-of-book will both use a bias of 0.0002, and the next BUY and SELL `Order`s will use a bias of 0.0004.
+
+(In fact, in that example, the BUY and SELL nearest the mid-price will use a bias factor of 0.0002 when calculating the bias using the current position, and all other `Order`s will use a bias factor of 0.0004 when calculating the bias using the current position.)
+
+Note that one consequence of this processing of `Order`s is that the orders returned from this `Element` may be in a different sort-order to the orders that were sent to it.
 
 
 ### `ConfidenceIntervalElement`
@@ -165,9 +195,7 @@ to a chain on ETH/USDC will force all BUY and SELL orders to have a position siz
 
 Specifying multiple fixed position sizes is designed to work in an intuitive way - the first BUY and SELL take the first specified position size, the second BUY and SELL take the second specified position size and so on.
 
-But in practice this could be quite confusing, especially if the `Order`s are not well sorted.
-
-So, to provide a consistent and intuitive processing of `Order`s, this element will:
+To do so, this element will:
 * Separate BUY and SELL `Order`s
 * Sort the BUY and SELL `Order`s from closest to top-of-book to farthest from top-of-book
 * Process each BUY and SELL pair using the next specified position size (substituting the last specified position size if no other one is available)
@@ -193,6 +221,21 @@ For example, adding:
 ```
 to a chain on ETH/USDC will force the spread on BUY and SELL orders to be 0.5 USDC, meaning the BUY price will be the mid-price *minus* half the --fixedspread-value, and the SELL price will be the mid-price *plus* half the --fixedspread-value.
 
+`--fixedspread-value` can be specified multiple times for configurations running multiple layers or levels of `Order`s.
+
+Specifying multiple fixed spreads is designed to work in an intuitive way - the first BUY and SELL take the first specified spread, the second BUY and SELL take the second specified spread and so on.
+
+To do so, this element will:
+* Separate BUY and SELL `Order`s
+* Sort the BUY and SELL `Order`s from closest to top-of-book to farthest from top-of-book
+* Process each BUY and SELL pair using the next specified spread (substituting the last specified spread if no other one is available)
+
+The result is if you specify `--fixedspread-value 2 --fixedspread-value 4` the BUY and SELL `Order`s closest to top-of-book will both be given a fixed spread of 2, and the next BUY and SELL `Order`s will be given a fixed spread of 4.
+
+(In fact, in that example, the BUY and SELL nearest the mid-price will be given a spread of 2 and all other `Order`s will be given a spread of 4.)
+
+Note that one consequence of this processing of `Order`s is that the orders returned from this `Element` may be in a different sort-order to the orders that were sent to it.
+
 
 ### `MinimumChargeElement`
 
@@ -207,6 +250,21 @@ This ensures that there’s a minimum value of spread to be paid by the taker.
 It’s possible that the configuration may lead to too small a spread to be profitable. You can use the `--minimumcharge-ratio` parameter to enforce a minimum spread. The default of 0.0005 is 0.05%.
 
 The default is to perform calculations based on the mid price. The `--minimumcharge-from-bid-ask` parameter specifies calculations are to be performed using the bid price (for BUYs) or ask price (for SELLs), not the mid price.
+
+`--minimumcharge-ratio` can be specified multiple times for configurations running multiple layers or levels of `Order`s.
+
+Specifying multiple minimum charges is designed to work in an intuitive way - the first BUY and SELL take the first specified position size, the second BUY and SELL take the second specified position size and so on.
+
+To do so, this element will:
+* Separate BUY and SELL `Order`s
+* Sort the BUY and SELL `Order`s from closest to top-of-book to farthest from top-of-book
+* Process each BUY and SELL pair using the next specified minimum charge (substituting the last specified minimum charge if no other one is available)
+
+The result is if you specify `--minimumcharge-ratio 2 --minimumcharge-ratio 4` the BUY and SELL `Order`s closest to top-of-book will both be given a minimum charge of 2, and the next BUY and SELL `Order`s will be given a fixed minimum charge of 4.
+
+(In fact, in that example, the BUY and SELL nearest the mid-price will be given a minimum charge of 2 and all other `Order`s will be given a minimum charge of 4.)
+
+Note that one consequence of this processing of `Order`s is that the orders returned from this `Element` may be in a different sort-order to the orders that were sent to it.
 
 
 ### `PreventPostOnlyCrossingBookElement`
