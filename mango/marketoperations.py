@@ -23,7 +23,7 @@ from solana.publickey import PublicKey
 
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .market import Market, DryRunMarket
-from .orders import Order
+from .orders import Order, OrderBook
 
 
 # # 🥭 MarketOperations
@@ -65,7 +65,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
         raise NotImplementedError("MarketOperations.place_order() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def load_orders(self) -> typing.Sequence[Order]:
+    def load_orderbook(self) -> OrderBook:
         raise NotImplementedError("MarketOperations.load_orders() is not implemented on the base type.")
 
     @abc.abstractmethod
@@ -110,8 +110,8 @@ class DryRunMarketOperations(MarketOperations):
         self.logger.info(f"[Dry Run] Not placing order {order}.")
         return order
 
-    def load_orders(self) -> typing.Sequence[Order]:
-        return []
+    def load_orderbook(self) -> OrderBook:
+        return OrderBook(self.market_name, [], [])
 
     def load_my_orders(self) -> typing.Sequence[Order]:
         return []

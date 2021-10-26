@@ -25,7 +25,8 @@ asks: typing.Sequence[mango.Order] = [
     fake_order(price=Decimal(86), quantity=Decimal(3), side=mango.Side.SELL),
     fake_order(price=Decimal(87), quantity=Decimal(7), side=mango.Side.SELL)
 ]
-model_state = fake_model_state(bids=bids, asks=asks)
+orderbook: mango.OrderBook = mango.OrderBook("TEST", bids, asks)
+model_state = fake_model_state(orderbook=orderbook)
 
 
 def test_from_args():
@@ -73,7 +74,8 @@ def test_accumulation_ignores_own_orders_updated():
         fake_order(price=Decimal(86), quantity=Decimal(3), side=mango.Side.SELL),
         fake_order(price=Decimal(87), quantity=Decimal(7), side=mango.Side.SELL)
     ]
-    model_state = fake_model_state(order_owner=order_owner, bids=bids, asks=asks)
+    orderbook: mango.OrderBook = mango.OrderBook("TEST", bids, asks)
+    model_state = fake_model_state(order_owner=order_owner, orderbook=orderbook)
     context = fake_context()
     buy: mango.Order = fake_order(price=Decimal(78), quantity=Decimal(6), side=mango.Side.BUY)
     sell: mango.Order = fake_order(price=Decimal(82), quantity=Decimal(6), side=mango.Side.SELL)

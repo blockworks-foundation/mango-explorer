@@ -25,7 +25,7 @@ from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import Group
 from .marketoperations import MarketOperations
-from .orders import Order
+from .orders import Order, OrderBook
 from .spotmarket import SpotMarket
 from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
 from .wallet import Wallet
@@ -102,15 +102,15 @@ class SpotMarketOperations(MarketOperations):
             return existing
         return self.create_openorders()
 
-    def load_orders(self) -> typing.Sequence[Order]:
-        return self.spot_market.orders(self.context)
+    def load_orderbook(self) -> OrderBook:
+        return self.spot_market.fetch_orderbook(self.context)
 
     def load_my_orders(self) -> typing.Sequence[Order]:
         if not self.open_orders_address:
             return []
 
-        all_orders = self.spot_market.orders(self.context)
-        return list([o for o in all_orders if o.owner == self.open_orders_address])
+        orderbook: OrderBook = self.load_orderbook()
+        return list([o for o in [*orderbook.bids, *orderbook.asks] if o.owner == self.open_orders_address])
 
     def _build_crank(self, limit: Decimal = Decimal(32), add_self: bool = False) -> CombinableInstructions:
         open_orders_to_crank: typing.List[PublicKey] = []

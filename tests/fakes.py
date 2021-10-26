@@ -144,11 +144,11 @@ def fake_inventory():
 
 
 def fake_bids():
-    return None
+    return []
 
 
 def fake_asks():
-    return None
+    return []
 
 
 def fake_model_state(order_owner: typing.Optional[PublicKey] = None,
@@ -158,8 +158,7 @@ def fake_model_state(order_owner: typing.Optional[PublicKey] = None,
                      price: typing.Optional[mango.Price] = None,
                      placed_orders_container: typing.Optional[mango.PlacedOrdersContainer] = None,
                      inventory: typing.Optional[mango.Inventory] = None,
-                     bids: typing.Optional[typing.Sequence[mango.Order]] = None,
-                     asks: typing.Optional[typing.Sequence[mango.Order]] = None) -> mango.ModelState:
+                     orderbook: typing.Optional[mango.OrderBook] = None) -> mango.ModelState:
     order_owner = order_owner or fake_seeded_public_key("order owner")
     market = market or fake_loaded_market()
     group = group or fake_group()
@@ -167,17 +166,15 @@ def fake_model_state(order_owner: typing.Optional[PublicKey] = None,
     price = price or fake_price()
     placed_orders_container = placed_orders_container or fake_placed_orders_container()
     inventory = inventory or fake_inventory()
-    bids = bids or fake_bids()
-    asks = asks or fake_asks()
+    orderbook = orderbook or mango.OrderBook("FAKE", fake_bids(), fake_asks())
     group_watcher: mango.ManualUpdateWatcher[mango.Group] = mango.ManualUpdateWatcher(group)
     account_watcher: mango.ManualUpdateWatcher[mango.Account] = mango.ManualUpdateWatcher(account)
     price_watcher: mango.ManualUpdateWatcher[mango.Price] = mango.ManualUpdateWatcher(price)
     placed_orders_container_watcher: mango.ManualUpdateWatcher[
         mango.PlacedOrdersContainer] = mango.ManualUpdateWatcher(placed_orders_container)
     inventory_watcher: mango.ManualUpdateWatcher[mango.Inventory] = mango.ManualUpdateWatcher(inventory)
-    bids_watcher: mango.ManualUpdateWatcher[typing.Sequence[mango.Order]] = mango.ManualUpdateWatcher(bids)
-    asks_watcher: mango.ManualUpdateWatcher[typing.Sequence[mango.Order]] = mango.ManualUpdateWatcher(asks)
+    orderbook_watcher: mango.ManualUpdateWatcher[mango.OrderBook] = mango.ManualUpdateWatcher(orderbook)
 
     return mango.ModelState(order_owner, market, group_watcher,
                             account_watcher, price_watcher, placed_orders_container_watcher,
-                            inventory_watcher, bids_watcher, asks_watcher)
+                            inventory_watcher, orderbook_watcher)

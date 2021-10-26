@@ -18,7 +18,6 @@ import typing
 
 from decimal import Decimal
 from pyserum.market import Market as PySerumMarket
-from pyserum.market.orderbook import OrderBook as PySerumOrderBook
 from solana.publickey import PublicKey
 
 from .account import Account
@@ -30,13 +29,13 @@ from .group import Group
 from .healthcheck import HealthCheck
 from .instructions import build_create_serum_open_orders_instructions
 from .inventory import Inventory, InventorySource
+from .loadedmarket import LoadedMarket
 from .market import Market
 from .observables import DisposePropagator, LatestItemObserverSubscriber
 from .openorders import OpenOrders
 from .oracle import Price
 from .oraclefactory import OracleProvider, create_oracle_provider
-from .orderbookside import OrderBookSideType, PerpOrderBookSide
-from .orders import Order
+from .orders import OrderBook
 from .perpmarket import PerpMarket
 from .placedorder import PlacedOrdersContainer
 from .serummarket import SerumMarket
@@ -205,45 +204,37 @@ def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscripti
     return LamdaUpdateWatcher(serum_inventory_accessor)
 
 
-def build_perp_orderbook_side_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, perp_market: PerpMarket, side: OrderBookSideType) -> Watcher[typing.Sequence[Order]]:
-    orderbook_address: PublicKey = perp_market.underlying_perp_market.bids if side == OrderBookSideType.BIDS else perp_market.underlying_perp_market.asks
-    orderbook_side_info = AccountInfo.load(context, orderbook_address)
-    if orderbook_side_info is None:
-        raise Exception(f"Could not find perp order book side at address {orderbook_address}.")
-    initial_orderbook_side: PerpOrderBookSide = PerpOrderBookSide.parse(
-        context, orderbook_side_info, perp_market.underlying_perp_market)
+def build_orderbook_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, market: LoadedMarket) -> Watcher[OrderBook]:
+    orderbook_addresses: typing.List[PublicKey] = [
+        market.bids_address,
+        market.asks_address
+    ]
+    orderbook_infos = AccountInfo.load_multiple(context, orderbook_addresses)
+    if len(orderbook_infos) != 2 or orderbook_infos[0] is None or orderbook_infos[1] is None:
+        raise Exception(f"Could not find {market.symbol} order book at addresses {orderbook_addresses}.")
 
-    orders_subscription = WebSocketAccountSubscription[typing.Sequence[Order]](
-        context, orderbook_address, lambda account_info: PerpOrderBookSide.parse(context, account_info, perp_market.underlying_perp_market).orders())
-    manager.add(orders_subscription)
+    initial_orderbook: OrderBook = market.parse_account_infos_to_orderbook(orderbook_infos[0], orderbook_infos[1])
+    updatable_orderbook: OrderBook = market.parse_account_infos_to_orderbook(
+        orderbook_infos[0], orderbook_infos[1])
 
-    latest_orders_observer = LatestItemObserverSubscriber[typing.Sequence[Order]](initial_orderbook_side.orders())
+    def _update_bids(account_info: AccountInfo) -> OrderBook:
+        new_bids = market.parse_account_info_to_orders(account_info)
+        updatable_orderbook.bids = new_bids
+        return updatable_orderbook
 
-    orders_subscription.publisher.subscribe(latest_orders_observer)
-    health_check.add("orderbook_side_subscription", orders_subscription.publisher)
-    return latest_orders_observer
+    def _update_asks(account_info: AccountInfo) -> OrderBook:
+        new_asks = market.parse_account_info_to_orders(account_info)
+        updatable_orderbook.asks = new_asks
+        return updatable_orderbook
+    bids_subscription = WebSocketAccountSubscription[OrderBook](context, orderbook_addresses[0], _update_bids)
+    manager.add(bids_subscription)
+    asks_subscription = WebSocketAccountSubscription[OrderBook](context, orderbook_addresses[1], _update_asks)
+    manager.add(asks_subscription)
 
+    orderbook_observer = LatestItemObserverSubscriber[OrderBook](initial_orderbook)
 
-def build_serum_orderbook_side_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, underlying_serum_market: PySerumMarket, side: OrderBookSideType) -> Watcher[typing.Sequence[Order]]:
-    orderbook_address: PublicKey = underlying_serum_market.state.bids(
-    ) if side == OrderBookSideType.BIDS else underlying_serum_market.state.asks()
-    orderbook_side_info = AccountInfo.load(context, orderbook_address)
-    if orderbook_side_info is None:
-        raise Exception(f"Could not find Serum order book side at address {orderbook_address}.")
-
-    def account_info_to_orderbook(account_info: AccountInfo) -> typing.Sequence[Order]:
-        serum_orderbook_side = PySerumOrderBook.from_bytes(
-            underlying_serum_market.state, account_info.data)
-        return list(map(Order.from_serum_order, serum_orderbook_side.orders()))
-
-    initial_orderbook_side: typing.Sequence[Order] = account_info_to_orderbook(orderbook_side_info)
-
-    orders_subscription = WebSocketAccountSubscription[typing.Sequence[Order]](
-        context, orderbook_address, account_info_to_orderbook)
-    manager.add(orders_subscription)
-
-    latest_orders_observer = LatestItemObserverSubscriber[typing.Sequence[Order]](initial_orderbook_side)
-
-    orders_subscription.publisher.subscribe(latest_orders_observer)
-    health_check.add("orderbook_side_subscription", orders_subscription.publisher)
-    return latest_orders_observer
+    bids_subscription.publisher.subscribe(orderbook_observer)
+    asks_subscription.publisher.subscribe(orderbook_observer)
+    health_check.add("orderbook_bids_subscription", bids_subscription.publisher)
+    health_check.add("orderbook_asks_subscription", asks_subscription.publisher)
+    return orderbook_observer

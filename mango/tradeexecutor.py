@@ -139,9 +139,11 @@ class ImmediateTradeExecutor(TradeExecutor):
 
     def buy(self, symbol: str, quantity: Decimal) -> Order:
         market_operations: MarketOperations = self._build_market_operations(symbol)
-        orders = market_operations.load_orders()
+        orderbook = market_operations.load_orderbook()
+        if orderbook.top_ask is None:
+            raise Exception(f"Could not determine top ask on {orderbook.symbol}")
 
-        top_ask = min([order.price for order in orders if order.side == Side.SELL])
+        top_ask = orderbook.top_ask.price
 
         increase_factor = Decimal(1) + self.price_adjustment_factor
         price = top_ask * increase_factor
@@ -152,9 +154,11 @@ class ImmediateTradeExecutor(TradeExecutor):
 
     def sell(self, symbol: str, quantity: Decimal) -> Order:
         market_operations: MarketOperations = self._build_market_operations(symbol)
-        orders = market_operations.load_orders()
+        orderbook = market_operations.load_orderbook()
+        if orderbook.top_bid is None:
+            raise Exception(f"Could not determine top bid on {orderbook.symbol}")
 
-        top_bid = max([order.price for order in orders if order.side == Side.BUY])
+        top_bid = orderbook.top_bid.price
 
         decrease_factor = Decimal(1) - self.price_adjustment_factor
         price = top_bid * decrease_factor

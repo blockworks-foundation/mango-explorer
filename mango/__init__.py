@@ -45,7 +45,7 @@ from .observables import DisposePropagator, DisposeWrapper, NullObserverSubscrib
 from .openorders import OpenOrders
 from .oracle import OracleSource, Price, Oracle, OracleProvider, SupportedOracleFeature
 from .orderbookside import OrderBookSideType, PerpOrderBookSide
-from .orders import Order, OrderType, Side
+from .orders import Order, OrderType, Side, OrderBook
 from .ownedtokenvalue import OwnedTokenValue
 from .oraclefactory import create_oracle_provider
 from .parse_account_info_to_orders import parse_account_info_to_orders
@@ -83,7 +83,7 @@ from .version import Version
 from .wallet import Wallet
 from .walletbalancer import TargetBalance, FixedTargetBalance, PercentageTargetBalance, parse_target_balance, parse_fixed_target_balance, sort_changes_for_trades, calculate_required_balance_changes, FilterSmallChanges, WalletBalancer, NullWalletBalancer, LiveWalletBalancer, LiveAccountBalancer
 from .watcher import Watcher, ManualUpdateWatcher, LamdaUpdateWatcher
-from .watchers import build_group_watcher, build_account_watcher, build_cache_watcher, build_spot_open_orders_watcher, build_serum_open_orders_watcher, build_perp_open_orders_watcher, build_price_watcher, build_serum_inventory_watcher, build_perp_orderbook_side_watcher, build_serum_orderbook_side_watcher
+from .watchers import build_group_watcher, build_account_watcher, build_cache_watcher, build_spot_open_orders_watcher, build_serum_open_orders_watcher, build_perp_open_orders_watcher, build_price_watcher, build_serum_inventory_watcher, build_orderbook_watcher
 from .websocketsubscription import WebSocketSubscription, WebSocketProgramSubscription, WebSocketAccountSubscription, WebSocketLogSubscription, WebSocketSubscriptionManager, IndividualWebSocketSubscriptionManager, SharedWebSocketSubscriptionManager
 
 from .layouts import layouts

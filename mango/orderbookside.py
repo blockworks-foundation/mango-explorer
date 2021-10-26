@@ -80,7 +80,7 @@ class PerpOrderBookSide(AddressableAccount):
         return PerpOrderBookSide(account_info, version, meta_data, perp_market_details, bump_index, free_list_len, free_list_head, root_node, leaf_count, nodes)
 
     @staticmethod
-    def parse(context: Context, account_info: AccountInfo, perp_market_details: PerpMarketDetails) -> "PerpOrderBookSide":
+    def parse(account_info: AccountInfo, perp_market_details: PerpMarketDetails) -> "PerpOrderBookSide":
         data = account_info.data
         if len(data) != layouts.ORDERBOOK_SIDE.sizeof():
             raise Exception(
@@ -94,7 +94,7 @@ class PerpOrderBookSide(AddressableAccount):
         account_info = AccountInfo.load(context, address)
         if account_info is None:
             raise Exception(f"PerpOrderBookSide account not found at address '{address}'")
-        return PerpOrderBookSide.parse(context, account_info, perp_market_details)
+        return PerpOrderBookSide.parse(account_info, perp_market_details)
 
     def orders(self) -> typing.Sequence[Order]:
         if self.leaf_count == 0:

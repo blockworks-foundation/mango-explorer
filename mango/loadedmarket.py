@@ -13,15 +13,15 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-
 import typing
 
 from solana.publickey import PublicKey
 
+from .accountinfo import AccountInfo
 from .context import Context
 from .lotsizeconverter import LotSizeConverter
 from .market import Market, InventorySource
-from .orders import Order
+from .orders import Order, OrderBook
 from .token import Token
 
 
@@ -33,5 +33,22 @@ class LoadedMarket(Market):
     def __init__(self, program_address: PublicKey, address: PublicKey, inventory_source: InventorySource, base: Token, quote: Token, lot_size_converter: LotSizeConverter):
         super().__init__(program_address, address, inventory_source, base, quote, lot_size_converter)
 
-    def orders(self, context: Context) -> typing.Sequence[Order]:
-        raise NotImplementedError("LoadedMarket.orders() is not implemented on the base type.")
+    @property
+    def bids_address(self) -> PublicKey:
+        raise NotImplementedError("LoadedMarket.bids_address() is not implemented on the base type.")
+
+    @property
+    def asks_address(self) -> PublicKey:
+        raise NotImplementedError("LoadedMarket.asks_address() is not implemented on the base type.")
+
+    def parse_account_info_to_orders(self, account_info: AccountInfo) -> typing.Sequence[Order]:
+        raise NotImplementedError("LoadedMarket.parse_account_info_to_orders() is not implemented on the base type.")
+
+    def parse_account_infos_to_orderbook(self, bids_account_info: AccountInfo, asks_account_info: AccountInfo) -> OrderBook:
+        bids_orderbook = self.parse_account_info_to_orders(bids_account_info)
+        asks_orderbook = self.parse_account_info_to_orders(asks_account_info)
+        return OrderBook(self.symbol, bids_orderbook, asks_orderbook)
+
+    def fetch_orderbook(self, context: Context) -> OrderBook:
+        [bids_info, asks_info] = AccountInfo.load_multiple(context, [self.bids_address, self.asks_address])
+        return self.parse_account_infos_to_orderbook(bids_info, asks_info)

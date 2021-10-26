@@ -201,6 +201,28 @@ class Account(AddressableAccount):
         return Account.parse(account_info, group)
 
     @staticmethod
+    def load_all(context: Context, group: Group) -> typing.Sequence["Account"]:
+        # mango_group is just after the METADATA, which is the first entry.
+        group_offset = layouts.METADATA.sizeof()
+        # owner is just after mango_group in the layout, and it's a PublicKey which is 32 bytes.
+        filters = [
+            MemcmpOpts(
+                offset=group_offset,
+                bytes=encode_key(group.address)
+            )
+        ]
+
+        results = context.client.get_program_accounts(
+            context.mango_program_address, memcmp_opts=filters, data_size=layouts.MANGO_ACCOUNT.sizeof())
+        accounts = []
+        for account_data in results:
+            address = PublicKey(account_data["pubkey"])
+            account_info = AccountInfo._from_response_values(account_data["account"], address)
+            account = Account.parse(account_info, group)
+            accounts += [account]
+        return accounts
+
+    @staticmethod
     def load_all_for_owner(context: Context, owner: PublicKey, group: Group) -> typing.Sequence["Account"]:
         # mango_group is just after the METADATA, which is the first entry.
         group_offset = layouts.METADATA.sizeof()
@@ -217,7 +239,8 @@ class Account(AddressableAccount):
             )
         ]
 
-        results = context.client.get_program_accounts(context.mango_program_address, memcmp_opts=filters)
+        results = context.client.get_program_accounts(
+            context.mango_program_address, memcmp_opts=filters, data_size=layouts.MANGO_ACCOUNT.sizeof())
         accounts = []
         for account_data in results:
             address = PublicKey(account_data["pubkey"])

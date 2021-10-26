@@ -25,7 +25,7 @@ from .group import Group
 from .inventory import Inventory
 from .market import Market
 from .oracle import Price
-from .orders import Order
+from .orders import Order, OrderBook
 from .placedorder import PlacedOrdersContainer
 from .watcher import Watcher
 
@@ -43,8 +43,7 @@ class ModelState:
                  price_watcher: Watcher[Price],
                  placed_orders_container_watcher: Watcher[PlacedOrdersContainer],
                  inventory_watcher: Watcher[Inventory],
-                 bids: Watcher[typing.Sequence[Order]],
-                 asks: Watcher[typing.Sequence[Order]]
+                 orderbook: Watcher[OrderBook]
                  ):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.order_owner: PublicKey = order_owner
@@ -55,8 +54,7 @@ class ModelState:
         self.placed_orders_container_watcher: Watcher[
             PlacedOrdersContainer] = placed_orders_container_watcher
         self.inventory_watcher: Watcher[Inventory] = inventory_watcher
-        self.bids_watcher: Watcher[typing.Sequence[Order]] = bids
-        self.asks_watcher: Watcher[typing.Sequence[Order]] = asks
+        self.orderbook_watcher: Watcher[OrderBook] = orderbook
 
         self.not_quoting: bool = False
         self.state: typing.Dict[str, typing.Any] = {}
@@ -82,42 +80,34 @@ class ModelState:
         return self.inventory_watcher.latest
 
     @property
+    def orderbook(self) -> OrderBook:
+        return self.orderbook_watcher.latest
+
+    @property
     def bids(self) -> typing.Sequence[Order]:
-        return self.bids_watcher.latest
+        return self.orderbook.bids
 
     @property
     def asks(self) -> typing.Sequence[Order]:
-        return self.asks_watcher.latest
+        return self.orderbook.asks
 
     # The top bid is the highest price someone is willing to pay to BUY
     @property
     def top_bid(self) -> typing.Optional[Order]:
-        if self.bids_watcher.latest and len(self.bids_watcher.latest) > 0:
-            # Top-of-book is always at index 0 for us.
-            return self.bids_watcher.latest[0]
-        else:
-            return None
+        return self.orderbook.top_bid
 
     # The top ask is the lowest price someone is willing to pay to SELL
     @property
     def top_ask(self) -> typing.Optional[Order]:
-        if self.asks_watcher.latest and len(self.asks_watcher.latest) > 0:
-            # Top-of-book is always at index 0 for us.
-            return self.asks_watcher.latest[0]
-        else:
-            return None
+        return self.orderbook.top_ask
 
     @property
     def spread(self) -> Decimal:
-        top_ask = self.top_ask
-        top_bid = self.top_bid
-        if top_ask is None or top_bid is None:
-            return Decimal(0)
-        else:
-            return top_ask.price - top_bid.price
+        return self.orderbook.spread
 
     def current_orders(self) -> typing.Sequence[Order]:
-        all_orders = [*self.bids_watcher.latest, *self.asks_watcher.latest]
+        self.orderbook
+        all_orders = [*self.bids, *self.asks]
         return list([o for o in all_orders if o.owner == self.order_owner])
 
     def __str__(self) -> str:
@@ -127,8 +117,8 @@ class ModelState:
     Price: {self.price_watcher.latest}
     Inventory: {self.inventory_watcher.latest}
     Existing Order Count: {len(self.placed_orders_container_watcher.latest.placed_orders)}
-    Bid Count: {len(self.bids_watcher.latest)}
-    Ask Count: {len(self.bids_watcher.latest)}
+    Bid Count: {len(self.bids)}
+    Ask Count: {len(self.asks)}
 »"""
 
     def __repr__(self) -> str:

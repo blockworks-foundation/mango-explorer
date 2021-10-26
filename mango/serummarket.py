@@ -13,7 +13,6 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-import itertools
 import typing
 
 from decimal import Decimal
@@ -44,18 +43,21 @@ class SerumMarket(LoadedMarket):
         quote_lot_size: Decimal = Decimal(underlying_serum_market.state.quote_lot_size())
         self.lot_size_converter: LotSizeConverter = LotSizeConverter(base, base_lot_size, quote, quote_lot_size)
 
+    @property
+    def bids_address(self) -> PublicKey:
+        return self.underlying_serum_market.state.bids()
+
+    @property
+    def asks_address(self) -> PublicKey:
+        return self.underlying_serum_market.state.asks()
+
+    def parse_account_info_to_orders(self, account_info: AccountInfo) -> typing.Sequence[Order]:
+        orderbook: PySerumOrderBook = PySerumOrderBook.from_bytes(self.underlying_serum_market.state, account_info.data)
+        return list(map(Order.from_serum_order, orderbook.orders()))
+
     def unprocessed_events(self, context: Context) -> typing.Sequence[SerumEvent]:
         event_queue: SerumEventQueue = SerumEventQueue.load(context, self.underlying_serum_market.state.event_queue())
         return event_queue.unprocessed_events
-
-    def orders(self, context: Context) -> typing.Sequence[Order]:
-        raw_market = self.underlying_serum_market
-        [bids_info, asks_info] = AccountInfo.load_multiple(
-            context, [raw_market.state.bids(), raw_market.state.asks()])
-        bids_orderbook = PySerumOrderBook.from_bytes(raw_market.state, bids_info.data)
-        asks_orderbook = PySerumOrderBook.from_bytes(raw_market.state, asks_info.data)
-
-        return list(map(Order.from_serum_order, itertools.chain(bids_orderbook.orders(), asks_orderbook.orders())))
 
     def find_openorders_address_for_owner(self, context: Context, owner: PublicKey) -> typing.Optional[PublicKey]:
         all_open_orders = OpenOrders.load_for_market_and_owner(

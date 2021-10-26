@@ -1,6 +1,6 @@
 FROM python:3.9-buster
 
-RUN sh -c "$(curl -sSfL https://release.solana.com/v1.8.0/install)"
+RUN sh -c "$(curl -sSfL https://release.solana.com/v1.8.1/install)"
 
 RUN apt-get update && apt-get -y install bc curl zlib1g-dev
 

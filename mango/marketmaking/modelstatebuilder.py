@@ -87,19 +87,17 @@ class PollingModelStateBuilder(ModelStateBuilder):
 
     def from_values(self, order_owner: PublicKey, market: mango.Market, group: mango.Group, account: mango.Account,
                     price: mango.Price, placed_orders_container: mango.PlacedOrdersContainer,
-                    inventory: mango.Inventory, bids: typing.Sequence[mango.Order],
-                    asks: typing.Sequence[mango.Order]) -> ModelState:
+                    inventory: mango.Inventory, orderbook: mango.OrderBook) -> ModelState:
         group_watcher: mango.ManualUpdateWatcher[mango.Group] = mango.ManualUpdateWatcher(group)
         account_watcher: mango.ManualUpdateWatcher[mango.Account] = mango.ManualUpdateWatcher(account)
         price_watcher: mango.ManualUpdateWatcher[mango.Price] = mango.ManualUpdateWatcher(price)
         placed_orders_container_watcher: mango.ManualUpdateWatcher[
             mango.PlacedOrdersContainer] = mango.ManualUpdateWatcher(placed_orders_container)
         inventory_watcher: mango.ManualUpdateWatcher[mango.Inventory] = mango.ManualUpdateWatcher(inventory)
-        bids_watcher: mango.ManualUpdateWatcher[typing.Sequence[mango.Order]] = mango.ManualUpdateWatcher(bids)
-        asks_watcher: mango.ManualUpdateWatcher[typing.Sequence[mango.Order]] = mango.ManualUpdateWatcher(asks)
+        orderbook_watcher: mango.ManualUpdateWatcher[mango.OrderBook] = mango.ManualUpdateWatcher(orderbook)
 
         return ModelState(order_owner, market, group_watcher, account_watcher, price_watcher,
-                          placed_orders_container_watcher, inventory_watcher, bids_watcher, asks_watcher)
+                          placed_orders_container_watcher, inventory_watcher, orderbook_watcher)
 
     def __str__(self) -> str:
         return "« 𝙿𝚘𝚕𝚕𝚒𝚗𝚐𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"
@@ -138,8 +136,8 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
             self.open_orders_address,
             self.base_inventory_token_account.address,
             self.quote_inventory_token_account.address,
-            self.market.underlying_serum_market.state.bids(),
-            self.market.underlying_serum_market.state.asks()
+            self.market.bids_address,
+            self.market.asks_address
         ]
         account_infos: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(context, addresses)
         group: mango.Group = mango.Group.parse(context, account_infos[0])
@@ -156,11 +154,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
         quote_inventory_token_account = mango.TokenAccount.parse(
             account_infos[4], self.quote_inventory_token_account.value.token)
 
-        # Both these will have top-of-book at index 0.
-        bids: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
-            account_infos[5], self.market.underlying_serum_market)
-        asks: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
-            account_infos[6], self.market.underlying_serum_market)
+        orderbook: mango.OrderBook = self.market.parse_account_infos_to_orderbook(account_infos[5], account_infos[6])
 
         price: mango.Price = self.oracle.fetch_price(context)
 
@@ -173,7 +167,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
                                                      base_inventory_token_account.value,
                                                      quote_inventory_token_account.value)
 
-        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, bids, asks)
+        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook)
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚎𝚛𝚞𝚖𝙿𝚘𝚕𝚕𝚒𝚗𝚐𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 for market '{self.market.symbol}' »"""
@@ -212,8 +206,8 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
             self.group_address,
             self.cache_address,
             self.account_address,
-            self.market.underlying_serum_market.state.bids(),
-            self.market.underlying_serum_market.state.asks(),
+            self.market.bids_address,
+            self.market.asks_address,
             *self.all_open_orders_addresses
         ]
         account_infos: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(context, addresses)
@@ -254,15 +248,11 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
                                                      base_value,
                                                      quote_value)
 
-        # Both these will have top-of-book at index 0.
-        bids: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
-            account_infos[3], self.market.underlying_serum_market)
-        asks: typing.Sequence[mango.Order] = mango.parse_account_info_to_orders(
-            account_infos[4], self.market.underlying_serum_market)
+        orderbook: mango.OrderBook = self.market.parse_account_infos_to_orderbook(account_infos[3], account_infos[4])
 
         price: mango.Price = self.oracle.fetch_price(context)
 
-        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, bids, asks)
+        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook)
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚙𝚘𝚝𝙿𝚘𝚕𝚕𝚒𝚗𝚐𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 for market '{self.market.symbol}' »"""
@@ -322,15 +312,11 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
                                                      base_token_value,
                                                      quote_token_value)
 
-        # Both these will have top-of-book at index 0.
-        bids: mango.PerpOrderBookSide = mango.PerpOrderBookSide.parse(
-            context, account_infos[3], self.market.underlying_perp_market)
-        asks: mango.PerpOrderBookSide = mango.PerpOrderBookSide.parse(
-            context, account_infos[4], self.market.underlying_perp_market)
+        orderbook: mango.OrderBook = self.market.parse_account_infos_to_orderbook(account_infos[3], account_infos[4])
 
         price: mango.Price = self.oracle.fetch_price(context)
 
-        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, bids.orders(), asks.orders())
+        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook)
 
     def __str__(self) -> str:
         return f"""« 𝙿𝚎𝚛𝚙𝙿𝚘𝚕𝚕𝚒𝚗𝚐𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 for market '{self.market.symbol}' »"""

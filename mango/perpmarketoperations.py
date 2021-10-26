@@ -24,7 +24,7 @@ from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .marketoperations import MarketOperations
-from .orders import Order
+from .orders import Order, OrderBook
 from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarket import PerpMarket
 from .wallet import Wallet
@@ -86,12 +86,12 @@ class PerpMarketOperations(MarketOperations):
     def ensure_openorders(self) -> PublicKey:
         return SYSTEM_PROGRAM_ADDRESS
 
-    def load_orders(self) -> typing.Sequence[Order]:
-        return self.perp_market.orders(self.context)
+    def load_orderbook(self) -> OrderBook:
+        return self.perp_market.fetch_orderbook(self.context)
 
     def load_my_orders(self) -> typing.Sequence[Order]:
-        all_orders = self.perp_market.orders(self.context)
-        return list([o for o in all_orders if o.owner == self.account.address])
+        orderbook: OrderBook = self.load_orderbook()
+        return list([o for o in [*orderbook.bids, *orderbook.asks] if o.owner == self.account.address])
 
     def __str__(self) -> str:
         return f"""« 𝙿𝚎𝚛𝚙𝚜𝙾𝚛𝚍𝚎𝚛𝙿𝚕𝚊𝚌𝚎𝚛 [{self.market_name}] »"""

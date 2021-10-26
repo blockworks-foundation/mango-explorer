@@ -189,3 +189,76 @@ class Order(typing.NamedTuple):
 
     def __repr__(self) -> str:
         return f"{self}"
+
+
+class OrderBook:
+    def __init__(self, symbol: str, bids: typing.Sequence[Order], asks: typing.Sequence[Order]):
+        self.symbol: str = symbol
+
+        # Sort bids high to low, so best bid is at index 0
+        bids_list: typing.List[Order] = list(bids)
+        bids_list.sort(key=lambda order: order.price, reverse=True)
+        self.bids: typing.Sequence[Order] = bids_list
+
+        # Sort bids low to high, so best bid is at index 0
+        asks_list: typing.List[Order] = list(asks)
+        asks_list.sort(key=lambda order: order.price)
+        self.asks: typing.Sequence[Order] = asks_list
+
+    # The top bid is the highest price someone is willing to pay to BUY
+    @property
+    def top_bid(self) -> typing.Optional[Order]:
+        if self.bids and len(self.bids) > 0:
+            # Top-of-book is always at index 0 for us.
+            return self.bids[0]
+        return None
+
+    # The top ask is the lowest price someone is willing to pay to SELL
+    @property
+    def top_ask(self) -> typing.Optional[Order]:
+        if self.asks and len(self.asks) > 0:
+            # Top-of-book is always at index 0 for us.
+            return self.asks[0]
+        return None
+
+    # The mid price is halfway between the best bid and best ask.
+    @property
+    def mid_price(self) -> typing.Optional[Decimal]:
+        if self.top_bid is not None and self.top_ask is not None:
+            return (self.top_bid.price + self.top_ask.price) / 2
+        elif self.top_bid is not None:
+            return self.top_bid.price
+        elif self.top_ask is not None:
+            return self.top_ask.price
+        return None
+
+    @property
+    def spread(self) -> Decimal:
+        top_ask = self.top_ask
+        top_bid = self.top_bid
+        if top_ask is None or top_bid is None:
+            return Decimal(0)
+        else:
+            return top_ask.price - top_bid.price
+
+    def __str__(self) -> str:
+        def _order_to_str(order: Order):
+            quantity = f"{order.quantity:,.8f}"
+            price = f"{order.price:,.8f}"
+            return f"{order.side} {quantity:>20} at {price:>20}"
+        orders_to_show = 5
+        lines = []
+        for counter in range(orders_to_show):
+            bid = _order_to_str(self.bids[counter]) if len(self.bids) > counter else ""
+            ask = _order_to_str(self.asks[counter]) if len(self.asks) > counter else ""
+            lines += [f"{bid:50} :: {ask}"]
+
+        text = "\n\t".join(lines)
+        spread_description = "N/A"
+        if self.spread != 0 and self.top_bid is not None:
+            spread_percentage = (self.spread / self.top_bid.price)
+            spread_description = f"{self.spread:,.8f}, {spread_percentage:,.3%}"
+        return f"« 𝙾𝚛𝚍𝚎𝚛𝙱𝚘𝚘𝚔 {self.symbol} [spread: {spread_description}]\n\t{text}\n»"
+
+    def __repr__(self) -> str:
+        return f"{self}"

@@ -27,7 +27,7 @@ from ...loadedmarket import LoadedMarket
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import Oracle, OracleProvider, OracleSource, Price, SupportedOracleFeature
-from ...orders import Order, Side
+from ...orders import OrderBook
 
 
 # # 🥭 Market
@@ -59,10 +59,18 @@ class MarketOracle(Oracle):
         self.source: OracleSource = OracleSource("Market", name, features, market)
 
     def fetch_price(self, context: Context) -> Price:
-        orders: typing.Sequence[Order] = self.loaded_market.orders(context)
-        top_bid = max([order.price for order in orders if order.side == Side.BUY])
-        top_ask = min([order.price for order in orders if order.side == Side.SELL])
-        mid_price = (top_bid + top_ask) / 2
+        orderbook: OrderBook = self.loaded_market.fetch_orderbook(context)
+        if orderbook.top_bid is None:
+            raise Exception(f"[{self.source}] Cannot determine complete price data - no top bid")
+        top_bid = orderbook.top_bid.price
+
+        if orderbook.top_ask is None:
+            raise Exception(f"[{self.source}] Cannot determine complete price data - no top bid")
+        top_ask = orderbook.top_ask.price
+
+        if orderbook.mid_price is None:
+            raise Exception(f"[{self.source}] Cannot determine complete price data - no mid price")
+        mid_price = orderbook.mid_price
 
         return Price(self.source, datetime.now(), self.market, top_bid, mid_price, top_ask, MarketOracleConfidence)
 

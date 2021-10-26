@@ -54,6 +54,18 @@ class PerpMarket(LoadedMarket):
     def group(self) -> Group:
         return self.underlying_perp_market.group
 
+    @property
+    def bids_address(self) -> PublicKey:
+        return self.underlying_perp_market.bids
+
+    @property
+    def asks_address(self) -> PublicKey:
+        return self.underlying_perp_market.asks
+
+    def parse_account_info_to_orders(self, account_info: AccountInfo) -> typing.Sequence[Order]:
+        side: PerpOrderBookSide = PerpOrderBookSide.parse(account_info, self.underlying_perp_market)
+        return side.orders()
+
     def unprocessed_events(self, context: Context) -> typing.Sequence[PerpEvent]:
         event_queue: PerpEventQueue = PerpEventQueue.load(
             context, self.underlying_perp_market.event_queue, self.lot_size_converter)
@@ -76,14 +88,6 @@ class PerpMarket(LoadedMarket):
                 seen += [account_str]
         distinct.sort(key=lambda address: address._key or [0])
         return distinct
-
-    def orders(self, context: Context) -> typing.Sequence[Order]:
-        bids_address: PublicKey = self.underlying_perp_market.bids
-        asks_address: PublicKey = self.underlying_perp_market.asks
-        [bids, asks] = AccountInfo.load_multiple(context, [bids_address, asks_address])
-        bid_side = PerpOrderBookSide.parse(context, bids, self.underlying_perp_market)
-        ask_side = PerpOrderBookSide.parse(context, asks, self.underlying_perp_market)
-        return [*bid_side.orders(), *ask_side.orders()]
 
     def observe_events(self, context: Context, interval: int = 30) -> DisposingSubject:
         perp_event_queue: PerpEventQueue = PerpEventQueue.load(
