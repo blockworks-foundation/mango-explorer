@@ -7,7 +7,7 @@ import sys
 import typing
 
 from decimal import Decimal
-from solana.account import Account
+from solana.keypair import Keypair
 from solana.transaction import Transaction
 
 sys.path.insert(0, os.path.abspath(
@@ -31,30 +31,30 @@ wrapped_sol = context.token_lookup.find_by_symbol_or_raise("SOL")
 amount_to_transfer = int(args.quantity * mango.SOL_DECIMAL_DIVISOR)
 
 transaction = Transaction()
-signers: typing.List[Account] = [wallet.account]
-wrapped_sol_account = Account()
+signers: typing.List[Keypair] = [wallet.keypair]
+wrapped_sol_account = Keypair()
 signers.append(wrapped_sol_account)
 
 create_instruction = mango.CreateSplAccountInstructionBuilder(
-    context, wallet, wrapped_sol_account.public_key(), amount_to_transfer)
+    context, wallet, wrapped_sol_account.public_key, amount_to_transfer)
 transaction.add(create_instruction.build())
 init_instruction = mango.InitializeSplAccountInstructionBuilder(
-    context, wallet, wrapped_sol, wrapped_sol_account.public_key())
+    context, wallet, wrapped_sol, wrapped_sol_account.public_key)
 transaction.add(init_instruction.build())
 
 token_accounts = mango.TokenAccount.fetch_all_for_owner_and_token(context, wallet.address, wrapped_sol)
 print("Wrapping SOL:")
 if len(token_accounts) == 0:
     print(f"    Source: {wallet.address}")
-    print(f"    Destination: {wrapped_sol_account.public_key()}")
+    print(f"    Destination: {wrapped_sol_account.public_key}")
 else:
-    print(f"    Temporary account: {wrapped_sol_account.public_key()}")
+    print(f"    Temporary account: {wrapped_sol_account.public_key}")
     print(f"    Source: {wallet.address}")
     print(f"    Destination: {token_accounts[0].address}")
     wrap_instruction = mango.TransferSplTokensInstructionBuilder(
-        context, wallet, wrapped_sol, wrapped_sol_account.public_key(), token_accounts[0].address, args.quantity)
+        context, wallet, wrapped_sol, wrapped_sol_account.public_key, token_accounts[0].address, args.quantity)
     transaction.add(wrap_instruction.build())
-    close_instruction = mango.CloseSplAccountInstructionBuilder(context, wallet, wrapped_sol_account.public_key())
+    close_instruction = mango.CloseSplAccountInstructionBuilder(context, wallet, wrapped_sol_account.public_key)
     transaction.add(close_instruction.build())
 
 transaction_id = context.client.send_transaction(transaction, *signers)

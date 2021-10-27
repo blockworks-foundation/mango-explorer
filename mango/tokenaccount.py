@@ -16,7 +16,7 @@
 
 import typing
 
-from solana.account import Account
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.types import TokenAccountOpts
 from spl.token.client import Token as SplToken
@@ -42,9 +42,9 @@ class TokenAccount(AddressableAccount):
         self.value: TokenValue = value
 
     @staticmethod
-    def create(context: Context, account: Account, token: Token):
+    def create(context: Context, account: Keypair, token: Token):
         spl_token = SplToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, account)
-        owner = account.public_key()
+        owner = account.public_key
         new_account_address = spl_token.create_account(owner)
         return TokenAccount.load(context, new_account_address)
 
@@ -74,8 +74,8 @@ class TokenAccount(AddressableAccount):
         return largest_account
 
     @staticmethod
-    def fetch_or_create_largest_for_owner_and_token(context: Context, account: Account, token: Token) -> "TokenAccount":
-        all_accounts = TokenAccount.fetch_all_for_owner_and_token(context, account.public_key(), token)
+    def fetch_or_create_largest_for_owner_and_token(context: Context, account: Keypair, token: Token) -> "TokenAccount":
+        all_accounts = TokenAccount.fetch_all_for_owner_and_token(context, account.public_key, token)
 
         largest_account: typing.Optional[TokenAccount] = None
         for token_account in all_accounts:

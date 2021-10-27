@@ -23,7 +23,7 @@ import spl.token.instructions as spl_token
 from decimal import Decimal
 from pyserum.enums import OrderType, Side
 from pyserum.market import Market as PySerumMarket
-from solana.account import Account
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.transaction import Transaction
 
@@ -219,7 +219,7 @@ class SerumImmediateTradeExecutor(TradeExecutor):
 
     def _execute(self, spot_market: SpotMarket, market: PySerumMarket, side: Side, price: Decimal, quantity: Decimal) -> typing.Sequence[str]:
         transaction = Transaction()
-        signers: typing.List[Account] = [self.wallet.account]
+        signers: typing.List[Keypair] = [self.wallet.keypair]
 
         base_token_account = TokenAccount.fetch_largest_for_owner_and_token(
             self.context, self.wallet.address, spot_market.base)
@@ -250,12 +250,12 @@ class SerumImmediateTradeExecutor(TradeExecutor):
 
         open_order_accounts = market.find_open_orders_accounts_for_owner(self.wallet.address)
         if not open_order_accounts:
-            new_open_orders_account = Account()
+            new_open_orders_account = Keypair()
             create_open_orders = CreateSerumOpenOrdersInstructionBuilder(
-                self.context, self.wallet, market, new_open_orders_account.public_key())
+                self.context, self.wallet, market, new_open_orders_account.public_key)
             transaction.add(create_open_orders.build())
             signers.append(new_open_orders_account)
-            open_orders_address: PublicKey = new_open_orders_account.public_key()
+            open_orders_address: PublicKey = new_open_orders_account.public_key
             open_orders_addresses: typing.List[PublicKey] = [open_orders_address]
         else:
             open_orders_address = open_order_accounts[0].address

@@ -5,7 +5,7 @@ import mango
 from decimal import Decimal
 from pyserum import market
 from pyserum.market.state import MarketState
-from solana.account import Account
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.types import RPCResponse
 
@@ -73,5 +73,5 @@ def fake_token_account() -> mango.TokenAccount:
 
 def fake_wallet() -> mango.Wallet:
     wallet = mango.Wallet([1] * 64)
-    wallet.account = Account()
+    wallet.keypair = Keypair()
     return wallet

@@ -175,7 +175,7 @@ class SerumOrderPlacer(OrderPlacer):
             f"Cancelling order {order.id} in openorders {self.open_orders.address} on market {self.spot_market.symbol}.")
         try:
             response = self.market.cancel_order_by_client_id(
-                self.wallet.account, self.open_orders.address, order.id,
+                self.wallet.to_deprecated_solana_account(), self.open_orders.address, order.id,
                 self.context.transaction_options)
             self.context.unwrap_or_raise_exception(response)
         except Exception as exception:
@@ -193,7 +193,7 @@ class SerumOrderPlacer(OrderPlacer):
         if token_account is None:
             raise Exception(f"Could not find payer token account for token {payer_token.symbol}.")
 
-        response = self.market.place_order(token_account.address, self.wallet.account,
+        response = self.market.place_order(token_account.address, self.wallet.to_deprecated_solana_account(),
                                            serum_order_type, serum_side, float(price), float(size),
                                            client_id, self.context.transaction_options)
         self.context.unwrap_or_raise_exception(response)

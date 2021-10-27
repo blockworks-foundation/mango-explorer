@@ -121,7 +121,7 @@ class ActualAccountLiquidator(AccountLiquidator):
         for builder in instruction_builders:
             transaction.add(builder.build())
 
-        transaction_id: str = self.context.client.send_transaction(transaction, self.wallet.account)
+        transaction_id: str = self.context.client.send_transaction(transaction, self.wallet.keypair)
         return [transaction_id]
 
 

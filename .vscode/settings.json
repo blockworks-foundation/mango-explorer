@@ -17,5 +17,6 @@
             "language": "python"
         }
     ],
-    "python.analysis.completeFunctionParens": true
+    "python.analysis.completeFunctionParens": true,
+    "python.pythonPath": ".venv/bin/python"
 }

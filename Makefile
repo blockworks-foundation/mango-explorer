@@ -2,15 +2,13 @@
 commands := $(wildcard bin/*)
 
 setup: ## Install all the build and lint dependencies
-	pip install -r requirements.txt
-	echo "y" | mypy --install-types
+	poetry install --no-interaction
 
 upgrade: ## Upgrade all the build and lint dependencies
-	pip install --upgrade -r requirements.txt
-	echo "y" | mypy --install-types
+	poetry upgrade --no-interaction
 
 test: ## Run all the tests
-	pytest -rP tests
+	SOLENV_NAME= SOLENV_ADDRESS= CLUSTER_NAME= CLUSTER_URL= KEYPAIR= poetry run pytest -rP tests
 
 #cover: test ## Run all the tests and opens the coverage report
 #	TODO: Coverage
@@ -21,11 +19,11 @@ mypy:
 	for file in bin/* ; do \
         cp $${file} .tmplintdir/$${file##*/}.py ; \
 	done
-	-mypy mango tests .tmplintdir
-	rm -rf .tmplintdir
+	-poetry run mypy --install-types mango tests .tmplintdir
+	rm -rf .tmplintdir .mypy_cache
 
 flake8:
-	flake8 --extend-ignore E402,E501,E722,W291,W391 . tests/* bin/*
+	poetry run flake8 --extend-ignore E402,E501,E722,W291,W391 mango tests bin/*
 
 lint: flake8 mypy
 

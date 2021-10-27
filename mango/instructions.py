@@ -24,13 +24,13 @@ from pyserum.enums import OrderType, Side
 from pyserum.instructions import ConsumeEventsParams, consume_events, settle_funds, SettleFundsParams
 from pyserum.market import Market
 from pyserum.open_orders_account import make_create_account_instruction
-from solana.account import Account
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import AccountMeta, TransactionInstruction
 from solana.sysvar import SYSVAR_CLOCK_PUBKEY
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
-from spl.token.instructions import CloseAccountParams, InitializeAccountParams, Transfer2Params, close_account, initialize_account, transfer2
+from spl.token.instructions import CloseAccountParams, InitializeAccountParams, TransferParams, close_account, initialize_account, transfer
 
 from .baskettoken import BasketToken
 from .constants import SYSTEM_PROGRAM_ADDRESS
@@ -510,8 +510,7 @@ class TransferSplTokensInstructionBuilder(InstructionBuilder):
         self.amount = int(quantity * (10 ** token.decimals))
 
     def build(self) -> TransactionInstruction:
-        return transfer2(
-            Transfer2Params(TOKEN_PROGRAM_ID, self.source, self.token.mint, self.destination, self.wallet.address, self.amount, int(self.token.decimals)))
+        return transfer(TransferParams(TOKEN_PROGRAM_ID, self.source, self.destination, self.wallet.address, self.amount, []))
 
 
 # # 🥭 CloseSplAccountInstructionBuilder class
@@ -581,7 +580,7 @@ class NewOrderV3InstructionBuilder(InstructionBuilder):
     def build(self) -> TransactionInstruction:
         instruction = self.market.make_place_order_instruction(
             self.source,
-            self.wallet.account,
+            self.wallet.to_deprecated_solana_account(),
             self.order_type,
             self.side,
             float(self.price),
@@ -596,7 +595,7 @@ class NewOrderV3InstructionBuilder(InstructionBuilder):
     def __str__(self) -> str:
         return f"""« NewOrderV3InstructionBuilder:
     source.address: {self.source},
-    wallet.account: {self.wallet.account.public_key()},
+    wallet.keypair: {self.wallet.keypair.public_key},
     order_type: {self.order_type},
     side: {self.side},
     price: {float(self.price)},
@@ -629,7 +628,7 @@ class ConsumeEventsInstructionBuilder(InstructionBuilder):
 
         # The interface accepts (and currently requires) two accounts at the end, but
         # it doesn't actually use them.
-        random_account = Account().public_key()
+        random_account = Keypair().public_key
         instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=False))
         instruction.keys.append(AccountMeta(random_account, is_signer=False, is_writable=False))
         return instruction

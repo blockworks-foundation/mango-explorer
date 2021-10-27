@@ -44,7 +44,7 @@ try:
     group_basket_token = mango.BasketToken.find_by_symbol(group.basket_tokens, args.token_symbol)
     group_token = group_basket_token.token
 
-    spl_token = Token(context.client.compatible_client, group_token.mint, TOKEN_PROGRAM_ID, wallet.account)
+    spl_token = Token(context.client.compatible_client, group_token.mint, TOKEN_PROGRAM_ID, wallet.keypair)
     source_accounts = spl_token.get_accounts(wallet.address)
     source_account = source_accounts["result"]["value"][0]
     source = PublicKey(source_account["pubkey"])
@@ -62,7 +62,7 @@ try:
         destination_account = destination_accounts["result"]["value"][0]
         destination = PublicKey(destination_account["pubkey"])
 
-    owner = wallet.account
+    owner = wallet.keypair
     amount = int(args.quantity * Decimal(10 ** group_token.decimals))
 
     print("Balance:", source_account["account"]["data"]["parsed"]

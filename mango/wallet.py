@@ -21,14 +21,15 @@ import os
 import os.path
 import typing
 
-from solana.account import Account
+from solana.account import Account as SolanaAccount
+from solana.keypair import Keypair
 from solana.publickey import PublicKey
 
 
 # # 🥭 Wallet class
 #
 # The `Wallet` class wraps our understanding of saving and loading keys, and creating the
-# appropriate Solana `Account` object.
+# appropriate Solana `Keypair` object.
 #
 # To load a private key from a file, the file must be a JSON-formatted text file with a root
 # array of the 64 bytes making up the secret key.
@@ -56,12 +57,17 @@ _DEFAULT_WALLET_FILENAME: str = "id.json"
 class Wallet:
     def __init__(self, secret_key):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.secret_key = secret_key[0:32]
-        self.account = Account(self.secret_key)
+        self.secret_key: bytes = secret_key[0:32]
+        self.keypair: Keypair = Keypair(self.secret_key)
 
     @property
     def address(self) -> PublicKey:
-        return self.account.public_key()
+        return self.keypair.public_key
+
+    def to_deprecated_solana_account(self) -> SolanaAccount:
+        # Solana Account is deprecated, so we use keypair everywhere. Some libraries like PySerum haven't
+        # caught up yet though, so this gives us a way to access the Solana Account object consistently.
+        return SolanaAccount(self.keypair.secret_key[0:32])
 
     def save(self, filename: str, overwrite: bool = False) -> None:
         if os.path.isfile(filename) and not overwrite:
@@ -82,8 +88,8 @@ class Wallet:
 
     @staticmethod
     def create() -> "Wallet":
-        new_account = Account()
-        new_secret_key = new_account.secret_key()
+        new_account = Keypair()
+        new_secret_key = new_account.secret_key
         return Wallet(new_secret_key)
 
     # Configuring a `Wallet` is a common operation for command-line programs and can involve a
