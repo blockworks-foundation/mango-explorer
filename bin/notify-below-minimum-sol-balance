@@ -22,7 +22,7 @@ parser.add_argument("--address", type=PublicKey, required=True,
                     help="address of the account")
 parser.add_argument("--minimum-sol-balance", type=Decimal, default=Decimal("0.1"),
                     help="the minimum SOL balance required for the alert. A SOL balance less than this value will trigger a nifitication.")
-parser.add_argument("--notify", type=mango.parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify", type=mango.parse_notification_target, action="append", default=[],
                     help="The notification target for low balance events")
 args = parser.parse_args()
 
@@ -38,6 +38,6 @@ else:
     account_sols = account_info.lamports / mango.SOL_DECIMAL_DIVISOR
     if account_sols < args.minimum_sol_balance:
         report = f"Account \"{args.name} [{args.address}]\" on {context.cluster} has only {account_sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
-        for notify in args.notify:
-            notify.send(report)
+        notify = mango.CompoundNotificationTarget(args.notify)
+        notify.send(report)
         print(f"Notification sent: {report}")

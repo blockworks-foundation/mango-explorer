@@ -37,23 +37,22 @@ parser.add_argument("--worthwhile-threshold", type=Decimal, default=Decimal("0.0
                     help="value a liquidation must be above to be carried out")
 parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
                     help="factor by which to adjust the SELL price (akin to maximum slippage)")
-parser.add_argument("--notify-liquidations", type=mango.parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify-liquidations", type=mango.parse_notification_target, action="append", default=[],
                     help="The notification target for liquidation events")
-parser.add_argument("--notify-successful-liquidations", type=mango.parse_subscription_target,
+parser.add_argument("--notify-successful-liquidations", type=mango.parse_notification_target,
                     action="append", default=[], help="The notification target for successful liquidation events")
-parser.add_argument("--notify-failed-liquidations", type=mango.parse_subscription_target,
+parser.add_argument("--notify-failed-liquidations", type=mango.parse_notification_target,
                     action="append", default=[], help="The notification target for failed liquidation events")
-parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify-errors", type=mango.parse_notification_target, action="append", default=[],
                     help="The notification target for error events")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args = parser.parse_args()
 
 logging.getLogger().setLevel(args.log_level)
-for notify in args.notify_errors:
-    handler = mango.NotificationHandler(notify)
-    handler.setLevel(logging.ERROR)
-    logging.getLogger().addHandler(handler)
+handler = mango.NotificationHandler(mango.CompoundNotificationTarget(args.notify_errors))
+handler.setLevel(logging.ERROR)
+logging.getLogger().addHandler(handler)
 
 logging.warning(mango.WARNING_DISCLAIMER_TEXT)
 
@@ -109,18 +108,17 @@ try:
 
     liquidations_publisher = mango.EventSource[mango.LiquidationEvent]()
     liquidations_publisher.subscribe(mango.PrintingObserverSubscriber(False))
-    for notification_target in args.notify_liquidations:
-        liquidations_publisher.subscribe(on_next=notification_target.send)
-    for successful_notification_target in args.notify_successful_liquidations:
-        captured_successful_notification_target = successful_notification_target
-        filtering_successful = mango.FilteringNotificationTarget(
-            captured_successful_notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
-        liquidations_publisher.subscribe(on_next=filtering_successful.send)
-    for failed_notification_target in args.notify_failed_liquidations:
-        captured_failed_notification_target = failed_notification_target
-        filtering_failed = mango.FilteringNotificationTarget(
-            captured_failed_notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded)
-        liquidations_publisher.subscribe(on_next=filtering_failed.send)
+    liquidations_publisher.subscribe(on_next=mango.CompoundNotificationTarget(args.notify_liquidations).send)
+
+    on_success = mango.FilteringNotificationTarget(
+        mango.CompoundNotificationTarget(args.notify_successful_liquidations),
+        lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
+    liquidations_publisher.subscribe(on_next=on_success.send)
+
+    on_failed = mango.FilteringNotificationTarget(
+        mango.CompoundNotificationTarget(args.notify_failed_liquidations),
+        lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded)
+    liquidations_publisher.subscribe(on_next=on_failed.send)
 
     if args.dry_run:
         intermediate: mango.AccountLiquidator = mango.NullAccountLiquidator()
