@@ -66,15 +66,22 @@ class LiquidityMiningInfo:
         #   est_next = elapsed / portion_given - elapsed
         now: datetime = datetime.now().replace(microsecond=0).astimezone(timezone.utc)
         mngo_distributed: TokenValue = self.mngo_per_period - self.mngo_left
-        proportion_distributed: Decimal = mngo_distributed.value / self.mngo_per_period.value
+        proportion_distributed: Decimal = Decimal(0)
         elapsed: timedelta = now - self.period_start
         elapsed_seconds: float = elapsed.total_seconds()
         rounded_elapsed: timedelta = timedelta(seconds=int(elapsed_seconds))
-        estimated_duration_seconds: float = (elapsed_seconds / float(proportion_distributed))
+        estimated_duration_seconds: float = elapsed_seconds
         estimated_duration: timedelta = timedelta(seconds=int(estimated_duration_seconds))
-        estimated_remaining_seconds: float = (elapsed_seconds / float(proportion_distributed)) - elapsed_seconds
+        estimated_remaining_seconds: float = estimated_duration_seconds - elapsed_seconds
         estimated_remaining: timedelta = timedelta(seconds=int(estimated_remaining_seconds))
         estimated_end: datetime = now + estimated_remaining
+        if self.mngo_per_period.value != 0:
+            proportion_distributed = mngo_distributed.value / self.mngo_per_period.value
+            estimated_duration_seconds = (elapsed_seconds / float(proportion_distributed))
+            estimated_duration = timedelta(seconds=int(estimated_duration_seconds))
+            estimated_remaining_seconds: float = estimated_duration_seconds - elapsed_seconds
+            estimated_remaining = timedelta(seconds=int(estimated_remaining_seconds))
+            estimated_end = now + estimated_remaining
         return f"""« 𝙻𝚒𝚚𝚞𝚒𝚍𝚒𝚝𝚢𝙼𝚒𝚗𝚒𝚗𝚐𝙸𝚗𝚏𝚘 {self.version}
     Period Start     : {self.period_start}
     Period End (Est.): {estimated_end}
