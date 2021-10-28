@@ -5,8 +5,9 @@ import itertools
 import logging
 import os
 import os.path
-import rx.operators as ops
 import rx
+import rx.subject
+import rx.operators as ops
 import sys
 import traceback
 import typing
@@ -29,22 +30,21 @@ parser.add_argument("--instruction-type", type=lambda ins: mango.InstructionType
                     help="The signature of the transaction to look up")
 parser.add_argument("--sender", type=PublicKey,
                     help="Only transactions sent by this PublicKey will be returned")
-parser.add_argument("--notify-transactions", type=mango.parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify-transactions", type=mango.parse_notification_target, action="append", default=[],
                     help="The notification target for transaction information")
-parser.add_argument("--notify-successful-transactions", type=mango.parse_subscription_target,
+parser.add_argument("--notify-successful-transactions", type=mango.parse_notification_target,
                     action="append", default=[], help="The notification target for successful transactions")
-parser.add_argument("--notify-failed-transactions", type=mango.parse_subscription_target,
+parser.add_argument("--notify-failed-transactions", type=mango.parse_notification_target,
                     action="append", default=[], help="The notification target for failed transactions")
-parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify-errors", type=mango.parse_notification_target, action="append", default=[],
                     help="The notification target for errors")
 parser.add_argument("--summarise", action="store_true", default=False,
                     help="create a short summary rather than the full TransactionScout details")
 args: argparse.Namespace = mango.parse_args(parser)
 
-for notify in args.notify_errors:
-    handler = mango.NotificationHandler(notify)
-    handler.setLevel(logging.ERROR)
-    logging.getLogger().addHandler(handler)
+handler = mango.NotificationHandler(mango.CompoundNotificationTarget(args.notify_errors))
+handler.setLevel(logging.ERROR)
+logging.getLogger().addHandler(handler)
 
 
 def summariser(context: mango.Context) -> typing.Callable[[mango.TransactionScout], str]:
@@ -102,7 +102,7 @@ try:
     first_item_capturer = mango.CaptureFirstItem()
     signatures = mango.fetch_all_recent_transaction_signatures(context)
     oldest_first = reversed(list(itertools.takewhile(lambda sig: sig != since_signature, signatures)))
-    pipeline = rx.from_(oldest_first).pipe(
+    pipeline: rx.core.Observable = rx.from_(oldest_first).pipe(
         ops.map(first_item_capturer.capture_if_first),
         #  ops.map(debug_print_item("Signature:")),
         ops.map(lambda sig: mango.TransactionScout.load_if_available(context, sig)),
@@ -127,17 +127,17 @@ try:
 
     fan_out = rx.subject.Subject()
     fan_out.subscribe(mango.PrintingObserverSubscriber(False))
+    fan_out.subscribe(on_next=mango.CompoundNotificationTarget(args.notify_transactions).send)
 
-    for notify in args.notify_transactions:
-        fan_out.subscribe(on_next=notify.send)
-    for notification_target in args.notify_successful_transactions:
-        filtering = mango.FilteringNotificationTarget(
-            notification_target, lambda item: isinstance(item, mango.TransactionScout) and item.succeeded)
-        fan_out.subscribe(on_next=filtering.send)
-    for notification_target in args.notify_failed_transactions:
-        filtering = mango.FilteringNotificationTarget(notification_target, lambda item: isinstance(
-            item, mango.TransactionScout) and not item.succeeded)
-        fan_out.subscribe(on_next=filtering.send)
+    on_success = mango.FilteringNotificationTarget(
+        mango.CompoundNotificationTarget(args.notify_successful_transactions),
+        lambda item: isinstance(item, mango.TransactionScout) and item.succeeded)
+    fan_out.subscribe(on_next=on_success.send)
+
+    on_failed = mango.FilteringNotificationTarget(
+        mango.CompoundNotificationTarget(args.notify_failed_transactions),
+        lambda item: isinstance(item, mango.TransactionScout) and not item.succeeded)
+    fan_out.subscribe(on_next=on_failed.send)
 
     pipeline.subscribe(fan_out)
 

@@ -79,7 +79,7 @@ class LiquidityMiningInfo:
             proportion_distributed = mngo_distributed.value / self.mngo_per_period.value
             estimated_duration_seconds = (elapsed_seconds / float(proportion_distributed))
             estimated_duration = timedelta(seconds=int(estimated_duration_seconds))
-            estimated_remaining_seconds: float = estimated_duration_seconds - elapsed_seconds
+            estimated_remaining_seconds = estimated_duration_seconds - elapsed_seconds
             estimated_remaining = timedelta(seconds=int(estimated_remaining_seconds))
             estimated_end = now + estimated_remaining
         return f"""« 𝙻𝚒𝚚𝚞𝚒𝚍𝚒𝚝𝚢𝙼𝚒𝚗𝚒𝚗𝚐𝙸𝚗𝚏𝚘 {self.version}

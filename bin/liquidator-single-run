@@ -17,22 +17,21 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Run a single pass of the liquidator for a Mango Markets group.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--notify-liquidations", type=mango.parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify-liquidations", type=mango.parse_notification_target, action="append", default=[],
                     help="The notification target for liquidation events")
-parser.add_argument("--notify-successful-liquidations", type=mango.parse_subscription_target,
+parser.add_argument("--notify-successful-liquidations", type=mango.parse_notification_target,
                     action="append", default=[], help="The notification target for successful liquidation events")
-parser.add_argument("--notify-failed-liquidations", type=mango.parse_subscription_target,
+parser.add_argument("--notify-failed-liquidations", type=mango.parse_notification_target,
                     action="append", default=[], help="The notification target for failed liquidation events")
-parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify-errors", type=mango.parse_notification_target, action="append", default=[],
                     help="The notification target for error events")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args: argparse.Namespace = mango.parse_args(parser)
 
-for notify in args.notify_errors:
-    handler = mango.NotificationHandler(notify)
-    handler.setLevel(logging.ERROR)
-    logging.getLogger().addHandler(handler)
+handler = mango.NotificationHandler(mango.CompoundNotificationTarget(args.notify_errors))
+handler.setLevel(logging.ERROR)
+logging.getLogger().addHandler(handler)
 
 try:
     context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -54,16 +53,17 @@ try:
     logging.info("Wallet accounts OK.")
 
     liquidations_publisher = mango.EventSource[mango.LiquidationEvent]()
-    for notification_target in args.notify_liquidations:
-        liquidations_publisher.subscribe(on_next=notification_target.send)
-    for notification_target in args.notify_successful_liquidations:
-        filtering = mango.FilteringNotificationTarget(
-            notification_target, lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
-        liquidations_publisher.subscribe(on_next=filtering.send)
-    for notification_target in args.notify_failed_liquidations:
-        filtering = mango.FilteringNotificationTarget(notification_target, lambda item: isinstance(
-            item, mango.LiquidationEvent) and not item.succeeded)
-        liquidations_publisher.subscribe(on_next=filtering.send)
+    liquidations_publisher.subscribe(on_next=mango.CompoundNotificationTarget(args.notify_liquidations).send)
+
+    on_success = mango.FilteringNotificationTarget(
+        mango.CompoundNotificationTarget(args.notify_successful_liquidations),
+        lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
+    liquidations_publisher.subscribe(on_next=on_success.send)
+
+    on_failed = mango.FilteringNotificationTarget(
+        mango.CompoundNotificationTarget(args.notify_failed_liquidations),
+        lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded)
+    liquidations_publisher.subscribe(on_next=on_failed.send)
 
     # TODO: Add proper liquidator classes here when they're written for V3
     if args.dry_run:

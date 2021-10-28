@@ -19,7 +19,7 @@ parser.add_argument("--address", type=PublicKey, required=True,
                     help="address of the account")
 parser.add_argument("--minimum-sol-balance", type=Decimal, default=Decimal("0.1"),
                     help="the minimum SOL balance required for the alert. A SOL balance less than this value will trigger a nifitication.")
-parser.add_argument("--notify", type=mango.parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify", type=mango.parse_notification_target, action="append", default=[],
                     help="The notification target for low balance events")
 args: argparse.Namespace = mango.parse_args(parser)
 
@@ -30,7 +30,7 @@ if account_info is None:
     raise Exception(f"No account at '{args.address}'")
 else:
     if account_info.sols < args.minimum_sol_balance:
+        notify: mango.NotificationTarget = mango.CompoundNotificationTarget(args.notify)
         report = f"Account \"{args.name} [{args.address}]\" on {context.client.cluster_name} has only {account_info.sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
-        for notify in args.notify:
-            notify.send(report)
+        notify.send(report)
         print(f"Notification sent: {report}")

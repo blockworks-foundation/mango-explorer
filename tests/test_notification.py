@@ -82,18 +82,18 @@ def test_filtering_notification_target():
     assert(mock.send_notification_called)
 
 
-def test_parse_subscription_target():
-    telegram_target = mango.parse_subscription_target(
+def test_parse_notification_target():
+    telegram_target = mango.parse_notification_target(
         "telegram:012345678@9876543210:ABCDEFGHijklmnop-qrstuvwxyzABCDEFGH")
     assert telegram_target is not None
 
-    discord_target = mango.parse_subscription_target(
+    discord_target = mango.parse_notification_target(
         "discord:https://discord.com/api/webhooks/012345678901234567/ABCDE_fghij-KLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN")
     assert discord_target is not None
 
-    mailjet_target = mango.parse_subscription_target(
+    mailjet_target = mango.parse_notification_target(
         "mailjet:user:secret:subject:from%20name:from@address:to%20name%20with%20colon%3A:to@address")
     assert mailjet_target is not None
 
-    csvfile_target = mango.parse_subscription_target("csvfile:filename.csv")
+    csvfile_target = mango.parse_notification_target("csvfile:filename.csv")
     assert csvfile_target is not None

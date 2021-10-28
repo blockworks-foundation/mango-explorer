@@ -53,6 +53,9 @@ class NotificationTarget(metaclass=abc.ABCMeta):
     def send_notification(self, item: typing.Any) -> None:
         raise NotImplementedError("NotificationTarget.send() is not implemented on the base type.")
 
+    def __str__(self) -> str:
+        return "« 𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 »"
+
     def __repr__(self) -> str:
         return f"{self}"
 
@@ -89,7 +92,7 @@ class TelegramNotificationTarget(NotificationTarget):
         requests.post(url, json=payload, headers=headers)
 
     def __str__(self) -> str:
-        return f"Telegram chat ID: {self.chat_id}"
+        return f"« 𝚃𝚎𝚕𝚎𝚐𝚛𝚊𝚖𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 Chat ID: {self.chat_id} »"
 
 
 # # 🥭 DiscordNotificationTarget class
@@ -110,7 +113,7 @@ class DiscordNotificationTarget(NotificationTarget):
         requests.post(url, json=payload, headers=headers)
 
     def __str__(self) -> str:
-        return "Discord webhook"
+        return f"« 𝙳𝚒𝚜𝚌𝚘𝚛𝚍𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 Address: {self.address} »"
 
 
 # # 🥭 MailjetNotificationTarget class
@@ -201,7 +204,7 @@ class MailjetNotificationTarget(NotificationTarget):
         requests.post(url, json=payload, headers=headers, auth=(self.api_key, self.api_secret))
 
     def __str__(self) -> str:
-        return f"Mailjet notifications to '{self.to_name}' '{self.to_address}' with subject '{self.subject}'"
+        return f"« 𝙼𝚊𝚒𝚕𝚓𝚎𝚝𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 To: '{self.to_name}' '{self.to_address}' with subject '{self.subject}' »"
 
 
 # # 🥭 CsvFileNotificationTarget class
@@ -233,14 +236,14 @@ class CsvFileNotificationTarget(NotificationTarget):
             with open(self.filename, "a") as csvfile:
                 result = "Succeeded" if event.succeeded else "Failed"
                 row_data = [event.timestamp, event.liquidator_name, event.group_name, result,
-                            event.signatures, event.wallet_address, event.account_address]
+                            " ".join(event.signatures), event.wallet_address, event.account_address]
                 for change in event.changes:
                     row_data += [f"{change.value:.8f}", change.token.name]
                 file_writer = csv.writer(csvfile, quoting=csv.QUOTE_MINIMAL)
                 file_writer.writerow(row_data)
 
     def __str__(self) -> str:
-        return f"CSV notifications to file {self.filename}"
+        return f"« 𝙲𝚜𝚟𝙵𝚒𝚕𝚎𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 File: {self.filename} »"
 
 
 # # 🥭 FilteringNotificationTarget class
@@ -259,7 +262,80 @@ class FilteringNotificationTarget(NotificationTarget):
             self.inner_notifier.send_notification(item)
 
     def __str__(self) -> str:
-        return f"Filtering notification target for '{self.inner_notifier}'"
+        return f"« 𝙵𝚒𝚕𝚝𝚎𝚛𝚒𝚗𝚐𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 For: {self.inner_notifier} »"
+
+
+# # 🥭 ConsoleNotificationTarget class
+#
+# The `ConsoleNotificationTarget` prints messages on the console.
+#
+class ConsoleNotificationTarget(NotificationTarget):
+    def __init__(self, name):
+        super().__init__()
+        self.name = name
+
+    def send_notification(self, item: typing.Any) -> None:
+        print(self.name, item)
+
+    def __str__(self) -> str:
+        return "« 𝙲𝚘𝚗𝚜𝚘𝚕𝚎𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 »"
+
+
+# # 🥭 CompoundNotificationTarget class
+#
+# The `CompoundNotificationTarget` acts as a single `NotificationTarget`, sending notifications to all
+# inner `NotificationTarget`s.
+#
+class CompoundNotificationTarget(NotificationTarget):
+    def __init__(self, targets: typing.Sequence[NotificationTarget]):
+        super().__init__()
+        self.targets: typing.Sequence[NotificationTarget] = targets
+        self.in_exception_handler: bool = False
+
+    def send_notification(self, item: typing.Any) -> None:
+        for target in self.targets:
+            try:
+                target.send(item)
+            except Exception as exception:
+                if not self.in_exception_handler:
+                    self.in_exception_handler = True
+                    self.logger.error(f"Failed to send notification to: {target} - {exception}")
+            finally:
+                self.in_exception_handler = False
+
+    def __str__(self) -> str:
+        inner: typing.List[str] = []
+        for target in self.targets:
+            inner += [f"{target}"]
+        inner_text: str = "\n    ".join(inner)
+        return f"""« 𝙲𝚘𝚖𝚙𝚘𝚞𝚗𝚍𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 with {len(self.targets)} inner targets:
+    {inner_text}
+»"""
+
+
+# # 🥭 parse_notification_target() function
+#
+# `parse_notification_target()` takes a parameter as a string and returns a notification
+# target.
+#
+# This is most likely used when parsing command-line arguments - this function can be used
+# in the `type` parameter of an `add_argument()` call.
+#
+def parse_notification_target(target):
+    protocol, destination = target.split(":", 1)
+
+    if protocol == "telegram":
+        return TelegramNotificationTarget(destination)
+    elif protocol == "discord":
+        return DiscordNotificationTarget(destination)
+    elif protocol == "mailjet":
+        return MailjetNotificationTarget(destination)
+    elif protocol == "csvfile":
+        return CsvFileNotificationTarget(destination)
+    elif protocol == "console":
+        return ConsoleNotificationTarget(destination)
+    else:
+        raise Exception(f"Unknown protocol: {protocol}")
 
 
 # # 🥭 NotificationHandler class
@@ -280,25 +356,5 @@ class NotificationHandler(logging.StreamHandler):
         message = self.format(record)
         self.target.send_notification(message)
 
-
-# # 🥭 parse_subscription_target() function
-#
-# `parse_subscription_target()` takes a parameter as a string and returns a notification
-# target.
-#
-# This is most likely used when parsing command-line arguments - this function can be used
-# in the `type` parameter of an `add_argument()` call.
-#
-def parse_subscription_target(target):
-    protocol, destination = target.split(":", 1)
-
-    if protocol == "telegram":
-        return TelegramNotificationTarget(destination)
-    elif protocol == "discord":
-        return DiscordNotificationTarget(destination)
-    elif protocol == "mailjet":
-        return MailjetNotificationTarget(destination)
-    elif protocol == "csvfile":
-        return CsvFileNotificationTarget(destination)
-    else:
-        raise Exception(f"Unknown protocol: {protocol}")
+    def __str__(self) -> str:
+        return "« 𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝙷𝚊𝚗𝚍𝚕𝚎𝚛 »"

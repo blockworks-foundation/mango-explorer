@@ -48,16 +48,15 @@ parser.add_argument("--hedging-target-balance", type=mango.parse_fixed_target_ba
                     help="hedged balance to maintain - format is a token symbol plus target value, separated by a colon (e.g. 'ETH:2.5')")
 parser.add_argument("--account-address", type=PublicKey,
                     help="address of the specific account to use, if more than one available")
-parser.add_argument("--notify-errors", type=mango.parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify-errors", type=mango.parse_notification_target, action="append", default=[],
                     help="The notification target for error events")
 parser.add_argument("--dry-run", action="store_true", default=False,
                     help="runs as read-only and does not perform any transactions")
 args: argparse.Namespace = mango.parse_args(parser)
 
-for notify in args.notify_errors:
-    handler = mango.NotificationHandler(notify)
-    handler.setLevel(logging.ERROR)
-    logging.getLogger().addHandler(handler)
+handler = mango.NotificationHandler(mango.CompoundNotificationTarget(args.notify_errors))
+handler.setLevel(logging.ERROR)
+logging.getLogger().addHandler(handler)
 
 
 def cleanup(context: mango.Context, wallet: mango.Wallet, account: mango.Account, market: mango.Market, dry_run: bool):

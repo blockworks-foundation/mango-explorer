@@ -28,27 +28,20 @@ parser.add_argument("--minimum-sol-balance", type=Decimal, default=Decimal("0.1"
                     help="the minimum SOL balance required for the alert. A SOL balance less than this value will trigger a nofitication.")
 parser.add_argument("--timer-limit", type=int, default=(60 * 60),
                     help="notifications for an account will be sent at most once per timer-limit seconds, and accounts will be polled once per timer-limit seconds irrespective of websocket activity")
-parser.add_argument("--notify", type=mango.parse_subscription_target, action="append", default=[],
+parser.add_argument("--notify", type=mango.parse_notification_target, action="append", default=[],
                     help="The notification target for low balance events")
-parser.add_argument("--notify-events", type=mango.parse_subscription_target, action="append", default=[],
-                    help="The notification target for low balance events")
+parser.add_argument("--notify-events", type=mango.parse_notification_target, action="append", default=[],
+                    help="The notification target for startup events")
 args: argparse.Namespace = mango.parse_args(parser)
 
-
-def send_balance_notification(message: str) -> None:
-    for notify in args.notify:
-        notify.send(f"[{args.name}] {message}")
-
-
-def send_event_notification(message: str) -> None:
-    for notify in args.notify_events:
-        notify.send(f"[{args.name}] {message}")
+notify_balance: mango.NotificationTarget = mango.CompoundNotificationTarget(args.notify)
+notify_event: mango.NotificationTarget = mango.CompoundNotificationTarget(args.notify_events)
 
 
 def notifier(name: str) -> typing.Callable[[mango.AccountInfo], None]:
     def notify(account_info: mango.AccountInfo) -> None:
         report = f"Account \"{name} [{account_info.address}]\" on {context.client.cluster_name} has only {account_info.sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
-        send_balance_notification(report)
+        notify_balance.send(f"[{args.name}] {report}")
         print(f"Notification sent: {report}")
     return notify
 
@@ -102,7 +95,7 @@ for name_and_address in args.named_address:
 
 manager.open()
 
-send_event_notification(f"Starting using context:\n{context}")
+notify_event.send(f"[{args.name}] Starting using context:\n{context}")
 
 # Wait - don't exit. Exiting will be handled by signals/interrupts.
 waiter = threading.Event()
