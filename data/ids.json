@@ -354,6 +354,10 @@
         {
           "symbol": "USDT",
           "publicKey": "38xoQ4oeJCBrcVvca2cGk7iV1dAfrmTR1kmhSCJQ8Jto"
+        },
+        {
+          "symbol": "ADA",
+          "publicKey": "8oGTURNmSQkrBS1AQ5NjB2p8qY34UVmMA9ojrw8vnHus"
         }
       ],
       "perpMarkets": [
@@ -378,6 +382,28 @@
           "bidsKey": "7HRgm8iXEDx2TmSETo3Lq9SXkF954HMVKNiq8t5sKvQS",
           "asksKey": "4oNxXQv1Rx3h7aNWjhTs3PWBoXdoPZjCaikSThV4yGb8",
           "eventsKey": "CZ5MCRvkN38d5pnZDDEEyMiED3drgDUVpEUjkuJq31Kf"
+        },
+        {
+          "name": "MNGO-PERP",
+          "publicKey": "98wPi7vBkiJ1sXLPipQEjrgHYcMBcNUsg9avTyWUi26j",
+          "baseSymbol": "MNGO",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 0,
+          "bidsKey": "5Zpfa8VbFKBJQFueomXz82EjbbtP6nFFQmBkHPCxfKpb",
+          "asksKey": "4Z9xHcCUMY9QLevHu3JpzxnwiHzzaQACMJERZ1XVJcSa",
+          "eventsKey": "uaUCSQejWYrDeYSuvn4As4kaCwJ2rLnRQSsSjY3ogZk"
+        },
+        {
+          "name": "ADA-PERP",
+          "publicKey": "Ai2579GtT3mYEu6LDB3FoZxJT7tiuo91t1joreQTfj9p",
+          "baseSymbol": "ADA",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 7,
+          "bidsKey": "5ugnXufA13HVgY6P9QLkFiSR6jy6XUv96WLbDV2Sf5i5",
+          "asksKey": "45MdNs8jpedfHLaHvL7nyfhHSwHXzTYzPQvR2FAnXG1p",
+          "eventsKey": "5v5fz2cCSy2VvrgVf5Vu7PF23RiZjv6BL36bgg48bA1c"
         }
       ],
       "spotMarkets": [
