@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+
+import argparse
+import json
+import os
+import os.path
+import sys
+import typing
+
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Display the balances of all group tokens in the current wallet.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--address", type=PublicKey,
+                    help="Root address to check (if not provided, the wallet address is used)")
+parser.add_argument("--json-filename", type=str,
+                    help="If specified, a file to write the balance information in JSON format")
+args: argparse.Namespace = mango.parse_args(parser)
+
+address: typing.Optional[PublicKey] = args.address
+if address is None:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    address = wallet.address
+
+context: mango.Context = mango.ContextBuilder.from_command_line_parameters(args)
+group: mango.Group = mango.Group.load(context)
+cache: mango.Cache = mango.Cache.load(context, group.cache)
+
+valuation: mango.Valuation = mango.Valuation.from_wallet(context, group, cache, address)
+
+print(valuation)
+if args.json_filename is not None:
+    with open(args.json_filename, "w") as json_file:
+        json.dump(valuation.to_json_dict(), json_file, indent=4)
