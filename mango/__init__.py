@@ -61,7 +61,7 @@ from .placedorder import PlacedOrder, PlacedOrdersContainer
 from .publickey import encode_public_key_for_sorting
 from .reconnectingwebsocket import ReconnectingWebsocket
 from .retrier import RetryWithPauses, retry_context
-from .rootbank import NodeBank, RootBank
+from .rootbank import NodeBank, RootBank, create_null_root_bank
 from .serumeventqueue import SerumEventQueue, UnseenSerumEventChangesTracker
 from .serummarket import SerumMarket, SerumMarketStub
 from .serummarketlookup import SerumMarketLookup

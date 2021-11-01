@@ -16,7 +16,6 @@
 import enum
 import typing
 
-from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .constants import MangoConstants
@@ -24,7 +23,7 @@ from .market import Market
 from .marketlookup import MarketLookup
 from .perpmarket import PerpMarketStub
 from .spotmarket import SpotMarketStub
-from .token import Token
+from .tokenlookup import TokenLookup
 
 
 class IdsJsonMarketType(enum.Enum):
@@ -45,29 +44,25 @@ class IdsJsonMarketType(enum.Enum):
 
 
 class IdsJsonMarketLookup(MarketLookup):
-    def __init__(self, cluster_name: str) -> None:
+    def __init__(self, cluster_name: str, token_lookup: TokenLookup) -> None:
         super().__init__()
         self.cluster_name: str = cluster_name
+        self.token_lookup: TokenLookup = token_lookup
 
     @staticmethod
-    def _from_dict(market_type: IdsJsonMarketType, mango_program_address: PublicKey, group_address: PublicKey, data: typing.Dict, tokens: typing.Sequence[Token], quote_symbol: str) -> Market:
+    def _from_dict(market_type: IdsJsonMarketType, mango_program_address: PublicKey, group_address: PublicKey, data: typing.Dict, token_lookup: TokenLookup, quote_symbol: str) -> Market:
         base_symbol = data["baseSymbol"]
-        base = Token.find_by_symbol(tokens, base_symbol)
-        quote = Token.find_by_symbol(tokens, quote_symbol)
+        base = token_lookup.find_by_symbol(base_symbol)
+        if base is None:
+            raise Exception(f"Could not find base token with symbol '{base_symbol}'")
+        quote = token_lookup.find_by_symbol(quote_symbol)
+        if quote is None:
+            raise Exception(f"Could not find quote token with symbol '{quote_symbol}'")
         address = PublicKey(data["publicKey"])
         if market_type == IdsJsonMarketType.PERP:
             return PerpMarketStub(mango_program_address, address, base, quote, group_address)
         else:
             return SpotMarketStub(mango_program_address, address, base, quote, group_address)
-
-    @staticmethod
-    def _load_tokens(data: typing.Dict) -> typing.Sequence[Token]:
-        tokens: typing.List[Token] = []
-        for token_data in data:
-            token = Token(token_data["symbol"], token_data["symbol"], PublicKey(
-                token_data["mintKey"]), Decimal(token_data["decimals"]))
-            tokens += [token]
-        return tokens
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:
         check_spots = True
@@ -87,13 +82,11 @@ class IdsJsonMarketLookup(MarketLookup):
                 if check_perps:
                     for market_data in group["perpMarkets"]:
                         if market_data["name"].upper() == symbol.upper():
-                            tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
+                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
                 if check_spots:
                     for market_data in group["spotMarkets"]:
                         if market_data["name"].upper() == symbol.upper():
-                            tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
+                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
         return None
 
     def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
@@ -102,13 +95,11 @@ class IdsJsonMarketLookup(MarketLookup):
                 group_address: PublicKey = PublicKey(group["publicKey"])
                 mango_program_address: PublicKey = PublicKey(group["mangoProgramId"])
                 for market_data in group["perpMarkets"]:
-                    if market_data["key"] == str(address):
-                        tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
+                    if market_data["publicKey"] == str(address):
+                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
                 for market_data in group["spotMarkets"]:
-                    if market_data["key"] == str(address):
-                        tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
+                    if market_data["publicKey"] == str(address):
+                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
         return None
 
     def all_markets(self) -> typing.Sequence[Market]:
@@ -118,14 +109,12 @@ class IdsJsonMarketLookup(MarketLookup):
                 group_address: PublicKey = PublicKey(group["publicKey"])
                 mango_program_address: PublicKey = PublicKey(group["mangoProgramId"])
                 for market_data in group["perpMarkets"]:
-                    tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
                     market = IdsJsonMarketLookup._from_dict(
-                        IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
+                        IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
                     markets = [market]
                 for market_data in group["spotMarkets"]:
-                    tokens = IdsJsonMarketLookup._load_tokens(group["tokens"])
                     market = IdsJsonMarketLookup._from_dict(
-                        IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, tokens, group["quoteSymbol"])
+                        IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
                     markets = [market]
 
         return markets

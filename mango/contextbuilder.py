@@ -219,17 +219,19 @@ class ContextBuilder:
         actual_gma_chunk_pause: Decimal = gma_chunk_pause or Decimal(0)
 
         ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(actual_cluster, actual_group_name)
-        all_token_lookup = ids_json_token_lookup
+        mainnet_special_cases_token_lookup: TokenLookup = SplTokenLookup.load_special_cases_for_cluster(actual_cluster)
+        token_lookup: TokenLookup = CompoundTokenLookup([ids_json_token_lookup, mainnet_special_cases_token_lookup])
         if actual_cluster == "mainnet":
             mainnet_spl_token_lookup: TokenLookup = SplTokenLookup.load(token_filename)
-            all_token_lookup = CompoundTokenLookup([ids_json_token_lookup, mainnet_spl_token_lookup])
+            token_lookup = CompoundTokenLookup(
+                [ids_json_token_lookup, mainnet_special_cases_token_lookup, mainnet_spl_token_lookup])
         elif actual_cluster == "devnet":
             devnet_token_filename = token_filename.rsplit('.', 1)[0] + ".devnet.json"
             devnet_spl_token_lookup: TokenLookup = SplTokenLookup.load(devnet_token_filename)
-            all_token_lookup = CompoundTokenLookup([ids_json_token_lookup, devnet_spl_token_lookup])
-        token_lookup: TokenLookup = all_token_lookup
+            token_lookup = CompoundTokenLookup(
+                [ids_json_token_lookup, mainnet_special_cases_token_lookup, devnet_spl_token_lookup])
 
-        ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(actual_cluster)
+        ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(actual_cluster, token_lookup)
         all_market_lookup = ids_json_market_lookup
         if actual_cluster == "mainnet":
             mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(

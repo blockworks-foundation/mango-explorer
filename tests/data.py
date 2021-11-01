@@ -10,7 +10,8 @@ def load_group(filename: str, root_banks: typing.Sequence[mango.RootBank]) -> ma
     mainnet_token_lookup: mango.TokenLookup = mango.IdsJsonTokenLookup("mainnet", "mainnet.1")
     devnet_token_lookup: mango.TokenLookup = mango.IdsJsonTokenLookup("devnet", "devnet.2")
     token_lookup: mango.TokenLookup = mango.CompoundTokenLookup([mainnet_token_lookup, devnet_token_lookup])
-    return mango.Group.parse_locally(account_info, "devnet.2", root_banks, token_lookup)
+    market_lookup: mango.MarketLookup = mango.NullMarketLookup()
+    return mango.Group.parse_locally(account_info, "devnet.2", root_banks, token_lookup, market_lookup)
 
 
 def load_account(filename: str, group: mango.Group) -> mango.Account:

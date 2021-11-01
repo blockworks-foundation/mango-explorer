@@ -21,6 +21,7 @@ from ..account import Account
 from ..cache import Cache
 from ..group import Group
 from ..openorders import OpenOrders
+from ..perpmarketinfo import PerpMarketInfo
 from ..spotmarketinfo import SpotMarketInfo
 from ..tokenvalue import TokenValue
 
@@ -56,16 +57,25 @@ class PerpCollateralCalculator(CollateralCalculator):
             #     raise Exception(
             #         f"Could not read perp market of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")
             spot_market: typing.Optional[SpotMarketInfo] = group.spot_markets[index]
-            if spot_market is None:
-                raise Exception(
-                    f"Could not read spot market of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")
+            init_asset_weight: Decimal
+            init_liab_weight: Decimal
+            if spot_market is not None:
+                init_asset_weight = spot_market.init_asset_weight
+                init_liab_weight = spot_market.init_liab_weight
+            else:
+                perp_market: typing.Optional[PerpMarketInfo] = group.perp_markets[index]
+                if perp_market is None:
+                    raise Exception(
+                        f"Could not read spot or perp market of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")
+                init_asset_weight = perp_market.init_asset_weight
+                init_liab_weight = perp_market.init_liab_weight
 
             # Base token calculations:
             #     total_collateral += prices[i] * (init_asset_weights[i] * deposits[i] * deposit_index -  init_liab_weights[i] * borrows[i] * borrow_index)
             # Note: the `AccountBasketToken` in the `Account` already factors the deposit and borrow index.
             weighted: Decimal = token_price.value * ((
-                basket_token.deposit.value * spot_market.init_asset_weight) - (
-                    basket_token.borrow.value * spot_market.init_liab_weight))
+                basket_token.deposit.value * init_asset_weight) - (
+                    basket_token.borrow.value * init_liab_weight))
 
             if weighted != 0:
                 collateral_description += [f"{weighted:,.8f} USDC from {basket_token.token_info.token.symbol}"]

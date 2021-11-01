@@ -83,5 +83,13 @@ class SplTokenLookup(TokenLookup):
             token_data = json.load(json_file)
             return SplTokenLookup(filename, token_data)
 
+    @staticmethod
+    def load_special_cases_for_cluster(cluster_name: str) -> "TokenLookup":
+        filename: str = "mango.specialcases.tokenlist.json"
+        if cluster_name == "devnet":
+            filename = "mango.specialcases.tokenlist.devnet.json"
+        filepath = os.path.join(DATA_PATH, filename)
+        return SplTokenLookup.load(filepath)
+
     def __str__(self) -> str:
         return f"« 𝚂𝚙𝚕𝚃𝚘𝚔𝚎𝚗𝙻𝚘𝚘𝚔𝚞𝚙 [{self.filename}] »"

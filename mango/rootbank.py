@@ -21,6 +21,7 @@ from solana.publickey import PublicKey
 
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
+from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .layouts import layouts
 from .metadata import Metadata
@@ -176,3 +177,16 @@ class RootBank(AddressableAccount):
 
     def __repr__(self) -> str:
         return f"{self}"
+
+
+def create_null_root_bank() -> RootBank:
+    return RootBank(AccountInfo(SYSTEM_PROGRAM_ADDRESS, False, Decimal(0), SYSTEM_PROGRAM_ADDRESS, Decimal(0), bytes()),
+                    Version.V1,
+                    Metadata(layouts.DATA_TYPE.RootBank, Version.V1, True),
+                    Decimal("0.5"),
+                    Decimal("0.1"),
+                    Decimal(1.5),
+                    [],
+                    Decimal(5),
+                    Decimal(2),
+                    datetime.now())

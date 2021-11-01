@@ -24,10 +24,10 @@ from .cache import Cache, PriceCache, PerpMarketCache
 from .context import Context
 from .layouts import layouts
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
-
+from .marketlookup import MarketLookup
 from .metadata import Metadata
 from .perpmarketinfo import PerpMarketInfo
-from .rootbank import RootBank
+from .rootbank import RootBank, create_null_root_bank
 from .spotmarketinfo import SpotMarketInfo
 from .token import SolToken, Token
 from .tokeninfo import TokenInfo
@@ -41,10 +41,10 @@ from .version import Version
 # `GroupBasketMarket` gathers basket items together instead of separate arrays.
 #
 class GroupBasketMarket:
-    def __init__(self, base_token_info: TokenInfo, quote_token_info: TokenInfo, spot_market_info: SpotMarketInfo, perp_market_info: typing.Optional[PerpMarketInfo], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey):
+    def __init__(self, base_token_info: TokenInfo, quote_token_info: TokenInfo, spot_market_info: typing.Optional[SpotMarketInfo], perp_market_info: typing.Optional[PerpMarketInfo], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey):
         self.base_token_info: TokenInfo = base_token_info
         self.quote_token_info: TokenInfo = quote_token_info
-        self.spot_market_info: SpotMarketInfo = spot_market_info
+        self.spot_market_info: typing.Optional[SpotMarketInfo] = spot_market_info
         self.perp_market_info: typing.Optional[PerpMarketInfo] = perp_market_info
         self.perp_lot_size_converter: LotSizeConverter = perp_lot_size_converter
         self.oracle: PublicKey = oracle
@@ -130,7 +130,7 @@ class Group(AddressableAccount):
         return Group._map_sequence_to_basket_indices(self.basket, self.basket_indices, lambda item: item)
 
     @staticmethod
-    def from_layout(layout: typing.Any, name: str, account_info: AccountInfo, version: Version, root_banks: typing.Sequence[RootBank], token_lookup: TokenLookup) -> "Group":
+    def from_layout(layout: typing.Any, name: str, account_info: AccountInfo, version: Version, root_banks: typing.Sequence[RootBank], token_lookup: TokenLookup, market_lookup: MarketLookup) -> "Group":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
         tokens: typing.List[typing.Optional[TokenInfo]] = [
             TokenInfo.from_layout_or_none(t, token_lookup, root_banks) for t in layout.tokens]
@@ -140,15 +140,24 @@ class Group(AddressableAccount):
             raise Exception("Could not find quote token info at end of group tokens.")
         basket: typing.List[GroupBasketMarket] = []
         in_basket: typing.List[bool] = []
-        for index, base_token_info in enumerate(tokens[:-1]):
-            if base_token_info is not None:
-                spot_market_info: typing.Optional[SpotMarketInfo] = SpotMarketInfo.from_layout_or_none(
-                    layout.spot_markets[index])
-                if spot_market_info is None:
-                    raise Exception(f"Could not find spot market at index {index} of group layout.")
-                perp_market_info: typing.Optional[PerpMarketInfo] = PerpMarketInfo.from_layout_or_none(
-                    layout.perp_markets[index])
+        for index in range(len(tokens) - 1):
+            spot_market_info: typing.Optional[SpotMarketInfo] = SpotMarketInfo.from_layout_or_none(
+                layout.spot_markets[index])
+            perp_market_info: typing.Optional[PerpMarketInfo] = PerpMarketInfo.from_layout_or_none(
+                layout.perp_markets[index])
+            if (spot_market_info is None) and (perp_market_info is None):
+                in_basket += [False]
+            else:
                 perp_lot_size_converter: LotSizeConverter = RaisingLotSizeConverter()
+                base_token_info: typing.Optional[TokenInfo] = tokens[index]
+                if base_token_info is None:
+                    # It's possible there's no underlying SPL token and we have a pure PERP market.
+                    if perp_market_info is None:
+                        raise Exception(f"Cannot find base token or perp market info for index {index}")
+                    perp_market = market_lookup.find_by_address(perp_market_info.address)
+                    if perp_market is None:
+                        raise Exception(f"Cannot find base token or perp market for index {index}")
+                    base_token_info = TokenInfo(perp_market.base, create_null_root_bank(), perp_market.base.decimals)
                 if perp_market_info is not None:
                     perp_lot_size_converter = LotSizeConverter(
                         base_token_info.token, perp_market_info.base_lot_size, quote_token_info.token, perp_market_info.quote_lot_size)
@@ -158,8 +167,6 @@ class Group(AddressableAccount):
                     base_token_info, quote_token_info, spot_market_info, perp_market_info, perp_lot_size_converter, oracle)
                 basket += [item]
                 in_basket += [True]
-            else:
-                in_basket += [False]
 
         signer_nonce: Decimal = layout.signer_nonce
         signer_key: PublicKey = layout.signer_key
@@ -185,17 +192,17 @@ class Group(AddressableAccount):
         layout = layouts.GROUP.parse(data)
         root_bank_addresses = [ti.root_bank for ti in layout.tokens if ti is not None and ti.root_bank is not None]
         root_banks = RootBank.load_multiple(context, root_bank_addresses)
-        return Group.parse_locally(account_info, name, root_banks, context.token_lookup)
+        return Group.parse_locally(account_info, name, root_banks, context.token_lookup, context.market_lookup)
 
     @staticmethod
-    def parse_locally(account_info: AccountInfo, name: str, root_banks: typing.Sequence[RootBank], token_lookup: TokenLookup) -> "Group":
+    def parse_locally(account_info: AccountInfo, name: str, root_banks: typing.Sequence[RootBank], token_lookup: TokenLookup, market_lookup: MarketLookup) -> "Group":
         data = account_info.data
         if len(data) != layouts.GROUP.sizeof():
             raise Exception(
                 f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP.sizeof()})")
 
         layout = layouts.GROUP.parse(data)
-        return Group.from_layout(layout, name, account_info, Version.V3, root_banks, token_lookup)
+        return Group.from_layout(layout, name, account_info, Version.V3, root_banks, token_lookup, market_lookup)
 
     @staticmethod
     def _map_sequence_to_basket_indices(items: typing.Sequence[GroupBasketMarket], in_basket: typing.Sequence[bool], selector: typing.Callable[[typing.Any], TMappedGroupBasketValue]) -> typing.Sequence[typing.Optional[TMappedGroupBasketValue]]:

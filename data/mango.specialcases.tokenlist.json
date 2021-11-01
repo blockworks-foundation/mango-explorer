@@ -1,0 +1,35 @@
+{
+  "name": "Mango Special Cases Token List",
+  "keywords": [
+    "solana",
+    "spl"
+  ],
+  "tags": {
+    "no-solana-coin": {
+      "name": "no-solana-coin",
+      "description": "Tokens that have no native Solana SPL token"
+    }
+  },
+  "timestamp": "2021-11-01T16:37:21+0000",
+  "tokens": [
+    {
+      "chainId": 101,
+      "address": "SPEC111111111111111111111111111111111111111",
+      "symbol": "ADA",
+      "name": "ADA",
+      "decimals": 6,
+      "tags": [
+        "no-solana-coin"
+      ],
+      "extensions": {
+        "coingeckoId": "cardano",
+        "website": "https://cardano.org/"
+      }
+    }
+  ],
+  "version": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0
+  }
+}

@@ -48,7 +48,7 @@ def fake_token(symbol: str = "FAKE", decimals: int = 6) -> mango.Token:
 
 def fake_token_info() -> mango.TokenInfo:
     token = fake_token()
-    meta_data = mango.Metadata(mango.layouts.DATA_TYPE.Group, mango.Version.V1, True)
+    meta_data = mango.Metadata(mango.layouts.DATA_TYPE.RootBank, mango.Version.V1, True)
     root_bank = mango.RootBank(fake_account_info(), mango.Version.V1, meta_data, Decimal("0.5"),
                                Decimal("0.1"), Decimal(1.5), [], Decimal(5), Decimal(2), datetime.datetime.now())
     return mango.TokenInfo(token, root_bank, Decimal(7))
