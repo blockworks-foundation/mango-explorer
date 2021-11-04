@@ -1,4 +1,4 @@
-from .context import mango
+from .context import mango, disable_logging
 
 from solana.publickey import PublicKey
 
@@ -128,7 +128,8 @@ def test_serum_market_lookups_with_full_data():
     assert btc_usdc.quote.symbol == "USDC"
     assert btc_usdc.address == PublicKey("A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw")
 
-    non_existant_market = market_lookup.find_by_symbol("ETH/BTC")
+    with disable_logging():
+        non_existant_market = market_lookup.find_by_symbol("ETH/BTC")
     assert non_existant_market is None  # No such market
 
     srm_usdc = market_lookup.find_by_address("ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA")
