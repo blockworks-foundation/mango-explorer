@@ -1,5 +1,5 @@
 from ..fakes import fake_context
-from ..data import load_cache, load_data_from_directory
+from ..data import load_data_from_directory
 
 from decimal import Decimal
 from mango.calculators.healthcalculator import HealthType, HealthCalculator
