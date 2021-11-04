@@ -41,7 +41,7 @@ class Token:
     def shift_to_decimals(self, value: Decimal) -> Decimal:
         divisor = Decimal(10 ** self.decimals)
         shifted = value / divisor
-        return round(shifted, int(self.decimals))
+        return shifted
 
     def shift_to_native(self, value: Decimal) -> Decimal:
         multiplier = Decimal(10 ** self.decimals)

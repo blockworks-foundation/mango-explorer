@@ -8,7 +8,7 @@ from .accounttokenvalues import AccountTokenValues, PricedAccountTokenValues
 from .addressableaccount import AddressableAccount
 from .arguments import parse_args
 from .balancesheet import BalanceSheet
-from .cache import PriceCache, RootBankCache, PerpMarketCache, Cache
+from .cache import PriceCache, RootBankCache, PerpMarketCache, MarketCache, Cache
 from .client import ClientException, RateLimitException, TooMuchBandwidthRateLimitException, TooManyRequestsRateLimitException, BlockhashNotFoundException, NodeIsBehindException, FailedToFetchBlockhashException, TransactionException, CompatibleClient, BetterClient
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS, SOL_MINT_ADDRESS, SOL_DECIMALS, SOL_DECIMAL_DIVISOR, WARNING_DISCLAIMER_TEXT, MangoConstants

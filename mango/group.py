@@ -20,7 +20,7 @@ from solana.publickey import PublicKey
 
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
-from .cache import Cache, PriceCache, PerpMarketCache
+from .cache import Cache, PerpMarketCache, MarketCache
 from .context import Context
 from .layouts import layouts
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
@@ -275,26 +275,16 @@ class Group(AddressableAccount):
         raise Exception(f"Could not find token info for symbol '{symbol}' in group {self.address}")
 
     def token_price_from_cache(self, cache: Cache, token: Token) -> TokenValue:
-        if token == self.shared_quote_token.token:
-            # The price of 1 unit of the shared quote token is always 1.
-            return TokenValue(token, Decimal(1))
-
-        token_index: int = self.find_token_market_index(token)
-        cached_price: typing.Optional[PriceCache] = cache.price_cache[token_index]
-        if cached_price is None:
-            raise Exception(f"Could not find price index of basket token {token.symbol}.")
-
-        price: Decimal = cached_price.price
-        decimals_difference = token.decimals - self.shared_quote_token.decimals
-        if decimals_difference != 0:
-            adjustment = 10 ** decimals_difference
-            price = price * adjustment
-
-        return TokenValue(self.shared_quote_token.token, price)
+        market_cache: MarketCache = self.market_cache_from_cache(cache, token)
+        return market_cache.adjusted_price(token, self.shared_quote_token.token)
 
     def perp_market_cache_from_cache(self, cache: Cache, token: Token) -> typing.Optional[PerpMarketCache]:
+        market_cache: MarketCache = self.market_cache_from_cache(cache, token)
+        return market_cache.perp_market
+
+    def market_cache_from_cache(self, cache: Cache, token: Token) -> MarketCache:
         token_index: int = self.find_token_market_index(token)
-        return cache.perp_market_cache[token_index]
+        return cache.market_cache_for_index(token_index)
 
     def fetch_balances(self, context: Context, root_address: PublicKey) -> typing.Sequence[TokenValue]:
         balances: typing.List[TokenValue] = []

@@ -54,8 +54,8 @@ def test_root_bank_constructor():
     assert actual.last_updated == timestamp
 
 
-def test_root_bank_loaded():
-    actual = load_root_bank("tests/testdata/empty/root_bank0.json")
+def test_load_root_bank():
+    actual = load_root_bank("tests/testdata/1deposit/root_bank0.json")
 
     assert actual is not None
     assert actual.logger is not None
@@ -63,16 +63,10 @@ def test_root_bank_loaded():
     assert actual.meta_data.version == mango.Version.V1
     assert actual.meta_data.data_type == mango.layouts.DATA_TYPE.RootBank
     assert actual.meta_data.is_initialized
-    # Typescript says: 0.69999999999999928946
-    assert actual.optimal_util == Decimal("0.699999999999999289457264239899814129")
-    # Typescript says: 0.05999999999999872102
-    assert actual.optimal_rate == Decimal("0.0599999999999987210230756318196654320")
-    # Typescript says: 1.5
+    assert actual.optimal_util == Decimal("0.69999999999999928946")
+    assert actual.optimal_rate == Decimal("0.05999999999999872102")
     assert actual.max_rate == Decimal("1.5")
     assert actual.node_banks[0] == PublicKey("J2Lmnc1e4frMnBEJARPoHtfpcohLfN67HdK1inXjTFSM")
-    # Typescript says: 1000154.42276607355830719825
-    assert actual.deposit_index == Decimal("1000154.42276607355830719825462438166")
-    # Typescript says: 1000219.00867863010088498754
-    assert actual.borrow_index == Decimal("1000219.00867863010088498754157626536")
-    # Typescript says: "Mon, 04 Oct 2021 14:58:05 GMT"
+    assert actual.deposit_index == Decimal("1000154.42276607355830719825")
+    assert actual.borrow_index == Decimal("1000219.00867863010088498754")
     assert actual.last_updated == datetime(2021, 10, 4, 14, 58, 5, 0, timezone.utc)

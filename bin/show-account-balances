@@ -71,10 +71,9 @@ for account in mango_accounts:
             report: mango.AccountTokenValues = mango.AccountTokenValues.from_account_basket_base_token(
                 asset, open_orders, group)
             # print(report)
+            market_cache: mango.MarketCache = group.market_cache_from_cache(cache, report.base_token)
             price_from_cache: mango.TokenValue = group.token_price_from_cache(cache, report.base_token)
-            perp_market_cache: typing.Optional[mango.PerpMarketCache] = group.perp_market_cache_from_cache(
-                cache, report.base_token)
-            priced_report: mango.AccountTokenValues = report.priced(price_from_cache, perp_market_cache)
+            priced_report: mango.AccountTokenValues = report.priced(market_cache)
             account_value += priced_report.net_value
             quote_token_free_in_open_orders += priced_report.quote_token_free
             quote_token_total_in_open_orders += priced_report.quote_token_total
@@ -82,7 +81,9 @@ for account in mango_accounts:
 
     quote_report: mango.AccountTokenValues = mango.AccountTokenValues(account.shared_quote_token.token_info.token,
                                                                       account.shared_quote_token.token_info.token,
+                                                                      account.shared_quote_token.raw_deposit,
                                                                       account.shared_quote_token.deposit,
+                                                                      account.shared_quote_token.raw_borrow,
                                                                       account.shared_quote_token.borrow,
                                                                       mango.TokenValue(
                                                                           group.shared_quote_token.token, Decimal(0)),
@@ -92,7 +93,12 @@ for account in mango_accounts:
                                                                       quote_token_total_in_open_orders,
                                                                       mango.TokenValue(
                                                                           group.shared_quote_token.token, Decimal(0)),
-                                                                      Decimal(0), Decimal(0), Decimal(0),
+                                                                      Decimal(0), Decimal(0),
+                                                                      mango.TokenValue(
+                                                                          group.shared_quote_token.token, Decimal(0)),
+                                                                      mango.TokenValue(
+                                                                          group.shared_quote_token.token, Decimal(0)),
+                                                                      Decimal(0), Decimal(0),
                                                                       mango.NullLotSizeConverter())
     account_value += quote_report.net_value + quote_token_total_in_open_orders
     print(quote_report)

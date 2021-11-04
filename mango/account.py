@@ -42,20 +42,26 @@ from .version import Version
 # `AccountBasketToken` gathers basket items together instead of separate arrays.
 #
 class AccountBasketToken:
-    def __init__(self, token_info: TokenInfo, deposit: TokenValue, borrow: TokenValue):
+    def __init__(self, token_info: TokenInfo, raw_deposit: Decimal, deposit: TokenValue, raw_borrow: Decimal, borrow: TokenValue):
         self.token_info: TokenInfo = token_info
+        self.raw_deposit: Decimal = raw_deposit
         self.deposit: TokenValue = deposit
+        self.raw_borrow: Decimal = raw_borrow
         self.borrow: TokenValue = borrow
 
     @property
     def net_value(self) -> TokenValue:
         return self.deposit - self.borrow
 
+    @property
+    def raw_net_value(self) -> Decimal:
+        return self.raw_deposit - self.raw_borrow
+
     def __str__(self) -> str:
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝙱𝚊𝚜𝚔𝚎𝚝𝚃𝚘𝚔𝚎𝚗 {self.token_info.token.symbol}
     Net Value:     {self.net_value}
-        Deposited: {self.deposit}
-        Borrowed:  {self.borrow}
+        Deposited: {self.deposit} (raw value: {self.raw_deposit})
+        Borrowed:  {self.borrow} (raw value {self.raw_borrow})
 »"""
 
     def __repr__(self) -> str:
@@ -68,8 +74,8 @@ class AccountBasketToken:
 # account.
 #
 class AccountBasketBaseToken(AccountBasketToken):
-    def __init__(self, token_info: TokenInfo, quote_token_info: TokenInfo, deposit: TokenValue, borrow: TokenValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]):
-        super().__init__(token_info, deposit, borrow)
+    def __init__(self, token_info: TokenInfo, quote_token_info: TokenInfo, raw_deposit: Decimal, deposit: TokenValue, raw_borrow: Decimal, borrow: TokenValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]):
+        super().__init__(token_info, raw_deposit, deposit, raw_borrow, borrow)
         self.quote_token_info: TokenInfo = quote_token_info
         self.spot_open_orders: typing.Optional[PublicKey] = spot_open_orders
         self.perp_account: typing.Optional[PerpAccount] = perp_account
@@ -80,8 +86,8 @@ class AccountBasketBaseToken(AccountBasketToken):
             perp_account = f"{self.perp_account}".replace("\n", "\n        ")
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝙱𝚊𝚜𝚔𝚎𝚝𝙱𝚊𝚜𝚎𝚃𝚘𝚔𝚎𝚗 {self.token_info.token.symbol}
     Net Value:     {self.net_value}
-        Deposited: {self.deposit}
-        Borrowed:  {self.borrow}
+        Deposited: {self.deposit} (raw value: {self.raw_deposit})
+        Borrowed:  {self.borrow} (raw value {self.raw_borrow})
     Spot OpenOrders: {self.spot_open_orders or "None"}
     Perp Account:
         {perp_account}
@@ -146,9 +152,11 @@ class Account(AddressableAccount):
 
         for index, token_info in enumerate(group.tokens[:-1]):
             if token_info:
-                intrinsic_deposit = token_info.root_bank.deposit_index * layout.deposits[index]
+                raw_deposit: Decimal = layout.deposits[index]
+                intrinsic_deposit = token_info.root_bank.deposit_index * raw_deposit
                 deposit = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_deposit))
-                intrinsic_borrow = token_info.root_bank.borrow_index * layout.borrows[index]
+                raw_borrow: Decimal = layout.borrows[index]
+                intrinsic_borrow = token_info.root_bank.borrow_index * raw_borrow
                 borrow = TokenValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_borrow))
                 perp_open_orders = PerpOpenOrders(placed_orders_all_markets[index])
                 group_basket_market = group.markets[index]
@@ -163,19 +171,22 @@ class Account(AddressableAccount):
                     mngo_token_info.token)
                 spot_open_orders = layout.spot_open_orders[index]
                 basket_item: AccountBasketBaseToken = AccountBasketBaseToken(
-                    token_info, quote_token_info, deposit, borrow, spot_open_orders, perp_account)
+                    token_info, quote_token_info, raw_deposit, deposit, raw_borrow, borrow, spot_open_orders, perp_account)
                 basket += [basket_item]
                 active_in_basket += [True]
             else:
                 active_in_basket += [False]
 
-        intrinsic_quote_deposit = quote_token_info.root_bank.deposit_index * layout.deposits[-1]
+        raw_quote_deposit: Decimal = layout.deposits[-1]
+        intrinsic_quote_deposit = quote_token_info.root_bank.deposit_index * raw_quote_deposit
         quote_deposit = TokenValue(quote_token_info.token,
                                    quote_token_info.token.shift_to_decimals(intrinsic_quote_deposit))
-        intrinsic_quote_borrow = quote_token_info.root_bank.borrow_index * layout.borrows[-1]
+        raw_quote_borrow: Decimal = layout.borrows[-1]
+        intrinsic_quote_borrow = quote_token_info.root_bank.borrow_index * raw_quote_borrow
         quote_borrow = TokenValue(quote_token_info.token,
                                   quote_token_info.token.shift_to_decimals(intrinsic_quote_borrow))
-        quote: AccountBasketToken = AccountBasketToken(quote_token_info, quote_deposit, quote_borrow)
+        quote: AccountBasketToken = AccountBasketToken(
+            quote_token_info, raw_quote_deposit, quote_deposit, raw_quote_borrow, quote_borrow)
 
         msrm_amount: Decimal = layout.msrm_amount
         being_liquidated: bool = bool(layout.being_liquidated)

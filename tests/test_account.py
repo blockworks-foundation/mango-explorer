@@ -13,21 +13,30 @@ def test_construction():
     info = "some name"
     in_margin_basket = [False, False, False, False, False]
     active_in_basket = [False, True, False, True, True]
-    quote_deposit = fake_token_value(Decimal(50))
-    quote_borrow = fake_token_value(Decimal(5))
-    quote = mango.AccountBasketToken(fake_token_info(), quote_deposit, quote_borrow)
-    deposit1 = fake_token_value(Decimal(1))
-    deposit2 = fake_token_value(Decimal(2))
-    deposit3 = fake_token_value(Decimal(3))
-    borrow1 = fake_token_value(Decimal("0.1"))
-    borrow2 = fake_token_value(Decimal("0.2"))
-    borrow3 = fake_token_value(Decimal("0.3"))
+    raw_quote_deposit = Decimal(50)
+    quote_deposit = fake_token_value(raw_quote_deposit)
+    raw_quote_borrow = Decimal(5)
+    quote_borrow = fake_token_value(raw_quote_borrow)
+    quote = mango.AccountBasketToken(fake_token_info(), raw_quote_deposit,
+                                     quote_deposit, raw_quote_borrow, quote_borrow)
+    raw_deposit1 = Decimal(1)
+    deposit1 = fake_token_value(raw_deposit1)
+    raw_deposit2 = Decimal(2)
+    deposit2 = fake_token_value(raw_deposit2)
+    raw_deposit3 = Decimal(3)
+    deposit3 = fake_token_value(raw_deposit3)
+    raw_borrow1 = Decimal("0.1")
+    borrow1 = fake_token_value(raw_borrow1)
+    raw_borrow2 = Decimal("0.2")
+    borrow2 = fake_token_value(raw_borrow2)
+    raw_borrow3 = Decimal("0.3")
+    borrow3 = fake_token_value(raw_borrow3)
     basket = [
-        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), deposit1, borrow1,
+        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), raw_deposit1, deposit1, raw_borrow1, borrow1,
                                      fake_seeded_public_key("spot openorders 1"), fake_seeded_public_key("perp1")),
-        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), deposit2, borrow2,
+        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), raw_deposit2, deposit2, raw_borrow2, borrow2,
                                      fake_seeded_public_key("spot openorders 2"), fake_seeded_public_key("perp2")),
-        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), deposit3, borrow3,
+        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), raw_deposit3, deposit3, raw_borrow3, borrow3,
                                      fake_seeded_public_key("spot openorders 3"), fake_seeded_public_key("perp3")),
     ]
     msrm_amount = Decimal(0)

@@ -23,7 +23,7 @@ from mango.perpmarketinfo import PerpMarketInfo
 
 from ..account import Account, AccountBasketBaseToken
 from ..accounttokenvalues import AccountTokenValues, PricedAccountTokenValues
-from ..cache import Cache, PerpMarketCache
+from ..cache import Cache, MarketCache
 from ..context import Context
 from ..group import Group
 from ..lotsizeconverter import NullLotSizeConverter
@@ -112,10 +112,12 @@ class HealthCalculator:
             # if (asset.deposit.value != 0) or (asset.borrow.value != 0) or (asset.net_value.value != 0):
             report: AccountTokenValues = AccountTokenValues.from_account_basket_base_token(
                 asset, open_orders_by_address, group)
-            price: TokenValue = group.token_price_from_cache(cache, report.base_token)
-            perp_market_cache: typing.Optional[PerpMarketCache] = group.perp_market_cache_from_cache(
-                cache, report.base_token)
-            priced_report: PricedAccountTokenValues = report.priced(price, perp_market_cache)
+            # print("report", report)
+            # price: TokenValue = group.token_price_from_cache(cache, report.base_token)
+            market_cache: MarketCache = group.market_cache_from_cache(cache, report.base_token)
+            # print("Market cache", market_cache)
+            priced_report: PricedAccountTokenValues = report.priced(market_cache)
+            # print("priced_report", priced_report)
             priced_reports += [priced_report]
 
         quote_token_free_in_open_orders: TokenValue = TokenValue(group.shared_quote_token.token, Decimal(0))
@@ -123,20 +125,29 @@ class HealthCalculator:
         for priced_report in priced_reports:
             quote_token_free_in_open_orders += priced_report.quote_token_free
             quote_token_total_in_open_orders += priced_report.quote_token_total
+        # print("quote_token_free_in_open_orders", quote_token_free_in_open_orders)
+        # print("quote_token_total_in_open_orders", quote_token_total_in_open_orders)
 
         quote_report: AccountTokenValues = AccountTokenValues(account.shared_quote_token.token_info.token,
                                                               account.shared_quote_token.token_info.token,
+                                                              account.shared_quote_token.raw_deposit,
                                                               account.shared_quote_token.deposit,
+                                                              account.shared_quote_token.raw_borrow,
                                                               account.shared_quote_token.borrow,
                                                               TokenValue(group.shared_quote_token.token, Decimal(0)),
                                                               TokenValue(group.shared_quote_token.token, Decimal(0)),
                                                               quote_token_free_in_open_orders,
                                                               quote_token_total_in_open_orders,
                                                               TokenValue(group.shared_quote_token.token, Decimal(0)),
-                                                              Decimal(0), Decimal(0), Decimal(0),
+                                                              Decimal(0), Decimal(0),
+                                                              TokenValue(group.shared_quote_token.token, Decimal(0)),
+                                                              TokenValue(group.shared_quote_token.token, Decimal(0)),
+                                                              Decimal(0), Decimal(0),
                                                               NullLotSizeConverter())
+        # print("quote_report", quote_report)
 
         health: Decimal = quote_report.net_value.value
+        # print("Health (start)", health)
         for priced_report in priced_reports:
             market_index = group.find_token_market_index(priced_report.base_token)
             spot_market: typing.Optional[SpotMarketInfo] = group.spot_markets[market_index]
@@ -147,8 +158,9 @@ class HealthCalculator:
 
             spot_weight = spot_market.init_asset_weight if base_value > 0 else spot_market.init_liab_weight
             spot_health = base_value.value * spot_weight
+            # print("Weights", base_value.value, "*", spot_weight, spot_health)
 
-            perp_base, _ = self._calculate_pessimistic_perp_value(priced_report)
+            perp_base, perp_quote = priced_report.if_worst_execution()
             perp_market: typing.Optional[PerpMarketInfo] = group.perp_markets[market_index]
             perp_health: Decimal = Decimal(0)
             if perp_market is not None:
@@ -158,7 +170,12 @@ class HealthCalculator:
             health += spot_health
             health += perp_health
             health += quote_value.value
+            health += perp_quote.value
             health += priced_report.raw_perp_quote_position
+        #     print("Health (now)", health, spot_health, perp_health, quote_value.value,
+        #           perp_quote.value, priced_report.raw_perp_quote_position)
+
+        # print("Health (returning)", health)
 
         return health
 

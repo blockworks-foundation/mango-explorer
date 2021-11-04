@@ -175,8 +175,8 @@ class FloatI80F48Adapter(construct.Adapter):
 
     def _decode(self, obj, context, path) -> Decimal:
         # How many decimal places precision should we allow for an I80F48? We could:
-        # return round(Decimal(obj) / self.divisor, 12)
-        return Decimal(obj) / self.divisor
+        return round(Decimal(obj) / self.divisor, 20)
+        # return Decimal(obj) / self.divisor
 
     def _encode(self, obj, context, path) -> bytes:
         return bytes(obj)

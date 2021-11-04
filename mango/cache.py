@@ -24,15 +24,15 @@ from .addressableaccount import AddressableAccount
 from .context import Context
 from .layouts import layouts
 from .metadata import Metadata
+from .token import Token
+from .tokenvalue import TokenValue
 from .version import Version
 
 
-# # 🥭 NodeBank class
+# # 🥭 PriceCache class
 #
-# `NodeBank` stores details of deposits/borrows and vault.
+# `PriceCache` stores a cached price.
 #
-
-
 class PriceCache:
     def __init__(self, price: Decimal, last_update: datetime):
         self.price: Decimal = price
@@ -45,12 +45,16 @@ class PriceCache:
         return PriceCache(layout.price, layout.last_update)
 
     def __str__(self) -> str:
-        return f"« 𝙿𝚛𝚒𝚌𝚎𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.price:,.8f} »"
+        return f"« 𝙿𝚛𝚒𝚌𝚎𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.price:,.20f} »"
 
     def __repr__(self) -> str:
         return f"{self}"
 
 
+# # 🥭 RootBankCache class
+#
+# `RootBankCache` stores cached details of deposits and borrows.
+#
 class RootBankCache:
     def __init__(self, deposit_index: Decimal, borrow_index: Decimal, last_update: datetime):
         self.deposit_index: Decimal = deposit_index
@@ -64,12 +68,16 @@ class RootBankCache:
         return RootBankCache(layout.deposit_index, layout.borrow_index, layout.last_update)
 
     def __str__(self) -> str:
-        return f"« 𝚁𝚘𝚘𝚝𝙱𝚊𝚗𝚔𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.deposit_index:,.8f} / {self.borrow_index:,.8f} »"
+        return f"« 𝚁𝚘𝚘𝚝𝙱𝚊𝚗𝚔𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.deposit_index:,.20f} / {self.borrow_index:,.20f} »"
 
     def __repr__(self) -> str:
         return f"{self}"
 
 
+# # 🥭 PerpMarketCache class
+#
+# `PerpMarketCache` stores cached details of long and short funding.
+#
 class PerpMarketCache:
     def __init__(self, long_funding: Decimal, short_funding: Decimal, last_update: datetime):
         self.long_funding: Decimal = long_funding
@@ -83,7 +91,44 @@ class PerpMarketCache:
         return PerpMarketCache(layout.long_funding, layout.short_funding, layout.last_update)
 
     def __str__(self) -> str:
-        return f"« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.long_funding:,.8f} / {self.short_funding:,.8f} »"
+        return f"« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.long_funding:,.20f} / {self.short_funding:,.20f} »"
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+# # 🥭 MarketCache class
+#
+# `MarketCache` stores cached details of price, root bank, and perp market, for a particular market.
+#
+class MarketCache:
+    def __init__(self, price: typing.Optional[PriceCache], root_bank: typing.Optional[RootBankCache], perp_market: typing.Optional[PerpMarketCache]):
+        self.price: typing.Optional[PriceCache] = price
+        self.root_bank: typing.Optional[RootBankCache] = root_bank
+        self.perp_market: typing.Optional[PerpMarketCache] = perp_market
+
+    def adjusted_price(self, token: Token, quote_token: Token) -> TokenValue:
+        if token == quote_token:
+            # The price of 1 unit of the shared quote token is always 1.
+            return TokenValue(token, Decimal(1))
+
+        if self.price is None:
+            raise Exception(f"Could not find price index of basket token {token.symbol}.")
+
+        price: Decimal = self.price.price
+        decimals_difference = token.decimals - quote_token.decimals
+        if decimals_difference != 0:
+            adjustment = 10 ** decimals_difference
+            price = price * adjustment
+
+        return TokenValue(quote_token, price)
+
+    def __str__(self) -> str:
+        return f"""« 𝙼𝚊𝚛𝚔𝚎𝚝𝙲𝚊𝚌𝚑𝚎
+    {self.price}
+    {self.root_bank}
+    {self.perp_market}
+»"""
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -93,7 +138,6 @@ class PerpMarketCache:
 #
 # `Cache` stores cache details of prices, root banks and perp markets.
 #
-
 class Cache(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
                  price_cache: typing.Sequence[typing.Optional[PriceCache]],
@@ -135,6 +179,9 @@ class Cache(AddressableAccount):
         if account_info is None:
             raise Exception(f"Cache account not found at address '{address}'")
         return Cache.parse(account_info)
+
+    def market_cache_for_index(self, index: int) -> MarketCache:
+        return MarketCache(self.price_cache[index], self.root_bank_cache[index], self.perp_market_cache[index])
 
     def __str__(self) -> str:
         def _render_list(items, stub):
