@@ -45,9 +45,12 @@ try:
     account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
 
     market_symbol = args.market.upper()
-    market = context.market_lookup.find_by_symbol(market_symbol)
-    if market is None:
-        raise Exception(f"Could not find spot market {market_symbol}")
+    market_stub = context.market_lookup.find_by_symbol(market_symbol)
+    if market_stub is None:
+        raise Exception(f"Could not find serum market {market_symbol}")
+    market = mango.ensure_market_loaded(context, market_stub)
+    if not isinstance(market, mango.SerumMarket):
+        raise Exception(f"Market is not a serum market: {market}")
 
     market_operations: mango.MarketOperations = mango.create_market_operations(
         context, wallet, account, market, args.dry_run)

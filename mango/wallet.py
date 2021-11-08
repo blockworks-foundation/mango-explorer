@@ -21,7 +21,6 @@ import os
 import os.path
 import typing
 
-from solana.account import Account as SolanaAccount
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
 
@@ -66,11 +65,6 @@ class Wallet:
     @property
     def address(self) -> PublicKey:
         return self.keypair.public_key
-
-    def to_deprecated_solana_account(self) -> SolanaAccount:
-        # Solana Account is deprecated, so we use keypair everywhere. Some libraries like PySerum haven't
-        # caught up yet though, so this gives us a way to access the Solana Account object consistently.
-        return SolanaAccount(self.keypair.secret_key[0:32])
 
     def save(self, filename: str, overwrite: bool = False) -> None:
         if os.path.isfile(filename) and not overwrite:

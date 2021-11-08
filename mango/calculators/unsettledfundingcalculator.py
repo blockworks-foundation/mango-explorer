@@ -17,24 +17,24 @@ import typing
 
 from decimal import Decimal
 
+from ..instrumentvalue import InstrumentValue
 from ..token import Token
-from ..tokenvalue import TokenValue
 
 
 class UnsettledFundingParams(typing.NamedTuple):
     quote_token: Token
-    base_position: TokenValue
+    base_position: InstrumentValue
     long_funding: Decimal
     long_settled_funding: Decimal
     short_funding: Decimal
     short_settled_funding: Decimal
 
 
-def calculate_unsettled_funding(params: UnsettledFundingParams) -> TokenValue:
+def calculate_unsettled_funding(params: UnsettledFundingParams) -> InstrumentValue:
     result: Decimal
     if params.base_position > 0:
         result = params.base_position.value * (params.long_funding - params.long_settled_funding)
     else:
         result = params.base_position.value * (params.short_funding - params.short_settled_funding)
 
-    return TokenValue(params.quote_token, result)
+    return InstrumentValue(params.quote_token, result)

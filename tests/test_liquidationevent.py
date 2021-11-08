@@ -8,14 +8,14 @@ import datetime
 
 def test_liquidation_event():
     balances_before = [
-        mango.TokenValue(fake_token("ETH"), Decimal(1)),
-        mango.TokenValue(fake_token("BTC"), Decimal("0.1")),
-        mango.TokenValue(fake_token("USDT"), Decimal(1000))
+        mango.InstrumentValue(fake_token("ETH"), Decimal(1)),
+        mango.InstrumentValue(fake_token("BTC"), Decimal("0.1")),
+        mango.InstrumentValue(fake_token("USDT"), Decimal(1000))
     ]
     balances_after = [
-        mango.TokenValue(fake_token("ETH"), Decimal(1)),
-        mango.TokenValue(fake_token("BTC"), Decimal("0.05")),
-        mango.TokenValue(fake_token("USDT"), Decimal(2000))
+        mango.InstrumentValue(fake_token("ETH"), Decimal(1)),
+        mango.InstrumentValue(fake_token("BTC"), Decimal("0.05")),
+        mango.InstrumentValue(fake_token("USDT"), Decimal(2000))
     ]
     timestamp = datetime.datetime(2021, 5, 17, 12, 20, 56)
     event = mango.LiquidationEvent(timestamp, "Liquidator", "Group", True, ["signature"],

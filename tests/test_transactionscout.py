@@ -34,11 +34,11 @@ def test_transaction_scout_constructor():
     instructions: typing.Sequence[str] = ["Instruction"]
     messages: typing.Sequence[str] = ["Message 1", "Message 2"]
     token = fake_token()
-    token_value = mango.TokenValue(token, Decimal(28))
+    token_value = mango.InstrumentValue(token, Decimal(28))
     owner = fake_seeded_public_key("owner")
-    owned_token_value = mango.OwnedTokenValue(owner, token_value)
-    pre_token_balances: typing.Sequence[mango.OwnedTokenValue] = [owned_token_value]
-    post_token_balances: typing.Sequence[mango.OwnedTokenValue] = [owned_token_value]
+    owned_token_value = mango.OwnedInstrumentValue(owner, token_value)
+    pre_token_balances: typing.Sequence[mango.OwnedInstrumentValue] = [owned_token_value]
+    post_token_balances: typing.Sequence[mango.OwnedInstrumentValue] = [owned_token_value]
     actual = mango.TransactionScout(timestamp, signatures, succeeded, group_name, accounts,
                                     instructions, messages, pre_token_balances, post_token_balances)
     assert actual is not None

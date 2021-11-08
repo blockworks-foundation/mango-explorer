@@ -146,7 +146,7 @@ def build_serum_place_order_instructions(context: Context, wallet: Wallet, marke
 
     instruction = market.make_place_order_instruction(
         source,
-        wallet.to_deprecated_solana_account(),
+        wallet.keypair,
         serum_order_type,
         serum_side,
         float(price),
@@ -389,7 +389,7 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks),
                 AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue),
                 *list([AccountMeta(is_signer=False, is_writable=False,
-                                   pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders])
+                                   pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders_by_index])
             ],
             program_id=context.mango_program_address,
             data=layouts.PLACE_PERP_ORDER.build(
@@ -534,7 +534,7 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
             *list([AccountMeta(is_signer=False, is_writable=False,
-                               pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders])
+                               pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders_by_index])
         ],
         program_id=context.mango_program_address,
         data=layouts.WITHDRAW.build({
@@ -615,7 +615,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
     spot_market_address = market.state.public_key()
     market_index = group.find_spot_market_index(spot_market_address)
 
-    open_orders_address = account.spot_open_orders[market_index]
+    open_orders_address = account.spot_open_orders_by_index[market_index]
     if open_orders_address is None:
         create_open_orders = build_spot_openorders_instructions(context, wallet, group, account, market)
         instructions += create_open_orders
@@ -634,12 +634,12 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
         float(quantity)) * market.state.quote_lot_size() * market.state.price_number_to_lots(float(price))
 
     base_token_infos = [
-        token_info for token_info in group.base_tokens if token_info is not None and token_info.token.mint == market.state.base_mint()]
+        token_info for token_info in group.base_tokens_by_index if token_info is not None and isinstance(token_info.token, Token) and token_info.token.mint == market.state.base_mint()]
     if len(base_token_infos) != 1:
         raise Exception(
             f"Could not find base token info for group {group.address} - length was {len(base_token_infos)} when it should be 1.")
     base_token_info = base_token_infos[0]
-    quote_token_info = group.shared_quote_token
+    quote_token_info = group.shared_quote
 
     base_root_bank: RootBank = base_token_info.root_bank
     base_node_bank: NodeBank = base_root_bank.pick_node_bank(context)
@@ -676,7 +676,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             AccountMeta(is_signer=False, is_writable=False, pubkey=vault_signer),
             AccountMeta(is_signer=False, is_writable=False, pubkey=fee_discount_address),
             *list([AccountMeta(is_signer=False, is_writable=(oo_address == open_orders_address),
-                               pubkey=oo_address) for oo_address in account.spot_open_orders if oo_address is not None])
+                               pubkey=oo_address) for oo_address in account.spot_open_orders])
         ],
         program_id=context.mango_program_address,
         data=layouts.PLACE_SPOT_ORDER_2.build(

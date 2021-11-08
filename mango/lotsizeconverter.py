@@ -15,16 +15,16 @@
 
 from decimal import Decimal
 
-from .token import Token
+from .token import Instrument
 
 
 # # 🥭 LotSizeConverter class
 #
 class LotSizeConverter():
-    def __init__(self, base: Token, base_lot_size: Decimal, quote: Token, quote_lot_size: Decimal):
-        self.base: Token = base
+    def __init__(self, base: Instrument, base_lot_size: Decimal, quote: Instrument, quote_lot_size: Decimal):
+        self.base: Instrument = base
         self.base_lot_size: Decimal = base_lot_size
-        self.quote: Token = quote
+        self.quote: Instrument = quote
         self.quote_lot_size: Decimal = quote_lot_size
 
     @property

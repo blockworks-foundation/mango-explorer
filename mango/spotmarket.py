@@ -38,6 +38,8 @@ from .token import Token
 class SpotMarket(LoadedMarket):
     def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token, group: Group, underlying_serum_market: PySerumMarket):
         super().__init__(serum_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
+        self.base: Token = base
+        self.quote: Token = quote
         self.group: Group = group
         self.underlying_serum_market: PySerumMarket = underlying_serum_market
         base_lot_size: Decimal = Decimal(underlying_serum_market.state.base_lot_size())
@@ -80,6 +82,8 @@ class SpotMarket(LoadedMarket):
 class SpotMarketStub(Market):
     def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token, group_address: PublicKey):
         super().__init__(serum_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
+        self.base: Token = base
+        self.quote: Token = quote
         self.group_address: PublicKey = group_address
 
     def load(self, context: Context, group: typing.Optional[Group]) -> SpotMarket:

@@ -8,9 +8,9 @@ def test_constructor():
     owner = fake_seeded_public_key("owner")
     token = fake_token()
     value = Decimal(27)
-    token_value = mango.TokenValue(token, value)
+    token_value = mango.InstrumentValue(token, value)
 
-    actual = mango.OwnedTokenValue(owner, token_value)
+    actual = mango.OwnedInstrumentValue(owner, token_value)
     assert actual is not None
     assert actual.logger is not None
     assert actual.owner == owner

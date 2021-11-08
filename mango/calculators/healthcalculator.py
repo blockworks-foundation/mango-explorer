@@ -21,17 +21,17 @@ from decimal import Decimal
 
 from mango.perpmarketinfo import PerpMarketInfo
 
-from ..account import Account, AccountBasketBaseToken
-from ..accounttokenvalues import AccountTokenValues, PricedAccountTokenValues
+from ..account import Account, AccountSlot
+from ..accountinstrumentvalues import AccountInstrumentValues, PricedAccountInstrumentValues
 from ..cache import Cache, MarketCache
 from ..context import Context
 from ..group import Group
+from ..instrumentvalue import InstrumentValue
 from ..lotsizeconverter import NullLotSizeConverter
 from ..openorders import OpenOrders
 from ..perpaccount import PerpAccount
 from ..spotmarketinfo import SpotMarketInfo
-from ..token import Token
-from ..tokenvalue import TokenValue
+from ..token import Instrument
 
 
 # # 🥭 HealthType enum
@@ -56,15 +56,15 @@ class HealthCalculator:
         self.context: Context = context
         self.health_type: HealthType = health_type
 
-    def _calculate_pessimistic_spot_value(self, values: PricedAccountTokenValues) -> typing.Tuple[TokenValue, TokenValue]:
+    def _calculate_pessimistic_spot_value(self, values: PricedAccountInstrumentValues) -> typing.Tuple[InstrumentValue, InstrumentValue]:
         # base total if all bids were executed
-        if_all_bids_executed: TokenValue = values.quote_token_locked + values.base_token_total
+        if_all_bids_executed: InstrumentValue = values.quote_token_locked + values.base_token_total
 
         # base total if all asks were executed
-        if_all_asks_executed: TokenValue = values.base_token_free
+        if_all_asks_executed: InstrumentValue = values.base_token_free
 
-        base: TokenValue
-        quote: TokenValue
+        base: InstrumentValue
+        quote: InstrumentValue
         if if_all_bids_executed > if_all_asks_executed:
             base = values.net_value + if_all_bids_executed
             quote = values.quote_token_free
@@ -74,10 +74,10 @@ class HealthCalculator:
             quote = values.base_token_locked + values.quote_token_total
             return base, quote
 
-    def _calculate_pessimistic_perp_value(self, values: PricedAccountTokenValues) -> typing.Tuple[TokenValue, TokenValue]:
+    def _calculate_pessimistic_perp_value(self, values: PricedAccountInstrumentValues) -> typing.Tuple[InstrumentValue, InstrumentValue]:
         return values.perp_base_position, values.perp_quote_position
 
-    def _calculate_perp_value(self, basket_token: AccountBasketBaseToken, token_price: TokenValue, market_index: int, cache: Cache, unadjustment_factor: Decimal) -> typing.Tuple[Decimal, Decimal]:
+    def _calculate_perp_value(self, basket_token: AccountSlot, token_price: InstrumentValue, market_index: int, cache: Cache, unadjustment_factor: Decimal) -> typing.Tuple[Decimal, Decimal]:
         if basket_token.perp_account is None or basket_token.perp_account.empty:
             return Decimal(0), Decimal(0)
 
@@ -86,7 +86,7 @@ class HealthCalculator:
             raise Exception(f"Cache contains no perp market cache for market index {market_index}.")
 
         perp_account: PerpAccount = basket_token.perp_account
-        token: Token = basket_token.token_info.token
+        token: Instrument = basket_token.token_info.token
         base_lot_size: Decimal = perp_account.lot_size_converter.base_lot_size
         quote_lot_size: Decimal = perp_account.lot_size_converter.quote_lot_size
 
@@ -107,50 +107,55 @@ class HealthCalculator:
             return if_all_asks_executed, full_quote_position
 
     def calculate(self, account: Account, open_orders_by_address: typing.Dict[str, OpenOrders], group: Group, cache: Cache) -> Decimal:
-        priced_reports: typing.List[PricedAccountTokenValues] = []
-        for asset in account.basket:
+        priced_reports: typing.List[PricedAccountInstrumentValues] = []
+        for asset in account.slots:
             # if (asset.deposit.value != 0) or (asset.borrow.value != 0) or (asset.net_value.value != 0):
-            report: AccountTokenValues = AccountTokenValues.from_account_basket_base_token(
+            report: AccountInstrumentValues = AccountInstrumentValues.from_account_basket_base_token(
                 asset, open_orders_by_address, group)
             # print("report", report)
-            # price: TokenValue = group.token_price_from_cache(cache, report.base_token)
+            # price: InstrumentValue = group.token_price_from_cache(cache, report.base_token)
             market_cache: MarketCache = group.market_cache_from_cache(cache, report.base_token)
             # print("Market cache", market_cache)
-            priced_report: PricedAccountTokenValues = report.priced(market_cache)
+            priced_report: PricedAccountInstrumentValues = report.priced(market_cache)
             # print("priced_report", priced_report)
             priced_reports += [priced_report]
 
-        quote_token_free_in_open_orders: TokenValue = TokenValue(group.shared_quote_token.token, Decimal(0))
-        quote_token_total_in_open_orders: TokenValue = TokenValue(group.shared_quote_token.token, Decimal(0))
+        quote_token_free_in_open_orders: InstrumentValue = InstrumentValue(group.shared_quote_token, Decimal(0))
+        quote_token_total_in_open_orders: InstrumentValue = InstrumentValue(group.shared_quote_token, Decimal(0))
         for priced_report in priced_reports:
             quote_token_free_in_open_orders += priced_report.quote_token_free
             quote_token_total_in_open_orders += priced_report.quote_token_total
         # print("quote_token_free_in_open_orders", quote_token_free_in_open_orders)
         # print("quote_token_total_in_open_orders", quote_token_total_in_open_orders)
 
-        quote_report: AccountTokenValues = AccountTokenValues(account.shared_quote_token.token_info.token,
-                                                              account.shared_quote_token.token_info.token,
-                                                              account.shared_quote_token.raw_deposit,
-                                                              account.shared_quote_token.deposit,
-                                                              account.shared_quote_token.raw_borrow,
-                                                              account.shared_quote_token.borrow,
-                                                              TokenValue(group.shared_quote_token.token, Decimal(0)),
-                                                              TokenValue(group.shared_quote_token.token, Decimal(0)),
-                                                              quote_token_free_in_open_orders,
-                                                              quote_token_total_in_open_orders,
-                                                              TokenValue(group.shared_quote_token.token, Decimal(0)),
-                                                              Decimal(0), Decimal(0),
-                                                              TokenValue(group.shared_quote_token.token, Decimal(0)),
-                                                              TokenValue(group.shared_quote_token.token, Decimal(0)),
-                                                              Decimal(0), Decimal(0),
-                                                              NullLotSizeConverter())
+        quote_report: AccountInstrumentValues = AccountInstrumentValues(account.shared_quote_token,
+                                                                        account.shared_quote_token,
+                                                                        account.shared_quote.raw_deposit,
+                                                                        account.shared_quote.deposit,
+                                                                        account.shared_quote.raw_borrow,
+                                                                        account.shared_quote.borrow,
+                                                                        InstrumentValue(
+                                                                            group.shared_quote_token, Decimal(0)),
+                                                                        InstrumentValue(
+                                                                            group.shared_quote_token, Decimal(0)),
+                                                                        quote_token_free_in_open_orders,
+                                                                        quote_token_total_in_open_orders,
+                                                                        InstrumentValue(
+                                                                            group.shared_quote_token, Decimal(0)),
+                                                                        Decimal(0), Decimal(0),
+                                                                        InstrumentValue(
+                                                                            group.shared_quote_token, Decimal(0)),
+                                                                        InstrumentValue(
+                                                                            group.shared_quote_token, Decimal(0)),
+                                                                        Decimal(0), Decimal(0),
+                                                                        NullLotSizeConverter())
         # print("quote_report", quote_report)
 
         health: Decimal = quote_report.net_value.value
         # print("Health (start)", health)
         for priced_report in priced_reports:
             market_index = group.find_token_market_index(priced_report.base_token)
-            spot_market: typing.Optional[SpotMarketInfo] = group.spot_markets[market_index]
+            spot_market: typing.Optional[SpotMarketInfo] = group.spot_markets_by_index[market_index]
             if spot_market is None:
                 raise Exception(f"Could not find market for spot token {priced_report.base_token.symbol}.")
 
@@ -161,7 +166,7 @@ class HealthCalculator:
             # print("Weights", base_value.value, "*", spot_weight, spot_health)
 
             perp_base, perp_quote = priced_report.if_worst_execution()
-            perp_market: typing.Optional[PerpMarketInfo] = group.perp_markets[market_index]
+            perp_market: typing.Optional[PerpMarketInfo] = group.perp_markets_by_index[market_index]
             perp_health: Decimal = Decimal(0)
             if perp_market is not None:
                 perp_weight = perp_market.init_asset_weight if perp_base > 0 else perp_market.init_liab_weight

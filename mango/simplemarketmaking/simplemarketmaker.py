@@ -55,11 +55,11 @@ from pathlib import Path
 #
 
 class SimpleMarketMaker:
-    def __init__(self, context: mango.Context, wallet: mango.Wallet, market: mango.Market, market_operations: mango.MarketOperations, oracle: mango.Oracle, spread_ratio: Decimal, position_size_ratio: Decimal, existing_order_tolerance: Decimal, pause: timedelta):
+    def __init__(self, context: mango.Context, wallet: mango.Wallet, market: mango.SerumMarket, market_operations: mango.MarketOperations, oracle: mango.Oracle, spread_ratio: Decimal, position_size_ratio: Decimal, existing_order_tolerance: Decimal, pause: timedelta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: mango.Context = context
         self.wallet: mango.Wallet = wallet
-        self.market: mango.Market = market
+        self.market: mango.SerumMarket = market
         self.market_operations: mango.MarketOperations = market_operations
         self.oracle: mango.Oracle = oracle
         self.spread_ratio: Decimal = spread_ratio
@@ -130,7 +130,7 @@ class SimpleMarketMaker:
         for order in orders:
             self.market_operations.cancel_order(order)
 
-    def fetch_inventory(self) -> typing.Sequence[typing.Optional[mango.TokenValue]]:
+    def fetch_inventory(self) -> typing.Sequence[typing.Optional[mango.InstrumentValue]]:
         if self.market.inventory_source == mango.InventorySource.SPL_TOKENS:
             base_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
                 self.context, self.wallet.address, self.market.base)
@@ -150,7 +150,7 @@ class SimpleMarketMaker:
                 raise Exception("No Mango account found.")
 
             account = accounts[0]
-            return account.net_assets
+            return account.net_values_by_index
 
     def calculate_order_prices(self, price: mango.Price):
         bid = price.mid_price - (price.mid_price * self.spread_ratio)
@@ -158,14 +158,16 @@ class SimpleMarketMaker:
 
         return (bid, ask)
 
-    def calculate_order_quantities(self, price: mango.Price, inventory: typing.Sequence[typing.Optional[mango.TokenValue]]):
-        base_tokens: typing.Optional[mango.TokenValue] = mango.TokenValue.find_by_token(inventory, price.market.base)
+    def calculate_order_quantities(self, price: mango.Price, inventory: typing.Sequence[typing.Optional[mango.InstrumentValue]]):
+        base_tokens: typing.Optional[mango.InstrumentValue] = mango.InstrumentValue.find_by_token(
+            inventory, self.market.base)
         if base_tokens is None:
-            raise Exception(f"Could not find market-maker base token {price.market.base.symbol} in inventory.")
+            raise Exception(f"Could not find market-maker base token {self.market.base.symbol} in inventory.")
 
-        quote_tokens: typing.Optional[mango.TokenValue] = mango.TokenValue.find_by_token(inventory, price.market.quote)
+        quote_tokens: typing.Optional[mango.InstrumentValue] = mango.InstrumentValue.find_by_token(
+            inventory, self.market.quote)
         if quote_tokens is None:
-            raise Exception(f"Could not find market-maker quote token {price.market.quote.symbol} in inventory.")
+            raise Exception(f"Could not find market-maker quote token {self.market.quote.symbol} in inventory.")
 
         buy_quantity = base_tokens.value * self.position_size_ratio
         sell_quantity = (quote_tokens.value / price.mid_price) * self.position_size_ratio

@@ -197,12 +197,14 @@ class OrderBook:
 
         # Sort bids high to low, so best bid is at index 0
         bids_list: typing.List[Order] = list(bids)
-        bids_list.sort(key=lambda order: order.price, reverse=True)
+        bids_list.sort(key=lambda order: order.id, reverse=True)
+        # bids_list.sort(key=lambda order: order.price, reverse=True)
         self.bids: typing.Sequence[Order] = bids_list
 
         # Sort bids low to high, so best bid is at index 0
         asks_list: typing.List[Order] = list(asks)
-        asks_list.sort(key=lambda order: order.price)
+        asks_list.sort(key=lambda order: order.id)
+        # asks_list.sort(key=lambda order: order.price)
         self.asks: typing.Sequence[Order] = asks_list
 
     # The top bid is the highest price someone is willing to pay to BUY

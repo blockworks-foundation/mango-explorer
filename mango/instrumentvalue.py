@@ -23,29 +23,28 @@ from solana.publickey import PublicKey
 from solana.rpc.types import TokenAccountOpts
 
 from .context import Context
-from .token import Token
+from .token import Instrument, Token
 
 
-# # 🥭 TokenValue class
+# # 🥭 InstrumentValue class
 #
-# The `TokenValue` class is a simple way of keeping a token and value together, and
+# The `InstrumentValue` class is a simple way of keeping a token and value together, and
 # displaying them nicely consistently.
 #
-
-class TokenValue:
-    def __init__(self, token: Token, value: Decimal):
+class InstrumentValue:
+    def __init__(self, token: Instrument, value: Decimal):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.token = token
-        self.value = value
+        self.token: Instrument = token
+        self.value: Decimal = value
         if not isinstance(self.value, Decimal):
             raise Exception(f"Value is {type(self.value)}, not Decimal: {self.value}")
 
-    def shift_to_native(self) -> "TokenValue":
+    def shift_to_native(self) -> "InstrumentValue":
         new_value = self.token.shift_to_native(self.value)
-        return TokenValue(self.token, new_value)
+        return InstrumentValue(self.token, new_value)
 
     @staticmethod
-    def fetch_total_value_or_none(context: Context, account_public_key: PublicKey, token: Token) -> typing.Optional["TokenValue"]:
+    def fetch_total_value_or_none(context: Context, account_public_key: PublicKey, token: Token) -> typing.Optional["InstrumentValue"]:
         opts = TokenAccountOpts(mint=token.mint)
 
         token_accounts = context.client.get_token_accounts_by_owner(account_public_key, opts)
@@ -57,22 +56,22 @@ class TokenValue:
             token_balance: Decimal = context.client.get_token_account_balance(token_account["pubkey"])
             total_value += token_balance
 
-        return TokenValue(token, total_value)
+        return InstrumentValue(token, total_value)
 
     @staticmethod
-    def fetch_total_value(context: Context, account_public_key: PublicKey, token: Token) -> "TokenValue":
-        value = TokenValue.fetch_total_value_or_none(context, account_public_key, token)
+    def fetch_total_value(context: Context, account_public_key: PublicKey, token: Token) -> "InstrumentValue":
+        value = InstrumentValue.fetch_total_value_or_none(context, account_public_key, token)
         if value is None:
-            return TokenValue(token, Decimal(0))
+            return InstrumentValue(token, Decimal(0))
         return value
 
     @staticmethod
-    def report(values: typing.Sequence["TokenValue"], reporter: typing.Callable[[str], None] = print) -> None:
+    def report(values: typing.Sequence["InstrumentValue"], reporter: typing.Callable[[str], None] = print) -> None:
         for value in values:
             reporter(f"{value.value:>18,.8f} {value.token.name}")
 
     @staticmethod
-    def find_by_symbol(values: typing.Sequence[typing.Optional["TokenValue"]], symbol: str) -> "TokenValue":
+    def find_by_symbol(values: typing.Sequence[typing.Optional["InstrumentValue"]], symbol: str) -> "InstrumentValue":
         found = [
             value for value in values if value is not None and value.token is not None and value.token.symbol_matches(symbol)]
         if len(found) == 0:
@@ -84,52 +83,41 @@ class TokenValue:
         return found[0]
 
     @staticmethod
-    def find_by_mint(values: typing.Sequence[typing.Optional["TokenValue"]], mint: PublicKey) -> "TokenValue":
-        found = [value for value in values if value is not None and value.token is not None and value.token.mint == mint]
-        if len(found) == 0:
-            raise Exception(f"Token '{mint}' not found in token values: {values}")
-
-        if len(found) > 1:
-            raise Exception(f"Token '{mint}' matched multiple tokens in values: {values}")
-
-        return found[0]
+    def find_by_token(values: typing.Sequence[typing.Optional["InstrumentValue"]], token: Instrument) -> "InstrumentValue":
+        return InstrumentValue.find_by_symbol(values, token.symbol)
 
     @staticmethod
-    def find_by_token(values: typing.Sequence[typing.Optional["TokenValue"]], token: Token) -> "TokenValue":
-        return TokenValue.find_by_mint(values, token.mint)
-
-    @staticmethod
-    def changes(before: typing.Sequence["TokenValue"], after: typing.Sequence["TokenValue"]) -> typing.Sequence["TokenValue"]:
-        changes: typing.List[TokenValue] = []
+    def changes(before: typing.Sequence["InstrumentValue"], after: typing.Sequence["InstrumentValue"]) -> typing.Sequence["InstrumentValue"]:
+        changes: typing.List[InstrumentValue] = []
         for before_balance in before:
-            after_balance = TokenValue.find_by_token(after, before_balance.token)
-            result = TokenValue(before_balance.token, after_balance.value - before_balance.value)
+            after_balance = InstrumentValue.find_by_token(after, before_balance.token)
+            result = InstrumentValue(before_balance.token, after_balance.value - before_balance.value)
             changes += [result]
 
         return changes
 
-    def __add__(self, token_value_to_add: "TokenValue") -> "TokenValue":
+    def __add__(self, token_value_to_add: "InstrumentValue") -> "InstrumentValue":
         if self.token != token_value_to_add.token:
             raise Exception(
-                f"Cannot add TokenValues from different tokens ({self.token} and {token_value_to_add.token}).")
-        return TokenValue(self.token, self.value + token_value_to_add.value)
+                f"Cannot add InstrumentValues from different tokens ({self.token} and {token_value_to_add.token}).")
+        return InstrumentValue(self.token, self.value + token_value_to_add.value)
 
-    def __sub__(self, token_value_to_subtract: "TokenValue") -> "TokenValue":
+    def __sub__(self, token_value_to_subtract: "InstrumentValue") -> "InstrumentValue":
         if self.token != token_value_to_subtract.token:
             raise Exception(
-                f"Cannot subtract TokenValues from different tokens ({self.token} and {token_value_to_subtract.token}).")
-        return TokenValue(self.token, self.value - token_value_to_subtract.value)
+                f"Cannot subtract InstrumentValues from different tokens ({self.token} and {token_value_to_subtract.token}).")
+        return InstrumentValue(self.token, self.value - token_value_to_subtract.value)
 
-    def __mul__(self, token_value_to_multiply: "TokenValue") -> "TokenValue":
-        # Multiplying by another TokenValue is assumed to be a token value multiplied by a token price.
+    def __mul__(self, token_value_to_multiply: "InstrumentValue") -> "InstrumentValue":
+        # Multiplying by another InstrumentValue is assumed to be a token value multiplied by a token price.
         # The result should be denominated in the currency of the price.
-        return TokenValue(token_value_to_multiply.token, self.value * token_value_to_multiply.value)
+        return InstrumentValue(token_value_to_multiply.token, self.value * token_value_to_multiply.value)
 
     def __lt__(self, other):
         if isinstance(other, numbers.Number):
             return self.value < other
 
-        if not isinstance(other, TokenValue):
+        if not isinstance(other, InstrumentValue):
             return NotImplemented
 
         if self.token != other.token:
@@ -141,7 +129,7 @@ class TokenValue:
         if isinstance(other, numbers.Number):
             return self.value > other
 
-        if not isinstance(other, TokenValue):
+        if not isinstance(other, InstrumentValue):
             return NotImplemented
 
         if self.token != other.token:
@@ -150,7 +138,7 @@ class TokenValue:
         return self.value > other.value
 
     def __eq__(self, other: typing.Any) -> bool:
-        if isinstance(other, TokenValue) and self.token == other.token and self.value == other.value:
+        if isinstance(other, InstrumentValue) and self.token == other.token and self.value == other.value:
             return True
         return False
 
@@ -158,10 +146,10 @@ class TokenValue:
         return format(str(self), format_spec)
 
     def __str__(self) -> str:
-        name = "« 𝚄𝚗-𝙽𝚊𝚖𝚎𝚍 𝚃𝚘𝚔𝚎𝚗 »"
+        name = "« 𝚄𝚗-𝙽𝚊𝚖𝚎𝚍 𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝 »"
         if self.token and self.token.name:
             name = self.token.name
-        return f"« 𝚃𝚘𝚔𝚎𝚗𝚅𝚊𝚕𝚞𝚎: {self.value:>18,.8f} {name} »"
+        return f"« 𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝𝚅𝚊𝚕𝚞𝚎: {self.value:>18,.8f} {name} »"
 
     def __repr__(self) -> str:
         return f"{self}"

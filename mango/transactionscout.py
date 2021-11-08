@@ -26,9 +26,9 @@ from solana.publickey import PublicKey
 from .context import Context
 from .instructionreporter import MangoInstruction
 from .instructiontype import InstructionType
+from .instrumentvalue import InstrumentValue
 from .layouts import layouts
-from .ownedtokenvalue import OwnedTokenValue
-from .tokenvalue import TokenValue
+from .ownedinstrumentvalue import OwnedInstrumentValue
 
 
 # # 🥭 TransactionScout
@@ -68,8 +68,8 @@ class TransactionScout:
     def __init__(self, timestamp: datetime.datetime, signatures: typing.Sequence[str],
                  succeeded: bool, group_name: str, accounts: typing.Sequence[PublicKey],
                  instructions: typing.Sequence[MangoInstruction], messages: typing.Sequence[str],
-                 pre_token_balances: typing.Sequence[OwnedTokenValue],
-                 post_token_balances: typing.Sequence[OwnedTokenValue]):
+                 pre_token_balances: typing.Sequence[OwnedInstrumentValue],
+                 post_token_balances: typing.Sequence[OwnedInstrumentValue]):
         self.timestamp: datetime.datetime = timestamp
         self.signatures: typing.Sequence[str] = signatures
         self.succeeded: bool = succeeded
@@ -77,24 +77,24 @@ class TransactionScout:
         self.accounts: typing.Sequence[PublicKey] = accounts
         self.instructions: typing.Sequence[MangoInstruction] = instructions
         self.messages: typing.Sequence[str] = messages
-        self.pre_token_balances: typing.Sequence[OwnedTokenValue] = pre_token_balances
-        self.post_token_balances: typing.Sequence[OwnedTokenValue] = post_token_balances
+        self.pre_token_balances: typing.Sequence[OwnedInstrumentValue] = pre_token_balances
+        self.post_token_balances: typing.Sequence[OwnedInstrumentValue] = post_token_balances
 
     @property
     def summary(self) -> str:
         result = "[Success]" if self.succeeded else "[Failed]"
         instructions = ", ".join([ins.instruction_type.name for ins in self.instructions])
-        changes = OwnedTokenValue.changes(self.pre_token_balances, self.post_token_balances)
+        changes = OwnedInstrumentValue.changes(self.pre_token_balances, self.post_token_balances)
 
         in_tokens = []
         for ins in self.instructions:
             if ins.token_in_account is not None:
-                in_tokens += [OwnedTokenValue.find_by_owner(changes, ins.token_in_account)]
+                in_tokens += [OwnedInstrumentValue.find_by_owner(changes, ins.token_in_account)]
 
         out_tokens = []
         for ins in self.instructions:
             if ins.token_out_account is not None:
-                out_tokens += [OwnedTokenValue.find_by_owner(changes, ins.token_out_account)]
+                out_tokens += [OwnedInstrumentValue.find_by_owner(changes, ins.token_out_account)]
 
         changed_tokens = in_tokens + out_tokens
         changed_tokens_text = ", ".join(
@@ -129,15 +129,15 @@ class TransactionScout:
 
     @staticmethod
     def from_transaction_response(context: Context, response: typing.Dict) -> "TransactionScout":
-        def balance_to_token_value(accounts: typing.Sequence[PublicKey], balance: typing.Dict) -> OwnedTokenValue:
+        def balance_to_token_value(accounts: typing.Sequence[PublicKey], balance: typing.Dict) -> OwnedInstrumentValue:
             mint = PublicKey(balance["mint"])
             account = accounts[balance["accountIndex"]]
             amount = Decimal(balance["uiTokenAmount"]["amount"])
             decimals = Decimal(balance["uiTokenAmount"]["decimals"])
             divisor = Decimal(10) ** decimals
             value = amount / divisor
-            token = context.token_lookup.find_by_mint_or_raise(mint)
-            return OwnedTokenValue(account, TokenValue(token, value))
+            token = context.instrument_lookup.find_by_mint_or_raise(mint)
+            return OwnedInstrumentValue(account, InstrumentValue(token, value))
 
         try:
             succeeded = True if response["meta"]["err"] is None else False
@@ -172,7 +172,7 @@ class TransactionScout:
             raise Exception(f"Exception fetching transaction '{signature}' - {traceback.format_exc()}", exception)
 
     def __str__(self) -> str:
-        def format_tokens(account_token_values: typing.Sequence[OwnedTokenValue]) -> str:
+        def format_tokens(account_token_values: typing.Sequence[OwnedInstrumentValue]) -> str:
             if len(account_token_values) == 0:
                 return "None"
             return "\n        ".join([f"{atv}" for atv in account_token_values])
@@ -182,7 +182,7 @@ class TransactionScout:
         accounts = "\n        ".join([f"{acc}" for acc in self.accounts])
         messages = "\n        ".join(self.messages)
         instructions = "\n        ".join([f"{ins}" for ins in self.instructions])
-        changes = OwnedTokenValue.changes(self.pre_token_balances, self.post_token_balances)
+        changes = OwnedInstrumentValue.changes(self.pre_token_balances, self.post_token_balances)
         tokens_in = format_tokens(self.pre_token_balances)
         tokens_out = format_tokens(self.post_token_balances)
         token_changes = format_tokens(changes)

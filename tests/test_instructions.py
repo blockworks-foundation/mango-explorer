@@ -1,4 +1,3 @@
-import pytest
 import typing
 
 from .context import mango
@@ -76,7 +75,6 @@ def test_build_create_serum_open_orders_instructions():
     assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
-@pytest.mark.filterwarnings("ignore::DeprecationWarning")
 def test_build_serum_place_order_instructions():
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()

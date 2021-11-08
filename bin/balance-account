@@ -17,7 +17,7 @@ import mango  # nopep8
 
 def resolve_quantity(token: mango.Token, current_quantity: Decimal, target_quantity: mango.TargetBalance, price: Decimal):
     current_value: Decimal = current_quantity * price
-    resolved_value_to_keep: mango.TokenValue = target_quantity.resolve(token, price, current_value)
+    resolved_value_to_keep: mango.InstrumentValue = target_quantity.resolve(token, price, current_value)
     return resolved_value_to_keep
 
 
@@ -52,11 +52,11 @@ if args.dry_run:
 else:
     trade_executor = mango.ImmediateTradeExecutor(context, wallet, account, max_slippage)
 
-prices: typing.List[mango.TokenValue] = []
+prices: typing.List[mango.InstrumentValue] = []
 oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, "market")
-for basket_token in account.basket:
+for basket_token in account.slots:
     if basket_token is not None:
-        market_symbol: str = f"{basket_token.token_info.token.symbol}/{group.shared_quote_token.token.symbol}"
+        market_symbol: str = f"{basket_token.token_info.token.symbol}/{group.shared_quote_token.symbol}"
         market = context.market_lookup.find_by_symbol(market_symbol)
         if market is None:
             raise Exception(f"Could not find market {market_symbol}")
@@ -64,8 +64,8 @@ for basket_token in account.basket:
         if oracle is None:
             raise Exception(f"Could not find oracle for market {market_symbol}")
         price = oracle.fetch_price(context)
-        prices += [mango.TokenValue(basket_token.token_info.token, price.mid_price)]
-prices += [mango.TokenValue(group.shared_quote_token.token, Decimal(1))]
+        prices += [mango.InstrumentValue(basket_token.token_info.token, price.mid_price)]
+prices += [mango.InstrumentValue(group.shared_quote_token, Decimal(1))]
 
 account_balancer = mango.LiveAccountBalancer(account, group, trade_executor, targets, action_threshold)
 account_balancer.balance(context, prices)

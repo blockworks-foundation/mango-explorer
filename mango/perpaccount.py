@@ -18,10 +18,10 @@ import typing
 from decimal import Decimal
 
 from .cache import PerpMarketCache
+from .instrumentvalue import InstrumentValue
 from .lotsizeconverter import LotSizeConverter
 from .perpopenorders import PerpOpenOrders
-from .token import Token
-from .tokenvalue import TokenValue
+from .token import Instrument, Token
 
 
 # # 🥭 PerpAccount class
@@ -31,9 +31,9 @@ from .tokenvalue import TokenValue
 class PerpAccount:
     def __init__(self, base_position: Decimal, quote_position: Decimal, long_settled_funding: Decimal,
                  short_settled_funding: Decimal, bids_quantity: Decimal, asks_quantity: Decimal,
-                 taker_base: Decimal, taker_quote: Decimal, mngo_accrued: TokenValue,
+                 taker_base: Decimal, taker_quote: Decimal, mngo_accrued: InstrumentValue,
                  open_orders: PerpOpenOrders, lot_size_converter: LotSizeConverter,
-                 base_token_value: TokenValue, quote_position_raw: Decimal):
+                 base_token_value: InstrumentValue, quote_position_raw: Decimal):
         self.base_position: Decimal = base_position
         self.quote_position: Decimal = quote_position
         self.long_settled_funding: Decimal = long_settled_funding
@@ -42,14 +42,14 @@ class PerpAccount:
         self.asks_quantity: Decimal = asks_quantity
         self.taker_base: Decimal = taker_base
         self.taker_quote: Decimal = taker_quote
-        self.mngo_accrued: TokenValue = mngo_accrued
+        self.mngo_accrued: InstrumentValue = mngo_accrued
         self.open_orders: PerpOpenOrders = open_orders
         self.lot_size_converter: LotSizeConverter = lot_size_converter
-        self.base_token_value: TokenValue = base_token_value
+        self.base_token_value: InstrumentValue = base_token_value
         self.quote_position_raw: Decimal = quote_position_raw
 
     @staticmethod
-    def from_layout(layout: typing.Any, base_token: Token, quote_token: Token, open_orders: PerpOpenOrders, lot_size_converter: LotSizeConverter, mngo_token: Token) -> "PerpAccount":
+    def from_layout(layout: typing.Any, base_token: Instrument, quote_token: Token, open_orders: PerpOpenOrders, lot_size_converter: LotSizeConverter, mngo_token: Token) -> "PerpAccount":
         base_position: Decimal = layout.base_position
         quote_position: Decimal = layout.quote_position
         long_settled_funding: Decimal = layout.long_settled_funding
@@ -59,10 +59,10 @@ class PerpAccount:
         taker_base: Decimal = layout.taker_base
         taker_quote: Decimal = layout.taker_quote
         mngo_accrued_raw: Decimal = layout.mngo_accrued
-        mngo_accrued: TokenValue = TokenValue(mngo_token, mngo_token.shift_to_decimals(mngo_accrued_raw))
+        mngo_accrued: InstrumentValue = InstrumentValue(mngo_token, mngo_token.shift_to_decimals(mngo_accrued_raw))
 
         base_position_raw = (base_position + taker_base) * lot_size_converter.base_lot_size
-        base_token_value: TokenValue = TokenValue(base_token, base_token.shift_to_decimals(base_position_raw))
+        base_token_value: InstrumentValue = InstrumentValue(base_token, base_token.shift_to_decimals(base_position_raw))
 
         quote_position_raw: Decimal = quote_token.shift_to_decimals(quote_position)
 

@@ -62,7 +62,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     📧 Email: mailto:hello@blockworks.foundation
 
 Wrapped SOL:
-    4dqnZ8MgT1AZksAixHha117DVPEBUJZ89V5MAgoYmzh9: « TokenValue:         1.00000000 Wrapped SOL »
+    4dqnZ8MgT1AZksAixHha117DVPEBUJZ89V5MAgoYmzh9: « InstrumentValue:         1.00000000 Wrapped SOL »
 ```
 If you have no wrapped SOL accounts, you'll see something like:
 ```
@@ -180,7 +180,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     📧 Email: mailto:hello@blockworks.foundation
 
 Wrapped SOL:
-    4dqnZ8MgT1AZksAixHha117DVPEBUJZ89V5MAgoYmzh9: « TokenValue:         1.00000000 Wrapped SOL »
+    4dqnZ8MgT1AZksAixHha117DVPEBUJZ89V5MAgoYmzh9: « InstrumentValue:         1.00000000 Wrapped SOL »
 ```
 An additional `wrap-sol` command will just add Wrapped SOL to that same account:
 ```
@@ -220,7 +220,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     📧 Email: mailto:hello@blockworks.foundation
 
 Wrapped SOL:
-    4dqnZ8MgT1AZksAixHha117DVPEBUJZ89V5MAgoYmzh9: « TokenValue:         2.00000000 Wrapped SOL »
+    4dqnZ8MgT1AZksAixHha117DVPEBUJZ89V5MAgoYmzh9: « InstrumentValue:         2.00000000 Wrapped SOL »
 ```
 And the group balances will also reflect this:
 ```
@@ -290,7 +290,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     📧 Email: mailto:hello@blockworks.foundation
 
 Wrapped SOL:
-    4dqnZ8MgT1AZksAixHha117DVPEBUJZ89V5MAgoYmzh9: « TokenValue:         1.00000000 Wrapped SOL »
+    4dqnZ8MgT1AZksAixHha117DVPEBUJZ89V5MAgoYmzh9: « InstrumentValue:         1.00000000 Wrapped SOL »
 ```
 Or with `group-balances`:
 ```
@@ -336,8 +336,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     📧 Email: mailto:hello@blockworks.foundation
 
 Wrapped SOL:
-    CUE36bvBYENx4TjRZbSAnL4d5cJeCk2Ct1PcQuyL9zYZ: « TokenValue:         0.50000000 Wrapped SOL »
-    4dqnZ8MgT1AZksAixHha117DVPEBUJZ89V5MAgoYmzh9: « TokenValue:         1.00000000 Wrapped SOL »
+    CUE36bvBYENx4TjRZbSAnL4d5cJeCk2Ct1PcQuyL9zYZ: « InstrumentValue:         0.50000000 Wrapped SOL »
+    4dqnZ8MgT1AZksAixHha117DVPEBUJZ89V5MAgoYmzh9: « InstrumentValue:         1.00000000 Wrapped SOL »
 ```
 The liquidator is only able to effectively use one of these, so it'll pick the largest.
 
@@ -380,5 +380,5 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     📧 Email: mailto:hello@blockworks.foundation
 
 Wrapped SOL:
-    CUE36bvBYENx4TjRZbSAnL4d5cJeCk2Ct1PcQuyL9zYZ: « TokenValue:         0.50000000 Wrapped SOL »
+    CUE36bvBYENx4TjRZbSAnL4d5cJeCk2Ct1PcQuyL9zYZ: « InstrumentValue:         0.50000000 Wrapped SOL »
 ```

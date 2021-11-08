@@ -23,8 +23,8 @@ from decimal import Decimal
 from .account import Account
 from .context import Context
 from .group import Group
-from .token import Token
-from .tokenvalue import TokenValue
+from .token import Instrument, Token
+from .instrumentvalue import InstrumentValue
 from .tradeexecutor import TradeExecutor
 from .wallet import Wallet
 
@@ -60,7 +60,7 @@ from .wallet import Wallet
 #   objects.
 # * There are two types of `TargetBalance` objects - `FixedTargetBalance` and
 #   `PercentageTargetBalance`.
-# * To get the actual `TokenValue` for balancing, the `TargetBalance` must be 'resolved'
+# * To get the actual `InstrumentValue` for balancing, the `TargetBalance` must be 'resolved'
 #   by calling `resolve()` with the appropriate token price and wallet value.
 #
 
@@ -73,7 +73,7 @@ class TargetBalance(metaclass=abc.ABCMeta):
         self.symbol = symbol.upper()
 
     @abc.abstractmethod
-    def resolve(self, token: Token, current_price: Decimal, total_value: Decimal) -> TokenValue:
+    def resolve(self, instrument: Instrument, current_price: Decimal, total_value: Decimal) -> InstrumentValue:
         raise NotImplementedError("TargetBalance.resolve() is not implemented on the base type.")
 
     def __repr__(self) -> str:
@@ -82,15 +82,15 @@ class TargetBalance(metaclass=abc.ABCMeta):
 
 # # 🥭 FixedTargetBalance class
 #
-# This is the simple case, where the `FixedTargetBalance` object contains enough information on its own to build the resolved `TokenValue` object.
+# This is the simple case, where the `FixedTargetBalance` object contains enough information on its own to build the resolved `InstrumentValue` object.
 #
 class FixedTargetBalance(TargetBalance):
     def __init__(self, symbol: str, value: Decimal):
         super().__init__(symbol)
         self.value = value
 
-    def resolve(self, token: Token, current_price: Decimal, total_value: Decimal) -> TokenValue:
-        return TokenValue(token, self.value)
+    def resolve(self, instrument: Instrument, current_price: Decimal, total_value: Decimal) -> InstrumentValue:
+        return InstrumentValue(instrument, self.value)
 
     def __str__(self) -> str:
         return f"""« 𝙵𝚒𝚡𝚎𝚍𝚃𝚊𝚛𝚐𝚎𝚝𝙱𝚊𝚕𝚊𝚗𝚌𝚎 [{self.value} {self.symbol}] »"""
@@ -113,10 +113,10 @@ class PercentageTargetBalance(TargetBalance):
         super().__init__(symbol)
         self.target_fraction = target_percentage / 100
 
-    def resolve(self, token: Token, current_price: Decimal, total_value: Decimal) -> TokenValue:
+    def resolve(self, instrument: Instrument, current_price: Decimal, total_value: Decimal) -> InstrumentValue:
         target_value = total_value * self.target_fraction
         target_size = target_value / current_price
-        return TokenValue(token, target_size)
+        return InstrumentValue(instrument, target_size)
 
     def __str__(self) -> str:
         return f"""« 𝙿𝚎𝚛𝚌𝚎𝚗𝚝𝚊𝚐𝚎𝚃𝚊𝚛𝚐𝚎𝚝𝙱𝚊𝚕𝚊𝚗𝚌𝚎 [{self.target_fraction * 100}% {self.symbol}] »"""
@@ -198,7 +198,7 @@ def parse_fixed_target_balance(to_parse: str) -> TargetBalance:
 # really care that much as long as we have SELLs before BUYs. (We could, later, take price
 # into account for this sorting but we don't need to now so we don't.)
 #
-def sort_changes_for_trades(changes: typing.Sequence[TokenValue]) -> typing.Sequence[TokenValue]:
+def sort_changes_for_trades(changes: typing.Sequence[InstrumentValue]) -> typing.Sequence[InstrumentValue]:
     return sorted(changes, key=lambda change: change.value)
 
 
@@ -206,11 +206,11 @@ def sort_changes_for_trades(changes: typing.Sequence[TokenValue]) -> typing.Sequ
 #
 # Takes a list of current balances, and a list of desired balances, and returns the list of changes required to get us to the desired balances.
 #
-def calculate_required_balance_changes(current_balances: typing.Sequence[TokenValue], desired_balances: typing.Sequence[TokenValue]) -> typing.Sequence[TokenValue]:
-    changes: typing.List[TokenValue] = []
+def calculate_required_balance_changes(current_balances: typing.Sequence[InstrumentValue], desired_balances: typing.Sequence[InstrumentValue]) -> typing.Sequence[InstrumentValue]:
+    changes: typing.List[InstrumentValue] = []
     for desired in desired_balances:
-        current = TokenValue.find_by_token(current_balances, desired.token)
-        change = TokenValue(desired.token, desired.value - current.value)
+        current = InstrumentValue.find_by_token(current_balances, desired.token)
+        change = InstrumentValue(desired.token, desired.value - current.value)
         changes += [change]
 
     return changes
@@ -229,21 +229,21 @@ def calculate_required_balance_changes(current_balances: typing.Sequence[TokenVa
 # easier to reason about.
 #
 class FilterSmallChanges:
-    def __init__(self, action_threshold: Decimal, balances: typing.Sequence[TokenValue], prices: typing.Sequence[TokenValue]):
+    def __init__(self, action_threshold: Decimal, balances: typing.Sequence[InstrumentValue], prices: typing.Sequence[InstrumentValue]):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.prices: typing.Dict[str, TokenValue] = {}
+        self.prices: typing.Dict[str, InstrumentValue] = {}
         total = Decimal(0)
         for balance in balances:
-            price = TokenValue.find_by_token(prices, balance.token)
-            self.prices[f"{price.token.mint}"] = price
+            price = InstrumentValue.find_by_token(prices, balance.token)
+            self.prices[price.token.symbol] = price
             total += price.value * balance.value
         self.total_balance = total
         self.action_threshold_value = total * action_threshold
         self.logger.info(
             f"Wallet total balance of {total:,.8f} gives action threshold: {self.action_threshold_value:,.8f}")
 
-    def allow(self, token_value: TokenValue) -> bool:
-        price = self.prices[f"{token_value.token.mint}"]
+    def allow(self, token_value: InstrumentValue) -> bool:
+        price = self.prices[token_value.token.symbol]
         value = price.value * token_value.value
         absolute_value = value.copy_abs()
         result = absolute_value > self.action_threshold_value
@@ -278,7 +278,7 @@ class WalletBalancer(metaclass=abc.ABCMeta):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def balance(self, context: Context, prices: typing.Sequence[TokenValue]):
+    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]):
         raise NotImplementedError("WalletBalancer.balance() is not implemented on the base type.")
 
 
@@ -291,7 +291,7 @@ class NullWalletBalancer(WalletBalancer):
     def __init__(self):
         super().__init__()
 
-    def balance(self, context: Context, prices: typing.Sequence[TokenValue]):
+    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]):
         pass
 
 
@@ -308,7 +308,7 @@ class LiveWalletBalancer(WalletBalancer):
         self.targets: typing.Sequence[TargetBalance] = targets
         self.action_threshold: Decimal = action_threshold
 
-    def balance(self, context: Context, prices: typing.Sequence[TokenValue]):
+    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]):
         padding = "\n    "
 
         def balances_report(balances) -> str:
@@ -316,25 +316,25 @@ class LiveWalletBalancer(WalletBalancer):
 
         tokens: typing.List[Token] = []
         for target_balance in self.targets:
-            token = context.token_lookup.find_by_symbol(target_balance.symbol)
+            token = context.instrument_lookup.find_by_symbol(target_balance.symbol)
             if token is None:
                 raise Exception(f"Could not find details of token {target_balance.symbol}.")
-            tokens += [token]
+            tokens += [Token.ensure(token)]
         tokens += [self.quote_token]
 
         balances = self._fetch_balances(context, tokens)
         total_value = Decimal(0)
         for bal in balances:
-            price = TokenValue.find_by_token(prices, bal.token)
+            price = InstrumentValue.find_by_token(prices, bal.token)
             value = bal.value * price.value
             total_value += value
         self.logger.info(f"Starting balances: {padding}{balances_report(balances)}")
-        total_token_value: TokenValue = TokenValue(self.quote_token, total_value)
+        total_token_value: InstrumentValue = InstrumentValue(self.quote_token, total_value)
         self.logger.info(f"Total: {total_token_value}")
 
-        resolved_targets: typing.List[TokenValue] = []
+        resolved_targets: typing.List[InstrumentValue] = []
         for target in self.targets:
-            price = TokenValue.find_by_symbol(prices, target.symbol)
+            price = InstrumentValue.find_by_symbol(prices, target.symbol)
             resolved_targets += [target.resolve(price.token, price.value, total_value)]
 
         balance_changes = calculate_required_balance_changes(balances, resolved_targets)
@@ -352,7 +352,7 @@ class LiveWalletBalancer(WalletBalancer):
         updated_balances = self._fetch_balances(context, tokens)
         self.logger.info(f"Finishing balances: {padding}{balances_report(updated_balances)}")
 
-    def _make_changes(self, balance_changes: typing.Sequence[TokenValue]):
+    def _make_changes(self, balance_changes: typing.Sequence[InstrumentValue]):
         quote = self.quote_token.symbol
         for change in balance_changes:
             market_symbol = f"serum:{change.token.symbol}/{quote}"
@@ -361,10 +361,10 @@ class LiveWalletBalancer(WalletBalancer):
             else:
                 self.trade_executor.buy(market_symbol, change.value.copy_abs())
 
-    def _fetch_balances(self, context: Context, tokens: typing.Sequence[Token]) -> typing.Sequence[TokenValue]:
-        balances: typing.List[TokenValue] = []
+    def _fetch_balances(self, context: Context, tokens: typing.Sequence[Token]) -> typing.Sequence[InstrumentValue]:
+        balances: typing.List[InstrumentValue] = []
         for token in tokens:
-            balance = TokenValue.fetch_total_value(context, self.wallet.address, token)
+            balance = InstrumentValue.fetch_total_value(context, self.wallet.address, token)
             balances += [balance]
 
         return balances
@@ -383,24 +383,25 @@ class LiveAccountBalancer(WalletBalancer):
         self.targets: typing.Sequence[TargetBalance] = targets
         self.action_threshold: Decimal = action_threshold
 
-    def balance(self, context: Context, prices: typing.Sequence[TokenValue]):
+    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]):
         padding = "\n    "
 
         def balances_report(balances) -> str:
             return padding.join(list([f"{bal}" for bal in balances]))
 
-        balances = [basket_token.net_value for basket_token in self.account.basket_tokens if basket_token is not None]
+        balances = [basket_token.net_value for basket_token in self.account.slots]
         total_value = Decimal(0)
         for bal in balances:
-            price = TokenValue.find_by_token(prices, bal.token)
+            price = InstrumentValue.find_by_token(prices, bal.token)
             value = bal.value * price.value
             total_value += value
         self.logger.info(f"Starting balances: {padding}{balances_report(balances)}")
-        total_token_value: TokenValue = TokenValue(self.account.shared_quote_token.token_info.token, total_value)
+        quote_token: Token = self.account.shared_quote_token
+        total_token_value: InstrumentValue = InstrumentValue(quote_token, total_value)
         self.logger.info(f"Total: {total_token_value}")
-        resolved_targets: typing.List[TokenValue] = []
+        resolved_targets: typing.List[InstrumentValue] = []
         for target in self.targets:
-            price = TokenValue.find_by_symbol(prices, target.symbol)
+            price = InstrumentValue.find_by_symbol(prices, target.symbol)
             resolved_targets += [target.resolve(price.token, price.value, total_value)]
 
         balance_changes = calculate_required_balance_changes(balances, resolved_targets)
@@ -417,12 +418,11 @@ class LiveAccountBalancer(WalletBalancer):
         self._make_changes(sorted_changes)
 
         updated_account: Account = Account.load(context, self.account.address, self.group)
-        updated_balances = [
-            basket_token.net_value for basket_token in updated_account.basket_tokens if basket_token is not None]
+        updated_balances = [basket_token.net_value for basket_token in updated_account.slots]
         self.logger.info(f"Finishing balances: {padding}{balances_report(updated_balances)}")
 
-    def _make_changes(self, balance_changes: typing.Sequence[TokenValue]):
-        quote = self.account.shared_quote_token.token_info.token.symbol
+    def _make_changes(self, balance_changes: typing.Sequence[InstrumentValue]):
+        quote = self.account.shared_quote_token.symbol
         for change in balance_changes:
             market_symbol = f"{change.token.symbol}/{quote}"
             if change.value < 0:

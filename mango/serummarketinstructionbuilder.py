@@ -14,7 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import pyserum.enums
 import typing
 
 from decimal import Decimal
@@ -23,12 +22,13 @@ from solana.publickey import PublicKey
 
 from .combinableinstructions import CombinableInstructions
 from .context import Context
-from .instructions import build_create_serum_open_orders_instructions, build_serum_consume_events_instructions, build_serum_settle_instructions
+from .instructions import build_create_serum_open_orders_instructions, build_serum_consume_events_instructions, build_serum_settle_instructions, build_serum_place_order_instructions
 from .marketinstructionbuilder import MarketInstructionBuilder
 from .openorders import OpenOrders
 from .orders import Order, Side
 from .publickey import encode_public_key_for_sorting
 from .serummarket import SerumMarket
+from .token import Instrument, Token
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
 
@@ -59,8 +59,9 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
             context.client.compatible_client, serum_market.address, context.serum_program_address)
 
         fee_discount_token_address: typing.Optional[PublicKey] = None
-        srm_token = context.token_lookup.find_by_symbol("SRM")
-        if srm_token is not None:
+        srm_instrument: typing.Optional[Instrument] = context.instrument_lookup.find_by_symbol("SRM")
+        if srm_instrument is not None:
+            srm_token: Token = Token.ensure(srm_instrument)
             fee_discount_token_account = TokenAccount.fetch_largest_for_owner_and_token(
                 context, wallet.address, srm_token)
             if fee_discount_token_account is not None:
@@ -89,7 +90,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
             raise Exception(f"Cannot cancel order with client ID {order.client_id} - no OpenOrders account.")
 
         raw_instruction = self.raw_market.make_cancel_order_by_client_id_instruction(
-            self.wallet.to_deprecated_solana_account(), self.open_orders_address, order.client_id
+            self.wallet.keypair, self.open_orders_address, order.client_id
         )
         return CombinableInstructions.from_instruction(raw_instruction)
 
@@ -101,21 +102,12 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         if self.open_orders_address is None:
             raise Exception("Failed to find or create OpenOrders address")
 
-        serum_order_type: pyserum.enums.OrderType = order.order_type.to_serum()
-        serum_side: pyserum.enums.Side = order.side.to_serum()
         payer_token_account = self.quote_token_account if order.side == Side.BUY else self.base_token_account
-
-        raw_instruction = self.raw_market.make_place_order_instruction(payer_token_account.address,
-                                                                       self.wallet.to_deprecated_solana_account(),
-                                                                       serum_order_type,
-                                                                       serum_side,
-                                                                       float(order.price),
-                                                                       float(order.quantity),
-                                                                       order.client_id,
-                                                                       self.open_orders_address,
-                                                                       self.fee_discount_token_address)
-
-        place = CombinableInstructions.from_instruction(raw_instruction)
+        place = build_serum_place_order_instructions(self.context, self.wallet, self.raw_market,
+                                                     payer_token_account.address, self.open_orders_address,
+                                                     order.order_type, order.side, order.price,
+                                                     order.quantity, order.client_id,
+                                                     self.fee_discount_token_address)
 
         return ensure_open_orders + place
 

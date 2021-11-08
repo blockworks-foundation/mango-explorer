@@ -63,18 +63,18 @@ def summariser(context: mango.Context) -> typing.Callable[[mango.TransactionScou
 
         instructions = ", ".join(instruction_details)
         targets = ", ".join(instruction_targets) or "None"
-        changes = mango.OwnedTokenValue.changes(
+        changes = mango.OwnedInstrumentValue.changes(
             transaction_scout.pre_token_balances, transaction_scout.post_token_balances)
 
         in_tokens = []
         for ins in transaction_scout.instructions:
             if ins.token_in_account is not None:
-                in_tokens += [mango.OwnedTokenValue.find_by_owner(changes, ins.token_in_account)]
+                in_tokens += [mango.OwnedInstrumentValue.find_by_owner(changes, ins.token_in_account)]
 
         out_tokens = []
         for ins in transaction_scout.instructions:
             if ins.token_out_account is not None:
-                out_tokens += [mango.OwnedTokenValue.find_by_owner(changes, ins.token_out_account)]
+                out_tokens += [mango.OwnedInstrumentValue.find_by_owner(changes, ins.token_out_account)]
 
         changed_tokens = in_tokens + out_tokens
         changed_tokens_text = ", ".join(

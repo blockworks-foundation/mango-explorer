@@ -22,10 +22,10 @@ from solana.publickey import PublicKey
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
+from .instrumentvalue import InstrumentValue
 from .layouts import layouts
 from .metadata import Metadata
-from .token import Token
-from .tokenvalue import TokenValue
+from .token import Instrument, Token
 from .version import Version
 
 
@@ -107,10 +107,10 @@ class MarketCache:
         self.root_bank: typing.Optional[RootBankCache] = root_bank
         self.perp_market: typing.Optional[PerpMarketCache] = perp_market
 
-    def adjusted_price(self, token: Token, quote_token: Token) -> TokenValue:
+    def adjusted_price(self, token: Instrument, quote_token: Token) -> InstrumentValue:
         if token == quote_token:
             # The price of 1 unit of the shared quote token is always 1.
-            return TokenValue(token, Decimal(1))
+            return InstrumentValue(quote_token, Decimal(1))
 
         if self.price is None:
             raise Exception(f"Could not find price index of basket token {token.symbol}.")
@@ -121,7 +121,7 @@ class MarketCache:
             adjustment = 10 ** decimals_difference
             price = price * adjustment
 
-        return TokenValue(quote_token, price)
+        return InstrumentValue(quote_token, price)
 
     def __str__(self) -> str:
         return f"""« 𝙼𝚊𝚛𝚔𝚎𝚝𝙲𝚊𝚌𝚑𝚎

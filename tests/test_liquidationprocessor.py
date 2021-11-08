@@ -37,14 +37,14 @@ def test_constructor():
 #     def __init__(self, liquidation_processor: mango.LiquidationProcessor):
 #         self.liquidation_processor = liquidation_processor
 #         self.captured_group: typing.Optional[mango.Group] = None
-#         self.captured_prices: typing.Optional[typing.Sequence[mango.TokenValue]] = None
+#         self.captured_prices: typing.Optional[typing.Sequence[mango.InstrumentValue]] = None
 #         self.captured_to_liquidate: typing.Optional[typing.Sequence[mango.LiquidatableReport]] = None
 
 #         # This monkeypatch is a bit nasty. It would be better to make the LiquidationProcessor
 #         # a bit more test-friendly.
 #         liquidation_processor._liquidate_all = self.liquidate_capture  # type: ignore
 
-#     def liquidate_capture(self, group: mango.Group, prices: typing.Sequence[mango.TokenValue], to_liquidate: typing.Sequence[mango.LiquidatableReport]):
+#     def liquidate_capture(self, group: mango.Group, prices: typing.Sequence[mango.InstrumentValue], to_liquidate: typing.Sequence[mango.LiquidatableReport]):
 #         self.captured_group = group
 #         self.captured_prices = prices
 #         self.captured_to_liquidate = to_liquidate

@@ -7,11 +7,12 @@ from decimal import Decimal
 
 def load_group(filename: str, root_banks: typing.Sequence[mango.RootBank]) -> mango.Group:
     account_info: mango.AccountInfo = mango.AccountInfo.load_json(filename)
-    mainnet_token_lookup: mango.TokenLookup = mango.IdsJsonTokenLookup("mainnet", "mainnet.1")
-    devnet_token_lookup: mango.TokenLookup = mango.IdsJsonTokenLookup("devnet", "devnet.2")
-    token_lookup: mango.TokenLookup = mango.CompoundTokenLookup([mainnet_token_lookup, devnet_token_lookup])
+    mainnet_token_lookup: mango.InstrumentLookup = mango.IdsJsonTokenLookup("mainnet", "mainnet.1")
+    devnet_token_lookup: mango.InstrumentLookup = mango.IdsJsonTokenLookup("devnet", "devnet.2")
+    instrument_lookup: mango.InstrumentLookup = mango.CompoundInstrumentLookup(
+        [mainnet_token_lookup, devnet_token_lookup])
     market_lookup: mango.MarketLookup = mango.NullMarketLookup()
-    return mango.Group.parse_locally(account_info, "devnet.2", root_banks, token_lookup, market_lookup)
+    return mango.Group.parse_locally(account_info, "devnet.2", root_banks, instrument_lookup, market_lookup)
 
 
 def load_account(filename: str, group: mango.Group) -> mango.Account:

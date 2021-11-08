@@ -20,20 +20,20 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .account import Account
-from .accounttokenvalues import AccountTokenValues
+from .accountinstrumentvalues import AccountInstrumentValues
 from .cache import Cache
 from .context import Context
 from .group import Group
+from .instrumentvalue import InstrumentValue
 from .openorders import OpenOrders
-from .token import Token, SolToken
-from .tokenvalue import TokenValue
+from .token import Instrument, Token, SolToken
 
 
 class TokenValuation:
-    def __init__(self, raw_token_value: TokenValue, price_token_value: TokenValue, value_token_value: TokenValue):
-        self.raw: TokenValue = raw_token_value
-        self.price: TokenValue = price_token_value
-        self.value: TokenValue = value_token_value
+    def __init__(self, raw_token_value: InstrumentValue, price_token_value: InstrumentValue, value_token_value: InstrumentValue):
+        self.raw: InstrumentValue = raw_token_value
+        self.price: InstrumentValue = price_token_value
+        self.value: InstrumentValue = value_token_value
 
     @staticmethod
     def from_json_dict(context: Context, json: typing.Dict[str, typing.Any]) -> "TokenValuation":
@@ -42,33 +42,42 @@ class TokenValuation:
         balance: Decimal = Decimal(json["balance"])
         price: Decimal = Decimal(json["price"])
         value: Decimal = Decimal(json["value"])
-        token = context.token_lookup.find_by_symbol(symbol)
+        token = context.instrument_lookup.find_by_symbol(symbol)
         if token is None:
             raise Exception(f"Could not find token for symbol: {symbol}")
-        currency_token = context.token_lookup.find_by_symbol(value_currency)
+        currency_token = context.instrument_lookup.find_by_symbol(value_currency)
         if currency_token is None:
             raise Exception(f"Could not find token for currency symbol: {value_currency}")
-        raw_token_value: TokenValue = TokenValue(token, balance)
-        price_token_value: TokenValue = TokenValue(currency_token, price)
-        value_token_value: TokenValue = TokenValue(currency_token, value)
+        raw_token_value: InstrumentValue = InstrumentValue(token, balance)
+        price_token_value: InstrumentValue = InstrumentValue(currency_token, price)
+        value_token_value: InstrumentValue = InstrumentValue(currency_token, value)
         return TokenValuation(raw_token_value, price_token_value, value_token_value)
 
     @staticmethod
-    def from_token_balance(context: Context, group: Group, cache: Cache, token_balance: TokenValue) -> "TokenValuation":
-        token_to_lookup: Token = token_balance.token
+    def from_token_balance(context: Context, group: Group, cache: Cache, token_balance: InstrumentValue) -> "TokenValuation":
+        token_to_lookup: Instrument = token_balance.token
         if token_balance.token == SolToken:
-            token_to_lookup = context.token_lookup.find_by_symbol_or_raise("SOL")
-        cached_token_price: TokenValue = group.token_price_from_cache(cache, token_to_lookup)
-        balance_value: TokenValue = token_balance * cached_token_price
+            token_to_lookup = context.instrument_lookup.find_by_symbol_or_raise("SOL")
+        cached_token_price: InstrumentValue = group.token_price_from_cache(cache, token_to_lookup)
+        balance_value: InstrumentValue = token_balance * cached_token_price
         return TokenValuation(token_balance, cached_token_price, balance_value)
 
     @staticmethod
     def all_from_wallet(context: Context, group: Group, cache: Cache, address: PublicKey) -> typing.Sequence["TokenValuation"]:
-        balances = group.fetch_balances(context, address)
+        balances: typing.List[InstrumentValue] = []
+        sol_balance = context.client.get_balance(address)
+        balances += [InstrumentValue(SolToken, sol_balance)]
+
+        for slot_token_info in group.tokens:
+            if isinstance(slot_token_info.token, Token):
+                balance = InstrumentValue.fetch_total_value(context, address, slot_token_info.token)
+                balances += [balance]
+
         wallet_tokens: typing.List[TokenValuation] = []
         for balance in balances:
             if balance.value != 0:
                 wallet_tokens += [TokenValuation.from_token_balance(context, group, cache, balance)]
+
         return wallet_tokens
 
     def to_json_dict(self) -> typing.Dict[str, typing.Any]:
@@ -91,7 +100,7 @@ class AccountValuation:
         self.tokens: typing.Sequence[TokenValuation] = tokens
 
     @property
-    def value(self) -> TokenValue:
+    def value(self) -> InstrumentValue:
         return sum((t.value for t in self.tokens[1:]), start=self.tokens[0].value)
 
     @staticmethod
@@ -109,20 +118,20 @@ class AccountValuation:
     def from_account(context: Context, group: Group, account: Account, cache: Cache) -> "AccountValuation":
         open_orders: typing.Dict[str, OpenOrders] = account.load_all_spot_open_orders(context)
         token_values: typing.List[TokenValuation] = []
-        for asset in account.basket:
+        for asset in account.slots:
             if (asset.net_value.value != 0) or ((asset.perp_account is not None) and not asset.perp_account.empty):
-                report: AccountTokenValues = AccountTokenValues.from_account_basket_base_token(
+                report: AccountInstrumentValues = AccountInstrumentValues.from_account_basket_base_token(
                     asset, open_orders, group)
                 asset_valuation = TokenValuation.from_token_balance(context, group, cache, report.net_value)
                 token_values += [asset_valuation]
 
-        quote_valuation = TokenValuation.from_token_balance(context, group, cache, account.shared_quote_token.net_value)
+        quote_valuation = TokenValuation.from_token_balance(context, group, cache, account.shared_quote.net_value)
         token_values += [quote_valuation]
 
         return AccountValuation(account.info, account.address, token_values)
 
     def to_json_dict(self) -> typing.Dict[str, typing.Any]:
-        value: TokenValue = self.value
+        value: InstrumentValue = self.value
         return {
             "name": self.name,
             "address": f"{self.address}",
@@ -140,8 +149,8 @@ class Valuation:
         self.accounts: typing.Sequence[AccountValuation] = accounts
 
     @property
-    def value(self) -> TokenValue:
-        wallet_tokens_value: TokenValue = sum(
+    def value(self) -> InstrumentValue:
+        wallet_tokens_value: InstrumentValue = sum(
             (t.value for t in self.wallet_tokens[1:]), start=self.wallet_tokens[0].value)
         return sum((acc.value for acc in self.accounts), start=wallet_tokens_value)
 
@@ -173,8 +182,8 @@ class Valuation:
         return Valuation(datetime.now(), address, spl_tokens, account_valuations)
 
     def to_json_dict(self) -> typing.Dict[str, typing.Any]:
-        value: TokenValue = self.value
-        wallet_value: TokenValue = sum(
+        value: InstrumentValue = self.value
+        wallet_value: InstrumentValue = sum(
             (t.value for t in self.wallet_tokens[1:]), start=self.wallet_tokens[0].value)
         return {
             "timestamp": self.timestamp.isoformat(),
@@ -191,7 +200,7 @@ class Valuation:
 
     def __str__(self) -> str:
         address: str = f"{self.address}:"
-        wallet_total: TokenValue = sum(
+        wallet_total: InstrumentValue = sum(
             (t.value for t in self.wallet_tokens[1:]), start=self.wallet_tokens[0].value)
         accounts: typing.List[str] = []
         for account in self.accounts:

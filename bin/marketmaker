@@ -8,6 +8,7 @@ import rx
 import rx.operators
 import sys
 import threading
+import traceback
 import typing
 
 from decimal import Decimal
@@ -92,9 +93,9 @@ account = mango.Account.load_for_owner_by_address(context, wallet.address, group
 market = mango.load_market_by_symbol(context, args.market)
 
 # The market index is also the index of the base token in the group's token list.
-if market.quote != group.shared_quote_token.token:
+if market.quote != group.shared_quote_token:
     raise Exception(
-        f"Group {group.name} uses shared quote token {group.shared_quote_token.token.symbol}/{group.shared_quote_token.token.mint}, but market {market.symbol} uses quote token {market.quote.symbol}/{market.quote.mint}.")
+        f"Group {group.name} uses shared quote token {group.shared_quote_token.symbol}/{group.shared_quote_token.mint}, but market {market.symbol} uses quote token {market.quote.symbol}/{market.quote.mint}.")
 
 cleanup(context, wallet, account, market, args.dry_run)
 
@@ -152,15 +153,18 @@ model_state_builder: mango.marketmaking.ModelStateBuilder = mango.marketmaking.m
 health_check.add("marketmaker_pulse", market_maker.pulse_complete)
 
 logging.info(f"Current assets in account {account.address} (owner: {account.owner}):")
-mango.TokenValue.report([asset for asset in account.net_assets if asset is not None], logging.info)
+mango.InstrumentValue.report([asset for asset in account.net_values if asset is not None], logging.info)
 
 manager.open()
 
 
 def pulse_action(_) -> None:
-    model_state: mango.ModelState = model_state_builder.build(context)
-    market_maker.pulse(context, model_state)
-    hedger.pulse(context, model_state)
+    try:
+        model_state: mango.ModelState = model_state_builder.build(context)
+        market_maker.pulse(context, model_state)
+        hedger.pulse(context, model_state)
+    except Exception:
+        logging.error(f"Pulse action failed: {traceback.format_exc()}")
 
 
 pulse_disposable = rx.interval(args.pulse_interval).pipe(

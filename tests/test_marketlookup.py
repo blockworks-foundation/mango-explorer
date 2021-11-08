@@ -117,7 +117,7 @@ def test_serum_market_lookup():
 
 def test_serum_market_lookups_with_full_data():
     market_lookup = mango.SerumMarketLookup.load(fake_seeded_public_key(
-        "program ID"), mango.SplTokenLookup.DefaultDataFilepath)
+        "program ID"), mango.SPLTokenLookup.DefaultDataFilepath)
     eth_usdt = market_lookup.find_by_symbol("ETH/USDT")
     assert eth_usdt.base.symbol == "ETH"
     assert eth_usdt.quote.symbol == "USDT"

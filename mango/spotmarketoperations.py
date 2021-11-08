@@ -46,7 +46,7 @@ class SpotMarketOperations(MarketOperations):
         self.market_instruction_builder: SpotMarketInstructionBuilder = market_instruction_builder
 
         self.market_index: int = group.find_spot_market_index(spot_market.address)
-        self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders[self.market_index]
+        self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders_by_index[self.market_index]
 
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
         self.logger.info(f"Cancelling {self.spot_market.symbol} order {order}.")
@@ -97,7 +97,7 @@ class SpotMarketOperations(MarketOperations):
         return open_orders_address
 
     def ensure_openorders(self) -> PublicKey:
-        existing: typing.Optional[PublicKey] = self.account.spot_open_orders[self.market_index]
+        existing: typing.Optional[PublicKey] = self.account.spot_open_orders_by_index[self.market_index]
         if existing is not None:
             return existing
         return self.create_openorders()

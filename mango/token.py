@@ -22,17 +22,11 @@ from solana.publickey import PublicKey
 from .constants import SOL_DECIMALS, SOL_MINT_ADDRESS
 
 
-# # 🥭 Token class
-#
-# `Token` defines aspects common to every token.
-#
-
-class Token:
-    def __init__(self, symbol: str, name: str, mint: PublicKey, decimals: Decimal):
+class Instrument:
+    def __init__(self, symbol: str, name: str, decimals: Decimal):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.symbol: str = symbol.upper()
         self.name: str = name
-        self.mint: PublicKey = mint
         self.decimals: Decimal = decimals
 
     def round(self, value: Decimal) -> Decimal:
@@ -50,6 +44,33 @@ class Token:
 
     def symbol_matches(self, symbol: str) -> bool:
         return self.symbol.upper() == symbol.upper()
+
+    # Instruments are equal if they have the same normalised symbol.
+    def __eq__(self, other):
+        if isinstance(other, Instrument):
+            return self.symbol == other.symbol
+        return False
+
+    def __str__(self) -> str:
+        return f"« 𝙽𝚘𝚗𝚂𝙿𝙻𝚃𝚘𝚔𝚎𝚗 [{self.symbol}] '{self.name}' »"
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+# # 🥭 Token class
+#
+# `Token` defines aspects common to every token.
+#
+class Token(Instrument):
+    def __init__(self, symbol: str, name: str, decimals: Decimal, mint: PublicKey):
+        super().__init__(symbol, name, decimals)
+        self.mint: PublicKey = mint
+
+    def ensure(uncertain_token: Instrument) -> "Token":
+        if isinstance(uncertain_token, Token):
+            return uncertain_token
+        raise Exception(f"Instrument {uncertain_token} cannot be converted to SPL Token")
 
     @staticmethod
     def find_by_symbol(values: typing.Sequence["Token"], symbol: str) -> "Token":
@@ -80,10 +101,7 @@ class Token:
         return False
 
     def __str__(self) -> str:
-        return f"« 𝚃𝚘𝚔𝚎𝚗 '{self.name}' [{self.mint} ({self.decimals} decimals)] »"
-
-    def __repr__(self) -> str:
-        return f"{self}"
+        return f"« 𝚃𝚘𝚔𝚎𝚗 [{self.symbol}] '{self.name}' [{self.mint} ({self.decimals} decimals)] »"
 
 
 # # 🥭 SolToken object
@@ -92,4 +110,4 @@ class Token:
 #
 
 
-SolToken = Token("SOL", "Pure SOL", SOL_MINT_ADDRESS, SOL_DECIMALS)
+SolToken = Token("SOL", "Pure SOL", SOL_DECIMALS, SOL_MINT_ADDRESS)

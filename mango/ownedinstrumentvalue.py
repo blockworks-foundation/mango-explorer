@@ -19,23 +19,23 @@ import typing
 
 from solana.publickey import PublicKey
 
-from .tokenvalue import TokenValue
+from .instrumentvalue import InstrumentValue
 
 
-# # 🥭 OwnedTokenValue class
+# # 🥭 OwnedInstrumentValue class
 #
-# Ties an owner and `TokenValue` together. This is useful in the `TransactionScout`, where
+# Ties an owner and `InstrumentValue` together. This is useful in the `TransactionScout`, where
 # token mints and values are given separate from the owner `PublicKey` - we can package them
-# together in this `OwnedTokenValue` class.
+# together in this `OwnedInstrumentValue` class.
 
-class OwnedTokenValue:
-    def __init__(self, owner: PublicKey, token_value: TokenValue):
+class OwnedInstrumentValue:
+    def __init__(self, owner: PublicKey, token_value: InstrumentValue):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.owner = owner
         self.token_value = token_value
 
     @staticmethod
-    def find_by_owner(values: typing.Sequence["OwnedTokenValue"], owner: PublicKey) -> "OwnedTokenValue":
+    def find_by_owner(values: typing.Sequence["OwnedInstrumentValue"], owner: PublicKey) -> "OwnedInstrumentValue":
         found = [value for value in values if value.owner == owner]
         if len(found) == 0:
             raise Exception(f"Owner '{owner}' not found in: {values}")
@@ -46,13 +46,13 @@ class OwnedTokenValue:
         return found[0]
 
     @staticmethod
-    def changes(before: typing.Sequence["OwnedTokenValue"], after: typing.Sequence["OwnedTokenValue"]) -> typing.Sequence["OwnedTokenValue"]:
-        changes: typing.List[OwnedTokenValue] = []
+    def changes(before: typing.Sequence["OwnedInstrumentValue"], after: typing.Sequence["OwnedInstrumentValue"]) -> typing.Sequence["OwnedInstrumentValue"]:
+        changes: typing.List[OwnedInstrumentValue] = []
         for before_value in before:
-            after_value = OwnedTokenValue.find_by_owner(after, before_value.owner)
-            token_value = TokenValue(before_value.token_value.token,
-                                     after_value.token_value.value - before_value.token_value.value)
-            result = OwnedTokenValue(before_value.owner, token_value)
+            after_value = OwnedInstrumentValue.find_by_owner(after, before_value.owner)
+            token_value = InstrumentValue(before_value.token_value.token,
+                                          after_value.token_value.value - before_value.token_value.value)
+            result = OwnedInstrumentValue(before_value.owner, token_value)
             changes += [result]
 
         return changes

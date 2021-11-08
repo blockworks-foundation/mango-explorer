@@ -22,7 +22,7 @@ from .context import Context
 from .lotsizeconverter import LotSizeConverter
 from .market import Market, InventorySource
 from .orders import Order, OrderBook
-from .token import Token
+from .token import Instrument, Token
 
 
 # # 🥭 LoadedMarket class
@@ -30,7 +30,7 @@ from .token import Token
 # This class describes a crypto market. It *must* have an address, a base token and a quote token.
 #
 class LoadedMarket(Market):
-    def __init__(self, program_address: PublicKey, address: PublicKey, inventory_source: InventorySource, base: Token, quote: Token, lot_size_converter: LotSizeConverter):
+    def __init__(self, program_address: PublicKey, address: PublicKey, inventory_source: InventorySource, base: Instrument, quote: Token, lot_size_converter: LotSizeConverter):
         super().__init__(program_address, address, inventory_source, base, quote, lot_size_converter)
 
     @property

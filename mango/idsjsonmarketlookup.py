@@ -19,11 +19,12 @@ import typing
 from solana.publickey import PublicKey
 
 from .constants import MangoConstants
+from .instrumentlookup import InstrumentLookup
 from .market import Market
 from .marketlookup import MarketLookup
 from .perpmarket import PerpMarketStub
 from .spotmarket import SpotMarketStub
-from .tokenlookup import TokenLookup
+from .token import Instrument, Token
 
 
 class IdsJsonMarketType(enum.Enum):
@@ -44,24 +45,26 @@ class IdsJsonMarketType(enum.Enum):
 
 
 class IdsJsonMarketLookup(MarketLookup):
-    def __init__(self, cluster_name: str, token_lookup: TokenLookup) -> None:
+    def __init__(self, cluster_name: str, instrument_lookup: InstrumentLookup) -> None:
         super().__init__()
         self.cluster_name: str = cluster_name
-        self.token_lookup: TokenLookup = token_lookup
+        self.instrument_lookup: InstrumentLookup = instrument_lookup
 
     @staticmethod
-    def _from_dict(market_type: IdsJsonMarketType, mango_program_address: PublicKey, group_address: PublicKey, data: typing.Dict, token_lookup: TokenLookup, quote_symbol: str) -> Market:
+    def _from_dict(market_type: IdsJsonMarketType, mango_program_address: PublicKey, group_address: PublicKey, data: typing.Dict, instrument_lookup: InstrumentLookup, quote_symbol: str) -> Market:
         base_symbol = data["baseSymbol"]
-        base = token_lookup.find_by_symbol(base_symbol)
-        if base is None:
-            raise Exception(f"Could not find base token with symbol '{base_symbol}'")
-        quote = token_lookup.find_by_symbol(quote_symbol)
-        if quote is None:
+        base_instrument: typing.Optional[Instrument] = instrument_lookup.find_by_symbol(base_symbol)
+        if base_instrument is None:
+            raise Exception(f"Could not find base instrument with symbol '{base_symbol}'")
+        quote_instrument: typing.Optional[Instrument] = instrument_lookup.find_by_symbol(quote_symbol)
+        if quote_instrument is None:
             raise Exception(f"Could not find quote token with symbol '{quote_symbol}'")
+        quote: Token = Token.ensure(quote_instrument)
         address = PublicKey(data["publicKey"])
         if market_type == IdsJsonMarketType.PERP:
-            return PerpMarketStub(mango_program_address, address, base, quote, group_address)
+            return PerpMarketStub(mango_program_address, address, base_instrument, quote, group_address)
         else:
+            base: Token = Token.ensure(base_instrument)
             return SpotMarketStub(mango_program_address, address, base, quote, group_address)
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:
@@ -82,11 +85,11 @@ class IdsJsonMarketLookup(MarketLookup):
                 if check_perps:
                     for market_data in group["perpMarkets"]:
                         if market_data["name"].upper() == symbol.upper():
-                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
+                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
                 if check_spots:
                     for market_data in group["spotMarkets"]:
                         if market_data["name"].upper() == symbol.upper():
-                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
+                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
         return None
 
     def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
@@ -96,10 +99,10 @@ class IdsJsonMarketLookup(MarketLookup):
                 mango_program_address: PublicKey = PublicKey(group["mangoProgramId"])
                 for market_data in group["perpMarkets"]:
                     if market_data["publicKey"] == str(address):
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
+                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
                 for market_data in group["spotMarkets"]:
                     if market_data["publicKey"] == str(address):
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
+                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
         return None
 
     def all_markets(self) -> typing.Sequence[Market]:
@@ -110,11 +113,11 @@ class IdsJsonMarketLookup(MarketLookup):
                 mango_program_address: PublicKey = PublicKey(group["mangoProgramId"])
                 for market_data in group["perpMarkets"]:
                     market = IdsJsonMarketLookup._from_dict(
-                        IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
+                        IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
                     markets = [market]
                 for market_data in group["spotMarkets"]:
                     market = IdsJsonMarketLookup._from_dict(
-                        IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.token_lookup, group["quoteSymbol"])
+                        IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
                     markets = [market]
 
         return markets

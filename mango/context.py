@@ -27,8 +27,8 @@ from solana.rpc.commitment import Commitment
 from .client import BetterClient
 from .constants import MangoConstants
 from .instructionreporter import InstructionReporter, CompoundInstructionReporter
+from .instrumentlookup import InstrumentLookup
 from .marketlookup import MarketLookup
-from .tokenlookup import TokenLookup
 
 
 # # 🥭 Context class
@@ -40,7 +40,7 @@ class Context:
                  blockhash_commitment: str, encoding: str, blockhash_cache_duration: datetime.timedelta,
                  mango_program_address: PublicKey, serum_program_address: PublicKey, group_name: str,
                  group_address: PublicKey, gma_chunk_size: Decimal, gma_chunk_pause: Decimal,
-                 token_lookup: TokenLookup, market_lookup: MarketLookup):
+                 instrument_lookup: InstrumentLookup, market_lookup: MarketLookup):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_addresses(
@@ -53,7 +53,7 @@ class Context:
         self.group_address: PublicKey = group_address
         self.gma_chunk_size: Decimal = gma_chunk_size
         self.gma_chunk_pause: Decimal = gma_chunk_pause
-        self.token_lookup: TokenLookup = token_lookup
+        self.instrument_lookup: InstrumentLookup = instrument_lookup
         self.market_lookup: MarketLookup = market_lookup
 
         self.ping_interval: int = 10

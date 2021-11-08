@@ -13,8 +13,7 @@
   "timestamp": "2021-11-01T16:37:21+0000",
   "tokens": [
     {
-      "chainId": 101,
-      "address": "SPEC111111111111111111111111111111111111111",
+      "chainId": 901,
       "symbol": "ADA",
       "name": "ADA",
       "decimals": 6,

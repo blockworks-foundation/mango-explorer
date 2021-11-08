@@ -25,10 +25,11 @@ from .calculators.collateralcalculator import CollateralCalculator
 from .calculators.spotcollateralcalculator import SpotCollateralCalculator
 from .calculators.perpcollateralcalculator import PerpCollateralCalculator
 from .group import Group
+from .instrumentvalue import InstrumentValue
 from .market import InventorySource, Market
 from .openorders import OpenOrders
 from .perpmarket import PerpMarket
-from .tokenvalue import TokenValue
+from .token import Token
 from .watcher import Watcher
 
 
@@ -37,13 +38,13 @@ from .watcher import Watcher
 # This class details inventory of a crypto account for a market.
 #
 class Inventory:
-    def __init__(self, inventory_source: InventorySource, liquidity_incentives: TokenValue, available_collateral: TokenValue, base: TokenValue, quote: TokenValue):
+    def __init__(self, inventory_source: InventorySource, liquidity_incentives: InstrumentValue, available_collateral: InstrumentValue, base: InstrumentValue, quote: InstrumentValue):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.inventory_source: InventorySource = inventory_source
-        self.available_collateral: TokenValue = available_collateral
-        self.liquidity_incentives: TokenValue = liquidity_incentives
-        self.base: TokenValue = base
-        self.quote: TokenValue = quote
+        self.available_collateral: InstrumentValue = available_collateral
+        self.liquidity_incentives: InstrumentValue = liquidity_incentives
+        self.base: InstrumentValue = base
+        self.quote: InstrumentValue = quote
 
     @property
     def symbol(self) -> str:
@@ -66,10 +67,11 @@ class SpotInventoryAccountWatcher:
         self.all_open_orders_watchers: typing.Sequence[Watcher[OpenOrders]] = all_open_orders_watchers
         self.cache_watcher: Watcher[Cache] = cache_watcher
         account: Account = account_watcher.latest
-        base_value = TokenValue.find_by_symbol(account.net_assets, market.base.symbol)
-        self.base_index: int = account.net_assets.index(base_value)
-        quote_value = TokenValue.find_by_symbol(account.net_assets, market.quote.symbol)
-        self.quote_index: int = account.net_assets.index(quote_value)
+        self.spot_account_index: int = group_watcher.latest.find_spot_market_index(market.address)
+        base_value = InstrumentValue.find_by_symbol(account.net_values, market.base.symbol)
+        self.base_index: int = account.net_values_by_index.index(base_value)
+        quote_value = InstrumentValue.find_by_symbol(account.net_values, market.quote.symbol)
+        self.quote_index: int = account.net_values_by_index.index(quote_value)
         self.collateral_calculator: CollateralCalculator = SpotCollateralCalculator()
 
     @property
@@ -79,18 +81,19 @@ class SpotInventoryAccountWatcher:
         cache: Cache = self.cache_watcher.latest
 
         # Spot markets don't accrue MNGO liquidity incentives
-        mngo = group.find_token_info_by_symbol("MNGO").token
-        mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
+        mngo = group.liquidity_incentive_token
+        mngo_accrued: InstrumentValue = InstrumentValue(mngo, Decimal(0))
 
         all_open_orders: typing.Dict[str, OpenOrders] = {
             str(oo_watcher.latest.address): oo_watcher.latest for oo_watcher in self.all_open_orders_watchers}
-        available_collateral: TokenValue = self.collateral_calculator.calculate(account, all_open_orders, group, cache)
+        available_collateral: InstrumentValue = self.collateral_calculator.calculate(
+            account, all_open_orders, group, cache)
 
-        base_value = account.net_assets[self.base_index]
+        base_value = account.net_values_by_index[self.base_index]
         if base_value is None:
             raise Exception(
                 f"Could not find net assets in account {account.address} at index {self.base_index}.")
-        quote_value = account.net_assets[self.quote_index]
+        quote_value = account.net_values_by_index[self.quote_index]
         if quote_value is None:
             raise Exception(
                 f"Could not find net assets in account {account.address} at index {self.quote_index}.")
@@ -106,8 +109,8 @@ class PerpInventoryAccountWatcher:
         self.cache_watcher: Watcher[Cache] = cache_watcher
         self.perp_account_index: int = group.find_perp_market_index(market.address)
         account: Account = account_watcher.latest
-        quote_value = TokenValue.find_by_symbol(account.net_assets, market.quote.symbol)
-        self.quote_index: int = account.net_assets.index(quote_value)
+        quote_value = InstrumentValue.find_by_symbol(account.net_values, market.quote.symbol)
+        self.quote_index: int = account.net_values_by_index.index(quote_value)
         self.collateral_calculator: CollateralCalculator = PerpCollateralCalculator()
 
     @property
@@ -115,17 +118,17 @@ class PerpInventoryAccountWatcher:
         account: Account = self.account_watcher.latest
         group: Group = self.group_watcher.latest
         cache: Cache = self.cache_watcher.latest
-        perp_account = account.perp_accounts[self.perp_account_index]
+        perp_account = account.perp_accounts_by_index[self.perp_account_index]
         if perp_account is None:
             raise Exception(
                 f"Could not find perp account for {self.market.symbol} in account {account.address} at index {self.perp_account_index}.")
 
-        available_collateral: TokenValue = self.collateral_calculator.calculate(account, {}, group, cache)
+        available_collateral: InstrumentValue = self.collateral_calculator.calculate(account, {}, group, cache)
 
         base_lots = perp_account.base_position
         base_value = self.market.lot_size_converter.base_size_lots_to_number(base_lots)
-        base_token_value = TokenValue(self.market.base, base_value)
-        quote_token_value = account.net_assets[self.quote_index]
-        if quote_token_value is None:
-            raise Exception(f"Could not find net assets in account {account.address} at index {self.quote_index}.")
+        # TODO - what about ADA, when base isn't a Token?
+        base_token_value = InstrumentValue(Token.ensure(self.market.base), base_value)
+        quote_token_value = account.shared_quote.net_value
+
         return Inventory(InventorySource.ACCOUNT, perp_account.mngo_accrued, available_collateral, base_token_value, quote_token_value)

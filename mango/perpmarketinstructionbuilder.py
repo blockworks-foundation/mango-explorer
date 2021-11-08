@@ -47,7 +47,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         self.group: Group = group
         self.account: Account = account
         self.perp_market: PerpMarket = perp_market
-        self.mngo_token_info: TokenInfo = self.group.find_token_info_by_symbol("MNGO")
+        self.mngo_token_info: TokenInfo = self.group.liquidity_incentive_token_info
 
     @staticmethod
     def load(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket) -> "PerpMarketInstructionBuilder":

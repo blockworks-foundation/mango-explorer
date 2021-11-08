@@ -22,8 +22,9 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
+from ..instrumentvalue import InstrumentValue
 from ..modelstate import ModelState
-from ..tokenvalue import TokenValue
+from ..token import Token
 
 from ..calculators.collateralcalculator import CollateralCalculator
 from ..calculators.perpcollateralcalculator import PerpCollateralCalculator
@@ -129,6 +130,10 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
         self.base_inventory_token_account: mango.TokenAccount = base_inventory_token_account
         self.quote_inventory_token_account: mango.TokenAccount = quote_inventory_token_account
 
+        # Serum always uses Tokens
+        self.base_token: Token = Token.ensure(self.base_inventory_token_account.value.token)
+        self.quote_token: Token = Token.ensure(self.quote_inventory_token_account.value.token)
+
     def poll(self, context: mango.Context) -> ModelState:
         addresses: typing.List[PublicKey] = [
             self.group_address,
@@ -146,13 +151,10 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
             account_infos[2], self.market.base.decimals, self.market.quote.decimals)
 
         # Serum markets don't accrue MNGO liquidity incentives
-        mngo = group.find_token_info_by_symbol("MNGO").token
-        mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
+        mngo_accrued: InstrumentValue = InstrumentValue(group.liquidity_incentive_token, Decimal(0))
 
-        base_inventory_token_account = mango.TokenAccount.parse(
-            account_infos[3], self.base_inventory_token_account.value.token)
-        quote_inventory_token_account = mango.TokenAccount.parse(
-            account_infos[4], self.quote_inventory_token_account.value.token)
+        base_inventory_token_account = mango.TokenAccount.parse(account_infos[3], self.base_token)
+        quote_inventory_token_account = mango.TokenAccount.parse(account_infos[4], self.quote_token)
 
         orderbook: mango.OrderBook = self.market.parse_account_infos_to_orderbook(account_infos[5], account_infos[6])
 
@@ -160,7 +162,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
 
         available: Decimal = (base_inventory_token_account.value.value * price.mid_price) + \
             quote_inventory_token_account.value.value
-        available_collateral: TokenValue = TokenValue(quote_inventory_token_account.value.token, available)
+        available_collateral: InstrumentValue = InstrumentValue(quote_inventory_token_account.value.token, available)
         inventory: mango.Inventory = mango.Inventory(mango.InventorySource.SPL_TOKENS,
                                                      mngo_accrued,
                                                      available_collateral,
@@ -216,32 +218,32 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
         account: mango.Account = mango.Account.parse(account_infos[2], group)
 
         # Update our stash of OpenOrders addresses for next time, in case new OpenOrders accounts were added
-        self.all_open_orders_addresses = list([oo for oo in account.spot_open_orders if oo is not None])
+        self.all_open_orders_addresses = account.spot_open_orders
 
         spot_open_orders_account_infos_by_address = {
             str(account_info.address): account_info for account_info in account_infos[5:]}
 
         all_open_orders: typing.Dict[str, mango.OpenOrders] = {}
-        for basket_token in account.basket:
+        for basket_token in account.slots:
             if basket_token.spot_open_orders is not None and str(basket_token.spot_open_orders) in spot_open_orders_account_infos_by_address:
                 account_info: mango.AccountInfo = spot_open_orders_account_infos_by_address[str(
                     basket_token.spot_open_orders)]
                 open_orders: mango.OpenOrders = mango.OpenOrders.parse(
                     account_info,
                     basket_token.token_info.decimals,
-                    account.shared_quote_token.token_info.token.decimals)
+                    account.shared_quote_token.decimals)
                 all_open_orders[str(basket_token.spot_open_orders)] = open_orders
 
         placed_orders_container: mango.PlacedOrdersContainer = all_open_orders[str(self.open_orders_address)]
 
         # Spot markets don't accrue MNGO liquidity incentives
-        mngo = group.find_token_info_by_symbol("MNGO").token
-        mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
+        mngo_accrued: InstrumentValue = InstrumentValue(group.liquidity_incentive_token, Decimal(0))
 
-        base_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.base.symbol)
-        quote_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.quote.symbol)
+        base_value = mango.InstrumentValue.find_by_symbol(account.net_values, self.market.base.symbol)
+        quote_value = mango.InstrumentValue.find_by_symbol(account.net_values, self.market.quote.symbol)
 
-        available_collateral: TokenValue = self.collateral_calculator.calculate(account, all_open_orders, group, cache)
+        available_collateral: InstrumentValue = self.collateral_calculator.calculate(
+            account, all_open_orders, group, cache)
         inventory: mango.Inventory = mango.Inventory(mango.InventorySource.ACCOUNT,
                                                      mngo_accrued,
                                                      available_collateral,
@@ -296,16 +298,16 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         account: mango.Account = mango.Account.parse(account_infos[2], group)
 
         index = group.find_perp_market_index(self.market.address)
-        perp_account = account.perp_accounts[index]
+        perp_account = account.perp_accounts_by_index[index]
         if perp_account is None:
             raise Exception(f"Could not find perp account at index {index} of account {account.address}.")
         placed_orders_container: mango.PlacedOrdersContainer = perp_account.open_orders
 
         base_lots = perp_account.base_position
         base_value = self.market.lot_size_converter.base_size_lots_to_number(base_lots)
-        base_token_value = mango.TokenValue(self.market.base, base_value)
-        quote_token_value = mango.TokenValue.find_by_symbol(account.net_assets, self.market.quote.symbol)
-        available_collateral: TokenValue = self.collateral_calculator.calculate(account, {}, group, cache)
+        base_token_value = mango.InstrumentValue(self.market.base, base_value)
+        quote_token_value = account.shared_quote.net_value
+        available_collateral: InstrumentValue = self.collateral_calculator.calculate(account, {}, group, cache)
         inventory: mango.Inventory = mango.Inventory(mango.InventorySource.ACCOUNT,
                                                      perp_account.mngo_accrued,
                                                      available_collateral,

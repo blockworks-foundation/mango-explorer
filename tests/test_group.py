@@ -11,7 +11,7 @@ def test_construction():
     meta_data = mango.Metadata(layouts.DATA_TYPE.Group, mango.Version.V1, True)
     shared_quote_token = fake_token_info()
     in_basket = []
-    basket_markets = []
+    slots = []
     signer_nonce = Decimal(1)
     signer_key = fake_seeded_public_key("signer key")
     admin_key = fake_seeded_public_key("admin key")
@@ -24,16 +24,17 @@ def test_construction():
     fees_vault = fake_seeded_public_key("fees vault")
 
     actual = mango.Group(account_info, mango.Version.V1, name, meta_data, shared_quote_token, in_basket,
-                         basket_markets, signer_nonce, signer_key, admin_key, serum_program_address,
+                         slots, signer_nonce, signer_key, admin_key, serum_program_address,
                          cache_key, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault)
 
     assert actual is not None
     assert actual.logger is not None
     assert actual.name == name
     assert actual.meta_data == meta_data
-    assert actual.shared_quote_token == shared_quote_token
-    assert actual.basket_indices == in_basket
-    assert actual.basket == basket_markets
+    assert actual.shared_quote_token == shared_quote_token.token
+    assert actual.shared_quote == shared_quote_token
+    assert actual.slot_indices == in_basket
+    assert actual.slots == slots
     assert actual.signer_nonce == signer_nonce
     assert actual.signer_key == signer_key
     assert actual.admin == admin_key

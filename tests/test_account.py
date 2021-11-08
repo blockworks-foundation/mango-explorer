@@ -17,8 +17,8 @@ def test_construction():
     quote_deposit = fake_token_value(raw_quote_deposit)
     raw_quote_borrow = Decimal(5)
     quote_borrow = fake_token_value(raw_quote_borrow)
-    quote = mango.AccountBasketToken(fake_token_info(), raw_quote_deposit,
-                                     quote_deposit, raw_quote_borrow, quote_borrow)
+    quote = mango.AccountSlot(fake_token_info(), fake_token_info(), raw_quote_deposit,
+                              quote_deposit, raw_quote_borrow, quote_borrow, None, None)
     raw_deposit1 = Decimal(1)
     deposit1 = fake_token_value(raw_deposit1)
     raw_deposit2 = Decimal(2)
@@ -32,12 +32,12 @@ def test_construction():
     raw_borrow3 = Decimal("0.3")
     borrow3 = fake_token_value(raw_borrow3)
     basket = [
-        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), raw_deposit1, deposit1, raw_borrow1, borrow1,
-                                     fake_seeded_public_key("spot openorders 1"), fake_seeded_public_key("perp1")),
-        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), raw_deposit2, deposit2, raw_borrow2, borrow2,
-                                     fake_seeded_public_key("spot openorders 2"), fake_seeded_public_key("perp2")),
-        mango.AccountBasketBaseToken(fake_token_info(), fake_token_info(), raw_deposit3, deposit3, raw_borrow3, borrow3,
-                                     fake_seeded_public_key("spot openorders 3"), fake_seeded_public_key("perp3")),
+        mango.AccountSlot(fake_token_info(), fake_token_info(), raw_deposit1, deposit1, raw_borrow1, borrow1,
+                          fake_seeded_public_key("spot openorders 1"), fake_seeded_public_key("perp1")),
+        mango.AccountSlot(fake_token_info(), fake_token_info(), raw_deposit2, deposit2, raw_borrow2, borrow2,
+                          fake_seeded_public_key("spot openorders 2"), fake_seeded_public_key("perp2")),
+        mango.AccountSlot(fake_token_info(), fake_token_info(), raw_deposit3, deposit3, raw_borrow3, borrow3,
+                          fake_seeded_public_key("spot openorders 3"), fake_seeded_public_key("perp3")),
     ]
     msrm_amount = Decimal(0)
     being_liquidated = False
@@ -52,16 +52,16 @@ def test_construction():
     assert actual.version == mango.Version.V1
     assert actual.meta_data == meta_data
     assert actual.owner == owner
-    assert actual.basket_indices == active_in_basket
+    assert actual.slot_indices == active_in_basket
     assert actual.in_margin_basket == in_margin_basket
-    assert actual.deposits == [None, deposit1, None, deposit2, deposit3, quote_deposit]
-    assert actual.borrows == [None, borrow1, None, borrow2, borrow3, quote_borrow]
-    assert actual.net_assets == [None, deposit1 - borrow1, None,
-                                 deposit2 - borrow2, deposit3 - borrow3, quote_deposit - quote_borrow]
-    assert actual.spot_open_orders == [None, fake_seeded_public_key("spot openorders 1"), None, fake_seeded_public_key(
-        "spot openorders 2"), fake_seeded_public_key("spot openorders 3")]
-    assert actual.perp_accounts == [None, fake_seeded_public_key("perp1"), None, fake_seeded_public_key(
-        "perp2"), fake_seeded_public_key("perp3")]
+    assert actual.deposits_by_index == [None, deposit1, None, deposit2, deposit3, quote_deposit]
+    assert actual.borrows_by_index == [None, borrow1, None, borrow2, borrow3, quote_borrow]
+    assert actual.net_values_by_index == [None, deposit1 - borrow1, None,
+                                          deposit2 - borrow2, deposit3 - borrow3, quote_deposit - quote_borrow]
+    assert actual.spot_open_orders_by_index == [None, fake_seeded_public_key("spot openorders 1"), None, fake_seeded_public_key(
+        "spot openorders 2"), fake_seeded_public_key("spot openorders 3"), None]
+    assert actual.perp_accounts_by_index == [None, fake_seeded_public_key("perp1"), None, fake_seeded_public_key(
+        "perp2"), fake_seeded_public_key("perp3"), None]
     assert actual.msrm_amount == msrm_amount
     assert actual.being_liquidated == being_liquidated
     assert actual.is_bankrupt == is_bankrupt

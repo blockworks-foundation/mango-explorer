@@ -18,13 +18,13 @@ import typing
 
 from solana.publickey import PublicKey
 
-from .tokenvalue import TokenValue
+from .instrumentvalue import InstrumentValue
 
 
 # # 🥭 LiquidationEvent class
 #
 class LiquidationEvent:
-    def __init__(self, timestamp: datetime.datetime, liquidator_name: str, group_name: str, succeeded: bool, signatures: typing.Sequence[str], wallet_address: PublicKey, account_address: PublicKey, balances_before: typing.Sequence[TokenValue], balances_after: typing.Sequence[TokenValue]):
+    def __init__(self, timestamp: datetime.datetime, liquidator_name: str, group_name: str, succeeded: bool, signatures: typing.Sequence[str], wallet_address: PublicKey, account_address: PublicKey, balances_before: typing.Sequence[InstrumentValue], balances_after: typing.Sequence[InstrumentValue]):
         self.timestamp: datetime.datetime = timestamp
         self.liquidator_name: str = liquidator_name
         self.group_name: str = group_name
@@ -32,9 +32,9 @@ class LiquidationEvent:
         self.signatures: typing.Sequence[str] = signatures
         self.wallet_address: PublicKey = wallet_address
         self.account_address: PublicKey = account_address
-        self.balances_before: typing.Sequence[TokenValue] = balances_before
-        self.balances_after: typing.Sequence[TokenValue] = balances_after
-        self.changes: typing.Sequence[TokenValue] = TokenValue.changes(balances_before, balances_after)
+        self.balances_before: typing.Sequence[InstrumentValue] = balances_before
+        self.balances_after: typing.Sequence[InstrumentValue] = balances_after
+        self.changes: typing.Sequence[InstrumentValue] = InstrumentValue.changes(balances_before, balances_after)
 
     def __str__(self) -> str:
         result = "✅" if self.succeeded else "❌"

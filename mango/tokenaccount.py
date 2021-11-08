@@ -14,8 +14,8 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import typing
 import spl.token.instructions as spl_token
+import typing
 
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
@@ -27,23 +27,22 @@ from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .combinableinstructions import CombinableInstructions
 from .context import Context
+from .instrumentlookup import InstrumentLookup
+from .instrumentvalue import InstrumentValue
 from .layouts import layouts
-from .token import Token
-from .tokenlookup import TokenLookup
-from .tokenvalue import TokenValue
+from .token import Instrument, Token
 from .version import Version
 from .wallet import Wallet
 
+
 # # 🥭 TokenAccount class
 #
-
-
 class TokenAccount(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version, owner: PublicKey, value: TokenValue):
+    def __init__(self, account_info: AccountInfo, version: Version, owner: PublicKey, value: InstrumentValue):
         super().__init__(account_info)
         self.version: Version = version
         self.owner: PublicKey = owner
-        self.value: TokenValue = value
+        self.value: InstrumentValue = value
 
     @staticmethod
     def create(context: Context, account: Keypair, token: Token):
@@ -119,11 +118,11 @@ class TokenAccount(AddressableAccount):
 
     @staticmethod
     def from_layout(layout: typing.Any, account_info: AccountInfo, token: Token) -> "TokenAccount":
-        token_value = TokenValue(token, token.shift_to_decimals(layout.amount))
+        token_value = InstrumentValue(token, token.shift_to_decimals(layout.amount))
         return TokenAccount(account_info, Version.UNSPECIFIED, layout.owner, token_value)
 
     @staticmethod
-    def parse(account_info: AccountInfo, token: typing.Optional[Token] = None, token_lookup: typing.Optional[TokenLookup] = None) -> "TokenAccount":
+    def parse(account_info: AccountInfo, token: typing.Optional[Token] = None, instrument_lookup: typing.Optional[InstrumentLookup] = None) -> "TokenAccount":
         data = account_info.data
         if len(data) != layouts.TOKEN_ACCOUNT.sizeof():
             raise Exception(
@@ -131,11 +130,12 @@ class TokenAccount(AddressableAccount):
 
         layout = layouts.TOKEN_ACCOUNT.parse(data)
         if token is None:
-            if token_lookup is None:
-                raise Exception("Neither 'Token' or 'TokenLookup' specified for parsing token data.")
-            token = token_lookup.find_by_mint(layout.mint)
-            if token is None:
+            if instrument_lookup is None:
+                raise Exception("Neither 'Token' or 'InstrumentLookup' specified for parsing token data.")
+            instrument: typing.Optional[Instrument] = instrument_lookup.find_by_mint(layout.mint)
+            if instrument is None:
                 raise Exception(f"Could not find token data for token with mint '{layout.mint}'")
+            token = Token.ensure(instrument)
 
         return TokenAccount.from_layout(layout, account_info, token)
 
@@ -144,7 +144,7 @@ class TokenAccount(AddressableAccount):
         account_info = AccountInfo.load(context, address)
         if account_info is None or (len(account_info.data) != layouts.TOKEN_ACCOUNT.sizeof()):
             return None
-        return TokenAccount.parse(account_info, token_lookup=context.token_lookup)
+        return TokenAccount.parse(account_info, instrument_lookup=context.instrument_lookup)
 
     def __str__(self) -> str:
         return f"« Token: Address: {self.address}, Owner: {self.owner}, Value: {self.value} »"

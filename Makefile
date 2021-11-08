@@ -17,7 +17,7 @@ mypy:
 	rm -rf .tmplintdir .mypy_cache
 	mkdir .tmplintdir
 	for file in bin/* ; do \
-        cp $${file} .tmplintdir/$${file##*/}.py ; \
+		cp $${file} .tmplintdir/$${file##*/}.py ; \
 	done
 	-poetry run mypy --install-types mango tests .tmplintdir
 	rm -rf .tmplintdir .mypy_cache

@@ -3,7 +3,7 @@ from .context import mango
 from solana.publickey import PublicKey
 
 
-def test_token_lookup():
+def test_spl_token_lookup():
     data = {
         "tokens": [
             {
@@ -31,7 +31,7 @@ def test_token_lookup():
                 "decimals": 6,
             }]
     }
-    actual = mango.SplTokenLookup("test-filename", data)
+    actual = mango.SPLTokenLookup("test-filename", data)
     assert actual is not None
     assert actual.logger is not None
     assert actual.find_by_symbol("ETH") is not None
@@ -40,9 +40,9 @@ def test_token_lookup():
     assert actual.find_by_symbol("BTC").name == "Wrapped Bitcoin (Sollet)"
 
 
-def test_token_lookups_with_full_data():
-    token_lookup = mango.SplTokenLookup.load(mango.SplTokenLookup.DefaultDataFilepath)
-    assert token_lookup.find_by_symbol("BTC").mint == PublicKey("9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E")
-    assert token_lookup.find_by_symbol("ETH").mint == PublicKey("2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk")
-    assert token_lookup.find_by_mint("AKJHspCwDhABucCxNLXUSfEzb7Ny62RqFtC9uNjJi4fq").symbol == "SRM-SOL"
-    assert token_lookup.find_by_mint("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB").symbol == "USDT"
+def test_spl_token_lookups_with_full_data():
+    actual = mango.SPLTokenLookup.load(mango.SPLTokenLookup.DefaultDataFilepath)
+    assert actual.find_by_symbol("BTC").mint == PublicKey("9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E")
+    assert actual.find_by_symbol("ETH").mint == PublicKey("2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk")
+    assert actual.find_by_mint("AKJHspCwDhABucCxNLXUSfEzb7Ny62RqFtC9uNjJi4fq").symbol == "SRM-SOL"
+    assert actual.find_by_mint("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB").symbol == "USDT"

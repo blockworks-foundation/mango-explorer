@@ -36,16 +36,16 @@ health_calculator = mango.calculators.healthcalculator.HealthCalculator(
     context, mango.calculators.healthcalculator.HealthType.INITIAL)
 
 spot_open_orders_addresses = list(
-    [basket_token.spot_open_orders for basket_token in mango_account.basket if basket_token.spot_open_orders is not None])
+    [basket_token.spot_open_orders for basket_token in mango_account.slots if basket_token.spot_open_orders is not None])
 spot_open_orders_account_infos = mango.AccountInfo.load_multiple(context, spot_open_orders_addresses)
 spot_open_orders_account_infos_by_address = {
     str(account_info.address): account_info for account_info in spot_open_orders_account_infos}
 spot_open_orders = {}
-for basket_token in mango_account.basket:
+for basket_token in mango_account.slots:
     if basket_token.spot_open_orders is not None:
         account_info = spot_open_orders_account_infos_by_address[str(basket_token.spot_open_orders)]
         oo = mango.OpenOrders.parse(account_info, basket_token.token_info.token.decimals,
-                                    mango_account.shared_quote_token.token_info.decimals)
+                                    mango_account.shared_quote_token.decimals)
         spot_open_orders[str(basket_token.spot_open_orders)] = oo
 
 print("Health", health_calculator.calculate(mango_account, spot_open_orders, group, cache))

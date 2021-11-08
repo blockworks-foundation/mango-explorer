@@ -10,12 +10,12 @@ from mango.layouts import layouts
 # Mocks are more involved than fakes, but do tend to allow more introspection.
 #
 
-token_lookup = fake_context().token_lookup
-ETH = token_lookup.find_by_symbol_or_raise("ETH")
-BTC = token_lookup.find_by_symbol_or_raise("BTC")
-SOL = token_lookup.find_by_symbol_or_raise("SOL")
-SRM = token_lookup.find_by_symbol_or_raise("SRM")
-USDC = token_lookup.find_by_symbol_or_raise("USDC")
+instrument_lookup = fake_context().instrument_lookup
+ETH = mango.Token.ensure(instrument_lookup.find_by_symbol_or_raise("ETH"))
+BTC = mango.Token.ensure(instrument_lookup.find_by_symbol_or_raise("BTC"))
+SOL = mango.Token.ensure(instrument_lookup.find_by_symbol_or_raise("SOL"))
+SRM = mango.Token.ensure(instrument_lookup.find_by_symbol_or_raise("SRM"))
+USDC = mango.Token.ensure(instrument_lookup.find_by_symbol_or_raise("USDC"))
 
 
 def mock_group():
@@ -43,11 +43,11 @@ def mock_group():
 def mock_prices(prices: typing.Sequence[str]):
     eth, btc, sol, srm, usdc = prices
     return [
-        mango.TokenValue(ETH, Decimal(eth)),
-        mango.TokenValue(BTC, Decimal(btc)),
-        mango.TokenValue(SOL, Decimal(sol)),
-        mango.TokenValue(SRM, Decimal(srm)),
-        mango.TokenValue(USDC, Decimal(usdc)),
+        mango.InstrumentValue(ETH, Decimal(eth)),
+        mango.InstrumentValue(BTC, Decimal(btc)),
+        mango.InstrumentValue(SOL, Decimal(sol)),
+        mango.InstrumentValue(SRM, Decimal(srm)),
+        mango.InstrumentValue(USDC, Decimal(usdc)),
     ]
 
 

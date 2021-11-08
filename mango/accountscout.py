@@ -23,6 +23,7 @@ from .accountinfo import AccountInfo
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import Group
+from .token import Token
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
 
@@ -144,15 +145,15 @@ class AccountScout:
 
         # Must have token accounts for each of the tokens in the group's basket.
         for basket_token in group.tokens:
-            if basket_token is not None:
+            if isinstance(basket_token.token, Token):
                 token_accounts = TokenAccount.fetch_all_for_owner_and_token(
                     context, account_address, basket_token.token)
                 if len(token_accounts) == 0:
                     report.add_error(
-                        f"Account '{account_address}' has no account for token '{basket_token.token.name}', mint '{basket_token.token.mint}'.")
+                        f"Account '{account_address}' has no account for token '{basket_token.token.name}'.")
                 else:
                     report.add_detail(
-                        f"Account '{account_address}' has {len(token_accounts)} {basket_token.token.name} token account(s) with mint '{basket_token.token.mint}': {[ta.address for ta in token_accounts]}")
+                        f"Account '{account_address}' has {len(token_accounts)} {basket_token.token.name} token account(s): {[ta.address for ta in token_accounts]}")
 
         # May have one or more Mango Markets margin account, but it's optional for liquidating
         accounts = Account.load_all_for_owner(context, account_address, group)

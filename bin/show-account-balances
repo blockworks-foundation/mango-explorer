@@ -32,14 +32,22 @@ cache: mango.Cache = mango.Cache.load(context, group.cache)
 
 logging.info(f"Address: {address}")
 
-balances = group.fetch_balances(context, address)
+balances: typing.List[mango.InstrumentValue] = []
+sol_balance = context.client.get_balance(address)
+balances += [mango.InstrumentValue(mango.SolToken, sol_balance)]
+
+for slot_token_info in group.tokens:
+    if isinstance(slot_token_info.token, mango.Token):
+        balance = mango.InstrumentValue.fetch_total_value(context, address, slot_token_info.token)
+        balances += [balance]
+
 print(f"\nToken Balances [{address}]:")
-total_in_wallet: mango.TokenValue = mango.TokenValue(group.shared_quote_token.token, Decimal(0))
+total_in_wallet: mango.InstrumentValue = mango.InstrumentValue(group.shared_quote_token, Decimal(0))
 for balance in balances:
     if balance.value != 0:
         balance_text: str = f"{balance} "
         value_text: str = ""
-        if balance.token == group.shared_quote_token.token:
+        if balance.token == group.shared_quote_token:
             total_in_wallet = total_in_wallet + balance
             value_text = f" worth {balance}"
         else:
@@ -47,8 +55,8 @@ for balance in balances:
             if token_index is not None:
                 cached_token_price: typing.Optional[mango.PriceCache] = cache.price_cache[token_index]
                 if cached_token_price is not None:
-                    balance_value: mango.TokenValue = mango.TokenValue(
-                        group.shared_quote_token.token, balance.value * cached_token_price.price)
+                    balance_value: mango.InstrumentValue = mango.InstrumentValue(
+                        group.shared_quote_token, balance.value * cached_token_price.price)
                     total_in_wallet += balance_value
                     value_text = f" worth {balance_value}"
         print(f"               {balance_text:<45}{value_text}")
@@ -57,49 +65,45 @@ print(
 
 
 mango_accounts = mango.Account.load_all_for_owner(context, address, group)
-account_value: mango.TokenValue = mango.TokenValue(group.shared_quote_token.token, Decimal(0))
-quote_token_free_in_open_orders: mango.TokenValue = mango.TokenValue(group.shared_quote_token.token, Decimal(0))
-quote_token_total_in_open_orders: mango.TokenValue = mango.TokenValue(group.shared_quote_token.token, Decimal(0))
-grand_total: mango.TokenValue = total_in_wallet
+account_value: mango.InstrumentValue = mango.InstrumentValue(group.shared_quote_token, Decimal(0))
+quote_token_free_in_open_orders: mango.InstrumentValue = mango.InstrumentValue(group.shared_quote_token, Decimal(0))
+quote_token_total_in_open_orders: mango.InstrumentValue = mango.InstrumentValue(group.shared_quote_token, Decimal(0))
+grand_total: mango.InstrumentValue = total_in_wallet
 for account in mango_accounts:
+    print("\n⚠ WARNING! ⚠ This is a work-in-progress and these figures may be wrong!\n")
     print(f"\nAccount Balances [{account.address}]:")
     at_least_one_output: bool = False
     open_orders: typing.Dict[str, mango.OpenOrders] = account.load_all_spot_open_orders(context)
-    for asset in account.basket:
+    for asset in account.slots:
         if (asset.deposit.value != 0) or (asset.borrow.value != 0) or (asset.net_value.value != 0) or ((asset.perp_account is not None) and not asset.perp_account.empty):
             at_least_one_output = True
-            report: mango.AccountTokenValues = mango.AccountTokenValues.from_account_basket_base_token(
+            report: mango.AccountInstrumentValues = mango.AccountInstrumentValues.from_account_basket_base_token(
                 asset, open_orders, group)
             # print(report)
             market_cache: mango.MarketCache = group.market_cache_from_cache(cache, report.base_token)
-            price_from_cache: mango.TokenValue = group.token_price_from_cache(cache, report.base_token)
-            priced_report: mango.AccountTokenValues = report.priced(market_cache)
+            price_from_cache: mango.InstrumentValue = group.token_price_from_cache(cache, report.base_token)
+            priced_report: mango.AccountInstrumentValues = report.priced(market_cache)
             account_value += priced_report.net_value
             quote_token_free_in_open_orders += priced_report.quote_token_free
             quote_token_total_in_open_orders += priced_report.quote_token_total
             print(priced_report)
 
-    quote_report: mango.AccountTokenValues = mango.AccountTokenValues(account.shared_quote_token.token_info.token,
-                                                                      account.shared_quote_token.token_info.token,
-                                                                      account.shared_quote_token.raw_deposit,
-                                                                      account.shared_quote_token.deposit,
-                                                                      account.shared_quote_token.raw_borrow,
-                                                                      account.shared_quote_token.borrow,
-                                                                      mango.TokenValue(
-                                                                          group.shared_quote_token.token, Decimal(0)),
-                                                                      mango.TokenValue(
-                                                                          group.shared_quote_token.token, Decimal(0)),
-                                                                      quote_token_free_in_open_orders,
-                                                                      quote_token_total_in_open_orders,
-                                                                      mango.TokenValue(
-                                                                          group.shared_quote_token.token, Decimal(0)),
-                                                                      Decimal(0), Decimal(0),
-                                                                      mango.TokenValue(
-                                                                          group.shared_quote_token.token, Decimal(0)),
-                                                                      mango.TokenValue(
-                                                                          group.shared_quote_token.token, Decimal(0)),
-                                                                      Decimal(0), Decimal(0),
-                                                                      mango.NullLotSizeConverter())
+    quote_report = mango.AccountInstrumentValues(account.shared_quote_token,
+                                                 account.shared_quote_token,
+                                                 account.shared_quote.raw_deposit,
+                                                 account.shared_quote.deposit,
+                                                 account.shared_quote.raw_borrow,
+                                                 account.shared_quote.borrow,
+                                                 mango.InstrumentValue(group.shared_quote_token, Decimal(0)),
+                                                 mango.InstrumentValue(group.shared_quote_token, Decimal(0)),
+                                                 quote_token_free_in_open_orders,
+                                                 quote_token_total_in_open_orders,
+                                                 mango.InstrumentValue(group.shared_quote_token, Decimal(0)),
+                                                 Decimal(0), Decimal(0),
+                                                 mango.InstrumentValue(group.shared_quote_token, Decimal(0)),
+                                                 mango.InstrumentValue(group.shared_quote_token, Decimal(0)),
+                                                 Decimal(0), Decimal(0),
+                                                 mango.NullLotSizeConverter())
     account_value += quote_report.net_value + quote_token_total_in_open_orders
     print(quote_report)
 

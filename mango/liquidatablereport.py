@@ -22,7 +22,7 @@ from decimal import Decimal
 
 from .account import Account
 from .group import Group
-from .tokenvalue import TokenValue
+from .instrumentvalue import InstrumentValue
 
 
 # # 🥭 LiquidatableState flag enum
@@ -43,14 +43,14 @@ class LiquidatableState(enum.Flag):
 #
 
 class LiquidatableReport:
-    def __init__(self, group: Group, prices: typing.Sequence[TokenValue], account: Account, state: LiquidatableState, worthwhile_threshold: Decimal):
+    def __init__(self, group: Group, prices: typing.Sequence[InstrumentValue], account: Account, state: LiquidatableState, worthwhile_threshold: Decimal):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.group: Group = group
-        self.prices: typing.Sequence[TokenValue] = prices
+        self.prices: typing.Sequence[InstrumentValue] = prices
         self.account: Account = account
         self.state: LiquidatableState = state
         self.worthwhile_threshold: Decimal = worthwhile_threshold
 
     @staticmethod
-    def build(group: Group, prices: typing.Sequence[TokenValue], account: Account, worthwhile_threshold: Decimal) -> "LiquidatableReport":
+    def build(group: Group, prices: typing.Sequence[InstrumentValue], account: Account, worthwhile_threshold: Decimal) -> "LiquidatableReport":
         return LiquidatableReport(group, prices, account, LiquidatableState.UNSET, worthwhile_threshold)

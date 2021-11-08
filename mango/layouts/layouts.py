@@ -36,7 +36,7 @@ import construct
 import datetime
 import typing
 
-from decimal import Decimal
+from decimal import Decimal, Context as DecimalContext
 from solana.publickey import PublicKey
 
 
@@ -159,8 +159,6 @@ class DatetimeAdapter(construct.Adapter):
 #
 # So it's 128 bits, or 16 bytes, long, and the first 10 bytes are the
 # integer part and the last 6 bytes are the fractional part.
-
-
 class FloatI80F48Adapter(construct.Adapter):
     def __init__(self):
         self.size = 16
@@ -174,9 +172,14 @@ class FloatI80F48Adapter(construct.Adapter):
         self.divisor = Decimal(2 ** fixed_point_in_bits)
 
     def _decode(self, obj, context, path) -> Decimal:
-        # How many decimal places precision should we allow for an I80F48? We could:
-        return round(Decimal(obj) / self.divisor, 20)
-        # return Decimal(obj) / self.divisor
+        # How many decimal places precision should we allow for an I80F48? TypeScript seems to have
+        # 20 decimal places. The Decimal class is a bit weird - although the standard Python round()
+        # is available, it can fail with InvalidOperation if the precision requested doesn't actually
+        # exist. That's the wrong way around for us - we want to ensure we don't have MORE digits
+        # than 20, not raise an exception when we have a sufficiently rounded number already.
+        value: Decimal = Decimal(obj)
+        divided: Decimal = value / self.divisor
+        return divided.quantize(Decimal('.00000000000000000001'), context=DecimalContext(prec=100))
 
     def _encode(self, obj, context, path) -> bytes:
         return bytes(obj)

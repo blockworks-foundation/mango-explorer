@@ -25,10 +25,10 @@ from .account import Account
 from .accountliquidator import AccountLiquidator
 from .context import Context
 from .group import Group
+from .instrumentvalue import InstrumentValue
 from .liquidatablereport import LiquidatableReport, LiquidatableState
 from .liquidationevent import LiquidationEvent
 from .observables import EventSource
-from .tokenvalue import TokenValue
 from .walletbalancer import WalletBalancer
 
 # # 🥭 Liquidation Processor
@@ -127,7 +127,7 @@ class LiquidationProcessor:
         time_taken = time.time() - started_at
         self.logger.info(f"Check of all ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
 
-    def _liquidate_all(self, group: Group, prices: typing.Sequence[TokenValue], to_liquidate: typing.Sequence[LiquidatableReport]):
+    def _liquidate_all(self, group: Group, prices: typing.Sequence[InstrumentValue], to_liquidate: typing.Sequence[LiquidatableReport]):
         to_process = list(to_liquidate)
         while len(to_process) > 0:
             # TODO - sort this when LiquidationReport has the proper details for V3.

@@ -20,13 +20,13 @@ import typing
 from ..account import Account
 from ..cache import Cache
 from ..group import Group
+from ..instrumentvalue import InstrumentValue
 from ..openorders import OpenOrders
-from ..tokenvalue import TokenValue
 
 
 class CollateralCalculator(metaclass=abc.ABCMeta):
     def __init__(self):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
-    def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], group: Group, cache: Cache) -> TokenValue:
+    def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], group: Group, cache: Cache) -> InstrumentValue:
         raise NotImplementedError("CollateralCalculator.calculate() is not implemented on the base type.")

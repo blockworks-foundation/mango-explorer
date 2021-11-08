@@ -7,7 +7,7 @@ import sys
 import typing
 
 from decimal import Decimal
-from spl.token.client import Token as SplToken
+from spl.token.client import Token as SolanaSPLToken
 from spl.token.constants import TOKEN_PROGRAM_ID
 from solana.publickey import PublicKey
 
@@ -27,11 +27,12 @@ args: argparse.Namespace = mango.parse_args(parser)
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-token = context.token_lookup.find_by_symbol(args.symbol.upper())
-if token is None:
-    raise Exception(f"Could not find token with symbol '{args.symbol}'.")
+instrument = context.instrument_lookup.find_by_symbol(args.symbol)
+if instrument is None:
+    raise Exception(f"Could not find instrument with symbol '{args.symbol}'.")
+token: mango.Token = mango.Token.ensure(instrument)
 
-spl_token = SplToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair)
+spl_token = SolanaSPLToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair)
 
 # Is the address an actual token account? Or is it the SOL address of the owner?
 account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(context, args.address)

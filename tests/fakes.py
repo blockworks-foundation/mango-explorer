@@ -43,7 +43,7 @@ def fake_account_info(address: PublicKey = fake_public_key(), executable: bool =
 
 
 def fake_token(symbol: str = "FAKE", decimals: int = 6) -> mango.Token:
-    return mango.Token(symbol, f"Fake Token ({symbol})", fake_seeded_public_key(f"fake token ({symbol})"), Decimal(decimals))
+    return mango.Token(symbol, f"Fake Token ({symbol})", Decimal(decimals), fake_seeded_public_key(f"fake token ({symbol})"))
 
 
 def fake_token_info() -> mango.TokenInfo:
@@ -69,7 +69,7 @@ def fake_context() -> mango.Context:
                             group_address=fake_seeded_public_key("group ID"),
                             gma_chunk_size=Decimal(20),
                             gma_chunk_pause=Decimal(25),
-                            token_lookup=mango.NullTokenLookup(),
+                            instrument_lookup=mango.NullInstrumentLookup(),
                             market_lookup=mango.NullMarketLookup())
     context.client = MockClient()
     return context
@@ -105,12 +105,12 @@ def fake_loaded_market(base_lot_size: Decimal = Decimal(1), quote_lot_size: Deci
 def fake_token_account() -> mango.TokenAccount:
     token_account_info = fake_account_info()
     token = fake_token()
-    token_value = mango.TokenValue(token, Decimal("100"))
+    token_value = mango.InstrumentValue(token, Decimal("100"))
     return mango.TokenAccount(token_account_info, mango.Version.V1, fake_seeded_public_key("owner"), token_value)
 
 
-def fake_token_value(value: Decimal = Decimal(100)) -> mango.TokenValue:
-    return mango.TokenValue(fake_token(), value)
+def fake_token_value(value: Decimal = Decimal(100)) -> mango.InstrumentValue:
+    return mango.InstrumentValue(fake_token(), value)
 
 
 def fake_wallet() -> mango.Wallet:

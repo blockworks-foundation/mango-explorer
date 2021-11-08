@@ -28,6 +28,7 @@ from .context import Context
 from .group import Group
 from .healthcheck import HealthCheck
 from .instructions import build_create_serum_open_orders_instructions
+from .instrumentvalue import InstrumentValue
 from .inventory import Inventory, InventorySource
 from .loadedmarket import LoadedMarket
 from .market import Market
@@ -43,8 +44,7 @@ from .spotmarket import SpotMarket
 from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
 from .spotmarketoperations import SpotMarketOperations
 from .tokenaccount import TokenAccount
-from .token import Token
-from .tokenvalue import TokenValue
+from .token import Instrument, Token
 from .wallet import Wallet
 from .watcher import Watcher, LamdaUpdateWatcher
 from .websocketsubscription import WebSocketAccountSubscription, WebSocketSubscription, WebSocketSubscriptionManager
@@ -82,7 +82,7 @@ def build_cache_watcher(context: Context, manager: WebSocketSubscriptionManager,
 
 def build_spot_open_orders_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, wallet: Wallet, account: Account, group: Group, spot_market: SpotMarket) -> Watcher[OpenOrders]:
     market_index = group.find_spot_market_index(spot_market.address)
-    open_orders_address = account.spot_open_orders[market_index]
+    open_orders_address = account.spot_open_orders_by_index[market_index]
     if open_orders_address is None:
         spot_market_instruction_builder: SpotMarketInstructionBuilder = SpotMarketInstructionBuilder.load(
             context, wallet, spot_market.group, account, spot_market)
@@ -137,13 +137,13 @@ def build_serum_open_orders_watcher(context: Context, manager: WebSocketSubscrip
 
 def build_perp_open_orders_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, perp_market: PerpMarket, account: Account, group: Group, account_subscription: WebSocketSubscription[Account]) -> Watcher[PlacedOrdersContainer]:
     index = group.find_perp_market_index(perp_market.address)
-    initial_perp_account = account.perp_accounts[index]
+    initial_perp_account = account.perp_accounts_by_index[index]
     if initial_perp_account is None:
         raise Exception(f"Could not find perp account at index {index} of account {account.address}.")
     initial_open_orders = initial_perp_account.open_orders
     latest_open_orders_observer = LatestItemObserverSubscriber[PlacedOrdersContainer](initial_open_orders)
     account_subscription.publisher.subscribe(
-        on_next=lambda updated_account: latest_open_orders_observer.on_next(updated_account.perp_accounts[index].open_orders))
+        on_next=lambda updated_account: latest_open_orders_observer.on_next(updated_account.perp_accounts_by_index[index].open_orders))
     health_check.add("open_orders_subscription", account_subscription.publisher)
     return latest_open_orders_observer
 
@@ -163,7 +163,7 @@ def build_price_watcher(context: Context, manager: WebSocketSubscriptionManager,
     return latest_price_observer
 
 
-def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, disposer: DisposePropagator, wallet: Wallet, market: Market, price_watcher: Watcher[Price]) -> Watcher[Inventory]:
+def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, disposer: DisposePropagator, wallet: Wallet, market: SerumMarket, price_watcher: Watcher[Price]) -> Watcher[Inventory]:
     base_account = TokenAccount.fetch_largest_for_owner_and_token(
         context, wallet.address, market.base)
     if base_account is None:
@@ -187,15 +187,16 @@ def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscripti
     disposer.add_disposable(quote_subscription_disposable)
 
     # Serum markets don't accrue MNGO liquidity incentives
-    mngo: typing.Optional[Token] = context.token_lookup.find_by_symbol("MNGO")
+    mngo: typing.Optional[Instrument] = context.instrument_lookup.find_by_symbol("MNGO")
     if mngo is None:
         raise Exception("Could not find details of MNGO token.")
-    mngo_accrued: TokenValue = TokenValue(mngo, Decimal(0))
+    mngo_accrued: InstrumentValue = InstrumentValue(Token.ensure(mngo), Decimal(0))
 
     def serum_inventory_accessor() -> Inventory:
         available: Decimal = (latest_base_token_account_observer.latest.value.value * price_watcher.latest.mid_price) + \
             latest_quote_token_account_observer.latest.value.value
-        available_collateral: TokenValue = TokenValue(latest_quote_token_account_observer.latest.value.token, available)
+        available_collateral: InstrumentValue = InstrumentValue(
+            latest_quote_token_account_observer.latest.value.token, available)
         return Inventory(InventorySource.SPL_TOKENS, mngo_accrued,
                          available_collateral,
                          latest_base_token_account_observer.latest.value,

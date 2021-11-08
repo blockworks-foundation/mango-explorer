@@ -29,21 +29,22 @@ if len(accounts) == 0:
     raise Exception(f"Could not find any Mango accounts for '{wallet.address}'.")
 account = accounts[args.account_index]
 
-token = context.token_lookup.find_by_symbol(args.symbol.upper())
-if token is None:
-    raise Exception(f"Could not find token with symbol '{args.symbol}'.")
+instrument = context.instrument_lookup.find_by_symbol(args.symbol)
+if instrument is None:
+    raise Exception(f"Could not find instrument with symbol '{args.symbol}'.")
+token: mango.Token = mango.Token.ensure(instrument)
 
 token_account = mango.TokenAccount.fetch_largest_for_owner_and_token(context, wallet.keypair.public_key, token)
 if token_account is None:
     raise Exception(f"Could not find token account for token {token} with owner {wallet.keypair}.")
 
-deposit_value = mango.TokenValue(token, args.quantity)
+deposit_value = mango.InstrumentValue(token, args.quantity)
 deposit_token_account = mango.TokenAccount(
     token_account.account_info, token_account.version, token_account.owner, deposit_value)
 
 root_bank = None
 for token_info in group.tokens:
-    if token_info is not None and token_info.token is not None and token_info.token.mint == token.mint:
+    if token_info is not None and token_info.token == token:
         root_bank = token_info.root_bank
 if root_bank is None:
     raise Exception(f"Could not find token root bank for symbol '{args.symbol}'.")

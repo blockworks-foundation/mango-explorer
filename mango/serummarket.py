@@ -38,6 +38,8 @@ from .token import Token
 class SerumMarket(LoadedMarket):
     def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token, underlying_serum_market: PySerumMarket):
         super().__init__(serum_program_address, address, InventorySource.SPL_TOKENS, base, quote, RaisingLotSizeConverter())
+        self.base: Token = base
+        self.quote: Token = quote
         self.underlying_serum_market: PySerumMarket = underlying_serum_market
         base_lot_size: Decimal = Decimal(underlying_serum_market.state.base_lot_size())
         quote_lot_size: Decimal = Decimal(underlying_serum_market.state.quote_lot_size())
@@ -84,6 +86,8 @@ class SerumMarket(LoadedMarket):
 class SerumMarketStub(Market):
     def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token):
         super().__init__(serum_program_address, address, InventorySource.SPL_TOKENS, base, quote, RaisingLotSizeConverter())
+        self.base: Token = base
+        self.quote: Token = quote
 
     def load(self, context: Context) -> SerumMarket:
         underlying_serum_market: PySerumMarket = PySerumMarket.load(

@@ -5,11 +5,11 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 
-ETH_TOKEN = mango.Token("ETH", "Wrapped Ethereum (Sollet)", PublicKey(
-    "2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk"), Decimal(6))
-BTC_TOKEN = mango.Token("BTC", "Wrapped Bitcoin (Sollet)", PublicKey(
-    "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E"), Decimal(6))
-USDT_TOKEN = mango.Token("USDT", "USDT", PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"), Decimal(6))
+ETH_TOKEN = mango.Token("ETH", "Wrapped Ethereum (Sollet)", Decimal(
+    6), PublicKey("2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk"))
+BTC_TOKEN = mango.Token("BTC", "Wrapped Bitcoin (Sollet)", Decimal(
+    6), PublicKey("9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E"))
+USDT_TOKEN = mango.Token("USDT", "USDT", Decimal(6), PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"))
 
 
 def test_target_balance_constructor():
@@ -42,13 +42,13 @@ def test_percentage_target_balance_constructor():
 
 def test_calculate_required_balance_changes():
     current_balances = [
-        mango.TokenValue(ETH_TOKEN, Decimal("0.5")),
-        mango.TokenValue(BTC_TOKEN, Decimal("0.2")),
-        mango.TokenValue(USDT_TOKEN, Decimal("10000")),
+        mango.InstrumentValue(ETH_TOKEN, Decimal("0.5")),
+        mango.InstrumentValue(BTC_TOKEN, Decimal("0.2")),
+        mango.InstrumentValue(USDT_TOKEN, Decimal("10000")),
     ]
     desired_balances = [
-        mango.TokenValue(ETH_TOKEN, Decimal("1")),
-        mango.TokenValue(BTC_TOKEN, Decimal("0.1"))
+        mango.InstrumentValue(ETH_TOKEN, Decimal("1")),
+        mango.InstrumentValue(BTC_TOKEN, Decimal("0.1"))
     ]
 
     changes = mango.calculate_required_balance_changes(current_balances, desired_balances)
@@ -91,20 +91,20 @@ def test_target_balance_parser_percentagevalue():
 
 def test_filter_small_changes_constructor():
     current_prices = [
-        mango.TokenValue(ETH_TOKEN, Decimal("4000")),
-        mango.TokenValue(BTC_TOKEN, Decimal("60000")),
-        mango.TokenValue(USDT_TOKEN, Decimal("1")),
+        mango.InstrumentValue(ETH_TOKEN, Decimal("4000")),
+        mango.InstrumentValue(BTC_TOKEN, Decimal("60000")),
+        mango.InstrumentValue(USDT_TOKEN, Decimal("1")),
     ]
     current_balances = [
-        mango.TokenValue(ETH_TOKEN, Decimal("0.5")),
-        mango.TokenValue(BTC_TOKEN, Decimal("0.2")),
-        mango.TokenValue(USDT_TOKEN, Decimal("10000")),
+        mango.InstrumentValue(ETH_TOKEN, Decimal("0.5")),
+        mango.InstrumentValue(BTC_TOKEN, Decimal("0.2")),
+        mango.InstrumentValue(USDT_TOKEN, Decimal("10000")),
     ]
     action_threshold = Decimal("0.01")  # Don't bother if it's less than 1% of the total value (24,000)
     expected_prices = {
-        f"{current_prices[0].token.mint}": current_prices[0],
-        f"{current_prices[1].token.mint}": current_prices[1],
-        f"{current_prices[2].token.mint}": current_prices[2]
+        current_prices[0].token.symbol: current_prices[0],
+        current_prices[1].token.symbol: current_prices[1],
+        current_prices[2].token.symbol: current_prices[2]
     }
     expected_total_balance = Decimal(24000)
     expected_action_threshold_value = expected_total_balance / 100  # Action threshold is 0.01
@@ -118,28 +118,28 @@ def test_filter_small_changes_constructor():
 
 def test_filtering_small_changes():
     current_prices = [
-        mango.TokenValue(ETH_TOKEN, Decimal("4000")),
-        mango.TokenValue(BTC_TOKEN, Decimal("60000")),
-        mango.TokenValue(USDT_TOKEN, Decimal("1")),
+        mango.InstrumentValue(ETH_TOKEN, Decimal("4000")),
+        mango.InstrumentValue(BTC_TOKEN, Decimal("60000")),
+        mango.InstrumentValue(USDT_TOKEN, Decimal("1")),
     ]
     current_balances = [
-        mango.TokenValue(ETH_TOKEN, Decimal("0.5")),
-        mango.TokenValue(BTC_TOKEN, Decimal("0.2")),
-        mango.TokenValue(USDT_TOKEN, Decimal("10000")),
+        mango.InstrumentValue(ETH_TOKEN, Decimal("0.5")),
+        mango.InstrumentValue(BTC_TOKEN, Decimal("0.2")),
+        mango.InstrumentValue(USDT_TOKEN, Decimal("10000")),
     ]
     action_threshold = Decimal("0.01")  # Don't bother if it's less than 1% of the total value (24,000)
     actual = mango.FilterSmallChanges(action_threshold, current_balances, current_prices)
 
     # 0.05 ETH is worth $200 at our test prices, which is less than our $240 threshold
-    assert(not actual.allow(mango.TokenValue(ETH_TOKEN, Decimal("0.05"))))
+    assert(not actual.allow(mango.InstrumentValue(ETH_TOKEN, Decimal("0.05"))))
 
     # 0.05 BTC is worth $3,000 at our test prices, which is much more than our $240 threshold
-    assert(actual.allow(mango.TokenValue(BTC_TOKEN, Decimal("0.05"))))
+    assert(actual.allow(mango.InstrumentValue(BTC_TOKEN, Decimal("0.05"))))
 
 
 def test_sort_changes_for_trades():
-    eth_buy = mango.TokenValue(ETH_TOKEN, Decimal("5"))
-    btc_sell = mango.TokenValue(BTC_TOKEN, Decimal("-1"))
+    eth_buy = mango.InstrumentValue(ETH_TOKEN, Decimal("5"))
+    btc_sell = mango.InstrumentValue(BTC_TOKEN, Decimal("-1"))
     sorted_changes = mango.sort_changes_for_trades([
         eth_buy,
         btc_sell

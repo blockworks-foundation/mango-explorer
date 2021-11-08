@@ -10,7 +10,7 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 from solana.rpc.types import TxOpts
-from spl.token.client import Token
+from spl.token.client import Token as SolanaSPLToken
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
 
 sys.path.insert(0, os.path.abspath(
@@ -37,11 +37,12 @@ wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 logging.info(f"Wallet address: {wallet.address}")
 
-token = context.token_lookup.find_by_symbol(args.symbol.upper())
-if token is None:
+instrument = context.instrument_lookup.find_by_symbol(args.symbol)
+if instrument is None:
     raise Exception(f"Could not find details of token with symbol {args.symbol}.")
+token: mango.Token = mango.Token.ensure(instrument)
 
-spl_token = Token(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair)
+spl_token = SolanaSPLToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair)
 source_accounts = spl_token.get_accounts(wallet.address)
 source_account = source_accounts["result"]["value"][0]
 source = PublicKey(source_account["pubkey"])

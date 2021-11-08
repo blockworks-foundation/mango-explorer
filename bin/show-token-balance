@@ -29,10 +29,12 @@ context: mango.Context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet: mango.Wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 owner_address: PublicKey = args.owner or wallet.address
 
+token: mango.Token
 if args.mint is not None:
-    token: mango.Token = mango.Token(args.symbol, args.symbol, args.mint, args.decimals)
+    token = mango.Token(args.symbol, args.symbol, args.decimals, args.mint)
 else:
-    token = context.token_lookup.find_by_symbol_or_raise(args.symbol.upper())
+    instrument: mango.Instrument = context.instrument_lookup.find_by_symbol_or_raise(args.symbol)
+    token = mango.Token.ensure(instrument)
 token_accounts: typing.Sequence[mango.TokenAccount] = mango.TokenAccount.fetch_all_for_owner_and_token(
     context, owner_address, token)
 

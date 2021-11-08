@@ -48,25 +48,25 @@ class PerpToSpotHedger(Hedger):
         self.sell_price_adjustment_factor: Decimal = Decimal("1") - max_price_slippage_factor
         self.max_hedge_chunk_quantity: Decimal = max_hedge_chunk_quantity
 
-        resolved_target: mango.TokenValue = target_balance.resolve(hedging_market.base, Decimal(0), Decimal(0))
+        resolved_target: mango.InstrumentValue = target_balance.resolve(hedging_market.base, Decimal(0), Decimal(0))
         self.target_balance: Decimal = self.hedging_market.lot_size_converter.round_base(resolved_target.value)
 
         self.market_index: int = group.find_perp_market_index(underlying_market.address)
 
     def pulse(self, context: mango.Context, model_state: mango.ModelState):
         try:
-            perp_account: typing.Optional[mango.PerpAccount] = model_state.account.perp_accounts[self.market_index]
+            perp_account: typing.Optional[mango.PerpAccount] = model_state.account.perp_accounts_by_index[self.market_index]
             if perp_account is None:
                 raise Exception(
                     f"Could not find perp account at index {self.market_index} in account {model_state.account.address}.")
 
-            basket_token: typing.Optional[mango.AccountBasketToken] = model_state.account.basket_tokens[self.market_index]
+            basket_token: typing.Optional[mango.AccountSlot] = model_state.account.slots_by_index[self.market_index]
             if basket_token is None:
                 raise Exception(
                     f"Could not find basket token at index {self.market_index} in account {model_state.account.address}.")
 
-            token_balance: mango.TokenValue = basket_token.net_value
-            perp_position: mango.TokenValue = perp_account.base_token_value
+            token_balance: mango.InstrumentValue = basket_token.net_value
+            perp_position: mango.InstrumentValue = perp_account.base_token_value
 
             # We're interested in maintaining the right size of hedge lots, so round everything to the hedge
             # market's lot size (even though perps have different lot sizes).

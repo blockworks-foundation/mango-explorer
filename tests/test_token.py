@@ -9,7 +9,7 @@ def test_token_constructor():
     name = "Test Token"
     mint = PublicKey("11111111111111111111111111111113")
     decimals = Decimal(18)
-    actual = mango.Token(symbol, name, mint, decimals)
+    actual = mango.Token(symbol, name, decimals, mint)
     assert actual is not None
     assert actual.logger is not None
     assert actual.symbol == symbol

@@ -27,11 +27,9 @@ from .client import BetterClient
 from .constants import MangoConstants
 from .context import Context
 from .idsjsonmarketlookup import IdsJsonMarketLookup
-from .idsjsontokenlookup import IdsJsonTokenLookup
+from .instrumentlookup import InstrumentLookup, CompoundInstrumentLookup, IdsJsonTokenLookup, NonSPLInstrumentLookup, SPLTokenLookup
 from .marketlookup import CompoundMarketLookup, MarketLookup
 from .serummarketlookup import SerumMarketLookup
-from .spltokenlookup import SplTokenLookup
-from .tokenlookup import TokenLookup, CompoundTokenLookup
 
 
 # # 🥭 ContextBuilder
@@ -84,7 +82,7 @@ class ContextBuilder:
         parser.add_argument("--gma-chunk-pause", type=Decimal, default=None,
                             help="number of seconds to pause between successive getMultipleAccounts() calls to avoid rate limiting")
 
-        parser.add_argument("--token-data-file", type=str, default=SplTokenLookup.DefaultDataFilepath,
+        parser.add_argument("--token-data-file", type=str, default=SPLTokenLookup.DefaultDataFilepath,
                             help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
 
     # This function is the converse of `add_command_line_parameters()` - it takes
@@ -129,7 +127,7 @@ class ContextBuilder:
                                     context.client.blockhash_commitment, context.client.encoding,
                                     context.client.compatible_client.blockhash_cache_duration,
                                     group_name, None, None, None, context.gma_chunk_size, context.gma_chunk_pause,
-                                    SplTokenLookup.DefaultDataFilepath)
+                                    SPLTokenLookup.DefaultDataFilepath)
 
     @staticmethod
     def forced_to_devnet(context: Context) -> Context:
@@ -173,7 +171,7 @@ class ContextBuilder:
               group_name: typing.Optional[str] = None, group_address: typing.Optional[PublicKey] = None,
               program_address: typing.Optional[PublicKey] = None, serum_program_address: typing.Optional[PublicKey] = None,
               gma_chunk_size: typing.Optional[Decimal] = None, gma_chunk_pause: typing.Optional[Decimal] = None,
-              token_filename: str = SplTokenLookup.DefaultDataFilepath) -> "Context":
+              token_filename: str = SPLTokenLookup.DefaultDataFilepath) -> "Context":
         def public_key_or_none(address: typing.Optional[str]) -> typing.Optional[PublicKey]:
             if address is not None and address != "":
                 return PublicKey(address)
@@ -218,20 +216,23 @@ class ContextBuilder:
         actual_gma_chunk_size: Decimal = gma_chunk_size or Decimal(100)
         actual_gma_chunk_pause: Decimal = gma_chunk_pause or Decimal(0)
 
-        ids_json_token_lookup: TokenLookup = IdsJsonTokenLookup(actual_cluster, actual_group_name)
-        mainnet_special_cases_token_lookup: TokenLookup = SplTokenLookup.load_special_cases_for_cluster(actual_cluster)
-        token_lookup: TokenLookup = CompoundTokenLookup([ids_json_token_lookup, mainnet_special_cases_token_lookup])
+        ids_json_token_lookup: InstrumentLookup = IdsJsonTokenLookup(actual_cluster, actual_group_name)
+        instrument_lookup: InstrumentLookup = ids_json_token_lookup
         if actual_cluster == "mainnet":
-            mainnet_spl_token_lookup: TokenLookup = SplTokenLookup.load(token_filename)
-            token_lookup = CompoundTokenLookup(
-                [ids_json_token_lookup, mainnet_special_cases_token_lookup, mainnet_spl_token_lookup])
+            mainnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(token_filename)
+            mainnet_non_spl_instrument_lookup: InstrumentLookup = NonSPLInstrumentLookup.load(
+                NonSPLInstrumentLookup.DefaultMainnetDataFilepath)
+            instrument_lookup = CompoundInstrumentLookup(
+                [ids_json_token_lookup, mainnet_spl_token_lookup, mainnet_non_spl_instrument_lookup])
         elif actual_cluster == "devnet":
             devnet_token_filename = token_filename.rsplit('.', 1)[0] + ".devnet.json"
-            devnet_spl_token_lookup: TokenLookup = SplTokenLookup.load(devnet_token_filename)
-            token_lookup = CompoundTokenLookup(
-                [ids_json_token_lookup, mainnet_special_cases_token_lookup, devnet_spl_token_lookup])
+            devnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(devnet_token_filename)
+            devnet_non_spl_instrument_lookup: InstrumentLookup = NonSPLInstrumentLookup.load(
+                NonSPLInstrumentLookup.DefaultDevnetDataFilepath)
+            instrument_lookup = CompoundInstrumentLookup(
+                [ids_json_token_lookup, devnet_spl_token_lookup, devnet_non_spl_instrument_lookup])
 
-        ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(actual_cluster, token_lookup)
+        ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(actual_cluster, instrument_lookup)
         all_market_lookup = ids_json_market_lookup
         if actual_cluster == "mainnet":
             mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
@@ -244,4 +245,4 @@ class ContextBuilder:
             all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
 
-        return Context(actual_name, actual_cluster, actual_cluster_url, actual_skip_preflight, actual_commitment, actual_blockhash_commitment, actual_encoding, actual_blockhash_cache_duration, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, token_lookup, market_lookup)
+        return Context(actual_name, actual_cluster, actual_cluster_url, actual_skip_preflight, actual_commitment, actual_blockhash_commitment, actual_encoding, actual_blockhash_cache_duration, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup)

@@ -18,8 +18,8 @@ import typing
 from ..account import Account
 from ..cache import Cache
 from ..group import Group
+from ..instrumentvalue import InstrumentValue
 from ..openorders import OpenOrders
-from ..tokenvalue import TokenValue
 
 from .collateralcalculator import CollateralCalculator
 
@@ -28,5 +28,5 @@ class SerumCollateralCalculator(CollateralCalculator):
     def __init__(self):
         super().__init__()
 
-    def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], group: Group, cache: Cache) -> TokenValue:
+    def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], group: Group, cache: Cache) -> InstrumentValue:
         raise NotImplementedError("SerumCollateralCalculator.calculate() is not implemented.")

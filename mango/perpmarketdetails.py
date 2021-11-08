@@ -23,25 +23,25 @@ from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
 from .group import Group
+from .instrumentvalue import InstrumentValue
 from .layouts import layouts
 from .metadata import Metadata
 from .token import Token
 from .tokeninfo import TokenInfo
-from .tokenvalue import TokenValue
 from .version import Version
 
 
 class LiquidityMiningInfo:
     def __init__(self, version: Version, rate: Decimal, max_depth_bps: Decimal, period_start: datetime,
-                 target_period_length: timedelta, mngo_left: TokenValue, mngo_per_period: TokenValue):
+                 target_period_length: timedelta, mngo_left: InstrumentValue, mngo_per_period: InstrumentValue):
         self.version: Version = version
 
         self.rate: Decimal = rate
         self.max_depth_bps: Decimal = max_depth_bps
         self.period_start: datetime = period_start
         self.target_period_length: timedelta = target_period_length
-        self.mngo_left: TokenValue = mngo_left
-        self.mngo_per_period: TokenValue = mngo_per_period
+        self.mngo_left: InstrumentValue = mngo_left
+        self.mngo_per_period: InstrumentValue = mngo_per_period
 
     @staticmethod
     def from_layout(layout: typing.Any, version: Version, mngo: Token) -> "LiquidityMiningInfo":
@@ -49,8 +49,8 @@ class LiquidityMiningInfo:
         max_depth_bps: Decimal = layout.max_depth_bps
         period_start: datetime = layout.period_start
         target_period_length: timedelta = timedelta(seconds=float(layout.target_period_length))
-        mngo_left: TokenValue = TokenValue(mngo, mngo.shift_to_decimals(layout.mngo_left))
-        mngo_per_period: TokenValue = TokenValue(mngo, mngo.shift_to_decimals(layout.mngo_per_period))
+        mngo_left: InstrumentValue = InstrumentValue(mngo, mngo.shift_to_decimals(layout.mngo_left))
+        mngo_per_period: InstrumentValue = InstrumentValue(mngo, mngo.shift_to_decimals(layout.mngo_per_period))
 
         return LiquidityMiningInfo(version, rate, max_depth_bps, period_start, target_period_length,
                                    mngo_left, mngo_per_period)
@@ -65,7 +65,7 @@ class LiquidityMiningInfo:
         #   elapsed = (<current_time> - periodStart) / targetPeriodLength
         #   est_next = elapsed / portion_given - elapsed
         now: datetime = datetime.now().replace(microsecond=0).astimezone(timezone.utc)
-        mngo_distributed: TokenValue = self.mngo_per_period - self.mngo_left
+        mngo_distributed: InstrumentValue = self.mngo_per_period - self.mngo_left
         proportion_distributed: Decimal = Decimal(0)
         elapsed: timedelta = now - self.period_start
         elapsed_seconds: float = elapsed.total_seconds()
@@ -129,15 +129,12 @@ class PerpMarketDetails(AddressableAccount):
 
         self.market_index = group.find_perp_market_index(self.address)
 
-        base_token = group.tokens[self.market_index]
+        base_token = group.tokens_by_index[self.market_index]
         if base_token is None:
             raise Exception(f"Could not find base token at index {self.market_index} for perp market {self.address}.")
         self.base_token: TokenInfo = base_token
 
-        quote_token = group.tokens[-1]
-        if quote_token is None:
-            raise Exception(f"Could not find shared quote token for perp market {self.address}.")
-        self.quote_token: TokenInfo = quote_token
+        self.quote_token: TokenInfo = group.shared_quote
 
     @staticmethod
     def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version, group: Group) -> "PerpMarketDetails":
@@ -155,9 +152,8 @@ class PerpMarketDetails(AddressableAccount):
         seq_num: Decimal = layout.seq_num
 
         fees_accrued: Decimal = layout.fees_accrued
-        mngo = group.find_token_info_by_symbol("MNGO")
         liquidity_mining_info: LiquidityMiningInfo = LiquidityMiningInfo.from_layout(
-            layout.liquidity_mining_info, Version.V1, mngo.token)
+            layout.liquidity_mining_info, Version.V1, group.liquidity_incentive_token)
         mngo_vault: PublicKey = layout.mngo_vault
 
         return PerpMarketDetails(account_info, version, meta_data, group, bids, asks, event_queue,

@@ -20,10 +20,10 @@ from decimal import Decimal
 from ..account import Account
 from ..cache import Cache
 from ..group import Group
+from ..instrumentvalue import InstrumentValue
 from ..openorders import OpenOrders
 from ..perpmarketinfo import PerpMarketInfo
 from ..spotmarketinfo import SpotMarketInfo
-from ..tokenvalue import TokenValue
 
 from .collateralcalculator import CollateralCalculator
 
@@ -41,24 +41,24 @@ class SpotCollateralCalculator(CollateralCalculator):
     # Also from Daffy, same thread, when I said there were two `init_asset_weights`, one for spot and one for perp (https://discord.com/channels/791995070613159966/807051268304273408/882030633940054056):
     #   yes I think we ignore perps
     #
-    def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], group: Group, cache: Cache) -> TokenValue:
+    def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], group: Group, cache: Cache) -> InstrumentValue:
         # Quote token calculation:
         #   total_collateral = deposits[QUOTE_INDEX] * deposit_index - borrows[QUOTE_INDEX] * borrow_index
-        # Note: the `AccountBasketToken` in the `Account` already factors the deposit and borrow index.
-        total: Decimal = account.shared_quote_token.net_value.value
+        # Note: the `AccountSlot` in the `Account` already factors the deposit and borrow index.
+        total: Decimal = account.shared_quote.net_value.value
         collateral_description = [f"{total:,.8f} USDC"]
-        for basket_token in account.basket:
+        for basket_token in account.slots:
             index = group.find_base_token_market_index(basket_token.token_info)
             token_price = group.token_price_from_cache(cache, basket_token.token_info.token)
 
-            spot_market: typing.Optional[SpotMarketInfo] = group.spot_markets[index]
+            spot_market: typing.Optional[SpotMarketInfo] = group.spot_markets_by_index[index]
             init_asset_weight: Decimal
             init_liab_weight: Decimal
             if spot_market is not None:
                 init_asset_weight = spot_market.init_asset_weight
                 init_liab_weight = spot_market.init_liab_weight
             else:
-                perp_market: typing.Optional[PerpMarketInfo] = group.perp_markets[index]
+                perp_market: typing.Optional[PerpMarketInfo] = group.perp_markets_by_index[index]
                 if perp_market is None:
                     raise Exception(
                         f"Could not read spot or perp market of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")
@@ -73,7 +73,7 @@ class SpotCollateralCalculator(CollateralCalculator):
 
             # Base token calculations:
             #     total_collateral += prices[i] * (init_asset_weights[i] * deposits[i] * deposit_index -  init_liab_weights[i] * borrows[i] * borrow_index)
-            # Note: the `AccountBasketToken` in the `Account` already factors the deposit and borrow index.
+            # Note: the `AccountSlot` in the `Account` already factors the deposit and borrow index.
             weighted: Decimal = in_orders + (token_price.value * ((
                 basket_token.deposit.value * init_asset_weight) - (
                     basket_token.borrow.value * init_liab_weight)))
@@ -83,4 +83,4 @@ class SpotCollateralCalculator(CollateralCalculator):
                 total += weighted
 
         self.logger.debug(f"Weighted collateral: {', '.join(collateral_description)}")
-        return TokenValue(group.shared_quote_token.token, total)
+        return InstrumentValue(group.shared_quote_token, total)

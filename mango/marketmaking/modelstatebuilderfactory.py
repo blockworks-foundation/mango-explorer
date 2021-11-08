@@ -88,9 +88,8 @@ def _polling_serum_model_state_builder_factory(context: mango.Context, wallet: m
 def _polling_spot_model_state_builder_factory(group: mango.Group, account: mango.Account, market: mango.SpotMarket,
                                               oracle: mango.Oracle) -> ModelStateBuilder:
     market_index: int = group.find_spot_market_index(market.address)
-    open_orders_address: typing.Optional[PublicKey] = account.spot_open_orders[market_index]
-    all_open_orders_addresses: typing.Sequence[PublicKey] = list(
-        [oo for oo in account.spot_open_orders if oo is not None])
+    open_orders_address: typing.Optional[PublicKey] = account.spot_open_orders_by_index[market_index]
+    all_open_orders_addresses: typing.Sequence[PublicKey] = account.spot_open_orders
     if open_orders_address is None:
         raise Exception(
             f"Could not find spot openorders in account {account.address} for market {market.symbol}.")
@@ -133,15 +132,15 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
             context, websocket_manager, health_check, market)
     elif isinstance(market, mango.SpotMarket):
         market_index: int = group.find_spot_market_index(market.address)
-        order_owner = account.spot_open_orders[market_index] or SYSTEM_PROGRAM_ADDRESS
+        order_owner = account.spot_open_orders_by_index[market_index] or SYSTEM_PROGRAM_ADDRESS
         cache: mango.Cache = mango.Cache.load(context, group.cache)
         cache_watcher: mango.Watcher[mango.Cache] = mango.build_cache_watcher(
             context, websocket_manager, health_check, cache, group)
 
         all_open_orders_watchers: typing.List[mango.Watcher[mango.OpenOrders]] = []
-        for basket_token in account.basket:
+        for basket_token in account.slots:
             if basket_token.spot_open_orders is not None:
-                spot_market_symbol: str = f"spot:{basket_token.token_info.token.symbol}/{account.shared_quote_token.token_info.token.symbol}"
+                spot_market_symbol: str = f"spot:{basket_token.token_info.token.symbol}/{account.shared_quote_token.symbol}"
                 spot_market = context.market_lookup.find_by_symbol(spot_market_symbol)
                 if spot_market is None:
                     raise Exception(f"Could not find spot market {spot_market_symbol}")
