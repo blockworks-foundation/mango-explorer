@@ -19,26 +19,43 @@ from .account import Account
 from .context import Context
 from .ensuremarketloaded import ensure_market_loaded
 from .market import Market
-from .marketoperations import MarketOperations, DryRunMarketOperations
-from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
-from .perpmarketoperations import PerpMarketOperations
+from .marketoperations import MarketInstructionBuilder, MarketOperations, NullMarketInstructionBuilder, NullMarketOperations
+from .perpmarketoperations import PerpMarketInstructionBuilder, PerpMarketOperations
 from .perpmarket import PerpMarket
 from .serummarket import SerumMarket
-from .serummarketinstructionbuilder import SerumMarketInstructionBuilder
-from .serummarketoperations import SerumMarketOperations
+from .serummarketoperations import SerumMarketInstructionBuilder, SerumMarketOperations
 from .spotmarket import SpotMarket
-from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
-from .spotmarketoperations import SpotMarketOperations
+from .spotmarketoperations import SpotMarketInstructionBuilder, SpotMarketOperations
 from .wallet import Wallet
+
+
+# # 🥭 create_market_instruction_builder
+#
+# This function deals with the creation of a `MarketInstructionBuilder` object for a given `Market`.
+#
+def create_market_instruction_builder(context: Context, wallet: Wallet, account: Account, market: Market, dry_run: bool = False) -> MarketInstructionBuilder:
+    if dry_run:
+        return NullMarketInstructionBuilder(market.symbol)
+
+    loaded_market: Market = ensure_market_loaded(context, market)
+    if isinstance(loaded_market, SerumMarket):
+        return SerumMarketInstructionBuilder.load(context, wallet, loaded_market)
+    elif isinstance(loaded_market, SpotMarket):
+        return SpotMarketInstructionBuilder.load(context, wallet, loaded_market.group, account, loaded_market)
+    elif isinstance(loaded_market, PerpMarket):
+        return PerpMarketInstructionBuilder.load(
+            context, wallet, loaded_market.group, account, loaded_market)
+    else:
+        raise Exception(f"Could not find market instructions builder for market {market.symbol}")
+
 
 # # 🥭 create_market_operations
 #
 # This function deals with the creation of a `MarketOperations` object for a given `Market`.
-
-
+#
 def create_market_operations(context: Context, wallet: Wallet, account: typing.Optional[Account], market: Market, dry_run: bool = False) -> MarketOperations:
     if dry_run:
-        return DryRunMarketOperations(market.symbol)
+        return NullMarketOperations(market.symbol)
 
     loaded_market: Market = ensure_market_loaded(context, market)
     if isinstance(loaded_market, SerumMarket):

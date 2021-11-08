@@ -23,11 +23,62 @@ from .account import Account
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
-from .marketoperations import MarketOperations
+from .group import Group
+from .instructions import build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_place_perp_order_instructions, build_redeem_accrued_mango_instructions
+from .marketoperations import MarketInstructionBuilder, MarketOperations
 from .orders import Order, OrderBook
-from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarket import PerpMarket
+from .tokeninfo import TokenInfo
 from .wallet import Wallet
+
+
+# # 🥭 PerpMarketInstructionBuilder
+#
+# This file deals with building instructions for Perp markets.
+#
+# As a matter of policy for all InstructionBuidlers, construction and build_* methods should all work with
+# existing data, requiring no fetches from Solana or other sources. All necessary data should all be loaded
+# on initial setup in the `load()` method.
+#
+class PerpMarketInstructionBuilder(MarketInstructionBuilder):
+    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket):
+        super().__init__()
+        self.context: Context = context
+        self.wallet: Wallet = wallet
+        self.group: Group = group
+        self.account: Account = account
+        self.perp_market: PerpMarket = perp_market
+        self.mngo_token_info: TokenInfo = self.group.liquidity_incentive_token_info
+
+    @staticmethod
+    def load(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket) -> "PerpMarketInstructionBuilder":
+        return PerpMarketInstructionBuilder(context, wallet, group, account, perp_market)
+
+    def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
+        if self.perp_market.underlying_perp_market is None:
+            raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
+        return build_cancel_perp_order_instructions(
+            self.context, self.wallet, self.account, self.perp_market.underlying_perp_market, order, ok_if_missing)
+
+    def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
+        if self.perp_market.underlying_perp_market is None:
+            raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
+        return build_place_perp_order_instructions(
+            self.context, self.wallet, self.perp_market.underlying_perp_market.group, self.account, self.perp_market.underlying_perp_market, order.price, order.quantity, order.client_id, order.side, order.order_type)
+
+    def build_settle_instructions(self) -> CombinableInstructions:
+        return CombinableInstructions.empty()
+
+    def build_crank_instructions(self, account_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+        if self.perp_market.underlying_perp_market is None:
+            raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
+        return build_mango_consume_events_instructions(self.context, self.group, self.perp_market.underlying_perp_market, account_addresses, limit)
+
+    def build_redeem_instructions(self) -> CombinableInstructions:
+        return build_redeem_accrued_mango_instructions(self.context, self.wallet, self.perp_market, self.group, self.account, self.mngo_token_info)
+
+    def __str__(self) -> str:
+        return """« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝚜 »"""
 
 
 # # 🥭 PerpMarketOperations
@@ -94,4 +145,4 @@ class PerpMarketOperations(MarketOperations):
         return list([o for o in [*orderbook.bids, *orderbook.asks] if o.owner == self.account.address])
 
     def __str__(self) -> str:
-        return f"""« 𝙿𝚎𝚛𝚙𝚜𝙾𝚛𝚍𝚎𝚛𝙿𝚕𝚊𝚌𝚎𝚛 [{self.market_name}] »"""
+        return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.market_name}] »"""
