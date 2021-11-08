@@ -20,7 +20,7 @@ from decimal import Decimal
 
 from .instrumentlookup import InstrumentLookup
 from .rootbank import RootBank
-from .token import Instrument
+from .token import Instrument, Token
 
 
 # # 🥭 TokenInfo class
@@ -28,9 +28,9 @@ from .token import Instrument
 # `TokenInfo` defines additional information for a `Token`.
 #
 class TokenInfo():
-    def __init__(self, token: Instrument, root_bank: RootBank, decimals: Decimal):
+    def __init__(self, token: Token, root_bank: RootBank, decimals: Decimal):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.token: Instrument = token
+        self.token: Token = token
         self.root_bank: RootBank = root_bank
         self.decimals: Decimal = decimals
 
@@ -38,9 +38,10 @@ class TokenInfo():
         if layout.mint is None:
             return None
 
-        token = instrument_lookup.find_by_mint(layout.mint)
-        if token is None:
+        instrument: typing.Optional[Instrument] = instrument_lookup.find_by_mint(layout.mint)
+        if instrument is None:
             raise Exception(f"Token with mint {layout.mint} could not be found.")
+        token: Token = Token.ensure(instrument)
 
         if layout.decimals != token.decimals:
             raise Exception(
