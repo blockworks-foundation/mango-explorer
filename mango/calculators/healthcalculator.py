@@ -19,18 +19,15 @@ import typing
 
 from decimal import Decimal
 
-from mango.perpmarketinfo import PerpMarketInfo
-
 from ..account import Account, AccountSlot
 from ..accountinstrumentvalues import AccountInstrumentValues, PricedAccountInstrumentValues
 from ..cache import Cache, MarketCache
 from ..context import Context
-from ..group import Group
+from ..group import GroupSlotSpotMarket, GroupSlotPerpMarket, Group
 from ..instrumentvalue import InstrumentValue
 from ..lotsizeconverter import NullLotSizeConverter
 from ..openorders import OpenOrders
 from ..perpaccount import PerpAccount
-from ..spotmarketinfo import SpotMarketInfo
 from ..token import Instrument
 
 
@@ -155,7 +152,7 @@ class HealthCalculator:
         # print("Health (start)", health)
         for priced_report in priced_reports:
             market_index = group.find_token_market_index(priced_report.base_token)
-            spot_market: typing.Optional[SpotMarketInfo] = group.spot_markets_by_index[market_index]
+            spot_market: typing.Optional[GroupSlotSpotMarket] = group.spot_markets_by_index[market_index]
             if spot_market is None:
                 raise Exception(f"Could not find market for spot token {priced_report.base_token.symbol}.")
 
@@ -166,7 +163,7 @@ class HealthCalculator:
             # print("Weights", base_value.value, "*", spot_weight, spot_health)
 
             perp_base, perp_quote = priced_report.if_worst_execution()
-            perp_market: typing.Optional[PerpMarketInfo] = group.perp_markets_by_index[market_index]
+            perp_market: typing.Optional[GroupSlotPerpMarket] = group.perp_markets_by_index[market_index]
             perp_health: Decimal = Decimal(0)
             if perp_market is not None:
                 perp_weight = perp_market.init_asset_weight if perp_base > 0 else perp_market.init_liab_weight

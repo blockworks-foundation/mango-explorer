@@ -21,6 +21,7 @@ from solana.publickey import PublicKey
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .cache import Cache, PerpMarketCache, MarketCache
+from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .instrumentlookup import InstrumentLookup
 from .instrumentvalue import InstrumentValue
@@ -28,12 +29,100 @@ from .layouts import layouts
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .marketlookup import MarketLookup
 from .metadata import Metadata
-from .perpmarketinfo import PerpMarketInfo
 from .rootbank import RootBank
-from .spotmarketinfo import SpotMarketInfo
 from .token import Instrument, Token
 from .tokeninfo import TokenInfo
 from .version import Version
+
+
+# # 🥭 GroupSlotSpotMarket class
+#
+class GroupSlotSpotMarket:
+    def __init__(self, address: PublicKey, maint_asset_weight: Decimal, init_asset_weight: Decimal, maint_liab_weight: Decimal, init_liab_weight: Decimal):
+        self.address: PublicKey = address
+        self.maint_asset_weight: Decimal = maint_asset_weight
+        self.init_asset_weight: Decimal = init_asset_weight
+        self.maint_liab_weight: Decimal = maint_liab_weight
+        self.init_liab_weight: Decimal = init_liab_weight
+
+    @staticmethod
+    def from_layout(layout: typing.Any) -> "GroupSlotSpotMarket":
+        spot_market: PublicKey = layout.spot_market
+        maint_asset_weight: Decimal = round(layout.maint_asset_weight, 8)
+        init_asset_weight: Decimal = round(layout.init_asset_weight, 8)
+        maint_liab_weight: Decimal = round(layout.maint_liab_weight, 8)
+        init_liab_weight: Decimal = round(layout.init_liab_weight, 8)
+        return GroupSlotSpotMarket(spot_market, maint_asset_weight, init_asset_weight, maint_liab_weight, init_liab_weight)
+
+    @staticmethod
+    def from_layout_or_none(layout: typing.Any) -> typing.Optional["GroupSlotSpotMarket"]:
+        if (layout.spot_market is None) or (layout.spot_market == SYSTEM_PROGRAM_ADDRESS):
+            return None
+
+        return GroupSlotSpotMarket.from_layout(layout)
+
+    def __str__(self) -> str:
+        return f"""« 𝙶𝚛𝚘𝚞𝚙𝚂𝚕𝚘𝚝𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝 [{self.address}]
+    Asset Weights:
+        Initial: {self.init_asset_weight}
+        Maintenance: {self.maint_asset_weight}
+    Liability Weights:
+        Initial: {self.init_liab_weight}
+        Maintenance: {self.maint_liab_weight}
+»"""
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+# # 🥭 GroupSlotPerpMarket class
+#
+class GroupSlotPerpMarket:
+    def __init__(self, address: PublicKey, maint_asset_weight: Decimal, init_asset_weight: Decimal, maint_liab_weight: Decimal, init_liab_weight: Decimal, liquidation_fee: Decimal, base_lot_size: Decimal, quote_lot_size: Decimal):
+        self.address: PublicKey = address
+        self.maint_asset_weight: Decimal = maint_asset_weight
+        self.init_asset_weight: Decimal = init_asset_weight
+        self.maint_liab_weight: Decimal = maint_liab_weight
+        self.init_liab_weight: Decimal = init_liab_weight
+        self.liquidation_fee: Decimal = liquidation_fee
+        self.base_lot_size: Decimal = base_lot_size
+        self.quote_lot_size: Decimal = quote_lot_size
+
+    @staticmethod
+    def from_layout(layout: typing.Any) -> "GroupSlotPerpMarket":
+        perp_market: PublicKey = layout.perp_market
+        maint_asset_weight: Decimal = round(layout.maint_asset_weight, 8)
+        init_asset_weight: Decimal = round(layout.init_asset_weight, 8)
+        maint_liab_weight: Decimal = round(layout.maint_liab_weight, 8)
+        init_liab_weight: Decimal = round(layout.init_liab_weight, 8)
+        liquidation_fee: Decimal = round(layout.liquidation_fee, 8)
+        base_lot_size: Decimal = layout.base_lot_size
+        quote_lot_size: Decimal = layout.quote_lot_size
+
+        return GroupSlotPerpMarket(perp_market, maint_asset_weight, init_asset_weight, maint_liab_weight, init_liab_weight, liquidation_fee, base_lot_size, quote_lot_size)
+
+    @staticmethod
+    def from_layout_or_none(layout: typing.Any) -> typing.Optional["GroupSlotPerpMarket"]:
+        if (layout.perp_market is None) or (layout.perp_market == SYSTEM_PROGRAM_ADDRESS):
+            return None
+
+        return GroupSlotPerpMarket.from_layout(layout)
+
+    def __str__(self) -> str:
+        return f"""« 𝙶𝚛𝚘𝚞𝚙𝚂𝚕𝚘𝚝𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝 [{self.address}]
+    Asset Weights:
+        Initial: {self.init_asset_weight}
+        Maintenance: {self.maint_asset_weight}
+    Liability Weights:
+        Initial: {self.init_liab_weight}
+        Maintenance: {self.maint_liab_weight}
+    Liquidation Fee: {self.liquidation_fee}
+    Base Lot Size: {self.base_lot_size}
+    Quote Lot Size: {self.quote_lot_size}
+»"""
+
+    def __repr__(self) -> str:
+        return f"{self}"
 
 
 # # 🥭 GroupSlot class
@@ -41,12 +130,12 @@ from .version import Version
 # `GroupSlot` gathers indexed slot items together instead of separate arrays.
 #
 class GroupSlot:
-    def __init__(self, base_instrument: Instrument, base_token_info: typing.Optional[TokenInfo], quote_token_info: TokenInfo, spot_market_info: typing.Optional[SpotMarketInfo], perp_market_info: typing.Optional[PerpMarketInfo], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey):
+    def __init__(self, base_instrument: Instrument, base_token_info: typing.Optional[TokenInfo], quote_token_info: TokenInfo, spot_market_info: typing.Optional[GroupSlotSpotMarket], perp_market_info: typing.Optional[GroupSlotPerpMarket], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey):
         self.base_instrument: Instrument = base_instrument
         self.base_token_info: typing.Optional[TokenInfo] = base_token_info
         self.quote_token_info: TokenInfo = quote_token_info
-        self.spot_market_info: typing.Optional[SpotMarketInfo] = spot_market_info
-        self.perp_market_info: typing.Optional[PerpMarketInfo] = perp_market_info
+        self.spot_market_info: typing.Optional[GroupSlotSpotMarket] = spot_market_info
+        self.perp_market_info: typing.Optional[GroupSlotPerpMarket] = perp_market_info
         self.perp_lot_size_converter: LotSizeConverter = perp_lot_size_converter
         self.oracle: PublicKey = oracle
 
@@ -69,9 +158,6 @@ class GroupSlot:
 
     def __repr__(self) -> str:
         return f"{self}"
-
-
-TMappedGroupBasketValue = typing.TypeVar("TMappedGroupBasketValue")
 
 
 # # 🥭 Group class
@@ -156,19 +242,19 @@ class Group(AddressableAccount):
         return [slot.oracle if slot is not None else None for slot in self.slots_by_index]
 
     @property
-    def spot_markets(self) -> typing.Sequence[SpotMarketInfo]:
+    def spot_markets(self) -> typing.Sequence[GroupSlotSpotMarket]:
         return [slot.spot_market_info for slot in self.slots if slot.spot_market_info is not None]
 
     @property
-    def spot_markets_by_index(self) -> typing.Sequence[typing.Optional[SpotMarketInfo]]:
+    def spot_markets_by_index(self) -> typing.Sequence[typing.Optional[GroupSlotSpotMarket]]:
         return [slot.spot_market_info if slot is not None else None for slot in self.slots_by_index]
 
     @property
-    def perp_markets(self) -> typing.Sequence[PerpMarketInfo]:
+    def perp_markets(self) -> typing.Sequence[GroupSlotPerpMarket]:
         return [slot.perp_market_info for slot in self.slots if slot.perp_market_info is not None]
 
     @property
-    def perp_markets_by_index(self) -> typing.Sequence[typing.Optional[PerpMarketInfo]]:
+    def perp_markets_by_index(self) -> typing.Sequence[typing.Optional[GroupSlotPerpMarket]]:
         return [slot.perp_market_info if slot is not None else None for slot in self.slots_by_index]
 
     @staticmethod
@@ -184,9 +270,9 @@ class Group(AddressableAccount):
         slots: typing.List[GroupSlot] = []
         in_slots: typing.List[bool] = []
         for index in range(len(tokens) - 1):
-            spot_market_info: typing.Optional[SpotMarketInfo] = SpotMarketInfo.from_layout_or_none(
+            spot_market_info: typing.Optional[GroupSlotSpotMarket] = GroupSlotSpotMarket.from_layout_or_none(
                 layout.spot_markets[index])
-            perp_market_info: typing.Optional[PerpMarketInfo] = PerpMarketInfo.from_layout_or_none(
+            perp_market_info: typing.Optional[GroupSlotPerpMarket] = GroupSlotPerpMarket.from_layout_or_none(
                 layout.perp_markets[index])
             if (spot_market_info is None) and (perp_market_info is None):
                 in_slots += [False]

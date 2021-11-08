@@ -19,11 +19,9 @@ from decimal import Decimal
 
 from ..account import Account
 from ..cache import Cache
-from ..group import Group
+from ..group import GroupSlotSpotMarket, GroupSlotPerpMarket, Group
 from ..instrumentvalue import InstrumentValue
 from ..openorders import OpenOrders
-from ..perpmarketinfo import PerpMarketInfo
-from ..spotmarketinfo import SpotMarketInfo
 
 from .collateralcalculator import CollateralCalculator
 
@@ -52,18 +50,18 @@ class PerpCollateralCalculator(CollateralCalculator):
             token_price = group.token_price_from_cache(cache, basket_token.token_info.token)
 
             # Not using perp market asset weights yet - stick with spot.
-            # perp_market: typing.Optional[PerpMarketInfo] = group.perp_markets_by_index[index]
+            # perp_market: typing.Optional[GroupSlotPerpMarket] = group.perp_markets_by_index[index]
             # if perp_market is None:
             #     raise Exception(
             #         f"Could not read perp market of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")
-            spot_market: typing.Optional[SpotMarketInfo] = group.spot_markets_by_index[index]
+            spot_market: typing.Optional[GroupSlotSpotMarket] = group.spot_markets_by_index[index]
             init_asset_weight: Decimal
             init_liab_weight: Decimal
             if spot_market is not None:
                 init_asset_weight = spot_market.init_asset_weight
                 init_liab_weight = spot_market.init_liab_weight
             else:
-                perp_market: typing.Optional[PerpMarketInfo] = group.perp_markets_by_index[index]
+                perp_market: typing.Optional[GroupSlotPerpMarket] = group.perp_markets_by_index[index]
                 if perp_market is None:
                     raise Exception(
                         f"Could not read spot or perp market of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")

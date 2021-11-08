@@ -18,7 +18,7 @@ from .createmarketinstructionbuilder import create_market_instruction_builder
 from .createmarketoperations import create_market_operations
 from .encoding import decode_binary, encode_binary, encode_key, encode_int
 from .ensuremarketloaded import ensure_market_loaded, load_market_by_symbol
-from .group import GroupSlot, Group
+from .group import GroupSlotSpotMarket, GroupSlotPerpMarket, GroupSlot, Group
 from .healthcheck import HealthCheck
 from .idl import IdlParser, lazy_load_cached_idl_parser
 from .idsjsonmarketlookup import IdsJsonMarketLookup
@@ -54,7 +54,6 @@ from .perpaccount import PerpAccount
 from .perpeventqueue import PerpEvent, PerpFillEvent, PerpOutEvent, PerpUnknownEvent, PerpEventQueue, UnseenPerpEventChangesTracker
 from .perpmarket import PerpMarket, PerpMarketStub
 from .perpmarketdetails import PerpMarketDetails
-from .perpmarketinfo import PerpMarketInfo
 from .perpmarketinstructionbuilder import PerpMarketInstructionBuilder
 from .perpmarketoperations import PerpMarketOperations
 from .perpopenorders import PerpOpenOrders
@@ -69,7 +68,6 @@ from .serummarketlookup import SerumMarketLookup
 from .serummarketinstructionbuilder import SerumMarketInstructionBuilder
 from .serummarketoperations import SerumMarketOperations
 from .spotmarket import SpotMarket, SpotMarketStub
-from .spotmarketinfo import SpotMarketInfo
 from .spotmarketinstructionbuilder import SpotMarketInstructionBuilder
 from .spotmarketoperations import SpotMarketOperations
 from .token import Instrument, Token, SolToken
