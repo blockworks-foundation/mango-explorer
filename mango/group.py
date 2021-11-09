@@ -358,35 +358,21 @@ class Group(AddressableAccount):
 
         raise Exception(f"Could not find perp market {perp_market_address} in group {self.address}")
 
-    def find_base_token_market_index(self, base_token: TokenInfo) -> int:
-        for index, bt in enumerate(self.base_tokens_by_index):
-            if bt is not None and bt.token == base_token.token:
-                return index
-
-        raise Exception(f"Could not find base token {base_token} in group {self.address}")
-
-    def find_base_instrument_market_index(self, instrument: Instrument) -> int:
-        for index, bt in enumerate(self.base_tokens_by_index):
-            if bt is not None and bt.token == instrument:
-                return index
-
-        raise Exception(f"Could not find base instrument {instrument} in group {self.address}")
-
-    def find_token_market_index_or_none(self, token: Instrument) -> typing.Optional[int]:
-        for index, bt in enumerate(self.base_tokens_by_index):
-            if bt is not None and bt.token == token:
+    def find_instrument_market_index_or_none(self, instrument: Instrument) -> typing.Optional[int]:
+        for index, slot in enumerate(self.slots_by_index):
+            if slot is not None and slot.base_instrument == instrument:
                 return index
 
         return None
 
-    def find_token_market_index(self, token: Instrument) -> int:
-        index = self.find_token_market_index_or_none(token)
+    def find_instrument_market_index(self, instrument: Instrument) -> int:
+        index = self.find_instrument_market_index_or_none(instrument)
         if index is not None:
             return index
 
-        raise Exception(f"Could not find token {token} in group {self.address}")
+        raise Exception(f"Could not find token {instrument} in group {self.address}")
 
-    def find_token_info_by_token(self, instrument: Instrument) -> TokenInfo:
+    def find_token_info_by_instrument(self, instrument: Instrument) -> TokenInfo:
         for token_info in self.tokens:
             if token_info.token == instrument:
                 return token_info
@@ -408,9 +394,9 @@ class Group(AddressableAccount):
         market_cache: MarketCache = self.market_cache_from_cache(cache, token)
         return market_cache.perp_market
 
-    def market_cache_from_cache(self, cache: Cache, token: Instrument) -> MarketCache:
-        token_index: int = self.find_token_market_index(token)
-        return cache.market_cache_for_index(token_index)
+    def market_cache_from_cache(self, cache: Cache, instrument: Instrument) -> MarketCache:
+        instrument_index: int = self.find_instrument_market_index(instrument)
+        return cache.market_cache_for_index(instrument_index)
 
     def __str__(self) -> str:
         slot_count = len(self.slots)

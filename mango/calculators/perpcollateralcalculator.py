@@ -46,7 +46,7 @@ class PerpCollateralCalculator(CollateralCalculator):
         total: Decimal = account.shared_quote.net_value.value
         collateral_description = [f"{total:,.8f} USDC"]
         for basket_token in account.slots:
-            index = group.find_base_instrument_market_index(basket_token.base_instrument)
+            index = group.find_instrument_market_index(basket_token.base_instrument)
             token_price = group.token_price_from_cache(cache, basket_token.base_instrument)
 
             # Not using perp market asset weights yet - stick with spot.

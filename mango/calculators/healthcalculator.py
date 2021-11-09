@@ -151,7 +151,7 @@ class HealthCalculator:
         health: Decimal = quote_report.net_value.value
         # print("Health (start)", health)
         for priced_report in priced_reports:
-            market_index = group.find_token_market_index(priced_report.base_token)
+            market_index = group.find_instrument_market_index(priced_report.base_token)
             spot_market: typing.Optional[GroupSlotSpotMarket] = group.spot_markets_by_index[market_index]
             if spot_market is None:
                 raise Exception(f"Could not find market for spot token {priced_report.base_token.symbol}.")

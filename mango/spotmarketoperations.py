@@ -94,9 +94,9 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         if self.open_orders_address is None:
             return CombinableInstructions.empty()
 
-        base_rootbank = self.group.find_token_info_by_token(self.spot_market.base).root_bank
+        base_rootbank = self.group.find_token_info_by_instrument(self.spot_market.base).root_bank
         base_nodebank = base_rootbank.pick_node_bank(self.context)
-        quote_rootbank = self.group.find_token_info_by_token(self.spot_market.quote).root_bank
+        quote_rootbank = self.group.find_token_info_by_instrument(self.spot_market.quote).root_bank
         quote_nodebank = quote_rootbank.pick_node_bank(self.context)
         return build_spot_settle_instructions(self.context, self.wallet, self.account,
                                               self.raw_market, self.group, self.open_orders_address,
