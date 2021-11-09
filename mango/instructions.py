@@ -351,7 +351,7 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
     raw_side: int = 1 if side == Side.SELL else 0
     raw_order_type: int = order_type.to_perp()
 
-    base_decimals = perp_market_details.base_token.decimals
+    base_decimals = perp_market_details.base_instrument.decimals
     quote_decimals = perp_market_details.quote_token.decimals
 
     base_factor = Decimal(10) ** base_decimals

@@ -365,6 +365,13 @@ class Group(AddressableAccount):
 
         raise Exception(f"Could not find base token {base_token} in group {self.address}")
 
+    def find_base_instrument_market_index(self, instrument: Instrument) -> int:
+        for index, bt in enumerate(self.base_tokens_by_index):
+            if bt is not None and bt.token == instrument:
+                return index
+
+        raise Exception(f"Could not find base instrument {instrument} in group {self.address}")
+
     def find_token_market_index_or_none(self, token: Instrument) -> typing.Optional[int]:
         for index, bt in enumerate(self.base_tokens_by_index):
             if bt is not None and bt.token == token:

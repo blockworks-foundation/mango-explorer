@@ -26,7 +26,7 @@ from .group import Group
 from .instrumentvalue import InstrumentValue
 from .layouts import layouts
 from .metadata import Metadata
-from .token import Token
+from .token import Instrument, Token
 from .tokeninfo import TokenInfo
 from .version import Version
 
@@ -131,11 +131,12 @@ class PerpMarketDetails(AddressableAccount):
 
         self.market_index = group.find_perp_market_index(self.address)
 
-        base_token = group.tokens_by_index[self.market_index]
-        if base_token is None:
-            raise Exception(f"Could not find base token at index {self.market_index} for perp market {self.address}.")
-        self.base_token: TokenInfo = base_token
+        slot = group.slots_by_index[self.market_index]
+        if slot is None:
+            raise Exception(f"Could not find slot at index {self.market_index} for perp market {self.address}.")
 
+        self.base_instrument: Instrument = slot.base_instrument
+        self.base_token: typing.Optional[TokenInfo] = slot.base_token_info
         self.quote_token: TokenInfo = group.shared_quote
 
     @staticmethod

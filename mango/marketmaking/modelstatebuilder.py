@@ -230,7 +230,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
                     basket_token.spot_open_orders)]
                 open_orders: mango.OpenOrders = mango.OpenOrders.parse(
                     account_info,
-                    basket_token.token_info.decimals,
+                    basket_token.base_instrument.decimals,
                     account.shared_quote_token.decimals)
                 all_open_orders[str(basket_token.spot_open_orders)] = open_orders
 

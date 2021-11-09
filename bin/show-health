@@ -44,7 +44,7 @@ spot_open_orders = {}
 for basket_token in mango_account.slots:
     if basket_token.spot_open_orders is not None:
         account_info = spot_open_orders_account_infos_by_address[str(basket_token.spot_open_orders)]
-        oo = mango.OpenOrders.parse(account_info, basket_token.token_info.token.decimals,
+        oo = mango.OpenOrders.parse(account_info, basket_token.base_instrument.decimals,
                                     mango_account.shared_quote_token.decimals)
         spot_open_orders[str(basket_token.spot_open_orders)] = oo
 

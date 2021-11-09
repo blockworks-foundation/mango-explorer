@@ -77,7 +77,7 @@ class PerpToSpotHedger(Hedger):
             # If we have a target balance, subtract that to get our targetted delta neutral balance.
             delta: Decimal = perp_position_rounded + token_balance_rounded - self.target_balance
             self.logger.debug(
-                f"Delta from {self.underlying_market.symbol} to {self.hedging_market.symbol} is {delta:,.8f} {basket_token.token_info.token.symbol}")
+                f"Delta from {self.underlying_market.symbol} to {self.hedging_market.symbol} is {delta:,.8f} {basket_token.base_instrument.symbol}")
 
             if delta != 0:
                 side: mango.Side = mango.Side.BUY if delta < 0 else mango.Side.SELL

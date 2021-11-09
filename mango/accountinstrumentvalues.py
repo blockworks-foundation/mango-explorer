@@ -106,20 +106,20 @@ class AccountInstrumentValues:
         return PricedAccountInstrumentValues(self, market_cache_with_null_root_bank)
 
     @staticmethod
-    def from_account_basket_base_token(account_basket_token: AccountSlot, open_orders_by_address: typing.Dict[str, OpenOrders], group: Group) -> "AccountInstrumentValues":
-        base_token: Instrument = account_basket_token.token_info.token
-        quote_token: Token = Token.ensure(account_basket_token.quote_token_info.token)
-        perp_account: typing.Optional[PerpAccount] = account_basket_token.perp_account
+    def from_account_basket_base_token(account_slot: AccountSlot, open_orders_by_address: typing.Dict[str, OpenOrders], group: Group) -> "AccountInstrumentValues":
+        base_token: Instrument = account_slot.base_instrument
+        quote_token: Token = Token.ensure(account_slot.quote_token_info.token)
+        perp_account: typing.Optional[PerpAccount] = account_slot.perp_account
         if perp_account is None:
-            raise Exception(f"No perp account for basket token {account_basket_token.token_info.token.symbol}")
+            raise Exception(f"No perp account for basket token {account_slot.base_instrument.symbol}")
 
         base_token_free: InstrumentValue = InstrumentValue(base_token, Decimal(0))
         base_token_total: InstrumentValue = InstrumentValue(base_token, Decimal(0))
         quote_token_free: InstrumentValue = InstrumentValue(quote_token, Decimal(0))
         quote_token_total: InstrumentValue = InstrumentValue(quote_token, Decimal(0))
-        if account_basket_token.spot_open_orders is not None:
+        if account_slot.spot_open_orders is not None:
             open_orders: typing.Sequence[OpenOrders] = [
-                open_orders_by_address[str(account_basket_token.spot_open_orders)]]
+                open_orders_by_address[str(account_slot.spot_open_orders)]]
             base_token_free, base_token_total, quote_token_free, quote_token_total = _token_values_from_open_orders(
                 Token.ensure(base_token), Token.ensure(quote_token), open_orders)
 
@@ -135,7 +135,7 @@ class AccountInstrumentValues:
         asks_quantity: InstrumentValue = InstrumentValue(base_token, base_token.shift_to_decimals(
             perp_account.asks_quantity * lot_size_converter.base_lot_size))
 
-        return AccountInstrumentValues(base_token, quote_token, account_basket_token.raw_deposit, account_basket_token.deposit, account_basket_token.raw_borrow, account_basket_token.borrow, base_token_free, base_token_total, quote_token_free, quote_token_total, perp_base_position, perp_quote_position, taker_quote, bids_quantity, asks_quantity, long_settled_funding, short_settled_funding, lot_size_converter)
+        return AccountInstrumentValues(base_token, quote_token, account_slot.raw_deposit, account_slot.deposit, account_slot.raw_borrow, account_slot.borrow, base_token_free, base_token_total, quote_token_free, quote_token_total, perp_base_position, perp_quote_position, taker_quote, bids_quantity, asks_quantity, long_settled_funding, short_settled_funding, lot_size_converter)
 
     def __str__(self) -> str:
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝𝚅𝚊𝚕𝚞𝚎𝚜 {self.base_token.symbol}

@@ -46,8 +46,8 @@ class SpotCollateralCalculator(CollateralCalculator):
         total: Decimal = account.shared_quote.net_value.value
         collateral_description = [f"{total:,.8f} USDC"]
         for basket_token in account.slots:
-            index = group.find_base_token_market_index(basket_token.token_info)
-            token_price = group.token_price_from_cache(cache, basket_token.token_info.token)
+            index = group.find_base_instrument_market_index(basket_token.base_instrument)
+            token_price = group.token_price_from_cache(cache, basket_token.base_instrument)
 
             spot_market: typing.Optional[GroupSlotSpotMarket] = group.spot_markets_by_index[index]
             init_asset_weight: Decimal
@@ -59,7 +59,7 @@ class SpotCollateralCalculator(CollateralCalculator):
                 perp_market: typing.Optional[GroupSlotPerpMarket] = group.perp_markets_by_index[index]
                 if perp_market is None:
                     raise Exception(
-                        f"Could not read spot or perp market of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")
+                        f"Could not read spot or perp market of token {basket_token.base_instrument.symbol} at index {index} of cache at {cache.address}")
                 init_asset_weight = perp_market.init_asset_weight
                 init_liab_weight = perp_market.init_liab_weight
 
@@ -77,7 +77,7 @@ class SpotCollateralCalculator(CollateralCalculator):
                     basket_token.borrow.value * init_liab_weight)))
 
             if weighted != 0:
-                collateral_description += [f"{weighted:,.8f} USDC from {basket_token.token_info.token.symbol}"]
+                collateral_description += [f"{weighted:,.8f} USDC from {basket_token.base_instrument.symbol}"]
                 total += weighted
 
         self.logger.debug(f"Weighted collateral: {', '.join(collateral_description)}")

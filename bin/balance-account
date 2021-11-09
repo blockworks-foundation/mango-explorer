@@ -56,7 +56,7 @@ prices: typing.List[mango.InstrumentValue] = []
 oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, "market")
 for basket_token in account.slots:
     if basket_token is not None:
-        market_symbol: str = f"{basket_token.token_info.token.symbol}/{group.shared_quote_token.symbol}"
+        market_symbol: str = f"{basket_token.base_instrument.symbol}/{group.shared_quote_token.symbol}"
         market = context.market_lookup.find_by_symbol(market_symbol)
         if market is None:
             raise Exception(f"Could not find market {market_symbol}")
@@ -64,7 +64,7 @@ for basket_token in account.slots:
         if oracle is None:
             raise Exception(f"Could not find oracle for market {market_symbol}")
         price = oracle.fetch_price(context)
-        prices += [mango.InstrumentValue(basket_token.token_info.token, price.mid_price)]
+        prices += [mango.InstrumentValue(basket_token.base_instrument, price.mid_price)]
 prices += [mango.InstrumentValue(group.shared_quote_token, Decimal(1))]
 
 account_balancer = mango.LiveAccountBalancer(account, group, trade_executor, targets, action_threshold)

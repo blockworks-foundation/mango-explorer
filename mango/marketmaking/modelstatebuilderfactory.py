@@ -140,7 +140,7 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
         all_open_orders_watchers: typing.List[mango.Watcher[mango.OpenOrders]] = []
         for basket_token in account.slots:
             if basket_token.spot_open_orders is not None:
-                spot_market_symbol: str = f"spot:{basket_token.token_info.token.symbol}/{account.shared_quote_token.symbol}"
+                spot_market_symbol: str = f"spot:{basket_token.base_instrument.symbol}/{account.shared_quote_token.symbol}"
                 spot_market = context.market_lookup.find_by_symbol(spot_market_symbol)
                 if spot_market is None:
                     raise Exception(f"Could not find spot market {spot_market_symbol}")

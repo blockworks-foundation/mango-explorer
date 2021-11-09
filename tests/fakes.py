@@ -64,6 +64,10 @@ def fake_account_info(address: PublicKey = fake_public_key(), executable: bool =
     return mango.AccountInfo(address, executable, lamports, owner, rent_epoch, data)
 
 
+def fake_instrument(symbol: str = "FAKE", decimals: int = 6) -> mango.Instrument:
+    return mango.Instrument(symbol, f"Fake Instrument ({symbol})", Decimal(decimals))
+
+
 def fake_token(symbol: str = "FAKE", decimals: int = 6) -> mango.Token:
     return mango.Token(symbol, f"Fake Token ({symbol})", Decimal(decimals), fake_seeded_public_key(f"fake token ({symbol})"))
 
@@ -151,9 +155,9 @@ def fake_asks() -> typing.Sequence[mango.Order]:
 
 
 def fake_account_slot() -> mango.AccountSlot:
-    return mango.AccountSlot(fake_token_info(), fake_token_info(), Decimal(1), fake_instrument_value(),
-                             Decimal(0), fake_instrument_value(), fake_seeded_public_key("open_orders"),
-                             None)
+    return mango.AccountSlot(fake_instrument(), fake_token_info(), fake_token_info(), Decimal(1),
+                             fake_instrument_value(), Decimal(0), fake_instrument_value(),
+                             fake_seeded_public_key("open_orders"), None)
 
 
 def fake_account() -> mango.Account:

@@ -83,7 +83,7 @@ class HealthCalculator:
             raise Exception(f"Cache contains no perp market cache for market index {market_index}.")
 
         perp_account: PerpAccount = basket_token.perp_account
-        token: Instrument = basket_token.token_info.token
+        token: Instrument = basket_token.base_instrument
         base_lot_size: Decimal = perp_account.lot_size_converter.base_lot_size
         quote_lot_size: Decimal = perp_account.lot_size_converter.quote_lot_size
 

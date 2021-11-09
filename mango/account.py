@@ -32,7 +32,7 @@ from .orders import Side
 from .perpaccount import PerpAccount
 from .perpopenorders import PerpOpenOrders
 from .placedorder import PlacedOrder
-from .token import Token
+from .token import Instrument, Token
 from .tokeninfo import TokenInfo
 from .version import Version
 
@@ -42,8 +42,9 @@ from .version import Version
 # `AccountSlot` gathers slot items together instead of separate arrays.
 #
 class AccountSlot:
-    def __init__(self, token_info: TokenInfo, quote_token_info: TokenInfo, raw_deposit: Decimal, deposit: InstrumentValue, raw_borrow: Decimal, borrow: InstrumentValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]) -> None:
-        self.token_info: TokenInfo = token_info
+    def __init__(self, base_instrument: Instrument, base_token_info: typing.Optional[TokenInfo], quote_token_info: TokenInfo, raw_deposit: Decimal, deposit: InstrumentValue, raw_borrow: Decimal, borrow: InstrumentValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]) -> None:
+        self.base_instrument: Instrument = base_instrument
+        self.base_token_info: typing.Optional[TokenInfo] = base_token_info
         self.quote_token_info: TokenInfo = quote_token_info
         self.raw_deposit: Decimal = raw_deposit
         self.deposit: InstrumentValue = deposit
@@ -64,7 +65,7 @@ class AccountSlot:
         perp_account: str = "None"
         if self.perp_account is not None:
             perp_account = f"{self.perp_account}".replace("\n", "\n        ")
-        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝙱𝚊𝚜𝚔𝚎𝚝𝙱𝚊𝚜𝚎𝚃𝚘𝚔𝚎𝚗 {self.token_info.token.symbol}
+        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝚂𝚕𝚘𝚝 {self.base_instrument.symbol}
     Net Value:     {self.net_value}
         Deposited: {self.deposit} (raw value: {self.raw_deposit})
         Borrowed:  {self.borrow} (raw value {self.raw_borrow})
@@ -107,7 +108,10 @@ class Account(AddressableAccount):
 
     @property
     def shared_quote_token(self) -> Token:
-        return Token.ensure(self.shared_quote.token_info.token)
+        token_info = self.shared_quote.base_token_info
+        if token_info is None:
+            raise Exception(f"Shared quote does not have a token: {self.shared_quote}")
+        return Token.ensure(token_info.token)
 
     @property
     def slots_by_index(self) -> typing.Sequence[typing.Optional[AccountSlot]]:
@@ -185,28 +189,38 @@ class Account(AddressableAccount):
         quote_token_info: TokenInfo = group.shared_quote
         quote_token: Token = group.shared_quote_token
 
-        for index, token_info in enumerate(group.tokens_by_index[:-1]):
-            if token_info is not None:
-                raw_deposit: Decimal = layout.deposits[index]
-                intrinsic_deposit = token_info.root_bank.deposit_index * raw_deposit
-                deposit = InstrumentValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_deposit))
-                raw_borrow: Decimal = layout.borrows[index]
-                intrinsic_borrow = token_info.root_bank.borrow_index * raw_borrow
-                borrow = InstrumentValue(token_info.token, token_info.token.shift_to_decimals(intrinsic_borrow))
+        for index in range(len(group.slots_by_index)):
+            group_slot = group.slots_by_index[index]
+            if group_slot is not None:
+                instrument = group_slot.base_instrument
+                token_info = group_slot.base_token_info
+                raw_deposit: Decimal = Decimal(0)
+                intrinsic_deposit: Decimal = Decimal(0)
+                raw_borrow: Decimal = Decimal(0)
+                intrinsic_borrow: Decimal = Decimal(0)
+                if token_info is not None:
+                    raw_deposit = layout.deposits[index]
+                    intrinsic_deposit = token_info.root_bank.deposit_index * raw_deposit
+                    raw_borrow = layout.borrows[index]
+                    intrinsic_borrow = token_info.root_bank.borrow_index * raw_borrow
+
+                deposit = InstrumentValue(instrument, instrument.shift_to_decimals(intrinsic_deposit))
+                borrow = InstrumentValue(instrument, instrument.shift_to_decimals(intrinsic_borrow))
+
                 perp_open_orders = PerpOpenOrders(placed_orders_all_markets[index])
-                group_slot = group.slots_by_index[index]
-                if group_slot is None:
-                    raise Exception(f"Could not find group slot at index {index}.")
+
                 perp_account = PerpAccount.from_layout(
                     layout.perp_accounts[index],
-                    token_info.token,
+                    instrument,
                     quote_token,
                     perp_open_orders,
                     group_slot.perp_lot_size_converter,
                     mngo_token)
                 spot_open_orders = layout.spot_open_orders[index]
-                account_slot: AccountSlot = AccountSlot(
-                    token_info, quote_token_info, raw_deposit, deposit, raw_borrow, borrow, spot_open_orders, perp_account)
+                account_slot: AccountSlot = AccountSlot(instrument, token_info, quote_token_info,
+                                                        raw_deposit, deposit, raw_borrow, borrow,
+                                                        spot_open_orders, perp_account)
+
                 slots += [account_slot]
                 active_in_basket += [True]
             else:
@@ -218,8 +232,9 @@ class Account(AddressableAccount):
         raw_quote_borrow: Decimal = layout.borrows[-1]
         intrinsic_quote_borrow = quote_token_info.root_bank.borrow_index * raw_quote_borrow
         quote_borrow = InstrumentValue(quote_token, quote_token.shift_to_decimals(intrinsic_quote_borrow))
-        quote: AccountSlot = AccountSlot(
-            quote_token_info, quote_token_info, raw_quote_deposit, quote_deposit, raw_quote_borrow, quote_borrow, None, None)
+        quote: AccountSlot = AccountSlot(quote_token_info.token, quote_token_info, quote_token_info,
+                                         raw_quote_deposit, quote_deposit, raw_quote_borrow, quote_borrow,
+                                         None, None)
 
         msrm_amount: Decimal = layout.msrm_amount
         being_liquidated: bool = bool(layout.being_liquidated)
@@ -312,8 +327,8 @@ class Account(AddressableAccount):
         for slot in self.slots:
             if slot.spot_open_orders is not None:
                 account_info = spot_open_orders_account_infos_by_address[str(slot.spot_open_orders)]
-                oo = OpenOrders.parse(account_info, slot.token_info.token.decimals,
-                                      self.shared_quote.token_info.decimals)
+                oo = OpenOrders.parse(account_info, slot.base_instrument.decimals,
+                                      self.shared_quote.base_instrument.decimals)
                 spot_open_orders[str(slot.spot_open_orders)] = oo
         return spot_open_orders
 
@@ -329,7 +344,7 @@ class Account(AddressableAccount):
         slot_count = len(self.slots)
         slots = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.slots])
 
-        symbols: typing.Sequence[str] = [slot.token_info.token.symbol for slot in self.slots]
+        symbols: typing.Sequence[str] = [slot.base_instrument.symbol for slot in self.slots]
         in_margin_basket = ", ".join(symbols) or "None"
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {info}, {self.version} [{self.address}]
     {self.meta_data}

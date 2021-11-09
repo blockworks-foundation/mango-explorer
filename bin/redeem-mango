@@ -15,17 +15,18 @@ import mango  # nopep8
 
 
 def report_accrued(basket_token: mango.AccountSlot) -> None:
-    symbol: str = basket_token.token_info.token.symbol
+    symbol: str = basket_token.base_instrument.symbol
     if basket_token.perp_account is None:
-        accrued: mango.InstrumentValue = mango.InstrumentValue(basket_token.token_info.token, Decimal(0))
+        accrued: mango.InstrumentValue = mango.InstrumentValue(basket_token.base_instrument, Decimal(0))
     else:
         accrued = basket_token.perp_account.mngo_accrued
     print(f"Accrued in perp market [{symbol:>5}]: {accrued}")
 
 
-def load_perp_market(context: mango.Context, group: mango.Group, slot: mango.GroupSlot) -> mango.PerpMarket:
+def load_perp_market(context: mango.Context, group: mango.Group, slot: mango.GroupSlot) -> typing.Optional[mango.PerpMarket]:
     if slot.perp_market_info is None:
-        raise Exception(f"No perp market available for group basket market: {slot}")
+        return None
+
     perp_market_details = mango.PerpMarketDetails.load(context, slot.perp_market_info.address, group)
     perp_market = mango.PerpMarket(context.mango_program_address, slot.perp_market_info.address,
                                    slot.base_instrument,
@@ -35,8 +36,8 @@ def load_perp_market(context: mango.Context, group: mango.Group, slot: mango.Gro
     return perp_market
 
 
-def find_basket_token_in_account(account: mango.Account, token: mango.Instrument) -> typing.Optional[mango.AccountSlot]:
-    basket_tokens = [in_basket for in_basket in account.slots if in_basket.token_info.token == token]
+def find_basket_token_in_account(account: mango.Account, instrument: mango.Instrument) -> typing.Optional[mango.AccountSlot]:
+    basket_tokens = [in_basket for in_basket in account.slots if in_basket.base_instrument == instrument]
 
     if len(basket_tokens) == 0:
         return None
@@ -85,9 +86,10 @@ all_instructions: mango.CombinableInstructions = signers
 if args.all:
     for slot in group.slots:
         perp_market = load_perp_market(context, group, slot)
-        basket_token = find_basket_token_in_account(account, slot.base_instrument)
-        all_instructions += build_redeem_instruction_for_account(context,
-                                                                 wallet, group, mngo, account, perp_market, basket_token)
+        if perp_market is not None:
+            basket_token = find_basket_token_in_account(account, slot.base_instrument)
+            all_instructions += build_redeem_instruction_for_account(
+                context, wallet, group, mngo, account, perp_market, basket_token)
 else:
     market_symbol = args.market.upper()
     market = context.market_lookup.find_by_symbol(market_symbol)
@@ -114,7 +116,7 @@ if args.wait:
             basket_token = find_basket_token_in_account(reloaded_account, slot.base_instrument)
             if basket_token is not None:
                 report_accrued(basket_token)
-    else:
+    elif perp_market is not None:
         basket_token = find_basket_token_in_account(reloaded_account, perp_market.base)
         if basket_token is not None:
             report_accrued(basket_token)
