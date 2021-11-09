@@ -98,10 +98,10 @@ class StubOracleProvider(OracleProvider):
     def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
         loaded_market: Market = ensure_market_loaded(context, market)
         if isinstance(loaded_market, SpotMarket):
-            spot_index: int = loaded_market.group.find_spot_market_index(loaded_market.address)
+            spot_index: int = loaded_market.group.slot_by_spot_market_address(loaded_market.address).index
             return StubOracle(loaded_market, spot_index, loaded_market.group.cache)
         elif isinstance(loaded_market, PerpMarket):
-            perp_index: int = loaded_market.group.find_perp_market_index(loaded_market.address)
+            perp_index: int = loaded_market.group.slot_by_perp_market_address(loaded_market.address).index
             return StubOracle(loaded_market, perp_index, loaded_market.group.cache)
 
         return None

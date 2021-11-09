@@ -24,7 +24,7 @@ from .account import Account
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
-from .group import Group
+from .group import GroupSlot, Group
 from .instructions import build_serum_consume_events_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions, build_spot_settle_instructions, build_spot_openorders_instructions
 from .marketoperations import MarketInstructionBuilder, MarketOperations
 from .orders import Order, OrderBook
@@ -73,7 +73,8 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
             logging.debug(
                 f"MSRM balance is: {msrm_balance} - using SRM fee discount address {fee_discount_token_address}")
 
-        market_index = group.find_spot_market_index(spot_market.address)
+        slot = group.slot_by_spot_market_address(spot_market.address)
+        market_index = slot.index
 
         return SpotMarketInstructionBuilder(context, wallet, group, account, spot_market, raw_market, market_index, fee_discount_token_address)
 
@@ -94,9 +95,18 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         if self.open_orders_address is None:
             return CombinableInstructions.empty()
 
-        base_rootbank = self.group.find_token_info_by_instrument(self.spot_market.base).root_bank
+        base_slot: GroupSlot = self.group.slot_by_instrument(self.spot_market.base)
+        if base_slot.base_token_info is None:
+            raise Exception(
+                f"No token info for base instrument {self.spot_market.base.symbol} in group {self.group.address}")
+        base_rootbank = base_slot.base_token_info.root_bank
         base_nodebank = base_rootbank.pick_node_bank(self.context)
-        quote_rootbank = self.group.find_token_info_by_instrument(self.spot_market.quote).root_bank
+
+        quote_slot: GroupSlot = self.group.slot_by_instrument(self.spot_market.quote)
+        if quote_slot.base_token_info is None:
+            raise Exception(
+                f"No token info for quote instrument {self.spot_market.quote.symbol} in group {self.group.address}")
+        quote_rootbank = quote_slot.base_token_info.root_bank
         quote_nodebank = quote_rootbank.pick_node_bank(self.context)
         return build_spot_settle_instructions(self.context, self.wallet, self.account,
                                               self.raw_market, self.group, self.open_orders_address,
@@ -145,7 +155,7 @@ class SpotMarketOperations(MarketOperations):
         self.spot_market: SpotMarket = spot_market
         self.market_instruction_builder: SpotMarketInstructionBuilder = market_instruction_builder
 
-        self.market_index: int = group.find_spot_market_index(spot_market.address)
+        self.market_index: int = group.slot_by_spot_market_address(spot_market.address).index
         self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders_by_index[self.market_index]
 
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:

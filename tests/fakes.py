@@ -155,7 +155,7 @@ def fake_asks() -> typing.Sequence[mango.Order]:
 
 
 def fake_account_slot() -> mango.AccountSlot:
-    return mango.AccountSlot(fake_instrument(), fake_token_info(), fake_token_info(), Decimal(1),
+    return mango.AccountSlot(1, fake_instrument(), fake_token_info(), fake_token_info(), Decimal(1),
                              fake_instrument_value(), Decimal(0), fake_instrument_value(),
                              fake_seeded_public_key("open_orders"), None)
 

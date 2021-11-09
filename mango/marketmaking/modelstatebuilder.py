@@ -297,10 +297,10 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         cache: mango.Cache = mango.Cache.parse(account_infos[1])
         account: mango.Account = mango.Account.parse(account_infos[2], group)
 
-        index = group.find_perp_market_index(self.market.address)
-        perp_account = account.perp_accounts_by_index[index]
+        slot = group.slot_by_perp_market_address(self.market.address)
+        perp_account = account.perp_accounts_by_index[slot.index]
         if perp_account is None:
-            raise Exception(f"Could not find perp account at index {index} of account {account.address}.")
+            raise Exception(f"Could not find perp account at index {slot.index} of account {account.address}.")
         placed_orders_container: mango.PlacedOrdersContainer = perp_account.open_orders
 
         base_lots = perp_account.base_position

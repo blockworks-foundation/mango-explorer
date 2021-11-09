@@ -67,7 +67,7 @@ class SpotInventoryAccountWatcher:
         self.all_open_orders_watchers: typing.Sequence[Watcher[OpenOrders]] = all_open_orders_watchers
         self.cache_watcher: Watcher[Cache] = cache_watcher
         account: Account = account_watcher.latest
-        self.spot_account_index: int = group_watcher.latest.find_spot_market_index(market.address)
+        self.spot_account_index: int = group_watcher.latest.slot_by_spot_market_address(market.address).index
         base_value = InstrumentValue.find_by_symbol(account.net_values, market.base.symbol)
         self.base_index: int = account.net_values_by_index.index(base_value)
         quote_value = InstrumentValue.find_by_symbol(account.net_values, market.quote.symbol)
@@ -107,7 +107,7 @@ class PerpInventoryAccountWatcher:
         self.account_watcher: Watcher[Account] = account_watcher
         self.group_watcher: Watcher[Group] = group_watcher
         self.cache_watcher: Watcher[Cache] = cache_watcher
-        self.perp_account_index: int = group.find_perp_market_index(market.address)
+        self.perp_account_index: int = group.slot_by_perp_market_address(market.address).index
         account: Account = account_watcher.latest
         quote_value = InstrumentValue.find_by_symbol(account.net_values, market.quote.symbol)
         self.quote_index: int = account.net_values_by_index.index(quote_value)

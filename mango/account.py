@@ -42,7 +42,8 @@ from .version import Version
 # `AccountSlot` gathers slot items together instead of separate arrays.
 #
 class AccountSlot:
-    def __init__(self, base_instrument: Instrument, base_token_info: typing.Optional[TokenInfo], quote_token_info: TokenInfo, raw_deposit: Decimal, deposit: InstrumentValue, raw_borrow: Decimal, borrow: InstrumentValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]) -> None:
+    def __init__(self, index: int, base_instrument: Instrument, base_token_info: typing.Optional[TokenInfo], quote_token_info: TokenInfo, raw_deposit: Decimal, deposit: InstrumentValue, raw_borrow: Decimal, borrow: InstrumentValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]) -> None:
+        self.index: int = index
         self.base_instrument: Instrument = base_instrument
         self.base_token_info: typing.Optional[TokenInfo] = base_token_info
         self.quote_token_info: TokenInfo = quote_token_info
@@ -217,7 +218,7 @@ class Account(AddressableAccount):
                     group_slot.perp_lot_size_converter,
                     mngo_token)
                 spot_open_orders = layout.spot_open_orders[index]
-                account_slot: AccountSlot = AccountSlot(instrument, token_info, quote_token_info,
+                account_slot: AccountSlot = AccountSlot(index, instrument, token_info, quote_token_info,
                                                         raw_deposit, deposit, raw_borrow, borrow,
                                                         spot_open_orders, perp_account)
 
@@ -232,9 +233,9 @@ class Account(AddressableAccount):
         raw_quote_borrow: Decimal = layout.borrows[-1]
         intrinsic_quote_borrow = quote_token_info.root_bank.borrow_index * raw_quote_borrow
         quote_borrow = InstrumentValue(quote_token, quote_token.shift_to_decimals(intrinsic_quote_borrow))
-        quote: AccountSlot = AccountSlot(quote_token_info.token, quote_token_info, quote_token_info,
-                                         raw_quote_deposit, quote_deposit, raw_quote_borrow, quote_borrow,
-                                         None, None)
+        quote: AccountSlot = AccountSlot(len(layout.deposits) - 1, quote_token_info.token, quote_token_info,
+                                         quote_token_info, raw_quote_deposit, quote_deposit, raw_quote_borrow,
+                                         quote_borrow, None, None)
 
         msrm_amount: Decimal = layout.msrm_amount
         being_liquidated: bool = bool(layout.being_liquidated)

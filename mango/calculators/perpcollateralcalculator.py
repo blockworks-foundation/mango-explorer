@@ -19,7 +19,7 @@ from decimal import Decimal
 
 from ..account import Account
 from ..cache import Cache
-from ..group import GroupSlotSpotMarket, GroupSlotPerpMarket, Group
+from ..group import GroupSlotSpotMarket, GroupSlotPerpMarket, GroupSlot, Group
 from ..instrumentvalue import InstrumentValue
 from ..openorders import OpenOrders
 
@@ -46,7 +46,7 @@ class PerpCollateralCalculator(CollateralCalculator):
         total: Decimal = account.shared_quote.net_value.value
         collateral_description = [f"{total:,.8f} USDC"]
         for basket_token in account.slots:
-            index = group.find_instrument_market_index(basket_token.base_instrument)
+            slot: GroupSlot = group.slot_by_instrument(basket_token.base_instrument)
             token_price = group.token_price_from_cache(cache, basket_token.base_instrument)
 
             # Not using perp market asset weights yet - stick with spot.
@@ -54,17 +54,17 @@ class PerpCollateralCalculator(CollateralCalculator):
             # if perp_market is None:
             #     raise Exception(
             #         f"Could not read perp market of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")
-            spot_market: typing.Optional[GroupSlotSpotMarket] = group.spot_markets_by_index[index]
+            spot_market: typing.Optional[GroupSlotSpotMarket] = slot.spot_market_info
             init_asset_weight: Decimal
             init_liab_weight: Decimal
             if spot_market is not None:
                 init_asset_weight = spot_market.init_asset_weight
                 init_liab_weight = spot_market.init_liab_weight
             else:
-                perp_market: typing.Optional[GroupSlotPerpMarket] = group.perp_markets_by_index[index]
+                perp_market: typing.Optional[GroupSlotPerpMarket] = slot.perp_market_info
                 if perp_market is None:
                     raise Exception(
-                        f"Could not read spot or perp market of token {basket_token.base_instrument.symbol} at index {index} of cache at {cache.address}")
+                        f"Could not read spot or perp market of token {basket_token.base_instrument.symbol} at index {slot.index} of cache at {cache.address}")
                 init_asset_weight = perp_market.init_asset_weight
                 init_liab_weight = perp_market.init_liab_weight
 

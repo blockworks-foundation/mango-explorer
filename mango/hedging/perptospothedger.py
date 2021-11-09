@@ -51,7 +51,7 @@ class PerpToSpotHedger(Hedger):
         resolved_target: mango.InstrumentValue = target_balance.resolve(hedging_market.base, Decimal(0), Decimal(0))
         self.target_balance: Decimal = self.hedging_market.lot_size_converter.round_base(resolved_target.value)
 
-        self.market_index: int = group.find_perp_market_index(underlying_market.address)
+        self.market_index: int = group.slot_by_perp_market_address(underlying_market.address).index
 
     def pulse(self, context: mango.Context, model_state: mango.ModelState) -> None:
         try:

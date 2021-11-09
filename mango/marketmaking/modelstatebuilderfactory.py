@@ -87,7 +87,7 @@ def _polling_serum_model_state_builder_factory(context: mango.Context, wallet: m
 
 def _polling_spot_model_state_builder_factory(group: mango.Group, account: mango.Account, market: mango.SpotMarket,
                                               oracle: mango.Oracle) -> ModelStateBuilder:
-    market_index: int = group.find_spot_market_index(market.address)
+    market_index: int = group.slot_by_spot_market_address(market.address).index
     open_orders_address: typing.Optional[PublicKey] = account.spot_open_orders_by_index[market_index]
     all_open_orders_addresses: typing.Sequence[PublicKey] = account.spot_open_orders
     if open_orders_address is None:
@@ -131,7 +131,7 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
         latest_orderbook_watcher = mango.build_orderbook_watcher(
             context, websocket_manager, health_check, market)
     elif isinstance(market, mango.SpotMarket):
-        market_index: int = group.find_spot_market_index(market.address)
+        market_index: int = group.slot_by_spot_market_address(market.address).index
         order_owner = account.spot_open_orders_by_index[market_index] or SYSTEM_PROGRAM_ADDRESS
         cache: mango.Cache = mango.Cache.load(context, group.cache)
         cache_watcher: mango.Watcher[mango.Cache] = mango.build_cache_watcher(

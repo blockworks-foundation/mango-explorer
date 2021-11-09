@@ -605,7 +605,8 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
     instructions: CombinableInstructions = CombinableInstructions.empty()
 
     spot_market_address = market.state.public_key()
-    market_index = group.find_spot_market_index(spot_market_address)
+    slot = group.slot_by_spot_market_address(spot_market_address)
+    market_index = slot.index
 
     open_orders_address = account.spot_open_orders_by_index[market_index]
     if open_orders_address is None:

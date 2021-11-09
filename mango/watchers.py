@@ -25,7 +25,7 @@ from .accountinfo import AccountInfo
 from .cache import Cache
 from .combinableinstructions import CombinableInstructions
 from .context import Context
-from .group import Group
+from .group import GroupSlot, Group
 from .healthcheck import HealthCheck
 from .instructions import build_create_serum_open_orders_instructions
 from .instrumentvalue import InstrumentValue
@@ -81,7 +81,7 @@ def build_cache_watcher(context: Context, manager: WebSocketSubscriptionManager,
 
 
 def build_spot_open_orders_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, wallet: Wallet, account: Account, group: Group, spot_market: SpotMarket) -> Watcher[OpenOrders]:
-    market_index = group.find_spot_market_index(spot_market.address)
+    market_index = group.slot_by_spot_market_address(spot_market.address).index
     open_orders_address = account.spot_open_orders_by_index[market_index]
     if open_orders_address is None:
         spot_market_instruction_builder: SpotMarketInstructionBuilder = SpotMarketInstructionBuilder.load(
@@ -136,10 +136,11 @@ def build_serum_open_orders_watcher(context: Context, manager: WebSocketSubscrip
 
 
 def build_perp_open_orders_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, perp_market: PerpMarket, account: Account, group: Group, account_subscription: WebSocketSubscription[Account]) -> Watcher[PlacedOrdersContainer]:
-    index = group.find_perp_market_index(perp_market.address)
-    initial_perp_account = account.perp_accounts_by_index[index]
+    slot: GroupSlot = group.slot_by_perp_market_address(perp_market.address)
+    index: int = slot.index
+    initial_perp_account = account.perp_accounts_by_index[slot.index]
     if initial_perp_account is None:
-        raise Exception(f"Could not find perp account at index {index} of account {account.address}.")
+        raise Exception(f"Could not find perp account at index {slot.index} of account {account.address}.")
     initial_open_orders = initial_perp_account.open_orders
     latest_open_orders_observer = LatestItemObserverSubscriber[PlacedOrdersContainer](initial_open_orders)
     account_subscription.publisher.subscribe(

@@ -51,14 +51,12 @@ for balance in balances:
             total_in_wallet = total_in_wallet + balance
             value_text = f" worth {balance}"
         else:
-            token_index: typing.Optional[int] = group.find_instrument_market_index_or_none(balance.token)
-            if token_index is not None:
-                cached_token_price: typing.Optional[mango.PriceCache] = cache.price_cache[token_index]
-                if cached_token_price is not None:
-                    balance_value: mango.InstrumentValue = mango.InstrumentValue(
-                        group.shared_quote_token, balance.value * cached_token_price.price)
-                    total_in_wallet += balance_value
-                    value_text = f" worth {balance_value}"
+            slot: typing.Optional[mango.GroupSlot] = group.slot_by_instrument_or_none(balance.token)
+            if slot is not None:
+                cached_token_price: mango.InstrumentValue = group.token_price_from_cache(cache, slot.base_instrument)
+                balance_value: mango.InstrumentValue = balance * cached_token_price
+                total_in_wallet += balance_value
+                value_text = f" worth {balance_value}"
         print(f"               {balance_text:<45}{value_text}")
 print(
     f"Total Value:   {total_in_wallet}")

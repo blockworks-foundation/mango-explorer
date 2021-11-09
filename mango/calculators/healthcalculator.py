@@ -23,7 +23,7 @@ from ..account import Account, AccountSlot
 from ..accountinstrumentvalues import AccountInstrumentValues, PricedAccountInstrumentValues
 from ..cache import Cache, MarketCache
 from ..context import Context
-from ..group import GroupSlotSpotMarket, GroupSlotPerpMarket, Group
+from ..group import GroupSlotSpotMarket, GroupSlotPerpMarket, GroupSlot, Group
 from ..instrumentvalue import InstrumentValue
 from ..lotsizeconverter import NullLotSizeConverter
 from ..openorders import OpenOrders
@@ -151,8 +151,8 @@ class HealthCalculator:
         health: Decimal = quote_report.net_value.value
         # print("Health (start)", health)
         for priced_report in priced_reports:
-            market_index = group.find_instrument_market_index(priced_report.base_token)
-            spot_market: typing.Optional[GroupSlotSpotMarket] = group.spot_markets_by_index[market_index]
+            slot: GroupSlot = group.slot_by_instrument(priced_report.base_token)
+            spot_market: typing.Optional[GroupSlotSpotMarket] = slot.spot_market_info
             if spot_market is None:
                 raise Exception(f"Could not find market for spot token {priced_report.base_token.symbol}.")
 
@@ -163,7 +163,7 @@ class HealthCalculator:
             # print("Weights", base_value.value, "*", spot_weight, spot_health)
 
             perp_base, perp_quote = priced_report.if_worst_execution()
-            perp_market: typing.Optional[GroupSlotPerpMarket] = group.perp_markets_by_index[market_index]
+            perp_market: typing.Optional[GroupSlotPerpMarket] = slot.perp_market_info
             perp_health: Decimal = Decimal(0)
             if perp_market is not None:
                 perp_weight = perp_market.init_asset_weight if perp_base > 0 else perp_market.init_liab_weight

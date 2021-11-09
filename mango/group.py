@@ -130,7 +130,8 @@ class GroupSlotPerpMarket:
 # `GroupSlot` gathers indexed slot items together instead of separate arrays.
 #
 class GroupSlot:
-    def __init__(self, base_instrument: Instrument, base_token_info: typing.Optional[TokenInfo], quote_token_info: TokenInfo, spot_market_info: typing.Optional[GroupSlotSpotMarket], perp_market_info: typing.Optional[GroupSlotPerpMarket], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey) -> None:
+    def __init__(self, index: int, base_instrument: Instrument, base_token_info: typing.Optional[TokenInfo], quote_token_info: TokenInfo, spot_market_info: typing.Optional[GroupSlotSpotMarket], perp_market_info: typing.Optional[GroupSlotPerpMarket], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey) -> None:
+        self.index: int = index
         self.base_instrument: Instrument = base_instrument
         self.base_token_info: typing.Optional[TokenInfo] = base_token_info
         self.quote_token_info: TokenInfo = quote_token_info
@@ -144,7 +145,7 @@ class GroupSlot:
         quote_token_info = f"{self.quote_token_info}".replace("\n", "\n        ")
         spot_market_info = f"{self.spot_market_info}".replace("\n", "\n        ")
         perp_market_info = f"{self.perp_market_info}".replace("\n", "\n        ")
-        return f"""« 𝙶𝚛𝚘𝚞𝚙𝚂𝚕𝚘𝚝 {self.base_instrument}
+        return f"""« 𝙶𝚛𝚘𝚞𝚙𝚂𝚕𝚘𝚝[{self.index}] {self.base_instrument}
     Base Token Info:
         {base_token_info}
     Quote Token Info:
@@ -198,7 +199,11 @@ class Group(AddressableAccount):
 
     @property
     def liquidity_incentive_token_info(self) -> TokenInfo:
-        return self.find_token_info_by_symbol("MNGO")
+        for token_info in self.tokens:
+            if token_info.token.symbol_matches("MNGO"):
+                return token_info
+
+        raise Exception(f"Could not find token info for symbol 'MNGO' in group {self.address}")
 
     @property
     def liquidity_incentive_token(self) -> Token:
@@ -295,8 +300,8 @@ class Group(AddressableAccount):
                         base_instrument, perp_market_info.base_lot_size, quote_token_info.token, perp_market_info.quote_lot_size)
 
                 oracle: PublicKey = layout.oracles[index]
-                slot: GroupSlot = GroupSlot(
-                    base_instrument, base_token_info, quote_token_info, spot_market_info, perp_market_info, perp_lot_size_converter, oracle)
+                slot: GroupSlot = GroupSlot(index, base_instrument, base_token_info, quote_token_info,
+                                            spot_market_info, perp_market_info, perp_lot_size_converter, oracle)
                 slots += [slot]
                 in_slots += [True]
 
@@ -344,47 +349,33 @@ class Group(AddressableAccount):
             raise Exception(f"Group account not found at address '{group_address}'")
         return Group.parse(context, account_info)
 
-    def find_spot_market_index(self, spot_market_address: PublicKey) -> int:
-        for index, spot in enumerate(self.spot_markets_by_index):
-            if spot is not None and spot.address == spot_market_address:
-                return index
+    def slot_by_spot_market_address(self, spot_market_address: PublicKey) -> GroupSlot:
+        for slot in self.slots:
+            if slot.spot_market_info is not None and slot.spot_market_info.address == spot_market_address:
+                return slot
 
         raise Exception(f"Could not find spot market {spot_market_address} in group {self.address}")
 
-    def find_perp_market_index(self, perp_market_address: PublicKey) -> int:
-        for index, pm in enumerate(self.perp_markets_by_index):
-            if pm is not None and pm.address == perp_market_address:
-                return index
+    def slot_by_perp_market_address(self, perp_market_address: PublicKey) -> GroupSlot:
+        for slot in self.slots:
+            if slot.perp_market_info is not None and slot.perp_market_info.address == perp_market_address:
+                return slot
 
         raise Exception(f"Could not find perp market {perp_market_address} in group {self.address}")
 
-    def find_instrument_market_index_or_none(self, instrument: Instrument) -> typing.Optional[int]:
-        for index, slot in enumerate(self.slots_by_index):
-            if slot is not None and slot.base_instrument == instrument:
-                return index
+    def slot_by_instrument_or_none(self, instrument: Instrument) -> typing.Optional[GroupSlot]:
+        for slot in self.slots:
+            if slot.base_instrument == instrument:
+                return slot
 
         return None
 
-    def find_instrument_market_index(self, instrument: Instrument) -> int:
-        index = self.find_instrument_market_index_or_none(instrument)
-        if index is not None:
-            return index
+    def slot_by_instrument(self, instrument: Instrument) -> GroupSlot:
+        slot: typing.Optional[GroupSlot] = self.slot_by_instrument_or_none(instrument)
+        if slot is not None:
+            return slot
 
         raise Exception(f"Could not find token {instrument} in group {self.address}")
-
-    def find_token_info_by_instrument(self, instrument: Instrument) -> TokenInfo:
-        for token_info in self.tokens:
-            if token_info.token == instrument:
-                return token_info
-
-        raise Exception(f"Could not find token info for instrument {instrument} in group {self.address}")
-
-    def find_token_info_by_symbol(self, symbol: str) -> TokenInfo:
-        for token_info in self.tokens:
-            if token_info.token.symbol_matches(symbol):
-                return token_info
-
-        raise Exception(f"Could not find token info for symbol '{symbol}' in group {self.address}")
 
     def token_price_from_cache(self, cache: Cache, token: Instrument) -> InstrumentValue:
         market_cache: MarketCache = self.market_cache_from_cache(cache, token)
@@ -395,7 +386,8 @@ class Group(AddressableAccount):
         return market_cache.perp_market
 
     def market_cache_from_cache(self, cache: Cache, instrument: Instrument) -> MarketCache:
-        instrument_index: int = self.find_instrument_market_index(instrument)
+        slot: GroupSlot = self.slot_by_instrument(instrument)
+        instrument_index: int = slot.index
         return cache.market_cache_for_index(instrument_index)
 
     def __str__(self) -> str:

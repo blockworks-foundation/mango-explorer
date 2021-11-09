@@ -22,7 +22,7 @@ from solana.publickey import PublicKey
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
-from .group import Group
+from .group import GroupSlot, Group
 from .instrumentvalue import InstrumentValue
 from .layouts import layouts
 from .metadata import Metadata
@@ -129,11 +129,11 @@ class PerpMarketDetails(AddressableAccount):
         self.liquidity_mining_info: LiquidityMiningInfo = liquidity_mining_info
         self.mngo_vault: PublicKey = mngo_vault
 
-        self.market_index = group.find_perp_market_index(self.address)
-
-        slot = group.slots_by_index[self.market_index]
+        slot: GroupSlot = group.slot_by_perp_market_address(self.address)
         if slot is None:
-            raise Exception(f"Could not find slot at index {self.market_index} for perp market {self.address}.")
+            raise Exception(f"Could not find slot for perp market {self.address} in group {group.address}.")
+
+        self.market_index: int = slot.index
 
         self.base_instrument: Instrument = slot.base_instrument
         self.base_token: typing.Optional[TokenInfo] = slot.base_token_info
