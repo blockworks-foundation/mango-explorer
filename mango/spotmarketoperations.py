@@ -102,11 +102,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         base_rootbank = base_slot.base_token_info.root_bank
         base_nodebank = base_rootbank.pick_node_bank(self.context)
 
-        quote_slot: GroupSlot = self.group.slot_by_instrument(self.spot_market.quote)
-        if quote_slot.base_token_info is None:
-            raise Exception(
-                f"No token info for quote instrument {self.spot_market.quote.symbol} in group {self.group.address}")
-        quote_rootbank = quote_slot.base_token_info.root_bank
+        quote_rootbank = self.group.shared_quote.root_bank
         quote_nodebank = quote_rootbank.pick_node_bank(self.context)
         return build_spot_settle_instructions(self.context, self.wallet, self.account,
                                               self.raw_market, self.group, self.open_orders_address,
