@@ -26,7 +26,7 @@ from .token import Token
 
 
 class BalanceSheet:
-    def __init__(self, token: Token, liabilities: Decimal, settled_assets: Decimal, unsettled_assets: Decimal):
+    def __init__(self, token: Token, liabilities: Decimal, settled_assets: Decimal, unsettled_assets: Decimal) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.token: Token = token
         self.liabilities: Decimal = liabilities

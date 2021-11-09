@@ -25,7 +25,7 @@ from ..openorders import OpenOrders
 
 
 class CollateralCalculator(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], group: Group, cache: Cache) -> InstrumentValue:

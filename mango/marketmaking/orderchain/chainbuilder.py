@@ -14,9 +14,9 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import argparse
-from mango.marketmaking.orderchain.afteraccumulateddepthelement import AfterAccumulatedDepthElement
 import typing
 
+from .afteraccumulateddepthelement import AfterAccumulatedDepthElement
 from .biasquoteelement import BiasQuoteElement
 from .biasquoteonpositionelement import BiasQuoteOnPositionElement
 from .chain import Chain

@@ -67,9 +67,8 @@ def _split_instructions_into_chunks(context: Context, signers: typing.Sequence[K
 # (signers + place_orders + settle + crank).execute(context)
 # ```
 #
-
 class CombinableInstructions():
-    def __init__(self, signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]):
+    def __init__(self, signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.signers: typing.Sequence[Keypair] = signers
         self.instructions: typing.Sequence[TransactionInstruction] = instructions

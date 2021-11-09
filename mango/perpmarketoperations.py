@@ -41,7 +41,8 @@ from .wallet import Wallet
 # on initial setup in the `load()` method.
 #
 class PerpMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket):
+    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account,
+                 perp_market: PerpMarket) -> None:
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
@@ -88,7 +89,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
 class PerpMarketOperations(MarketOperations):
     def __init__(self, market_name: str, context: Context, wallet: Wallet,
                  market_instruction_builder: PerpMarketInstructionBuilder,
-                 account: Account, perp_market: PerpMarket):
+                 account: Account, perp_market: PerpMarket) -> None:
         super().__init__(perp_market)
         self.market_name: str = market_name
         self.context: Context = context

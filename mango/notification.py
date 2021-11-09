@@ -40,7 +40,7 @@ from .liquidationevent import LiquidationEvent
 # Derived classes should not override `send()` since that is the interface outside classes call and it's used to ensure `NotificationTarget`s don't throw an exception when sending.
 #
 class NotificationTarget(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     def send(self, item: typing.Any) -> None:
@@ -79,7 +79,7 @@ class NotificationTarget(metaclass=abc.ABCMeta):
 # The [Telegram instructions to create a bot](https://core.telegram.org/bots#creating-a-new-bot)
 # show you how to create the bot token.
 class TelegramNotificationTarget(NotificationTarget):
-    def __init__(self, address):
+    def __init__(self, address: str) -> None:
         super().__init__()
         chat_id, bot_id = address.split("@", 1)
         self.chat_id = chat_id
@@ -100,7 +100,7 @@ class TelegramNotificationTarget(NotificationTarget):
 # The `DiscordNotificationTarget` sends messages to Discord.
 #
 class DiscordNotificationTarget(NotificationTarget):
-    def __init__(self, address):
+    def __init__(self, address: str) -> None:
         super().__init__()
         self.address = address
 
@@ -167,7 +167,7 @@ class DiscordNotificationTarget(NotificationTarget):
 # 	}'
 # ```
 class MailjetNotificationTarget(NotificationTarget):
-    def __init__(self, encoded_parameters):
+    def __init__(self, encoded_parameters: str) -> None:
         super().__init__()
         self.address = "https://api.mailjet.com/v3.1/send"
         api_key, api_secret, subject, from_name, from_address, to_name, to_address = encoded_parameters.split(":")
@@ -221,7 +221,7 @@ class MailjetNotificationTarget(NotificationTarget):
 # changes is not guaranteed to be consistent from transaction to transaction.
 #
 class CsvFileNotificationTarget(NotificationTarget):
-    def __init__(self, filename):
+    def __init__(self, filename: str) -> None:
         super().__init__()
         self.filename = filename
 
@@ -252,7 +252,7 @@ class CsvFileNotificationTarget(NotificationTarget):
 # `NotificationTarget` if the filter function returns `True` for the notification item.
 #
 class FilteringNotificationTarget(NotificationTarget):
-    def __init__(self, inner_notifier: NotificationTarget, filter_func: typing.Callable[[typing.Any], bool]):
+    def __init__(self, inner_notifier: NotificationTarget, filter_func: typing.Callable[[typing.Any], bool]) -> None:
         super().__init__()
         self.inner_notifier: NotificationTarget = inner_notifier
         self.filter_func = filter_func
@@ -270,7 +270,7 @@ class FilteringNotificationTarget(NotificationTarget):
 # The `ConsoleNotificationTarget` prints messages on the console.
 #
 class ConsoleNotificationTarget(NotificationTarget):
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         super().__init__()
         self.name = name
 
@@ -278,7 +278,7 @@ class ConsoleNotificationTarget(NotificationTarget):
         print(self.name, item)
 
     def __str__(self) -> str:
-        return "« 𝙲𝚘𝚗𝚜𝚘𝚕𝚎𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 »"
+        return f"« 𝙲𝚘𝚗𝚜𝚘𝚕𝚎𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 '{self.name}' »"
 
 
 # # 🥭 CompoundNotificationTarget class
@@ -287,7 +287,7 @@ class ConsoleNotificationTarget(NotificationTarget):
 # inner `NotificationTarget`s.
 #
 class CompoundNotificationTarget(NotificationTarget):
-    def __init__(self, targets: typing.Sequence[NotificationTarget]):
+    def __init__(self, targets: typing.Sequence[NotificationTarget]) -> None:
         super().__init__()
         self.targets: typing.Sequence[NotificationTarget] = targets
         self.in_exception_handler: bool = False
@@ -321,7 +321,7 @@ class CompoundNotificationTarget(NotificationTarget):
 # This is most likely used when parsing command-line arguments - this function can be used
 # in the `type` parameter of an `add_argument()` call.
 #
-def parse_notification_target(target):
+def parse_notification_target(target: str) -> NotificationTarget:
     protocol, destination = target.split(":", 1)
 
     if protocol == "telegram":
@@ -345,11 +345,11 @@ def parse_notification_target(target):
 # and notify however it chooses.
 #
 class NotificationHandler(logging.StreamHandler):
-    def __init__(self, target: NotificationTarget):
+    def __init__(self, target: NotificationTarget) -> None:
         logging.StreamHandler.__init__(self)
         self.target = target
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         # Don't send error logging from solanaweb3
         if record.name == "solanaweb3.rpc.httprpc.HTTPClient":
             return

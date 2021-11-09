@@ -19,7 +19,7 @@ import typing
 import websocket
 
 from datetime import datetime
-from rx.subject import BehaviorSubject
+from rx.subject.behaviorsubject import BehaviorSubject
 from rx.core.typing import Disposable
 from solana.publickey import PublicKey
 from solana.rpc.types import RPCResponse
@@ -41,7 +41,8 @@ TSubscriptionInstance = typing.TypeVar('TSubscriptionInstance')
 
 
 class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], metaclass=abc.ABCMeta):
-    def __init__(self, context: Context, address: PublicKey, constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]):
+    def __init__(self, context: Context, address: PublicKey,
+                 constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
         self.address: PublicKey = address
@@ -58,9 +59,12 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
         raise NotImplementedError("WebSocketSubscription.build_request() is not implemented on the base type.")
 
     def open(self,) -> None:
-        websocket_url = self.context.client.cluster_url.replace("https", "wss", 1)
-        ws: ReconnectingWebsocket = ReconnectingWebsocket(websocket_url, lambda sock: sock.send(self.build_request()))
-        ws.item.subscribe(on_next=self._on_item)
+        websocket_url: str = self.context.client.cluster_url.replace("https", "wss", 1)
+
+        def on_open(sock: websocket.WebSocketApp) -> None:
+            sock.send(self.build_request())
+        ws: ReconnectingWebsocket = ReconnectingWebsocket(websocket_url, on_open)
+        ws.item.subscribe(on_next=self._on_item)  # type: ignore[call-arg]
         ws.ping_interval = self.context.ping_interval
         self.ws = ws
         ws.open()
@@ -74,7 +78,7 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
             self.ws.close()
             self.ws = None
 
-    def _on_item(self, response) -> None:
+    def _on_item(self, response: typing.Dict[str, typing.Any]) -> None:
         if "method" not in response:
             id: int = int(response["id"])
             if id == self.id:
@@ -92,7 +96,7 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
         built: TSubscriptionInstance = self.from_account_info(account_info)
         return built
 
-    def dispose(self):
+    def dispose(self) -> None:
         self.publisher.on_completed()
         self.publisher.dispose()
         if self.ws is not None:
@@ -104,7 +108,8 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
 
 
 class WebSocketProgramSubscription(WebSocketSubscription[TSubscriptionInstance]):
-    def __init__(self, context: Context, address: PublicKey, constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]):
+    def __init__(self, context: Context, address: PublicKey,
+                 constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]) -> None:
         super().__init__(context, address, constructor)
 
     def build_request(self) -> str:
@@ -124,7 +129,8 @@ class WebSocketProgramSubscription(WebSocketSubscription[TSubscriptionInstance])
 
 
 class WebSocketAccountSubscription(WebSocketSubscription[TSubscriptionInstance]):
-    def __init__(self, context: Context, address: PublicKey, constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]):
+    def __init__(self, context: Context, address: PublicKey,
+                 constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]) -> None:
         super().__init__(context, address, constructor)
 
     def build_request(self) -> str:
@@ -144,12 +150,12 @@ class WebSocketAccountSubscription(WebSocketSubscription[TSubscriptionInstance])
 
 
 class LogEvent:
-    def __init__(self, signatures: typing.Sequence[str], logs: typing.Sequence[str]):
+    def __init__(self, signatures: typing.Sequence[str], logs: typing.Sequence[str]) -> None:
         self.signatures: typing.Sequence[str] = signatures
         self.logs: typing.Sequence[str] = logs
 
     @staticmethod
-    def from_response(response) -> "LogEvent":
+    def from_response(response: RPCResponse) -> "LogEvent":
         signature_text: str = response["result"]["value"]["signature"]
         signatures = signature_text.split(",")
         logs = response["result"]["value"]["logs"]
@@ -166,7 +172,7 @@ class LogEvent:
 
 
 class WebSocketLogSubscription(WebSocketSubscription[LogEvent]):
-    def __init__(self, context: Context, address: PublicKey):
+    def __init__(self, context: Context, address: PublicKey) -> None:
         super().__init__(context, address, lambda _: LogEvent([""], []))
 
     def build_request(self) -> str:
@@ -195,13 +201,13 @@ class WebSocketLogSubscription(WebSocketSubscription[LogEvent]):
 # The `WebSocketSubscriptionManager` is a base class for different websocket management approaches.
 #
 class WebSocketSubscriptionManager(Disposable, metaclass=abc.ABCMeta):
-    def __init__(self, context: Context, ping_interval: int = 10):
+    def __init__(self, context: Context, ping_interval: int = 10) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
         self.ping_interval: int = ping_interval
-        self.subscriptions: typing.List[WebSocketSubscription] = []
+        self.subscriptions: typing.List[WebSocketSubscription[typing.Any]] = []
 
-    def add(self, subscription: WebSocketSubscription) -> None:
+    def add(self, subscription: WebSocketSubscription[typing.Any]) -> None:
         self.subscriptions += [subscription]
 
     def open(self) -> None:
@@ -210,12 +216,12 @@ class WebSocketSubscriptionManager(Disposable, metaclass=abc.ABCMeta):
     def close(self) -> None:
         raise NotImplementedError("WebSocketSubscription.build_request() is not implemented on the base type.")
 
-    def on_disconnected(self, ws: websocket.WebSocketApp):
+    def on_disconnected(self, ws: websocket.WebSocketApp) -> None:
         for subscription in self.subscriptions:
             subscription.dispose()
         self.subscriptions = []
 
-    def dispose(self):
+    def dispose(self) -> None:
         for subscription in self.subscriptions:
             subscription.dispose()
 
@@ -225,7 +231,7 @@ class WebSocketSubscriptionManager(Disposable, metaclass=abc.ABCMeta):
 # The `IndividualWebSocketSubscriptionManager` runs `WebSocketSubscription`s each in their own websocket.
 #
 class IndividualWebSocketSubscriptionManager(WebSocketSubscriptionManager):
-    def __init__(self, context: Context, ping_interval: int = 10):
+    def __init__(self, context: Context, ping_interval: int = 10) -> None:
         super().__init__(context, ping_interval)
 
     def open(self) -> None:
@@ -243,7 +249,7 @@ class IndividualWebSocketSubscriptionManager(WebSocketSubscriptionManager):
 # `WebSocketSubscription`.
 #
 class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
-    def __init__(self, context: Context, ping_interval: int = 10):
+    def __init__(self, context: Context, ping_interval: int = 10) -> None:
         super().__init__(context, ping_interval)
         self.ws: typing.Optional[ReconnectingWebsocket] = None
         self.pong: BehaviorSubject = BehaviorSubject(datetime.now())
@@ -252,7 +258,7 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
     def open(self) -> None:
         websocket_url = self.context.client.cluster_url.replace("https", "wss", 1)
         ws: ReconnectingWebsocket = ReconnectingWebsocket(websocket_url, self.open_handler)
-        ws.item.subscribe(on_next=self.on_item)
+        ws.item.subscribe(on_next=self.on_item)  # type: ignore[call-arg]
         ws.ping_interval = self.ping_interval
         self.ws = ws
         ws.open()
@@ -266,7 +272,7 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
             self.ws.close()
             self.ws = None
 
-    def add_subscription_id(self, id, subscription_id) -> None:
+    def add_subscription_id(self, id: int, subscription_id: int) -> None:
         for subscription in self.subscriptions:
             if subscription.id == id:
                 self.logger.info(
@@ -275,13 +281,13 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
                 return
         self.logger.error(f"[{self.context.name}] Subscription ID {id} not found")
 
-    def subscription_by_subscription_id(self, subscription_id) -> WebSocketSubscription:
+    def subscription_by_subscription_id(self, subscription_id: int) -> WebSocketSubscription[typing.Any]:
         for subscription in self.subscriptions:
             if subscription.subscription_id == subscription_id:
                 return subscription
         raise Exception(f"[{self.context.name}] No subscription with subscription ID {subscription_id} could be found.")
 
-    def on_item(self, response) -> None:
+    def on_item(self, response: typing.Dict[str, typing.Any]) -> None:
         if "method" not in response:
             id: int = int(response["id"])
             subscription_id: int = int(response["result"])
@@ -294,11 +300,11 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
         else:
             self.logger.error(f"[{self.context.name}] Unknown response: {response}")
 
-    def open_handler(self, ws: websocket.WebSocketApp):
+    def open_handler(self, ws: websocket.WebSocketApp) -> None:
         for subscription in self.subscriptions:
             ws.send(subscription.build_request())
 
-    def dispose(self):
+    def dispose(self) -> None:
         super().dispose()
         if self.ws is not None:
             if self._pong_subscription is not None:

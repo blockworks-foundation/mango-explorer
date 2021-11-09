@@ -29,14 +29,14 @@ orderbook: mango.OrderBook = mango.OrderBook("TEST", bids, asks)
 model_state = fake_model_state(orderbook=orderbook)
 
 
-def test_from_args():
+def test_from_args() -> None:
     args: argparse.Namespace = argparse.Namespace(
         afteraccumulateddepth_depth=None, afteraccumulateddepth_adjustment_ticks=None)
     actual: AfterAccumulatedDepthElement = AfterAccumulatedDepthElement.from_command_line_parameters(args)
     assert actual is not None
 
 
-def test_bid_price_updated():
+def test_bid_price_updated() -> None:
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(78), quantity=Decimal(7), side=mango.Side.BUY)
 
@@ -46,7 +46,7 @@ def test_bid_price_updated():
     assert result[0].price == 74
 
 
-def test_ask_price_updated():
+def test_ask_price_updated() -> None:
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(82), quantity=Decimal(6), side=mango.Side.SELL)
 
@@ -56,7 +56,7 @@ def test_ask_price_updated():
     assert result[0].price == 86
 
 
-def test_accumulation_ignores_own_orders_updated():
+def test_accumulation_ignores_own_orders_updated() -> None:
     order_owner: PublicKey = fake_seeded_public_key("order owner")
     bids: typing.Sequence[mango.Order] = [
         fake_order(price=Decimal(78), quantity=Decimal(1), side=mango.Side.BUY),
@@ -87,7 +87,7 @@ def test_accumulation_ignores_own_orders_updated():
     assert result[1].price == 87
 
 
-def test_bid_price_updated_at_instead_of_after():
+def test_bid_price_updated_at_instead_of_after() -> None:
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(78), quantity=Decimal(7), side=mango.Side.BUY)
 
@@ -98,7 +98,7 @@ def test_bid_price_updated_at_instead_of_after():
     assert result[0].price == 75
 
 
-def test_ask_price_updated_at_instead_of_after():
+def test_ask_price_updated_at_instead_of_after() -> None:
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(82), quantity=Decimal(6), side=mango.Side.SELL)
 
@@ -109,7 +109,7 @@ def test_ask_price_updated_at_instead_of_after():
     assert result[0].price == 85
 
 
-def test_bid_price_updated_for_fixed_depth():
+def test_bid_price_updated_for_fixed_depth() -> None:
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(78), quantity=Decimal(7), side=mango.Side.BUY)
 
@@ -120,7 +120,7 @@ def test_bid_price_updated_for_fixed_depth():
     assert result[0].price == 76
 
 
-def test_ask_price_updated_for_fixed_depth():
+def test_ask_price_updated_for_fixed_depth() -> None:
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(82), quantity=Decimal(6), side=mango.Side.SELL)
 
@@ -131,7 +131,7 @@ def test_ask_price_updated_for_fixed_depth():
     assert result[0].price == 83
 
 
-def test_bid_price_updated_at_instead_of_after_fixed_depth():
+def test_bid_price_updated_at_instead_of_after_fixed_depth() -> None:
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(78), quantity=Decimal(7), side=mango.Side.BUY)
 
@@ -143,7 +143,7 @@ def test_bid_price_updated_at_instead_of_after_fixed_depth():
     assert result[0].price == 77
 
 
-def test_ask_price_updated_at_instead_of_after_fixed_depth():
+def test_ask_price_updated_at_instead_of_after_fixed_depth() -> None:
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(82), quantity=Decimal(6), side=mango.Side.SELL)
 

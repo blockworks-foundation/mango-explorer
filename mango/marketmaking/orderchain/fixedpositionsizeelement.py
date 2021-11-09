@@ -29,7 +29,7 @@ from ...modelstate import ModelState
 # value and a fixed position size value.
 #
 class FixedPositionSizeElement(PairwiseElement):
-    def __init__(self, position_sizes: typing.Sequence[Decimal]):
+    def __init__(self, position_sizes: typing.Sequence[Decimal]) -> None:
         super().__init__()
         self.position_sizes: typing.Sequence[Decimal] = position_sizes
 

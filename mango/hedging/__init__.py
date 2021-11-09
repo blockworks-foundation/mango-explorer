@@ -1,3 +1,3 @@
-from .hedger import Hedger
-from .nullhedger import NullHedger
-from .perptospothedger import PerpToSpotHedger
+from .hedger import Hedger as Hedger
+from .nullhedger import NullHedger as NullHedger
+from .perptospothedger import PerpToSpotHedger as PerpToSpotHedger

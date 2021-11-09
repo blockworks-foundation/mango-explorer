@@ -31,7 +31,7 @@ from ...modelstate import ModelState
 # Can take multiple minimum charges to work with pair-wise orders.
 #
 class MinimumChargeElement(PairwiseElement):
-    def __init__(self, ratios: typing.Sequence[Decimal], from_bid_ask: bool):
+    def __init__(self, ratios: typing.Sequence[Decimal], from_bid_ask: bool) -> None:
         super().__init__()
         self.minimumcharge_ratios: typing.Sequence[Decimal] = ratios
         self.minimumcharge_from_bid_ask: bool = from_bid_ask

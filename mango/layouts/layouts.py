@@ -47,16 +47,22 @@ from solana.publickey import PublicKey
 # ## DecimalAdapter class
 #
 # A simple construct `Adapter` that lets us use `Decimal`s directly in our structs.
-class DecimalAdapter(construct.Adapter):
-    def __init__(self, size: int = 8):
-        construct.Adapter.__init__(self, construct.BytesInteger(size, swapped=True))  # type: ignore[call-arg]
+#
+if typing.TYPE_CHECKING:
+    class DecimalAdapter(construct.Adapter[Decimal, int, typing.Any, typing.Any]):
+        def __init__(self, size: int = 8) -> None:
+            pass
+else:
+    class DecimalAdapter(construct.Adapter):
+        def __init__(self, size: int = 8) -> None:
+            super().__init__(construct.BytesInteger(size, swapped=True))
 
-    def _decode(self, obj, context, path) -> Decimal:
-        return Decimal(obj)
+        def _decode(self, obj: int, context: typing.Any, path: typing.Any) -> Decimal:
+            return Decimal(obj)
 
-    def _encode(self, obj, context, path) -> int:
-        # Can only encode int values.
-        return int(obj)
+        def _encode(self, obj: Decimal, context: typing.Any, path: typing.Any) -> int:
+            # Can only encode Decimal values.
+            return int(obj)
 
 
 # ## FloatAdapter class
@@ -78,78 +84,94 @@ class DecimalAdapter(construct.Adapter):
 # structs. We do as Daffy says, but we can handle arbitrary sizes, not just u128. (The
 # constructor takes a size - in bytes, like the rest of our code - and calculates the
 # divisor so the mid-point of the whole sequence of bits is the fixed point.)
+#
+if typing.TYPE_CHECKING:
+    class FloatAdapter(construct.Adapter[Decimal, int, typing.Any, typing.Any]):
+        def __init__(self, size: int = 16) -> None:
+            pass
+else:
+    class FloatAdapter(construct.Adapter):
+        def __init__(self, size: int = 16) -> None:
+            self.size = size
+            super().__init__(construct.BytesInteger(size, swapped=True))
 
+            # Our size is in bytes but we want to work with bits here.
+            bit_size = self.size * 8
 
-class FloatAdapter(construct.Adapter):
-    def __init__(self, size: int = 16):
-        self.size = size
-        construct.Adapter.__init__(self, construct.BytesInteger(size, swapped=True))  # type: ignore[call-arg]
+            # For our string of bits, our 'fixed point' is right in the middle.
+            fixed_point = bit_size / 2
 
-        # Our size is in bytes but we want to work with bits here.
-        bit_size = self.size * 8
+            # So our divisor is 2 to the power of the fixed point
+            self.divisor = Decimal(2 ** fixed_point)
 
-        # For our string of bits, our 'fixed point' is right in the middle.
-        fixed_point = bit_size / 2
+        def _decode(self, obj: int, context: typing.Any, path: typing.Any) -> Decimal:
+            return Decimal(obj) / self.divisor
 
-        # So our divisor is 2 to the power of the fixed point
-        self.divisor = Decimal(2 ** fixed_point)
-
-    def _decode(self, obj, context, path) -> Decimal:
-        return Decimal(obj) / self.divisor
-
-    def _encode(self, obj, context, path) -> bytes:
-        return bytes(obj)
+        def _encode(self, obj: Decimal, context: typing.Any, path: typing.Any) -> int:
+            return int(obj)
 
 
 # ## SignedDecimalAdapter class
 #
 # Another simple `Decimal` `Adapter` but this one specifically works with signed decimals.
+#
+if typing.TYPE_CHECKING:
+    class SignedDecimalAdapter(construct.Adapter[Decimal, int, typing.Any, typing.Any]):
+        def __init__(self, size: int = 8) -> None:
+            pass
+else:
+    class SignedDecimalAdapter(construct.Adapter):
+        def __init__(self, size: int = 8) -> None:
+            super().__init__(construct.BytesInteger(size, signed=True, swapped=True))
 
-class SignedDecimalAdapter(construct.Adapter):
-    def __init__(self, size: int = 8):
-        construct.Adapter.__init__(self, construct.BytesInteger(
-            size, signed=True, swapped=True))  # type: ignore[call-arg]
+        def _decode(self, obj: int, context: typing.Any, path: typing.Any) -> Decimal:
+            return Decimal(obj)
 
-    def _decode(self, obj, context, path) -> Decimal:
-        return Decimal(obj)
-
-    def _encode(self, obj, context, path) -> int:
-        # Can only encode int values.
-        return int(obj)
+        def _encode(self, obj: Decimal, context: typing.Any, path: typing.Any) -> int:
+            # Can only encode int values.
+            return int(obj)
 
 
 # ## PublicKeyAdapter
 #
 # A simple construct `Adapter` that lets us use `PublicKey`s directly in our structs.
+#
+if typing.TYPE_CHECKING:
+    class PublicKeyAdapter(construct.Adapter[PublicKey, bytes, typing.Any, typing.Any]):
+        def __init__(self) -> None:
+            pass
+else:
+    class PublicKeyAdapter(construct.Adapter):
+        def __init__(self) -> None:
+            super().__init__(construct.Bytes(32))
 
+        def _decode(self, obj: bytes, context: typing.Any, path: typing.Any) -> typing.Optional[PublicKey]:
+            if (obj is None) or (obj == bytes([0] * 32)):
+                return None
+            return PublicKey(obj)
 
-class PublicKeyAdapter(construct.Adapter):
-    def __init__(self):
-        construct.Adapter.__init__(self, construct.Bytes(32))
-
-    def _decode(self, obj, context, path) -> typing.Optional[PublicKey]:
-        if (obj is None) or (obj == bytes([0] * 32)):
-            return None
-        return PublicKey(obj)
-
-    def _encode(self, obj, context, path) -> bytes:
-        return bytes(obj)
+        def _encode(self, obj: PublicKey, context: typing.Any, path: typing.Any) -> bytes:
+            return bytes(obj)
 
 
 # ## DatetimeAdapter
 #
 # A simple construct `Adapter` that lets us load `datetime`s directly in our structs.
+#
+if typing.TYPE_CHECKING:
+    class DatetimeAdapter(construct.Adapter[datetime.datetime, int, typing.Any, typing.Any]):
+        def __init__(self) -> None:
+            pass
+else:
+    class DatetimeAdapter(construct.Adapter):
+        def __init__(self) -> None:
+            super().__init__(construct.BytesInteger(8, swapped=True))
 
+        def _decode(self, obj: int, context: typing.Any, path: typing.Any) -> datetime.datetime:
+            return datetime.datetime.fromtimestamp(obj, tz=datetime.timezone.utc)
 
-class DatetimeAdapter(construct.Adapter):
-    def __init__(self):
-        construct.Adapter.__init__(self, construct.BytesInteger(8, swapped=True))
-
-    def _decode(self, obj, context, path) -> datetime.datetime:
-        return datetime.datetime.fromtimestamp(obj, tz=datetime.timezone.utc)
-
-    def _encode(self, obj, context, path) -> bytes:
-        return bytes(obj)
+        def _encode(self, obj: datetime.datetime, context: typing.Any, path: typing.Any) -> int:
+            return int(obj.timestamp())
 
 
 # ## FloatI80F48Adapter
@@ -159,30 +181,36 @@ class DatetimeAdapter(construct.Adapter):
 #
 # So it's 128 bits, or 16 bytes, long, and the first 10 bytes are the
 # integer part and the last 6 bytes are the fractional part.
-class FloatI80F48Adapter(construct.Adapter):
-    def __init__(self):
-        self.size = 16
-        construct.Adapter.__init__(self, construct.BytesInteger(self.size, signed=True, swapped=True))
+#
+if typing.TYPE_CHECKING:
+    class FloatI80F48Adapter(construct.Adapter[Decimal, int, typing.Any, typing.Any]):
+        def __init__(self) -> None:
+            pass
+else:
+    class FloatI80F48Adapter(construct.Adapter):
+        def __init__(self) -> None:
+            self.size = 16
+            super().__init__(construct.BytesInteger(self.size, signed=True, swapped=True))
 
-        # For our string of bits, our 'fixed point' is between the 10th byte and 11th byte. We want
-        # the last 6 bytes to be fractional, so:
-        fixed_point_in_bits = 8 * 6
+            # For our string of bits, our 'fixed point' is between the 10th byte and 11th byte. We want
+            # the last 6 bytes to be fractional, so:
+            fixed_point_in_bits = 8 * 6
 
-        # So our divisor is 2 to the power of the fixed point
-        self.divisor = Decimal(2 ** fixed_point_in_bits)
+            # So our divisor is 2 to the power of the fixed point
+            self.divisor = Decimal(2 ** fixed_point_in_bits)
 
-    def _decode(self, obj, context, path) -> Decimal:
-        # How many decimal places precision should we allow for an I80F48? TypeScript seems to have
-        # 20 decimal places. The Decimal class is a bit weird - although the standard Python round()
-        # is available, it can fail with InvalidOperation if the precision requested doesn't actually
-        # exist. That's the wrong way around for us - we want to ensure we don't have MORE digits
-        # than 20, not raise an exception when we have a sufficiently rounded number already.
-        value: Decimal = Decimal(obj)
-        divided: Decimal = value / self.divisor
-        return divided.quantize(Decimal('.00000000000000000001'), context=DecimalContext(prec=100))
+        def _decode(self, obj: int, context: typing.Any, path: typing.Any) -> Decimal:
+            # How many decimal places precision should we allow for an I80F48? TypeScript seems to have
+            # 20 decimal places. The Decimal class is a bit weird - although the standard Python round()
+            # is available, it can fail with InvalidOperation if the precision requested doesn't actually
+            # exist. That's the wrong way around for us - we want to ensure we don't have MORE digits
+            # than 20, not raise an exception when we have a sufficiently rounded number already.
+            value: Decimal = Decimal(obj)
+            divided: Decimal = value / self.divisor
+            return divided.quantize(Decimal('.00000000000000000001'), context=DecimalContext(prec=100))
 
-    def _encode(self, obj, context, path) -> bytes:
-        return bytes(obj)
+        def _encode(self, obj: Decimal, context: typing.Any, path: typing.Any) -> int:
+            return int(obj)
 
 
 # ## BookPriceAdapter
@@ -196,27 +224,32 @@ class FloatI80F48Adapter(construct.Adapter):
 # Really, it'd be nice if this adapter could place 3 keys in the layout struct, but I haven't
 # found out how to do that. So as a quick workaround, we return the three keys in their own
 # dictionary.
+#
+if typing.TYPE_CHECKING:
+    class BookPriceAdapter(construct.Adapter[typing.Dict[str, Decimal], bytes, typing.Any, typing.Any]):
+        def __init__(self) -> None:
+            pass
+else:
+    class BookPriceAdapter(construct.Adapter):
+        def __init__(self) -> None:
+            super().__init__(construct.Bytes(16))
 
-class BookPriceAdapter(construct.Adapter):
-    def __init__(self):
-        construct.Adapter.__init__(self, construct.Bytes(16))
+        def _decode(self, obj: bytes, context: typing.Any, path: typing.Any) -> typing.Dict[str, Decimal]:
+            order_id = Decimal(int.from_bytes(obj, 'little', signed=False))
+            low_order = obj[:8]
+            high_order = obj[8:]
+            sequence_number = Decimal(int.from_bytes(low_order, 'little', signed=False))
+            price = Decimal(int.from_bytes(high_order, 'little', signed=False))
 
-    def _decode(self, obj, context, path) -> typing.Dict[str, Decimal]:
-        order_id = Decimal(int.from_bytes(obj, 'little', signed=False))
-        low_order = obj[:8]
-        high_order = obj[8:]
-        sequence_number = Decimal(int.from_bytes(low_order, 'little', signed=False))
-        price = Decimal(int.from_bytes(high_order, 'little', signed=False))
+            return {
+                "order_id": order_id,
+                "price": price,
+                "sequence_number": sequence_number
+            }
 
-        return {
-            "order_id": order_id,
-            "price": price,
-            "sequence_number": sequence_number
-        }
-
-    def _encode(self, obj, context, path) -> int:
-        # Not done yet
-        raise NotImplementedError()
+        def _encode(self, obj: typing.Dict[str, Decimal], context: typing.Any, path: typing.Any) -> bytes:
+            # Not done yet
+            raise NotImplementedError()
 
 
 # ## OrderBookNodeAdapter
@@ -228,28 +261,33 @@ class BookPriceAdapter(construct.Adapter):
 _NODE_SIZE = 88
 
 
-class OrderBookNodeAdapter(construct.Adapter):
-    def __init__(self):
-        construct.Adapter.__init__(self, construct.Bytes(_NODE_SIZE))
+if typing.TYPE_CHECKING:
+    class OrderBookNodeAdapter(construct.Adapter[typing.Any, typing.Any, typing.Any, typing.Any]):
+        def __init__(self) -> None:
+            pass
+else:
+    class OrderBookNodeAdapter(construct.Adapter):
+        def __init__(self) -> None:
+            super().__init__(construct.Bytes(_NODE_SIZE))
 
-    def _decode(self, obj, context, path) -> construct.Container:
-        any_node = ANY_NODE.parse(obj)
-        if any_node.tag == Decimal(0):
-            return UNINITIALIZED_BOOK_NODE.parse(obj)
-        elif any_node.tag == Decimal(1):
-            return INNER_BOOK_NODE.parse(obj)
-        elif any_node.tag == Decimal(2):
-            return LEAF_BOOK_NODE.parse(obj)
-        elif any_node.tag == Decimal(3):
-            return FREE_BOOK_NODE.parse(obj)
-        elif any_node.tag == Decimal(4):
-            return LAST_FREE_BOOK_NODE.parse(obj)
+        def _decode(self, obj: bytes, context: typing.Any, path: typing.Any) -> typing.Any:
+            any_node = ANY_NODE.parse(obj)
+            if any_node.tag == Decimal(0):
+                return UNINITIALIZED_BOOK_NODE.parse(obj)
+            elif any_node.tag == Decimal(1):
+                return INNER_BOOK_NODE.parse(obj)
+            elif any_node.tag == Decimal(2):
+                return LEAF_BOOK_NODE.parse(obj)
+            elif any_node.tag == Decimal(3):
+                return FREE_BOOK_NODE.parse(obj)
+            elif any_node.tag == Decimal(4):
+                return LAST_FREE_BOOK_NODE.parse(obj)
 
-        raise Exception(f"Unknown node type tag: {any_node.tag}")
+            raise Exception(f"Unknown node type tag: {any_node.tag}")
 
-    def _encode(self, obj, context, path) -> int:
-        # Not done yet
-        raise NotImplementedError()
+        def _encode(self, obj: typing.Any, context: typing.Any, path: typing.Any) -> typing.Any:
+            # Not done yet
+            raise NotImplementedError()
 
 
 # # Layout Structs

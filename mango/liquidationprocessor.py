@@ -42,7 +42,6 @@ from .walletbalancer import WalletBalancer
 #
 # An enum that describes the current state of the `LiquidationProcessor`.
 #
-
 class LiquidationProcessorState(enum.Enum):
     STARTING = enum.auto()
     HEALTHY = enum.auto()
@@ -58,13 +57,11 @@ class LiquidationProcessorState(enum.Enum):
 # list of `Account`s, determines if they're liquidatable, and calls an
 # `AccountLiquidator` to do the work.
 #
-
-
 class LiquidationProcessor:
     _AGE_ERROR_THRESHOLD = timedelta(minutes=5)
     _AGE_WARNING_THRESHOLD = timedelta(minutes=2)
 
-    def __init__(self, context: Context, name: str, account_liquidator: AccountLiquidator, wallet_balancer: WalletBalancer, worthwhile_threshold: Decimal = Decimal("0.01")):
+    def __init__(self, context: Context, name: str, account_liquidator: AccountLiquidator, wallet_balancer: WalletBalancer, worthwhile_threshold: Decimal = Decimal("0.01")) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
         self.name: str = name
@@ -78,7 +75,7 @@ class LiquidationProcessor:
         self.state: LiquidationProcessorState = LiquidationProcessorState.STARTING
         self.state_change: EventSource[LiquidationProcessor] = EventSource[LiquidationProcessor]()
 
-    def update_accounts(self, ripe_accounts: typing.Sequence[Account]):
+    def update_accounts(self, ripe_accounts: typing.Sequence[Account]) -> None:
         self.logger.info(
             f"Received {len(ripe_accounts)} ripe 🥭 margin accounts to process - prices last updated {self.prices_updated_at:%Y-%m-%d %H:%M:%S}")
         self._check_update_recency("prices", self.prices_updated_at)
@@ -88,7 +85,7 @@ class LiquidationProcessor:
         if self.state == LiquidationProcessorState.STARTING:
             self.state = LiquidationProcessorState.HEALTHY
 
-    def update_prices(self, group: Group, prices):
+    def update_prices(self, group: Group, prices: typing.Sequence[InstrumentValue]) -> None:
         started_at = time.time()
 
         if self.state == LiquidationProcessorState.STARTING:
@@ -127,7 +124,7 @@ class LiquidationProcessor:
         time_taken = time.time() - started_at
         self.logger.info(f"Check of all ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
 
-    def _liquidate_all(self, group: Group, prices: typing.Sequence[InstrumentValue], to_liquidate: typing.Sequence[LiquidatableReport]):
+    def _liquidate_all(self, group: Group, prices: typing.Sequence[InstrumentValue], to_liquidate: typing.Sequence[LiquidatableReport]) -> None:
         to_process = list(to_liquidate)
         while len(to_process) > 0:
             # TODO - sort this when LiquidationReport has the proper details for V3.

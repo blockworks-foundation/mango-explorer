@@ -23,7 +23,7 @@ from .constants import SOL_DECIMALS, SOL_MINT_ADDRESS
 
 
 class Instrument:
-    def __init__(self, symbol: str, name: str, decimals: Decimal):
+    def __init__(self, symbol: str, name: str, decimals: Decimal) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.symbol: str = symbol.upper()
         self.name: str = name
@@ -46,13 +46,13 @@ class Instrument:
         return self.symbol.upper() == symbol.upper()
 
     # Instruments are equal if they have the same normalised symbol.
-    def __eq__(self, other):
+    def __eq__(self, other: typing.Any) -> bool:
         if isinstance(other, Instrument):
             return self.symbol == other.symbol
         return False
 
     def __str__(self) -> str:
-        return f"« 𝙽𝚘𝚗𝚂𝙿𝙻𝚃𝚘𝚔𝚎𝚗 [{self.symbol}] '{self.name}' »"
+        return f"« 𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝 [{self.symbol}] '{self.name}' »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -63,7 +63,7 @@ class Instrument:
 # `Token` defines aspects common to every token.
 #
 class Token(Instrument):
-    def __init__(self, symbol: str, name: str, decimals: Decimal, mint: PublicKey):
+    def __init__(self, symbol: str, name: str, decimals: Decimal, mint: PublicKey) -> None:
         super().__init__(symbol, name, decimals)
         self.mint: PublicKey = mint
 
@@ -95,8 +95,8 @@ class Token(Instrument):
         return found[0]
 
     # Tokens are equal if they have the same mint address.
-    def __eq__(self, other):
-        if hasattr(other, 'mint'):
+    def __eq__(self, other: typing.Any) -> bool:
+        if isinstance(other, Token):
             return self.mint == other.mint
         return False
 
@@ -108,6 +108,4 @@ class Token(Instrument):
 #
 # It's sometimes handy to have a `Token` for SOL, but SOL isn't actually a token and can't appear in baskets. This object defines a special case for SOL.
 #
-
-
 SolToken = Token("SOL", "Pure SOL", SOL_DECIMALS, SOL_MINT_ADDRESS)

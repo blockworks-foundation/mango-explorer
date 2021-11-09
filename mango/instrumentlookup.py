@@ -135,10 +135,10 @@ class NonSPLInstrumentLookup(InstrumentLookup):
     DefaultMainnetDataFilepath = os.path.join(DATA_PATH, "nonspl.instrumentlist.json")
     DefaultDevnetDataFilepath = os.path.join(DATA_PATH, "nonspl.instrumentlist.devnet.json")
 
-    def __init__(self, filename: str, token_data: typing.Dict) -> None:
+    def __init__(self, filename: str, token_data: typing.Dict[str, typing.Any]) -> None:
         super().__init__()
         self.filename: str = filename
-        self.token_data = token_data
+        self.token_data: typing.Dict[str, typing.Any] = token_data
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Instrument]:
         for token in self.token_data["tokens"]:
@@ -207,10 +207,10 @@ class IdsJsonTokenLookup(InstrumentLookup):
 class SPLTokenLookup(InstrumentLookup):
     DefaultDataFilepath = os.path.join(DATA_PATH, "solana.tokenlist.json")
 
-    def __init__(self, filename: str, token_data: typing.Dict) -> None:
+    def __init__(self, filename: str, token_data: typing.Dict[str, typing.Any]) -> None:
         super().__init__()
         self.filename: str = filename
-        self.token_data = token_data
+        self.token_data: typing.Dict[str, typing.Any] = token_data
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
         for token in self.token_data["tokens"]:

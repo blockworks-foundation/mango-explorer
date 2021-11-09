@@ -20,7 +20,7 @@ import rx.subject
 import typing
 
 from datetime import datetime
-from rx.core.abc.disposable import Disposable
+from rx.core.typing import Disposable
 from rxpy_backpressure import BackPressure
 
 
@@ -34,9 +34,7 @@ from rxpy_backpressure import BackPressure
 #
 # This class can subscribe to an `Observable` to do nothing but make sure it runs.
 #
-
-
-class NullObserverSubscriber(rx.core.Observer):
+class NullObserverSubscriber(rx.core.observer.observer.Observer):
     def __init__(self) -> None:
         super().__init__()
 
@@ -54,7 +52,7 @@ class NullObserverSubscriber(rx.core.Observer):
 #
 # This class can subscribe to an `Observable` and print out each item.
 #
-class PrintingObserverSubscriber(rx.core.Observer):
+class PrintingObserverSubscriber(rx.core.observer.observer.Observer):
     def __init__(self, report_no_output: bool) -> None:
         super().__init__()
         self.report_no_output = report_no_output
@@ -90,7 +88,7 @@ class TimestampedPrintingObserverSubscriber(PrintingObserverSubscriber):
 #
 # This class can subscribe to an `Observable` and collect each item.
 #
-class CollectingObserverSubscriber(rx.core.Observer):
+class CollectingObserverSubscriber(rx.core.observer.observer.Observer):
     def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.collected: typing.List[typing.Any] = []
@@ -111,7 +109,7 @@ class CollectingObserverSubscriber(rx.core.Observer):
 # later.
 #
 class CaptureFirstItem:
-    def __init__(self):
+    def __init__(self) -> None:
         self.captured: typing.Any = None
         self.has_captured: bool = False
 
@@ -134,7 +132,7 @@ TItem = typing.TypeVar('TItem')
 #
 # This class can subscribe to an `Observable` and capture the latest item as it is observed.
 #
-class LatestItemObserverSubscriber(rx.core.Observer, typing.Generic[TItem]):
+class LatestItemObserverSubscriber(rx.core.observer.observer.Observer, typing.Generic[TItem]):
     def __init__(self, initial: TItem) -> None:
         super().__init__()
         self.latest: TItem = initial
@@ -159,11 +157,11 @@ class LatestItemObserverSubscriber(rx.core.Observer, typing.Generic[TItem]):
 # This is mostly for libraries (like `rxpy_backpressure`) that take observers but not their
 # component functions.
 #
-class FunctionObserver(rx.core.Observer):
+class FunctionObserver(rx.core.observer.observer.Observer):
     def __init__(self,
                  on_next: typing.Callable[[typing.Any], None],
                  on_error: typing.Callable[[Exception], None] = lambda _: None,
-                 on_completed: typing.Callable[[], None] = lambda: None):
+                 on_completed: typing.Callable[[], None] = lambda: None) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._on_next = on_next
         self._on_error = on_error
@@ -193,7 +191,7 @@ class FunctionObserver(rx.core.Observer):
 # This class is a regular Subject that can take additional `Disposable` objects to dispose of when the
 # `Subject` is being cleaned up.
 #
-class DisposingSubject(rx.subject.Subject):
+class DisposingSubject(rx.subject.subject.Subject):
     def __init__(self) -> None:
         super().__init__()
         self._to_dispose: typing.List[rx.core.typing.Disposable] = []
@@ -215,9 +213,9 @@ class DisposingSubject(rx.subject.Subject):
 # take multiple seconds to complete. In that case, the latest item will be immediately
 # emitted and the in-between items skipped.
 #
-def create_backpressure_skipping_observer(on_next: typing.Callable[[typing.Any], None], on_error: typing.Callable[[Exception], None] = lambda _: None, on_completed: typing.Callable[[], None] = lambda: None) -> rx.core.Observer:
+def create_backpressure_skipping_observer(on_next: typing.Callable[[typing.Any], None], on_error: typing.Callable[[Exception], None] = lambda _: None, on_completed: typing.Callable[[], None] = lambda: None) -> rx.core.typing.Observer[typing.Any]:
     observer = FunctionObserver(on_next=on_next, on_error=on_error, on_completed=on_completed)
-    return BackPressure.LATEST(observer)
+    return typing.cast(rx.core.typing.Observer[typing.Any], BackPressure.LATEST(observer))
 
 
 # # 🥭 debug_print_item function
@@ -277,7 +275,7 @@ def log_subscription_error(error: Exception) -> None:
 # sub1.subscribe(lambda item: print(item), on_error = lambda error: print(f"Error : {error}"))
 # ```
 #
-def observable_pipeline_error_reporter(ex, _):
+def observable_pipeline_error_reporter(ex: Exception, _: rx.core.observable.observable.Observable) -> rx.core.observable.observable.Observable:
     logging.error(f"Intercepted error in observable pipeline: {ex}")
     raise ex
 
@@ -293,7 +291,7 @@ TEventDatum = typing.TypeVar('TEventDatum')
 #
 # A strongly(ish)-typed event source that can handle many subscribers.
 #
-class EventSource(rx.subject.Subject, typing.Generic[TEventDatum]):
+class EventSource(rx.subject.subject.Subject, typing.Generic[TEventDatum]):
     def __init__(self) -> None:
         super().__init__()
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -323,13 +321,13 @@ class EventSource(rx.subject.Subject, typing.Generic[TEventDatum]):
 # cleanup actions.
 #
 class DisposePropagator(Disposable):
-    def __init__(self):
+    def __init__(self) -> None:
         self.disposables: typing.List[Disposable] = []
 
-    def add_disposable(self, disposable: Disposable):
+    def add_disposable(self, disposable: Disposable) -> None:
         self.disposables += [disposable]
 
-    def dispose(self):
+    def dispose(self) -> None:
         for disposable in self.disposables:
             disposable.dispose()
 
@@ -339,8 +337,8 @@ class DisposePropagator(Disposable):
 # A `Disposable` class that wraps a lambda to perform some cleanup actions when it is disposed.
 #
 class DisposeWrapper(Disposable):
-    def __init__(self, callable):
+    def __init__(self, callable: typing.Callable[[], None]) -> None:
         self.callable: typing.Callable[[], None] = callable
 
-    def dispose(self):
+    def dispose(self) -> None:
         self.callable()

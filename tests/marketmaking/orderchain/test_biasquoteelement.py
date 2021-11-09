@@ -8,13 +8,13 @@ from decimal import Decimal
 from mango.marketmaking.orderchain.biasquoteelement import BiasQuoteElement
 
 
-def test_from_args():
+def test_from_args() -> None:
     args: argparse.Namespace = argparse.Namespace(biasquote_factor=[Decimal(17)])
     actual: BiasQuoteElement = BiasQuoteElement.from_command_line_parameters(args)
-    assert actual.bias_factors == [17]
+    assert actual.bias_factors == [17]  # type: ignore[comparison-overlap]
 
 
-def test_no_factor_results_in_no_change():
+def test_no_factor_results_in_no_change() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
     actual: BiasQuoteElement = BiasQuoteElement([Decimal(1)])
@@ -25,7 +25,7 @@ def test_no_factor_results_in_no_change():
     assert result == [order]
 
 
-def test_single_factor_much_greater_than_one():
+def test_single_factor_much_greater_than_one() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
     actual: BiasQuoteElement = BiasQuoteElement([Decimal("1.2")])  # Huge bias!
@@ -38,7 +38,7 @@ def test_single_factor_much_greater_than_one():
     assert result[1].price == 132  # 110 * 1.2 = 132
 
 
-def test_single_factor_much_less_than_one():
+def test_single_factor_much_less_than_one() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
     actual: BiasQuoteElement = BiasQuoteElement([Decimal("0.8")])  # Huge bias!
@@ -51,7 +51,7 @@ def test_single_factor_much_less_than_one():
     assert result[1].price == 88  # 110 * 0.8 = 88
 
 
-def test_single_factor_greater_than_one():
+def test_single_factor_greater_than_one() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
     actual: BiasQuoteElement = BiasQuoteElement([Decimal("1.001")])  # shift 10 bips up
@@ -64,7 +64,7 @@ def test_single_factor_greater_than_one():
     assert result[1].price == Decimal("110.11")  # 110 * 1.001 = 110.11
 
 
-def test_single_factor_less_than_one():
+def test_single_factor_less_than_one() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
     actual: BiasQuoteElement = BiasQuoteElement([Decimal("0.999")])  # shift 10 bips down
@@ -77,7 +77,7 @@ def test_single_factor_less_than_one():
     assert result[1].price == Decimal("109.89")  # 110 * 0.999 = 109.89
 
 
-def test_single_factor_two_order_pairs():
+def test_single_factor_two_order_pairs() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
     actual: BiasQuoteElement = BiasQuoteElement([Decimal("0.999")])  # shift 10 bips down
@@ -95,7 +95,7 @@ def test_single_factor_two_order_pairs():
     assert result[3].price == Decimal("119.88")  # 120 * 0.999 = 119.88
 
 
-def test_two_factors_two_order_pairs():
+def test_two_factors_two_order_pairs() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
     actual: BiasQuoteElement = BiasQuoteElement([Decimal("0.999"), Decimal("0.9")])  # shift 10 bips down
@@ -113,7 +113,7 @@ def test_two_factors_two_order_pairs():
     assert result[3].price == Decimal("108")  # 120 * 0.9 = 108
 
 
-def test_three_factors_three_order_pairs():
+def test_three_factors_three_order_pairs() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
     actual: BiasQuoteElement = BiasQuoteElement([Decimal("0.9"), Decimal("0.8"), Decimal("0.7")])  # shift 10 bips down

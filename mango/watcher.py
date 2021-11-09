@@ -45,7 +45,7 @@ class Watcher(typing.Protocol[TWatched]):
 # requires manual intervention (updating of the `value` member) to set the latest version.
 #
 class ManualUpdateWatcher(typing.Generic[TWatched]):
-    def __init__(self, value: TWatched):
+    def __init__(self, value: TWatched) -> None:
         self.value: TWatched = value
 
     @property
@@ -59,7 +59,7 @@ class ManualUpdateWatcher(typing.Generic[TWatched]):
 # calls a lambda to determine the latest version.
 #
 class LamdaUpdateWatcher(typing.Generic[TWatched]):
-    def __init__(self, accessor: typing.Callable[[], TWatched]):
+    def __init__(self, accessor: typing.Callable[[], TWatched]) -> None:
         self.accessor: typing.Callable[[], TWatched] = accessor
 
     @property

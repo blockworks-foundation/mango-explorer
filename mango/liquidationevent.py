@@ -24,7 +24,7 @@ from .instrumentvalue import InstrumentValue
 # # 🥭 LiquidationEvent class
 #
 class LiquidationEvent:
-    def __init__(self, timestamp: datetime.datetime, liquidator_name: str, group_name: str, succeeded: bool, signatures: typing.Sequence[str], wallet_address: PublicKey, account_address: PublicKey, balances_before: typing.Sequence[InstrumentValue], balances_after: typing.Sequence[InstrumentValue]):
+    def __init__(self, timestamp: datetime.datetime, liquidator_name: str, group_name: str, succeeded: bool, signatures: typing.Sequence[str], wallet_address: PublicKey, account_address: PublicKey, balances_before: typing.Sequence[InstrumentValue], balances_after: typing.Sequence[InstrumentValue]) -> None:
         self.timestamp: datetime.datetime = timestamp
         self.liquidator_name: str = liquidator_name
         self.group_name: str = group_name

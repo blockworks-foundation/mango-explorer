@@ -4,7 +4,7 @@ from .fakes import fake_account_info, fake_public_key
 from decimal import Decimal
 
 
-def test_constructor():
+def test_constructor() -> None:
     account_info = fake_account_info()
     program_address = fake_public_key()
     market = fake_public_key()

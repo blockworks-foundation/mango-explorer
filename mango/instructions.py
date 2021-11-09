@@ -21,7 +21,7 @@ from decimal import Decimal
 from pyserum._layouts.instructions import INSTRUCTIONS_LAYOUT as PYSERUM_INSTRUCTIONS_LAYOUT, InstructionType as PySerumInstructionType
 from pyserum.enums import OrderType as PySerumOrderType, Side as PySerumSide
 from pyserum.instructions import settle_funds as pyserum_settle_funds, SettleFundsParams as PySerumSettleFundsParams
-from pyserum.market import Market as PySerumMarket
+from pyserum.market.market import Market as PySerumMarket
 from pyserum.open_orders_account import make_create_account_instruction as pyserum_make_create_account_instruction
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
@@ -81,7 +81,6 @@ def build_create_solana_account_instructions(context: Context, wallet: Wallet, m
 # Prefer `build_create_spl_account_instructions()` over this function. This function should be
 # reserved for cases where you specifically don't want the associated token account.
 #
-
 def build_create_spl_account_instructions(context: Context, wallet: Wallet, token: Token, lamports: int = 0) -> CombinableInstructions:
     create_account_instructions = build_create_solana_account_instructions(
         context, wallet, TOKEN_PROGRAM_ID, ACCOUNT_LEN, lamports)
@@ -140,7 +139,7 @@ def build_create_serum_open_orders_instructions(context: Context, wallet: Wallet
 #
 # Creates a Serum order-placing instruction using V3 of the NewOrder instruction.
 #
-def build_serum_place_order_instructions(context: Context, wallet: Wallet, market: PySerumMarket, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, fee_discount_address: typing.Optional[PublicKey]) -> CombinableInstructions:
+def build_serum_place_order_instructions(context: Context, wallet: Wallet, market: PySerumMarket, source: PublicKey, open_orders_address: PublicKey, order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, fee_discount_address: PublicKey) -> CombinableInstructions:
     serum_order_type: PySerumOrderType = PySerumOrderType.POST_ONLY if order_type == OrderType.POST_ONLY else PySerumOrderType.IOC if order_type == OrderType.IOC else PySerumOrderType.LIMIT
     serum_side: PySerumSide = PySerumSide.SELL if side == Side.SELL else PySerumSide.BUY
 
@@ -163,7 +162,6 @@ def build_serum_place_order_instructions(context: Context, wallet: Wallet, marke
 #
 # Creates an event-consuming 'crank' instruction.
 #
-
 def build_serum_consume_events_instructions(context: Context, market_address: PublicKey, event_queue_address: PublicKey, open_orders_addresses: typing.Sequence[PublicKey], limit: int = 32) -> CombinableInstructions:
     instruction = TransactionInstruction(
         keys=[
@@ -188,7 +186,6 @@ def build_serum_consume_events_instructions(context: Context, market_address: Pu
 #
 # Creates a 'settle' instruction.
 #
-
 def build_serum_settle_instructions(context: Context, wallet: Wallet, market: PySerumMarket, open_orders_address: PublicKey, base_token_account_address: PublicKey, quote_token_account_address: PublicKey) -> CombinableInstructions:
     vault_signer = PublicKey.create_program_address(
         [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
@@ -209,6 +206,7 @@ def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Py
     )
 
     return CombinableInstructions(signers=[], instructions=[instruction])
+
 
 # # 🥭 build_spot_settle_instructions function
 #
@@ -236,8 +234,7 @@ def build_serum_settle_instructions(context: Context, wallet: Wallet, market: Py
 # /// 15. `[writable]` quote_vault_ai - MangoGroup quote vault acc
 # /// 16. `[]` dex_signer_ai - dex PySerumMarket signer account
 # /// 17. `[]` spl token program
-
-
+#
 def build_spot_settle_instructions(context: Context, wallet: Wallet, account: Account,
                                    market: PySerumMarket, group: Group, open_orders_address: PublicKey,
                                    base_rootbank: RootBank, base_nodebank: NodeBank,
@@ -294,8 +291,7 @@ def build_spot_settle_instructions(context: Context, wallet: Wallet, account: Ac
 # immediately if the order is filled (either because it's IOC or because it matches an order on the
 # orderbook).
 #
-
-def build_compound_serum_place_order_instructions(context: Context, wallet: Wallet, market: PySerumMarket, source: PublicKey, open_orders_address: PublicKey, all_open_orders_addresses: typing.Sequence[PublicKey], order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, base_token_account_address: PublicKey, quote_token_account_address: PublicKey, fee_discount_address: typing.Optional[PublicKey], consume_limit: int = 32) -> CombinableInstructions:
+def build_compound_serum_place_order_instructions(context: Context, wallet: Wallet, market: PySerumMarket, source: PublicKey, open_orders_address: PublicKey, all_open_orders_addresses: typing.Sequence[PublicKey], order_type: OrderType, side: Side, price: Decimal, quantity: Decimal, client_id: int, base_token_account_address: PublicKey, quote_token_account_address: PublicKey, fee_discount_address: PublicKey, consume_limit: int = 32) -> CombinableInstructions:
     place_order = build_serum_place_order_instructions(
         context, wallet, market, source, open_orders_address, order_type, side, price, quantity, client_id, fee_discount_address)
     consume_events = build_serum_consume_events_instructions(
@@ -310,8 +306,6 @@ def build_compound_serum_place_order_instructions(context: Context, wallet: Wall
 #
 # Builds the instructions necessary for cancelling a perp order.
 #
-
-
 def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, account: Account, perp_market_details: PerpMarketDetails, order: Order, invalid_id_ok: bool) -> CombinableInstructions:
     # Prefer cancelling by client ID so we don't have to keep track of the order side.
     if order.client_id is not None and order.client_id != 0:
@@ -517,8 +511,6 @@ def build_deposit_instructions(context: Context, wallet: Wallet, group: Group, a
 #     quantity: u64,
 #     allow_borrow: bool,
 # },
-
-
 def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, account: Account, root_bank: RootBank, node_bank: NodeBank, token_account: TokenAccount, allow_borrow: bool) -> CombinableInstructions:
     value = token_account.value.shift_to_native().value
     withdraw = TransactionInstruction(
@@ -700,8 +692,6 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
 #
 # Builds the instructions necessary for cancelling a spot order.
 #
-
-
 def build_cancel_spot_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: PySerumMarket, order: Order, open_orders_address: PublicKey) -> CombinableInstructions:
     # { buy: 0, sell: 1 }
     raw_side: int = 1 if order.side == Side.SELL else 0

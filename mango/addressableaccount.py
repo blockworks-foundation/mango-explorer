@@ -30,10 +30,9 @@ from .accountinfo import AccountInfo
 #
 # It's sometimes useful to be able to treat these in a common fashion so we use
 # `AddressableAccount` as a way of sharing common features and providing a common base.
-
-
+#
 class AddressableAccount(metaclass=abc.ABCMeta):
-    def __init__(self, account_info: AccountInfo):
+    def __init__(self, account_info: AccountInfo) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.account_info = account_info
 

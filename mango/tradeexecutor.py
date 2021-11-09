@@ -53,9 +53,8 @@ from .wallet import Wallet
 # trade_executor.buy("ETH", 2.5)
 # ```
 #
-
 class TradeExecutor(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
@@ -66,17 +65,19 @@ class TradeExecutor(metaclass=abc.ABCMeta):
     def sell(self, symbol: str, quantity: Decimal) -> Order:
         raise NotImplementedError("TradeExecutor.sell() is not implemented on the base type.")
 
+    def __repr__(self) -> str:
+        return f"{self}"
+
 
 # # 🥭 NullTradeExecutor class
 #
 # A null, no-op, dry-run trade executor that can be plugged in anywhere a `TradeExecutor`
 # is expected, but which will not actually trade.
 #
-
 class NullTradeExecutor(TradeExecutor):
-    def __init__(self, reporter: typing.Callable[[str], None] = None):
+    def __init__(self, reporter: typing.Optional[typing.Callable[[str], None]] = None) -> None:
         super().__init__()
-        self.reporter = reporter or (lambda _: None)
+        self.reporter: typing.Callable[[str], None] = reporter or (lambda _: None)
 
     def buy(self, symbol: str, quantity: Decimal) -> Order:
         self.logger.info(f"Skipping BUY trade of {quantity:,.8f} of '{symbol}'.")
@@ -116,7 +117,7 @@ class NullTradeExecutor(TradeExecutor):
 # assuming) the price exceeded the price specified.
 #
 class ImmediateTradeExecutor(TradeExecutor):
-    def __init__(self, context: Context, wallet: Wallet, account: typing.Optional[Account], price_adjustment_factor: Decimal = Decimal(0), reporter: typing.Callable[[str], None] = None):
+    def __init__(self, context: Context, wallet: Wallet, account: typing.Optional[Account], price_adjustment_factor: Decimal = Decimal(0), reporter: typing.Optional[typing.Callable[[str], None]] = None) -> None:
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
@@ -125,17 +126,11 @@ class ImmediateTradeExecutor(TradeExecutor):
         self._serum_fee_discount_token_address: typing.Optional[PublicKey] = None
         self._serum_fee_discount_token_address_loaded: bool = False
 
-        def report(text):
+        def _reporter(text: str) -> None:
             self.logger.info(text)
-            reporter(text)
-
-        def just_log(text):
-            self.logger.info(text)
-
-        if reporter is not None:
-            self.reporter = report
-        else:
-            self.reporter = just_log
+            if reporter is not None:
+                reporter(text)
+        self.reporter = _reporter
 
     def buy(self, symbol: str, quantity: Decimal) -> Order:
         market_operations: MarketOperations = self._build_market_operations(symbol)
@@ -176,6 +171,3 @@ class ImmediateTradeExecutor(TradeExecutor):
 
     def __str__(self) -> str:
         return f"""« 𝙸𝚖𝚖𝚎𝚍𝚒𝚊𝚝𝚎𝚃𝚛𝚊𝚍𝚎𝙴𝚡𝚎𝚌𝚞𝚝𝚘𝚛 [{self.price_adjustment_factor}] »"""
-
-    def __repr__(self) -> str:
-        return f"{self}"

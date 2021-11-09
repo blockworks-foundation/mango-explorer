@@ -65,24 +65,28 @@ ACCOUNT_TYPE = construct.Enum(construct.Int32ul, Unknown=0, Mapping=1, Product=2
 # Loads string key-value pairs into a dictionary. The strings are 'Pascal' strings, which
 # specify the string length as an int followed by that number of UTF-8 characters.
 #
+if typing.TYPE_CHECKING:
+    class StringDictionaryAdapter(construct.Adapter[typing.Any, str, typing.Any, typing.Any]):
+        def __init__(self) -> None:
+            pass
+else:
+    class StringDictionaryAdapter(construct.Adapter):
+        def __init__(self) -> None:
+            super().__init__(construct.RepeatUntil(lambda contents, lst, ctx: contents == "",
+                                                   construct.PascalString(construct.VarInt, "utf8")))
 
-class StringDictionaryAdapter(construct.Adapter):
-    def __init__(self):
-        construct.Adapter.__init__(self, construct.RepeatUntil(lambda contents, lst, ctx: contents == "",
-                                   construct.PascalString(construct.VarInt, "utf8")))
+        def _decode(self, obj: typing.Sequence[str], context: typing.Any, path: typing.Any) -> typing.Dict[str, str]:
+            result: typing.Dict[str, str] = {}
+            for counter in range(int(len(obj) / 2)):
+                index: int = counter * 2
+                key: str = obj[index]
+                value: str = obj[index + 1]
+                result[key] = value
+            return result
 
-    def _decode(self, obj, context, path) -> typing.Dict[str, str]:
-        result = {}
-        for counter in range(int(len(obj) / 2)):
-            index = counter * 2
-            key = obj[index]
-            value = obj[index + 1]
-            result[key] = value
-        return result
-
-    def _encode(self, obj, context, path) -> str:
-        # Can only encode string values.
-        return str(obj)
+        def _encode(self, obj: typing.Any, context: typing.Any, path: typing.Any) -> str:
+            # Can only encode string values.
+            return str(obj)
 
 
 # # 🥭 MAPPING layout
@@ -102,7 +106,6 @@ class StringDictionaryAdapter(construct.Adapter):
 #   pub next       : AccKey,     // next mapping account (if any)
 #   pub products   : [AccKey;MAP_TABLE_SIZE]
 # }
-
 MAPPING = construct.Struct(
     "magic" / DecimalAdapter(4),
     "ver" / DecimalAdapter(4),
@@ -131,7 +134,6 @@ MAPPING = construct.Struct(
 #   pub px_acc     : AccKey,     // first price account in list
 #   pub attr       : [u8;PROD_ATTR_SIZE] // key/value pairs of reference attr.
 # }
-
 PRODUCT = construct.Struct(
     "magic" / DecimalAdapter(4),
     "ver" / DecimalAdapter(4),
@@ -156,7 +158,6 @@ PRODUCT = construct.Struct(
 #   pub corp_act   : CorpAction, // notification of any corporate action
 #   pub pub_slot   : u64
 # }
-
 PRICE_INFO = construct.Struct(
     "price" / DecimalAdapter(),
     "conf" / DecimalAdapter(),
@@ -178,7 +179,6 @@ PRICE_INFO = construct.Struct(
 #   agg        : PriceInfo,      // contributing price to last aggregate
 #   latest     : PriceInfo       // latest contributing price (not in agg.)
 # }
-
 PRICE_COMP = construct.Struct(
     "publisher" / PublicKeyAdapter(),
     "agg" / PRICE_INFO,
@@ -211,7 +211,6 @@ PRICE_COMP = construct.Struct(
 #   pub agg        : PriceInfo,  // aggregate price info
 #   pub comp       : [PriceComp;32] // price components one per quoter
 # }
-
 PRICE = construct.Struct(
     "magic" / DecimalAdapter(4),
     "ver" / DecimalAdapter(4),

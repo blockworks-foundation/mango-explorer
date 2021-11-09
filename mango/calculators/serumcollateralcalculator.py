@@ -25,7 +25,7 @@ from .collateralcalculator import CollateralCalculator
 
 
 class SerumCollateralCalculator(CollateralCalculator):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def calculate(self, account: Account, all_open_orders: typing.Dict[str, OpenOrders], group: Group, cache: Cache) -> InstrumentValue:

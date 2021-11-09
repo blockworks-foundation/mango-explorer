@@ -51,7 +51,7 @@ handler.setLevel(logging.ERROR)
 logging.getLogger().addHandler(handler)
 
 
-def start_subscriptions(context: mango.Context, liquidation_processor: mango.LiquidationProcessor, fetch_prices: typing.Callable[[typing.Any], typing.Any], fetch_accounts: typing.Callable[[typing.Any], typing.Any], throttle_reload_to_seconds: Decimal, throttle_ripe_update_to_seconds: Decimal):
+def start_subscriptions(context: mango.Context, liquidation_processor: mango.LiquidationProcessor, fetch_prices: typing.Callable[[typing.Any], typing.Any], fetch_accounts: typing.Callable[[typing.Any], typing.Any], throttle_reload_to_seconds: Decimal, throttle_ripe_update_to_seconds: Decimal) -> typing.Tuple[rx.core.typing.Disposable, rx.core.typing.Disposable]:
     liquidation_processor.state = mango.LiquidationProcessorState.STARTING
 
     logging.info("Starting margin account fetcher subscription")
@@ -100,17 +100,18 @@ try:
     logging.info("Wallet accounts OK.")
 
     liquidations_publisher = mango.EventSource[mango.LiquidationEvent]()
-    liquidations_publisher.subscribe(on_next=mango.CompoundNotificationTarget(args.notify_liquidations).send)
+    liquidations_publisher.subscribe(on_next=mango.CompoundNotificationTarget(
+        args.notify_liquidations).send)  # type: ignore[call-arg]
 
     on_success = mango.FilteringNotificationTarget(
         mango.CompoundNotificationTarget(args.notify_successful_liquidations),
         lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
-    liquidations_publisher.subscribe(on_next=on_success.send)
+    liquidations_publisher.subscribe(on_next=on_success.send)  # type: ignore[call-arg]
 
     on_failed = mango.FilteringNotificationTarget(
         mango.CompoundNotificationTarget(args.notify_failed_liquidations),
         lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded)
-    liquidations_publisher.subscribe(on_next=on_failed.send)
+    liquidations_publisher.subscribe(on_next=on_failed.send)  # type: ignore[call-arg]
 
     # TODO: Add proper liquidator classes here when they're written for V3
     if args.dry_run:
@@ -140,29 +141,30 @@ try:
         # TODO - fetch prices when code available in V3.
         return group, []
 
-    def fetch_prices(context):
-        def _fetch_prices(_):
+    def fetch_prices(context: mango.Context) -> typing.Callable[[typing.Any], typing.Any]:
+        def _fetch_prices(_: typing.Any) -> typing.Any:
             with mango.retry_context("Price Fetch",
-                                     load_updated_price_details,
+                                     lambda _: load_updated_price_details(),
                                      context.retry_pauses) as retrier:
                 return retrier.run()
 
         return _fetch_prices
 
-    def fetch_accounts(context):
-        def _actual_fetch():
-            group = mango.Group.load(context)
-            return mango.Account.load_ripe(context, group)
+    def fetch_accounts(context: mango.Context) -> typing.Callable[[typing.Any], typing.Any]:
+        def _actual_fetch() -> typing.Sequence[mango.Account]:
+            # group = mango.Group.load(context)
+            # return mango.Account.load_ripe(context, group)
+            return []
 
-        def _fetch_accounts(_):
+        def _fetch_accounts(_: typing.Any) -> typing.Any:
             with mango.retry_context("Margin Account Fetch",
-                                     _actual_fetch,
+                                     lambda _: _actual_fetch(),
                                      context.retry_pauses) as retrier:
                 return retrier.run()
         return _fetch_accounts
 
     class LiquidationProcessorSubscriptions:
-        def __init__(self, account: rx.core.typing.Disposable, price: rx.core.typing.Disposable):
+        def __init__(self, account: rx.core.typing.Disposable, price: rx.core.typing.Disposable) -> None:
             self.account: rx.core.typing.Disposable = account
             self.price: rx.core.typing.Disposable = price
 
@@ -174,7 +176,7 @@ try:
     subscriptions = LiquidationProcessorSubscriptions(account=account_subscription,
                                                       price=price_subscription)
 
-    def on_unhealthy(liquidation_processor: mango.LiquidationProcessor):
+    def on_unhealthy(liquidation_processor: mango.LiquidationProcessor) -> None:
         if liquidation_processor.state != mango.LiquidationProcessorState.UNHEALTHY:
             logging.info(
                 f"Ignoring LiquidationProcessor state change - state is: {liquidation_processor.state}")
@@ -195,7 +197,7 @@ try:
         subscriptions.account = account_subscription
         subscriptions.price = price_subscription
 
-    liquidation_processor.state_change.subscribe(on_next=on_unhealthy)
+    liquidation_processor.state_change.subscribe(on_next=on_unhealthy)  # type: ignore[call-arg]
 
     # Wait - don't exit. Exiting will be handled by signals/interrupts.
     waiter = threading.Event()

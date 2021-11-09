@@ -23,7 +23,7 @@ import typing
 from .constants import DATA_PATH
 from .layouts import layouts
 
-_known_idl_type_adapters: typing.Dict[str, typing.Callable[[], construct.Construct]] = {
+_known_idl_type_adapters: typing.Dict[str, typing.Callable[[], typing.Any]] = {
     "publicKey": lambda: layouts.PublicKeyAdapter(),
     "bool": lambda: construct.Flag,
     "u8": lambda: layouts.DecimalAdapter(1),
@@ -36,9 +36,9 @@ _known_idl_type_adapters: typing.Dict[str, typing.Callable[[], construct.Constru
 
 
 class IdlType:
-    def __init__(self, name: str, struct: construct.Struct):
+    def __init__(self, name: str, struct: typing.Any) -> None:
         self.name: str = name
-        self.struct: construct.Struct = struct
+        self.struct: typing.Any = struct
 
 
 # This really only parses a subset of the IDL. For Mango right now, we only need to parse the
@@ -55,8 +55,8 @@ def _load_idl_parsers_from_json_file(filepath: str) -> typing.Dict[bytes, IdlTyp
         sha = hashlib.sha256(f"event:{name}".encode())
         return sha.digest()[0:8]
 
-    def _context_counter_lookup(field_counter) -> typing.Callable[[typing.Any], int]:
-        return lambda ctx: ctx[field_counter]
+    def _context_counter_lookup(field_counter: str) -> typing.Callable[[typing.Any], int]:
+        return lambda ctx: int(ctx[field_counter])
 
     with open(filepath, encoding="utf-8") as json_file:
         idl_data: typing.Dict[str, typing.Any] = json.load(json_file)
@@ -85,12 +85,12 @@ class IdlParser:
     def __init__(self, filepath: str):
         self.parsers: typing.Dict[bytes, IdlType] = _load_idl_parsers_from_json_file(filepath)
 
-    def parse(self, binary_data: bytes) -> typing.Tuple[str, construct.Container]:
+    def parse(self, binary_data: bytes) -> typing.Tuple[str, typing.Any]:
         discriminator: bytes = binary_data[0:8]
         idl_type: IdlType = self.parsers[discriminator]
         return idl_type.name, idl_type.struct.parse(binary_data[8:])
 
-    def decode_and_parse(self, encoded: str) -> typing.Tuple[str, construct.Container]:
+    def decode_and_parse(self, encoded: str) -> typing.Tuple[str, typing.Any]:
         decoded: bytes = base64.b64decode(encoded)
         return self.parse(decoded)
 
@@ -98,7 +98,7 @@ class IdlParser:
 _loaded_idl_sets: typing.Dict[str, IdlParser] = {}
 
 
-def lazy_load_cached_idl_parser(filename: str):
+def lazy_load_cached_idl_parser(filename: str) -> IdlParser:
     if filename not in _loaded_idl_sets:
         filepath = os.path.join(DATA_PATH, filename)
         idl_parser: IdlParser = IdlParser(filepath)

@@ -33,7 +33,8 @@ from .version import Version
 
 class LiquidityMiningInfo:
     def __init__(self, version: Version, rate: Decimal, max_depth_bps: Decimal, period_start: datetime,
-                 target_period_length: timedelta, mngo_left: InstrumentValue, mngo_per_period: InstrumentValue):
+                 target_period_length: timedelta, mngo_left: InstrumentValue,
+                 mngo_per_period: InstrumentValue) -> None:
         self.version: Version = version
 
         self.rate: Decimal = rate
@@ -107,7 +108,8 @@ class PerpMarketDetails(AddressableAccount):
                  meta_data: Metadata, group: Group, bids: PublicKey, asks: PublicKey,
                  event_queue: PublicKey, base_lot_size: Decimal, quote_lot_size: Decimal, long_funding: Decimal,
                  short_funding: Decimal, open_interest: Decimal, last_updated: datetime, seq_num: Decimal,
-                 fees_accrued: Decimal, liquidity_mining_info: LiquidityMiningInfo, mngo_vault: PublicKey):
+                 fees_accrued: Decimal, liquidity_mining_info: LiquidityMiningInfo,
+                 mngo_vault: PublicKey) -> None:
         super().__init__(account_info)
         self.version: Version = version
 

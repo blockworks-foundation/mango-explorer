@@ -33,7 +33,7 @@ from .version import Version
 #
 class NodeBank(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
-                 deposits: Decimal, borrows: Decimal, vault: PublicKey):
+                 deposits: Decimal, borrows: Decimal, vault: PublicKey) -> None:
         super().__init__(account_info)
         self.version: Version = version
 
@@ -88,7 +88,7 @@ class RootBank(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
                  optimal_util: Decimal, optimal_rate: Decimal, max_rate: Decimal,
                  node_banks: typing.Sequence[PublicKey], deposit_index: Decimal,
-                 borrow_index: Decimal, last_updated: datetime):
+                 borrow_index: Decimal, last_updated: datetime) -> None:
         super().__init__(account_info)
         self.version: Version = version
 

@@ -30,7 +30,8 @@ from .token import Instrument, Token, SolToken
 
 
 class TokenValuation:
-    def __init__(self, raw_token_value: InstrumentValue, price_token_value: InstrumentValue, value_token_value: InstrumentValue):
+    def __init__(self, raw_token_value: InstrumentValue, price_token_value: InstrumentValue,
+                 value_token_value: InstrumentValue) -> None:
         self.raw: InstrumentValue = raw_token_value
         self.price: InstrumentValue = price_token_value
         self.value: InstrumentValue = value_token_value
@@ -94,7 +95,7 @@ class TokenValuation:
 
 
 class AccountValuation:
-    def __init__(self, name: str, address: PublicKey, tokens: typing.Sequence[TokenValuation]):
+    def __init__(self, name: str, address: PublicKey, tokens: typing.Sequence[TokenValuation]) -> None:
         self.name: str = name
         self.address: PublicKey = address
         self.tokens: typing.Sequence[TokenValuation] = tokens

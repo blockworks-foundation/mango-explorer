@@ -20,7 +20,7 @@ import time
 import typing
 
 from decimal import Decimal
-from rx.scheduler import ThreadPoolScheduler
+from rx.scheduler.threadpoolscheduler import ThreadPoolScheduler
 from solana.publickey import PublicKey
 from solana.rpc.commitment import Commitment
 
@@ -40,7 +40,7 @@ class Context:
                  blockhash_commitment: str, encoding: str, blockhash_cache_duration: datetime.timedelta,
                  mango_program_address: PublicKey, serum_program_address: PublicKey, group_name: str,
                  group_address: PublicKey, gma_chunk_size: Decimal, gma_chunk_pause: Decimal,
-                 instrument_lookup: InstrumentLookup, market_lookup: MarketLookup):
+                 instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_addresses(
@@ -97,7 +97,7 @@ class Context:
         group_address_str = str(group_address)
         for group in MangoConstants["groups"]:
             if group["cluster"] == self.client.cluster_name and group["publicKey"] == group_address_str:
-                return group["name"]
+                return str(group["name"])
 
         return "« Unknown Group »"
 

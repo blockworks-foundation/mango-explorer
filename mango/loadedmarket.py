@@ -30,7 +30,7 @@ from .token import Instrument, Token
 # This class describes a crypto market. It *must* have an address, a base token and a quote token.
 #
 class LoadedMarket(Market):
-    def __init__(self, program_address: PublicKey, address: PublicKey, inventory_source: InventorySource, base: Instrument, quote: Token, lot_size_converter: LotSizeConverter):
+    def __init__(self, program_address: PublicKey, address: PublicKey, inventory_source: InventorySource, base: Instrument, quote: Token, lot_size_converter: LotSizeConverter) -> None:
         super().__init__(program_address, address, inventory_source, base, quote, lot_size_converter)
 
     @property

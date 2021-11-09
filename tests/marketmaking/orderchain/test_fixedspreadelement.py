@@ -11,13 +11,13 @@ from mango.marketmaking.orderchain.fixedspreadelement import FixedSpreadElement
 model_state = fake_model_state(price=fake_price(price=Decimal(80)))
 
 
-def test_from_args():
+def test_from_args() -> None:
     args: argparse.Namespace = argparse.Namespace(fixedspread_value=[Decimal(17)])
     actual: FixedSpreadElement = FixedSpreadElement.from_command_line_parameters(args)
-    assert actual.spreads == [17]
+    assert actual.spreads == [17]  # type: ignore[comparison-overlap]
 
 
-def test_single_bid_price_updated():
+def test_single_bid_price_updated() -> None:
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(78), side=mango.Side.BUY)
 
@@ -27,7 +27,7 @@ def test_single_bid_price_updated():
     assert result[0].price == 75.5  # 80 - (9/2)
 
 
-def test_single_ask_price_updated():
+def test_single_ask_price_updated() -> None:
     context = fake_context()
     order: mango.Order = fake_order(price=Decimal(78), side=mango.Side.SELL)
 
@@ -37,7 +37,7 @@ def test_single_ask_price_updated():
     assert result[0].price == 84.5  # 80 + (9/2)
 
 
-def test_single_pair_price_updated():
+def test_single_pair_price_updated() -> None:
     context = fake_context()
     order1: mango.Order = fake_order(price=Decimal(78), side=mango.Side.BUY)
     order2: mango.Order = fake_order(price=Decimal(78), side=mango.Side.SELL)
@@ -49,7 +49,7 @@ def test_single_pair_price_updated():
     assert result[1].price == 84.5  # 80 + (9/2)
 
 
-def test_three_spreads_six_paired_orders_different_order_updated():
+def test_three_spreads_six_paired_orders_different_order_updated() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(10)))
     order1: mango.Order = fake_order(price=Decimal(7), side=mango.Side.BUY)
@@ -70,7 +70,7 @@ def test_three_spreads_six_paired_orders_different_order_updated():
     assert result[5].price == 14
 
 
-def test_two_spreads_six_paired_orders_different_order_updated():
+def test_two_spreads_six_paired_orders_different_order_updated() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(10)))
     order1: mango.Order = fake_order(price=Decimal(7), side=mango.Side.BUY)

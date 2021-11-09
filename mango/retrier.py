@@ -39,17 +39,15 @@ from decimal import Decimal
 #
 # This class is best used in a `with...` block using the `retry_context()` function below.
 #
-
-
 class RetryWithPauses:
-    def __init__(self, name: str, func: typing.Callable, pauses: typing.Sequence[Decimal]) -> None:
+    def __init__(self, name: str, func: typing.Callable[..., typing.Any], pauses: typing.Sequence[Decimal]) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
-        self.func: typing.Callable = func
+        self.func: typing.Callable[..., typing.Any] = func
         self.pauses: typing.Sequence[Decimal] = pauses
 
-    def run(self, *args, **kwargs):
-        captured_exception: Exception = None
+    def run(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+        captured_exception: Exception
         for sleep_time_on_error in self.pauses:
             try:
                 return self.func(*args, **kwargs)
@@ -98,5 +96,5 @@ class RetryWithPauses:
 # ```
 
 @contextmanager
-def retry_context(name: str, func: typing.Callable, pauses: typing.Sequence[Decimal]) -> typing.Iterator[RetryWithPauses]:
+def retry_context(name: str, func: typing.Callable[..., typing.Any], pauses: typing.Sequence[Decimal]) -> typing.Iterator[RetryWithPauses]:
     yield RetryWithPauses(name, func, pauses)

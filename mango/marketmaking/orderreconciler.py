@@ -28,7 +28,7 @@ from .reconciledorders import ReconciledOrders
 # Base class for order reconciler that combines existing and desired orders into buckets inside a `ReconciledOrders`.
 #
 class OrderReconciler(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
@@ -47,7 +47,7 @@ class OrderReconciler(metaclass=abc.ABCMeta):
 # Null implementation of OrderReconciler. Just maintains all existing orders.
 #
 class NullOrderReconciler(OrderReconciler):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def reconcile(self, _: ModelState, existing_orders: typing.Sequence[mango.Order], desired_orders: typing.Sequence[mango.Order]) -> ReconciledOrders:

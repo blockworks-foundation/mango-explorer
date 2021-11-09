@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.abspath(
 import mango  # nopep8
 
 
-def resolve_quantity(token: mango.Token, current_quantity: Decimal, target_quantity: mango.TargetBalance, price: Decimal):
+def resolve_quantity(token: mango.Token, current_quantity: Decimal, target_quantity: mango.TargetBalance, price: Decimal) -> mango.InstrumentValue:
     current_value: Decimal = current_quantity * price
     resolved_value_to_keep: mango.InstrumentValue = target_quantity.resolve(token, price, current_value)
     return resolved_value_to_keep

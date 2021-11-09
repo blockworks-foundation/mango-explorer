@@ -70,13 +70,13 @@ class ScoutReport:
     def has_warnings(self) -> bool:
         return len(self.warnings) > 0
 
-    def add_error(self, error) -> None:
+    def add_error(self, error: str) -> None:
         self.errors += [error]
 
-    def add_warning(self, warning) -> None:
+    def add_warning(self, warning: str) -> None:
         self.warnings += [warning]
 
-    def add_detail(self, detail) -> None:
+    def add_detail(self, detail: str) -> None:
         self.details += [detail]
 
     def __str__(self) -> str:
@@ -121,7 +121,7 @@ class ScoutReport:
 #
 
 class AccountScout:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     def require_account_prepared_for_group(self, context: Context, group: Group, account_address: PublicKey) -> None:

@@ -35,7 +35,7 @@ class MarketMaker:
     def __init__(self, wallet: mango.Wallet, market: mango.Market,
                  market_instruction_builder: mango.MarketInstructionBuilder,
                  desired_orders_chain: Chain, order_reconciler: OrderReconciler,
-                 redeem_threshold: typing.Optional[Decimal]):
+                 redeem_threshold: typing.Optional[Decimal]) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.wallet: mango.Wallet = wallet
         self.market: mango.Market = market
@@ -50,7 +50,7 @@ class MarketMaker:
         self.buy_client_ids: typing.List[int] = []
         self.sell_client_ids: typing.List[int] = []
 
-    def pulse(self, context: mango.Context, model_state: mango.ModelState):
+    def pulse(self, context: mango.Context, model_state: mango.ModelState) -> None:
         try:
             self.logger.debug(f"[{context.name}] Pulse started with oracle price:\n    {model_state.price}")
 

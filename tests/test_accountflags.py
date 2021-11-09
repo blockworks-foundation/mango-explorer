@@ -1,7 +1,7 @@
 from .context import mango
 
 
-def test_constructor():
+def test_constructor() -> None:
     initialized: bool = True
     market: bool = True
     open_orders: bool = True

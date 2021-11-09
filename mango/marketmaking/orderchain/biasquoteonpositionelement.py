@@ -31,7 +31,7 @@ from ...modelstate import ModelState
 # Can take multiple bias factors to work with pair-wise orders.
 #
 class BiasQuoteOnPositionElement(PairwiseElement):
-    def __init__(self, biases: typing.Sequence[Decimal]):
+    def __init__(self, biases: typing.Sequence[Decimal]) -> None:
         super().__init__()
         self.biases: typing.Sequence[Decimal] = biases
 

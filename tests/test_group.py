@@ -1,3 +1,5 @@
+import typing
+
 from .context import mango
 from .fakes import fake_account_info, fake_seeded_public_key, fake_token_info
 
@@ -5,13 +7,13 @@ from decimal import Decimal
 from mango.layouts import layouts
 
 
-def test_construction():
+def test_construction() -> None:
     account_info = fake_account_info()
     name = "FAKE_GROUP"
     meta_data = mango.Metadata(layouts.DATA_TYPE.Group, mango.Version.V1, True)
     shared_quote_token = fake_token_info()
-    in_basket = []
-    slots = []
+    in_basket: typing.Sequence[bool] = []
+    slots: typing.Sequence[mango.GroupSlot] = []
     signer_nonce = Decimal(1)
     signer_key = fake_seeded_public_key("signer key")
     admin_key = fake_seeded_public_key("admin key")

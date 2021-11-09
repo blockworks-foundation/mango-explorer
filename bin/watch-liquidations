@@ -47,7 +47,7 @@ for address in args.address:
     publishers += [log_subscription.publisher]
 
 
-publisher = rx.subject.Subject()
+publisher = rx.subject.subject.Subject()
 publisher.pipe(
     rx.operators.merge(*publishers),
     # rx.operators.filter(lambda log_event: "PartialLiquidate" in "\n".join(log_event.logs)),

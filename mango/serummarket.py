@@ -16,7 +16,7 @@
 import typing
 
 from decimal import Decimal
-from pyserum.market import Market as PySerumMarket
+from pyserum.market.market import Market as PySerumMarket
 from pyserum.market.orderbook import OrderBook as PySerumOrderBook
 from solana.publickey import PublicKey
 
@@ -36,7 +36,8 @@ from .token import Token
 # This class encapsulates our knowledge of a Serum spot market.
 #
 class SerumMarket(LoadedMarket):
-    def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token, underlying_serum_market: PySerumMarket):
+    def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token,
+                 underlying_serum_market: PySerumMarket) -> None:
         super().__init__(serum_program_address, address, InventorySource.SPL_TOKENS, base, quote, RaisingLotSizeConverter())
         self.base: Token = base
         self.quote: Token = quote
@@ -84,7 +85,7 @@ class SerumMarket(LoadedMarket):
 # This class holds information to load a `SerumMarket` object but doesn't automatically load it.
 #
 class SerumMarketStub(Market):
-    def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token):
+    def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token) -> None:
         super().__init__(serum_program_address, address, InventorySource.SPL_TOKENS, base, quote, RaisingLotSizeConverter())
         self.base: Token = base
         self.quote: Token = quote

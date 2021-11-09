@@ -34,7 +34,7 @@ from .version import Version
 # `PriceCache` stores a cached price.
 #
 class PriceCache:
-    def __init__(self, price: Decimal, last_update: datetime):
+    def __init__(self, price: Decimal, last_update: datetime) -> None:
         self.price: Decimal = price
         self.last_update: datetime = last_update
 
@@ -56,7 +56,7 @@ class PriceCache:
 # `RootBankCache` stores cached details of deposits and borrows.
 #
 class RootBankCache:
-    def __init__(self, deposit_index: Decimal, borrow_index: Decimal, last_update: datetime):
+    def __init__(self, deposit_index: Decimal, borrow_index: Decimal, last_update: datetime) -> None:
         self.deposit_index: Decimal = deposit_index
         self.borrow_index: Decimal = borrow_index
         self.last_update: datetime = last_update
@@ -79,7 +79,7 @@ class RootBankCache:
 # `PerpMarketCache` stores cached details of long and short funding.
 #
 class PerpMarketCache:
-    def __init__(self, long_funding: Decimal, short_funding: Decimal, last_update: datetime):
+    def __init__(self, long_funding: Decimal, short_funding: Decimal, last_update: datetime) -> None:
         self.long_funding: Decimal = long_funding
         self.short_funding: Decimal = short_funding
         self.last_update: datetime = last_update
@@ -102,7 +102,7 @@ class PerpMarketCache:
 # `MarketCache` stores cached details of price, root bank, and perp market, for a particular market.
 #
 class MarketCache:
-    def __init__(self, price: typing.Optional[PriceCache], root_bank: typing.Optional[RootBankCache], perp_market: typing.Optional[PerpMarketCache]):
+    def __init__(self, price: typing.Optional[PriceCache], root_bank: typing.Optional[RootBankCache], perp_market: typing.Optional[PerpMarketCache]) -> None:
         self.price: typing.Optional[PriceCache] = price
         self.root_bank: typing.Optional[RootBankCache] = root_bank
         self.perp_market: typing.Optional[PerpMarketCache] = perp_market
@@ -142,7 +142,7 @@ class Cache(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
                  price_cache: typing.Sequence[typing.Optional[PriceCache]],
                  root_bank_cache: typing.Sequence[typing.Optional[RootBankCache]],
-                 perp_market_cache: typing.Sequence[typing.Optional[PerpMarketCache]]):
+                 perp_market_cache: typing.Sequence[typing.Optional[PerpMarketCache]]) -> None:
         super().__init__(account_info)
         self.version: Version = version
 
@@ -184,7 +184,7 @@ class Cache(AddressableAccount):
         return MarketCache(self.price_cache[index], self.root_bank_cache[index], self.perp_market_cache[index])
 
     def __str__(self) -> str:
-        def _render_list(items, stub):
+        def _render_list(items: typing.Sequence[typing.Any], stub: str) -> typing.Sequence[str]:
             rendered = []
             for index, item in enumerate(items):
                 rendered += [f"{index}: {(item or stub)}".replace("\n", "\n            ")]

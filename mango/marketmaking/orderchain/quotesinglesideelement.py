@@ -26,7 +26,7 @@ from ...modelstate import ModelState
 # Only allows orders from one side of the book to progress to the next element of the chain.
 #
 class QuoteSingleSideElement(Element):
-    def __init__(self, side: mango.Side):
+    def __init__(self, side: mango.Side) -> None:
         super().__init__()
         self.allowed: mango.Side = side
 

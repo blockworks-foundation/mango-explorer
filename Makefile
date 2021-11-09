@@ -19,7 +19,7 @@ mypy:
 	for file in bin/* ; do \
 		cp $${file} .tmplintdir/$${file##*/}.py ; \
 	done
-	-poetry run mypy --install-types mango tests .tmplintdir
+	-poetry run mypy --strict --install-types --non-interactive mango tests .tmplintdir
 	rm -rf .tmplintdir .mypy_cache
 
 flake8:

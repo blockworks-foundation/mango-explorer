@@ -117,7 +117,7 @@ class ContextBuilder:
         return context
 
     @staticmethod
-    def default():
+    def default() -> Context:
         return ContextBuilder.build()
 
     @staticmethod

@@ -4,7 +4,7 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 
-def test_constructor():
+def test_constructor() -> None:
     address: PublicKey = PublicKey("11111111111111111111111111111118")
     executable: bool = False
     lamports: Decimal = Decimal(12345)
@@ -23,7 +23,7 @@ def test_constructor():
     assert actual.data == data
 
 
-def test_split_list_into_chunks():
+def test_split_list_into_chunks() -> None:
     list_to_split = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
     split_3 = mango.AccountInfo._split_list_into_chunks(list_to_split, 3)
     assert len(split_3) == 4

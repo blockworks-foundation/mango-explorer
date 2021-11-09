@@ -38,18 +38,21 @@ from .wallet import Wallet
 # # 🥭 TokenAccount class
 #
 class TokenAccount(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version, owner: PublicKey, value: InstrumentValue):
+    def __init__(self, account_info: AccountInfo, version: Version, owner: PublicKey, value: InstrumentValue) -> None:
         super().__init__(account_info)
         self.version: Version = version
         self.owner: PublicKey = owner
         self.value: InstrumentValue = value
 
     @staticmethod
-    def create(context: Context, account: Keypair, token: Token):
+    def create(context: Context, account: Keypair, token: Token) -> "TokenAccount":
         spl_token = SplToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, account)
         owner = account.public_key
         new_account_address = spl_token.create_account(owner)
-        return TokenAccount.load(context, new_account_address)
+        created: typing.Optional[TokenAccount] = TokenAccount.load(context, new_account_address)
+        if created is None:
+            raise Exception(f"Newly-created SPL token account could not be found at address {new_account_address}")
+        return created
 
     @staticmethod
     def fetch_all_for_owner_and_token(context: Context, owner_public_key: PublicKey, token: Token) -> typing.Sequence["TokenAccount"]:
@@ -147,4 +150,4 @@ class TokenAccount(AddressableAccount):
         return TokenAccount.parse(account_info, instrument_lookup=context.instrument_lookup)
 
     def __str__(self) -> str:
-        return f"« Token: Address: {self.address}, Owner: {self.owner}, Value: {self.value} »"
+        return f"« 𝚃𝚘𝚔𝚎𝚗𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {self.address}, Owner: {self.owner}, Value: {self.value} »"

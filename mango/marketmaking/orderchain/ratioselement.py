@@ -33,7 +33,7 @@ DEFAULT_POSITION_SIZE_RATIO = Decimal("0.01")
 # ratio and a position size ratio.
 #
 class RatiosElement(Element):
-    def __init__(self, order_type: mango.OrderType, spread_ratios: typing.Sequence[Decimal], position_size_ratios: typing.Sequence[Decimal], from_bid_ask: bool):
+    def __init__(self, order_type: mango.OrderType, spread_ratios: typing.Sequence[Decimal], position_size_ratios: typing.Sequence[Decimal], from_bid_ask: bool) -> None:
         super().__init__()
         self.order_type: mango.OrderType = order_type
         self.spread_ratios: typing.Sequence[Decimal] = spread_ratios

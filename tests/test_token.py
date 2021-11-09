@@ -4,7 +4,7 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 
-def test_token_constructor():
+def test_token_constructor() -> None:
     symbol = "TEST"
     name = "Test Token"
     mint = PublicKey("11111111111111111111111111111113")

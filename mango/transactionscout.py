@@ -24,9 +24,9 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .context import Context
-from .instructionreporter import MangoInstruction
 from .instructiontype import InstructionType
 from .instrumentvalue import InstrumentValue
+from .mangoinstruction import MangoInstruction
 from .layouts import layouts
 from .ownedinstrumentvalue import OwnedInstrumentValue
 
@@ -69,7 +69,7 @@ class TransactionScout:
                  succeeded: bool, group_name: str, accounts: typing.Sequence[PublicKey],
                  instructions: typing.Sequence[MangoInstruction], messages: typing.Sequence[str],
                  pre_token_balances: typing.Sequence[OwnedInstrumentValue],
-                 post_token_balances: typing.Sequence[OwnedInstrumentValue]):
+                 post_token_balances: typing.Sequence[OwnedInstrumentValue]) -> None:
         self.timestamp: datetime.datetime = timestamp
         self.signatures: typing.Sequence[str] = signatures
         self.succeeded: bool = succeeded
@@ -128,8 +128,8 @@ class TransactionScout:
         return tx
 
     @staticmethod
-    def from_transaction_response(context: Context, response: typing.Dict) -> "TransactionScout":
-        def balance_to_token_value(accounts: typing.Sequence[PublicKey], balance: typing.Dict) -> OwnedInstrumentValue:
+    def from_transaction_response(context: Context, response: typing.Dict[str, typing.Any]) -> "TransactionScout":
+        def balance_to_token_value(accounts: typing.Sequence[PublicKey], balance: typing.Dict[str, typing.Any]) -> OwnedInstrumentValue:
             mint = PublicKey(balance["mint"])
             account = accounts[balance["accountIndex"]]
             amount = Decimal(balance["uiTokenAmount"]["amount"])
@@ -230,7 +230,7 @@ def fetch_all_recent_transaction_signatures(context: Context) -> typing.Sequence
     return signature_results
 
 
-def mango_instruction_from_response(context: Context, all_accounts: typing.Sequence[PublicKey], instruction_data: typing.Dict) -> typing.Optional["MangoInstruction"]:
+def mango_instruction_from_response(context: Context, all_accounts: typing.Sequence[PublicKey], instruction_data: typing.Dict[str, typing.Any]) -> typing.Optional["MangoInstruction"]:
     program_account_index = instruction_data["programIdIndex"]
     if all_accounts[program_account_index] != context.mango_program_address:
         # It's an instruction, it's just not a Mango one.

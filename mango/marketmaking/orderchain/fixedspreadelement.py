@@ -29,7 +29,7 @@ from ...modelstate import ModelState
 # value.
 #
 class FixedSpreadElement(PairwiseElement):
-    def __init__(self, spreads: typing.Sequence[Decimal]):
+    def __init__(self, spreads: typing.Sequence[Decimal]) -> None:
         super().__init__()
         self.spreads: typing.Sequence[Decimal] = spreads
 

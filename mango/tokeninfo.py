@@ -28,12 +28,13 @@ from .token import Instrument, Token
 # `TokenInfo` defines additional information for a `Token`.
 #
 class TokenInfo():
-    def __init__(self, token: Token, root_bank: RootBank, decimals: Decimal):
+    def __init__(self, token: Token, root_bank: RootBank, decimals: Decimal) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.token: Token = token
         self.root_bank: RootBank = root_bank
         self.decimals: Decimal = decimals
 
+    @staticmethod
     def from_layout_or_none(layout: typing.Any, instrument_lookup: InstrumentLookup, root_banks: typing.Sequence[RootBank]) -> typing.Optional["TokenInfo"]:
         if layout.mint is None:
             return None

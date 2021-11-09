@@ -36,7 +36,7 @@ from ...modelstate import ModelState
 # its price and the mid-price.
 #
 class AfterAccumulatedDepthElement(Element):
-    def __init__(self, depth: typing.Optional[Decimal], adjustment_ticks: Decimal = Decimal(1)):
+    def __init__(self, depth: typing.Optional[Decimal], adjustment_ticks: Decimal = Decimal(1)) -> None:
         super().__init__()
         self.depth: typing.Optional[Decimal] = depth
         self.adjustment_ticks: Decimal = adjustment_ticks

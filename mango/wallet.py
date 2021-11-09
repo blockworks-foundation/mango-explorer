@@ -57,7 +57,7 @@ _DEFAULT_WALLET_FILENAME: str = "id.json"
 
 
 class Wallet:
-    def __init__(self, secret_key: bytes):
+    def __init__(self, secret_key: bytes) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.secret_key: bytes = secret_key[0:32]
         self.keypair: Keypair = Keypair(self.secret_key)

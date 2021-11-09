@@ -1,5 +1,5 @@
 from .context import mango
-from .fakes import fake_seeded_public_key, fake_token
+from .fakes import fake_mango_instruction, fake_seeded_public_key, fake_token
 
 from datetime import datetime
 from decimal import Decimal
@@ -8,7 +8,7 @@ from solana.publickey import PublicKey
 import typing
 
 
-def test_transaction_instruction_constructor():
+def test_transaction_instruction_constructor() -> None:
     instruction_type: mango.InstructionType = mango.InstructionType.Deposit
     instruction_data: typing.Dict[str, str] = {"key": "test value"}
     account1 = fake_seeded_public_key("account 1")
@@ -22,7 +22,7 @@ def test_transaction_instruction_constructor():
     assert actual.accounts == accounts
 
 
-def test_transaction_scout_constructor():
+def test_transaction_scout_constructor() -> None:
     timestamp: datetime = datetime.now()
     signatures: typing.Sequence[str] = ["Signature1", "Signature2"]
     succeeded: bool = True
@@ -31,7 +31,7 @@ def test_transaction_scout_constructor():
     account2: PublicKey = fake_seeded_public_key("account 2")
     account3: PublicKey = fake_seeded_public_key("account 3")
     accounts: typing.Sequence[PublicKey] = [account1, account2, account3]
-    instructions: typing.Sequence[str] = ["Instruction"]
+    instructions: typing.Sequence[mango.MangoInstruction] = [fake_mango_instruction()]
     messages: typing.Sequence[str] = ["Message 1", "Message 2"]
     token = fake_token()
     token_value = mango.InstrumentValue(token, Decimal(28))

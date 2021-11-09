@@ -23,10 +23,10 @@ from .hedger import Hedger
 # A base hedger class to allow hedging across markets.
 #
 class NullHedger(Hedger):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-    def pulse(self, context: mango.Context, model_state: mango.ModelState):
+    def pulse(self, context: mango.Context, model_state: mango.ModelState) -> None:
         pass
 
     def __str__(self) -> str:

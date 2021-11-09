@@ -11,13 +11,13 @@ from mango.marketmaking.orderchain.fixedpositionsizeelement import FixedPosition
 model_state = fake_model_state(price=fake_price(price=Decimal(80)))
 
 
-def test_from_args():
+def test_from_args() -> None:
     args: argparse.Namespace = argparse.Namespace(fixedpositionsize_value=[Decimal(17)])
     actual: FixedPositionSizeElement = FixedPositionSizeElement.from_command_line_parameters(args)
-    assert actual.position_sizes == [17]
+    assert actual.position_sizes == [17]  # type: ignore[comparison-overlap]
 
 
-def test_single_bid_quantity_updated():
+def test_single_bid_quantity_updated() -> None:
     context = fake_context()
     order: mango.Order = fake_order(quantity=Decimal(10), side=mango.Side.BUY)
 
@@ -27,7 +27,7 @@ def test_single_bid_quantity_updated():
     assert result[0].quantity == 20
 
 
-def test_single_ask_quantity_updated():
+def test_single_ask_quantity_updated() -> None:
     context = fake_context()
     order: mango.Order = fake_order(quantity=Decimal(11), side=mango.Side.SELL)
 
@@ -37,7 +37,7 @@ def test_single_ask_quantity_updated():
     assert result[0].quantity == 21
 
 
-def test_single_quantity_multiple_orders_updated():
+def test_single_quantity_multiple_orders_updated() -> None:
     context = fake_context()
     order1: mango.Order = fake_order(quantity=Decimal(9), side=mango.Side.BUY)
     order2: mango.Order = fake_order(quantity=Decimal(10), side=mango.Side.BUY)
@@ -53,7 +53,7 @@ def test_single_quantity_multiple_orders_updated():
     assert result[3].quantity == 20
 
 
-def test_three_quantities_six_paired_orders_different_order_updated():
+def test_three_quantities_six_paired_orders_different_order_updated() -> None:
     context = fake_context()
     order1: mango.Order = fake_order(quantity=Decimal(8), side=mango.Side.BUY)
     order2: mango.Order = fake_order(quantity=Decimal(9), side=mango.Side.BUY)
@@ -76,7 +76,7 @@ def test_three_quantities_six_paired_orders_different_order_updated():
     assert result[5].quantity == 44
 
 
-def test_two_quantities_six_paired_orders_different_order_updated():
+def test_two_quantities_six_paired_orders_different_order_updated() -> None:
     context = fake_context()
     order1: mango.Order = fake_order(quantity=Decimal(8), side=mango.Side.BUY)
     order2: mango.Order = fake_order(quantity=Decimal(9), side=mango.Side.BUY)

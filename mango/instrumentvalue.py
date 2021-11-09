@@ -26,13 +26,27 @@ from .context import Context
 from .token import Instrument, Token
 
 
+def _decimal_from_number(value: numbers.Number) -> Decimal:
+    # Decimal constructor can only handle these Number types:
+    # Union[Decimal, float, str, Tuple[int, Sequence[int], int]]
+    if isinstance(value, Decimal):
+        return value
+    if isinstance(value, int):
+        return Decimal(value)
+    if isinstance(value, float):
+        return Decimal(value)
+    if isinstance(value, str):
+        return Decimal(value)
+    raise Exception(f"Cannot handle conversion of {value} to Decimal.")
+
+
 # # 🥭 InstrumentValue class
 #
 # The `InstrumentValue` class is a simple way of keeping a token and value together, and
 # displaying them nicely consistently.
 #
 class InstrumentValue:
-    def __init__(self, token: Instrument, value: Decimal):
+    def __init__(self, token: Instrument, value: Decimal) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.token: Instrument = token
         self.value: Decimal = value
@@ -113,9 +127,9 @@ class InstrumentValue:
         # The result should be denominated in the currency of the price.
         return InstrumentValue(token_value_to_multiply.token, self.value * token_value_to_multiply.value)
 
-    def __lt__(self, other):
+    def __lt__(self, other: typing.Any) -> bool:
         if isinstance(other, numbers.Number):
-            return self.value < other
+            return self.value < _decimal_from_number(other)
 
         if not isinstance(other, InstrumentValue):
             return NotImplemented
@@ -125,9 +139,9 @@ class InstrumentValue:
                 f"Cannot compare token values when one token is {self.token.symbol} and the other is {other.token.symbol}.")
         return self.value < other.value
 
-    def __gt__(self, other):
+    def __gt__(self, other: typing.Any) -> bool:
         if isinstance(other, numbers.Number):
-            return self.value > other
+            return self.value > _decimal_from_number(other)
 
         if not isinstance(other, InstrumentValue):
             return NotImplemented
@@ -142,7 +156,7 @@ class InstrumentValue:
             return True
         return False
 
-    def __format__(self, format_spec):
+    def __format__(self, format_spec: str) -> str:
         return format(str(self), format_spec)
 
     def __str__(self) -> str:

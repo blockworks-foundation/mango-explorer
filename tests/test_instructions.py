@@ -4,13 +4,12 @@ from .context import mango
 from .fakes import fake_context, fake_market, fake_seeded_public_key, fake_token, fake_wallet
 
 from decimal import Decimal
-from pyserum.enums import OrderType as PySerumOrderType, Side as PySerumSide
 from pyserum.market.market import Market as PySerumMarket
 from solana.publickey import PublicKey
 from solana.transaction import TransactionInstruction
 
 
-def test_build_create_spl_account_instructions():
+def test_build_create_spl_account_instructions() -> None:
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()
     token: mango.Token = fake_token()
@@ -24,7 +23,7 @@ def test_build_create_spl_account_instructions():
     assert isinstance(actual.instructions[1], TransactionInstruction)
 
 
-def test_build_create_associated_spl_account_instructions():
+def test_build_create_associated_spl_account_instructions() -> None:
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()
     token: mango.Token = fake_token()
@@ -36,13 +35,13 @@ def test_build_create_associated_spl_account_instructions():
     assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
-def test_build_transfer_spl_tokens_instructions():
+def test_build_transfer_spl_tokens_instructions() -> None:
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()
     token: mango.Token = fake_token()
     source: PublicKey = fake_seeded_public_key("source SPL account")
     destination: PublicKey = fake_seeded_public_key("destination SPL account")
-    quantity: int = 7
+    quantity: Decimal = Decimal(7)
     actual = mango.build_transfer_spl_tokens_instructions(context, wallet, token, source, destination, quantity)
     assert actual is not None
     assert len(actual.signers) == 0
@@ -51,7 +50,7 @@ def test_build_transfer_spl_tokens_instructions():
     assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
-def test_build_close_spl_account_instructions():
+def test_build_close_spl_account_instructions() -> None:
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()
     address: PublicKey = fake_seeded_public_key("target SPL account")
@@ -63,7 +62,7 @@ def test_build_close_spl_account_instructions():
     assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
-def test_build_create_serum_open_orders_instructions():
+def test_build_create_serum_open_orders_instructions() -> None:
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()
     market: PySerumMarket = fake_market()
@@ -75,14 +74,14 @@ def test_build_create_serum_open_orders_instructions():
     assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
-def test_build_serum_place_order_instructions():
+def test_build_serum_place_order_instructions() -> None:
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()
     market: PySerumMarket = fake_market()
     source: PublicKey = fake_seeded_public_key("source")
     open_orders_address: PublicKey = fake_seeded_public_key("open orders account")
-    order_type: PySerumOrderType = PySerumOrderType.IOC
-    side: PySerumSide = PySerumSide.BUY
+    order_type: mango.OrderType = mango.OrderType.IOC
+    side: mango.Side = mango.Side.BUY
     price: Decimal = Decimal(72)
     quantity: Decimal = Decimal("0.05")
     client_id: int = 53
@@ -96,7 +95,7 @@ def test_build_serum_place_order_instructions():
     assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
-def test_build_serum_consume_events_instructions():
+def test_build_serum_consume_events_instructions() -> None:
     context: mango.Context = fake_context()
     market_address: PublicKey = fake_seeded_public_key("market address")
     event_queue_address: PublicKey = fake_seeded_public_key("event queue address")
@@ -111,7 +110,7 @@ def test_build_serum_consume_events_instructions():
     assert isinstance(actual.instructions[0], TransactionInstruction)
 
 
-def test_build_serum_settle_instructions():
+def test_build_serum_settle_instructions() -> None:
     market = fake_market()
     context: mango.Context = fake_context()
     wallet: mango.Wallet = fake_wallet()

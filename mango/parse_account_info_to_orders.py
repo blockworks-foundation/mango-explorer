@@ -16,7 +16,7 @@
 
 import typing
 
-from pyserum.market import Market as PySerumMarket
+from pyserum.market.market import Market as PySerumMarket
 from pyserum.market.orderbook import OrderBook as PySerumOrderBook
 
 from .accountinfo import AccountInfo

@@ -36,11 +36,13 @@ from .market import Market
 # Some oracles provide a mid price. Some provide bid and ask but no mid price. Some provide a confidence score.
 # Some done. This enum allows an oracle to say which features it supports.
 #
-
 class SupportedOracleFeature(enum.Flag):
     MID_PRICE = enum.auto()
     TOP_BID_AND_OFFER = enum.auto()
     CONFIDENCE = enum.auto()
+
+    def has_feature(self, feature: "SupportedOracleFeature") -> bool:
+        return (self & feature) == 0  # type: ignore[comparison-overlap]
 
 
 # # 🥭 OracleSource class
@@ -48,7 +50,6 @@ class SupportedOracleFeature(enum.Flag):
 # This class describes an oracle and can be used to tell apart `Prices` from different `Oracle`s
 # apart.
 #
-
 class OracleSource():
     def __init__(self, provider_name: str, source_name: str, supports: SupportedOracleFeature, market: Market) -> None:
         self.provider_name = provider_name
@@ -57,7 +58,7 @@ class OracleSource():
         self.market = market
 
     def __str__(self) -> str:
-        return f"« OracleSource '{self.source_name}' from '{self.provider_name}' for market '{self.market.symbol}' [{self.supports}] »"
+        return f"« 𝙾𝚛𝚊𝚌𝚕𝚎𝚂𝚘𝚞𝚛𝚌𝚎 '{self.source_name}' from '{self.provider_name}' for market '{self.market.symbol}' [{self.supports}] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -67,8 +68,6 @@ class OracleSource():
 #
 # This class contains all relevant info for a price.
 #
-
-
 class Price():
     def __init__(self, source: OracleSource, timestamp: datetime, market: Market, top_bid: Decimal, mid_price: Decimal, top_ask: Decimal, confidence: Decimal) -> None:
         self.source: OracleSource = source
@@ -97,8 +96,6 @@ class Price():
 #
 # Derived versions of this class can fetch prices for a specific market.
 #
-
-
 class Oracle(metaclass=abc.ABCMeta):
     def __init__(self, name: str, market: Market) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -114,11 +111,11 @@ class Oracle(metaclass=abc.ABCMeta):
         raise NotImplementedError("Oracle.fetch_price() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def to_streaming_observable(self, context: Context) -> rx.core.Observable:
+    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable[Price]:
         raise NotImplementedError("Oracle.fetch_price() is not implemented on the base type.")
 
     def __str__(self) -> str:
-        return f"« Oracle {self.name} [{self.market.symbol}] »"
+        return f"« 𝙾𝚛𝚊𝚌𝚕𝚎 {self.name} [{self.market.symbol}] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -128,8 +125,6 @@ class Oracle(metaclass=abc.ABCMeta):
 #
 # Derived versions of this class allow creation of oracles for markets.
 #
-
-
 class OracleProvider(metaclass=abc.ABCMeta):
     def __init__(self, name: str) -> None:
         self.name = name
@@ -141,3 +136,9 @@ class OracleProvider(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def all_available_symbols(self, context: Context) -> typing.Sequence[str]:
         raise NotImplementedError("OracleProvider.all_available_symbols() is not implemented on the base type.")
+
+    def __str__(self) -> str:
+        return f"« 𝙾𝚛𝚊𝚌𝚕𝚎𝙿𝚛𝚘𝚟𝚒𝚍𝚎𝚛 {self.name} »"
+
+    def __repr__(self) -> str:
+        return f"{self}"

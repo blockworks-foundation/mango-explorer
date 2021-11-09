@@ -53,7 +53,7 @@ StubOracleConfidence: Decimal = Decimal(0)
 
 
 class StubOracle(Oracle):
-    def __init__(self, market: Market, index: int, cache_address: PublicKey):
+    def __init__(self, market: Market, index: int, cache_address: PublicKey) -> None:
         name = f"Stub Oracle for {market.symbol}"
         super().__init__(name, market)
         self.index: int = index
@@ -75,14 +75,15 @@ class StubOracle(Oracle):
         # will give you the consistent results, but you'll need to adjust your code"
         return Price(self.source, datetime.now(), self.market, raw_price.price, raw_price.price, raw_price.price, StubOracleConfidence)
 
-    def to_streaming_observable(self, context: Context) -> rx.core.Observable:
-        return rx.interval(1).pipe(
+    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable[Price]:
+        prices = rx.interval(1).pipe(
             ops.observe_on(context.create_thread_pool_scheduler()),
             ops.start_with(-1),
             ops.map(lambda _: self.fetch_price(context)),
             ops.catch(observable_pipeline_error_reporter),
             ops.retry(),
         )
+        return typing.cast(rx.core.typing.Observable[Price], prices)
 
 
 # # 🥭 StubOracleProvider class

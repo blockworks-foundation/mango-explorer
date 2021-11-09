@@ -8,15 +8,15 @@ from .fakes import fake_account_info, fake_seeded_public_key
 from decimal import Decimal
 
 
-def test_constructor():
+def test_constructor() -> None:
     address = fake_seeded_public_key("perp event queue address")
     account_info: mango.AccountInfo = fake_account_info(address)
     meta_data: mango.Metadata = mango.Metadata(mango.layouts.DATA_TYPE.EventQueue, mango.Version.V1, True)
     head: Decimal = Decimal(0)
     count: Decimal = Decimal(0)
     sequence_number: Decimal = Decimal(0)
-    unprocessed_events: typing.Sequence[typing.Optional[mango.PerpEvent]] = []
-    processed_events: typing.Sequence[typing.Optional[mango.PerpEvent]] = []
+    unprocessed_events: typing.Sequence[mango.PerpEvent] = []
+    processed_events: typing.Sequence[mango.PerpEvent] = []
 
     actual = mango.PerpEventQueue(account_info, mango.Version.V1, meta_data, head, count,
                                   sequence_number, unprocessed_events, processed_events)
@@ -51,7 +51,7 @@ class TstPE(mango.PerpEvent):
         return f"« TstPE [{self.event_type}] »"
 
 
-def test_unseen_with_no_changes():
+def test_unseen_with_no_changes() -> None:
     initial = _fake_pev(Decimal(5), Decimal(2), Decimal(7), [], [TstPE(), TstPE(), TstPE(), TstPE(), TstPE()])
     actual: mango.UnseenPerpEventChangesTracker = mango.UnseenPerpEventChangesTracker(initial)
     assert actual.last_sequence_number == Decimal(7)
@@ -62,7 +62,7 @@ def test_unseen_with_no_changes():
     assert actual.last_sequence_number == Decimal(7)
 
 
-def test_unseen_with_one_unprocessed_change():
+def test_unseen_with_one_unprocessed_change() -> None:
     initial = _fake_pev(Decimal(1), Decimal(0), Decimal(1), [TstPE()], [TstPE(), TstPE(), TstPE(), TstPE()])
     actual: mango.UnseenPerpEventChangesTracker = mango.UnseenPerpEventChangesTracker(initial)
     assert actual.last_sequence_number == Decimal(1)
@@ -75,7 +75,7 @@ def test_unseen_with_one_unprocessed_change():
     assert unseen[0] == marker
 
 
-def test_unseen_with_two_unprocessed_changes():
+def test_unseen_with_two_unprocessed_changes() -> None:
     initial = _fake_pev(Decimal(1), Decimal(0), Decimal(1), [], [TstPE(), TstPE(), TstPE()])
     actual: mango.UnseenPerpEventChangesTracker = mango.UnseenPerpEventChangesTracker(initial)
     assert actual.last_sequence_number == Decimal(1)
@@ -90,7 +90,7 @@ def test_unseen_with_two_unprocessed_changes():
     assert unseen[1] == marker2
 
 
-def test_unseen_with_two_processed_changes():
+def test_unseen_with_two_processed_changes() -> None:
     # This should be identical to the previous test - it shouldn't matter to 'seen' tracking whether an event
     # is processed or not.
     initial = _fake_pev(Decimal(1), Decimal(0), Decimal(1), [], [TstPE(), TstPE(), TstPE()])
@@ -107,7 +107,7 @@ def test_unseen_with_two_processed_changes():
     assert unseen[1] == marker2
 
 
-def test_unseen_with_two_unprocessed_changes_wrapping_around():
+def test_unseen_with_two_unprocessed_changes_wrapping_around() -> None:
     # This is tricky because the change overlaps the end of the array-as-ringbuffer. A change is added
     # to the next slot (which is the last slot in the array) and then another is added to the next slot
     # (which is the first slot in the array). Seen tracking shouldn't care - it should just return the

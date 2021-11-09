@@ -69,7 +69,7 @@ from .wallet import Wallet
 # This is the abstract base class for our target balances, to allow them to be treated polymorphically.
 #
 class TargetBalance(metaclass=abc.ABCMeta):
-    def __init__(self, symbol: str):
+    def __init__(self, symbol: str) -> None:
         self.symbol = symbol.upper()
 
     @abc.abstractmethod
@@ -85,7 +85,7 @@ class TargetBalance(metaclass=abc.ABCMeta):
 # This is the simple case, where the `FixedTargetBalance` object contains enough information on its own to build the resolved `InstrumentValue` object.
 #
 class FixedTargetBalance(TargetBalance):
-    def __init__(self, symbol: str, value: Decimal):
+    def __init__(self, symbol: str, value: Decimal) -> None:
         super().__init__(symbol)
         self.value = value
 
@@ -109,7 +109,7 @@ class FixedTargetBalance(TargetBalance):
 # > _target balance_ is _wallet fraction_ divided by _token price_
 #
 class PercentageTargetBalance(TargetBalance):
-    def __init__(self, symbol: str, target_percentage: Decimal):
+    def __init__(self, symbol: str, target_percentage: Decimal) -> None:
         super().__init__(symbol)
         self.target_fraction = target_percentage / 100
 
@@ -229,7 +229,8 @@ def calculate_required_balance_changes(current_balances: typing.Sequence[Instrum
 # easier to reason about.
 #
 class FilterSmallChanges:
-    def __init__(self, action_threshold: Decimal, balances: typing.Sequence[InstrumentValue], prices: typing.Sequence[InstrumentValue]):
+    def __init__(self, action_threshold: Decimal, balances: typing.Sequence[InstrumentValue],
+                 prices: typing.Sequence[InstrumentValue]) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.prices: typing.Dict[str, InstrumentValue] = {}
         total = Decimal(0)
@@ -274,11 +275,11 @@ class FilterSmallChanges:
 # This is the abstract class which defines the interface.
 #
 class WalletBalancer(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]):
+    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]) -> None:
         raise NotImplementedError("WalletBalancer.balance() is not implemented on the base type.")
 
 
@@ -288,10 +289,10 @@ class WalletBalancer(metaclass=abc.ABCMeta):
 # which can be plugged into algorithms that may want balancing logic.
 #
 class NullWalletBalancer(WalletBalancer):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]):
+    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]) -> None:
         pass
 
 
@@ -300,7 +301,8 @@ class NullWalletBalancer(WalletBalancer):
 # This is the high-level class that does much of the work.
 #
 class LiveWalletBalancer(WalletBalancer):
-    def __init__(self, wallet: Wallet, quote_token: Token, trade_executor: TradeExecutor, targets: typing.Sequence[TargetBalance], action_threshold: Decimal):
+    def __init__(self, wallet: Wallet, quote_token: Token, trade_executor: TradeExecutor,
+                 targets: typing.Sequence[TargetBalance], action_threshold: Decimal) -> None:
         super().__init__()
         self.wallet: Wallet = wallet
         self.quote_token: Token = quote_token
@@ -308,10 +310,10 @@ class LiveWalletBalancer(WalletBalancer):
         self.targets: typing.Sequence[TargetBalance] = targets
         self.action_threshold: Decimal = action_threshold
 
-    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]):
+    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]) -> None:
         padding = "\n    "
 
-        def balances_report(balances) -> str:
+        def balances_report(balances: typing.Sequence[InstrumentValue]) -> str:
             return padding.join(list([f"{bal}" for bal in balances]))
 
         tokens: typing.List[Token] = []
@@ -352,7 +354,7 @@ class LiveWalletBalancer(WalletBalancer):
         updated_balances = self._fetch_balances(context, tokens)
         self.logger.info(f"Finishing balances: {padding}{balances_report(updated_balances)}")
 
-    def _make_changes(self, balance_changes: typing.Sequence[InstrumentValue]):
+    def _make_changes(self, balance_changes: typing.Sequence[InstrumentValue]) -> None:
         quote = self.quote_token.symbol
         for change in balance_changes:
             market_symbol = f"serum:{change.token.symbol}/{quote}"
@@ -375,7 +377,8 @@ class LiveWalletBalancer(WalletBalancer):
 # This is the high-level class that does much of the work.
 #
 class LiveAccountBalancer(WalletBalancer):
-    def __init__(self, account: Account, group: Group, trade_executor: TradeExecutor, targets: typing.Sequence[TargetBalance], action_threshold: Decimal):
+    def __init__(self, account: Account, group: Group, trade_executor: TradeExecutor,
+                 targets: typing.Sequence[TargetBalance], action_threshold: Decimal) -> None:
         super().__init__()
         self.account: Account = account
         self.group: Group = group
@@ -383,10 +386,10 @@ class LiveAccountBalancer(WalletBalancer):
         self.targets: typing.Sequence[TargetBalance] = targets
         self.action_threshold: Decimal = action_threshold
 
-    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]):
+    def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]) -> None:
         padding = "\n    "
 
-        def balances_report(balances) -> str:
+        def balances_report(balances: typing.Sequence[InstrumentValue]) -> str:
             return padding.join(list([f"{bal}" for bal in balances]))
 
         balances = [basket_token.net_value for basket_token in self.account.slots]
@@ -421,7 +424,7 @@ class LiveAccountBalancer(WalletBalancer):
         updated_balances = [basket_token.net_value for basket_token in updated_account.slots]
         self.logger.info(f"Finishing balances: {padding}{balances_report(updated_balances)}")
 
-    def _make_changes(self, balance_changes: typing.Sequence[InstrumentValue]):
+    def _make_changes(self, balance_changes: typing.Sequence[InstrumentValue]) -> None:
         quote = self.account.shared_quote_token.symbol
         for change in balance_changes:
             market_symbol = f"{change.token.symbol}/{quote}"

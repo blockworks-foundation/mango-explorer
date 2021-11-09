@@ -51,7 +51,7 @@ class IdsJsonMarketLookup(MarketLookup):
         self.instrument_lookup: InstrumentLookup = instrument_lookup
 
     @staticmethod
-    def _from_dict(market_type: IdsJsonMarketType, mango_program_address: PublicKey, group_address: PublicKey, data: typing.Dict, instrument_lookup: InstrumentLookup, quote_symbol: str) -> Market:
+    def _from_dict(market_type: IdsJsonMarketType, mango_program_address: PublicKey, group_address: PublicKey, data: typing.Dict[str, typing.Any], instrument_lookup: InstrumentLookup, quote_symbol: str) -> Market:
         base_symbol = data["baseSymbol"]
         base_instrument: typing.Optional[Instrument] = instrument_lookup.find_by_symbol(base_symbol)
         if base_instrument is None:

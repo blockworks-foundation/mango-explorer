@@ -192,7 +192,7 @@ class Order(typing.NamedTuple):
 
 
 class OrderBook:
-    def __init__(self, symbol: str, bids: typing.Sequence[Order], asks: typing.Sequence[Order]):
+    def __init__(self, symbol: str, bids: typing.Sequence[Order], asks: typing.Sequence[Order]) -> None:
         self.symbol: str = symbol
 
         # Sort bids high to low, so best bid is at index 0
@@ -244,7 +244,7 @@ class OrderBook:
             return top_ask.price - top_bid.price
 
     def __str__(self) -> str:
-        def _order_to_str(order: Order):
+        def _order_to_str(order: Order) -> str:
             quantity = f"{order.quantity:,.8f}"
             price = f"{order.price:,.8f}"
             return f"{order.side} {quantity:>20} at {price:>20}"

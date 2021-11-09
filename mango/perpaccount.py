@@ -33,7 +33,7 @@ class PerpAccount:
                  short_settled_funding: Decimal, bids_quantity: Decimal, asks_quantity: Decimal,
                  taker_base: Decimal, taker_quote: Decimal, mngo_accrued: InstrumentValue,
                  open_orders: PerpOpenOrders, lot_size_converter: LotSizeConverter,
-                 base_token_value: InstrumentValue, quote_position_raw: Decimal):
+                 base_token_value: InstrumentValue, quote_position_raw: Decimal) -> None:
         self.base_position: Decimal = base_position
         self.quote_position: Decimal = quote_position
         self.long_settled_funding: Decimal = long_settled_funding

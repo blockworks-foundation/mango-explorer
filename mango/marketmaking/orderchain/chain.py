@@ -31,7 +31,7 @@ from ...modelstate import ModelState
 # reconciling and possibly adding to the orderbook.
 #
 class Chain:
-    def __init__(self, elements: typing.Sequence[Element]):
+    def __init__(self, elements: typing.Sequence[Element]) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.elements: typing.Sequence[Element] = elements
 

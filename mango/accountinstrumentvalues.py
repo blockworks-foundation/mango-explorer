@@ -56,7 +56,7 @@ def _token_values_from_open_orders(base_token: Token, quote_token: Token, spot_o
 # `AccountInstrumentValues` gathers basket items together instead of separate arrays.
 #
 class AccountInstrumentValues:
-    def __init__(self, base_token: Instrument, quote_token: Token, raw_deposit: Decimal, deposit: InstrumentValue, raw_borrow: Decimal, borrow: InstrumentValue, base_token_free: InstrumentValue, base_token_total: InstrumentValue, quote_token_free: InstrumentValue, quote_token_total: InstrumentValue, perp_base_position: InstrumentValue, raw_perp_quote_position: Decimal, raw_taker_quote: Decimal, bids_quantity: InstrumentValue, asks_quantity: InstrumentValue, long_settled_funding: Decimal, short_settled_funding: Decimal, lot_size_converter: LotSizeConverter):
+    def __init__(self, base_token: Instrument, quote_token: Token, raw_deposit: Decimal, deposit: InstrumentValue, raw_borrow: Decimal, borrow: InstrumentValue, base_token_free: InstrumentValue, base_token_total: InstrumentValue, quote_token_free: InstrumentValue, quote_token_total: InstrumentValue, perp_base_position: InstrumentValue, raw_perp_quote_position: Decimal, raw_taker_quote: Decimal, bids_quantity: InstrumentValue, asks_quantity: InstrumentValue, long_settled_funding: Decimal, short_settled_funding: Decimal, lot_size_converter: LotSizeConverter) -> None:
         self.base_token: Instrument = base_token
         self.quote_token: Token = quote_token
         self.raw_deposit: Decimal = raw_deposit
@@ -158,7 +158,7 @@ class AccountInstrumentValues:
 
 
 class PricedAccountInstrumentValues(AccountInstrumentValues):
-    def __init__(self, original_account_token_values: AccountInstrumentValues, market_cache: MarketCache):
+    def __init__(self, original_account_token_values: AccountInstrumentValues, market_cache: MarketCache) -> None:
         price: InstrumentValue = market_cache.adjusted_price(
             original_account_token_values.base_token, original_account_token_values.quote_token)
 

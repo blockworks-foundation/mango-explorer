@@ -6,7 +6,7 @@ import logging
 import os
 import os.path
 import rx
-import rx.subject
+import rx.subject.subject
 import rx.operators as ops
 import sys
 import traceback
@@ -102,7 +102,7 @@ try:
     first_item_capturer = mango.CaptureFirstItem()
     signatures = mango.fetch_all_recent_transaction_signatures(context)
     oldest_first = reversed(list(itertools.takewhile(lambda sig: sig != since_signature, signatures)))
-    pipeline: rx.core.Observable = rx.from_(oldest_first).pipe(
+    pipeline: rx.core.typing.Observable[mango.TransactionScout] = rx.from_(oldest_first).pipe(
         ops.map(first_item_capturer.capture_if_first),
         #  ops.map(debug_print_item("Signature:")),
         ops.map(lambda sig: mango.TransactionScout.load_if_available(context, sig)),
@@ -111,13 +111,12 @@ try:
 
     if sender is not None:
         pipeline = pipeline.pipe(
-            ops.filter(lambda item: item.sender == sender)
+            ops.filter(lambda item: bool(item.sender == sender))
         )
 
     if instruction_type is not None:
         pipeline = pipeline.pipe(
-            ops.filter(lambda item: item.has_any_instruction_of_type(
-                instruction_type))
+            ops.filter(lambda item: bool(item.has_any_instruction_of_type(instruction_type)))
         )
 
     if args.summarise:
@@ -125,19 +124,19 @@ try:
             ops.map(summariser(context))
         )
 
-    fan_out = rx.subject.Subject()
+    fan_out: rx.subject.subject.Subject = rx.subject.subject.Subject()
     fan_out.subscribe(mango.PrintingObserverSubscriber(False))
-    fan_out.subscribe(on_next=mango.CompoundNotificationTarget(args.notify_transactions).send)
+    fan_out.subscribe(on_next=mango.CompoundNotificationTarget(args.notify_transactions).send)  # type: ignore[call-arg]
 
     on_success = mango.FilteringNotificationTarget(
         mango.CompoundNotificationTarget(args.notify_successful_transactions),
         lambda item: isinstance(item, mango.TransactionScout) and item.succeeded)
-    fan_out.subscribe(on_next=on_success.send)
+    fan_out.subscribe(on_next=on_success.send)  # type: ignore[call-arg]
 
     on_failed = mango.FilteringNotificationTarget(
         mango.CompoundNotificationTarget(args.notify_failed_transactions),
         lambda item: isinstance(item, mango.TransactionScout) and not item.succeeded)
-    fan_out.subscribe(on_next=on_failed.send)
+    fan_out.subscribe(on_next=on_failed.send)  # type: ignore[call-arg]
 
     pipeline.subscribe(fan_out)
 

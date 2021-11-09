@@ -58,17 +58,18 @@ try:
     logging.info("Wallet accounts OK.")
 
     liquidations_publisher = mango.EventSource[mango.LiquidationEvent]()
-    liquidations_publisher.subscribe(on_next=mango.CompoundNotificationTarget(args.notify_liquidations).send)
+    liquidations_publisher.subscribe(on_next=mango.CompoundNotificationTarget(
+        args.notify_liquidations).send)  # type: ignore[call-arg]
 
     on_success = mango.FilteringNotificationTarget(
         mango.CompoundNotificationTarget(args.notify_successful_liquidations),
         lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
-    liquidations_publisher.subscribe(on_next=on_success.send)
+    liquidations_publisher.subscribe(on_next=on_success.send)  # type: ignore[call-arg]
 
     on_failed = mango.FilteringNotificationTarget(
         mango.CompoundNotificationTarget(args.notify_failed_liquidations),
         lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded)
-    liquidations_publisher.subscribe(on_next=on_failed.send)
+    liquidations_publisher.subscribe(on_next=on_failed.send)  # type: ignore[call-arg]
 
     # TODO: Add proper liquidator classes here when they're written for V3
     if args.dry_run:

@@ -28,7 +28,7 @@ from ...modelstate import ModelState
 # May modifiy an `Order`s price or quantity to ensure it's exactly aligned to the market's lot sizes.
 #
 class RoundToLotSizeElement(Element):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     @staticmethod

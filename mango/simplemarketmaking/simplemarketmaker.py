@@ -55,7 +55,7 @@ from pathlib import Path
 #
 
 class SimpleMarketMaker:
-    def __init__(self, context: mango.Context, wallet: mango.Wallet, market: mango.SerumMarket, market_operations: mango.MarketOperations, oracle: mango.Oracle, spread_ratio: Decimal, position_size_ratio: Decimal, existing_order_tolerance: Decimal, pause: timedelta):
+    def __init__(self, context: mango.Context, wallet: mango.Wallet, market: mango.SerumMarket, market_operations: mango.MarketOperations, oracle: mango.Oracle, spread_ratio: Decimal, position_size_ratio: Decimal, existing_order_tolerance: Decimal, pause: timedelta) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: mango.Context = context
         self.wallet: mango.Wallet = wallet
@@ -69,7 +69,7 @@ class SimpleMarketMaker:
         self.stop_requested = False
         self.health_filename = "/var/tmp/mango_healthcheck_simple_market_maker"
 
-    def start(self):
+    def start(self) -> None:
         # On startup there should be no existing orders. If we didn't exit cleanly last time though,
         # there may still be some hanging around. Cancel any existing orders so we start fresh.
         self.cleanup()
@@ -119,12 +119,12 @@ class SimpleMarketMaker:
 
         self.cleanup()
 
-    def stop(self):
+    def stop(self) -> None:
         self.logger.info("Stop requested.")
         self.stop_requested = True
         Path(self.health_filename).unlink(missing_ok=True)
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         self.logger.info("Cleaning up.")
         orders = self.market_operations.load_my_orders()
         for order in orders:
@@ -152,13 +152,13 @@ class SimpleMarketMaker:
             account = accounts[0]
             return account.net_values_by_index
 
-    def calculate_order_prices(self, price: mango.Price):
+    def calculate_order_prices(self, price: mango.Price) -> typing.Tuple[Decimal, Decimal]:
         bid = price.mid_price - (price.mid_price * self.spread_ratio)
         ask = price.mid_price + (price.mid_price * self.spread_ratio)
 
         return (bid, ask)
 
-    def calculate_order_quantities(self, price: mango.Price, inventory: typing.Sequence[typing.Optional[mango.InstrumentValue]]):
+    def calculate_order_quantities(self, price: mango.Price, inventory: typing.Sequence[typing.Optional[mango.InstrumentValue]]) -> typing.Tuple[Decimal, Decimal]:
         base_tokens: typing.Optional[mango.InstrumentValue] = mango.InstrumentValue.find_by_token(
             inventory, self.market.base)
         if base_tokens is None:
@@ -174,9 +174,9 @@ class SimpleMarketMaker:
         return (buy_quantity, sell_quantity)
 
     def orders_require_action(self, orders: typing.Sequence[mango.Order], price: Decimal, quantity: Decimal) -> bool:
-        def within_tolerance(target_value, order_value, tolerance):
+        def within_tolerance(target_value: Decimal, order_value: Decimal, tolerance: Decimal) -> bool:
             tolerated = order_value * tolerance
-            return (order_value < (target_value + tolerated)) and (order_value > (target_value - tolerated))
+            return bool((order_value < (target_value + tolerated)) and (order_value > (target_value - tolerated)))
         return len(orders) == 0 or not all([(within_tolerance(price, order.price, self.existing_order_tolerance)) and within_tolerance(quantity, order.quantity, self.existing_order_tolerance) for order in orders])
 
     def update_health_on_successful_iteration(self) -> None:

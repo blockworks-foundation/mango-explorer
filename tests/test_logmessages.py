@@ -1,7 +1,7 @@
 from .context import mango
 
 
-def test_no_messages_to_expand():
+def test_no_messages_to_expand() -> None:
     # https://explorer.solana.com/tx/5pJMY9JFbFDMGU4EUhR3oqxDfyGqEpj9hcrMmux5QLQKysdhy1F2qfpckqm2Sg9hLxnkwpRsL2K6z2bSq2Wpn5mZ?cluster=devnet
     logs = [
         "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA invoke [1]",
@@ -17,7 +17,7 @@ def test_no_messages_to_expand():
     assert actual == logs  # Should be no change to messages
 
 
-def test_expand_liquidate_perp_market():
+def test_expand_liquidate_perp_market() -> None:
     # https://explorer.solana.com/tx/5QXc2ssJASwwtd3THxo2d8sYMArR485oGB3k2B8QgDK1haP6W5Vii74JkC9GoEJv2aMNh7GmoQ2yHA4EZWGxAUWr?cluster=devnet
     logs = [
         "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA invoke [1]",
@@ -45,7 +45,7 @@ def test_expand_liquidate_perp_market():
     assert actual[4] == logs[5]
 
 
-def test_expand_liquidate_token_and_perp():
+def test_expand_liquidate_token_and_perp() -> None:
     # https://explorer.solana.com/tx/5TmXHZbwYhXE2pN868cH72ak8GrZtVyxJPRYXY2h4jTRzhmNbAtoZrq24TSUxZBX8Bf3xMYMGLWgyuV79P5QMMxs?cluster=devnet
     logs = [
         "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA invoke [1]",
@@ -93,7 +93,7 @@ def test_expand_liquidate_token_and_perp():
     assert actual[6] == logs[9]
 
 
-def test_expand_resolve_perp_bankruptcy():
+def test_expand_resolve_perp_bankruptcy() -> None:
     # https://explorer.solana.com/tx/64AhTnzhQDwmJKsXcDukjSRV9Te7uDaZB586dLFPNAr8KLf9DmvKhY2WvG95nVXQbTae3MqoPB14MQXhmEPYhmtY?cluster=devnet
     logs = [
         "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA invoke [1]",
@@ -121,7 +121,7 @@ def test_expand_resolve_perp_bankruptcy():
     assert actual[4] == logs[5]
 
 
-def test_expand_caches():
+def test_expand_caches() -> None:
     # https://explorer.solana.com/tx/5qyQkpiHX1CmuHw1GeoMq5vfq6usAt53st83dcF4SjKDJG9Agjogf8ADnv1TYohYL6vggbLuFdbfUM9mC2mQd1js
     logs = [
         "Program mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68 invoke [1]",

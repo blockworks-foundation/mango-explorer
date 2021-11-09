@@ -16,13 +16,13 @@
 
 import typing
 
-from .openorders import PlacedOrder
+from .placedorder import PlacedOrder
 
 
 # # 🥭 PerpOpenOrders class
 #
 class PerpOpenOrders:
-    def __init__(self, placed_orders: typing.Sequence[PlacedOrder]):
+    def __init__(self, placed_orders: typing.Sequence[PlacedOrder]) -> None:
         self.placed_orders: typing.Sequence[PlacedOrder] = placed_orders
 
     @property
@@ -36,3 +36,6 @@ class PerpOpenOrders:
     Orders:
         {placed_orders}
 »"""
+
+    def __repr__(self) -> str:
+        return f"{self}"

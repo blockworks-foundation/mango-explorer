@@ -31,7 +31,7 @@ from ...modelstate import ModelState
 # Only `Order`s returned from `process()` method are passed to the next element of the chain.
 #
 class Element(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @staticmethod

@@ -12,17 +12,17 @@ BTC_TOKEN = mango.Token("BTC", "Wrapped Bitcoin (Sollet)", Decimal(
 USDT_TOKEN = mango.Token("USDT", "USDT", Decimal(6), PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"))
 
 
-def test_target_balance_constructor():
+def test_target_balance_constructor() -> None:
     succeeded = False
     try:
-        mango.TargetBalance(fake_token())
+        mango.TargetBalance("ETH:20")  # type: ignore[abstract]
     except TypeError:
         # Can't instantiate the abstract base class.
         succeeded = True
     assert succeeded
 
 
-def test_fixed_target_balance_constructor():
+def test_fixed_target_balance_constructor() -> None:
     token = fake_token()
     value = Decimal(23)
     actual = mango.FixedTargetBalance(token.symbol, value)
@@ -31,7 +31,7 @@ def test_fixed_target_balance_constructor():
     assert actual.value == value
 
 
-def test_percentage_target_balance_constructor():
+def test_percentage_target_balance_constructor() -> None:
     token = fake_token()
     value = Decimal(5)
     actual = mango.PercentageTargetBalance(token.symbol, value)
@@ -40,7 +40,7 @@ def test_percentage_target_balance_constructor():
     assert actual.target_fraction == Decimal("0.05")  # Calculated as a fraction instead of a percentage.
 
 
-def test_calculate_required_balance_changes():
+def test_calculate_required_balance_changes() -> None:
     current_balances = [
         mango.InstrumentValue(ETH_TOKEN, Decimal("0.5")),
         mango.InstrumentValue(BTC_TOKEN, Decimal("0.2")),
@@ -59,7 +59,7 @@ def test_calculate_required_balance_changes():
     assert(changes[1].value == Decimal("-0.1"))
 
 
-def test_percentage_target_balance():
+def test_percentage_target_balance() -> None:
     token = fake_token()
     percentage_parsed_balance_change = mango.PercentageTargetBalance(token.symbol, Decimal(33))
     assert(percentage_parsed_balance_change.symbol == token.symbol)
@@ -75,21 +75,21 @@ def test_percentage_target_balance():
     assert(resolved_parsed_balance_change.value == Decimal("1.65"))
 
 
-def test_target_balance_parser_fixedvalue():
+def test_target_balance_parser_fixedvalue() -> None:
     parsed = mango.parse_target_balance("eth:70")
     assert isinstance(parsed, mango.FixedTargetBalance)
     assert parsed.symbol == "ETH"
     assert parsed.value == Decimal(70)
 
 
-def test_target_balance_parser_percentagevalue():
+def test_target_balance_parser_percentagevalue() -> None:
     parsed = mango.parse_target_balance("btc:10%")
     assert isinstance(parsed, mango.PercentageTargetBalance)
     assert parsed.symbol == "BTC"
     assert parsed.target_fraction == Decimal("0.1")
 
 
-def test_filter_small_changes_constructor():
+def test_filter_small_changes_constructor() -> None:
     current_prices = [
         mango.InstrumentValue(ETH_TOKEN, Decimal("4000")),
         mango.InstrumentValue(BTC_TOKEN, Decimal("60000")),
@@ -116,7 +116,7 @@ def test_filter_small_changes_constructor():
     assert actual.action_threshold_value == expected_action_threshold_value
 
 
-def test_filtering_small_changes():
+def test_filtering_small_changes() -> None:
     current_prices = [
         mango.InstrumentValue(ETH_TOKEN, Decimal("4000")),
         mango.InstrumentValue(BTC_TOKEN, Decimal("60000")),
@@ -137,7 +137,7 @@ def test_filtering_small_changes():
     assert(actual.allow(mango.InstrumentValue(BTC_TOKEN, Decimal("0.05"))))
 
 
-def test_sort_changes_for_trades():
+def test_sort_changes_for_trades() -> None:
     eth_buy = mango.InstrumentValue(ETH_TOKEN, Decimal("5"))
     btc_sell = mango.InstrumentValue(BTC_TOKEN, Decimal("-1"))
     sorted_changes = mango.sort_changes_for_trades([

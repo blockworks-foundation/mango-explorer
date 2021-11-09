@@ -1,21 +1,23 @@
+import typing
+
 from .context import mango
-from .fakes import fake_context
+from .fakes import fake_context, fake_wallet
 
 from decimal import Decimal
 
 
-def test_trade_executor_constructor():
+def test_trade_executor_constructor() -> None:
     succeeded = False
     try:
-        mango.TradeExecutor()
+        mango.TradeExecutor()  # type: ignore[abstract]
     except TypeError:
         # Can't instantiate the abstract base class.
         succeeded = True
     assert succeeded
 
 
-def test_null_trade_executor_constructor():
-    def reporter(x):
+def test_null_trade_executor_constructor() -> None:
+    def reporter(x: typing.Any) -> None:
         return None
     actual = mango.NullTradeExecutor(reporter)
     assert actual is not None
@@ -23,12 +25,12 @@ def test_null_trade_executor_constructor():
     assert actual.reporter == reporter
 
 
-def test_serum_trade_executor_constructor():
+def test_serum_trade_executor_constructor() -> None:
     context: mango.Context = fake_context()
-    wallet: mango.Wallet = {"fake": "Wallet"}
+    wallet: mango.Wallet = fake_wallet()
     price_adjustment_factor: Decimal = Decimal(0.05)
 
-    def reporter(x):
+    def reporter(x: typing.Any) -> None:
         return None
     actual = mango.ImmediateTradeExecutor(context, wallet, None, price_adjustment_factor, reporter)
     assert actual is not None

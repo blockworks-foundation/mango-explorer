@@ -4,7 +4,7 @@ from .fakes import fake_seeded_public_key, fake_token
 from decimal import Decimal
 
 
-def test_constructor():
+def test_constructor() -> None:
     owner = fake_seeded_public_key("owner")
     token = fake_token()
     value = Decimal(27)

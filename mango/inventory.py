@@ -38,7 +38,7 @@ from .watcher import Watcher
 # This class details inventory of a crypto account for a market.
 #
 class Inventory:
-    def __init__(self, inventory_source: InventorySource, liquidity_incentives: InstrumentValue, available_collateral: InstrumentValue, base: InstrumentValue, quote: InstrumentValue):
+    def __init__(self, inventory_source: InventorySource, liquidity_incentives: InstrumentValue, available_collateral: InstrumentValue, base: InstrumentValue, quote: InstrumentValue) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.inventory_source: InventorySource = inventory_source
         self.available_collateral: InstrumentValue = available_collateral

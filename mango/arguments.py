@@ -26,8 +26,8 @@ from .constants import WARNING_DISCLAIMER_TEXT, DATA_PATH
 #
 # This function parses CLI arguments and sets up common logging for all commands.
 #
-def parse_args(parser: argparse.ArgumentParser, logging_default=logging.INFO) -> argparse.Namespace:
-    parser.add_argument("--log-level", default=logging_default, type=lambda level: getattr(logging, level),
+def parse_args(parser: argparse.ArgumentParser, logging_default: int = logging.INFO) -> argparse.Namespace:
+    parser.add_argument("--log-level", default=logging_default, type=lambda level: typing.cast(object, getattr(logging, level)),
                         help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
     parser.add_argument("--log-suppress-timestamp", default=False, action="store_true",
                         help="Suppress timestamp in log output (useful for systems that supply their own timestamp on log messages)")
@@ -46,7 +46,7 @@ def parse_args(parser: argparse.ArgumentParser, logging_default=logging.INFO) ->
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("solanaweb3").setLevel(logging.WARNING)
 
-    default_log_record_factory: typing.Callable[[typing.Any], logging.LogRecord] = logging.getLogRecordFactory()
+    default_log_record_factory: typing.Callable[..., logging.LogRecord] = logging.getLogRecordFactory()
     log_levels: typing.Dict[int, str] = {
         logging.CRITICAL: "🛑",
         logging.ERROR: "🚨",
@@ -55,10 +55,10 @@ def parse_args(parser: argparse.ArgumentParser, logging_default=logging.INFO) ->
         logging.DEBUG: "🐛"
     }
 
-    def _emojified_record_factory(*args, **kwargs):
+    def _emojified_record_factory(*args: typing.Any, **kwargs: typing.Any) -> logging.LogRecord:
         record = default_log_record_factory(*args, **kwargs)
         # Here's where we add our own format keywords.
-        record.level_emoji = log_levels[record.levelno]
+        setattr(record, "level_emoji", log_levels[record.levelno])
         return record
 
     logging.setLogRecordFactory(_emojified_record_factory)

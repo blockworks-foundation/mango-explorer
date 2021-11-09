@@ -5,7 +5,7 @@ from decimal import Decimal
 from mango.calculators.healthcalculator import HealthType, HealthCalculator
 
 
-def test_empty():
+def test_empty() -> None:
     context = fake_context()
     group, cache, account, open_orders = load_data_from_directory("tests/testdata/empty")
 
@@ -15,7 +15,7 @@ def test_empty():
     assert health == Decimal("0")
 
 
-def test_1deposit():
+def test_1deposit() -> None:
     context = fake_context()
     group, cache, account, open_orders = load_data_from_directory("tests/testdata/1deposit")
 
@@ -25,7 +25,7 @@ def test_1deposit():
     assert health == Decimal("37904.2600000591928892771752953600134")
 
 
-def test_perp_account_no_spot_openorders():
+def test_perp_account_no_spot_openorders() -> None:
     context = fake_context()
     group, cache, account, open_orders = load_data_from_directory("tests/testdata/perp_account_no_spot_openorders")
 
@@ -37,7 +37,7 @@ def test_perp_account_no_spot_openorders():
     assert health == Decimal("7036880.69722811087924538653007346763")
 
 
-def test_perp_account_no_spot_openorders_unhealthy():
+def test_perp_account_no_spot_openorders_unhealthy() -> None:
     context = fake_context()
     group, cache, account, open_orders = load_data_from_directory(
         "tests/testdata/perp_account_no_spot_openorders_unhealthy")
@@ -49,7 +49,7 @@ def test_perp_account_no_spot_openorders_unhealthy():
     assert health == Decimal("1100318.49506000114695611699892507857")
 
 
-def test_account1():
+def test_account1() -> None:
     context = fake_context()
     group, cache, account, open_orders = load_data_from_directory("tests/testdata/account1")
 
@@ -60,7 +60,7 @@ def test_account1():
     assert health == Decimal("2578453.62441460502856112835667758626")
 
 
-def test_account2():
+def test_account2() -> None:
     context = fake_context()
     group, cache, account, open_orders = load_data_from_directory("tests/testdata/account2")
 

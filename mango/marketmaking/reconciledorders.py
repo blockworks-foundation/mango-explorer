@@ -28,7 +28,7 @@ import typing
 # This class encapsulates the outcome of such a reconciliation.
 #
 class ReconciledOrders:
-    def __init__(self):
+    def __init__(self) -> None:
         self.to_keep: typing.List[mango.Order] = []
         self.to_place: typing.List[mango.Order] = []
         self.to_cancel: typing.List[mango.Order] = []

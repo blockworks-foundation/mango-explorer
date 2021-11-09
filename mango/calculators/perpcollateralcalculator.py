@@ -27,7 +27,7 @@ from .collateralcalculator import CollateralCalculator
 
 
 class PerpCollateralCalculator(CollateralCalculator):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     # From Daffy in Discord, 30th August 2021 (https://discord.com/channels/791995070613159966/807051268304273408/882029587914182666)

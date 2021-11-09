@@ -5,7 +5,7 @@ from decimal import Decimal
 from .fakes import fake_token
 
 
-def test_round_base_btc():
+def test_round_base_btc() -> None:
     fake_base = fake_token("BTC")
     fake_quote = fake_token("USDC")
     # From BTC/USDC on Mango spot:
@@ -15,7 +15,7 @@ def test_round_base_btc():
     assert actual == Decimal("1234567890.1234")
 
 
-def test_round_base_eth():
+def test_round_base_eth() -> None:
     fake_base = fake_token("ETH")
     fake_quote = fake_token("USDC")
     # From ETH/USDC on Mango spot:
@@ -25,7 +25,7 @@ def test_round_base_eth():
     assert actual == Decimal("1234567890.123")
 
 
-def test_round_base_mngo():
+def test_round_base_mngo() -> None:
     fake_base = fake_token("MNGO")
     fake_quote = fake_token("USDC")
     # From USDT/USDC on Mango spot:
@@ -35,7 +35,7 @@ def test_round_base_mngo():
     assert actual == Decimal("1234567890")
 
 
-def test_round_base_ray():
+def test_round_base_ray() -> None:
     fake_base = fake_token("RAY")
     fake_quote = fake_token("USDC")
     # From RAY/USDC on Mango spot:
@@ -45,7 +45,7 @@ def test_round_base_ray():
     assert actual == Decimal("1234567890.1")
 
 
-def test_round_base_sol():
+def test_round_base_sol() -> None:
     fake_base = fake_token("SOL", decimals=9)
     fake_quote = fake_token("USDC")
     # From SOL/USDC on Mango spot:
@@ -55,7 +55,7 @@ def test_round_base_sol():
     assert actual == Decimal("1234567890.1")
 
 
-def test_round_base_srm():
+def test_round_base_srm() -> None:
     fake_base = fake_token("SRM")
     fake_quote = fake_token("USDC")
     # From SRM/USDC on Mango spot:
@@ -65,7 +65,7 @@ def test_round_base_srm():
     assert actual == Decimal("1234567890.1")
 
 
-def test_round_base_usdt():
+def test_round_base_usdt() -> None:
     fake_base = fake_token("BASE")
     fake_quote = fake_token("USDC")
     # From USDT/USDC on Mango spot:
@@ -75,7 +75,7 @@ def test_round_base_usdt():
     assert actual == Decimal("1234567890")
 
 
-def test_round_quote_btc():
+def test_round_quote_btc() -> None:
     fake_base = fake_token("BTC")
     fake_quote = fake_token("USDC")
     # From BTC/USDC on Mango spot:
@@ -85,7 +85,7 @@ def test_round_quote_btc():
     assert actual == Decimal("1234567890.12345")
 
 
-def test_round_quote_eth():
+def test_round_quote_eth() -> None:
     fake_base = fake_token("ETH")
     fake_quote = fake_token("USDC")
     # From ETH/USDC on Mango spot:
@@ -95,7 +95,7 @@ def test_round_quote_eth():
     assert actual == Decimal("1234567890.12345")
 
 
-def test_round_quote_mngo():
+def test_round_quote_mngo() -> None:
     fake_base = fake_token("MNGO")
     fake_quote = fake_token("USDC")
     # From MNGO/USDC on Mango spot:
@@ -105,7 +105,7 @@ def test_round_quote_mngo():
     assert actual == Decimal("1234567890.1234")
 
 
-def test_round_quote_ray():
+def test_round_quote_ray() -> None:
     fake_base = fake_token("RAY")
     fake_quote = fake_token("USDC")
     # From RAY/USDC on Mango spot:
@@ -115,7 +115,7 @@ def test_round_quote_ray():
     assert actual == Decimal("1234567890.1234")
 
 
-def test_round_quote_sol():
+def test_round_quote_sol() -> None:
     fake_base = fake_token("SOL", decimals=9)
     fake_quote = fake_token("USDC")
     # From SOL/USDC on Mango spot:
@@ -125,7 +125,7 @@ def test_round_quote_sol():
     assert actual == Decimal("1234567890.1234")
 
 
-def test_round_quote_srm():
+def test_round_quote_srm() -> None:
     fake_base = fake_token("SRM")
     fake_quote = fake_token("USDC")
     # From SRM/USDC on Mango spot:
@@ -135,7 +135,7 @@ def test_round_quote_srm():
     assert actual == Decimal("1234567890.1234")
 
 
-def test_round_quote_usdt():
+def test_round_quote_usdt() -> None:
     fake_base = fake_token("BASE")
     fake_quote = fake_token("USDC")
     # From USDT/USDC on Mango spot:

@@ -32,7 +32,7 @@ class PerpToSpotHedger(Hedger):
     def __init__(self, group: mango.Group, underlying_market: mango.PerpMarket,
                  hedging_market: mango.SpotMarket, market_operations: mango.MarketOperations,
                  max_price_slippage_factor: Decimal, max_hedge_chunk_quantity: Decimal,
-                 target_balance: mango.TargetBalance):
+                 target_balance: mango.TargetBalance) -> None:
         super().__init__()
         if (underlying_market.base != hedging_market.base) or (underlying_market.quote != hedging_market.quote):
             raise Exception(
@@ -53,7 +53,7 @@ class PerpToSpotHedger(Hedger):
 
         self.market_index: int = group.find_perp_market_index(underlying_market.address)
 
-    def pulse(self, context: mango.Context, model_state: mango.ModelState):
+    def pulse(self, context: mango.Context, model_state: mango.ModelState) -> None:
         try:
             perp_account: typing.Optional[mango.PerpAccount] = model_state.account.perp_accounts_by_index[self.market_index]
             if perp_account is None:

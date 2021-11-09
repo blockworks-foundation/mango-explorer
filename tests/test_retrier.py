@@ -5,9 +5,9 @@ from decimal import Decimal
 import typing
 
 
-def test_constructor():
+def test_constructor() -> None:
     name: str = "Test"
-    func: typing.Callable = lambda: 1
+    func: typing.Callable[[], int] = lambda: 1
     pauses: typing.Sequence[Decimal] = [Decimal(2)]
     actual = mango.RetryWithPauses(name, func, pauses)
     assert actual is not None
@@ -17,9 +17,8 @@ def test_constructor():
     assert actual.pauses == pauses
 
 
-def test_0_retry():
+def test_0_retry() -> None:
     name: str = "Test"
-    func: typing.Callable = lambda: 1
 
     # Number of retries is the number of pauses - 1.
     # The retrier only pauses if an exception is raised.
@@ -28,7 +27,7 @@ def test_0_retry():
     class FuncScope:
         called: int = 0
 
-    def func():
+    def func() -> None:
         FuncScope.called += 1
         raise Exception("Test")
 
@@ -42,9 +41,8 @@ def test_0_retry():
     assert FuncScope.called == 1
 
 
-def test_1_retry():
+def test_1_retry() -> None:
     name: str = "Test"
-    func: typing.Callable = lambda: 1
 
     # Number of retries is the number of pauses - 1.
     # The retrier only pauses if an exception is raised.
@@ -53,7 +51,7 @@ def test_1_retry():
     class FuncScope:
         called: int = 0
 
-    def func():
+    def func() -> None:
         FuncScope.called += 1
         raise Exception("Test")
 
@@ -67,9 +65,8 @@ def test_1_retry():
     assert FuncScope.called == 2
 
 
-def test_3_retries():
+def test_3_retries() -> None:
     name: str = "Test"
-    func: typing.Callable = lambda: 1
 
     # Number of retries is the number of pauses - 1.
     # The retrier only pauses if an exception is raised.
@@ -78,7 +75,7 @@ def test_3_retries():
     class FuncScope:
         called: int = 0
 
-    def func():
+    def func() -> None:
         FuncScope.called += 1
         raise Exception("Test")
 
@@ -92,9 +89,8 @@ def test_3_retries():
     assert FuncScope.called == 4
 
 
-def test_with_context():
+def test_with_context() -> None:
     name: str = "Test"
-    func: typing.Callable = lambda: 1
 
     # Number of retries is the number of pauses - 1.
     # The retrier only pauses if an exception is raised.
@@ -103,7 +99,7 @@ def test_with_context():
     class FuncScope:
         called: int = 0
 
-    def func():
+    def func() -> None:
         FuncScope.called += 1
         raise Exception("Test")
 

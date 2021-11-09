@@ -33,7 +33,7 @@ if args.account_type.upper() == "ACCOUNTINFO":
     raw_subscription = mango.WebSocketAccountSubscription(
         context, args.address, lambda account_info: account_info)
     manager.add(raw_subscription)
-    publisher: rx.Observable = raw_subscription.publisher
+    publisher: rx.core.typing.Observable[mango.AccountInfo] = raw_subscription.publisher
 elif args.account_type.upper() == "SERUMEVENTS":
     initial_serum_event_queue: mango.SerumEventQueue = mango.SerumEventQueue.load(context, args.address)
     serum_splitter: mango.UnseenSerumEventChangesTracker = mango.UnseenSerumEventChangesTracker(

@@ -7,7 +7,7 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 
-def test_node_bank_constructor():
+def test_node_bank_constructor() -> None:
     account_info = fake_account_info(fake_seeded_public_key("node bank"))
     meta_data = mango.Metadata(mango.layouts.DATA_TYPE.parse(bytearray(b'\x03')), mango.Version.V1, True)
     deposits = Decimal(1000)
@@ -26,7 +26,7 @@ def test_node_bank_constructor():
     assert actual.vault == fake_seeded_public_key("vault")
 
 
-def test_root_bank_constructor():
+def test_root_bank_constructor() -> None:
     account_info = fake_account_info(fake_seeded_public_key("root bank"))
     meta_data = mango.Metadata(mango.layouts.DATA_TYPE.parse(bytearray(b'\x02')), mango.Version.V1, True)
     optimal_util = Decimal("0.7")
@@ -54,7 +54,7 @@ def test_root_bank_constructor():
     assert actual.last_updated == timestamp
 
 
-def test_load_root_bank():
+def test_load_root_bank() -> None:
     actual = load_root_bank("tests/testdata/1deposit/root_bank0.json")
 
     assert actual is not None

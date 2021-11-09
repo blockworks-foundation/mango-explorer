@@ -35,7 +35,7 @@ from .version import Version
 # `PerpEvent` is the base class of all perp event objects.
 #
 class PerpEvent(metaclass=abc.ABCMeta):
-    def __init__(self, event_type: int, original_index: Decimal):
+    def __init__(self, event_type: int, original_index: Decimal) -> None:
         self.event_type: int = event_type
         self.original_index: Decimal = original_index
 
@@ -57,7 +57,7 @@ class PerpFillEvent(PerpEvent):
                  price: Decimal, quantity: Decimal, best_initial: Decimal, maker_slot: Decimal,
                  maker_out: bool, maker: PublicKey, maker_order_id: Decimal,
                  maker_client_order_id: Decimal, taker: PublicKey, taker_order_id: Decimal,
-                 taker_client_order_id: Decimal):
+                 taker_client_order_id: Decimal) -> None:
         super().__init__(event_type, original_index)
         self.timestamp: datetime = timestamp
         self.taker_side: Side = taker_side
@@ -96,7 +96,7 @@ class PerpFillEvent(PerpEvent):
 #
 class PerpOutEvent(PerpEvent):
     def __init__(self, event_type: int, original_index: Decimal, owner: PublicKey, side: Side,
-                 quantity: Decimal, slot: Decimal):
+                 quantity: Decimal, slot: Decimal) -> None:
         super().__init__(event_type, original_index)
         self.owner: PublicKey = owner
         self.side: Side = side
@@ -118,7 +118,7 @@ class PerpOutEvent(PerpEvent):
 class PerpLiquidateEvent(PerpEvent):
     def __init__(self, event_type: int, original_index: Decimal, timestamp: datetime, seq_num: Decimal,
                  liquidatee: PublicKey, liquidator: PublicKey, price: Decimal, quantity: Decimal,
-                 liquidation_fee: Decimal):
+                 liquidation_fee: Decimal) -> None:
         super().__init__(event_type, original_index)
         self.timestamp: datetime = timestamp
         self.seq_num: Decimal = seq_num
@@ -142,7 +142,7 @@ class PerpLiquidateEvent(PerpEvent):
 # the event queue data is upgraded before this code.
 #
 class PerpUnknownEvent(PerpEvent):
-    def __init__(self, event_type: int, original_index: Decimal, owner: PublicKey):
+    def __init__(self, event_type: int, original_index: Decimal, owner: PublicKey) -> None:
         super().__init__(event_type, original_index)
         self.owner: PublicKey = owner
 
@@ -158,7 +158,7 @@ class PerpUnknownEvent(PerpEvent):
 #
 # `event_builder()` takes an event layout and returns a typed `PerpEvent`.
 #
-def event_builder(lot_size_converter: LotSizeConverter, event_layout, original_index: Decimal) -> typing.Optional[PerpEvent]:
+def event_builder(lot_size_converter: LotSizeConverter, event_layout: typing.Any, original_index: Decimal) -> typing.Optional[PerpEvent]:
     if event_layout.event_type == b'\x00':
         if event_layout.maker is None and event_layout.taker is None:
             return None
@@ -188,7 +188,7 @@ class PerpEventQueue(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
                  head: Decimal, count: Decimal, sequence_number: Decimal,
                  unprocessed_events: typing.Sequence[PerpEvent],
-                 processed_events: typing.Sequence[PerpEvent]):
+                 processed_events: typing.Sequence[PerpEvent]) -> None:
         super().__init__(account_info)
         self.version: Version = version
 
@@ -270,7 +270,7 @@ class PerpEventQueue(AddressableAccount):
 # to return.
 #
 class UnseenPerpEventChangesTracker:
-    def __init__(self, initial: PerpEventQueue):
+    def __init__(self, initial: PerpEventQueue) -> None:
         self.last_sequence_number: Decimal = initial.sequence_number
 
     def unseen(self, event_queue: PerpEventQueue) -> typing.Sequence[PerpEvent]:

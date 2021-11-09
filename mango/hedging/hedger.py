@@ -27,12 +27,12 @@ from ..observables import EventSource
 # A base hedger class to allow hedging across markets.
 #
 class Hedger(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.pulse_complete: EventSource[datetime] = EventSource[datetime]()
         self.pulse_error: EventSource[Exception] = EventSource[Exception]()
 
-    def pulse(self, context: mango.Context, model_state: mango.ModelState):
+    def pulse(self, context: mango.Context, model_state: mango.ModelState) -> None:
         raise NotImplementedError("Hedger.pulse() is not implemented on the base type.")
 
     def __str__(self) -> str:

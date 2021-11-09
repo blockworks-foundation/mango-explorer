@@ -42,7 +42,7 @@ from .version import Version
 # `AccountSlot` gathers slot items together instead of separate arrays.
 #
 class AccountSlot:
-    def __init__(self, token_info: TokenInfo, quote_token_info: TokenInfo, raw_deposit: Decimal, deposit: InstrumentValue, raw_borrow: Decimal, borrow: InstrumentValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]):
+    def __init__(self, token_info: TokenInfo, quote_token_info: TokenInfo, raw_deposit: Decimal, deposit: InstrumentValue, raw_borrow: Decimal, borrow: InstrumentValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]) -> None:
         self.token_info: TokenInfo = token_info
         self.quote_token_info: TokenInfo = quote_token_info
         self.raw_deposit: Decimal = raw_deposit
@@ -88,7 +88,7 @@ class Account(AddressableAccount):
                  in_margin_basket: typing.Sequence[bool],
                  slot_indices: typing.Sequence[bool],
                  slots: typing.Sequence[AccountSlot],
-                 msrm_amount: Decimal, being_liquidated: bool, is_bankrupt: bool):
+                 msrm_amount: Decimal, being_liquidated: bool, is_bankrupt: bool) -> None:
         super().__init__(account_info)
         self.version: Version = version
 

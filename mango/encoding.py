@@ -40,7 +40,7 @@ _decompressor: zstandard.ZstdDecompressor = zstandard.ZstdDecompressor()
 # Alternatively, it may just be a base58-encoded string.
 #
 # `decode_binary()` decodes the data properly based on which encoding was used.
-def decode_binary(encoded: typing.Sequence) -> bytes:
+def decode_binary(encoded: typing.Union[str, typing.Sequence[str]]) -> bytes:
     if isinstance(encoded, str):
         return base58.b58decode(encoded)
     elif encoded[1] == "base64":
@@ -57,7 +57,7 @@ def decode_binary(encoded: typing.Sequence) -> bytes:
 #
 # Inverse of `decode_binary()`, this takes a binary list and encodes it (using base 64), then returns the encoded string and the string "base64" in an array.
 #
-def encode_binary(decoded: bytes) -> typing.Sequence:
+def encode_binary(decoded: bytes) -> typing.Sequence[str]:
     return [base64.b64encode(decoded).decode(), "base64"]
 
 

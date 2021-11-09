@@ -48,7 +48,7 @@ class HealthType(enum.Enum):
 
 
 class HealthCalculator:
-    def __init__(self, context: Context, health_type: HealthType):
+    def __init__(self, context: Context, health_type: HealthType) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
         self.health_type: HealthType = health_type

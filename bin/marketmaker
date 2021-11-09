@@ -60,7 +60,7 @@ handler.setLevel(logging.ERROR)
 logging.getLogger().addHandler(handler)
 
 
-def cleanup(context: mango.Context, wallet: mango.Wallet, account: mango.Account, market: mango.Market, dry_run: bool):
+def cleanup(context: mango.Context, wallet: mango.Wallet, account: mango.Account, market: mango.Market, dry_run: bool) -> None:
     market_operations: mango.MarketOperations = mango.create_market_operations(
         context, wallet, account, market, dry_run)
     market_instruction_builder: mango.MarketInstructionBuilder = mango.create_market_instruction_builder(
@@ -158,7 +158,7 @@ mango.InstrumentValue.report([asset for asset in account.net_values if asset is 
 manager.open()
 
 
-def pulse_action(_) -> None:
+def pulse_action(_: int) -> None:
     try:
         model_state: mango.ModelState = model_state_builder.build(context)
         market_maker.pulse(context, model_state)

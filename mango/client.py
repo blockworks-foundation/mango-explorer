@@ -44,7 +44,7 @@ from .logmessages import expand_log_messages
 # independent of other error handling.
 #
 class ClientException(Exception):
-    def __init__(self, message: str, name: str, cluster_url: str):
+    def __init__(self, message: str, name: str, cluster_url: str) -> None:
         super().__init__(message)
         self.message: str = message
         self.name: str = name
@@ -91,7 +91,7 @@ class TooManyRequestsRateLimitException(RateLimitException):
 # considers it 'recent') or when it's too new (and hasn't yet made it to the node that is responding).
 #
 class BlockhashNotFoundException(ClientException):
-    def __init__(self, name: str, cluster_url: str, blockhash: typing.Optional[Blockhash] = None):
+    def __init__(self, name: str, cluster_url: str, blockhash: typing.Optional[Blockhash] = None) -> None:
         message: str = f"Blockhash '{blockhash}' not found on {cluster_url}."
         super().__init__(message, name, cluster_url)
         self.blockhash: typing.Optional[Blockhash] = blockhash
@@ -106,7 +106,7 @@ class BlockhashNotFoundException(ClientException):
 # many slots.
 #
 class NodeIsBehindException(ClientException):
-    def __init__(self, name: str, cluster_url: str, slots_behind: int):
+    def __init__(self, name: str, cluster_url: str, slots_behind: int) -> None:
         message: str = f"Node is behind by {slots_behind} slots."
         super().__init__(message, name, cluster_url)
         self.slots_behind: int = slots_behind
@@ -121,7 +121,7 @@ class NodeIsBehindException(ClientException):
 # to fetch a recent or distinct blockhash.
 #
 class FailedToFetchBlockhashException(ClientException):
-    def __init__(self, message: str, name: str, cluster_url: str, pauses: typing.Sequence[float]):
+    def __init__(self, message: str, name: str, cluster_url: str, pauses: typing.Sequence[float]) -> None:
         super().__init__(message, name, cluster_url)
         self.pauses: typing.Sequence[float] = pauses
 
@@ -139,7 +139,7 @@ class FailedToFetchBlockhashException(ClientException):
 # of problems at the right place.
 #
 class TransactionException(ClientException):
-    def __init__(self, transaction: typing.Optional[Transaction], message: str, code: int, name: str, cluster_url: str, rpc_method: str, request_text: str, response_text: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None], instruction_reporter: InstructionReporter = InstructionReporter()):
+    def __init__(self, transaction: typing.Optional[Transaction], message: str, code: int, name: str, cluster_url: str, rpc_method: str, request_text: str, response_text: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None], instruction_reporter: InstructionReporter = InstructionReporter()) -> None:
         super().__init__(message, name, cluster_url)
         self.transaction: typing.Optional[Transaction] = transaction
         self.code: int = code
@@ -226,7 +226,7 @@ class CachedBlockhash(typing.NamedTuple):
 # some common operations better from our point of view.
 #
 class CompatibleClient(Client):
-    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, blockhash_commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: datetime.timedelta, instruction_reporter: InstructionReporter):
+    def __init__(self, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, blockhash_commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: datetime.timedelta, instruction_reporter: InstructionReporter) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster_name: str = cluster_name
@@ -242,7 +242,7 @@ class CompatibleClient(Client):
         self._cached_blockhash: CachedBlockhash = CachedBlockhash(Blockhash("unset"), datetime.datetime.min)
 
         # Keep a note of the last 10 blockhashes, if we're using caching
-        self._previous_blockhashes: collections.deque = collections.deque([], 10)
+        self._previous_blockhashes: collections.deque[Blockhash] = collections.deque([], 10)
 
     def is_node_healthy(self) -> bool:
         try:
@@ -340,7 +340,7 @@ class CompatibleClient(Client):
             self._cached_blockhash = CachedBlockhash(blockhash=blockhash, timestamp=datetime.datetime.now())
         return self._cached_blockhash.blockhash
 
-    def get_token_account_balance(self, pubkey: typing.Union[str, PublicKey], commitment: typing.Optional[Commitment] = UnspecifiedCommitment):
+    def get_token_account_balance(self, pubkey: typing.Union[str, PublicKey], commitment: typing.Optional[Commitment] = UnspecifiedCommitment) -> RPCResponse:
         options = self._build_options(commitment, None, None)
         return self._send_request("getTokenAccountBalance", str(pubkey), options)
 
@@ -405,7 +405,7 @@ class CompatibleClient(Client):
         return response
 
     # def _send_request(self, method: str, transaction: typing.Optional[Transaction] = None, blockhash: typing.Optional[Blockhash] = None, *params: typing.Any) -> RPCResponse:
-    def _send_request(self, method: str, *args: typing.Any, **kwargs) -> RPCResponse:
+    def _send_request(self, method: str, *args: typing.Any, **kwargs: typing.Any) -> RPCResponse:
         request_id = next(self._request_counter) + 1
         headers = {"Content-Type": "application/json"}
         data = json.dumps({"jsonrpc": "2.0", "id": request_id, "method": method, "params": args})
@@ -428,7 +428,7 @@ class CompatibleClient(Client):
         # All seems OK, but maybe the server returned an error? If so, try to pass on as much
         # information as we can.
         response_text: str = raw_response.text
-        response: typing.Dict = json.loads(response_text)
+        response: typing.Dict[str, typing.Any] = json.loads(response_text)
         if "error" in response:
             if response["error"] is str:
                 message: str = typing.cast(str, response["error"])
@@ -440,7 +440,8 @@ class CompatibleClient(Client):
                 if error_code == -32005:
                     slots_behind: int = response["error"]["data"]["numSlotsBehind"] if "numSlotsBehind" in response["error"]["data"] else -1
                     raise NodeIsBehindException(self.name, self.cluster_url, slots_behind)
-                error_data: typing.Dict = response["error"]["data"] if "data" in response["error"] else {}
+                error_data: typing.Dict[str,
+                                        typing.Any] = response["error"]["data"] if "data" in response["error"] else {}
                 error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
                 error_err = error_data["err"] if "err" in error_data else "No error text returned"
                 if error_err == "BlockhashNotFound":
@@ -483,7 +484,7 @@ class CompatibleClient(Client):
 
 
 class BetterClient:
-    def __init__(self, client: CompatibleClient):
+    def __init__(self, client: CompatibleClient) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.compatible_client: CompatibleClient = client
 
@@ -563,7 +564,7 @@ class BetterClient:
         return value / SOL_DECIMAL_DIVISOR
 
     def get_account_info(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment,
-                         encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> typing.Dict:
+                         encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> typing.Any:
         response = self.compatible_client.get_account_info(pubkey, commitment, encoding, data_slice)
         return response["result"]
 
@@ -571,20 +572,20 @@ class BetterClient:
         response = self.compatible_client.get_confirmed_signature_for_address2(account, before, limit)
         return [result["signature"] for result in response["result"]]
 
-    def get_confirmed_transaction(self, signature: str, encoding: str = "json") -> typing.Dict:
+    def get_confirmed_transaction(self, signature: str, encoding: str = "json") -> typing.Any:
         response = self.compatible_client.get_confirmed_transaction(signature, encoding)
         return response["result"]
 
     def get_minimum_balance_for_rent_exemption(self, size: int, commitment: Commitment = UnspecifiedCommitment) -> int:
         response = self.compatible_client.get_minimum_balance_for_rent_exemption(size, commitment)
-        return response["result"]
+        return int(response["result"])
 
     def get_program_accounts(self, pubkey: typing.Union[str, PublicKey],
                              commitment: Commitment = UnspecifiedCommitment,
                              encoding: typing.Optional[str] = UnspecifiedEncoding,
                              data_slice: typing.Optional[DataSliceOpts] = None,
                              data_size: typing.Optional[int] = None,
-                             memcmp_opts: typing.Optional[typing.List[MemcmpOpts]] = None) -> typing.Dict:
+                             memcmp_opts: typing.Optional[typing.List[MemcmpOpts]] = None) -> typing.Any:
         response = self.compatible_client.get_program_accounts(
             pubkey, commitment, encoding, data_slice, data_size, memcmp_opts)
         return response["result"]
@@ -600,19 +601,19 @@ class BetterClient:
         divisor = Decimal(10 ** decimal_places)
         return value / divisor
 
-    def get_token_accounts_by_owner(self, owner: PublicKey, token_account_options: TokenAccountOpts, commitment: Commitment = UnspecifiedCommitment,) -> typing.Sequence[typing.Dict]:
+    def get_token_accounts_by_owner(self, owner: PublicKey, token_account_options: TokenAccountOpts, commitment: Commitment = UnspecifiedCommitment,) -> typing.Any:
         response = self.compatible_client.get_token_accounts_by_owner(owner, token_account_options, commitment)
         return response["result"]["value"]
 
     def get_multiple_accounts(self, pubkeys: typing.Sequence[PublicKey], commitment: Commitment = UnspecifiedCommitment,
-                              encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> typing.Sequence[typing.Dict]:
+                              encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> typing.Any:
         response = self.compatible_client.get_multiple_accounts(pubkeys, commitment, encoding, data_slice)
         return response["result"]["value"]
 
     def send_transaction(self, transaction: Transaction, *signers: Keypair, opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment)) -> str:
         response = self.compatible_client.send_transaction(
             transaction, *signers, opts=opts)
-        return response["result"]
+        return str(response["result"])
 
     def wait_for_confirmation(self, transaction_ids: typing.Sequence[str], max_wait_in_seconds: int = 60) -> typing.Sequence[str]:
         self.logger.info(f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}.")

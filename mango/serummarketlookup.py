@@ -50,10 +50,10 @@ from .token import Token
 # there is a name-value pair for the particular market we're interested in. Also, the
 # current file only lists USDC and USDT markets, so that's all we can support this way.
 class SerumMarketLookup(MarketLookup):
-    def __init__(self, serum_program_address: PublicKey, token_data: typing.Dict) -> None:
+    def __init__(self, serum_program_address: PublicKey, token_data: typing.Dict[str, typing.Any]) -> None:
         super().__init__()
         self.serum_program_address: PublicKey = serum_program_address
-        self.token_data: typing.Dict = token_data
+        self.token_data: typing.Dict[str, typing.Any] = token_data
 
     @staticmethod
     def load(serum_program_address: PublicKey, token_data_filename: str) -> "SerumMarketLookup":
@@ -62,14 +62,14 @@ class SerumMarketLookup(MarketLookup):
             return SerumMarketLookup(serum_program_address, token_data)
 
     @staticmethod
-    def _find_data_by_symbol(symbol: str, token_data: typing.Dict) -> typing.Optional[typing.Dict]:
+    def _find_data_by_symbol(symbol: str, token_data: typing.Dict[str, typing.Any]) -> typing.Optional[typing.Dict[str, typing.Any]]:
         for token in token_data["tokens"]:
             if token["symbol"] == symbol:
-                return token
+                return typing.cast(typing.Dict[str, typing.Any], token)
         return None
 
     @staticmethod
-    def _find_token_by_symbol_or_error(symbol: str, token_data: typing.Dict) -> Token:
+    def _find_token_by_symbol_or_error(symbol: str, token_data: typing.Dict[str, typing.Any]) -> Token:
         found_token_data = SerumMarketLookup._find_data_by_symbol(symbol, token_data)
         if found_token_data is None:
             raise Exception(f"Could not find data for token symbol '{symbol}'.")

@@ -21,7 +21,7 @@ from .token import Instrument
 # # 🥭 LotSizeConverter class
 #
 class LotSizeConverter():
-    def __init__(self, base: Instrument, base_lot_size: Decimal, quote: Instrument, quote_lot_size: Decimal):
+    def __init__(self, base: Instrument, base_lot_size: Decimal, quote: Instrument, quote_lot_size: Decimal) -> None:
         self.base: Instrument = base
         self.base_lot_size: Decimal = base_lot_size
         self.quote: Instrument = quote
@@ -85,8 +85,9 @@ class LotSizeConverter():
 # # 🥭 NullLotSizeConverter class
 #
 class NullLotSizeConverter(LotSizeConverter):
-    def __init__(self):
-        super().__init__(None, Decimal(1), None, Decimal(1))
+    def __init__(self) -> None:
+        super().__init__(Instrument("NULLBASE", "Null Base", Decimal(0)), Decimal(
+            1), Instrument("NULLQUOTE", "Null Quote", Decimal(0)), Decimal(1))
 
     def price_lots_to_number(self, price_lots: Decimal) -> Decimal:
         return price_lots
@@ -113,8 +114,9 @@ class NullLotSizeConverter(LotSizeConverter):
 # # 🥭 RaisingLotSizeConverter class
 #
 class RaisingLotSizeConverter(LotSizeConverter):
-    def __init__(self):
-        super().__init__(None, Decimal(-1), None, Decimal(-1))
+    def __init__(self) -> None:
+        super().__init__(Instrument("RAISINGBASE", "Raising Base", Decimal(0)), Decimal(-1),
+                         Instrument("RAISINGQUOTE", "Raising Quote", Decimal(0)), Decimal(-1))
 
     def price_lots_to_number(self, price_lots: Decimal) -> Decimal:
         raise NotImplementedError(

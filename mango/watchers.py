@@ -17,7 +17,7 @@ import logging
 import typing
 
 from decimal import Decimal
-from pyserum.market import Market as PySerumMarket
+from pyserum.market.market import Market as PySerumMarket
 from solana.publickey import PublicKey
 
 from .account import Account
@@ -29,13 +29,14 @@ from .group import Group
 from .healthcheck import HealthCheck
 from .instructions import build_create_serum_open_orders_instructions
 from .instrumentvalue import InstrumentValue
-from .inventory import Inventory, InventorySource
+from .inventory import Inventory
 from .loadedmarket import LoadedMarket
-from .market import Market
+from .market import Market, InventorySource
 from .observables import DisposePropagator, LatestItemObserverSubscriber
 from .openorders import OpenOrders
 from .oracle import Price
-from .oraclefactory import OracleProvider, create_oracle_provider
+from .oracle import OracleProvider
+from .oraclefactory import create_oracle_provider
 from .orders import OrderBook
 from .perpmarket import PerpMarket
 from .placedorder import PlacedOrdersContainer
@@ -142,7 +143,7 @@ def build_perp_open_orders_watcher(context: Context, manager: WebSocketSubscript
     initial_open_orders = initial_perp_account.open_orders
     latest_open_orders_observer = LatestItemObserverSubscriber[PlacedOrdersContainer](initial_open_orders)
     account_subscription.publisher.subscribe(
-        on_next=lambda updated_account: latest_open_orders_observer.on_next(updated_account.perp_accounts_by_index[index].open_orders))
+        on_next=lambda updated_account: latest_open_orders_observer.on_next(updated_account.perp_accounts_by_index[index].open_orders))  # type: ignore[call-arg]
     health_check.add("open_orders_subscription", account_subscription.publisher)
     return latest_open_orders_observer
 

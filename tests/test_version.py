@@ -1,9 +1,9 @@
 from .context import mango
 
 
-def test_equality():
-    assert mango.Version.V1 == mango.Version.V1
+def test_equality() -> None:
+    assert mango.Version.V1.value == mango.Version.V1.value
 
 
-def test_inequality():
-    assert mango.Version.V1 != mango.Version.V2
+def test_inequality() -> None:
+    assert mango.Version.V1.value != mango.Version.V2.value

@@ -40,7 +40,7 @@ from ...modelstate import ModelState
 # structure, and then calls the derived class's `process_order_pair()` method to process a pair.
 #
 class PairwiseElement(Element, metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def process_order_pair(self, context: mango.Context, model_state: ModelState, index: int, buy: typing.Optional[mango.Order], sell: typing.Optional[mango.Order]) -> typing.Tuple[typing.Optional[mango.Order], typing.Optional[mango.Order]]:

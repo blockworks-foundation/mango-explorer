@@ -33,7 +33,6 @@ from .version import Version
 #
 # Does the orderbook side represent bids or asks?
 #
-
 class OrderBookSideType(enum.Enum):
     # We use strings here so that argparse can work with these as parameters.
     BIDS = "BIDS"
@@ -54,7 +53,7 @@ class PerpOrderBookSide(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version,
                  meta_data: Metadata, perp_market_details: PerpMarketDetails, bump_index: Decimal,
                  free_list_len: Decimal, free_list_head: Decimal, root_node: Decimal,
-                 leaf_count: Decimal, nodes: typing.Any):
+                 leaf_count: Decimal, nodes: typing.Any) -> None:
         super().__init__(account_info)
         self.version: Version = version
 

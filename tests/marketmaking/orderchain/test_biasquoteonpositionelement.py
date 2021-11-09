@@ -8,13 +8,13 @@ from decimal import Decimal
 from mango.marketmaking.orderchain.biasquoteonpositionelement import BiasQuoteOnPositionElement
 
 
-def test_from_args():
+def test_from_args() -> None:
     args: argparse.Namespace = argparse.Namespace(biasquoteonposition_bias=[Decimal(17)])
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement.from_command_line_parameters(args)
-    assert actual.biases == [17]
+    assert actual.biases == [17]  # type: ignore[comparison-overlap]
 
 
-def test_no_bias_results_in_no_change():
+def test_no_bias_results_in_no_change() -> None:
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement([])
     order: mango.Order = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
 
@@ -23,7 +23,7 @@ def test_no_bias_results_in_no_change():
     assert result == order
 
 
-def test_bias_with_positive_inventory():
+def test_bias_with_positive_inventory() -> None:
     quantity: Decimal = Decimal(10)
     inventory: Decimal = Decimal(100)
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement([])
@@ -39,7 +39,7 @@ def test_bias_with_positive_inventory():
     assert result.price == Decimal("990")
 
 
-def test_bias_with_negative_inventory():
+def test_bias_with_negative_inventory() -> None:
     quantity: Decimal = Decimal(10)
     inventory: Decimal = Decimal(-100)
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement([])
@@ -64,7 +64,7 @@ def test_bias_with_negative_inventory():
 #  So if my standard size I'm quoting is 0.0002 BTC, my current position is +0.0010 BTC, and pos_lean
 #  is -0.0001, you would move your quotes down by 0.0005 (or 5bps)
 # (Private chat link: https://discord.com/channels/@me/832570058861314048/878343278523723787)
-def test_from_daffys_original_note():
+def test_from_daffys_original_note() -> None:
     quantity: Decimal = Decimal("0.0002")
     inventory: Decimal = Decimal("0.0010")
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement([])
@@ -78,7 +78,7 @@ def test_from_daffys_original_note():
     assert result.price == Decimal(49975)
 
 
-def test_single_bias_two_order_pairs():
+def test_single_bias_two_order_pairs() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)), inventory=fake_inventory())
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement([Decimal("0.001")])
@@ -98,7 +98,7 @@ def test_single_bias_two_order_pairs():
     assert result[3].price == Decimal("118.8")  # 120 * (1 + (10 / 1) * -0.001) == 118.8
 
 
-def test_three_biases_three_order_pairs():
+def test_three_biases_three_order_pairs() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)), inventory=fake_inventory())
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement(

@@ -17,7 +17,7 @@ import logging
 import typing
 
 from decimal import Decimal
-from pyserum.market import Market as PySerumMarket
+from pyserum.market.market import Market as PySerumMarket
 from solana.publickey import PublicKey
 
 from .account import Account
@@ -42,7 +42,9 @@ from .wallet import Wallet
 # on initial setup in the `load()` method.
 #
 class SpotMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, raw_market: PySerumMarket, market_index: int, fee_discount_token_address: PublicKey):
+    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account,
+                 spot_market: SpotMarket, raw_market: PySerumMarket, market_index: int,
+                 fee_discount_token_address: PublicKey) -> None:
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
@@ -133,7 +135,8 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
 # This class puts trades on the Serum orderbook. It doesn't do anything complicated.
 #
 class SpotMarketOperations(MarketOperations):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket, market_instruction_builder: SpotMarketInstructionBuilder):
+    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account,
+                 spot_market: SpotMarket, market_instruction_builder: SpotMarketInstructionBuilder) -> None:
         super().__init__(spot_market)
         self.context: Context = context
         self.wallet: Wallet = wallet

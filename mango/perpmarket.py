@@ -40,7 +40,8 @@ from .token import Instrument, Token
 # This class encapsulates our knowledge of a Mango perps market.
 #
 class PerpMarket(LoadedMarket):
-    def __init__(self, mango_program_address: PublicKey, address: PublicKey, base: Instrument, quote: Token, underlying_perp_market: PerpMarketDetails):
+    def __init__(self, mango_program_address: PublicKey, address: PublicKey, base: Instrument, quote: Token,
+                 underlying_perp_market: PerpMarketDetails) -> None:
         super().__init__(mango_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.underlying_perp_market: PerpMarketDetails = underlying_perp_market
         self.lot_size_converter: LotSizeConverter = LotSizeConverter(
@@ -119,7 +120,8 @@ class PerpMarket(LoadedMarket):
 # This class holds information to load a `PerpMarket` object but doesn't automatically load it.
 #
 class PerpMarketStub(Market):
-    def __init__(self, mango_program_address: PublicKey, address: PublicKey, base: Instrument, quote: Token, group_address: PublicKey):
+    def __init__(self, mango_program_address: PublicKey, address: PublicKey, base: Instrument, quote: Token,
+                 group_address: PublicKey) -> None:
         super().__init__(mango_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
         self.group_address: PublicKey = group_address
 

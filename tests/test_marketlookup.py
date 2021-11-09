@@ -5,7 +5,7 @@ from solana.publickey import PublicKey
 from .fakes import fake_seeded_public_key
 
 
-def test_serum_market_lookup():
+def test_serum_market_lookup() -> None:
     data = {
         "tokens": [
             {
@@ -109,21 +109,25 @@ def test_serum_market_lookup():
     actual = mango.SerumMarketLookup(fake_seeded_public_key("program ID"), data)
     assert actual is not None
     assert actual.logger is not None
-    assert actual.find_by_symbol("ETH/USDT") is not None
-    assert actual.find_by_symbol("ETH/USDT").address == PublicKey("7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF")
-    assert actual.find_by_symbol("BTC/USDC") is not None
-    assert actual.find_by_symbol("BTC/USDC").address == PublicKey("A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw")
+    eth_usdt = actual.find_by_symbol("ETH/USDT")
+    assert eth_usdt is not None
+    assert eth_usdt.address == PublicKey("7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF")
+    btc_usdc = actual.find_by_symbol("BTC/USDC")
+    assert btc_usdc is not None
+    assert btc_usdc.address == PublicKey("A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw")
 
 
-def test_serum_market_lookups_with_full_data():
+def test_serum_market_lookups_with_full_data() -> None:
     market_lookup = mango.SerumMarketLookup.load(fake_seeded_public_key(
         "program ID"), mango.SPLTokenLookup.DefaultDataFilepath)
     eth_usdt = market_lookup.find_by_symbol("ETH/USDT")
+    assert eth_usdt is not None
     assert eth_usdt.base.symbol == "ETH"
     assert eth_usdt.quote.symbol == "USDT"
     assert eth_usdt.address == PublicKey("7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF")
 
     btc_usdc = market_lookup.find_by_symbol("BTC/USDC")
+    assert btc_usdc is not None
     assert btc_usdc.base.symbol == "BTC"
     assert btc_usdc.quote.symbol == "USDC"
     assert btc_usdc.address == PublicKey("A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw")
@@ -132,7 +136,8 @@ def test_serum_market_lookups_with_full_data():
         non_existant_market = market_lookup.find_by_symbol("ETH/BTC")
     assert non_existant_market is None  # No such market
 
-    srm_usdc = market_lookup.find_by_address("ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA")
+    srm_usdc = market_lookup.find_by_address(PublicKey("ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA"))
+    assert srm_usdc is not None
     assert srm_usdc.base.symbol == "SRM"
     assert srm_usdc.quote.symbol == "USDC"
     assert srm_usdc.address == PublicKey("ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA")

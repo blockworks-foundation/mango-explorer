@@ -31,7 +31,7 @@ from .version import Version
 # `SerumEventFlags` stores flags describing a `SerumEvent`.
 #
 class SerumEventFlags:
-    def __init__(self, version: Version, fill: bool, out: bool, bid: bool, maker: bool):
+    def __init__(self, version: Version, fill: bool, out: bool, bid: bool, maker: bool) -> None:
         self.version: Version = version
         self.fill: bool = fill
         self.out: bool = out
@@ -62,7 +62,7 @@ class SerumEventFlags:
 class SerumEvent:
     def __init__(self, version: Version, event_flags: SerumEventFlags, open_order_slot: Decimal, fee_tier: Decimal,
                  native_quantity_released: Decimal, native_quantity_paid: Decimal, native_fee_or_rebate: Decimal,
-                 order_id: Decimal, public_key: PublicKey, client_order_id: Decimal):
+                 order_id: Decimal, public_key: PublicKey, client_order_id: Decimal) -> None:
         self.version: Version = version
         self.event_flags: SerumEventFlags = event_flags
         self.open_order_slot: Decimal = open_order_slot
@@ -113,7 +113,7 @@ class SerumEventQueue(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, account_flags: AccountFlags,
                  head: Decimal, count: Decimal, sequence_number: Decimal,
                  unprocessed_events: typing.Sequence[SerumEvent],
-                 processed_events: typing.Sequence[SerumEvent]):
+                 processed_events: typing.Sequence[SerumEvent]) -> None:
         super().__init__(account_info)
         self.version: Version = version
 
@@ -193,7 +193,7 @@ class SerumEventQueue(AddressableAccount):
 # to return.
 #
 class UnseenSerumEventChangesTracker:
-    def __init__(self, initial: SerumEventQueue):
+    def __init__(self, initial: SerumEventQueue) -> None:
         self.last_sequence_number: Decimal = initial.sequence_number
 
     def unseen(self, event_queue: SerumEventQueue) -> typing.Sequence[SerumEvent]:

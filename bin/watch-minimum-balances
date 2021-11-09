@@ -47,7 +47,7 @@ def notifier(name: str) -> typing.Callable[[mango.AccountInfo], None]:
 
 
 def account_fails_balance_check(account_info: mango.AccountInfo) -> bool:
-    return account_info.sols < args.minimum_sol_balance
+    return bool(account_info.sols < args.minimum_sol_balance)
 
 
 def log_account(account_info: mango.AccountInfo) -> mango.AccountInfo:
@@ -55,7 +55,7 @@ def log_account(account_info: mango.AccountInfo) -> mango.AccountInfo:
     return account_info
 
 
-def add_subscription_for_parameter(context: mango.Context, manager: mango.WebSocketSubscriptionManager, health_check: mango.HealthCheck, timer_limit: int, name_and_address: str):
+def add_subscription_for_parameter(context: mango.Context, manager: mango.WebSocketSubscriptionManager, health_check: mango.HealthCheck, timer_limit: int, name_and_address: str) -> None:
     name, address_str = name_and_address.split(":")
     address = PublicKey(address_str)
 

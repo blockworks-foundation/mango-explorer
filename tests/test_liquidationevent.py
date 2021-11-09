@@ -6,7 +6,7 @@ from decimal import Decimal
 import datetime
 
 
-def test_liquidation_event():
+def test_liquidation_event() -> None:
     balances_before = [
         mango.InstrumentValue(fake_token("ETH"), Decimal(1)),
         mango.InstrumentValue(fake_token("BTC"), Decimal("0.1")),

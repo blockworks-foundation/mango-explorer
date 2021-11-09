@@ -23,7 +23,7 @@ def report_accrued(basket_token: mango.AccountSlot) -> None:
     print(f"Accrued in perp market [{symbol:>5}]: {accrued}")
 
 
-def load_perp_market(context: mango.Context, group: mango.Group, slot: mango.GroupSlot):
+def load_perp_market(context: mango.Context, group: mango.Group, slot: mango.GroupSlot) -> mango.PerpMarket:
     if slot.perp_market_info is None:
         raise Exception(f"No perp market available for group basket market: {slot}")
     perp_market_details = mango.PerpMarketDetails.load(context, slot.perp_market_info.address, group)
@@ -47,7 +47,7 @@ def find_basket_token_in_account(account: mango.Account, token: mango.Instrument
 def build_redeem_instruction_for_account(context: mango.Context, wallet: mango.Wallet, group: mango.Group,
                                          mngo: mango.TokenInfo, account: mango.Account,
                                          perp_market: mango.PerpMarket,
-                                         basket_token: typing.Optional[mango.AccountSlot]):
+                                         basket_token: typing.Optional[mango.AccountSlot]) -> mango.CombinableInstructions:
     if (basket_token is None) or (basket_token.perp_account is None) or basket_token.perp_account.mngo_accrued.value == 0:
         return mango.CombinableInstructions.empty()
 
@@ -94,9 +94,10 @@ else:
     if market is None:
         raise Exception(f"Could not find market {market_symbol}")
 
-    perp_market = mango.ensure_market_loaded(context, market)
-    if not isinstance(perp_market, mango.PerpMarket):
+    loaded_market: mango.LoadedMarket = mango.ensure_market_loaded(context, market)
+    if not isinstance(loaded_market, mango.PerpMarket):
         raise Exception(f"Market {market_symbol} is not a perp market")
+    perp_market = loaded_market
 
     basket_token = find_basket_token_in_account(account, perp_market.base)
     all_instructions += build_redeem_instruction_for_account(context,

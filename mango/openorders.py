@@ -31,16 +31,15 @@ from .layouts import layouts
 from .placedorder import PlacedOrder
 from .version import Version
 
+
 # # 🥭 OpenOrders class
 #
-
-
 class OpenOrders(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, program_address: PublicKey,
                  account_flags: AccountFlags, market: PublicKey, owner: PublicKey,
                  base_token_free: Decimal, base_token_total: Decimal, quote_token_free: Decimal,
                  quote_token_total: Decimal, placed_orders: typing.Sequence[PlacedOrder],
-                 referrer_rebate_accrued: Decimal):
+                 referrer_rebate_accrued: Decimal) -> None:
         super().__init__(account_info)
         self.version: Version = version
         self.program_address: PublicKey = program_address
@@ -79,7 +78,7 @@ class OpenOrders(AddressableAccount):
         quote_token_free: Decimal = layout.quote_token_free / quote_divisor
         quote_token_total: Decimal = layout.quote_token_total / quote_divisor
 
-        placed_orders: typing.List[PlacedOrder] = []
+        placed_orders: typing.Sequence[PlacedOrder] = []
         if account_flags.initialized:
             placed_orders = PlacedOrder.build_from_open_orders_data(
                 layout.free_slot_bits, layout.is_bid_bits, layout.orders, layout.client_ids)
@@ -121,7 +120,7 @@ class OpenOrders(AddressableAccount):
         return OpenOrders.parse(open_orders_account, base_decimals, quote_decimals)
 
     @staticmethod
-    def load_for_market_and_owner(context: Context, market: PublicKey, owner: PublicKey, program_address: PublicKey, base_decimals: Decimal, quote_decimals: Decimal):
+    def load_for_market_and_owner(context: Context, market: PublicKey, owner: PublicKey, program_address: PublicKey, base_decimals: Decimal, quote_decimals: Decimal) -> typing.Sequence["OpenOrders"]:
         filters = [
             MemcmpOpts(
                 offset=layouts.ACCOUNT_FLAGS.sizeof() + 5,

@@ -4,7 +4,7 @@ import typing
 
 
 class MockNotificationTarget(mango.NotificationTarget):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.send_notification_called = False
 
@@ -12,17 +12,17 @@ class MockNotificationTarget(mango.NotificationTarget):
         self.send_notification_called = True
 
 
-def test_notification_target_constructor():
+def test_notification_target_constructor() -> None:
     succeeded = False
     try:
-        mango.AccountLiquidator()
+        mango.AccountLiquidator()  # type: ignore[abstract]
     except TypeError:
         # Can't instantiate the abstract base class.
         succeeded = True
     assert succeeded
 
 
-def test_telegram_notification_target_constructor():
+def test_telegram_notification_target_constructor() -> None:
     address = "chat@bot"
     actual = mango.TelegramNotificationTarget(address)
     assert actual is not None
@@ -31,7 +31,7 @@ def test_telegram_notification_target_constructor():
     assert actual.bot_id == "bot"
 
 
-def test_discord_notification_target_constructor():
+def test_discord_notification_target_constructor() -> None:
     address = "discord-address"
     actual = mango.DiscordNotificationTarget(address)
     assert actual is not None
@@ -39,7 +39,7 @@ def test_discord_notification_target_constructor():
     assert actual.address == address
 
 
-def test_mailjet_notification_target_constructor():
+def test_mailjet_notification_target_constructor() -> None:
     encoded_parameters = "user:secret:subject:from%20name:from@address:to%20name%20with%20colon%3A:to@address"
     actual = mango.MailjetNotificationTarget(encoded_parameters)
     assert actual is not None
@@ -53,7 +53,7 @@ def test_mailjet_notification_target_constructor():
     assert actual.to_address == "to@address"
 
 
-def test_csvfile_notification_target_constructor():
+def test_csvfile_notification_target_constructor() -> None:
     filename = "test-filename"
     actual = mango.CsvFileNotificationTarget(filename)
     assert actual is not None
@@ -61,10 +61,10 @@ def test_csvfile_notification_target_constructor():
     assert actual.filename == filename
 
 
-def test_filtering_notification_target_constructor():
+def test_filtering_notification_target_constructor() -> None:
     mock = MockNotificationTarget()
 
-    def func(_):
+    def func(_: typing.Any) -> bool:
         return True
     actual = mango.FilteringNotificationTarget(mock, func)
     assert actual is not None
@@ -73,16 +73,16 @@ def test_filtering_notification_target_constructor():
     assert actual.filter_func == func
 
 
-def test_filtering_notification_target():
+def test_filtering_notification_target() -> None:
     mock = MockNotificationTarget()
-    filtering = mango.FilteringNotificationTarget(mock, lambda x: x == "yes")
+    filtering = mango.FilteringNotificationTarget(mock, lambda x: bool(x == "yes"))
     filtering.send("no")
     assert(not mock.send_notification_called)
     filtering.send("yes")
     assert(mock.send_notification_called)
 
 
-def test_parse_notification_target():
+def test_parse_notification_target() -> None:
     telegram_target = mango.parse_notification_target(
         "telegram:012345678@9876543210:ABCDEFGHijklmnop-qrstuvwxyzABCDEFGH")
     assert telegram_target is not None

@@ -51,7 +51,8 @@ class InstructionReporter:
 # The `SerumInstructionParser` class knows a bit more about Serum instructions.
 #
 class SerumInstructionReporter(InstructionReporter):
-    def __init__(self, serum_program_address: PublicKey):
+    def __init__(self, serum_program_address: PublicKey) -> None:
+        super().__init__()
         self.serum_program_address: PublicKey = serum_program_address
 
     def matches(self, instruction: TransactionInstruction) -> bool:
@@ -68,7 +69,8 @@ class SerumInstructionReporter(InstructionReporter):
 # The `MangoInstructionReporter` class knows a bit more about Mango instructions.
 #
 class MangoInstructionReporter(InstructionReporter):
-    def __init__(self, mango_program_address: PublicKey):
+    def __init__(self, mango_program_address: PublicKey) -> None:
+        super().__init__()
         self.mango_program_address: PublicKey = mango_program_address
 
     def matches(self, instruction: TransactionInstruction) -> bool:
@@ -94,7 +96,8 @@ class MangoInstructionReporter(InstructionReporter):
 # The `CompoundInstructionReporter` class can combine multiple `InstructionReporter`s and pick the right one.
 #
 class CompoundInstructionReporter(InstructionReporter):
-    def __init__(self, reporters: typing.Sequence[InstructionReporter]):
+    def __init__(self, reporters: typing.Sequence[InstructionReporter]) -> None:
+        super().__init__()
         self.reporters: typing.Sequence[InstructionReporter] = reporters
 
     def matches(self, instruction: TransactionInstruction) -> bool:

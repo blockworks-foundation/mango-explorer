@@ -44,7 +44,7 @@ from .liquidatablereport import LiquidatableReport
 #
 
 class AccountLiquidator(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
@@ -62,7 +62,7 @@ class AccountLiquidator(metaclass=abc.ABCMeta):
 #
 
 class NullAccountLiquidator(AccountLiquidator):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.Sequence[TransactionInstruction]:

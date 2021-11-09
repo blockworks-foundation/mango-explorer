@@ -38,7 +38,7 @@ from .version import Version
 # # 🥭 GroupSlotSpotMarket class
 #
 class GroupSlotSpotMarket:
-    def __init__(self, address: PublicKey, maint_asset_weight: Decimal, init_asset_weight: Decimal, maint_liab_weight: Decimal, init_liab_weight: Decimal):
+    def __init__(self, address: PublicKey, maint_asset_weight: Decimal, init_asset_weight: Decimal, maint_liab_weight: Decimal, init_liab_weight: Decimal) -> None:
         self.address: PublicKey = address
         self.maint_asset_weight: Decimal = maint_asset_weight
         self.init_asset_weight: Decimal = init_asset_weight
@@ -78,7 +78,7 @@ class GroupSlotSpotMarket:
 # # 🥭 GroupSlotPerpMarket class
 #
 class GroupSlotPerpMarket:
-    def __init__(self, address: PublicKey, maint_asset_weight: Decimal, init_asset_weight: Decimal, maint_liab_weight: Decimal, init_liab_weight: Decimal, liquidation_fee: Decimal, base_lot_size: Decimal, quote_lot_size: Decimal):
+    def __init__(self, address: PublicKey, maint_asset_weight: Decimal, init_asset_weight: Decimal, maint_liab_weight: Decimal, init_liab_weight: Decimal, liquidation_fee: Decimal, base_lot_size: Decimal, quote_lot_size: Decimal) -> None:
         self.address: PublicKey = address
         self.maint_asset_weight: Decimal = maint_asset_weight
         self.init_asset_weight: Decimal = init_asset_weight
@@ -130,7 +130,7 @@ class GroupSlotPerpMarket:
 # `GroupSlot` gathers indexed slot items together instead of separate arrays.
 #
 class GroupSlot:
-    def __init__(self, base_instrument: Instrument, base_token_info: typing.Optional[TokenInfo], quote_token_info: TokenInfo, spot_market_info: typing.Optional[GroupSlotSpotMarket], perp_market_info: typing.Optional[GroupSlotPerpMarket], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey):
+    def __init__(self, base_instrument: Instrument, base_token_info: typing.Optional[TokenInfo], quote_token_info: TokenInfo, spot_market_info: typing.Optional[GroupSlotSpotMarket], perp_market_info: typing.Optional[GroupSlotPerpMarket], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey) -> None:
         self.base_instrument: Instrument = base_instrument
         self.base_token_info: typing.Optional[TokenInfo] = base_token_info
         self.quote_token_info: TokenInfo = quote_token_info
@@ -172,7 +172,7 @@ class Group(AddressableAccount):
                  slots: typing.Sequence[GroupSlot],
                  signer_nonce: Decimal, signer_key: PublicKey,
                  admin: PublicKey, serum_program_address: PublicKey, cache: PublicKey, valid_interval: Decimal,
-                 insurance_vault: PublicKey, srm_vault: PublicKey, msrm_vault: PublicKey, fees_vault: PublicKey):
+                 insurance_vault: PublicKey, srm_vault: PublicKey, msrm_vault: PublicKey, fees_vault: PublicKey) -> None:
         super().__init__(account_info)
         self.version: Version = version
         self.name: str = name

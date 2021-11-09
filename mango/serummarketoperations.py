@@ -17,7 +17,7 @@
 import typing
 
 from decimal import Decimal
-from pyserum.market import Market as PySerumMarket
+from pyserum.market.market import Market as PySerumMarket
 from solana.publickey import PublicKey
 
 from .combinableinstructions import CombinableInstructions
@@ -43,7 +43,10 @@ from .wallet import Wallet
 # on initial setup in the `load()` method.
 #
 class SerumMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket, raw_market: PySerumMarket, base_token_account: TokenAccount, quote_token_account: TokenAccount, open_orders_address: typing.Optional[PublicKey], fee_discount_token_address: typing.Optional[PublicKey]):
+    def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket, raw_market: PySerumMarket,
+                 base_token_account: TokenAccount, quote_token_account: TokenAccount,
+                 open_orders_address: typing.Optional[PublicKey],
+                 fee_discount_token_address: PublicKey) -> None:
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
@@ -52,14 +55,14 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         self.base_token_account: TokenAccount = base_token_account
         self.quote_token_account: TokenAccount = quote_token_account
         self.open_orders_address: typing.Optional[PublicKey] = open_orders_address
-        self.fee_discount_token_address: typing.Optional[PublicKey] = fee_discount_token_address
+        self.fee_discount_token_address: PublicKey = fee_discount_token_address
 
     @staticmethod
     def load(context: Context, wallet: Wallet, serum_market: SerumMarket) -> "SerumMarketInstructionBuilder":
         raw_market: PySerumMarket = PySerumMarket.load(
             context.client.compatible_client, serum_market.address, context.serum_program_address)
 
-        fee_discount_token_address: typing.Optional[PublicKey] = None
+        fee_discount_token_address: PublicKey = SYSTEM_PROGRAM_ADDRESS
         srm_instrument: typing.Optional[Instrument] = context.instrument_lookup.find_by_symbol("SRM")
         if srm_instrument is not None:
             srm_token: Token = Token.ensure(srm_instrument)
@@ -152,7 +155,8 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
 # This class performs standard operations on the Serum orderbook.
 #
 class SerumMarketOperations(MarketOperations):
-    def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket, market_instruction_builder: SerumMarketInstructionBuilder):
+    def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket,
+                 market_instruction_builder: SerumMarketInstructionBuilder) -> None:
         super().__init__(serum_market)
         self.context: Context = context
         self.wallet: Wallet = wallet

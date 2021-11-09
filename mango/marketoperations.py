@@ -56,7 +56,7 @@ from .orders import Order, OrderBook
 # on initial setup in the `load()` method.
 #
 class MarketInstructionBuilder(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
@@ -103,7 +103,7 @@ class MarketInstructionBuilder(metaclass=abc.ABCMeta):
 # ```
 #
 class MarketOperations(metaclass=abc.ABCMeta):
-    def __init__(self, market: Market):
+    def __init__(self, market: Market) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.market: Market = market
 
@@ -149,7 +149,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
 # is expected, but which will not actually trade.
 #
 class NullMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, symbol: str):
+    def __init__(self, symbol: str) -> None:
         super().__init__()
         self.symbol: str = symbol
 
@@ -178,7 +178,7 @@ class NullMarketInstructionBuilder(MarketInstructionBuilder):
 # is expected, but which will not actually trade.
 #
 class NullMarketOperations(MarketOperations):
-    def __init__(self, market_name: str):
+    def __init__(self, market_name: str) -> None:
         super().__init__(DryRunMarket(market_name))
         self.market_name: str = market_name
 

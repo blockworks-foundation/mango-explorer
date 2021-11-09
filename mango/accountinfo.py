@@ -31,7 +31,7 @@ from .encoding import decode_binary, encode_binary
 # # 🥭 AccountInfo class
 #
 class AccountInfo:
-    def __init__(self, address: PublicKey, executable: bool, lamports: Decimal, owner: PublicKey, rent_epoch: Decimal, data: bytes):
+    def __init__(self, address: PublicKey, executable: bool, lamports: Decimal, owner: PublicKey, rent_epoch: Decimal, data: bytes) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.address: PublicKey = address
         self.executable: bool = executable
@@ -44,7 +44,7 @@ class AccountInfo:
     def sols(self) -> Decimal:
         return self.lamports / SOL_DECIMAL_DIVISOR
 
-    def encoded_data(self) -> typing.Sequence:
+    def encoded_data(self) -> typing.Sequence[str]:
         return encode_binary(self.data)
 
     def save_json(self, filename: str) -> None:
@@ -101,7 +101,7 @@ class AccountInfo:
         multiple: typing.List[AccountInfo] = []
         chunks: typing.Sequence[typing.Sequence[PublicKey]] = AccountInfo._split_list_into_chunks(addresses, chunk_size)
         for counter, chunk in enumerate(chunks):
-            result: typing.Sequence[typing.Dict] = context.client.get_multiple_accounts(chunk)
+            result: typing.Sequence[typing.Dict[str, typing.Any]] = context.client.get_multiple_accounts(chunk)
             response_value_list = zip(result, chunk)
             multiple += list(map(lambda pair: AccountInfo._from_response_values(pair[0], pair[1]), response_value_list))
             if (sleep_between_calls > 0.0) and (counter < (len(chunks) - 1)):
@@ -123,7 +123,7 @@ class AccountInfo:
         return AccountInfo._from_response_values(response["result"]["value"], address)
 
     @staticmethod
-    def _split_list_into_chunks(to_chunk: typing.Sequence, chunk_size: int = 100) -> typing.Sequence[typing.Sequence]:
+    def _split_list_into_chunks(to_chunk: typing.Sequence[typing.Any], chunk_size: int = 100) -> typing.Sequence[typing.Sequence[typing.Any]]:
         chunks = []
         start = 0
         while start < len(to_chunk):

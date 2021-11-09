@@ -1,8 +1,8 @@
 from .context import mango
 
 
-def test_constructor():
-    secret_key = [0] * 32
+def test_constructor() -> None:
+    secret_key = bytearray([0] * 32)
     actual = mango.Wallet(secret_key)
     assert actual is not None
     assert actual.logger is not None
@@ -10,8 +10,8 @@ def test_constructor():
     assert actual.keypair is not None
 
 
-def test_constructor_with_longer_secret_key():
-    secret_key = [0] * 64
+def test_constructor_with_longer_secret_key() -> None:
+    secret_key = bytearray([0] * 64)
     actual = mango.Wallet(secret_key)
     assert actual is not None
     assert actual.logger is not None

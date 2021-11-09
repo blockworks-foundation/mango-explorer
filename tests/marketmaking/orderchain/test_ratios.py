@@ -11,7 +11,7 @@ from mango.marketmaking.orderchain.ratioselement import RatiosElement
 model_state = fake_model_state(price=fake_price(bid=Decimal(75), price=Decimal(80), ask=Decimal(85)))
 
 
-def test_from_args():
+def test_from_args() -> None:
     args: argparse.Namespace = argparse.Namespace(ratios_spread=[Decimal("0.7")], ratios_position_size=[Decimal("0.27")],
                                                   order_type=mango.OrderType.IOC, ratios_from_bid_ask=True)
     actual: RatiosElement = RatiosElement.from_command_line_parameters(args)
@@ -21,7 +21,7 @@ def test_from_args():
     assert actual.from_bid_ask
 
 
-def test_uses_specified_spread_ratio():
+def test_uses_specified_spread_ratio() -> None:
     context = fake_context()
 
     actual: RatiosElement = RatiosElement(mango.OrderType.POST_ONLY, [Decimal("0.1")], [Decimal("0.01")], False)
@@ -33,7 +33,7 @@ def test_uses_specified_spread_ratio():
     assert result[1].quantity == Decimal("0.0125")
 
 
-def test_uses_specified_position_size_ratio():
+def test_uses_specified_position_size_ratio() -> None:
     context = fake_context()
 
     actual: RatiosElement = RatiosElement(mango.OrderType.POST_ONLY, [Decimal("0.01")], [Decimal("0.1")], False)
@@ -45,7 +45,7 @@ def test_uses_specified_position_size_ratio():
     assert result[1].quantity == Decimal("0.125")
 
 
-def test_uses_specified_spread_and_position_size_ratio():
+def test_uses_specified_spread_and_position_size_ratio() -> None:
     context = fake_context()
 
     actual: RatiosElement = RatiosElement(mango.OrderType.POST_ONLY, [Decimal("0.1")], [Decimal("0.1")], False)
@@ -57,7 +57,7 @@ def test_uses_specified_spread_and_position_size_ratio():
     assert result[1].quantity == Decimal("0.125")
 
 
-def test_uses_specified_spread_and_position_size_ratio_from_bid_ask():
+def test_uses_specified_spread_and_position_size_ratio_from_bid_ask() -> None:
     context = fake_context()
 
     actual: RatiosElement = RatiosElement(mango.OrderType.POST_ONLY, [Decimal("0.1")], [Decimal("0.1")], True)

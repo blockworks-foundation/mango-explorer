@@ -44,7 +44,7 @@ class ModelState:
                  placed_orders_container_watcher: Watcher[PlacedOrdersContainer],
                  inventory_watcher: Watcher[Inventory],
                  orderbook: Watcher[OrderBook]
-                 ):
+                 ) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.order_owner: PublicKey = order_owner
         self.market: Market = market

@@ -37,7 +37,7 @@ from ..calculators.spotcollateralcalculator import SpotCollateralCalculator
 
 
 class ModelStateBuilder(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
@@ -56,7 +56,7 @@ class ModelStateBuilder(metaclass=abc.ABCMeta):
 # Base class for building a `ModelState` through polling.
 #
 class WebsocketModelStateBuilder(ModelStateBuilder):
-    def __init__(self, model_state: ModelState):
+    def __init__(self, model_state: ModelState) -> None:
         super().__init__()
         self.model_state: ModelState = model_state
 
@@ -72,7 +72,7 @@ class WebsocketModelStateBuilder(ModelStateBuilder):
 # Base class for building a `ModelState` through polling.
 #
 class PollingModelStateBuilder(ModelStateBuilder):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def build(self, context: mango.Context) -> ModelState:
@@ -118,7 +118,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
                  open_orders_address: PublicKey,
                  base_inventory_token_account: mango.TokenAccount,
                  quote_inventory_token_account: mango.TokenAccount,
-                 ):
+                 ) -> None:
         super().__init__()
         self.order_owner: PublicKey = order_owner
         self.market: mango.SerumMarket = market
@@ -189,7 +189,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
                  account_address: PublicKey,
                  open_orders_address: PublicKey,
                  all_open_orders_addresses: typing.Sequence[PublicKey]
-                 ):
+                 ) -> None:
         super().__init__()
         self.order_owner: PublicKey = order_owner
         self.market: mango.SpotMarket = market
@@ -272,7 +272,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
                  group_address: PublicKey,
                  cache_address: PublicKey,
                  account_address: PublicKey
-                 ):
+                 ) -> None:
         super().__init__()
         self.order_owner: PublicKey = order_owner
         self.market: mango.PerpMarket = market

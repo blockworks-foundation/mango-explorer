@@ -74,14 +74,15 @@ class MarketOracle(Oracle):
 
         return Price(self.source, datetime.now(), self.market, top_bid, mid_price, top_ask, MarketOracleConfidence)
 
-    def to_streaming_observable(self, context: Context) -> rx.core.Observable:
-        return rx.interval(1).pipe(
+    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable[Price]:
+        prices = rx.interval(1).pipe(
             ops.observe_on(context.create_thread_pool_scheduler()),
             ops.start_with(-1),
             ops.map(lambda _: self.fetch_price(context)),
             ops.catch(observable_pipeline_error_reporter),
             ops.retry(),
         )
+        return typing.cast(rx.core.typing.Observable[Price], prices)
 
 
 # # 🥭 MarketOracleProvider class

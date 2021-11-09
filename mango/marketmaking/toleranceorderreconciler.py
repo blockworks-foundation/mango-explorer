@@ -41,7 +41,7 @@ from .reconciledorders import ReconciledOrders
 # * ModelState is ignored when matching.
 #
 class ToleranceOrderReconciler(OrderReconciler):
-    def __init__(self, price_tolerance: Decimal, quantity_tolerance: Decimal):
+    def __init__(self, price_tolerance: Decimal, quantity_tolerance: Decimal) -> None:
         super().__init__()
         self.price_tolerance: Decimal = price_tolerance
         self.quantity_tolerance: Decimal = quantity_tolerance

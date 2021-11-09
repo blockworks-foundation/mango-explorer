@@ -29,7 +29,7 @@ from ...modelstate import ModelState
 # of a charge if that `Order` is filled.
 #
 class PreventPostOnlyCrossingBookElement(Element):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     @staticmethod

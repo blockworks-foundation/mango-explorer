@@ -29,7 +29,7 @@ from ...modelstate import ModelState
 # size ratio but with a spread based on the confidence in the oracle price.
 #
 class ConfidenceIntervalElement(Element):
-    def __init__(self, order_type: mango.OrderType, position_size_ratio: Decimal, confidence_interval_levels: typing.Sequence[Decimal]):
+    def __init__(self, order_type: mango.OrderType, position_size_ratio: Decimal, confidence_interval_levels: typing.Sequence[Decimal]) -> None:
         super().__init__()
         self.order_type: mango.OrderType = order_type
         self.position_size_ratio: Decimal = position_size_ratio
@@ -57,7 +57,7 @@ class ConfidenceIntervalElement(Element):
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
-        if price.source.supports & mango.SupportedOracleFeature.CONFIDENCE == 0:
+        if price.source.supports.has_feature(mango.SupportedOracleFeature.CONFIDENCE):
             raise Exception(f"Price does not support confidence interval: {price}")
 
         quote_value_to_risk = model_state.inventory.available_collateral.value * self.position_size_ratio
