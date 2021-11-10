@@ -78,8 +78,8 @@ def fake_perp_account() -> mango.PerpAccount:
                              mango.NullLotSizeConverter(), fake_instrument_value(), Decimal(0))
 
 
-def fake_token_info() -> mango.TokenInfo:
-    token = fake_token()
+def fake_token_info(symbol: str = "FAKE") -> mango.TokenInfo:
+    token = fake_token(symbol)
     meta_data = mango.Metadata(mango.layouts.DATA_TYPE.RootBank, mango.Version.V1, True)
     root_bank = mango.RootBank(fake_account_info(), mango.Version.V1, meta_data, Decimal("0.5"),
                                Decimal("0.1"), Decimal(1.5), [], Decimal(5), Decimal(2), datetime.datetime.now())

@@ -45,7 +45,7 @@ class PerpCollateralCalculator(CollateralCalculator):
         # Note: the `AccountSlot` in the `Account` already factors the deposit and borrow index.
         total: Decimal = account.shared_quote.net_value.value
         collateral_description = [f"{total:,.8f} USDC"]
-        for basket_token in account.slots:
+        for basket_token in account.base_slots:
             slot: GroupSlot = group.slot_by_instrument(basket_token.base_instrument)
             token_price = group.token_price_from_cache(cache, basket_token.base_instrument)
 
@@ -54,14 +54,14 @@ class PerpCollateralCalculator(CollateralCalculator):
             # if perp_market is None:
             #     raise Exception(
             #         f"Could not read perp market of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")
-            spot_market: typing.Optional[GroupSlotSpotMarket] = slot.spot_market_info
+            spot_market: typing.Optional[GroupSlotSpotMarket] = slot.spot_market
             init_asset_weight: Decimal
             init_liab_weight: Decimal
             if spot_market is not None:
                 init_asset_weight = spot_market.init_asset_weight
                 init_liab_weight = spot_market.init_liab_weight
             else:
-                perp_market: typing.Optional[GroupSlotPerpMarket] = slot.perp_market_info
+                perp_market: typing.Optional[GroupSlotPerpMarket] = slot.perp_market
                 if perp_market is None:
                     raise Exception(
                         f"Could not read spot or perp market of token {basket_token.base_instrument.symbol} at index {slot.index} of cache at {cache.address}")

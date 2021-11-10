@@ -392,7 +392,7 @@ class LiveAccountBalancer(WalletBalancer):
         def balances_report(balances: typing.Sequence[InstrumentValue]) -> str:
             return padding.join(list([f"{bal}" for bal in balances]))
 
-        balances = [basket_token.net_value for basket_token in self.account.slots]
+        balances = [basket_token.net_value for basket_token in self.account.base_slots]
         total_value = Decimal(0)
         for bal in balances:
             price = InstrumentValue.find_by_token(prices, bal.token)
@@ -421,7 +421,7 @@ class LiveAccountBalancer(WalletBalancer):
         self._make_changes(sorted_changes)
 
         updated_account: Account = Account.load(context, self.account.address, self.group)
-        updated_balances = [basket_token.net_value for basket_token in updated_account.slots]
+        updated_balances = [basket_token.net_value for basket_token in updated_account.base_slots]
         self.logger.info(f"Finishing balances: {padding}{balances_report(updated_balances)}")
 
     def _make_changes(self, balance_changes: typing.Sequence[InstrumentValue]) -> None:

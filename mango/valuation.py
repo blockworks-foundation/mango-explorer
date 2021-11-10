@@ -119,7 +119,7 @@ class AccountValuation:
     def from_account(context: Context, group: Group, account: Account, cache: Cache) -> "AccountValuation":
         open_orders: typing.Dict[str, OpenOrders] = account.load_all_spot_open_orders(context)
         token_values: typing.List[TokenValuation] = []
-        for asset in account.slots:
+        for asset in account.base_slots:
             if (asset.net_value.value != 0) or ((asset.perp_account is not None) and not asset.perp_account.empty):
                 report: AccountInstrumentValues = AccountInstrumentValues.from_account_basket_base_token(
                     asset, open_orders, group)

@@ -24,11 +24,11 @@ def report_accrued(basket_token: mango.AccountSlot) -> None:
 
 
 def load_perp_market(context: mango.Context, group: mango.Group, slot: mango.GroupSlot) -> typing.Optional[mango.PerpMarket]:
-    if slot.perp_market_info is None:
+    if slot.perp_market is None:
         return None
 
-    perp_market_details = mango.PerpMarketDetails.load(context, slot.perp_market_info.address, group)
-    perp_market = mango.PerpMarket(context.mango_program_address, slot.perp_market_info.address,
+    perp_market_details = mango.PerpMarketDetails.load(context, slot.perp_market.address, group)
+    perp_market = mango.PerpMarket(context.mango_program_address, slot.perp_market.address,
                                    slot.base_instrument,
                                    mango.Token.ensure(slot.quote_token_info.token),
                                    perp_market_details)

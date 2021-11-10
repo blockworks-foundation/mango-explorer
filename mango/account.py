@@ -89,7 +89,7 @@ class Account(AddressableAccount):
                  info: str, shared_quote: AccountSlot,
                  in_margin_basket: typing.Sequence[bool],
                  slot_indices: typing.Sequence[bool],
-                 slots: typing.Sequence[AccountSlot],
+                 base_slots: typing.Sequence[AccountSlot],
                  msrm_amount: Decimal, being_liquidated: bool, is_bankrupt: bool) -> None:
         super().__init__(account_info)
         self.version: Version = version
@@ -102,7 +102,7 @@ class Account(AddressableAccount):
         self.shared_quote: AccountSlot = shared_quote
         self.in_margin_basket: typing.Sequence[bool] = in_margin_basket
         self.slot_indices: typing.Sequence[bool] = slot_indices
-        self.slots: typing.Sequence[AccountSlot] = slots
+        self.base_slots: typing.Sequence[AccountSlot] = base_slots
         self.msrm_amount: Decimal = msrm_amount
         self.being_liquidated: bool = being_liquidated
         self.is_bankrupt: bool = is_bankrupt
@@ -115,12 +115,16 @@ class Account(AddressableAccount):
         return Token.ensure(token_info.token)
 
     @property
+    def slots(self) -> typing.Sequence[AccountSlot]:
+        return [*[slot for slot in self.base_slots], self.shared_quote]
+
+    @property
     def slots_by_index(self) -> typing.Sequence[typing.Optional[AccountSlot]]:
         mapped_items: typing.List[typing.Optional[AccountSlot]] = []
         slot_counter = 0
         for available in self.slot_indices:
             if available:
-                mapped_items += [self.slots[slot_counter]]
+                mapped_items += [self.base_slots[slot_counter]]
                 slot_counter += 1
             else:
                 mapped_items += [None]
@@ -154,7 +158,7 @@ class Account(AddressableAccount):
 
     @property
     def spot_open_orders(self) -> typing.Sequence[PublicKey]:
-        return [slot.spot_open_orders for slot in self.slots if slot.spot_open_orders is not None]
+        return [slot.spot_open_orders for slot in self.base_slots if slot.spot_open_orders is not None]
 
     @property
     def spot_open_orders_by_index(self) -> typing.Sequence[typing.Optional[PublicKey]]:
@@ -162,7 +166,7 @@ class Account(AddressableAccount):
 
     @property
     def perp_accounts(self) -> typing.Sequence[PerpAccount]:
-        return [slot.perp_account for slot in self.slots if slot.perp_account is not None]
+        return [slot.perp_account for slot in self.base_slots if slot.perp_account is not None]
 
     @property
     def perp_accounts_by_index(self) -> typing.Sequence[typing.Optional[PerpAccount]]:
@@ -320,12 +324,26 @@ class Account(AddressableAccount):
 
         return accounts[0]
 
+    def slot_by_instrument_or_none(self, instrument: Instrument) -> typing.Optional[AccountSlot]:
+        for slot in self.slots:
+            if slot.base_instrument == instrument:
+                return slot
+
+        return None
+
+    def slot_by_instrument(self, instrument: Instrument) -> AccountSlot:
+        slot: typing.Optional[AccountSlot] = self.slot_by_instrument_or_none(instrument)
+        if slot is not None:
+            return slot
+
+        raise Exception(f"Could not find token {instrument} in account {self.address}")
+
     def load_all_spot_open_orders(self, context: Context) -> typing.Dict[str, OpenOrders]:
         spot_open_orders_account_infos = AccountInfo.load_multiple(context, self.spot_open_orders)
         spot_open_orders_account_infos_by_address = {
             str(account_info.address): account_info for account_info in spot_open_orders_account_infos}
         spot_open_orders: typing.Dict[str, OpenOrders] = {}
-        for slot in self.slots:
+        for slot in self.base_slots:
             if slot.spot_open_orders is not None:
                 account_info = spot_open_orders_account_infos_by_address[str(slot.spot_open_orders)]
                 oo = OpenOrders.parse(account_info, slot.base_instrument.decimals,
@@ -342,10 +360,10 @@ class Account(AddressableAccount):
     def __str__(self) -> str:
         info = f"'{self.info}'" if self.info else "(𝑢𝑛-𝑛𝑎𝑚𝑒𝑑)"
         shared_quote: str = f"{self.shared_quote}".replace("\n", "\n        ")
-        slot_count = len(self.slots)
-        slots = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.slots])
+        slot_count = len(self.base_slots)
+        slots = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.base_slots])
 
-        symbols: typing.Sequence[str] = [slot.base_instrument.symbol for slot in self.slots]
+        symbols: typing.Sequence[str] = [slot.base_instrument.symbol for slot in self.base_slots]
         in_margin_basket = ", ".join(symbols) or "None"
         return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {info}, {self.version} [{self.address}]
     {self.meta_data}

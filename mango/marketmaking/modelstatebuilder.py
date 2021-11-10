@@ -224,7 +224,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
             str(account_info.address): account_info for account_info in account_infos[5:]}
 
         all_open_orders: typing.Dict[str, mango.OpenOrders] = {}
-        for basket_token in account.slots:
+        for basket_token in account.base_slots:
             if basket_token.spot_open_orders is not None and str(basket_token.spot_open_orders) in spot_open_orders_account_infos_by_address:
                 account_info: mango.AccountInfo = spot_open_orders_account_infos_by_address[str(
                     basket_token.spot_open_orders)]

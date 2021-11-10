@@ -28,3 +28,6 @@ if address is None:
 group = mango.Group.load(context, context.group_address)
 mango_accounts = mango.Account.load_all_for_owner(context, address, group)
 print(mango_accounts)
+
+print(mango_accounts[0].in_margin_basket)
+print(mango_accounts[0].slot_indices)

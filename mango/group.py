@@ -135,16 +135,16 @@ class GroupSlot:
         self.base_instrument: Instrument = base_instrument
         self.base_token_info: typing.Optional[TokenInfo] = base_token_info
         self.quote_token_info: TokenInfo = quote_token_info
-        self.spot_market_info: typing.Optional[GroupSlotSpotMarket] = spot_market_info
-        self.perp_market_info: typing.Optional[GroupSlotPerpMarket] = perp_market_info
+        self.spot_market: typing.Optional[GroupSlotSpotMarket] = spot_market_info
+        self.perp_market: typing.Optional[GroupSlotPerpMarket] = perp_market_info
         self.perp_lot_size_converter: LotSizeConverter = perp_lot_size_converter
         self.oracle: PublicKey = oracle
 
     def __str__(self) -> str:
         base_token_info = f"{self.base_token_info}".replace("\n", "\n        ")
         quote_token_info = f"{self.quote_token_info}".replace("\n", "\n        ")
-        spot_market_info = f"{self.spot_market_info}".replace("\n", "\n        ")
-        perp_market_info = f"{self.perp_market_info}".replace("\n", "\n        ")
+        spot_market_info = f"{self.spot_market}".replace("\n", "\n        ")
+        perp_market_info = f"{self.perp_market}".replace("\n", "\n        ")
         return f"""« 𝙶𝚛𝚘𝚞𝚙𝚂𝚕𝚘𝚝[{self.index}] {self.base_instrument}
     Base Token Info:
         {base_token_info}
@@ -248,19 +248,19 @@ class Group(AddressableAccount):
 
     @property
     def spot_markets(self) -> typing.Sequence[GroupSlotSpotMarket]:
-        return [slot.spot_market_info for slot in self.slots if slot.spot_market_info is not None]
+        return [slot.spot_market for slot in self.slots if slot.spot_market is not None]
 
     @property
     def spot_markets_by_index(self) -> typing.Sequence[typing.Optional[GroupSlotSpotMarket]]:
-        return [slot.spot_market_info if slot is not None else None for slot in self.slots_by_index]
+        return [slot.spot_market if slot is not None else None for slot in self.slots_by_index]
 
     @property
     def perp_markets(self) -> typing.Sequence[GroupSlotPerpMarket]:
-        return [slot.perp_market_info for slot in self.slots if slot.perp_market_info is not None]
+        return [slot.perp_market for slot in self.slots if slot.perp_market is not None]
 
     @property
     def perp_markets_by_index(self) -> typing.Sequence[typing.Optional[GroupSlotPerpMarket]]:
-        return [slot.perp_market_info if slot is not None else None for slot in self.slots_by_index]
+        return [slot.perp_market if slot is not None else None for slot in self.slots_by_index]
 
     @staticmethod
     def from_layout(layout: typing.Any, name: str, account_info: AccountInfo, version: Version, root_banks: typing.Sequence[RootBank], instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> "Group":
@@ -351,14 +351,14 @@ class Group(AddressableAccount):
 
     def slot_by_spot_market_address(self, spot_market_address: PublicKey) -> GroupSlot:
         for slot in self.slots:
-            if slot.spot_market_info is not None and slot.spot_market_info.address == spot_market_address:
+            if slot.spot_market is not None and slot.spot_market.address == spot_market_address:
                 return slot
 
         raise Exception(f"Could not find spot market {spot_market_address} in group {self.address}")
 
     def slot_by_perp_market_address(self, perp_market_address: PublicKey) -> GroupSlot:
         for slot in self.slots:
-            if slot.perp_market_info is not None and slot.perp_market_info.address == perp_market_address:
+            if slot.perp_market is not None and slot.perp_market.address == perp_market_address:
                 return slot
 
         raise Exception(f"Could not find perp market {perp_market_address} in group {self.address}")

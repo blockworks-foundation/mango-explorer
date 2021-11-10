@@ -105,7 +105,7 @@ class HealthCalculator:
 
     def calculate(self, account: Account, open_orders_by_address: typing.Dict[str, OpenOrders], group: Group, cache: Cache) -> Decimal:
         priced_reports: typing.List[PricedAccountInstrumentValues] = []
-        for asset in account.slots:
+        for asset in account.base_slots:
             # if (asset.deposit.value != 0) or (asset.borrow.value != 0) or (asset.net_value.value != 0):
             report: AccountInstrumentValues = AccountInstrumentValues.from_account_basket_base_token(
                 asset, open_orders_by_address, group)
@@ -152,7 +152,7 @@ class HealthCalculator:
         # print("Health (start)", health)
         for priced_report in priced_reports:
             slot: GroupSlot = group.slot_by_instrument(priced_report.base_token)
-            spot_market: typing.Optional[GroupSlotSpotMarket] = slot.spot_market_info
+            spot_market: typing.Optional[GroupSlotSpotMarket] = slot.spot_market
             if spot_market is None:
                 raise Exception(f"Could not find market for spot token {priced_report.base_token.symbol}.")
 
@@ -163,7 +163,7 @@ class HealthCalculator:
             # print("Weights", base_value.value, "*", spot_weight, spot_health)
 
             perp_base, perp_quote = priced_report.if_worst_execution()
-            perp_market: typing.Optional[GroupSlotPerpMarket] = slot.perp_market_info
+            perp_market: typing.Optional[GroupSlotPerpMarket] = slot.perp_market
             perp_health: Decimal = Decimal(0)
             if perp_market is not None:
                 perp_weight = perp_market.init_asset_weight if perp_base > 0 else perp_market.init_liab_weight
