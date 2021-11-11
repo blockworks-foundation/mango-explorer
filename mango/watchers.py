@@ -52,7 +52,7 @@ from .websocketsubscription import WebSocketAccountSubscription, WebSocketSubscr
 
 def build_group_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, group: Group) -> Watcher[Group]:
     group_subscription = WebSocketAccountSubscription[Group](
-        context, group.address, lambda account_info: Group.parse(context, account_info))
+        context, group.address, lambda account_info: Group.parse(account_info, group.name, context.instrument_lookup, context.market_lookup))
     manager.add(group_subscription)
     latest_group_observer = LatestItemObserverSubscriber[Group](group)
     group_subscription.publisher.subscribe(latest_group_observer)
@@ -60,9 +60,9 @@ def build_group_watcher(context: Context, manager: WebSocketSubscriptionManager,
     return latest_group_observer
 
 
-def build_account_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, account: Account, group_observer: Watcher[Group]) -> typing.Tuple[WebSocketSubscription[Account], Watcher[Account]]:
+def build_account_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, account: Account, group_observer: Watcher[Group], cache_observer: Watcher[Cache]) -> typing.Tuple[WebSocketSubscription[Account], Watcher[Account]]:
     account_subscription = WebSocketAccountSubscription[Account](
-        context, account.address, lambda account_info: Account.parse(account_info, group_observer.latest))
+        context, account.address, lambda account_info: Account.parse(account_info, group_observer.latest, cache_observer.latest))
     manager.add(account_subscription)
     latest_account_observer = LatestItemObserverSubscriber[Account](account)
     account_subscription.publisher.subscribe(latest_account_observer)

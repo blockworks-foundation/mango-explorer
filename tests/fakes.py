@@ -79,11 +79,7 @@ def fake_perp_account() -> mango.PerpAccount:
 
 
 def fake_token_info(symbol: str = "FAKE") -> mango.TokenInfo:
-    token = fake_token(symbol)
-    meta_data = mango.Metadata(mango.layouts.DATA_TYPE.RootBank, mango.Version.V1, True)
-    root_bank = mango.RootBank(fake_account_info(), mango.Version.V1, meta_data, Decimal("0.5"),
-                               Decimal("0.1"), Decimal(1.5), [], Decimal(5), Decimal(2), datetime.datetime.now())
-    return mango.TokenInfo(token, root_bank, Decimal(7))
+    return mango.TokenInfo(fake_token(symbol), fake_seeded_public_key("root bank"))
 
 
 def fake_market() -> PySerumMarket:
@@ -174,13 +170,22 @@ def fake_root_bank() -> mango.RootBank:
                           Decimal(0), [], Decimal(0), Decimal(0), datetime.datetime.now())
 
 
+def fake_cache() -> mango.Cache:
+    meta_data = mango.Metadata(mango.layouts.DATA_TYPE.RootBank, mango.Version.V1, True)
+    return mango.Cache(fake_account_info(), mango.Version.V1, meta_data, [], [], [])
+
+
+def fake_root_bank_cache() -> mango.RootBankCache:
+    return mango.RootBankCache(Decimal(1), Decimal(2), datetime.datetime.now())
+
+
 def fake_group() -> mango.Group:
     account_info = fake_account_info()
     name = "FAKE_GROUP"
     meta_data = mango.Metadata(mango.layouts.DATA_TYPE.Group, mango.Version.V1, True)
     instrument_lookup = fake_context().instrument_lookup
     usdc = mango.Token.ensure(instrument_lookup.find_by_symbol_or_raise("usdc"))
-    quote_info = mango.TokenInfo(usdc, fake_root_bank(), Decimal(6))
+    quote_info = mango.TokenInfo(usdc, fake_seeded_public_key("root bank"))
     signer_nonce = Decimal(1)
     signer_key = fake_seeded_public_key("signer key")
     admin_key = fake_seeded_public_key("admin key")

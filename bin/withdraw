@@ -41,14 +41,10 @@ withdrawal_value = mango.InstrumentValue(token, args.quantity)
 withdrawal_token_account = mango.TokenAccount(
     token_account.account_info, token_account.version, token_account.owner, withdrawal_value)
 
-
-root_bank = None
-for token_info in group.tokens:
-    if token_info is not None and token_info.token is not None and token_info.token == token:
-        root_bank = token_info.root_bank
-if root_bank is None:
-    raise Exception(f"Could not find token root bank for symbol '{args.symbol}'.")
-
+slot = group.slot_by_instrument(token)
+if slot.base_token_info is None:
+    raise Exception(f"Could not find root bank token info for symbol '{args.symbol}'.")
+root_bank = slot.base_token_info.load_root_bank(context)
 node_bank = root_bank.pick_node_bank(context)
 
 signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)

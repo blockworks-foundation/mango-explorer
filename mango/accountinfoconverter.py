@@ -41,13 +41,14 @@ from .serumeventqueue import SerumEventQueue
 def build_account_info_converter(context: Context, account_type: str) -> typing.Callable[[AccountInfo], AddressableAccount]:
     account_type_upper = account_type.upper()
     if account_type_upper == "GROUP":
-        return lambda account_info: Group.parse(context, account_info)
+        return lambda account_info: Group.parse_with_context(context, account_info)
     elif account_type_upper == "ACCOUNT":
         def account_loader(account_info: AccountInfo) -> Account:
             layout_account = layouts.MANGO_ACCOUNT.parse(account_info.data)
             group_address = layout_account.group
             group: Group = Group.load(context, group_address)
-            return Account.parse(account_info, group)
+            cache: Cache = group.fetch_cache(context)
+            return Account.parse(account_info, group, cache)
         return account_loader
     elif account_type_upper == "OPENORDERS":
         return lambda account_info: OpenOrders.parse(account_info, Decimal(6), Decimal(6))

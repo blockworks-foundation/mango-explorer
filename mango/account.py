@@ -21,6 +21,7 @@ from solana.rpc.types import MemcmpOpts
 
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
+from .cache import Cache, RootBankCache
 from .context import Context
 from .encoding import encode_key
 from .group import Group
@@ -173,7 +174,7 @@ class Account(AddressableAccount):
         return [slot.perp_account if slot is not None else None for slot in self.slots_by_index]
 
     @staticmethod
-    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version, group: Group) -> "Account":
+    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version, group: Group, cache: Cache) -> "Account":
         meta_data = Metadata.from_layout(layout.meta_data)
         owner: PublicKey = layout.owner
         info: str = layout.info
@@ -205,9 +206,13 @@ class Account(AddressableAccount):
                 intrinsic_borrow: Decimal = Decimal(0)
                 if token_info is not None:
                     raw_deposit = layout.deposits[index]
-                    intrinsic_deposit = token_info.root_bank.deposit_index * raw_deposit
+                    root_bank_cache: typing.Optional[RootBankCache] = token_info.root_bank_cache_from_cache(
+                        cache, index)
+                    if root_bank_cache is None:
+                        raise Exception(f"No root bank cache found for token {token_info} at index {index}")
+                    intrinsic_deposit = root_bank_cache.deposit_index * raw_deposit
                     raw_borrow = layout.borrows[index]
-                    intrinsic_borrow = token_info.root_bank.borrow_index * raw_borrow
+                    intrinsic_borrow = root_bank_cache.borrow_index * raw_borrow
 
                 deposit = InstrumentValue(instrument, instrument.shift_to_decimals(intrinsic_deposit))
                 borrow = InstrumentValue(instrument, instrument.shift_to_decimals(intrinsic_borrow))
@@ -231,11 +236,16 @@ class Account(AddressableAccount):
             else:
                 active_in_basket += [False]
 
-        raw_quote_deposit: Decimal = layout.deposits[-1]
-        intrinsic_quote_deposit = quote_token_info.root_bank.deposit_index * raw_quote_deposit
+        quote_index: int = len(layout.deposits) - 1
+        raw_quote_deposit: Decimal = layout.deposits[quote_index]
+        quote_root_bank_cache: typing.Optional[RootBankCache] = quote_token_info.root_bank_cache_from_cache(
+            cache, quote_index)
+        if quote_root_bank_cache is None:
+            raise Exception(f"No root bank cache found for quote token {quote_token_info} at index {index}")
+        intrinsic_quote_deposit = quote_root_bank_cache.deposit_index * raw_quote_deposit
         quote_deposit = InstrumentValue(quote_token, quote_token.shift_to_decimals(intrinsic_quote_deposit))
-        raw_quote_borrow: Decimal = layout.borrows[-1]
-        intrinsic_quote_borrow = quote_token_info.root_bank.borrow_index * raw_quote_borrow
+        raw_quote_borrow: Decimal = layout.borrows[quote_index]
+        intrinsic_quote_borrow = quote_root_bank_cache.borrow_index * raw_quote_borrow
         quote_borrow = InstrumentValue(quote_token, quote_token.shift_to_decimals(intrinsic_quote_borrow))
         quote: AccountSlot = AccountSlot(len(layout.deposits) - 1, quote_token_info.token, quote_token_info,
                                          quote_token_info, raw_quote_deposit, quote_deposit, raw_quote_borrow,
@@ -248,21 +258,22 @@ class Account(AddressableAccount):
         return Account(account_info, version, meta_data, group.name, group.address, owner, info, quote, in_margin_basket, active_in_basket, slots, msrm_amount, being_liquidated, is_bankrupt)
 
     @staticmethod
-    def parse(account_info: AccountInfo, group: Group) -> "Account":
+    def parse(account_info: AccountInfo, group: Group, cache: Cache) -> "Account":
         data = account_info.data
         if len(data) != layouts.MANGO_ACCOUNT.sizeof():
             raise Exception(
                 f"Account data length ({len(data)}) does not match expected size ({layouts.MANGO_ACCOUNT.sizeof()})")
 
         layout = layouts.MANGO_ACCOUNT.parse(data)
-        return Account.from_layout(layout, account_info, Version.V3, group)
+        return Account.from_layout(layout, account_info, Version.V3, group, cache)
 
     @staticmethod
     def load(context: Context, address: PublicKey, group: Group) -> "Account":
         account_info = AccountInfo.load(context, address)
         if account_info is None:
             raise Exception(f"Account account not found at address '{address}'")
-        return Account.parse(account_info, group)
+        cache: Cache = group.fetch_cache(context)
+        return Account.parse(account_info, group, cache)
 
     @staticmethod
     def load_all(context: Context, group: Group) -> typing.Sequence["Account"]:
@@ -278,11 +289,12 @@ class Account(AddressableAccount):
 
         results = context.client.get_program_accounts(
             context.mango_program_address, memcmp_opts=filters, data_size=layouts.MANGO_ACCOUNT.sizeof())
-        accounts = []
+        cache: Cache = group.fetch_cache(context)
+        accounts: typing.List[Account] = []
         for account_data in results:
             address = PublicKey(account_data["pubkey"])
             account_info = AccountInfo._from_response_values(account_data["account"], address)
-            account = Account.parse(account_info, group)
+            account = Account.parse(account_info, group, cache)
             accounts += [account]
         return accounts
 
@@ -305,11 +317,12 @@ class Account(AddressableAccount):
 
         results = context.client.get_program_accounts(
             context.mango_program_address, memcmp_opts=filters, data_size=layouts.MANGO_ACCOUNT.sizeof())
-        accounts = []
+        cache: Cache = group.fetch_cache(context)
+        accounts: typing.List[Account] = []
         for account_data in results:
             address = PublicKey(account_data["pubkey"])
             account_info = AccountInfo._from_response_values(account_data["account"], address)
-            account = Account.parse(account_info, group)
+            account = Account.parse(account_info, group, cache)
             accounts += [account]
         return accounts
 

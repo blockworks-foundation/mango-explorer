@@ -29,7 +29,6 @@ from .layouts import layouts
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .marketlookup import MarketLookup
 from .metadata import Metadata
-from .rootbank import RootBank
 from .token import Instrument, Token
 from .tokeninfo import TokenInfo
 from .version import Version
@@ -263,10 +262,10 @@ class Group(AddressableAccount):
         return [slot.perp_market if slot is not None else None for slot in self.slots_by_index]
 
     @staticmethod
-    def from_layout(layout: typing.Any, name: str, account_info: AccountInfo, version: Version, root_banks: typing.Sequence[RootBank], instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> "Group":
+    def from_layout(layout: typing.Any, name: str, account_info: AccountInfo, version: Version, instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> "Group":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
         tokens: typing.List[typing.Optional[TokenInfo]] = [
-            TokenInfo.from_layout_or_none(t, instrument_lookup, root_banks) for t in layout.tokens]
+            TokenInfo.from_layout_or_none(t, instrument_lookup) for t in layout.tokens]
 
         # By convention, the shared quote token is always at the end.
         quote_token_info: typing.Optional[TokenInfo] = tokens[-1]
@@ -309,37 +308,29 @@ class Group(AddressableAccount):
         signer_key: PublicKey = layout.signer_key
         admin: PublicKey = layout.admin
         serum_program_address: PublicKey = layout.serum_program_address
-        cache: PublicKey = layout.cache
+        cache_address: PublicKey = layout.cache
         valid_interval: Decimal = layout.valid_interval
         insurance_vault: PublicKey = layout.insurance_vault
         srm_vault: PublicKey = layout.srm_vault
         msrm_vault: PublicKey = layout.msrm_vault
         fees_vault: PublicKey = layout.fees_vault
 
-        return Group(account_info, version, name, meta_data, quote_token_info, in_slots, slots, signer_nonce, signer_key, admin, serum_program_address, cache, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault)
+        return Group(account_info, version, name, meta_data, quote_token_info, in_slots, slots, signer_nonce, signer_key, admin, serum_program_address, cache_address, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault)
 
     @staticmethod
-    def parse(context: Context, account_info: AccountInfo) -> "Group":
+    def parse(account_info: AccountInfo, name: str, instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> "Group":
         data = account_info.data
         if len(data) != layouts.GROUP.sizeof():
             raise Exception(
                 f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP.sizeof()})")
 
+        layout = layouts.GROUP.parse(data)
+        return Group.from_layout(layout, name, account_info, Version.V3, instrument_lookup, market_lookup)
+
+    @staticmethod
+    def parse_with_context(context: Context, account_info: AccountInfo) -> "Group":
         name = context.lookup_group_name(account_info.address)
-        layout = layouts.GROUP.parse(data)
-        root_bank_addresses = [ti.root_bank for ti in layout.tokens if ti is not None and ti.root_bank is not None]
-        root_banks = RootBank.load_multiple(context, root_bank_addresses)
-        return Group.parse_locally(account_info, name, root_banks, context.instrument_lookup, context.market_lookup)
-
-    @staticmethod
-    def parse_locally(account_info: AccountInfo, name: str, root_banks: typing.Sequence[RootBank], instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> "Group":
-        data = account_info.data
-        if len(data) != layouts.GROUP.sizeof():
-            raise Exception(
-                f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP.sizeof()})")
-
-        layout = layouts.GROUP.parse(data)
-        return Group.from_layout(layout, name, account_info, Version.V3, root_banks, instrument_lookup, market_lookup)
+        return Group.parse(account_info, name, context.instrument_lookup, context.market_lookup)
 
     @staticmethod
     def load(context: Context, address: typing.Optional[PublicKey] = None) -> "Group":
@@ -347,7 +338,9 @@ class Group(AddressableAccount):
         account_info = AccountInfo.load(context, group_address)
         if account_info is None:
             raise Exception(f"Group account not found at address '{group_address}'")
-        return Group.parse(context, account_info)
+
+        name = context.lookup_group_name(account_info.address)
+        return Group.parse(account_info, name, context.instrument_lookup, context.market_lookup)
 
     def slot_by_spot_market_address(self, spot_market_address: PublicKey) -> GroupSlot:
         for slot in self.slots:
@@ -389,6 +382,9 @@ class Group(AddressableAccount):
         slot: GroupSlot = self.slot_by_instrument(instrument)
         instrument_index: int = slot.index
         return cache.market_cache_for_index(instrument_index)
+
+    def fetch_cache(self, context: Context) -> Cache:
+        return Cache.load(context, self.cache)
 
     def __str__(self) -> str:
         slot_count = len(self.slots)

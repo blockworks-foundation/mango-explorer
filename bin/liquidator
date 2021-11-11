@@ -136,7 +136,7 @@ try:
         all_addresses = [group_address, *oracles]
         all_account_infos = mango.AccountInfo.load_multiple(context, all_addresses)
         group_account_info = all_account_infos[0]
-        group = mango.Group.parse(context, group_account_info)
+        group = mango.Group.parse_with_context(context, group_account_info)
 
         # TODO - fetch prices when code available in V3.
         return group, []

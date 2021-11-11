@@ -114,6 +114,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
                  market: mango.SerumMarket,
                  oracle: mango.Oracle,
                  group_address: PublicKey,
+                 cache_address: PublicKey,
                  account_address: PublicKey,
                  open_orders_address: PublicKey,
                  base_inventory_token_account: mango.TokenAccount,
@@ -125,6 +126,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
         self.oracle: mango.Oracle = oracle
 
         self.group_address: PublicKey = group_address
+        self.cache_address: PublicKey = cache_address
         self.account_address: PublicKey = account_address
         self.open_orders_address: PublicKey = open_orders_address
         self.base_inventory_token_account: mango.TokenAccount = base_inventory_token_account
@@ -137,6 +139,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
     def poll(self, context: mango.Context) -> ModelState:
         addresses: typing.List[PublicKey] = [
             self.group_address,
+            self.cache_address,
             self.account_address,
             self.open_orders_address,
             self.base_inventory_token_account.address,
@@ -145,18 +148,19 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
             self.market.asks_address
         ]
         account_infos: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(context, addresses)
-        group: mango.Group = mango.Group.parse(context, account_infos[0])
-        account: mango.Account = mango.Account.parse(account_infos[1], group)
+        group: mango.Group = mango.Group.parse_with_context(context, account_infos[0])
+        cache: mango.Cache = mango.Cache.parse(account_infos[1])
+        account: mango.Account = mango.Account.parse(account_infos[2], group, cache)
         placed_orders_container: mango.PlacedOrdersContainer = mango.OpenOrders.parse(
-            account_infos[2], self.market.base.decimals, self.market.quote.decimals)
+            account_infos[3], self.market.base.decimals, self.market.quote.decimals)
 
         # Serum markets don't accrue MNGO liquidity incentives
         mngo_accrued: InstrumentValue = InstrumentValue(group.liquidity_incentive_token, Decimal(0))
 
-        base_inventory_token_account = mango.TokenAccount.parse(account_infos[3], self.base_token)
-        quote_inventory_token_account = mango.TokenAccount.parse(account_infos[4], self.quote_token)
+        base_inventory_token_account = mango.TokenAccount.parse(account_infos[4], self.base_token)
+        quote_inventory_token_account = mango.TokenAccount.parse(account_infos[5], self.quote_token)
 
-        orderbook: mango.OrderBook = self.market.parse_account_infos_to_orderbook(account_infos[5], account_infos[6])
+        orderbook: mango.OrderBook = self.market.parse_account_infos_to_orderbook(account_infos[6], account_infos[7])
 
         price: mango.Price = self.oracle.fetch_price(context)
 
@@ -213,9 +217,9 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
             *self.all_open_orders_addresses
         ]
         account_infos: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(context, addresses)
-        group: mango.Group = mango.Group.parse(context, account_infos[0])
+        group: mango.Group = mango.Group.parse_with_context(context, account_infos[0])
         cache: mango.Cache = mango.Cache.parse(account_infos[1])
-        account: mango.Account = mango.Account.parse(account_infos[2], group)
+        account: mango.Account = mango.Account.parse(account_infos[2], group, cache)
 
         # Update our stash of OpenOrders addresses for next time, in case new OpenOrders accounts were added
         self.all_open_orders_addresses = account.spot_open_orders
@@ -224,7 +228,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
             str(account_info.address): account_info for account_info in account_infos[5:]}
 
         all_open_orders: typing.Dict[str, mango.OpenOrders] = {}
-        for basket_token in account.base_slots:
+        for basket_token in account.slots:
             if basket_token.spot_open_orders is not None and str(basket_token.spot_open_orders) in spot_open_orders_account_infos_by_address:
                 account_info: mango.AccountInfo = spot_open_orders_account_infos_by_address[str(
                     basket_token.spot_open_orders)]
@@ -293,9 +297,9 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
             self.market.underlying_perp_market.asks
         ]
         account_infos: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(context, addresses)
-        group: mango.Group = mango.Group.parse(context, account_infos[0])
+        group: mango.Group = mango.Group.parse_with_context(context, account_infos[0])
         cache: mango.Cache = mango.Cache.parse(account_infos[1])
-        account: mango.Account = mango.Account.parse(account_infos[2], group)
+        account: mango.Account = mango.Account.parse(account_infos[2], group, cache)
 
         slot = group.slot_by_perp_market_address(self.market.address)
         perp_account = account.perp_accounts_by_index[slot.index]

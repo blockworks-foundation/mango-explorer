@@ -1,6 +1,8 @@
 #! /usr/bin/env bash
 
 export CLUSTER_NAME=devnet
+show-account-info --address Ec2enZyoC4nGpEfu2sUNAa2nUGJHWxoUWYSEJ2hNTWTA --filename group.json
+show-account-info --address 8mFQbdXsFXt3R3cu3oSNS3bDZRwJRP18vyzd9J278J9z --filename cache.json
 
 # No Mango Account, only 1 SOL as balance.
 show-account-info --address ASo5EzLWSUJo2RKvMut2G3C87rsuSSPWKSXiXpSUJtR4 --filename account.json

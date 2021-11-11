@@ -32,7 +32,7 @@ for index, open_orders_address in enumerate(account.spot_open_orders):
         if base_token_info is None:
             raise Exception(f"No base token available at index {index}.")
         open_orders = mango.OpenOrders.load(context, open_orders_address,
-                                            base_token_info.decimals, quote_token_info.decimals)
+                                            base_token_info.token.decimals, quote_token_info.decimals)
         print(open_orders)
         at_least_one_open_orders_account = True
 

@@ -113,7 +113,8 @@ class PerpOrderBookSide(AddressableAccount):
                 price = node.key["price"]
                 quantity = node.quantity
 
-                decimals_differential = self.perp_market_details.base_instrument.decimals - self.perp_market_details.quote_token.decimals
+                decimals_differential = self.perp_market_details.base_instrument.decimals - \
+                    self.perp_market_details.quote_token.token.decimals
                 native_to_ui = Decimal(10) ** decimals_differential
                 quote_lot_size = self.perp_market_details.quote_lot_size
                 base_lot_size = self.perp_market_details.base_lot_size

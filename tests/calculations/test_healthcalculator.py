@@ -34,7 +34,7 @@ def test_perp_account_no_spot_openorders() -> None:
 
     # Typescript says: 341025333625.51856223547208912805
     # TODO: This is significantly different from Typescript answer
-    assert health == Decimal("7036880.69722811087924538653007346763")
+    assert health == Decimal("7036880.69722812395986194177339495613")
 
 
 def test_perp_account_no_spot_openorders_unhealthy() -> None:
@@ -56,8 +56,8 @@ def test_account1() -> None:
     actual = HealthCalculator(context, HealthType.INITIAL)
     health = actual.calculate(account, open_orders, group, cache)
     # Typescript says: 454884281.15520619643754685058
-    # TODO: This is slightly different from Typescript answer
-    assert health == Decimal("2578453.62441460502856112835667758626")
+    # TODO: This is significantly different from Typescript answer
+    assert health == Decimal("2578453.62435039273978679178827388534")
 
 
 def test_account2() -> None:
@@ -68,4 +68,4 @@ def test_account2() -> None:
     health = actual.calculate(account, open_orders, group, cache)
     # Typescript says: 7516159604.84918334545095675026
     # TODO: This is slightly different from Typescript answer
-    assert health == Decimal("-34471.8824121736505777079119365978915")
+    assert health == Decimal("-34471.8822627460347363357247598728190")

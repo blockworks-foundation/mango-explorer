@@ -352,7 +352,7 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
     raw_order_type: int = order_type.to_perp()
 
     base_decimals = perp_market_details.base_instrument.decimals
-    quote_decimals = perp_market_details.quote_token.decimals
+    quote_decimals = perp_market_details.quote_token.token.decimals
 
     base_factor = Decimal(10) ** base_decimals
     quote_factor = Decimal(10) ** quote_decimals
@@ -634,9 +634,9 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
     base_token_info = base_token_infos[0]
     quote_token_info = group.shared_quote
 
-    base_root_bank: RootBank = base_token_info.root_bank
+    base_root_bank: RootBank = base_token_info.load_root_bank(context)
     base_node_bank: NodeBank = base_root_bank.pick_node_bank(context)
-    quote_root_bank: RootBank = quote_token_info.root_bank
+    quote_root_bank: RootBank = quote_token_info.load_root_bank(context)
     quote_node_bank: NodeBank = quote_root_bank.pick_node_bank(context)
 
     vault_signer = PublicKey.create_program_address(
@@ -765,7 +765,7 @@ def build_mango_settle_instructions(context: Context, wallet: Wallet, market: Py
 # Creates a 'RedeemMngo' instruction for Mango accounts.
 #
 def build_redeem_accrued_mango_instructions(context: Context, wallet: Wallet, perp_market: PerpMarket, group: Group, account: Account, mngo: TokenInfo) -> CombinableInstructions:
-    node_bank: NodeBank = mngo.root_bank.pick_node_bank(context)
+    node_bank: NodeBank = mngo.pick_node_bank(context)
     # /// Redeem the mngo_accrued in a PerpAccount for MNGO in MangoAccount deposits
     # ///
     # /// Accounts expected by this instruction (11):
@@ -788,7 +788,7 @@ def build_redeem_accrued_mango_instructions(context: Context, wallet: Wallet, pe
             AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
             AccountMeta(is_signer=False, is_writable=False, pubkey=perp_market.address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market.underlying_perp_market.mngo_vault),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=mngo.root_bank.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=mngo.root_bank_address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
