@@ -368,6 +368,13 @@ class Group(AddressableAccount):
         if slot is not None:
             return slot
 
+        raise Exception(f"Could not find slot for {instrument} in group {self.address}")
+
+    def token_info_by_instrument(self, instrument: Instrument) -> TokenInfo:
+        for token_info in self.tokens:
+            if token_info.token == instrument:
+                return token_info
+
         raise Exception(f"Could not find token {instrument} in group {self.address}")
 
     def token_price_from_cache(self, cache: Cache, token: Instrument) -> InstrumentValue:
