@@ -1,0 +1,10 @@
+#! /usr/bin/env bash
+
+export CLUSTER_NAME=mainnet
+
+
+show-account-info --address 98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue --filename group.json
+show-account-info --address 8VwAANqu3t4KQKpMq7wrS6yg5GTHwJBFsrK4Tk2cFN3q --filename btc_root_bank.json
+show-account-info --address 7CfvGCV7qMf7im7mcqftZxQZGTweGappvL1maH7PMZ3Q --filename btc_node_bank.json
+show-account-info --address AMzanZxMirPCgGcBoH9kw4Jzi9LFMomyUCXbpzDeL2T8 --filename usdc_root_bank.json
+show-account-info --address BGcwkj1WudQwUUjFk78hAjwd1uAm8trh1N4CJSa51euh --filename usdc_node_bank.json

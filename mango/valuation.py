@@ -69,9 +69,9 @@ class TokenValuation:
         sol_balance = context.client.get_balance(address)
         balances += [InstrumentValue(SolToken, sol_balance)]
 
-        for slot_token_info in group.tokens:
-            if isinstance(slot_token_info.token, Token):
-                balance = InstrumentValue.fetch_total_value(context, address, slot_token_info.token)
+        for slot_token_bank in group.tokens:
+            if isinstance(slot_token_bank.token, Token):
+                balance = InstrumentValue.fetch_total_value(context, address, slot_token_bank.token)
                 balances += [balance]
 
         wallet_tokens: typing.List[TokenValuation] = []

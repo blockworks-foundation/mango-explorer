@@ -28,7 +28,7 @@ from .instructions import build_cancel_perp_order_instructions, build_mango_cons
 from .marketoperations import MarketInstructionBuilder, MarketOperations
 from .orders import Order, OrderBook
 from .perpmarket import PerpMarket
-from .tokeninfo import TokenInfo
+from .tokenbank import TokenBank
 from .wallet import Wallet
 
 
@@ -49,7 +49,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         self.group: Group = group
         self.account: Account = account
         self.perp_market: PerpMarket = perp_market
-        self.mngo_token_info: TokenInfo = self.group.liquidity_incentive_token_info
+        self.mngo_token_bank: TokenBank = self.group.liquidity_incentive_token_bank
 
     @staticmethod
     def load(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket) -> "PerpMarketInstructionBuilder":
@@ -76,7 +76,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         return build_mango_consume_events_instructions(self.context, self.group, self.perp_market.underlying_perp_market, account_addresses, limit)
 
     def build_redeem_instructions(self) -> CombinableInstructions:
-        return build_redeem_accrued_mango_instructions(self.context, self.wallet, self.perp_market, self.group, self.account, self.mngo_token_info)
+        return build_redeem_accrued_mango_instructions(self.context, self.wallet, self.perp_market, self.group, self.account, self.mngo_token_bank)
 
     def __str__(self) -> str:
         return """« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝚜 »"""

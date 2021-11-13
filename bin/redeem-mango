@@ -30,7 +30,7 @@ def load_perp_market(context: mango.Context, group: mango.Group, slot: mango.Gro
     perp_market_details = mango.PerpMarketDetails.load(context, slot.perp_market.address, group)
     perp_market = mango.PerpMarket(context.mango_program_address, slot.perp_market.address,
                                    slot.base_instrument,
-                                   mango.Token.ensure(slot.quote_token_info.token),
+                                   mango.Token.ensure(slot.quote_token_bank.token),
                                    perp_market_details)
 
     return perp_market
@@ -46,7 +46,7 @@ def find_basket_token_in_account(account: mango.Account, instrument: mango.Instr
 
 
 def build_redeem_instruction_for_account(context: mango.Context, wallet: mango.Wallet, group: mango.Group,
-                                         mngo: mango.TokenInfo, account: mango.Account,
+                                         mngo: mango.TokenBank, account: mango.Account,
                                          perp_market: mango.PerpMarket,
                                          basket_token: typing.Optional[mango.AccountSlot]) -> mango.CombinableInstructions:
     if (basket_token is None) or (basket_token.perp_account is None) or basket_token.perp_account.mngo_accrued.value == 0:
@@ -77,7 +77,7 @@ context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 group = mango.Group.load(context, context.group_address)
-mngo = group.liquidity_incentive_token_info
+mngo = group.liquidity_incentive_token_bank
 account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
 
 signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)

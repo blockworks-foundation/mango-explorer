@@ -53,7 +53,7 @@ class PerpCollateralCalculator(CollateralCalculator):
             # perp_market: typing.Optional[GroupSlotPerpMarket] = group.perp_markets_by_index[index]
             # if perp_market is None:
             #     raise Exception(
-            #         f"Could not read perp market of token {basket_token.token_info.token.symbol} at index {index} of cache at {cache.address}")
+            #         f"Could not read perp market of token {basket_token.token_bank.token.symbol} at index {index} of cache at {cache.address}")
             spot_market: typing.Optional[GroupSlotSpotMarket] = slot.spot_market
             init_asset_weight: Decimal
             init_liab_weight: Decimal

@@ -88,7 +88,7 @@ try:
     logging.info(f"Wallet address: {wallet.address}")
 
     group = mango.Group.load(context)
-    tokens = [token_info.token for token_info in group.tokens if token_info is not None]
+    tokens = [token_bank.token for token_bank in group.tokens if token_bank is not None]
 
     logging.info("Checking wallet accounts.")
     scout = mango.AccountScout()

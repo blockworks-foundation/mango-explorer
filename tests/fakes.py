@@ -78,8 +78,8 @@ def fake_perp_account() -> mango.PerpAccount:
                              mango.NullLotSizeConverter(), fake_instrument_value(), Decimal(0))
 
 
-def fake_token_info(symbol: str = "FAKE") -> mango.TokenInfo:
-    return mango.TokenInfo(fake_token(symbol), fake_seeded_public_key("root bank"))
+def fake_token_bank(symbol: str = "FAKE") -> mango.TokenBank:
+    return mango.TokenBank(fake_token(symbol), fake_seeded_public_key("root bank"))
 
 
 def fake_market() -> PySerumMarket:
@@ -151,7 +151,7 @@ def fake_asks() -> typing.Sequence[mango.Order]:
 
 
 def fake_account_slot() -> mango.AccountSlot:
-    return mango.AccountSlot(1, fake_instrument(), fake_token_info(), fake_token_info(), Decimal(1),
+    return mango.AccountSlot(1, fake_instrument(), fake_token_bank(), fake_token_bank(), Decimal(1),
                              fake_instrument_value(), Decimal(0), fake_instrument_value(),
                              fake_seeded_public_key("open_orders"), None)
 
@@ -185,7 +185,7 @@ def fake_group() -> mango.Group:
     meta_data = mango.Metadata(mango.layouts.DATA_TYPE.Group, mango.Version.V1, True)
     instrument_lookup = fake_context().instrument_lookup
     usdc = mango.Token.ensure(instrument_lookup.find_by_symbol_or_raise("usdc"))
-    quote_info = mango.TokenInfo(usdc, fake_seeded_public_key("root bank"))
+    quote_info = mango.TokenBank(usdc, fake_seeded_public_key("root bank"))
     signer_nonce = Decimal(1)
     signer_key = fake_seeded_public_key("signer key")
     admin_key = fake_seeded_public_key("admin key")

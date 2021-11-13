@@ -40,10 +40,9 @@ from .layouts import layouts
 from .orders import Order, OrderType, Side
 from .perpmarket import PerpMarket
 from .perpmarketdetails import PerpMarketDetails
-from .rootbank import NodeBank, RootBank
 from .token import Token
 from .tokenaccount import TokenAccount
-from .tokeninfo import TokenInfo
+from .tokenbank import TokenBank, NodeBank, RootBank
 from .wallet import Wallet
 
 
@@ -626,17 +625,17 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
     max_quote_quantity = market.state.base_size_number_to_lots(
         float(quantity)) * market.state.quote_lot_size() * market.state.price_number_to_lots(float(price))
 
-    base_token_infos = [
-        token_info for token_info in group.base_tokens_by_index if token_info is not None and isinstance(token_info.token, Token) and token_info.token.mint == market.state.base_mint()]
-    if len(base_token_infos) != 1:
+    base_token_banks = [
+        token_bank for token_bank in group.base_tokens_by_index if token_bank is not None and token_bank.token.mint == market.state.base_mint()]
+    if len(base_token_banks) != 1:
         raise Exception(
-            f"Could not find base token info for group {group.address} - length was {len(base_token_infos)} when it should be 1.")
-    base_token_info = base_token_infos[0]
-    quote_token_info = group.shared_quote
+            f"Could not find base token info for group {group.address} - length was {len(base_token_banks)} when it should be 1.")
+    base_token_bank = base_token_banks[0]
+    quote_token_bank = group.shared_quote
 
-    base_root_bank: RootBank = base_token_info.load_root_bank(context)
+    base_root_bank: RootBank = base_token_bank.ensure_root_bank(context)
     base_node_bank: NodeBank = base_root_bank.pick_node_bank(context)
-    quote_root_bank: RootBank = quote_token_info.load_root_bank(context)
+    quote_root_bank: RootBank = quote_token_bank.ensure_root_bank(context)
     quote_node_bank: NodeBank = quote_root_bank.pick_node_bank(context)
 
     vault_signer = PublicKey.create_program_address(
@@ -764,7 +763,7 @@ def build_mango_settle_instructions(context: Context, wallet: Wallet, market: Py
 #
 # Creates a 'RedeemMngo' instruction for Mango accounts.
 #
-def build_redeem_accrued_mango_instructions(context: Context, wallet: Wallet, perp_market: PerpMarket, group: Group, account: Account, mngo: TokenInfo) -> CombinableInstructions:
+def build_redeem_accrued_mango_instructions(context: Context, wallet: Wallet, perp_market: PerpMarket, group: Group, account: Account, mngo: TokenBank) -> CombinableInstructions:
     node_bank: NodeBank = mngo.pick_node_bank(context)
     # /// Redeem the mngo_accrued in a PerpAccount for MNGO in MangoAccount deposits
     # ///

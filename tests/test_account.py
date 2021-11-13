@@ -1,7 +1,7 @@
 import pytest
 
 from .context import mango
-from .fakes import fake_account_info, fake_seeded_public_key, fake_token_info, fake_instrument, fake_instrument_value, fake_perp_account, fake_token
+from .fakes import fake_account_info, fake_seeded_public_key, fake_token_bank, fake_instrument, fake_instrument_value, fake_perp_account, fake_token
 
 from decimal import Decimal
 from mango.layouts import layouts
@@ -19,7 +19,7 @@ def test_construction() -> None:
     quote_deposit = fake_instrument_value(raw_quote_deposit)
     raw_quote_borrow = Decimal(5)
     quote_borrow = fake_instrument_value(raw_quote_borrow)
-    quote = mango.AccountSlot(3, fake_instrument(), fake_token_info(), fake_token_info(), raw_quote_deposit,
+    quote = mango.AccountSlot(3, fake_instrument(), fake_token_bank(), fake_token_bank(), raw_quote_deposit,
                               quote_deposit, raw_quote_borrow, quote_borrow, None, None)
     raw_deposit1 = Decimal(1)
     deposit1 = fake_instrument_value(raw_deposit1)
@@ -37,11 +37,11 @@ def test_construction() -> None:
     perp2 = fake_perp_account()
     perp3 = fake_perp_account()
     basket = [
-        mango.AccountSlot(0, fake_instrument(), fake_token_info(), fake_token_info(), raw_deposit1, deposit1,
+        mango.AccountSlot(0, fake_instrument(), fake_token_bank(), fake_token_bank(), raw_deposit1, deposit1,
                           raw_borrow1, borrow1, fake_seeded_public_key("spot openorders 1"), perp1),
-        mango.AccountSlot(1, fake_instrument(), fake_token_info(), fake_token_info(), raw_deposit2, deposit2,
+        mango.AccountSlot(1, fake_instrument(), fake_token_bank(), fake_token_bank(), raw_deposit2, deposit2,
                           raw_borrow2, borrow2, fake_seeded_public_key("spot openorders 2"), perp2),
-        mango.AccountSlot(2, fake_instrument(), fake_token_info(), fake_token_info(), raw_deposit3, deposit3,
+        mango.AccountSlot(2, fake_instrument(), fake_token_bank(), fake_token_bank(), raw_deposit3, deposit3,
                           raw_borrow3, borrow3, fake_seeded_public_key("spot openorders 3"), perp3),
     ]
     msrm_amount = Decimal(0)
@@ -80,20 +80,20 @@ def test_slot_lookups() -> None:
     in_margin_basket = [False, False, False, False, False, False, False]
     active_in_basket = [False, True, False, True, True, False, False]
     zero_value = Decimal(0)
-    quote_slot = mango.AccountSlot(3, fake_token("FAKEQUOTE"), fake_token_info("FAKEQUOTE"), fake_token_info(), zero_value,
+    quote_slot = mango.AccountSlot(3, fake_token("FAKEQUOTE"), fake_token_bank("FAKEQUOTE"), fake_token_bank(), zero_value,
                                    fake_instrument_value(Decimal(10)), zero_value, fake_instrument_value(Decimal(2)), None, None)
     perp2 = fake_perp_account()
     perp3 = fake_perp_account()
     slots = [
-        mango.AccountSlot(1, fake_instrument("slot1"), fake_token_info(), fake_token_info(),
+        mango.AccountSlot(1, fake_instrument("slot1"), fake_token_bank(), fake_token_bank(),
                           zero_value, fake_instrument_value(Decimal(2)),
                           zero_value, fake_instrument_value(Decimal(1)),
                           fake_seeded_public_key("spot openorders 1"), None),
-        mango.AccountSlot(3, fake_token("MNGO"), fake_token_info("MNGO"), fake_token_info(),
+        mango.AccountSlot(3, fake_token("MNGO"), fake_token_bank("MNGO"), fake_token_bank(),
                           zero_value, fake_instrument_value(Decimal(6)),
                           zero_value, fake_instrument_value(Decimal(4)),
                           fake_seeded_public_key("spot openorders 2"), perp2),
-        mango.AccountSlot(4, fake_instrument("slot3"), fake_token_info(), fake_token_info(),
+        mango.AccountSlot(4, fake_instrument("slot3"), fake_token_bank(), fake_token_bank(),
                           zero_value, fake_instrument_value(Decimal(5)),
                           zero_value, fake_instrument_value(Decimal(8)), None, perp3),
     ]

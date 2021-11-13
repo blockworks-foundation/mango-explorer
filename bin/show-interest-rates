@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import os.path
+import sys
+
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows the current interest rates for a token in a Mango Markets Group.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+parser.add_argument("--symbol", type=str, required=True, help="symbol of the token to look up, e.g. 'ETH'")
+args: argparse.Namespace = mango.parse_args(parser)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+group = mango.Group.load(context)
+
+token = context.instrument_lookup.find_by_symbol(args.symbol)
+if token is None:
+    raise Exception(f"Could not find token {args.symbol} in group {group.address}")
+
+token_bank = group.token_bank_by_instrument(token)
+
+interest_rates = token_bank.fetch_interest_rates(context)
+print(f"Interest rates for {token.symbol}:")
+print(f"    Deposit: {interest_rates.deposit:,.2%}")
+print(f"    Borrow : {interest_rates.borrow:,.2%}")

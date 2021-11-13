@@ -29,8 +29,8 @@ from .lotsizeconverter import NullLotSizeConverter
 from .openorders import OpenOrders
 from .perpeventqueue import PerpEventQueue
 from .perpmarketdetails import PerpMarketDetails
-from .rootbank import NodeBank, RootBank
 from .serumeventqueue import SerumEventQueue
+from .tokenbank import NodeBank, RootBank
 
 
 # # 🥭 build_account_info_converter function

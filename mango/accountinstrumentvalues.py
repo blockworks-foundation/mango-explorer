@@ -108,7 +108,7 @@ class AccountInstrumentValues:
     @staticmethod
     def from_account_basket_base_token(account_slot: AccountSlot, open_orders_by_address: typing.Dict[str, OpenOrders], group: Group) -> "AccountInstrumentValues":
         base_token: Instrument = account_slot.base_instrument
-        quote_token: Token = Token.ensure(account_slot.quote_token_info.token)
+        quote_token: Token = Token.ensure(account_slot.quote_token_bank.token)
         perp_account: typing.Optional[PerpAccount] = account_slot.perp_account
         if perp_account is None:
             raise Exception(f"No perp account for basket token {account_slot.base_instrument.symbol}")

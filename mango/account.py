@@ -34,7 +34,7 @@ from .perpaccount import PerpAccount
 from .perpopenorders import PerpOpenOrders
 from .placedorder import PlacedOrder
 from .token import Instrument, Token
-from .tokeninfo import TokenInfo
+from .tokenbank import TokenBank
 from .version import Version
 
 
@@ -43,11 +43,11 @@ from .version import Version
 # `AccountSlot` gathers slot items together instead of separate arrays.
 #
 class AccountSlot:
-    def __init__(self, index: int, base_instrument: Instrument, base_token_info: typing.Optional[TokenInfo], quote_token_info: TokenInfo, raw_deposit: Decimal, deposit: InstrumentValue, raw_borrow: Decimal, borrow: InstrumentValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]) -> None:
+    def __init__(self, index: int, base_instrument: Instrument, base_token_bank: typing.Optional[TokenBank], quote_token_bank: TokenBank, raw_deposit: Decimal, deposit: InstrumentValue, raw_borrow: Decimal, borrow: InstrumentValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]) -> None:
         self.index: int = index
         self.base_instrument: Instrument = base_instrument
-        self.base_token_info: typing.Optional[TokenInfo] = base_token_info
-        self.quote_token_info: TokenInfo = quote_token_info
+        self.base_token_bank: typing.Optional[TokenBank] = base_token_bank
+        self.quote_token_bank: TokenBank = quote_token_bank
         self.raw_deposit: Decimal = raw_deposit
         self.deposit: InstrumentValue = deposit
         self.raw_borrow: Decimal = raw_borrow
@@ -110,10 +110,10 @@ class Account(AddressableAccount):
 
     @property
     def shared_quote_token(self) -> Token:
-        token_info = self.shared_quote.base_token_info
-        if token_info is None:
+        token_bank = self.shared_quote.base_token_bank
+        if token_bank is None:
             raise Exception(f"Shared quote does not have a token: {self.shared_quote}")
-        return Token.ensure(token_info.token)
+        return Token.ensure(token_bank.token)
 
     @property
     def slots(self) -> typing.Sequence[AccountSlot]:
@@ -192,24 +192,24 @@ class Account(AddressableAccount):
                 placed_order = PlacedOrder(id, client_id, side)
                 placed_orders_all_markets[int(order_market)] += [placed_order]
 
-        quote_token_info: TokenInfo = group.shared_quote
+        quote_token_bank: TokenBank = group.shared_quote
         quote_token: Token = group.shared_quote_token
 
         for index in range(len(group.slots_by_index)):
             group_slot = group.slots_by_index[index]
             if group_slot is not None:
                 instrument = group_slot.base_instrument
-                token_info = group_slot.base_token_info
+                token_bank = group_slot.base_token_bank
                 raw_deposit: Decimal = Decimal(0)
                 intrinsic_deposit: Decimal = Decimal(0)
                 raw_borrow: Decimal = Decimal(0)
                 intrinsic_borrow: Decimal = Decimal(0)
-                if token_info is not None:
+                if token_bank is not None:
                     raw_deposit = layout.deposits[index]
-                    root_bank_cache: typing.Optional[RootBankCache] = token_info.root_bank_cache_from_cache(
+                    root_bank_cache: typing.Optional[RootBankCache] = token_bank.root_bank_cache_from_cache(
                         cache, index)
                     if root_bank_cache is None:
-                        raise Exception(f"No root bank cache found for token {token_info} at index {index}")
+                        raise Exception(f"No root bank cache found for token {token_bank} at index {index}")
                     intrinsic_deposit = root_bank_cache.deposit_index * raw_deposit
                     raw_borrow = layout.borrows[index]
                     intrinsic_borrow = root_bank_cache.borrow_index * raw_borrow
@@ -227,7 +227,7 @@ class Account(AddressableAccount):
                     group_slot.perp_lot_size_converter,
                     mngo_token)
                 spot_open_orders = layout.spot_open_orders[index]
-                account_slot: AccountSlot = AccountSlot(index, instrument, token_info, quote_token_info,
+                account_slot: AccountSlot = AccountSlot(index, instrument, token_bank, quote_token_bank,
                                                         raw_deposit, deposit, raw_borrow, borrow,
                                                         spot_open_orders, perp_account)
 
@@ -238,17 +238,17 @@ class Account(AddressableAccount):
 
         quote_index: int = len(layout.deposits) - 1
         raw_quote_deposit: Decimal = layout.deposits[quote_index]
-        quote_root_bank_cache: typing.Optional[RootBankCache] = quote_token_info.root_bank_cache_from_cache(
+        quote_root_bank_cache: typing.Optional[RootBankCache] = quote_token_bank.root_bank_cache_from_cache(
             cache, quote_index)
         if quote_root_bank_cache is None:
-            raise Exception(f"No root bank cache found for quote token {quote_token_info} at index {index}")
+            raise Exception(f"No root bank cache found for quote token {quote_token_bank} at index {index}")
         intrinsic_quote_deposit = quote_root_bank_cache.deposit_index * raw_quote_deposit
         quote_deposit = InstrumentValue(quote_token, quote_token.shift_to_decimals(intrinsic_quote_deposit))
         raw_quote_borrow: Decimal = layout.borrows[quote_index]
         intrinsic_quote_borrow = quote_root_bank_cache.borrow_index * raw_quote_borrow
         quote_borrow = InstrumentValue(quote_token, quote_token.shift_to_decimals(intrinsic_quote_borrow))
-        quote: AccountSlot = AccountSlot(len(layout.deposits) - 1, quote_token_info.token, quote_token_info,
-                                         quote_token_info, raw_quote_deposit, quote_deposit, raw_quote_borrow,
+        quote: AccountSlot = AccountSlot(len(layout.deposits) - 1, quote_token_bank.token, quote_token_bank,
+                                         quote_token_bank, raw_quote_deposit, quote_deposit, raw_quote_borrow,
                                          quote_borrow, None, None)
 
         msrm_amount: Decimal = layout.msrm_amount

@@ -175,8 +175,6 @@ from .publickey import encode_public_key_for_sorting as encode_public_key_for_so
 from .reconnectingwebsocket import ReconnectingWebsocket as ReconnectingWebsocket
 from .retrier import RetryWithPauses as RetryWithPauses
 from .retrier import retry_context as retry_context
-from .rootbank import NodeBank as NodeBank
-from .rootbank import RootBank as RootBank
 from .serumeventqueue import SerumEventQueue as SerumEventQueue
 from .serumeventqueue import UnseenSerumEventChangesTracker as UnseenSerumEventChangesTracker
 from .serummarket import SerumMarket as SerumMarket
@@ -192,7 +190,11 @@ from .token import Instrument as Instrument
 from .token import SolToken as SolToken
 from .token import Token as Token
 from .tokenaccount import TokenAccount as TokenAccount
-from .tokeninfo import TokenInfo as TokenInfo
+from .tokenbank import BankBalances as BankBalances
+from .tokenbank import InterestRates as InterestRates
+from .tokenbank import NodeBank as NodeBank
+from .tokenbank import RootBank as RootBank
+from .tokenbank import TokenBank as TokenBank
 from .tradeexecutor import ImmediateTradeExecutor as ImmediateTradeExecutor
 from .tradeexecutor import NullTradeExecutor as NullTradeExecutor
 from .tradeexecutor import TradeExecutor as TradeExecutor

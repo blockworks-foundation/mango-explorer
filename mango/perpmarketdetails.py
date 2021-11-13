@@ -27,7 +27,7 @@ from .instrumentvalue import InstrumentValue
 from .layouts import layouts
 from .metadata import Metadata
 from .token import Instrument, Token
-from .tokeninfo import TokenInfo
+from .tokenbank import TokenBank
 from .version import Version
 
 
@@ -136,8 +136,8 @@ class PerpMarketDetails(AddressableAccount):
         self.market_index: int = slot.index
 
         self.base_instrument: Instrument = slot.base_instrument
-        self.base_token: typing.Optional[TokenInfo] = slot.base_token_info
-        self.quote_token: TokenInfo = group.shared_quote
+        self.base_token: typing.Optional[TokenBank] = slot.base_token_bank
+        self.quote_token: TokenBank = group.shared_quote
 
     @staticmethod
     def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version, group: Group) -> "PerpMarketDetails":

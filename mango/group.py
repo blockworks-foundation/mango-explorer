@@ -30,7 +30,7 @@ from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .marketlookup import MarketLookup
 from .metadata import Metadata
 from .token import Instrument, Token
-from .tokeninfo import TokenInfo
+from .tokenbank import TokenBank
 from .version import Version
 
 
@@ -129,26 +129,26 @@ class GroupSlotPerpMarket:
 # `GroupSlot` gathers indexed slot items together instead of separate arrays.
 #
 class GroupSlot:
-    def __init__(self, index: int, base_instrument: Instrument, base_token_info: typing.Optional[TokenInfo], quote_token_info: TokenInfo, spot_market_info: typing.Optional[GroupSlotSpotMarket], perp_market_info: typing.Optional[GroupSlotPerpMarket], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey) -> None:
+    def __init__(self, index: int, base_instrument: Instrument, base_token_bank: typing.Optional[TokenBank], quote_token_bank: TokenBank, spot_market_info: typing.Optional[GroupSlotSpotMarket], perp_market_info: typing.Optional[GroupSlotPerpMarket], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey) -> None:
         self.index: int = index
         self.base_instrument: Instrument = base_instrument
-        self.base_token_info: typing.Optional[TokenInfo] = base_token_info
-        self.quote_token_info: TokenInfo = quote_token_info
+        self.base_token_bank: typing.Optional[TokenBank] = base_token_bank
+        self.quote_token_bank: TokenBank = quote_token_bank
         self.spot_market: typing.Optional[GroupSlotSpotMarket] = spot_market_info
         self.perp_market: typing.Optional[GroupSlotPerpMarket] = perp_market_info
         self.perp_lot_size_converter: LotSizeConverter = perp_lot_size_converter
         self.oracle: PublicKey = oracle
 
     def __str__(self) -> str:
-        base_token_info = f"{self.base_token_info}".replace("\n", "\n        ")
-        quote_token_info = f"{self.quote_token_info}".replace("\n", "\n        ")
+        base_token_bank = f"{self.base_token_bank}".replace("\n", "\n        ")
+        quote_token_bank = f"{self.quote_token_bank}".replace("\n", "\n        ")
         spot_market_info = f"{self.spot_market}".replace("\n", "\n        ")
         perp_market_info = f"{self.perp_market}".replace("\n", "\n        ")
         return f"""« 𝙶𝚛𝚘𝚞𝚙𝚂𝚕𝚘𝚝[{self.index}] {self.base_instrument}
     Base Token Info:
-        {base_token_info}
+        {base_token_bank}
     Quote Token Info:
-        {quote_token_info}
+        {quote_token_bank}
     Oracle: {self.oracle}
     Spot Market:
         {spot_market_info}
@@ -167,7 +167,7 @@ class GroupSlot:
 class Group(AddressableAccount):
     def __init__(self, account_info: AccountInfo, version: Version, name: str,
                  meta_data: Metadata,
-                 shared_quote: TokenInfo,
+                 shared_quote: TokenBank,
                  slot_indices: typing.Sequence[bool],
                  slots: typing.Sequence[GroupSlot],
                  signer_nonce: Decimal, signer_key: PublicKey,
@@ -178,7 +178,7 @@ class Group(AddressableAccount):
         self.name: str = name
 
         self.meta_data: Metadata = meta_data
-        self.shared_quote: TokenInfo = shared_quote
+        self.shared_quote: TokenBank = shared_quote
         self.slot_indices: typing.Sequence[bool] = slot_indices
         self.slots: typing.Sequence[GroupSlot] = slots
         self.signer_nonce: Decimal = signer_nonce
@@ -197,23 +197,23 @@ class Group(AddressableAccount):
         return Token.ensure(self.shared_quote.token)
 
     @property
-    def liquidity_incentive_token_info(self) -> TokenInfo:
-        for token_info in self.tokens:
-            if token_info.token.symbol_matches("MNGO"):
-                return token_info
+    def liquidity_incentive_token_bank(self) -> TokenBank:
+        for token_bank in self.tokens:
+            if token_bank.token.symbol_matches("MNGO"):
+                return token_bank
 
         raise Exception(f"Could not find token info for symbol 'MNGO' in group {self.address}")
 
     @property
     def liquidity_incentive_token(self) -> Token:
-        return Token.ensure(self.liquidity_incentive_token_info.token)
+        return Token.ensure(self.liquidity_incentive_token_bank.token)
 
     @property
-    def tokens(self) -> typing.Sequence[TokenInfo]:
+    def tokens(self) -> typing.Sequence[TokenBank]:
         return [*self.base_tokens, self.shared_quote]
 
     @property
-    def tokens_by_index(self) -> typing.Sequence[typing.Optional[TokenInfo]]:
+    def tokens_by_index(self) -> typing.Sequence[typing.Optional[TokenBank]]:
         return [*self.base_tokens_by_index, self.shared_quote]
 
     @property
@@ -230,12 +230,12 @@ class Group(AddressableAccount):
         return mapped_items
 
     @property
-    def base_tokens(self) -> typing.Sequence[TokenInfo]:
-        return [slot.base_token_info for slot in self.slots if slot.base_token_info is not None]
+    def base_tokens(self) -> typing.Sequence[TokenBank]:
+        return [slot.base_token_bank for slot in self.slots if slot.base_token_bank is not None]
 
     @property
-    def base_tokens_by_index(self) -> typing.Sequence[typing.Optional[TokenInfo]]:
-        return [slot.base_token_info if slot is not None else None for slot in self.slots_by_index]
+    def base_tokens_by_index(self) -> typing.Sequence[typing.Optional[TokenBank]]:
+        return [slot.base_token_bank if slot is not None else None for slot in self.slots_by_index]
 
     @property
     def oracles(self) -> typing.Sequence[PublicKey]:
@@ -264,12 +264,12 @@ class Group(AddressableAccount):
     @staticmethod
     def from_layout(layout: typing.Any, name: str, account_info: AccountInfo, version: Version, instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> "Group":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
-        tokens: typing.List[typing.Optional[TokenInfo]] = [
-            TokenInfo.from_layout_or_none(t, instrument_lookup) for t in layout.tokens]
+        tokens: typing.List[typing.Optional[TokenBank]] = [
+            TokenBank.from_layout_or_none(t, instrument_lookup) for t in layout.tokens]
 
         # By convention, the shared quote token is always at the end.
-        quote_token_info: typing.Optional[TokenInfo] = tokens[-1]
-        if quote_token_info is None:
+        quote_token_bank: typing.Optional[TokenBank] = tokens[-1]
+        if quote_token_bank is None:
             raise Exception("Could not find quote token info at end of group tokens.")
         slots: typing.List[GroupSlot] = []
         in_slots: typing.List[bool] = []
@@ -282,10 +282,10 @@ class Group(AddressableAccount):
                 in_slots += [False]
             else:
                 perp_lot_size_converter: LotSizeConverter = RaisingLotSizeConverter()
-                base_token_info: typing.Optional[TokenInfo] = tokens[index]
+                base_token_bank: typing.Optional[TokenBank] = tokens[index]
                 base_instrument: Instrument
-                if base_token_info is not None:
-                    base_instrument = base_token_info.token
+                if base_token_bank is not None:
+                    base_instrument = base_token_bank.token
                 else:
                     # It's possible there's no underlying SPL token and we have a pure PERP market.
                     if perp_market_info is None:
@@ -296,10 +296,10 @@ class Group(AddressableAccount):
                     base_instrument = perp_market.base
                 if perp_market_info is not None:
                     perp_lot_size_converter = LotSizeConverter(
-                        base_instrument, perp_market_info.base_lot_size, quote_token_info.token, perp_market_info.quote_lot_size)
+                        base_instrument, perp_market_info.base_lot_size, quote_token_bank.token, perp_market_info.quote_lot_size)
 
                 oracle: PublicKey = layout.oracles[index]
-                slot: GroupSlot = GroupSlot(index, base_instrument, base_token_info, quote_token_info,
+                slot: GroupSlot = GroupSlot(index, base_instrument, base_token_bank, quote_token_bank,
                                             spot_market_info, perp_market_info, perp_lot_size_converter, oracle)
                 slots += [slot]
                 in_slots += [True]
@@ -315,7 +315,7 @@ class Group(AddressableAccount):
         msrm_vault: PublicKey = layout.msrm_vault
         fees_vault: PublicKey = layout.fees_vault
 
-        return Group(account_info, version, name, meta_data, quote_token_info, in_slots, slots, signer_nonce, signer_key, admin, serum_program_address, cache_address, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault)
+        return Group(account_info, version, name, meta_data, quote_token_bank, in_slots, slots, signer_nonce, signer_key, admin, serum_program_address, cache_address, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault)
 
     @staticmethod
     def parse(account_info: AccountInfo, name: str, instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> "Group":
@@ -370,10 +370,10 @@ class Group(AddressableAccount):
 
         raise Exception(f"Could not find slot for {instrument} in group {self.address}")
 
-    def token_info_by_instrument(self, instrument: Instrument) -> TokenInfo:
-        for token_info in self.tokens:
-            if token_info.token == instrument:
-                return token_info
+    def token_bank_by_instrument(self, instrument: Instrument) -> TokenBank:
+        for token_bank in self.tokens:
+            if token_bank.token == instrument:
+                return token_bank
 
         raise Exception(f"Could not find token {instrument} in group {self.address}")
 

@@ -36,6 +36,11 @@ def load_root_bank(filename: str) -> mango.RootBank:
     return mango.RootBank.parse(account_info)
 
 
+def load_node_bank(filename: str) -> mango.NodeBank:
+    account_info: mango.AccountInfo = mango.AccountInfo.load_json(filename)
+    return mango.NodeBank.parse(account_info)
+
+
 def load_data_from_directory(directory_path: str) -> typing.Tuple[mango.Group, mango.Cache, mango.Account, typing.Dict[str, mango.OpenOrders]]:
     all_openorders = {}
     for filepath in glob.iglob(f"{directory_path}/openorders*.json"):
