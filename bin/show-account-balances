@@ -72,7 +72,7 @@ for account in mango_accounts:
     print(f"\nAccount Balances [{account.address}]:")
     at_least_one_output: bool = False
     open_orders: typing.Dict[str, mango.OpenOrders] = account.load_all_spot_open_orders(context)
-    for asset in account.slots:
+    for asset in account.base_slots:
         if (asset.deposit.value != 0) or (asset.borrow.value != 0) or (asset.net_value.value != 0) or ((asset.perp_account is not None) and not asset.perp_account.empty):
             at_least_one_output = True
             report: mango.AccountInstrumentValues = mango.AccountInstrumentValues.from_account_basket_base_token(
