@@ -19,6 +19,9 @@ import rx.subject
 import rx.operators as ops
 import typing
 
+from datetime import datetime
+from dateutil import parser
+from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .accountinfo import AccountInfo
@@ -33,6 +36,52 @@ from .orders import Order
 from .perpeventqueue import PerpEvent, PerpEventQueue, UnseenPerpEventChangesTracker
 from .perpmarketdetails import PerpMarketDetails
 from .token import Instrument, Token
+
+
+# # 🥭 FundingRate class
+#
+# A simple way to package details of a funding rate in a single object.
+#
+class FundingRate(typing.NamedTuple):
+    symbol: str
+    rate: Decimal
+    oracle_price: Decimal
+    open_interest: Decimal
+    from_: datetime
+    to: datetime
+
+    @staticmethod
+    def from_stats_data(symbol: str, lot_size_converter: LotSizeConverter, oldest_stats: typing.Dict[str, typing.Any], newest_stats: typing.Dict[str, typing.Any]) -> "FundingRate":
+        oldest_short_funding = Decimal(oldest_stats["shortFunding"])
+        oldest_long_funding = Decimal(oldest_stats["longFunding"])
+        oldest_oracle_price = Decimal(oldest_stats["baseOraclePrice"])
+        from_timestamp = parser.parse(oldest_stats["time"]).replace(microsecond=0)
+
+        newest_short_funding = Decimal(newest_stats["shortFunding"])
+        newest_long_funding = Decimal(newest_stats["longFunding"])
+        newest_oracle_price = Decimal(newest_stats["baseOraclePrice"])
+        to_timestamp = parser.parse(newest_stats["time"]).replace(microsecond=0)
+        raw_open_interest = Decimal(newest_stats["openInterest"])
+        open_interest = lot_size_converter.base_size_lots_to_number(raw_open_interest) / 2
+
+        average_oracle_price = (oldest_oracle_price + newest_oracle_price) / 2
+        average_oracle_price = newest_oracle_price
+
+        start_funding = (oldest_long_funding + oldest_short_funding) / 2
+        end_funding = (newest_long_funding + newest_short_funding) / 2
+        funding_difference = end_funding - start_funding
+
+        funding_in_quote_decimals = lot_size_converter.quote.shift_to_decimals(funding_difference)
+
+        base_price_in_base_lots = average_oracle_price * lot_size_converter.lot_size
+        funding_rate = funding_in_quote_decimals / base_price_in_base_lots
+        return FundingRate(symbol=symbol, rate=funding_rate, oracle_price=average_oracle_price, open_interest=open_interest, from_=from_timestamp, to=to_timestamp)
+
+    def __str__(self) -> str:
+        return f"« 𝙵𝚞𝚗𝚍𝚒𝚗𝚐𝚁𝚊𝚝𝚎 {self.symbol} {self.rate:,.8%}, open interest: {self.open_interest:,.8f} from: {self.from_} to {self.to} »"
+
+    def __repr__(self) -> str:
+        return f"{self}"
 
 
 # # 🥭 PerpMarket class
@@ -66,6 +115,13 @@ class PerpMarket(LoadedMarket):
     def parse_account_info_to_orders(self, account_info: AccountInfo) -> typing.Sequence[Order]:
         side: PerpOrderBookSide = PerpOrderBookSide.parse(account_info, self.underlying_perp_market)
         return side.orders()
+
+    def fetch_funding(self, context: Context) -> FundingRate:
+        stats = context.fetch_stats(f"perp/funding_rate?mangoGroup={self.group.name}&market={self.symbol}")
+        newest_stats = stats[0]
+        oldest_stats = stats[-1]
+
+        return FundingRate.from_stats_data(self.symbol, self.lot_size_converter, oldest_stats, newest_stats)
 
     def unprocessed_events(self, context: Context) -> typing.Sequence[PerpEvent]:
         event_queue: PerpEventQueue = PerpEventQueue.load(

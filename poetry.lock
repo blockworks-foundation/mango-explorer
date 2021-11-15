@@ -346,6 +346,17 @@ toml = "*"
 testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xmlschema"]
 
 [[package]]
+name = "python-dateutil"
+version = "2.8.2"
+description = "Extensions to the standard Python datetime module"
+category = "main"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+
+[package.dependencies]
+six = ">=1.5"
+
+[[package]]
 name = "requests"
 version = "2.26.0"
 description = "Python HTTP for Humans."
@@ -452,6 +463,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "types-python-dateutil"
+version = "2.8.2"
+description = "Typing stubs for python-dateutil"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-requests"
 version = "2.26.0"
 description = "Typing stubs for requests"
@@ -525,7 +544,7 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "00dd9a8ff5fc060d7b595694b4fa07ab8940756c561619039437173caee8e95b"
+content-hash = "dd2ffa0dda88b822d7449023c4bd9eadb93bf98a2d96136f301c174bef66c122"
 
 [metadata.files]
 anyio = [
@@ -736,6 +755,10 @@ pytest = [
     {file = "pytest-6.2.5-py3-none-any.whl", hash = "sha256:7310f8d27bc79ced999e760ca304d69f6ba6c6649c0b60fb0e04a4a77cacc134"},
     {file = "pytest-6.2.5.tar.gz", hash = "sha256:131b36680866a76e6781d13f101efb86cf674ebb9762eb70d3082b6f29889e89"},
 ]
+python-dateutil = [
+    {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
+    {file = "python_dateutil-2.8.2-py2.py3-none-any.whl", hash = "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"},
+]
 requests = [
     {file = "requests-2.26.0-py2.py3-none-any.whl", hash = "sha256:6c1246513ecd5ecd4528a0906f910e8f0f9c6b8ec72030dc9fd154dc1a6efd24"},
     {file = "requests-2.26.0.tar.gz", hash = "sha256:b8aa58f8cf793ffd8782d3d8cb19e66ef36f7aba4353eec859e74678b01b07a7"},
@@ -774,6 +797,10 @@ types-cachetools = [
 types-certifi = [
     {file = "types-certifi-2021.10.8.0.tar.gz", hash = "sha256:33308fb722d28cad8ae19834dcc4d2593509ac80bcbabe77c6d8e9a25001c2de"},
     {file = "types_certifi-2021.10.8.0-py3-none-any.whl", hash = "sha256:ca164939fe86b5f70988eed480b788162ee81f62e72f486a7b96cb53f4112355"},
+]
+types-python-dateutil = [
+    {file = "types-python-dateutil-2.8.2.tar.gz", hash = "sha256:84a1b09fae40d61c01f450ea87cd594201bbe8511a64fecbe433051b87fb582c"},
+    {file = "types_python_dateutil-2.8.2-py3-none-any.whl", hash = "sha256:74d7d3a79ff07e7921472cf252b7fe4ffda5dc35570b9d3c7c4908761e9f9b87"},
 ]
 types-requests = [
     {file = "types-requests-2.26.0.tar.gz", hash = "sha256:df5ec8c34b413a42ebb38e4f96bdeb68090b875bdfcc5138dc82989c95445883"},

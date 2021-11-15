@@ -16,6 +16,7 @@
 import datetime
 import logging
 import multiprocessing
+import requests
 import time
 import typing
 
@@ -100,6 +101,11 @@ class Context:
                 return str(group["name"])
 
         return "« Unknown Group »"
+
+    def fetch_stats(self, url_suffix: str) -> typing.Sequence[typing.Any]:
+        stats_url = f"https://mango-stats-v3.herokuapp.com/{url_suffix}"
+        stats_response = requests.get(stats_url)
+        return typing.cast(typing.Sequence[typing.Any], stats_response.json())
 
     def __str__(self) -> str:
         return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝 '{self.name}':

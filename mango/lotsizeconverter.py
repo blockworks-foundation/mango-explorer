@@ -28,7 +28,7 @@ class LotSizeConverter():
         self.quote_lot_size: Decimal = quote_lot_size
 
     @property
-    def min_order_size(self) -> Decimal:
+    def lot_size(self) -> Decimal:
         return self.base_size_lots_to_number(Decimal(1))
 
     @property
