@@ -157,6 +157,6 @@ def version() -> PackageVersion:
     last_commit = f"Unknown (no version file found at '{version_filename}')."
     if os.path.isfile(version_filename):
         with open(version_filename) as version_file:
-            last_commit = version_file.read()
+            last_commit = version_file.read().strip()
 
     return PackageVersion(version=package_version, last_commit=last_commit)
