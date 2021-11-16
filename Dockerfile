@@ -1,7 +1,5 @@
 FROM python:3.9-buster
 
-ARG LAST_COMMIT=""
-
 RUN sh -c "$(curl -sSfL https://release.solana.com/v1.8.1/install)"
 
 RUN apt-get update && apt-get -y install bc curl zlib1g-dev
@@ -20,4 +18,5 @@ RUN poetry install --no-dev --no-root
 
 # Have these as the last steps since the code here is the most-frequently changing
 COPY . /app/
+ARG LAST_COMMIT=""
 RUN echo ${LAST_COMMIT} > /app/data/.version
