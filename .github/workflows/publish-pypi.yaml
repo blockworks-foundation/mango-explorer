@@ -15,8 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Add version info
+        run: git log -1 --format='%h [%ad] - %s' > data/.version
+
       - name: Build and publish to pypi
         uses: JRubics/poetry-publish@v1.8
         with:
           python_version: "3.9"
           pypi_token: ${{ secrets.PYPI_TOKEN }}
+          ignore_dev_requirements: "yes"

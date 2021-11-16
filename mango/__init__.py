@@ -43,6 +43,7 @@ from .constants import SOL_DECIMALS as SOL_DECIMALS
 from .constants import SOL_MINT_ADDRESS as SOL_MINT_ADDRESS
 from .constants import SYSTEM_PROGRAM_ADDRESS as SYSTEM_PROGRAM_ADDRESS
 from .constants import WARNING_DISCLAIMER_TEXT as WARNING_DISCLAIMER_TEXT
+from .constants import version as version
 from .context import Context as Context
 from .contextbuilder import ContextBuilder as ContextBuilder
 from .createmarketoperations import create_market_instruction_builder as create_market_instruction_builder

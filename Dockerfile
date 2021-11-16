@@ -17,7 +17,7 @@ RUN poetry config virtualenvs.create false
 RUN poetry install --no-dev --no-root
 
 ARG LAST_COMMIT=""
-RUN echo ${LAST_COMMIT} > /app/.version
+RUN echo ${LAST_COMMIT} > /app/data/.version
 
 # Have this as the last step since the code here is the most-frequently changing
 COPY . /app/

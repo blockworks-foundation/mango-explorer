@@ -15,6 +15,7 @@
 
 
 import decimal
+import importlib.metadata
 import json
 import os.path
 import typing
@@ -128,3 +129,34 @@ DATA_PATH: str = _build_data_path()
 #
 with open(os.path.join(DATA_PATH, "ids.json")) as json_file:
     MangoConstants = json.load(json_file)
+
+
+# # 🥭 PackageVersion class
+#
+# Runtime details of the current version of mango-explorer.
+#
+class PackageVersion(typing.NamedTuple):
+    version: str
+    last_commit: str
+
+    def __str__(self) -> str:
+        return f"« 𝙿𝚊𝚌𝚔𝚊𝚐𝚎𝚅𝚎𝚛𝚜𝚒𝚘𝚗 {self.version} - '{self.last_commit}' »"
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+def version() -> PackageVersion:
+    package_version: str = "Unknown"
+    try:
+        package_version = importlib.metadata.version("mango-explorer")
+    except Exception:
+        pass
+
+    version_filename: str = os.path.join(DATA_PATH, ".version")
+    last_commit = f"Unknown (no version file found at '{version_filename}')."
+    if os.path.isfile(version_filename):
+        with open(version_filename) as version_file:
+            last_commit = version_file.read()
+
+    return PackageVersion(version=package_version, last_commit=last_commit)
