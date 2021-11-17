@@ -1,4 +1,6 @@
+.DS_Store
 .git
+.venv
 .version
 wallet.json
 private.py

@@ -20,12 +20,14 @@ from solana.blockhash import Blockhash
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.transaction import Transaction, TransactionInstruction
+from solana.utils import shortvec_encoding as shortvec
 
 from .context import Context
 from .instructionreporter import InstructionReporter
 from .wallet import Wallet
 
 _MAXIMUM_TRANSACTION_LENGTH = 1280 - 40 - 8
+_PUBKEY_LENGTH = 32
 _SIGNATURE_LENGTH = 64
 
 
@@ -68,6 +70,9 @@ def _split_instructions_into_chunks(context: Context, signers: typing.Sequence[K
 # ```
 #
 class CombinableInstructions():
+    # For now let's run both checks to ensure our calculations are accurate.
+    __check_transaction_size_with_pyserum = True
+
     def __init__(self, signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.signers: typing.Sequence[Keypair] = signers
@@ -89,10 +94,9 @@ class CombinableInstructions():
     def from_instruction(instruction: TransactionInstruction) -> "CombinableInstructions":
         return CombinableInstructions(signers=[], instructions=[instruction])
 
-    # This is a quick-and-dirty way to find out the size the transaction will be. There's an upper limit
-    # on transaction size of 1232 so we need to keep all transactions below this size.
+    # This is the expensive - but always accurate - way of calculating the size of a transaction.
     @staticmethod
-    def transaction_size(signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> int:
+    def _transaction_size_from_pyserum(signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> int:
         inspector = Transaction()
         inspector.recent_blockhash = Blockhash(str(PublicKey(3)))
         inspector.instructions.extend(instructions)
@@ -108,6 +112,103 @@ class CombinableInstructions():
         length += (len(inspector.signatures) * _SIGNATURE_LENGTH)
 
         return length
+
+    # This is the quicker way - just add up the sizes ourselves. It's not trivial though.
+
+    @staticmethod
+    def _calculate_transaction_size(signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> int:
+        # Solana transactions have a deterministic size, but calculating it is a bit tricky.
+        #
+        # The transaction consists of:
+        # * Message header
+        # * count of number of instruction parcels
+        # * 1 instruction parcel per instruction
+        #
+        # We're mostly interested in the number of distinct public keys used, rather than just the total number of public keys used
+        # All distinct keys are passed in the message header, and 1-byte indexes are used in the instructions. That makes it all
+        # a bit more compact.
+        #
+        # `shortvec` here is a compact representation of an integer that may take multiple bytes but only as many as it needs. What
+        # we're interest in here is the count of the number of bytes the `shortvec` takes. It's normally 1, sometimes 2, but could be
+        # any number.
+        #
+        # A public key is 32 bytes.
+        #
+        # A signature is 64 bytes.
+        #
+        # Message header is:
+        # * 1 byte for number of signatures
+        # * 1 byte for number of signed accounts
+        # * 1 byte for number of unsigned accounts
+        # * 32 bytes for recent blockhash
+        # * (variable) shortvec length for number of distinct public keys
+        # * (variable) 32 bytes * number  of distinct public keys
+        #
+        # This gives us a header size of:
+        # 35 + (shortvec-length of distinct public keys) + (32 * number of distinct public keys)
+        #
+        # The count of number of instruction parcels is a shortvec length of the number of instructions
+        #
+        # Each instruction is:
+        # * 1 byte for the program ID index
+        # * (variable) shortvec length of the number of public keys
+        # * (variable) 1 byte for the index of each account public key
+        # * (variable) shortvec length of the data
+        # * (variable) length of the data
+        #
+        # This gives us an instruction size of:
+        # 1 + (shortvec-length of number of keys) + (number of keys) + (shortvec-length of the data) + (length of the data)
+        #
+        # This is signed, so the length is then:
+        # * Message header size
+        # * + each instruction size
+        # * + shortvec-length of the number of signers
+        # * + (number of signers * 64 bytes)
+        #
+        def shortvec_length(value: int) -> int:
+            return len(shortvec.encode_length(value))
+
+        program_ids = {instruction.program_id.to_base58() for instruction in instructions}
+        meta_pubkeys = {meta.pubkey.to_base58() for instruction in instructions for meta in instruction.keys}
+        distinct_publickeys = set.union(program_ids, meta_pubkeys, {
+                                        signer.public_key.to_base58() for signer in signers})
+        num_distinct_publickeys = len(distinct_publickeys)
+
+        # 35 + (shortvec-length of distinct public keys) + (32 * number of distinct public keys)
+        header_size = 35 + shortvec_length(num_distinct_publickeys) + (num_distinct_publickeys * _PUBKEY_LENGTH)
+
+        instruction_count_length = shortvec_length(len(instructions))
+
+        instructions_size = 0
+        for inst in instructions:
+            # 1 + (shortvec-length of number of keys) + (number of keys) + (shortvec-length of the data) + (length of the data)
+            instructions_size += 1 + shortvec_length(len(inst.keys)) + len(inst.keys) + \
+                shortvec_length(len(inst.data)) + len(inst.data)
+
+        # Signatures
+        signatures_size = 1 + (len(signers) * _SIGNATURE_LENGTH)
+
+        # We can now calculate the total transaction size
+        calculated_transaction_size = header_size + instruction_count_length + instructions_size + signatures_size
+        return calculated_transaction_size
+
+    # Calculate the exact size of a transaction. There's an upper limit of 1232 so we need to keep
+    # all transactions below this size.
+    @staticmethod
+    def transaction_size(signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> int:
+        calculated_transaction_size = CombinableInstructions._calculate_transaction_size(signers, instructions)
+        if CombinableInstructions.__check_transaction_size_with_pyserum:
+            pyserum_transaction_size = CombinableInstructions._calculate_transaction_size(signers, instructions)
+            discrepancy = pyserum_transaction_size - calculated_transaction_size
+            if discrepancy == 0:
+                logging.debug(
+                    f"txszcalc Calculated: {calculated_transaction_size}, Should be: {pyserum_transaction_size}, No Discrepancy!")
+            else:
+                logging.error(
+                    f"txszcalcerr Calculated: {calculated_transaction_size}, Should be: {pyserum_transaction_size}, Discrepancy: {discrepancy}")
+                return pyserum_transaction_size
+
+        return calculated_transaction_size
 
     def __add__(self, new_instruction_data: "CombinableInstructions") -> "CombinableInstructions":
         all_signers = [*self.signers, *new_instruction_data.signers]
