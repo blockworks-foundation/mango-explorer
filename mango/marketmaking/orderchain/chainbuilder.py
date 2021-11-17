@@ -29,6 +29,7 @@ from .preventpostonlycrossingbookelement import PreventPostOnlyCrossingBookEleme
 from .quotesinglesideelement import QuoteSingleSideElement
 from .roundtolotsizeelement import RoundToLotSizeElement
 from .ratioselement import RatiosElement
+from .topofbookelement import TopOfBookElement
 
 _DEFAULT_CHAIN = [
     "confidenceinterval",
@@ -63,6 +64,7 @@ class ChainBuilder:
         QuoteSingleSideElement.add_command_line_parameters(parser)
         RatiosElement.add_command_line_parameters(parser)
         RoundToLotSizeElement.add_command_line_parameters(parser)
+        TopOfBookElement.add_command_line_parameters(parser)
 
     # This function is the converse of `add_command_line_parameters()` - it takes
     # an argument of parsed command-line parameters and expects to see the ones it added
@@ -108,5 +110,7 @@ class ChainBuilder:
             return RatiosElement.from_command_line_parameters(args)
         elif proper_name == "ROUNDTOLOTSIZE":
             return RoundToLotSizeElement.from_command_line_parameters(args)
+        elif proper_name == "TOPOFBOOK":
+            return TopOfBookElement.from_command_line_parameters(args)
         else:
             raise Exception(f"Unknown chain element: '{proper_name}'")

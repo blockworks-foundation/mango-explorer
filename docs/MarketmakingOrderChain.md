@@ -307,3 +307,18 @@ The default is to perform calculations based on the mid price. The `--ratios-fro
 > Specified using `--chain roundtolotsize`
 
 This ensures prices and quantities are properly rounded to lot sizes. This can make the order reconciliation process more reliable since exact matches can be found for rounded orders while non-rounded orders may need more tolerance.
+
+
+### `TopOfBookElement`
+
+> Specified using: `--chain topofbook`
+
+> Accepts parameter: `--topofbook-adjustment-ticks`
+
+Tries to move the order to the top of the orderbook.
+
+Basically, this element looks at the current orderbook for the best bid or ask that isn't owned by the current account, then it shifts the order price so it is 1 tick better than that best bid or ask.
+
+E.g. if the top bid on an orderbook is 50, this element will shift a BUY order so it is 1 tick better with a price of 51. Similarly if the top ask on an orderbook is 60, this element will shift a SELL order so it is 1 tick better with a price of 59. (If the order on the orderbook is owned by the account running the marketmaker, it is ignored by this element so it will never try to out-do its own orders.)
+
+The `--topofbook-adjustment-ticks` parameter allows you to specify how far (in ticks) from the current best order to position the order. The default is 1 tick - 1 tick below for a SELL, 1 tick above for a BUY. Use 0 to specify placing the order AT the current best.
