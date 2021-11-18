@@ -4,6 +4,9 @@ import argparse
 import os
 import os.path
 import sys
+import typing
+
+from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
@@ -12,29 +15,33 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Shows Mango open orders accounts.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--address", type=PublicKey,
+                    help="Root address to check (if not provided, the wallet address is used)")
 parser.add_argument("--account-index", type=int, default=0,
                     help="index of the account to use, if more than one available")
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
-wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+address: typing.Optional[PublicKey] = args.address
+if address is None:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    address = wallet.address
 
 group = mango.Group.load(context)
-accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
+accounts = mango.Account.load_all_for_owner(context, address, group)
 account = accounts[args.account_index]
-
 
 at_least_one_open_orders_account = False
 quote_token_bank = group.shared_quote_token
-for index, open_orders_address in enumerate(account.spot_open_orders):
-    if open_orders_address is not None:
-        base_token_bank = group.base_tokens[index]
-        if base_token_bank is None:
-            raise Exception(f"No base token available at index {index}.")
-        open_orders = mango.OpenOrders.load(context, open_orders_address,
-                                            base_token_bank.token.decimals, quote_token_bank.decimals)
+for slot in account.slots:
+    if slot.spot_open_orders is not None:
+        if slot.base_token_bank is None:
+            raise Exception(f"No base token available for token {slot.base_instrument}.")
+        open_orders = mango.OpenOrders.load(context, slot.spot_open_orders,
+                                            slot.base_token_bank.token.decimals, slot.quote_token_bank.token.decimals)
+        print(slot.base_instrument)
         print(open_orders)
         at_least_one_open_orders_account = True
 
 if not at_least_one_open_orders_account:
-    print(f"No OpenOrders accounts for {wallet.address}[{args.account_index}]")
+    print(f"No OpenOrders accounts for {address}[{args.account_index}]")
