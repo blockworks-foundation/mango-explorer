@@ -22,6 +22,7 @@ rxpy-backpressure = "^1.0.0"
 solana = "^0.16.0"
 websocket-client = "^1.2.1"
 zstandard = "^0.15.2"
+Nuitka = "^0.6.17"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.5.7"
@@ -33,7 +34,6 @@ types-certifi = "^2021.10.8"
 types-requests = "^2.25.11"
 types-setuptools = "^57.4.2"
 types-toml = "^0.10.1"
-Nuitka = "^0.6.17"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
