@@ -12,6 +12,7 @@ dist
 .ipynb_checkpoints
 __pycache__
 .mypy_cache
+.pytest_cache
 
 # Don't check in any dev .version file
 .version
