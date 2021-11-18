@@ -14,7 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import argparse
-
 import mango
 import typing
 

@@ -237,6 +237,26 @@ The result is if you specify `--fixedspread-value 2 --fixedspread-value 4` the B
 Note that one consequence of this processing of `Order`s is that the orders returned from this `Element` may be in a different sort-order to the orders that were sent to it.
 
 
+### `MaximumQuantityElement`
+
+> Specified using: `--chain maximumquantity`
+
+> Accepts parameter: `--maximumquantity-size`
+
+> Accepts parameter: `--maximumquantity-remove`
+
+Ensures orders' quantities are always less than the maximum. Will either:
+* Remove the order if the position size is too high, or
+* Set the too-high position size to the permitted maximum
+
+This `Element` examines every order to make sure the order quantity is less than or equal to the `--maximumquantity-size`. If it is less, this `Element` takes no further action on it.
+
+If the order quantity is greater than `--maximumquantity-size`, then either:
+
+1. (default) the order quantity will be reduced to the value specified by `--maximumquantity-size`.
+2. (if `--maximumquantity-remove` is specified) the order will be removed from further processing and so will not be placed.
+
+
 ### `MinimumChargeElement`
 
 > Specified using: `--chain minimumcharge`
@@ -265,6 +285,26 @@ The result is if you specify `--minimumcharge-ratio 2 --minimumcharge-ratio 4` t
 (In fact, in that example, the BUY and SELL nearest the mid-price will be given a minimum charge of 2 and all other `Order`s will be given a minimum charge of 4.)
 
 Note that one consequence of this processing of `Order`s is that the orders returned from this `Element` may be in a different sort-order to the orders that were sent to it.
+
+
+### `MinimumQuantityElement`
+
+> Specified using: `--chain minimumquantity`
+
+> Accepts parameter: `--minimumquantity-size`
+
+> Accepts parameter: `--minimumquantity-remove`
+
+Ensures orders' quantities are always greater than the minimum. Will either:
+* Remove the order if the position size is too low, or
+* Set the too-low position size to the permitted minimum
+
+This `Element` examines every order to make sure the order quantity is greater than or equal to the `--minimumquantity-size`. If it is greater, this `Element` takes no further action on it.
+
+If the order quantity is less than `--minimumquantity-size`, then either:
+
+1. (default) the order quantity will be increased to the value specified by `--minimumquantity-size`.
+2. (if `--minimumquantity-remove` is specified) the order will be removed from further processing and so will not be placed.
 
 
 ### `PreventPostOnlyCrossingBookElement`

@@ -24,6 +24,8 @@ from .confidenceintervalelement import ConfidenceIntervalElement
 from .element import Element
 from .fixedpositionsizeelement import FixedPositionSizeElement
 from .fixedspreadelement import FixedSpreadElement
+from .maximumquantityelement import MaximumQuantityElement
+from .minimumquantityelement import MinimumQuantityElement
 from .minimumchargeelement import MinimumChargeElement
 from .preventpostonlycrossingbookelement import PreventPostOnlyCrossingBookElement
 from .quotesinglesideelement import QuoteSingleSideElement
@@ -59,6 +61,8 @@ class ChainBuilder:
         ConfidenceIntervalElement.add_command_line_parameters(parser)
         FixedSpreadElement.add_command_line_parameters(parser)
         FixedPositionSizeElement.add_command_line_parameters(parser)
+        MaximumQuantityElement.add_command_line_parameters(parser)
+        MinimumQuantityElement.add_command_line_parameters(parser)
         MinimumChargeElement.add_command_line_parameters(parser)
         PreventPostOnlyCrossingBookElement.add_command_line_parameters(parser)
         QuoteSingleSideElement.add_command_line_parameters(parser)
@@ -100,8 +104,12 @@ class ChainBuilder:
             return FixedSpreadElement.from_command_line_parameters(args)
         elif proper_name == "FIXEDPOSITIONSIZE":
             return FixedPositionSizeElement.from_command_line_parameters(args)
+        elif proper_name == "MAXIMUMQUANTITY":
+            return MaximumQuantityElement.from_command_line_parameters(args)
         elif proper_name == "MINIMUMCHARGE":
             return MinimumChargeElement.from_command_line_parameters(args)
+        elif proper_name == "MINIMUMQUANTITY":
+            return MinimumQuantityElement.from_command_line_parameters(args)
         elif proper_name == "PREVENTPOSTONLYCROSSINGBOOK":
             return PreventPostOnlyCrossingBookElement.from_command_line_parameters(args)
         elif proper_name == "QUOTESINGLESIDE":

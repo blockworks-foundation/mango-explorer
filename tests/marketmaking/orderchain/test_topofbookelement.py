@@ -55,7 +55,7 @@ def test_ask_price_updated() -> None:
     assert result[0].price == 81
 
 
-def test_accumulation_ignores_own_orders_updated() -> None:
+def test_top_check_ignores_own_orders_updated() -> None:
     order_owner: PublicKey = fake_seeded_public_key("order owner")
     bids: typing.Sequence[mango.Order] = [
         fake_order(price=Decimal(78), quantity=Decimal(1), side=mango.Side.BUY).with_owner(order_owner),
