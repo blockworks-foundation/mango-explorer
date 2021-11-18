@@ -56,7 +56,7 @@ def test_token_lookup():
 
 
 def test_token_lookups_with_full_data():
-    token_lookup = mango.TokenLookup.load(mango.TokenLookup.DEFAULT_FILE_NAME)
+    token_lookup = mango.TokenLookup.load(mango.TokenLookup.DefaultDataFilepath)
     assert token_lookup.find_by_symbol("BTC").mint == PublicKey("9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E")
     assert token_lookup.find_by_symbol("ETH").mint == PublicKey("2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk")
     assert token_lookup.find_by_mint("AKJHspCwDhABucCxNLXUSfEzb7Ny62RqFtC9uNjJi4fq").symbol == "SRM-SOL"

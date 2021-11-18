@@ -5,3 +5,4 @@
 .pytest_cache
 wallet.json
 private.py
+built/

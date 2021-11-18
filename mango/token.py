@@ -16,19 +16,19 @@
 
 import json
 import logging
+import os.path
 import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-from .constants import SOL_DECIMALS, SOL_MINT_ADDRESS
+from .constants import DATA_PATH, SOL_DECIMALS, SOL_MINT_ADDRESS
 
 
 # # 🥭 Token class
 #
 # `Token` defines aspects common to every token.
 #
-
 class Token:
     def __init__(self, symbol: str, name: str, mint: PublicKey, decimals: Decimal):
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -92,8 +92,6 @@ class Token:
 #
 # It's sometimes handy to have a `Token` for SOL, but SOL isn't actually a token and can't appear in baskets. This object defines a special case for SOL.
 #
-
-
 SolToken = Token("SOL", "Pure SOL", SOL_MINT_ADDRESS, SOL_DECIMALS)
 
 
@@ -112,10 +110,8 @@ SolToken = Token("SOL", "Pure SOL", SOL_MINT_ADDRESS, SOL_DECIMALS)
 #
 # It's usually easiest to access it via the `Context` as `context.token_lookup`.
 #
-
-
 class TokenLookup:
-    DEFAULT_FILE_NAME = "solana.tokenlist.json"
+    DefaultDataFilepath = os.path.join(DATA_PATH, "solana.tokenlist.json")
 
     @staticmethod
     def _find_data_by_symbol(symbol: str, token_data: typing.Dict) -> typing.Optional[typing.Dict]:

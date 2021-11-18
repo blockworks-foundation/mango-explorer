@@ -127,7 +127,7 @@ def test_spot_market_lookup():
 
 
 def test_spot_market_lookups_with_full_data():
-    market_lookup = mango.SpotMarketLookup.load(mango.TokenLookup.DEFAULT_FILE_NAME)
+    market_lookup = mango.SpotMarketLookup.load(mango.TokenLookup.DefaultDataFilepath)
     eth_usdt = market_lookup.find_by_symbol("ETH/USDT")
     assert eth_usdt.base.symbol == "ETH"
     assert eth_usdt.quote.symbol == "USDT"

@@ -84,7 +84,7 @@ class Context:
                  encoding: str, skip_preflight: bool, program_id: PublicKey,
                  dex_program_id: PublicKey, group_name: str, group_id: PublicKey,
                  gma_chunk_size: Decimal, gma_chunk_pause: Decimal,
-                 token_filename: str = TokenLookup.DEFAULT_FILE_NAME):
+                 token_filename: str = TokenLookup.DefaultDataFilepath):
         configured_program_id = program_id
         if group_id == _OLD_3_TOKEN_GROUP_ID:
             configured_program_id = _OLD_3_TOKEN_PROGRAM_ID
@@ -238,7 +238,7 @@ class Context:
                             help="Encoding to request when receiving data from Solana (options are 'base58' (slow), 'base64', 'base64+zstd', or 'jsonParsed')")
         parser.add_argument("--skip-preflight", default=default_skip_preflight,
                             action="store_true", help="Skip pre-flight checks")
-        parser.add_argument("--token-data-file", type=str, default="solana.tokenlist.json",
+        parser.add_argument("--token-data-file", type=str, default=TokenLookup.DefaultDataFilepath,
                             help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
 
         # This isn't really a Context thing but we don't have a better place for it (yet) and we
