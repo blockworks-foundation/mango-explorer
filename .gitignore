@@ -13,6 +13,7 @@ dist
 __pycache__
 .mypy_cache
 .pytest_cache
+.venv
 
 # Don't check in any dev .version file
 .version
