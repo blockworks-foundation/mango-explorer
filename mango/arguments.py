@@ -14,12 +14,45 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import argparse
+import enum
+import json
+import jsons
 import logging
 import os
 import sys
 import typing
 
+from solana.publickey import PublicKey
+
 from .constants import WARNING_DISCLAIMER_TEXT, version
+
+
+# # 🥭 OutputFormat enum
+#
+# How should we format any output?
+#
+class OutputFormat(enum.Enum):
+    # We use strings here so that argparse can work with these as parameters.
+    TEXT = "TEXT"
+    JSON = "JSON"
+
+    def __str__(self) -> str:
+        return self.value
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+output_format: OutputFormat = OutputFormat.TEXT
+
+
+def output(obj: typing.Any) -> None:
+    if output_format == OutputFormat.JSON:
+        jsons.set_serializer(lambda pubkey, **kwargs: f"{pubkey}", PublicKey)
+        print(json.dumps(jsons.dump(obj, strip_attr=("data", "logger", "lot_size_converter", "tokens", "tokens_by_index", "slots", "base_tokens", "base_tokens_by_index", "oracles", "oracles_by_index", "spot_markets", "spot_markets_by_index", "perp_markets", "perp_markets_by_index", "shared_quote_token", "liquidity_incentive_token"),
+              key_transformer=jsons.KEY_TRANSFORMER_CAMELCASE), sort_keys=True, indent=4))
+    else:
+        print(obj)
 
 
 # # 🥭 parse_args
@@ -31,8 +64,13 @@ def parse_args(parser: argparse.ArgumentParser, logging_default: int = logging.I
                         help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
     parser.add_argument("--log-suppress-timestamp", default=False, action="store_true",
                         help="Suppress timestamp in log output (useful for systems that supply their own timestamp on log messages)")
+    parser.add_argument("--output-format", type=OutputFormat, default=OutputFormat.TEXT,
+                        choices=list(OutputFormat), help="output format - can be TEXT (the default) or JSON")
 
     args: argparse.Namespace = parser.parse_args()
+
+    global output_format
+    output_format = args.output_format
 
     log_record_format: str = "%(asctime)s %(level_emoji)s %(name)-12.12s %(message)s"
     if args.log_suppress_timestamp:

@@ -20,6 +20,7 @@ from .accountscout import AccountScout as AccountScout
 from .accountscout import ScoutReport as ScoutReport
 from .addressableaccount import AddressableAccount as AddressableAccount
 from .arguments import parse_args as parse_args
+from .arguments import output as output
 from .balancesheet import BalanceSheet as BalanceSheet
 from .cache import Cache as Cache
 from .cache import MarketCache as MarketCache

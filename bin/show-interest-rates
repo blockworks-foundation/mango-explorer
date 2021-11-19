@@ -25,6 +25,4 @@ if token is None:
 token_bank = group.token_bank_by_instrument(token)
 
 interest_rates = token_bank.fetch_interest_rates(context)
-print(f"Interest rates for {token.symbol}:")
-print(f"    Deposit: {interest_rates.deposit:,.2%}")
-print(f"    Borrow : {interest_rates.borrow:,.2%}")
+mango.output(interest_rates)

@@ -28,4 +28,4 @@ perp_market = mango.ensure_market_loaded(context, market)
 if not isinstance(perp_market, mango.PerpMarket):
     raise Exception(f"Market {market_symbol} is not a perp market.")
 
-print(perp_market.fetch_funding(context))
+mango.output(perp_market.fetch_funding(context))

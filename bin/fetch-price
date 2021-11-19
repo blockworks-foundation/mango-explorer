@@ -36,11 +36,7 @@ if oracle is None:
 else:
     if not args.stream:
         price = oracle.fetch_price(context)
-        confidence = ""
-        if price.source.supports & mango.SupportedOracleFeature.CONFIDENCE:
-            confidence = f" +/- {price.confidence:,.8f}"
-        print(
-            f"The price of «{oracle.symbol}» on {price.source.provider_name} is: '{price.mid_price:,.8f}'{confidence}")
+        mango.output(price)
     else:
         print("Press <ENTER> to quit.")
         price_subscription = oracle.to_streaming_observable(context)

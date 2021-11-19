@@ -19,7 +19,7 @@ try:
     context = mango.ContextBuilder.from_command_line_parameters(args)
 
     group = mango.Group.load(context)
-    print(group)
+    mango.output(group)
 except Exception as exception:
     logging.critical(f"show-group stopped because of exception: {exception} - {traceback.format_exc()}")
 except:

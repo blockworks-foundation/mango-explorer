@@ -86,7 +86,7 @@ class Price():
         confidence = ""
         if self.source.supports & SupportedOracleFeature.CONFIDENCE:
             confidence = f" +/- {self.confidence:,.8f}"
-        return f"{self.timestamp} [{self.source.provider_name}] {self.market.symbol}: {self.mid_price:,.8f}{confidence}"
+        return f"« 𝙿𝚛𝚒𝚌𝚎 [{self.source.provider_name}] {self.market.symbol} at {self.timestamp}: {self.mid_price:,.8f}{confidence} »"
 
     def __repr__(self) -> str:
         return f"{self}"

@@ -24,4 +24,4 @@ actual_market = mango.ensure_market_loaded(context, market)
 if not isinstance(actual_market, mango.PerpMarket):
     raise Exception(f"Market {market_symbol} is not a perp market.")
 
-print(actual_market.underlying_perp_market.liquidity_mining_info)
+mango.output(actual_market.underlying_perp_market.liquidity_mining_info)
