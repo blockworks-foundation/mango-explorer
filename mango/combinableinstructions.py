@@ -198,7 +198,7 @@ class CombinableInstructions():
     def transaction_size(signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> int:
         calculated_transaction_size = CombinableInstructions._calculate_transaction_size(signers, instructions)
         if CombinableInstructions.__check_transaction_size_with_pyserum:
-            pyserum_transaction_size = CombinableInstructions._calculate_transaction_size(signers, instructions)
+            pyserum_transaction_size = CombinableInstructions._transaction_size_from_pyserum(signers, instructions)
             discrepancy = pyserum_transaction_size - calculated_transaction_size
             if discrepancy == 0:
                 logging.debug(
