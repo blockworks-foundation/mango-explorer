@@ -65,7 +65,7 @@ class BiasQuantityOnPositionElement(PairwiseElement):
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--biasquantityonposition-maximum-position", type=Decimal,
                             help="maximum inventory position to proportionally move away from")
-        parser.add_argument("--biasquantityonposition-taget-position", type=Decimal,
+        parser.add_argument("--biasquantityonposition-target-position", type=Decimal,
                             help="inventory position to target (default 0)")
 
     @staticmethod
