@@ -348,6 +348,8 @@ The default is to perform calculations based on the mid price. The `--ratios-fro
 
 This ensures prices and quantities are properly rounded to lot sizes. This can make the order reconciliation process more reliable since exact matches can be found for rounded orders while non-rounded orders may need more tolerance.
 
+If a `price` or `quantity` rounds to zero, the `Order` is removed. (Sending such an `Order` would generate an error and fail the whole transaction.)
+
 
 ### `TopOfBookElement`
 
