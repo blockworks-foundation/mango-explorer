@@ -57,6 +57,7 @@ class ChainBuilder:
         # one specifies it.
         # Now add args for all the elements.
         AfterAccumulatedDepthElement.add_command_line_parameters(parser)
+        BiasQuantityOnPositionElement.add_command_line_parameters(parser)
         BiasQuoteElement.add_command_line_parameters(parser)
         BiasQuoteOnPositionElement.add_command_line_parameters(parser)
         ConfidenceIntervalElement.add_command_line_parameters(parser)
