@@ -17,6 +17,7 @@ import argparse
 import typing
 
 from .afteraccumulateddepthelement import AfterAccumulatedDepthElement
+from .biasquantityonpositionelement import BiasQuantityOnPositionElement
 from .biasquoteelement import BiasQuoteElement
 from .biasquoteonpositionelement import BiasQuoteOnPositionElement
 from .chain import Chain
@@ -94,6 +95,8 @@ class ChainBuilder:
         proper_name: str = name.upper()
         if proper_name == "AFTERACCUMULATEDDEPTH":
             return AfterAccumulatedDepthElement.from_command_line_parameters(args)
+        elif proper_name == "BIASQUANTITYONPOSITION":
+            return BiasQuantityOnPositionElement.from_command_line_parameters(args)
         elif proper_name == "BIASQUOTE":
             return BiasQuoteElement.from_command_line_parameters(args)
         elif proper_name == "BIASQUOTEONPOSITION":

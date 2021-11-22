@@ -87,9 +87,9 @@ Here's a list of all available `Element`s and the additional configuration param
 
 > Specified using: `--chain afteraccumulateddepth`
 
-> Accepts parameter: `--afteraccumulateddepth-depth`
+> Accepts parameter: `--afteraccumulateddepth-depth <DECIMAL>` (optional, default: order quantity)
 
-> Accepts parameter: `--afteraccumulateddepth-adjustment-ticks`
+> Accepts parameter: `--afteraccumulateddepth-adjustment-ticks <DECIMAL>` (optional, default: 1)
 
 Tries to place an order on the orderbook with sufficient quantity on orders between it and the mid-price.
 
@@ -102,11 +102,48 @@ The `--afteraccumulateddepth-depth` parameter can be used to specify a fixed dep
 The `--afteraccumulateddepth-adjustment-ticks` parameter allows you to specify how far (in ticks) from the accumulated depth to position the order. The default is 1 tick above for a SELL, 1 tick below for a BUY. Use 0 to specify placing the order AT the depth.
 
 
+### `BiasQuantityOnPositionElement`
+
+> Specified using: `--chain biasquantityonposition`
+
+> Accepts parameter: `--biasquantityonposition-maximum-position <DECIMAL>` (required)
+
+> Accepts parameter: `--biasquantityonposition-taget-position <DECIMAL>` (optional, default: 0)
+
+Varies the order quantities to favour a target position.
+
+This `Element` looks at the _current position_, the _maximum desired position_, and the _target position_. Tries to bias the order quantity to tend towards the target position, incresing the order quantities that shift it in that direction and decreasing the order quantities that shift it away from the target.
+
+For example(1):
+* BUY quantity: 10
+* SELL quantity: 10
+* CURRENT position: 0
+* MAXIMUM position: 50
+* TARGET position: 0
+* Result: no change in order quantities
+
+For example(2):
+* BUY quantity: 10
+* SELL quantity: 10
+* CURRENT position: 20
+* MAXIMUM position: 50
+* TARGET position: 0
+* Result:
+  * BUY quantity: 6
+  * SELL quantity: 14
+
+In example (2) you can see:
+* the current position of 20 means BUY quantity has decreased and SELL quantity has increased
+* the total quantity in BUY and SELL stays the same, at 20
+
+More examples (including all data used in unit tests) are available in the [BiasQuantityOnPosition](docs/BiasQuantityOnPosition.ods) spreadsheet.
+
+
 ### `BiasQuoteElement`
 
 > Specified using: `--chain biasquote`
 
-> Accepts parameter: `--biasquote-factor`
+> Accepts parameter: `--biasquote-factor <DECIMAL>` (optional, multiple allowed, default: 1)
 
 This shifts the price of orders by a specified factor.
 
@@ -134,7 +171,7 @@ Note that one consequence of this processing of `Order`s is that the orders retu
 
 > Specified using: `--chain biasquoteonposition`
 
-> Accepts parameter: `--biasquoteonposition-bias`
+> Accepts parameter: `--biasquoteonposition-bias <DECIMAL>` (optional, multiple allowed, default: 0)
 
 This can shift the price of orders based on how much inventory is held. Too much inventory: bias prices down (so it tends to buy less and sell more). Too little inventory: bias prices up (so it tends to buy more and sell less).
 
@@ -160,9 +197,9 @@ Note that one consequence of this processing of `Order`s is that the orders retu
 
 > Specified using: `--chain confidenceinterval`
 
-> Accepts parameter: `--confidenceinterval-level`
+> Accepts parameter: `--confidenceinterval-level <DECIMAL>`  (optional, multiple allowed, default: 2)
 
-> Accepts parameter: `--confidenceinterval-position-size-ratio`
+> Accepts parameter: `--confidenceinterval-position-size-ratio <DECIMAL>` (required)
 
 The `ConfidenceIntervalElement` uses the ‘confidence interval’ in the oracle price to determine the spread. How aggressively this is used can be tuned by the `--confidenceinterval-level` parameter.
 
@@ -181,7 +218,7 @@ The ‘confidence interval’ is Pyth’s expectation of how far from the curren
 
 > Specified using: `--chain fixedpositionsize`
 
-> Accepts parameter: `--fixedpositionsize-value`
+> Accepts parameter: `--fixedpositionsize-value <DECIMAL>` (required, multiple allowed)
 
 The `FixedPositionSizeElement` overrides the position size of all orders it sees, setting them to the fixed value (in the base currency) specified in the parameter(s).
 
@@ -211,7 +248,7 @@ Note that one consequence of this processing of `Order`s is that the orders retu
 
 > Specified using: `--chain fixedspread`
 
-> Accepts parameter: `--fixedspread-value`
+> Accepts parameter: `--fixedspread-value <DECIMAL>` (required, multiple allowed)
 
 The `FixedSpreadElement` overrides the spread of all orders it sees, setting them to the fixed value (in the quote currency) specified in the parameter.
 
@@ -241,9 +278,9 @@ Note that one consequence of this processing of `Order`s is that the orders retu
 
 > Specified using: `--chain maximumquantity`
 
-> Accepts parameter: `--maximumquantity-size`
+> Accepts parameter: `--maximumquantity-size <DECIMAL>` (required)
 
-> Accepts parameter: `--maximumquantity-remove`
+> Accepts parameter: `--maximumquantity-remove` (optional, TRUE if spcified otherwise FALSE)
 
 Ensures orders' quantities are always less than the maximum. Will either:
 * Remove the order if the position size is too high, or
@@ -261,9 +298,9 @@ If the order quantity is greater than `--maximumquantity-size`, then either:
 
 > Specified using: `--chain minimumcharge`
 
-> Accepts parameter: `--minimumcharge-ratio`
+> Accepts parameter: `--minimumcharge-ratio <DECIMAL>` (required, multiple allowed, default: 0.0005)
 
-> Accepts parameter: `--minimumcharge-from-bid-ask`
+> Accepts parameter: `--minimumcharge-from-bid-ask` (optional, TRUE if spcified otherwise FALSE)
 
 This ensures that there’s a minimum value of spread to be paid by the taker.
 
@@ -291,9 +328,9 @@ Note that one consequence of this processing of `Order`s is that the orders retu
 
 > Specified using: `--chain minimumquantity`
 
-> Accepts parameter: `--minimumquantity-size`
+> Accepts parameter: `--minimumquantity-size <DECIMAL>` (required)
 
-> Accepts parameter: `--minimumquantity-remove`
+> Accepts parameter: `--minimumquantity-remove` (optional, TRUE if spcified otherwise FALSE)
 
 Ensures orders' quantities are always greater than the minimum. Will either:
 * Remove the order if the position size is too low, or
@@ -318,7 +355,7 @@ This ensures that POST_ONLY orders that would corss the orderbook (and so be can
 
 > Specified using: `--chain quotesingleside`
 
-> Accepts parameter: `--quotesingleside-side`
+> Accepts parameter: `--quotesingleside-side <SIDE>` (required, side can be BUY or SELL)
 
 Sometimes you may only want your marketmaker to place SELL orders. Or only place BUY orders. The `QuoteSingleSideElement` allows you to specify a single side, and will filter out all desired orders that are not for that side.
 
@@ -329,11 +366,11 @@ For example, you can set the 'order chain' to have a `RatiosElement` asking for 
 
 > Specified using: `--chain ratios`
 
-> Accepts parameter: `--ratios-spread`
+> Accepts parameter: `--ratios-spread <DECIMAL>` (required, multiple allowed, default: 0.01)
 
-> Accepts parameter: `--ratios-position-size`
+> Accepts parameter: `--ratios-position-size <DECIMAL>` (required, multiple allowed, default: 0.01)
 
-> Accepts parameter: `--ratios-from-bid-ask`
+> Accepts parameter: `--ratios-from-bid-ask` (optional, TRUE if spcified otherwise FALSE)
 
 The `RatiosElement` builds orders using the specified ratio of available collateral for the position size and the specified ratio of the price for the spread. The position size is specified using the `--ratios-position-size` parameter, and the spread is specified using the `--ratios-spread` parameter.
 
@@ -355,7 +392,7 @@ If a `price` or `quantity` rounds to zero, the `Order` is removed. (Sending such
 
 > Specified using: `--chain topofbook`
 
-> Accepts parameter: `--topofbook-adjustment-ticks`
+> Accepts parameter: `--topofbook-adjustment-ticks <DECIMAL>` (optional, default: 1)
 
 Tries to move the order to the top of the orderbook.
 

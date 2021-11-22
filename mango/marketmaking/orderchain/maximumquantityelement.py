@@ -37,14 +37,17 @@ class MaximumQuantityElement(Element):
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--maximumquantity-size", type=Decimal, default=Decimal(1),
+        parser.add_argument("--maximumquantity-size", type=Decimal,
                             help="the maximum permitted order quantity")
         parser.add_argument("--maximumquantity-remove", action="store_true", default=False,
                             help="remove an order that has too big a quantity (default is to reduce order quantity to maximum)")
 
     @staticmethod
     def from_command_line_parameters(args: argparse.Namespace) -> "MaximumQuantityElement":
-        return MaximumQuantityElement(args.maximumquantity_size, args.maximumquantity_remove)
+        if args.maximumquantity_size is None:
+            raise Exception("No maximum size specified. Try the --maximumquantity-size parameter?")
+
+        return MaximumQuantityElement(args.maximumquantity_size, bool(args.maximumquantity_remove))
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         new_orders: typing.List[mango.Order] = []

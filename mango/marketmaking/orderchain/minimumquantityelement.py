@@ -44,7 +44,10 @@ class MinimumQuantityElement(Element):
 
     @staticmethod
     def from_command_line_parameters(args: argparse.Namespace) -> "MinimumQuantityElement":
-        return MinimumQuantityElement(args.minimumquantity_size, args.minimumquantity_remove)
+        if args.minimumquantity_size is None:
+            raise Exception("No minimum size specified. Try the --minimumquantity-size parameter?")
+
+        return MinimumQuantityElement(args.minimumquantity_size, bool(args.minimumquantity_remove))
 
     def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
         new_orders: typing.List[mango.Order] = []

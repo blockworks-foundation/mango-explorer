@@ -138,8 +138,8 @@ def fake_placed_orders_container() -> mango.PlacedOrdersContainer:
     return mango.PerpOpenOrders([])
 
 
-def fake_inventory() -> mango.Inventory:
-    return mango.Inventory(mango.InventorySource.SPL_TOKENS, fake_instrument_value(Decimal(1)), fake_instrument_value(Decimal(100)), fake_instrument_value(Decimal(10)), fake_instrument_value(Decimal(10)))
+def fake_inventory(incentives: Decimal = Decimal(1), available: Decimal = Decimal(100), base: Decimal = Decimal(10), quote: Decimal = Decimal(10)) -> mango.Inventory:
+    return mango.Inventory(mango.InventorySource.SPL_TOKENS, fake_instrument_value(incentives), fake_instrument_value(available), fake_instrument_value(base), fake_instrument_value(quote))
 
 
 def fake_bids() -> typing.Sequence[mango.Order]:
