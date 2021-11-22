@@ -55,15 +55,21 @@ class PerpToSpotHedger(Hedger):
 
     def pulse(self, context: mango.Context, model_state: mango.ModelState) -> None:
         try:
-            perp_account: typing.Optional[mango.PerpAccount] = model_state.account.perp_accounts_by_index[self.market_index]
+            # Latency can be important here so fetch fresh Account data in one gulp.
+            fresh_data: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(
+                context, [model_state.group.address, model_state.group.cache, model_state.account.address])
+            fresh_group: mango.Group = mango.Group.parse_with_context(context, fresh_data[0])
+            fresh_cache: mango.Cache = mango.Cache.parse(fresh_data[1])
+            fresh_account: mango.Account = mango.Account.parse(fresh_data[2], fresh_group, fresh_cache)
+            perp_account: typing.Optional[mango.PerpAccount] = fresh_account.perp_accounts_by_index[self.market_index]
             if perp_account is None:
                 raise Exception(
-                    f"Could not find perp account at index {self.market_index} in account {model_state.account.address}.")
+                    f"Could not find perp account at index {self.market_index} in account {fresh_account.address}.")
 
-            basket_token: typing.Optional[mango.AccountSlot] = model_state.account.slots_by_index[self.market_index]
+            basket_token: typing.Optional[mango.AccountSlot] = fresh_account.slots_by_index[self.market_index]
             if basket_token is None:
                 raise Exception(
-                    f"Could not find basket token at index {self.market_index} in account {model_state.account.address}.")
+                    f"Could not find basket token at index {self.market_index} in account {fresh_account.address}.")
 
             token_balance: mango.InstrumentValue = basket_token.net_value
             perp_position: mango.InstrumentValue = perp_account.base_token_value
