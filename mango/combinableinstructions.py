@@ -70,8 +70,8 @@ def _split_instructions_into_chunks(context: Context, signers: typing.Sequence[K
 # ```
 #
 class CombinableInstructions():
-    # For now let's run both checks to ensure our calculations are accurate.
-    __check_transaction_size_with_pyserum = True
+    # A toggle to run both checks to ensure our calculations are accurate.
+    __check_transaction_size_with_pyserum = False
 
     def __init__(self, signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
