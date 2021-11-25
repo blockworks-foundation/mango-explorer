@@ -268,7 +268,7 @@ class CompatibleClient(Client):
         options = self._build_options_with_encoding(commitment, encoding, data_slice)
         return self._send_request("getAccountInfo", str(pubkey), options)
 
-    def get_confirmed_signature_for_address2(self, account: typing.Union[str, Keypair, PublicKey], before: typing.Optional[str] = None, limit: typing.Optional[int] = None) -> RPCResponse:
+    def get_confirmed_signature_for_address2(self, account: typing.Union[str, Keypair, PublicKey], before: typing.Optional[str] = None, until: typing.Optional[str] = None, limit: typing.Optional[int] = None) -> RPCResponse:
         if isinstance(account, Keypair):
             account = str(account.public_key)
 
@@ -278,6 +278,9 @@ class CompatibleClient(Client):
         opts: typing.Dict[str, typing.Union[int, str]] = {}
         if before:
             opts["before"] = before
+
+        if until:
+            opts["until"] = until
 
         if limit:
             opts["limit"] = limit
@@ -568,8 +571,8 @@ class BetterClient:
         response = self.compatible_client.get_account_info(pubkey, commitment, encoding, data_slice)
         return response["result"]
 
-    def get_confirmed_signatures_for_address2(self, account: typing.Union[str, Keypair, PublicKey], before: typing.Optional[str] = None, limit: typing.Optional[int] = None) -> typing.Sequence[str]:
-        response = self.compatible_client.get_confirmed_signature_for_address2(account, before, limit)
+    def get_confirmed_signatures_for_address2(self, account: typing.Union[str, Keypair, PublicKey], before: typing.Optional[str] = None, until: typing.Optional[str] = None, limit: typing.Optional[int] = None) -> typing.Sequence[str]:
+        response = self.compatible_client.get_confirmed_signature_for_address2(account, before, until, limit)
         return [result["signature"] for result in response["result"]]
 
     def get_confirmed_transaction(self, signature: str, encoding: str = "json") -> typing.Any:
