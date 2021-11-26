@@ -15,6 +15,7 @@
 
 
 import enum
+import pandas
 import pyserum.enums
 import typing
 
@@ -23,6 +24,8 @@ from pyserum.market.types import Order as PySerumOrder
 from solana.publickey import PublicKey
 
 from .constants import SYSTEM_PROGRAM_ADDRESS
+from .lotsizeconverter import LotSizeConverter
+
 
 # # 🥭 Orders
 #
@@ -133,6 +136,18 @@ class Order(typing.NamedTuple):
     quantity: Decimal
     order_type: OrderType
 
+    @staticmethod
+    def read_sequence_number(id: int) -> Decimal:
+        id_bytes = id.to_bytes(16, byteorder="little", signed=False)
+        low_order = id_bytes[:8]
+        return Decimal(int.from_bytes(low_order, 'little', signed=False))
+
+    @staticmethod
+    def read_price(id: int) -> Decimal:
+        id_bytes = id.to_bytes(16, byteorder="little", signed=False)
+        high_order = id_bytes[8:]
+        return Decimal(int.from_bytes(high_order, 'little', signed=False))
+
     # Returns an identical order with the ID changed.
     def with_id(self, id: int) -> "Order":
         return Order(id=id, side=self.side, price=self.price, quantity=self.quantity,
@@ -192,8 +207,9 @@ class Order(typing.NamedTuple):
 
 
 class OrderBook:
-    def __init__(self, symbol: str, bids: typing.Sequence[Order], asks: typing.Sequence[Order]) -> None:
+    def __init__(self, symbol: str, lot_size_converter: LotSizeConverter, bids: typing.Sequence[Order], asks: typing.Sequence[Order]) -> None:
         self.symbol: str = symbol
+        self.__lot_size_converter: LotSizeConverter = lot_size_converter
 
         # Sort bids high to low, so best bid is at index 0
         bids_list: typing.List[Order] = list(bids)
@@ -242,6 +258,42 @@ class OrderBook:
             return Decimal(0)
         else:
             return top_ask.price - top_bid.price
+
+    def to_dataframe(self) -> pandas.DataFrame:
+        column_mapper = {
+            "id": "Id",
+            "client_id": "ClientId",
+            "owner": "Owner",
+            "side": "Side",
+            "price": "Price",
+            "quantity": "Quantity"
+        }
+
+        frame: pandas.DataFrame = pandas.DataFrame([*reversed(self.bids), *self.asks])
+        frame = frame.drop(["order_type"], axis=1)
+        frame = frame.rename(mapper=column_mapper, axis=1, copy=True)
+        frame["Price"] = pandas.to_numeric(frame["Price"])
+        frame["QuantityLots"] = frame["Quantity"].apply(self.__lot_size_converter.base_size_number_to_lots)
+        frame["Quantity"] = pandas.to_numeric(frame["Quantity"])
+        frame["PriceLots"] = pandas.to_numeric(frame["Id"].apply(Order.read_price))
+        frame["SequenceNumber"] = frame["Id"].apply(Order.read_sequence_number)
+
+        return frame
+
+    def to_l1_dataframe(self) -> pandas.DataFrame:
+        frame: pandas.DataFrame = self.to_l2_dataframe()
+        buys = frame[(frame["Side"] == Side.BUY)]
+        sells = frame[(frame["Side"] == Side.SELL)]
+        top = frame.loc[[buys["PriceLots"].idxmax(), sells["PriceLots"].idxmin()]]
+        return typing.cast(pandas.DataFrame, top)
+
+    def to_l2_dataframe(self) -> pandas.DataFrame:
+        frame: pandas.DataFrame = self.to_dataframe()
+
+        return frame.groupby("Price").agg({"PriceLots": "first", "Side": "first", "Quantity": "sum", "QuantityLots": "sum"})
+
+    def to_l3_dataframe(self) -> pandas.DataFrame:
+        return self.to_dataframe()
 
     def __str__(self) -> str:
         def _order_to_str(order: Order) -> str:

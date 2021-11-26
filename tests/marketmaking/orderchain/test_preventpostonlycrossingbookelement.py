@@ -13,7 +13,7 @@ top_bid: mango.Order = fake_order(price=Decimal(90), side=mango.Side.BUY, order_
 # The top ask is the lowest price someone is willing to pay to SELL
 top_ask: mango.Order = fake_order(price=Decimal(110), side=mango.Side.SELL, order_type=mango.OrderType.POST_ONLY)
 
-orderbook: mango.OrderBook = mango.OrderBook("TEST", [top_bid], [top_ask])
+orderbook: mango.OrderBook = mango.OrderBook("TEST", mango.NullLotSizeConverter(), [top_bid], [top_ask])
 
 model_state = fake_model_state(market=fake_loaded_market(), orderbook=orderbook)
 
@@ -79,7 +79,7 @@ def test_bid_too_high_no_bid_results_in_new_bid() -> None:
     order: mango.Order = fake_order(price=Decimal(120), side=mango.Side.BUY, order_type=mango.OrderType.POST_ONLY)
 
     actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement()
-    orderbook: mango.OrderBook = mango.OrderBook("TEST", [], [top_ask])
+    orderbook: mango.OrderBook = mango.OrderBook("TEST", mango.NullLotSizeConverter(), [], [top_ask])
     model_state = fake_model_state(market=fake_loaded_market(), orderbook=orderbook)
 
     result = actual.process(context, model_state, [order])
@@ -92,7 +92,7 @@ def test_ask_too_low_no_ask_results_in_new_ask() -> None:
     order: mango.Order = fake_order(price=Decimal(80), side=mango.Side.SELL, order_type=mango.OrderType.POST_ONLY)
 
     actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement()
-    orderbook: mango.OrderBook = mango.OrderBook("TEST", [top_bid], [])
+    orderbook: mango.OrderBook = mango.OrderBook("TEST", mango.NullLotSizeConverter(), [top_bid], [])
     model_state = fake_model_state(market=fake_loaded_market(), orderbook=orderbook)
     result = actual.process(context, model_state, [order])
 
@@ -104,7 +104,7 @@ def test_ask_no_orderbook_results_in_no_change() -> None:
     order: mango.Order = fake_order(price=Decimal(120), side=mango.Side.SELL, order_type=mango.OrderType.POST_ONLY)
 
     actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement()
-    orderbook: mango.OrderBook = mango.OrderBook("TEST", [], [])
+    orderbook: mango.OrderBook = mango.OrderBook("TEST", mango.NullLotSizeConverter(), [], [])
     model_state = fake_model_state(market=fake_loaded_market(), orderbook=orderbook)
     result = actual.process(context, model_state, [order])
 
@@ -116,7 +116,7 @@ def test_bid_no_orderbook_results_in_no_change() -> None:
     order: mango.Order = fake_order(price=Decimal(80), side=mango.Side.BUY, order_type=mango.OrderType.POST_ONLY)
 
     actual: PreventPostOnlyCrossingBookElement = PreventPostOnlyCrossingBookElement()
-    orderbook: mango.OrderBook = mango.OrderBook("TEST", [], [])
+    orderbook: mango.OrderBook = mango.OrderBook("TEST", mango.NullLotSizeConverter(), [], [])
     model_state = fake_model_state(market=fake_loaded_market(), orderbook=orderbook)
     result = actual.process(context, model_state, [order])
 

@@ -21,6 +21,8 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
+from mango.lotsizeconverter import NullLotSizeConverter
+
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .market import Market, DryRunMarket
@@ -191,7 +193,7 @@ class NullMarketOperations(MarketOperations):
         return order
 
     def load_orderbook(self) -> OrderBook:
-        return OrderBook(self.market_name, [], [])
+        return OrderBook(self.market_name, NullLotSizeConverter(), [], [])
 
     def load_my_orders(self) -> typing.Sequence[Order]:
         return []

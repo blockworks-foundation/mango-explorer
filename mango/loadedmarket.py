@@ -47,7 +47,7 @@ class LoadedMarket(Market):
     def parse_account_infos_to_orderbook(self, bids_account_info: AccountInfo, asks_account_info: AccountInfo) -> OrderBook:
         bids_orderbook = self.parse_account_info_to_orders(bids_account_info)
         asks_orderbook = self.parse_account_info_to_orders(asks_account_info)
-        return OrderBook(self.symbol, bids_orderbook, asks_orderbook)
+        return OrderBook(self.symbol, self.lot_size_converter, bids_orderbook, asks_orderbook)
 
     def fetch_orderbook(self, context: Context) -> OrderBook:
         [bids_info, asks_info] = AccountInfo.load_multiple(context, [self.bids_address, self.asks_address])

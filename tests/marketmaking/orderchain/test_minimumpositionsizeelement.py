@@ -24,7 +24,7 @@ asks: typing.Sequence[mango.Order] = [
     fake_order(price=Decimal(86), quantity=Decimal(3), side=mango.Side.SELL),
     fake_order(price=Decimal(87), quantity=Decimal(7), side=mango.Side.SELL)
 ]
-orderbook: mango.OrderBook = mango.OrderBook("TEST", bids, asks)
+orderbook: mango.OrderBook = mango.OrderBook("TEST", mango.NullLotSizeConverter(), bids, asks)
 model_state = fake_model_state(orderbook=orderbook)
 
 

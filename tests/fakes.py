@@ -5,6 +5,7 @@ import mango.marketmaking
 import typing
 
 from decimal import Decimal
+from mango.lotsizeconverter import NullLotSizeConverter
 from pyserum.market.market import Market as PySerumMarket
 from pyserum.market.state import MarketState as PySerumMarketState
 from solana.keypair import Keypair
@@ -249,7 +250,7 @@ def fake_model_state(order_owner: typing.Optional[PublicKey] = None,
     price = price or fake_price()
     placed_orders_container = placed_orders_container or fake_placed_orders_container()
     inventory = inventory or fake_inventory()
-    orderbook = orderbook or mango.OrderBook("FAKE", fake_bids(), fake_asks())
+    orderbook = orderbook or mango.OrderBook("FAKE", NullLotSizeConverter(), fake_bids(), fake_asks())
     group_watcher: mango.ManualUpdateWatcher[mango.Group] = mango.ManualUpdateWatcher(group)
     account_watcher: mango.ManualUpdateWatcher[mango.Account] = mango.ManualUpdateWatcher(account)
     price_watcher: mango.ManualUpdateWatcher[mango.Price] = mango.ManualUpdateWatcher(price)
