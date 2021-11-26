@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import os.path
+import sys
+import typing
+
+from solana.publickey import PublicKey
+
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(
+    description="Downloads perp and spot trades for the current wallet. Will perform incremental updates to the given filename instead of re-downloading all trades.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--address", type=PublicKey, required=False,
+                    help="Address of the Mango account to load (defaults to current wallet's Mango account)")
+parser.add_argument("--filename", type=str, required=False,
+                    help="filename for loading and storing the trade history data in CSV format")
+args: argparse.Namespace = mango.parse_args(parser)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+
+
+accounts: typing.Sequence[mango.Account]
+group = mango.Group.load(context)
+if args.address is not None:
+    account = mango.Account.load(context, args.address, group)
+    accounts = [account]
+else:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
+
+for account in accounts:
+    filename: str = args.filename
+    if filename is None:
+        filename = f"trade-history-{account.address}.csv"
+    history: mango.TradeHistory = mango.TradeHistory(context, account, filename)
+    history.update()
+    history.save()

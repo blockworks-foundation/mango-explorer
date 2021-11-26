@@ -200,6 +200,7 @@ from .tokenbank import TokenBank as TokenBank
 from .tradeexecutor import ImmediateTradeExecutor as ImmediateTradeExecutor
 from .tradeexecutor import NullTradeExecutor as NullTradeExecutor
 from .tradeexecutor import TradeExecutor as TradeExecutor
+from .tradehistory import TradeHistory as TradeHistory
 from .transactionscout import TransactionScout as TransactionScout
 from .transactionscout import fetch_all_recent_transaction_signatures as fetch_all_recent_transaction_signatures
 from .transactionscout import mango_instruction_from_response as mango_instruction_from_response
