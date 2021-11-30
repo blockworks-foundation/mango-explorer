@@ -105,7 +105,7 @@ pycparser = "*"
 
 [[package]]
 name = "charset-normalizer"
-version = "2.0.7"
+version = "2.0.8"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 category = "main"
 optional = false
@@ -812,7 +812,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-requests"
-version = "2.26.0"
+version = "2.26.1"
 description = "Typing stubs for requests"
 category = "dev"
 optional = false
@@ -820,7 +820,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-setuptools"
-version = "57.4.3"
+version = "57.4.4"
 description = "Typing stubs for setuptools"
 category = "dev"
 optional = false
@@ -995,8 +995,8 @@ cffi = [
     {file = "cffi-1.15.0.tar.gz", hash = "sha256:920f0d66a896c2d99f0adbb391f990a84091179542c205fa53ce5787aff87954"},
 ]
 charset-normalizer = [
-    {file = "charset-normalizer-2.0.7.tar.gz", hash = "sha256:e019de665e2bcf9c2b64e2e5aa025fa991da8720daa3c1138cadd2fd1856aed0"},
-    {file = "charset_normalizer-2.0.7-py3-none-any.whl", hash = "sha256:f7af805c321bfa1ce6714c51f254e0d5bb5e5834039bc17db7ebe3a4cec9492b"},
+    {file = "charset-normalizer-2.0.8.tar.gz", hash = "sha256:735e240d9a8506778cd7a453d97e817e536bb1fc29f4f6961ce297b9c7a917b0"},
+    {file = "charset_normalizer-2.0.8-py3-none-any.whl", hash = "sha256:83fcdeb225499d6344c8f7f34684c2981270beacc32ede2e669e94f7fa544405"},
 ]
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
@@ -1502,12 +1502,12 @@ types-python-dateutil = [
     {file = "types_python_dateutil-2.8.3-py3-none-any.whl", hash = "sha256:42262d0b8f8ecb06cdc5c458956685eb3b27c74f170adf541d1cc5ee4ff68bdc"},
 ]
 types-requests = [
-    {file = "types-requests-2.26.0.tar.gz", hash = "sha256:df5ec8c34b413a42ebb38e4f96bdeb68090b875bdfcc5138dc82989c95445883"},
-    {file = "types_requests-2.26.0-py3-none-any.whl", hash = "sha256:809b5dcd3c408ac39d11d593835b6aff32420b3e7ddb79c7f3e823330f040466"},
+    {file = "types-requests-2.26.1.tar.gz", hash = "sha256:0893e112e1510bbb67f537941c92192de7472e51bf7f236e0e583866f0ed933e"},
+    {file = "types_requests-2.26.1-py3-none-any.whl", hash = "sha256:853571b3accc188976c0f4feffcaebf6cdfc170082b5e43f3358aa78de61f531"},
 ]
 types-setuptools = [
-    {file = "types-setuptools-57.4.3.tar.gz", hash = "sha256:1bc9a00bae901ef939c1720ae040c9f1127e79e60e04588ed1506c62685385ed"},
-    {file = "types_setuptools-57.4.3-py3-none-any.whl", hash = "sha256:2b969e6545859be2c26cd0eb8bf6ccf17995ba9dee98825fd7b6ab8c46224875"},
+    {file = "types-setuptools-57.4.4.tar.gz", hash = "sha256:a3cbcbf3f02142bb5d3b5c5f5918f453b8752362b96d58aba2a5cfa43ba6d209"},
+    {file = "types_setuptools-57.4.4-py3-none-any.whl", hash = "sha256:9fe4180548e5cbb44cc0d343a47e4dc1d6769c31e16447994788c28df169011f"},
 ]
 types-toml = [
     {file = "types-toml-0.10.1.tar.gz", hash = "sha256:5c1f8f8d57692397c8f902bf6b4d913a0952235db7db17d2908cc110e70610cb"},
