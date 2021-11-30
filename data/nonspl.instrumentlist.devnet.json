@@ -10,7 +10,7 @@
       "description": "Tokens that have no native Solana SPL token"
     }
   },
-  "timestamp": "2021-11-01T16:37:21+0000",
+  "timestamp": "2021-11-30T17:30:00+0000",
   "tokens": [
     {
       "chainId": 901,
@@ -23,6 +23,19 @@
       "extensions": {
         "coingeckoId": "cardano",
         "website": "https://cardano.org/"
+      }
+    },
+    {
+      "chainId": 901,
+      "symbol": "AVAX",
+      "name": "Avalanche",
+      "decimals": 9,
+      "tags": [
+        "no-solana-coin"
+      ],
+      "extensions": {
+        "coingeckoId": "avalanche",
+        "website": "https://avax.network/"
       }
     }
   ],
