@@ -21,25 +21,13 @@ def test_context_default_values() -> None:
     context_has_default_values(mango.ContextBuilder.default())
 
 
-# Need to have more than one working cluster for this test.
-# def test_new_from_cluster() -> None:
-#     context_has_default_values(mango.ContextBuilder.default())
-#     derived = mango.ContextBuilder.default().new_from_cluster("mainnet")
-#     assert derived.cluster_name == "mainnet"
-#     assert derived.cluster_url == "https://solana-api.projectserum.com"
-#     assert derived.mango_program_address == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
-#     assert derived.serum_program_address == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-#     assert derived.group_name == "mainnet.0"
-#     assert derived.group_address == PublicKey("98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue")
-#     context_has_default_values(mango.ContextBuilder.default())
-
-
-def test_new_from_group_name() -> None:
+def test_new_from_cluster() -> None:
     context_has_default_values(mango.ContextBuilder.default())
-    derived = mango.ContextBuilder.from_group_name(mango.ContextBuilder.default(), "mainnet.0")
-    assert derived.mango_program_address == PublicKey("mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68")
-    assert derived.serum_program_address == PublicKey("9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin")
-
-    # Should update both of these values on new group name.
-    assert derived.group_name == "mainnet.0"
-    assert derived.group_address == PublicKey("4yJ2Vx3kZnmHTNCrHzdoj5nCwriF2kVhfKNvqC6gU8tr")
+    derived = mango.ContextBuilder.build(cluster_name="devnet")
+    assert derived.client.cluster_name == "devnet"
+    assert derived.client.cluster_url == "https://mango.devnet.rpcpool.com"
+    assert derived.mango_program_address == PublicKey("4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA")
+    assert derived.serum_program_address == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
+    assert derived.group_name == "devnet.2"
+    assert derived.group_address == PublicKey("Ec2enZyoC4nGpEfu2sUNAa2nUGJHWxoUWYSEJ2hNTWTA")
+    context_has_default_values(mango.ContextBuilder.default())
