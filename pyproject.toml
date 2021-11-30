@@ -39,6 +39,8 @@ types-setuptools = "^57.4.2"
 types-toml = "^0.10.1"
 types-python-dateutil = "^2.8.2"
 pandas-stubs = "^1.2.0"
+ipykernel = "^6.5.1"
+Jinja2 = "^3.0.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

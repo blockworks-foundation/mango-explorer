@@ -39,6 +39,7 @@ for account in accounts:
     filename: str = args.filename
     if filename is None:
         filename = f"trade-history-{account.address}.csv"
-    history: mango.TradeHistory = mango.TradeHistory(context, account, filename)
-    history.update()
-    history.save()
+    history: mango.TradeHistory = mango.TradeHistory()
+    history.load(filename, ok_if_missing=True)
+    history.update(context, account)
+    history.save(filename)

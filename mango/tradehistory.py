@@ -23,6 +23,8 @@ import time
 import typing
 
 from datetime import datetime
+from dateutil import parser
+from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .account import Account
@@ -37,14 +39,14 @@ class TradeHistory:
     COLUMNS = ["Timestamp", "Market", "Side", "MakerOrTaker", "Value", "Price", "Quantity", "Fee",
                "SequenceNumber", "FeeTier", "MarketType", "OrderId"]
 
-    __perp_column_mapper = {
+    __perp_column_name_mapper = {
         "loadTimestamp": "Timestamp",
         "seqNum": "SequenceNumber",
         "price": "Price",
         "quantity": "Quantity"
     }
 
-    __spot_column_mapper = {
+    __spot_column_name_mapper = {
         "loadTimestamp": "Timestamp",
         "seqNum": "SequenceNumber",
         "price": "Price",
@@ -55,28 +57,48 @@ class TradeHistory:
         "orderId": "OrderId"
     }
 
-    __dtype_mapper = {
-        "SequenceNumber": "Int64",
-        "Fee": "float64",
-        "Price": "float64",
-        "Quantity": "float64",
-        "Value": "float64"
+    __decimal_spot_columns = [
+        "openOrderSlot",
+        "feeTier",
+        "nativeQuantityReleased",
+        "nativeQuantityPaid",
+        "nativeFeeOrRebate",
+        "orderId",
+        "clientOrderId",
+        "source",
+        "seqNum",
+        "baseTokenDecimals",
+        "quoteTokenDecimals",
+        "price",
+        "feeCost",
+        "size"
+    ]
+
+    __decimal_perp_columns = [
+        "seqNum",
+        "makerFee",
+        "takerFee",
+        "makerOrderId",
+        "takerOrderId",
+        "price",
+        "quantity"
+    ]
+
+    __column_converters = {
+        "Timestamp": lambda value: parser.parse(value),
+        "SequenceNumber": lambda value: Decimal(value),
+        "Price": lambda value: Decimal(value),
+        "Value": lambda value: Decimal(value),
+        "Quantity": lambda value: Decimal(value),
+        "Fee": lambda value: Decimal(value),
+        "FeeTier": lambda value: Decimal(value),
+        "OrderId": lambda value: Decimal(value)
     }
 
-    def __init__(self, context: Context, account: Account, filename: str, seconds_pause_between_rest_calls: int = 10) -> None:
+    def __init__(self, seconds_pause_between_rest_calls: int = 1) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.__context: Context = context
-        self.__account: Account = account
-        self.__filename: str = filename
         self.__seconds_pause_between_rest_calls: int = seconds_pause_between_rest_calls
         self.__trades: pandas.DataFrame = pandas.DataFrame(columns=TradeHistory.COLUMNS)
-        if os.path.isfile(filename):
-            existing = pandas.read_csv(self.__filename,
-                                       parse_dates=["Timestamp"],
-                                       dtype=TradeHistory.__dtype_mapper,
-                                       float_precision="round_trip")
-
-            self.__trades = self.__trades.append(existing)
 
     @staticmethod
     def __market_lookup(context: Context) -> typing.Callable[[pandas.Series], str]:
@@ -89,23 +111,42 @@ class TradeHistory:
         return __safe_lookup
 
     @staticmethod
-    def __set_dtypes(data: pandas.DataFrame) -> None:
-        data["Timestamp"] = pandas.to_datetime(data["Timestamp"])
-        data["Value"] = pandas.to_numeric(data["Value"])
-        data["Price"] = pandas.to_numeric(data["Price"])
-        data["Quantity"] = pandas.to_numeric(data["Quantity"])
-        data["Fee"] = pandas.to_numeric(data["Fee"])
-        data["SequenceNumber"] = pandas.to_numeric(data["SequenceNumber"])
-        data["FeeTier"] = pandas.to_numeric(data["FeeTier"])
-
-    @staticmethod
     def __download_json(url: str) -> typing.Any:
         response = requests.get(url)
         response.raise_for_status()
         return response.json()
 
     @staticmethod
-    def __download_all_perps(context: Context, account: Account, newer_than: typing.Optional[datetime], seconds_pause_between_rest_calls: int) -> pandas.DataFrame:
+    def __download_all_perps(context: Context, account: Account) -> pandas.DataFrame:
+        url = f"https://event-history-api.herokuapp.com/perp_trades/{account.address}?page=all"
+        data = TradeHistory.__download_json(url)
+        trades: pandas.DataFrame = TradeHistory.__perp_data_to_dataframe(context, account, data)
+
+        return trades
+
+    @staticmethod
+    def __download_updated_perps(context: Context, account: Account, newer_than: typing.Optional[datetime], seconds_pause_between_rest_calls: int) -> pandas.DataFrame:
+        trades: pandas.DataFrame = pandas.DataFrame(columns=TradeHistory.COLUMNS)
+        page: int = 0
+        complete: bool = False
+        while not complete:
+            page += 1
+            url = f"https://event-history-api.herokuapp.com/perp_trades/{account.address}?page={page}"
+            data = TradeHistory.__download_json(url)
+            frame: pandas.DataFrame = TradeHistory.__perp_data_to_dataframe(context, account, data)
+            if len(frame) == 0:
+                complete = True
+            else:
+                trades = trades.append(frame)
+                if (newer_than is not None) and (frame.loc[frame.index[-1], "Timestamp"] < newer_than):
+                    complete = True
+                else:
+                    time.sleep(seconds_pause_between_rest_calls)
+
+        return trades
+
+    @staticmethod
+    def __perp_data_to_dataframe(context: Context, account: Account, data: typing.Any) -> pandas.DataFrame:
         # Perp data is an array of JSON packages like:
         # {
         #     "loadTimestamp": "2021-09-02T10:54:56.000Z",
@@ -121,8 +162,6 @@ class TradeHistory:
         #     "price": "50131.9",
         #     "quantity": "0.019"
         # },
-        this_address = f"{account.address}"
-
         def __side_lookup(row: pandas.Series) -> str:
             if row["MakerOrTaker"] == "taker":
                 return str(row["takerSide"])
@@ -131,45 +170,78 @@ class TradeHistory:
             else:
                 return "buy"
 
-        trades: pandas.DataFrame = pandas.DataFrame(columns=TradeHistory.COLUMNS)
-        page: int = 0
-        complete: bool = False
-        while not complete:
-            page += 1
-            url = f"https://event-history-api.herokuapp.com/perp_trades/{account.address}?page={page}"
-            data = TradeHistory.__download_json(url)
-
-            if len(data["data"]) <= 1:
-                complete = True
+        def __fee_calculator(row: pandas.Series) -> Decimal:
+            price: Decimal = row["Price"]
+            quantity: Decimal = row["Quantity"]
+            fee_rate: Decimal
+            if row["MakerOrTaker"] == "maker":
+                fee_rate = row["makerFee"]
             else:
-                raw_data = pandas.DataFrame(data["data"][:-1])
-                raw_data["Market"] = raw_data.apply(TradeHistory.__market_lookup(context), axis=1)
+                fee_rate = row["takerFee"]
+            return price * quantity * fee_rate
 
-                data = raw_data.rename(mapper=TradeHistory.__perp_column_mapper, axis=1, copy=True)
-                data["MarketType"] = "perp"
-                data["MakerOrTaker"] = data["maker"].apply(lambda addy: "maker" if addy == this_address else "taker")
+        if len(data["data"]) <= 1:
+            return pandas.DataFrame(columns=TradeHistory.COLUMNS)
 
-                data["Fee"] = pandas.to_numeric(numpy.where(data["MakerOrTaker"] == "maker",
-                                                data["makerFee"], data["takerFee"]))
-                data["FeeTier"] = -1
-                data["Price"] = data["Price"].astype("float64")
-                data["Quantity"] = data["Quantity"].astype("float64")
-                data["Value"] = (data["Price"] * data["Quantity"]) - data["Fee"]
-                data["Side"] = data.apply(__side_lookup, axis=1)
-                data["OrderId"] = numpy.where(data["MakerOrTaker"] == "maker",
-                                              data["makerOrderId"], data["takerOrderId"])
-                TradeHistory.__set_dtypes(data)
-                trades = trades.append(data[TradeHistory.COLUMNS])
+        trade_data = data["data"][:-1]
+        for trade in trade_data:
+            for column_name in TradeHistory.__decimal_perp_columns:
+                trade[column_name] = Decimal(trade[column_name])
 
-                if (newer_than is not None) and (data.loc[data.index[-1], "Timestamp"] < newer_than):
-                    complete = True
-                else:
-                    time.sleep(seconds_pause_between_rest_calls)
+        frame = pandas.DataFrame(trade_data).rename(mapper=TradeHistory.__perp_column_name_mapper, axis=1, copy=True)
+        frame["Timestamp"] = frame["Timestamp"].apply(lambda timestamp: parser.parse(timestamp).replace(microsecond=0))
+        frame["Market"] = frame.apply(TradeHistory.__market_lookup(context), axis=1)
+        frame["MarketType"] = "perp"
+
+        this_address = f"{account.address}"
+        frame["MakerOrTaker"] = frame["maker"].apply(lambda addy: "maker" if addy == this_address else "taker")
+
+        frame["FeeTier"] = -1
+        frame["Fee"] = frame.apply(__fee_calculator, axis=1)
+        frame["Value"] = (frame["Price"] * frame["Quantity"]) - frame["Fee"]
+        frame["Side"] = frame.apply(__side_lookup, axis=1)
+        frame["OrderId"] = numpy.where(frame["MakerOrTaker"] == "maker",
+                                       frame["makerOrderId"], frame["takerOrderId"])
+
+        return frame[TradeHistory.COLUMNS]
+
+    @staticmethod
+    def __download_all_spots(context: Context, account: Account) -> pandas.DataFrame:
+        trades: pandas.DataFrame = pandas.DataFrame(columns=TradeHistory.COLUMNS)
+        for spot_open_orders_address in account.spot_open_orders:
+            url = f"https://event-history-api.herokuapp.com/trades/open_orders/{spot_open_orders_address}?page=all"
+            data = TradeHistory.__download_json(url)
+            frame = TradeHistory.__spot_data_to_dataframe(context, account, data)
+            trades = trades.append(frame)
 
         return trades
 
     @staticmethod
-    def __download_all_spots(context: Context, account: Account, newer_than: typing.Optional[datetime], seconds_pause_between_rest_calls: int) -> pandas.DataFrame:
+    def __download_updated_spots(context: Context, account: Account, newer_than: typing.Optional[datetime], seconds_pause_between_rest_calls: int) -> pandas.DataFrame:
+        trades: pandas.DataFrame = pandas.DataFrame(columns=TradeHistory.COLUMNS)
+        for spot_open_orders_address in account.spot_open_orders:
+            page: int = 0
+            complete: bool = False
+            while not complete:
+                page += 1
+                url = f"https://event-history-api.herokuapp.com/trades/open_orders/{spot_open_orders_address}?page={page}"
+                data = TradeHistory.__download_json(url)
+                frame = TradeHistory.__spot_data_to_dataframe(context, account, data)
+
+                if len(frame) == 0:
+                    complete = True
+                else:
+                    trades = trades.append(frame)
+                    earliest_in_frame = frame.loc[frame.index[-1], "Timestamp"]
+                    if (newer_than is not None) and (earliest_in_frame < newer_than):
+                        complete = True
+                    else:
+                        time.sleep(seconds_pause_between_rest_calls)
+
+        return trades
+
+    @staticmethod
+    def __spot_data_to_dataframe(context: Context, account: Account, data: typing.Any) -> pandas.DataFrame:
         # Spot data is an array of JSON packages like:
         # {
         #     "loadTimestamp": "2021-10-05T16:04:50.717Z",
@@ -199,62 +271,69 @@ class TradeHistory:
         #     "feeCost": -0.146288,
         #     "size": 3
         # }
-        trades: pandas.DataFrame = pandas.DataFrame(columns=TradeHistory.COLUMNS)
-        for spot_open_orders_address in account.spot_open_orders:
-            page: int = 0
-            complete: bool = False
-            while not complete:
-                page += 1
-                url = f"https://event-history-api.herokuapp.com/trades/open_orders/{spot_open_orders_address}?page={page}"
-                data = TradeHistory.__download_json(url)
+        if len(data["data"]) == 0:
+            return pandas.DataFrame(columns=TradeHistory.COLUMNS)
+        else:
+            trade_data = data["data"]
+            for trade in trade_data:
+                for column_name in TradeHistory.__decimal_spot_columns:
+                    trade[column_name] = Decimal(trade[column_name])
 
-                if len(data["data"]) <= 1:
-                    complete = True
-                else:
-                    raw_data = pandas.DataFrame(data["data"])
-                    raw_data["Market"] = raw_data.apply(TradeHistory.__market_lookup(context), axis=1)
+            frame = pandas.DataFrame(trade_data).rename(
+                mapper=TradeHistory.__spot_column_name_mapper, axis=1, copy=True)
+            frame["Timestamp"] = frame["Timestamp"].apply(
+                lambda timestamp: parser.parse(timestamp).replace(microsecond=0))
+            frame["Market"] = frame.apply(TradeHistory.__market_lookup(context), axis=1)
+            frame["MakerOrTaker"] = numpy.where(frame["maker"], "maker", "taker")
+            frame["Value"] = (frame["Price"] * frame["Quantity"]) - frame["Fee"]
+            frame["MarketType"] = "spot"
 
-                    data = raw_data.rename(mapper=TradeHistory.__spot_column_mapper, axis=1, copy=True)
-                    data["MakerOrTaker"] = numpy.where(data["maker"], "maker", "taker")
-                    data["Price"] = data["Price"].astype("float64")
-                    data["Quantity"] = data["Quantity"].astype("float64")
-                    data["Value"] = (data["Price"] * data["Quantity"]) - data["Fee"]
-                    data["MarketType"] = "spot"
-                    TradeHistory.__set_dtypes(data)
-
-                    trades = trades.append(data[TradeHistory.COLUMNS])
-
-                    if (newer_than is not None) and (data.loc[data.index[-1], "Timestamp"] < newer_than):
-                        complete = True
-                    else:
-                        time.sleep(seconds_pause_between_rest_calls)
-
-        return trades
+            return frame[TradeHistory.COLUMNS]
 
     @property
     def trades(self) -> pandas.DataFrame:
         return self.__trades.copy(deep=True)
 
-    def update(self) -> None:
+    def update(self, context: Context, account: Account) -> None:
         latest_trade: typing.Optional[datetime] = self.__trades.loc[self.__trades.index[-1],
                                                                     "Timestamp"] if len(self.__trades) > 0 else None
-        self.logger.info(f"Downloading spot trades up to cutoff: {latest_trade}")
-        spot = TradeHistory.__download_all_spots(self.__context, self.__account,
-                                                 latest_trade, self.__seconds_pause_between_rest_calls)
-        self.logger.info(f"Downloading perp trades up to cutoff: {latest_trade}")
-        perp = TradeHistory.__download_all_perps(self.__context, self.__account,
-                                                 latest_trade, self.__seconds_pause_between_rest_calls)
+        spot: pandas.DataFrame
+        perp: pandas.DataFrame
+        if latest_trade is None:
+            self.logger.info("Downloading all spot trades.")
+            spot = TradeHistory.__download_all_spots(context, account)
+            self.logger.info("Downloading all perp trades.")
+            perp = TradeHistory.__download_all_perps(context, account)
+        else:
+            self.logger.info(f"Downloading spot trades up to cutoff: {latest_trade}")
+            spot = TradeHistory.__download_updated_spots(context, account,
+                                                         latest_trade, self.__seconds_pause_between_rest_calls)
+            self.logger.info(f"Downloading perp trades up to cutoff: {latest_trade}")
+            perp = TradeHistory.__download_updated_perps(context, account,
+                                                         latest_trade, self.__seconds_pause_between_rest_calls)
+
         all_trades = pandas.concat([self.__trades, spot, perp])
         distinct_trades = all_trades.drop_duplicates()
         sorted_trades = distinct_trades.sort_values(["Timestamp", "Market", "SequenceNumber"], axis=0, ascending=True)
         self.logger.info(f"Download complete. Data contains {len(sorted_trades)} trades.")
         self.__trades = sorted_trades
 
-    def save(self) -> None:
-        self.__trades.to_csv(self.__filename, index=False, mode="w")
+    def load(self, filename: str, ok_if_missing: bool = False) -> None:
+        if not os.path.isfile(filename):
+            if not ok_if_missing:
+                raise Exception(f"File {filename} does not exist or is not a file.")
+        else:
+            existing = pandas.read_csv(filename,
+                                       float_precision="round_trip",
+                                       converters=TradeHistory.__column_converters)
+
+            self.__trades = self.__trades.append(existing)
+
+    def save(self, filename: str) -> None:
+        self.__trades.to_csv(filename, index=False, mode="w")
 
     def __str__(self) -> str:
-        return f"« 𝚃𝚛𝚊𝚍𝚎𝙷𝚒𝚜𝚝𝚘𝚛𝚢 for {self.__account.address} »"
+        return f"« 𝚃𝚛𝚊𝚍𝚎𝙷𝚒𝚜𝚝𝚘𝚛𝚢 containing {len(self.__trades)} trades »"
 
     def __repr__(self) -> str:
         return f"{self}"
