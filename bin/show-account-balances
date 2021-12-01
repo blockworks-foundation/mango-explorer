@@ -36,7 +36,7 @@ balances: typing.List[mango.InstrumentValue] = []
 sol_balance = context.client.get_balance(address)
 balances += [mango.InstrumentValue(mango.SolToken, sol_balance)]
 
-for slot_token_bank in [*group.tokens, group.shared_quote]:
+for slot_token_bank in group.tokens:
     if isinstance(slot_token_bank.token, mango.Token):
         balance = mango.InstrumentValue.fetch_total_value(context, address, slot_token_bank.token)
         balances += [balance]
