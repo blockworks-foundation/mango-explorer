@@ -98,7 +98,7 @@ class PerpToSpotHedger(Hedger):
                     quantity = self.max_hedge_chunk_quantity
                 order: mango.Order = mango.Order.from_basic_info(side, adjusted_price, quantity, mango.OrderType.IOC)
                 self.logger.info(
-                    f"Hedging perp position {perp_position} and token balance {token_balance} with {side} of {quantity:,.8f} at {up_or_down} {adjusted_price:,.8f} on {self.hedging_market.symbol}\n\t{order}")
+                    f"Hedging perp position {perp_position} and token balance {token_balance} with {side} of {quantity:,.8f} at {up_or_down} ({model_state.price}) {adjusted_price:,.8f} on {self.hedging_market.symbol}\n\t{order}")
                 try:
                     self.market_operations.place_order(order)
                 except Exception:
