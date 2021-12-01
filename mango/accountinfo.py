@@ -101,7 +101,7 @@ class AccountInfo:
         multiple: typing.List[AccountInfo] = []
         chunks: typing.Sequence[typing.Sequence[PublicKey]] = AccountInfo._split_list_into_chunks(addresses, chunk_size)
         for counter, chunk in enumerate(chunks):
-            result: typing.Sequence[typing.Dict[str, typing.Any]] = context.client.get_multiple_accounts(chunk)
+            result: typing.Sequence[typing.Dict[str, typing.Any]] = context.client.get_multiple_accounts([*chunk])
             response_value_list = zip(result, chunk)
             multiple += list(map(lambda pair: AccountInfo._from_response_values(pair[0], pair[1]), response_value_list))
             if (sleep_between_calls > 0.0) and (counter < (len(chunks) - 1)):

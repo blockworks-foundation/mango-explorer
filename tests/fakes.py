@@ -10,14 +10,14 @@ from pyserum.market.market import Market as PySerumMarket
 from pyserum.market.state import MarketState as PySerumMarketState
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
+from solana.rpc.api import Client
 from solana.rpc.commitment import Commitment
 from solana.rpc.types import RPCResponse
 
 
-class MockCompatibleClient(mango.CompatibleClient):
+class MockCompatibleClient(Client):
     def __init__(self) -> None:
-        super().__init__("test", "local", "http://localhost", Commitment("processed"), Commitment("processed"),
-                         False, "base64", datetime.timedelta(seconds=5), mango.InstructionReporter())
+        super().__init__("http://localhost", Commitment("processed"))
         self.token_accounts_by_owner: typing.Sequence[typing.Any] = []
 
     def get_token_accounts_by_owner(self, *args: typing.Any, **kwargs: typing.Any) -> RPCResponse:
@@ -29,7 +29,8 @@ class MockCompatibleClient(mango.CompatibleClient):
 
 class MockClient(mango.BetterClient):
     def __init__(self) -> None:
-        super().__init__(MockCompatibleClient())
+        super().__init__(MockCompatibleClient(), "test", "local", "http://localhost", Commitment("processed"),
+                         False, "base64", False, mango.InstructionReporter())
 
 
 def fake_public_key() -> PublicKey:
@@ -46,9 +47,8 @@ def fake_context() -> mango.Context:
                             cluster_url="http://localhost",
                             skip_preflight=False,
                             commitment="processed",
-                            blockhash_commitment="processed",
                             encoding="base64",
-                            blockhash_cache_duration=datetime.timedelta(seconds=5),
+                            blockhash_cache_duration=0,
                             mango_program_address=fake_seeded_public_key("Mango program address"),
                             serum_program_address=fake_seeded_public_key("Serum program address"),
                             group_name="TEST_GROUP",

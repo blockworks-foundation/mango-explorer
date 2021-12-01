@@ -14,7 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import argparse
-import datetime
 import copy
 import logging
 import os
@@ -72,11 +71,10 @@ class ContextBuilder:
         parser.add_argument("--skip-preflight", default=False, action="store_true", help="Skip pre-flight checks")
         parser.add_argument("--commitment", type=str, default=None,
                             help="Commitment to use when sending transactions (can be 'finalized', 'confirmed' or 'processed')")
-        parser.add_argument("--blockhash-commitment", type=str, default=None,
-                            help="Commitment to use specifically when fetching recent blockhash (can be 'finalized', 'confirmed' or 'processed')")
         parser.add_argument("--encoding", type=str, default=None,
                             help="Encoding to request when receiving data from Solana (options are 'base58' (slow), 'base64', 'base64+zstd', or 'jsonParsed')")
-        parser.add_argument("--blockhash-cache-duration", type=int, help="How long to cache 'recent' blockhashes")
+        parser.add_argument("--blockhash-cache-duration", type=int,
+                            help="How long (in seconds) to cache 'recent' blockhashes")
         parser.add_argument("--gma-chunk-size", type=Decimal, default=None,
                             help="Maximum number of addresses to send in a single call to getMultipleAccounts()")
         parser.add_argument("--gma-chunk-pause", type=Decimal, default=None,
@@ -102,15 +100,13 @@ class ContextBuilder:
         serum_program_address: typing.Optional[PublicKey] = args.serum_program_address
         skip_preflight: bool = bool(args.skip_preflight)
         commitment: typing.Optional[str] = args.commitment
-        blockhash_commitment: typing.Optional[str] = args.blockhash_commitment
         encoding: typing.Optional[str] = args.encoding
-        blockhash_cache_duration: typing.Optional[datetime.timedelta] = datetime.timedelta(
-            seconds=args.blockhash_cache_duration) if args.blockhash_cache_duration is not None else None
+        blockhash_cache_duration: typing.Optional[int] = args.blockhash_cache_duration
         gma_chunk_size: typing.Optional[Decimal] = args.gma_chunk_size
         gma_chunk_pause: typing.Optional[Decimal] = args.gma_chunk_pause
         token_filename: str = args.token_data_file
 
-        context: Context = ContextBuilder.build(name, cluster_name, cluster_url, skip_preflight, commitment, blockhash_commitment, encoding, blockhash_cache_duration,
+        context: Context = ContextBuilder.build(name, cluster_name, cluster_url, skip_preflight, commitment, encoding, blockhash_cache_duration,
                                                 group_name, group_address, mango_program_address, serum_program_address, gma_chunk_size, gma_chunk_pause, token_filename)
         logging.debug(f"{context}")
 
@@ -124,9 +120,9 @@ class ContextBuilder:
     def from_group_name(context: Context, group_name: str) -> Context:
         return ContextBuilder.build(context.name, context.client.cluster_name, context.client.cluster_url,
                                     context.client.skip_preflight, context.client.commitment,
-                                    context.client.blockhash_commitment, context.client.encoding,
-                                    context.client.compatible_client.blockhash_cache_duration,
-                                    group_name, None, None, None, context.gma_chunk_size, context.gma_chunk_pause,
+                                    context.client.encoding, context.client.blockhash_cache_duration,
+                                    group_name, None, None, None,
+                                    context.gma_chunk_size, context.gma_chunk_pause,
                                     SPLTokenLookup.DefaultDataFilepath)
 
     @staticmethod
@@ -138,10 +134,9 @@ class ContextBuilder:
                                                                cluster_name,
                                                                cluster_url,
                                                                context.client.commitment,
-                                                               context.client.blockhash_commitment,
                                                                context.client.skip_preflight,
                                                                context.client.encoding,
-                                                               context.client.compatible_client.blockhash_cache_duration,
+                                                               context.client.blockhash_cache_duration,
                                                                context.client.instruction_reporter)
 
         return fresh_context
@@ -155,10 +150,9 @@ class ContextBuilder:
                                                                cluster_name,
                                                                cluster_url,
                                                                context.client.commitment,
-                                                               context.client.blockhash_commitment,
                                                                context.client.skip_preflight,
                                                                context.client.encoding,
-                                                               context.client.compatible_client.blockhash_cache_duration,
+                                                               context.client.blockhash_cache_duration,
                                                                context.client.instruction_reporter)
 
         return fresh_context
@@ -166,8 +160,8 @@ class ContextBuilder:
     @staticmethod
     def build(name: typing.Optional[str] = None, cluster_name: typing.Optional[str] = None,
               cluster_url: typing.Optional[str] = None, skip_preflight: bool = False,
-              commitment: typing.Optional[str] = None, blockhash_commitment: typing.Optional[str] = None,
-              encoding: typing.Optional[str] = None, blockhash_cache_duration: typing.Optional[datetime.timedelta] = None,
+              commitment: typing.Optional[str] = None, encoding: typing.Optional[str] = None,
+              blockhash_cache_duration: typing.Optional[int] = None,
               group_name: typing.Optional[str] = None, group_address: typing.Optional[PublicKey] = None,
               program_address: typing.Optional[PublicKey] = None, serum_program_address: typing.Optional[PublicKey] = None,
               gma_chunk_size: typing.Optional[Decimal] = None, gma_chunk_pause: typing.Optional[Decimal] = None,
@@ -189,9 +183,8 @@ class ContextBuilder:
                 break
 
         actual_commitment: str = commitment or "processed"
-        actual_blockhash_commitment: str = blockhash_commitment or commitment or "processed"
         actual_encoding: str = encoding or "base64"
-        actual_blockhash_cache_duration: datetime.timedelta = blockhash_cache_duration or datetime.timedelta(seconds=0)
+        actual_blockhash_cache_duration: int = blockhash_cache_duration or 0
 
         actual_cluster_url: str = cluster_url or os.environ.get(
             "CLUSTER_URL") or MangoConstants["cluster_urls"][actual_cluster]
@@ -245,4 +238,4 @@ class ContextBuilder:
             all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
 
-        return Context(actual_name, actual_cluster, actual_cluster_url, actual_skip_preflight, actual_commitment, actual_blockhash_commitment, actual_encoding, actual_blockhash_cache_duration, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup)
+        return Context(actual_name, actual_cluster, actual_cluster_url, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup)

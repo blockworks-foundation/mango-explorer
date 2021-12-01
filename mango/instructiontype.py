@@ -61,6 +61,18 @@ class InstructionType(enum.IntEnum):
     AddMangoAccountInfo = 34
     DepositMsrm = 35
     WithdrawMsrm = 36
+    ChanePerpMarketParams = 37
+    SetGroupAdmin = 38
+    CancelAllPerpOrders = 39
+    ForceSettleQuotePositions = 40
+    PlaceSpotOrder2 = 41
+    InitAdvancedOrders = 42
+    AddPerpTriggerOrder = 43
+    RemoveAdvancedOrder = 44
+    ExecutePerpTriggerOrder = 45
+    CreatePerpMarket = 46
+    ChangePerpMarketParams2 = 47
+    UpdateMarginBasket = 48
 
     def __str__(self) -> str:
         return self.name
