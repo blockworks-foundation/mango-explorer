@@ -243,6 +243,9 @@ class CombinableInstructions():
 
         return results
 
+    async def execute_async(self, context: Context, on_exception_continue: bool = False) -> typing.Sequence[str]:
+        return self.execute(context, on_exception_continue)
+
     def __str__(self) -> str:
         report: typing.List[str] = []
         for index, signer in enumerate(self.signers):
