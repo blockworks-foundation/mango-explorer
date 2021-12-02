@@ -307,11 +307,14 @@ class TradeHistory:
         else:
             # Go back further than we need to so we can be sure we're not skipping any trades due to race conditions.
             # We remove duplicates a few lines further down.
-            cutoff: datetime = latest_trade - timedelta(hours=1)
-            self.logger.info(f"Downloading spot trades up to cutoff: {cutoff}")
+            cutoff_safety_margin: timedelta = timedelta(hours=1)
+            cutoff: datetime = latest_trade - cutoff_safety_margin
+            self.logger.info(
+                f"Downloading spot trades from {cutoff}, {cutoff_safety_margin} before latest stored trade at {latest_trade}")
             spot = TradeHistory.__download_updated_spots(context, account,
                                                          cutoff, self.__seconds_pause_between_rest_calls)
-            self.logger.info(f"Downloading perp trades up to cutoff: {cutoff}")
+            self.logger.info(
+                f"Downloading perp trades from {cutoff}, {cutoff_safety_margin} before latest stored trade at {latest_trade}")
             perp = TradeHistory.__download_updated_perps(context, account,
                                                          cutoff, self.__seconds_pause_between_rest_calls)
 
