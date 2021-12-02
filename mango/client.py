@@ -160,29 +160,31 @@ class TransactionException(ClientException):
         self.instruction_reporter: InstructionReporter = instruction_reporter
 
     def __str__(self) -> str:
-        request_details: str = ""
-        response_details: str = ""
-        if logging.DEBUG >= logging.root.level:
-            request_details = f"""
+        try:
+            request_details: str = ""
+            response_details: str = ""
+            if logging.DEBUG >= logging.root.level:
+                request_details = f"""
     Request:
         {self.request_text}"""
             response_details = f"""
     Response:
         {self.response_text}"""
-        transaction_details = ""
-        if self.transaction is not None:
-            instruction_details = "\n".join(list(map(self.instruction_reporter.report, self.transaction.instructions)))
-            transaction_details = "\n    Instructions:\n        " + instruction_details.replace("\n", "\n        ")
-        accounts = "No Accounts"
-        if len(self.accounts) > 0:
-            accounts = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.accounts])
-        errors = "No Errors"
-        if len(self.errors) > 0:
-            errors = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.errors])
-        logs = "No Logs"
-        if len(self.logs) > 0:
-            logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
-        return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 in '{self.name}' [{self.rpc_method}]: {self.code}:: {self.message}{transaction_details}
+            transaction_details = ""
+            if self.transaction is not None:
+                instruction_details = "\n".join(
+                    list(map(self.instruction_reporter.report, self.transaction.instructions)))
+                transaction_details = "\n    Instructions:\n        " + instruction_details.replace("\n", "\n        ")
+            accounts = "No Accounts"
+            if len(self.accounts) > 0:
+                accounts = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.accounts])
+            errors = "No Errors"
+            if len(self.errors) > 0:
+                errors = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.errors])
+            logs = "No Logs"
+            if len(self.logs) > 0:
+                logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
+            return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 in '{self.name}' [{self.rpc_method}]: {self.code}:: {self.message}{transaction_details}
     Accounts:
         {accounts}
     Errors:
@@ -190,6 +192,8 @@ class TransactionException(ClientException):
     Logs:
         {logs}{request_details}{response_details}
 »"""
+        except Exception as exception:
+            return f"TransactionException printing failed with: {exception}"
 
     def __repr__(self) -> str:
         return f"{self}"

@@ -74,13 +74,17 @@ class OrderType(enum.Enum):
 
     @staticmethod
     def from_value(value: Decimal) -> "OrderType":
-        converted: pyserum.enums.OrderType = pyserum.enums.OrderType(int(value))
-        if converted == pyserum.enums.OrderType.IOC:
-            return OrderType.IOC
-        elif converted == pyserum.enums.OrderType.POST_ONLY:
-            return OrderType.POST_ONLY
-        elif converted == pyserum.enums.OrderType.LIMIT:
-            return OrderType.LIMIT
+        int_value: int = int(value)
+        if int_value in [item.value for item in pyserum.enums.OrderType]:
+            converted: pyserum.enums.OrderType = pyserum.enums.OrderType(int(value))
+            if converted == pyserum.enums.OrderType.IOC:
+                return OrderType.IOC
+            elif converted == pyserum.enums.OrderType.POST_ONLY:
+                return OrderType.POST_ONLY
+            elif converted == pyserum.enums.OrderType.LIMIT:
+                return OrderType.LIMIT
+        elif int_value in [item.value for item in OrderType]:
+            return OrderType(int_value)
         return OrderType.UNKNOWN
 
     def to_serum(self) -> pyserum.enums.OrderType:
