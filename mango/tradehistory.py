@@ -22,7 +22,7 @@ import requests
 import time
 import typing
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil import parser
 from decimal import Decimal
 from solana.publickey import PublicKey
@@ -305,12 +305,15 @@ class TradeHistory:
             self.logger.info("Downloading all perp trades.")
             perp = TradeHistory.__download_all_perps(context, account)
         else:
-            self.logger.info(f"Downloading spot trades up to cutoff: {latest_trade}")
+            # Go back further than we need to so we can be sure we're not skipping any trades due to race conditions.
+            # We remove duplicates a few lines further down.
+            cutoff: datetime = latest_trade - timedelta(hours=1)
+            self.logger.info(f"Downloading spot trades up to cutoff: {cutoff}")
             spot = TradeHistory.__download_updated_spots(context, account,
-                                                         latest_trade, self.__seconds_pause_between_rest_calls)
-            self.logger.info(f"Downloading perp trades up to cutoff: {latest_trade}")
+                                                         cutoff, self.__seconds_pause_between_rest_calls)
+            self.logger.info(f"Downloading perp trades up to cutoff: {cutoff}")
             perp = TradeHistory.__download_updated_perps(context, account,
-                                                         latest_trade, self.__seconds_pause_between_rest_calls)
+                                                         cutoff, self.__seconds_pause_between_rest_calls)
 
         all_trades = pandas.concat([self.__trades, spot, perp])
         distinct_trades = all_trades.drop_duplicates()
