@@ -74,18 +74,26 @@ class OrderType(enum.Enum):
 
     @staticmethod
     def from_value(value: Decimal) -> "OrderType":
-        int_value: int = int(value)
-        if int_value in [item.value for item in pyserum.enums.OrderType]:
-            converted: pyserum.enums.OrderType = pyserum.enums.OrderType(int(value))
-            if converted == pyserum.enums.OrderType.IOC:
-                return OrderType.IOC
-            elif converted == pyserum.enums.OrderType.POST_ONLY:
-                return OrderType.POST_ONLY
-            elif converted == pyserum.enums.OrderType.LIMIT:
-                return OrderType.LIMIT
-        elif int_value in [item.value for item in OrderType]:
-            return OrderType(int_value)
-        return OrderType.UNKNOWN
+        # From: https://github.com/blockworks-foundation/mango-v3/blob/0c4d26e3e32821d871c5e5986edafbf694a44137/program/src/matching.rs#L212
+        # pub enum OrderType {
+        #     Limit = 0,
+        #     ImmediateOrCancel = 1,
+        #     PostOnly = 2,
+        #     Market = 3,
+        #     PostOnlySlide = 4, // ***
+        # }
+        if value == 0:
+            return OrderType.LIMIT
+        elif value == 1:
+            return OrderType.IOC
+        elif value == 2:
+            return OrderType.POST_ONLY
+        elif value == 3:
+            return OrderType.MARKET
+        elif value == 4:
+            return OrderType.POST_ONLY_SLIDE
+
+        return OrderType.LIMIT
 
     def to_serum(self) -> pyserum.enums.OrderType:
         if self == OrderType.IOC:
