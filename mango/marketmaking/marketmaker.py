@@ -69,7 +69,18 @@ class MarketMaker:
                 return
 
             existing_orders = model_state.current_orders()
+            self.logger.debug(f"""Before reconciliation: all owned orders on current orderbook [{model_state.market.symbol}]:
+    {mango.indent_collection_as_str(existing_orders)}""")
             reconciled = self.order_reconciler.reconcile(model_state, existing_orders, desired_orders)
+            self.logger.debug(f"""After reconciliation
+Keep:
+    {mango.indent_collection_as_str(reconciled.to_keep)}
+Cancel:
+    {mango.indent_collection_as_str(reconciled.to_cancel)}
+Place:
+    {mango.indent_collection_as_str(reconciled.to_place)}
+Ignore:
+    {mango.indent_collection_as_str(reconciled.to_ignore)}""")
 
             cancellations = mango.CombinableInstructions.empty()
             for to_cancel in reconciled.to_cancel:

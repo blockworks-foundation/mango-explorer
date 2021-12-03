@@ -187,6 +187,8 @@ from .spotmarket import SpotMarket as SpotMarket
 from .spotmarket import SpotMarketStub as SpotMarketStub
 from .spotmarketoperations import SpotMarketInstructionBuilder as SpotMarketInstructionBuilder
 from .spotmarketoperations import SpotMarketOperations as SpotMarketOperations
+from .text import indent_collection_as_str as indent_collection_as_str
+from .text import indent_item_by as indent_item_by
 from .token import Instrument as Instrument
 from .token import SolToken as SolToken
 from .token import Token as Token
