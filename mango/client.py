@@ -37,11 +37,15 @@ from .instructionreporter import InstructionReporter
 from .logmessages import expand_log_messages
 
 
+__STUB_TRANSACTION_SIGNATURE: str = "stub-for-already-submitted-transaction-signature"
+
 # # 🥭 ClientException class
 #
 # A `ClientException` exception base class that allows trapping and handling rate limiting
 # independent of other error handling.
 #
+
+
 class ClientException(Exception):
     def __init__(self, message: str, name: str, cluster_url: str) -> None:
         super().__init__(message)
@@ -244,8 +248,11 @@ class RPCCaller(HTTPProvider):
         self.stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry
         self.latest_slot: int = 0
 
-    def require_data_from_fresh_slot(self) -> None:
-        self.latest_slot += 1
+    def require_data_from_fresh_slot(self, latest_slot: typing.Optional[int] = None) -> None:
+        latest: int = latest_slot or self.latest_slot
+        if latest >= self.latest_slot:
+            self.latest_slot = latest + 1
+            self.logger_.debug(f"Only accepting data from slot {self.latest_slot} onwards now.")
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
         # No pauses specified means this funcitonality is turned off.
@@ -268,9 +275,9 @@ class RPCCaller(HTTPProvider):
                 #
                 # Return fake data in the expected structure for now, and try to figure out a better way.
                 return {
-                    'jsonrpc': '2.0',
-                    'id': 0,
-                    'result': 'stub-for-already-submitted-transaction-signature',
+                    "jsonrpc": "2.0",
+                    "id": 0,
+                    "result": __STUB_TRANSACTION_SIGNATURE,
                 }
             except StaleSlotException as exception:
                 last_stale_slot_exception = exception
@@ -318,6 +325,7 @@ class RPCCaller(HTTPProvider):
         if len(params) > 1 and "commitment" in params[1] and params[1]["commitment"] == Processed:
             if "result" in response and "context" in response["result"] and "slot" in response["result"]["context"]:
                 slot: int = response["result"]["context"]["slot"]
+                self.logger_.debug(f"{method}() data is from slot: {slot}")
                 if slot < self.latest_slot:
                     self.logger_.warning(f"Result is from slot: {slot} - latest slot is: {self.latest_slot}")
                     raise StaleSlotException(self.name, self.cluster_url, self.latest_slot, slot)
@@ -477,7 +485,19 @@ class BetterClient:
                              skip_preflight=opts.skip_preflight)
 
         response = self.compatible_client.send_transaction(transaction, *signers, opts=proper_opts)
-        return str(response["result"])
+        signature: str = str(response["result"])
+
+        if signature != __STUB_TRANSACTION_SIGNATURE:
+            transaction_status = self.compatible_client.get_signature_statuses([signature])
+            if "result" in transaction_status and "context" in transaction_status["result"] and "slot" in transaction_status["result"]["context"]:
+                slot: int = transaction_status["result"]["context"]["slot"]
+                self.rpc_caller.require_data_from_fresh_slot(slot)
+            else:
+                self.logger.error(f"Could not get status for signature {signature}")
+        else:
+            self.logger.error("Could not get status for stub signature")
+
+        return signature
 
     def wait_for_confirmation(self, transaction_ids: typing.Sequence[str], max_wait_in_seconds: int = 60) -> typing.Sequence[str]:
         self.logger.info(f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}.")
