@@ -160,6 +160,7 @@ manager.open()
 
 def pulse_action(_: int) -> None:
     try:
+        context.client.require_data_from_fresh_slot()
         model_state: mango.ModelState = model_state_builder.build(context)
         market_maker.pulse(context, model_state)
         hedger.pulse(context, model_state)

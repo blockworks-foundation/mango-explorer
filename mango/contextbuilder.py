@@ -75,6 +75,10 @@ class ContextBuilder:
                             help="Encoding to request when receiving data from Solana (options are 'base58' (slow), 'base64', 'base64+zstd', or 'jsonParsed')")
         parser.add_argument("--blockhash-cache-duration", type=int,
                             help="How long (in seconds) to cache 'recent' blockhashes")
+        parser.add_argument("--stale-data-pause-before-retry", type=Decimal,
+                            help="How long (in seconds, e.g. 0.1) to pause after retrieving stale data before retrying")
+        parser.add_argument("--stale-data-maximum-retries", type=int,
+                            help="How many times to retry fetching data after being given stale data before giving up")
         parser.add_argument("--gma-chunk-size", type=Decimal, default=None,
                             help="Maximum number of addresses to send in a single call to getMultipleAccounts()")
         parser.add_argument("--gma-chunk-pause", type=Decimal, default=None,
@@ -102,12 +106,26 @@ class ContextBuilder:
         commitment: typing.Optional[str] = args.commitment
         encoding: typing.Optional[str] = args.encoding
         blockhash_cache_duration: typing.Optional[int] = args.blockhash_cache_duration
+        stale_data_pause_before_retry: typing.Optional[Decimal] = args.stale_data_pause_before_retry
+        stale_data_maximum_retries: typing.Optional[int] = args.stale_data_maximum_retries
         gma_chunk_size: typing.Optional[Decimal] = args.gma_chunk_size
         gma_chunk_pause: typing.Optional[Decimal] = args.gma_chunk_pause
         token_filename: str = args.token_data_file
 
-        context: Context = ContextBuilder.build(name, cluster_name, cluster_url, skip_preflight, commitment, encoding, blockhash_cache_duration,
-                                                group_name, group_address, mango_program_address, serum_program_address, gma_chunk_size, gma_chunk_pause, token_filename)
+        # Do this here so build() only ever has to handle the sequence of retry times. (It gets messy
+        # passing around the sequnce *plus* the data to reconstruct it for build().)
+        actual_maximum_stale_data_pauses: int = stale_data_maximum_retries or 20
+        actual_stale_data_pauses_before_retry: typing.Sequence[float] = []
+        if stale_data_pause_before_retry is not None:
+            actual_stale_data_pauses_before_retry = [
+                float(stale_data_pause_before_retry)] * actual_maximum_stale_data_pauses
+
+        context: Context = ContextBuilder.build(name, cluster_name, cluster_url, skip_preflight, commitment,
+                                                encoding, blockhash_cache_duration,
+                                                actual_stale_data_pauses_before_retry,
+                                                group_name, group_address, mango_program_address,
+                                                serum_program_address, gma_chunk_size, gma_chunk_pause,
+                                                token_filename)
         logging.debug(f"{context}")
 
         return context
@@ -121,6 +139,7 @@ class ContextBuilder:
         return ContextBuilder.build(context.name, context.client.cluster_name, context.client.cluster_url,
                                     context.client.skip_preflight, context.client.commitment,
                                     context.client.encoding, context.client.blockhash_cache_duration,
+                                    context.client.stale_data_pauses_before_retry,
                                     group_name, None, None, None,
                                     context.gma_chunk_size, context.gma_chunk_pause,
                                     SPLTokenLookup.DefaultDataFilepath)
@@ -137,6 +156,7 @@ class ContextBuilder:
                                                                context.client.skip_preflight,
                                                                context.client.encoding,
                                                                context.client.blockhash_cache_duration,
+                                                               context.client.stale_data_pauses_before_retry,
                                                                context.client.instruction_reporter)
 
         return fresh_context
@@ -153,6 +173,7 @@ class ContextBuilder:
                                                                context.client.skip_preflight,
                                                                context.client.encoding,
                                                                context.client.blockhash_cache_duration,
+                                                               context.client.stale_data_pauses_before_retry,
                                                                context.client.instruction_reporter)
 
         return fresh_context
@@ -162,6 +183,7 @@ class ContextBuilder:
               cluster_url: typing.Optional[str] = None, skip_preflight: bool = False,
               commitment: typing.Optional[str] = None, encoding: typing.Optional[str] = None,
               blockhash_cache_duration: typing.Optional[int] = None,
+              stale_data_pauses_before_retry: typing.Optional[typing.Sequence[float]] = None,
               group_name: typing.Optional[str] = None, group_address: typing.Optional[PublicKey] = None,
               program_address: typing.Optional[PublicKey] = None, serum_program_address: typing.Optional[PublicKey] = None,
               gma_chunk_size: typing.Optional[Decimal] = None, gma_chunk_pause: typing.Optional[Decimal] = None,
@@ -185,6 +207,7 @@ class ContextBuilder:
         actual_commitment: str = commitment or "processed"
         actual_encoding: str = encoding or "base64"
         actual_blockhash_cache_duration: int = blockhash_cache_duration or 0
+        actual_stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry or []
 
         actual_cluster_url: str = cluster_url or os.environ.get(
             "CLUSTER_URL") or MangoConstants["cluster_urls"][actual_cluster]
@@ -238,4 +261,4 @@ class ContextBuilder:
             all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
 
-        return Context(actual_name, actual_cluster, actual_cluster_url, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup)
+        return Context(actual_name, actual_cluster, actual_cluster_url, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_stale_data_pauses_before_retry, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup)

@@ -27,7 +27,7 @@ from solana.blockhash import Blockhash, BlockhashCache
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
-from solana.rpc.commitment import Commitment
+from solana.rpc.commitment import Commitment, Processed
 from solana.rpc.providers.http import HTTPProvider
 from solana.rpc.types import DataSliceOpts, MemcmpOpts, RPCMethod, RPCResponse, TokenAccountOpts, TxOpts
 from solana.transaction import Transaction
@@ -112,6 +112,33 @@ class NodeIsBehindException(ClientException):
 
     def __str__(self) -> str:
         return f"« NodeIsBehindException '{self.name}' [behind by {self.slots_behind} slots] on {self.cluster_url} »"
+
+
+# # 🥭 TransactionAlreadyProcessedException class
+#
+# A `TransactionAlreadyProcessedException` exception indicates that a transaction with that signature and
+# recent blockhash has already been processed.
+#
+# This can be a normal consequence of the stale slot checking/resubmission (which will mean it is ignored)
+# or it can indicate an actual problem.
+#
+class TransactionAlreadyProcessedException(RateLimitException):
+    pass
+
+
+# # 🥭 StaleSlotException class
+#
+# A `StaleSlotException` exception allows trapping and handling exceptions when data is received from
+#
+class StaleSlotException(ClientException):
+    def __init__(self, name: str, cluster_url: str, latest_seen_slot: int, just_returned_slot: int) -> None:
+        message: str = f"Stale slot received - received data from slot {just_returned_slot} having previously seen slot {latest_seen_slot}."
+        super().__init__(message, name, cluster_url)
+        self.latest_seen_slot: int = latest_seen_slot
+        self.just_returned_slot: int = just_returned_slot
+
+    def __str__(self) -> str:
+        return f"« StaleSlotException '{self.name}' [received data from slot {self.just_returned_slot} having previously seen slot {self.latest_seen_slot}] on {self.cluster_url} »"
 
 
 # # 🥭 FailedToFetchBlockhashException class
@@ -203,18 +230,58 @@ UnspecifiedCommitment = Commitment("unspecified")
 UnspecifiedEncoding = "unspecified"
 
 
-# # 🥭 ErrorHandlingProvider class
+# # 🥭 RPCCaller class
 #
-# A `ErrorHandlingProvider` extends the HTTPProvider with better error handling.
+# A `RPCCaller` extends the HTTPProvider with better error handling.
 #
-class ErrorHandlingProvider(HTTPProvider):
-    def __init__(self, name: str, cluster_url: str, instruction_reporter: InstructionReporter):
+class RPCCaller(HTTPProvider):
+    def __init__(self, name: str, cluster_url: str, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter):
         super().__init__(cluster_url)
+        self.logger_: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster_url: str = cluster_url
         self.instruction_reporter: InstructionReporter = instruction_reporter
+        self.stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry
+        self.latest_slot: int = 0
+
+    def require_data_from_fresh_slot(self) -> None:
+        self.latest_slot += 1
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
+        # No pauses specified means this funcitonality is turned off.
+        if len(self.stale_data_pauses_before_retry) == 0:
+            return self.__make_request(method, *params)
+
+        at_least_one_submission: bool = False
+        last_stale_slot_exception: StaleSlotException
+        for pause in [*self.stale_data_pauses_before_retry, 0]:
+            try:
+                return self.__make_request(method, *params)
+            except TransactionAlreadyProcessedException as transaction_already_processed_exception:
+                if not at_least_one_submission:
+                    raise transaction_already_processed_exception
+
+                # The transaction has already been processed (even though we previously got a stale slot
+                # response). So, yay? It's good that it was successfully handled (and presumably processed)
+                # and it means we can safely ignore this exception, but it does leave us with no proper
+                # response to return.
+                #
+                # Return fake data in the expected structure for now, and try to figure out a better way.
+                return {
+                    'jsonrpc': '2.0',
+                    'id': 0,
+                    'result': 'stub-for-already-submitted-transaction-signature',
+                }
+            except StaleSlotException as exception:
+                last_stale_slot_exception = exception
+                self.logger_.debug(f"Will retry after pause of {pause} seconds after getting stale slot: {exception}")
+                time.sleep(pause)
+            at_least_one_submission = True
+
+        # They've all failed.
+        raise last_stale_slot_exception
+
+    def __make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
         # This is the entire method in HTTPProvider that we're overriding here:
         #
         # """Make an HTTP request to an http rpc endpoint."""
@@ -243,6 +310,19 @@ class ErrorHandlingProvider(HTTPProvider):
         # information as we can.
         response_text: str = raw_response.text
         response: typing.Dict[str, typing.Any] = json.loads(response_text)
+
+        # Did we get sufficiently up-to-date information? It must be from the last slot we saw or a
+        # newer slot.
+        #
+        # Only do this check if we're using a commitment level of 'processed'.
+        if len(params) > 1 and "commitment" in params[1] and params[1]["commitment"] == Processed:
+            if "result" in response and "context" in response["result"] and "slot" in response["result"]["context"]:
+                slot: int = response["result"]["context"]["slot"]
+                if slot < self.latest_slot:
+                    self.logger_.warning(f"Result is from slot: {slot} - latest slot is: {self.latest_slot}")
+                    raise StaleSlotException(self.name, self.cluster_url, self.latest_slot, slot)
+                self.latest_slot = slot
+
         if "error" in response:
             if response["error"] is str:
                 message: str = typing.cast(str, response["error"])
@@ -270,6 +350,9 @@ class ErrorHandlingProvider(HTTPProvider):
                 if error_err == "BlockhashNotFound":
                     raise BlockhashNotFoundException(self.name, self.cluster_url, blockhash)
 
+                if error_err == "AlreadyProcessed":
+                    raise TransactionAlreadyProcessedException(error_message, self.name, self.cluster_url)
+
                 exception_message: str = f"Transaction failed with: '{error_message}'"
                 raise TransactionException(transaction, exception_message, error_code, self.name,
                                            self.cluster_url, method, parameters, response_text, error_accounts,
@@ -280,17 +363,16 @@ class ErrorHandlingProvider(HTTPProvider):
 
 
 class BetterClient:
-    def __init__(self, client: Client, name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, instruction_reporter: InstructionReporter) -> None:
+    def __init__(self, client: Client, name: str, cluster_name: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, rpc_caller: RPCCaller) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.compatible_client: Client = client
         self.name: str = name
         self.cluster_name: str = cluster_name
-        self.cluster_url: str = cluster_url
         self.commitment: Commitment = commitment
         self.skip_preflight: bool = skip_preflight
         self.encoding: str = encoding
         self.blockhash_cache_duration: int = blockhash_cache_duration
-        self.instruction_reporter: InstructionReporter = instruction_reporter
+        self.rpc_caller: RPCCaller = rpc_caller
 
         # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451
         # "I think you are better off doing 4,8,16,20,30"
@@ -298,15 +380,30 @@ class BetterClient:
             8), Decimal(16), Decimal(20), Decimal(30)]
 
     @staticmethod
-    def from_configuration(name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, instruction_reporter: InstructionReporter) -> "BetterClient":
-        provider: HTTPProvider = ErrorHandlingProvider(name, cluster_url, instruction_reporter)
+    def from_configuration(name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter) -> "BetterClient":
+        rpc_caller: RPCCaller = RPCCaller(name, cluster_url, stale_data_pauses_before_retry, instruction_reporter)
         blockhash_cache: typing.Union[BlockhashCache, bool] = False
         if blockhash_cache_duration > 0:
             blockhash_cache = BlockhashCache(blockhash_cache_duration)
         client: Client = Client(cluster_url, commitment=commitment, blockhash_cache=blockhash_cache)
-        client._provider = provider
+        client._provider = rpc_caller
 
-        return BetterClient(client, name, cluster_name, cluster_url, commitment, skip_preflight, encoding, blockhash_cache_duration, instruction_reporter)
+        return BetterClient(client, name, cluster_name, commitment, skip_preflight, encoding, blockhash_cache_duration, rpc_caller)
+
+    @property
+    def cluster_url(self) -> str:
+        return self.rpc_caller.cluster_url
+
+    @property
+    def instruction_reporter(self) -> InstructionReporter:
+        return self.rpc_caller.instruction_reporter
+
+    @property
+    def stale_data_pauses_before_retry(self) -> typing.Sequence[float]:
+        return self.rpc_caller.stale_data_pauses_before_retry
+
+    def require_data_from_fresh_slot(self) -> None:
+        self.rpc_caller.require_data_from_fresh_slot()
 
     def get_balance(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment) -> Decimal:
         resolved_commitment, _ = self.__resolve_defaults(commitment)

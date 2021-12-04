@@ -55,6 +55,9 @@ class PerpToSpotHedger(Hedger):
 
     def pulse(self, context: mango.Context, model_state: mango.ModelState) -> None:
         try:
+            # Make sure we get fresh data
+            context.client.require_data_from_fresh_slot()
+
             # Latency can be important here so fetch fresh Account data in one gulp.
             fresh_data: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(
                 context, [model_state.group.address, model_state.group.cache, model_state.account.address])

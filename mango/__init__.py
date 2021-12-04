@@ -33,6 +33,7 @@ from .client import ClientException as ClientException
 from .client import FailedToFetchBlockhashException as FailedToFetchBlockhashException
 from .client import NodeIsBehindException as NodeIsBehindException
 from .client import RateLimitException as RateLimitException
+from .client import RPCCaller as RPCCaller
 from .client import TooManyRequestsRateLimitException as TooManyRequestsRateLimitException
 from .client import TooMuchBandwidthRateLimitException as TooMuchBandwidthRateLimitException
 from .client import TransactionException as TransactionException
