@@ -63,7 +63,8 @@ class ContextBuilder:
         parser.add_argument("--name", type=str, default="Mango Explorer",
                             help="Name of the program (used in reports and alerts)")
         parser.add_argument("--cluster-name", type=str, default=None, help="Solana RPC cluster name")
-        parser.add_argument("--cluster-url", type=str, default=None, help="Solana RPC cluster URL")
+        parser.add_argument("--cluster-url", type=str, action="append", default=[],
+                            help="Solana RPC cluster URL (can be specified multiple times to provide failover when one errors)")
         parser.add_argument("--group-name", type=str, default=None, help="Mango group name")
         parser.add_argument("--group-address", type=PublicKey, default=None, help="Mango group address")
         parser.add_argument("--mango-program-address", type=PublicKey, default=None, help="Mango program address")
@@ -97,7 +98,7 @@ class ContextBuilder:
     def from_command_line_parameters(args: argparse.Namespace) -> Context:
         name: typing.Optional[str] = args.name
         cluster_name: typing.Optional[str] = args.cluster_name
-        cluster_url: typing.Optional[str] = args.cluster_url
+        cluster_urls: typing.Optional[typing.Sequence[str]] = args.cluster_url
         group_name: typing.Optional[str] = args.group_name
         group_address: typing.Optional[PublicKey] = args.group_address
         mango_program_address: typing.Optional[PublicKey] = args.mango_program_address
@@ -120,7 +121,7 @@ class ContextBuilder:
             actual_stale_data_pauses_before_retry = [
                 float(stale_data_pause_before_retry)] * actual_maximum_stale_data_pauses
 
-        context: Context = ContextBuilder.build(name, cluster_name, cluster_url, skip_preflight, commitment,
+        context: Context = ContextBuilder.build(name, cluster_name, cluster_urls, skip_preflight, commitment,
                                                 encoding, blockhash_cache_duration,
                                                 actual_stale_data_pauses_before_retry,
                                                 group_name, group_address, mango_program_address,
@@ -136,7 +137,7 @@ class ContextBuilder:
 
     @staticmethod
     def from_group_name(context: Context, group_name: str) -> Context:
-        return ContextBuilder.build(context.name, context.client.cluster_name, context.client.cluster_url,
+        return ContextBuilder.build(context.name, context.client.cluster_name, context.client.cluster_urls,
                                     context.client.skip_preflight, context.client.commitment,
                                     context.client.encoding, context.client.blockhash_cache_duration,
                                     context.client.stale_data_pauses_before_retry,
@@ -151,7 +152,7 @@ class ContextBuilder:
         fresh_context = copy.copy(context)
         fresh_context.client = BetterClient.from_configuration(context.name,
                                                                cluster_name,
-                                                               cluster_url,
+                                                               [cluster_url],
                                                                context.client.commitment,
                                                                context.client.skip_preflight,
                                                                context.client.encoding,
@@ -168,7 +169,7 @@ class ContextBuilder:
         fresh_context = copy.copy(context)
         fresh_context.client = BetterClient.from_configuration(context.name,
                                                                cluster_name,
-                                                               cluster_url,
+                                                               [cluster_url],
                                                                context.client.commitment,
                                                                context.client.skip_preflight,
                                                                context.client.encoding,
@@ -180,7 +181,7 @@ class ContextBuilder:
 
     @staticmethod
     def build(name: typing.Optional[str] = None, cluster_name: typing.Optional[str] = None,
-              cluster_url: typing.Optional[str] = None, skip_preflight: bool = False,
+              cluster_urls: typing.Optional[typing.Sequence[str]] = None, skip_preflight: bool = False,
               commitment: typing.Optional[str] = None, encoding: typing.Optional[str] = None,
               blockhash_cache_duration: typing.Optional[int] = None,
               stale_data_pauses_before_retry: typing.Optional[typing.Sequence[float]] = None,
@@ -188,7 +189,7 @@ class ContextBuilder:
               program_address: typing.Optional[PublicKey] = None, serum_program_address: typing.Optional[PublicKey] = None,
               gma_chunk_size: typing.Optional[Decimal] = None, gma_chunk_pause: typing.Optional[Decimal] = None,
               token_filename: str = SPLTokenLookup.DefaultDataFilepath) -> "Context":
-        def public_key_or_none(address: typing.Optional[str]) -> typing.Optional[PublicKey]:
+        def __public_key_or_none(address: typing.Optional[str]) -> typing.Optional[PublicKey]:
             if address is not None and address != "":
                 return PublicKey(address)
             return None
@@ -209,8 +210,14 @@ class ContextBuilder:
         actual_blockhash_cache_duration: int = blockhash_cache_duration or 0
         actual_stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry or []
 
-        actual_cluster_url: str = cluster_url or os.environ.get(
-            "CLUSTER_URL") or MangoConstants["cluster_urls"][actual_cluster]
+        actual_cluster_urls: typing.Optional[typing.Sequence[str]] = cluster_urls
+        if actual_cluster_urls is None or len(actual_cluster_urls) == 0:
+            cluster_url_from_environment: typing.Optional[str] = os.environ.get("CLUSTER_URL")
+            if cluster_url_from_environment is not None and cluster_url_from_environment != "":
+                actual_cluster_urls = [cluster_url_from_environment]
+            else:
+                actual_cluster_urls = [MangoConstants["cluster_urls"][actual_cluster]]
+
         actual_skip_preflight: bool = skip_preflight
         actual_group_name: str = group_name or os.environ.get("GROUP_NAME") or default_group_data["name"]
 
@@ -222,11 +229,11 @@ class ContextBuilder:
         if found_group_data is None:
             raise Exception(f"Could not find group named '{actual_group_name}' in cluster '{actual_cluster}'.")
 
-        actual_group_address: PublicKey = group_address or public_key_or_none(os.environ.get(
+        actual_group_address: PublicKey = group_address or __public_key_or_none(os.environ.get(
             "GROUP_ADDRESS")) or PublicKey(found_group_data["publicKey"])
-        actual_program_address: PublicKey = program_address or public_key_or_none(os.environ.get(
+        actual_program_address: PublicKey = program_address or __public_key_or_none(os.environ.get(
             "MANGO_PROGRAM_ADDRESS")) or PublicKey(found_group_data["mangoProgramId"])
-        actual_serum_program_address: PublicKey = serum_program_address or public_key_or_none(os.environ.get(
+        actual_serum_program_address: PublicKey = serum_program_address or __public_key_or_none(os.environ.get(
             "SERUM_PROGRAM_ADDRESS")) or PublicKey(found_group_data["serumProgramId"])
 
         actual_gma_chunk_size: Decimal = gma_chunk_size or Decimal(100)
@@ -261,4 +268,4 @@ class ContextBuilder:
             all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
 
-        return Context(actual_name, actual_cluster, actual_cluster_url, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_stale_data_pauses_before_retry, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup)
+        return Context(actual_name, actual_cluster, actual_cluster_urls, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_stale_data_pauses_before_retry, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup)

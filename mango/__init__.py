@@ -30,10 +30,12 @@ from .cache import RootBankCache as RootBankCache
 from .client import BetterClient as BetterClient
 from .client import BlockhashNotFoundException as BlockhashNotFoundException
 from .client import ClientException as ClientException
+from .client import CompoundRPCCaller as CompoundRPCCaller
 from .client import FailedToFetchBlockhashException as FailedToFetchBlockhashException
 from .client import NodeIsBehindException as NodeIsBehindException
 from .client import RateLimitException as RateLimitException
 from .client import RPCCaller as RPCCaller
+from .client import SlotHolder as SlotHolder
 from .client import TooManyRequestsRateLimitException as TooManyRequestsRateLimitException
 from .client import TooMuchBandwidthRateLimitException as TooMuchBandwidthRateLimitException
 from .client import TransactionException as TransactionException

@@ -29,6 +29,7 @@ from .constants import MangoConstants
 from .instructionreporter import InstructionReporter, CompoundInstructionReporter
 from .instrumentlookup import InstrumentLookup
 from .marketlookup import MarketLookup
+from .text import indent_collection_as_str, indent_item_by
 
 
 # # 🥭 Context class
@@ -36,16 +37,17 @@ from .marketlookup import MarketLookup
 # A `Context` object to manage Solana connection and Mango configuration.
 #
 class Context:
-    def __init__(self, name: str, cluster_name: str, cluster_url: str, skip_preflight: bool, commitment: str,
-                 encoding: str, blockhash_cache_duration: int, stale_data_pauses_before_retry: typing.Sequence[float],
-                 mango_program_address: PublicKey, serum_program_address: PublicKey, group_name: str,
-                 group_address: PublicKey, gma_chunk_size: Decimal, gma_chunk_pause: Decimal,
-                 instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> None:
+    def __init__(self, name: str, cluster_name: str, cluster_urls: typing.Sequence[str], skip_preflight: bool,
+                 commitment: str, encoding: str, blockhash_cache_duration: int,
+                 stale_data_pauses_before_retry: typing.Sequence[float], mango_program_address: PublicKey,
+                 serum_program_address: PublicKey, group_name: str, group_address: PublicKey,
+                 gma_chunk_size: Decimal, gma_chunk_pause: Decimal, instrument_lookup: InstrumentLookup,
+                 market_lookup: MarketLookup) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_addresses(
             mango_program_address, serum_program_address)
-        self.client: BetterClient = BetterClient.from_configuration(name, cluster_name, cluster_url, Commitment(
+        self.client: BetterClient = BetterClient.from_configuration(name, cluster_name, cluster_urls, Commitment(
             commitment), skip_preflight, encoding, blockhash_cache_duration, stale_data_pauses_before_retry, instruction_reporter)
         self.mango_program_address: PublicKey = mango_program_address
         self.serum_program_address: PublicKey = serum_program_address
@@ -107,9 +109,11 @@ class Context:
         return typing.cast(typing.Sequence[typing.Any], stats_response.json())
 
     def __str__(self) -> str:
+        cluster_urls: str = indent_item_by(indent_collection_as_str(self.client.cluster_urls))
         return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝 '{self.name}':
     Cluster Name: {self.client.cluster_name}
-    Cluster URL: {self.client.cluster_url}
+    Cluster URLs:
+        {cluster_urls}
     Group Name: {self.group_name}
     Group Address: {self.group_address}
     Mango Program Address: {self.mango_program_address}

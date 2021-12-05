@@ -21,7 +21,7 @@ import time
 import typing
 
 
-from base64 import b64decode
+from base64 import b64decode, b64encode
 from decimal import Decimal
 from solana.blockhash import Blockhash, BlockhashCache
 from solana.keypair import Keypair
@@ -37,15 +37,14 @@ from .instructionreporter import InstructionReporter
 from .logmessages import expand_log_messages
 
 
-__STUB_TRANSACTION_SIGNATURE: str = "stub-for-already-submitted-transaction-signature"
+_STUB_TRANSACTION_SIGNATURE: str = "stub-for-already-submitted-transaction-signature"
+
 
 # # 🥭 ClientException class
 #
 # A `ClientException` exception base class that allows trapping and handling rate limiting
 # independent of other error handling.
 #
-
-
 class ClientException(Exception):
     def __init__(self, message: str, name: str, cluster_url: str) -> None:
         super().__init__(message)
@@ -234,25 +233,51 @@ UnspecifiedCommitment = Commitment("unspecified")
 UnspecifiedEncoding = "unspecified"
 
 
+# # 🥭 SlotHolder class
+#
+# A `SlotHolder` shares the latest slot across multiple `RPCCaller`s.
+#
+class SlotHolder:
+    def __init__(self) -> None:
+        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.__latest_slot: int = 0
+
+    @property
+    def latest_slot(self) -> int:
+        return self.__latest_slot
+
+    def require_data_from_fresh_slot(self, latest_slot: typing.Optional[int] = None) -> None:
+        latest: int = latest_slot or self.latest_slot
+        if latest >= self.latest_slot:
+            self.__latest_slot = latest + 1
+            self.logger.debug(f"Requiring data from slot {self.latest_slot} onwards now.")
+
+    def is_acceptable(self, slot_to_check: int) -> bool:
+        if slot_to_check < self.__latest_slot:
+            return False
+
+        if slot_to_check > self.__latest_slot:
+            self.__latest_slot = slot_to_check
+            self.logger.debug(f"Only accepting data from slot {self.latest_slot} onwards now.")
+        return True
+
+
 # # 🥭 RPCCaller class
 #
 # A `RPCCaller` extends the HTTPProvider with better error handling.
 #
 class RPCCaller(HTTPProvider):
-    def __init__(self, name: str, cluster_url: str, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter):
+    def __init__(self, name: str, cluster_url: str, stale_data_pauses_before_retry: typing.Sequence[float], slot_holder: SlotHolder, instruction_reporter: InstructionReporter):
         super().__init__(cluster_url)
         self.logger_: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster_url: str = cluster_url
-        self.instruction_reporter: InstructionReporter = instruction_reporter
         self.stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry
-        self.latest_slot: int = 0
+        self.slot_holder: SlotHolder = slot_holder
+        self.instruction_reporter: InstructionReporter = instruction_reporter
 
     def require_data_from_fresh_slot(self, latest_slot: typing.Optional[int] = None) -> None:
-        latest: int = latest_slot or self.latest_slot
-        if latest >= self.latest_slot:
-            self.latest_slot = latest + 1
-            self.logger_.debug(f"Only accepting data from slot {self.latest_slot} onwards now.")
+        self.slot_holder.require_data_from_fresh_slot(latest_slot)
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
         # No pauses specified means this funcitonality is turned off.
@@ -277,7 +302,7 @@ class RPCCaller(HTTPProvider):
                 return {
                     "jsonrpc": "2.0",
                     "id": 0,
-                    "result": __STUB_TRANSACTION_SIGNATURE,
+                    "result": _STUB_TRANSACTION_SIGNATURE,
                 }
             except StaleSlotException as exception:
                 last_stale_slot_exception = exception
@@ -326,10 +351,10 @@ class RPCCaller(HTTPProvider):
             if "result" in response and "context" in response["result"] and "slot" in response["result"]["context"]:
                 slot: int = response["result"]["context"]["slot"]
                 self.logger_.debug(f"{method}() data is from slot: {slot}")
-                if slot < self.latest_slot:
-                    self.logger_.warning(f"Result is from slot: {slot} - latest slot is: {self.latest_slot}")
-                    raise StaleSlotException(self.name, self.cluster_url, self.latest_slot, slot)
-                self.latest_slot = slot
+                if not self.slot_holder.is_acceptable(slot):
+                    self.logger_.warning(
+                        f"Result is from slot: {slot} - latest slot is: {self.slot_holder.latest_slot}")
+                    raise StaleSlotException(self.name, self.cluster_url, self.slot_holder.latest_slot, slot)
 
         if "error" in response:
             if response["error"] is str:
@@ -369,9 +394,88 @@ class RPCCaller(HTTPProvider):
         # The call succeeded.
         return typing.cast(RPCResponse, response)
 
+    def __str__(self) -> str:
+        return f"« 𝚁𝙿𝙲𝙲𝚊𝚕𝚕𝚎𝚛 [{self.cluster_url}] »"
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+# # 🥭 CompoundRPCCaller class
+#
+# A `CompoundRPCCaller` will try multiple providers until it succeeds (or the all fail). Should only trap
+# and switch provider on exceptions that show that provider is no longer at the tip of the chain.
+#
+class CompoundRPCCaller(HTTPProvider):
+    def __init__(self, providers: typing.Sequence[RPCCaller]):
+        self.logger_: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.__providers: typing.Sequence[RPCCaller] = providers
+
+    @property
+    def current(self) -> RPCCaller:
+        return self.__providers[0]
+
+    @property
+    def all_providers(self) -> typing.Sequence[RPCCaller]:
+        return self.__providers
+
+    def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
+        last_exception: Exception
+        for provider in self.__providers:
+            try:
+                result = provider.make_request(method, *params)
+                successful_index: int = self.__providers.index(provider)
+                if successful_index != 0:
+                    # Rebase the providers' list so we continue to use this successful one (until it fails)
+                    self.__providers = [*self.__providers[successful_index:], *self.__providers[:successful_index]]
+                return result
+            except (RateLimitException,
+                    NodeIsBehindException,
+                    StaleSlotException,
+                    FailedToFetchBlockhashException,
+                    BlockhashNotFoundException) as exception:
+                last_exception = exception
+                self.logger_.info(f"Moving to next provider - {provider} gave {exception}")
+
+        raise last_exception
+
+    def is_connected(self) -> bool:
+        # All we need for this to be true is for one of our providers to be connected.
+        for provider in self.__providers:
+            if provider.is_connected():
+                return True
+        return False
+
+    def __str__(self) -> str:
+        return f"« 𝙲𝚘𝚖𝚙𝚘𝚞𝚗𝚍𝚁𝙿𝙲𝙲𝚊𝚕𝚕𝚎𝚛 with {len(self.__providers)} providers - current head is: {self.__providers[0]} »"
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+# This is purely to pass `maxRetries`: 0 in the TxOpts. (solana-py doesn't currently support this but Solana does.)
+class _MaxRetriesZeroClient(Client):
+    def _send_raw_transaction_args(
+        self, txn: typing.Union[bytes, str], opts: TxOpts
+    ) -> typing.Tuple[RPCMethod, str, typing.Dict[str, typing.Union[bool, Commitment, str]]]:
+
+        if isinstance(txn, bytes):
+            txn = b64encode(txn).decode("utf-8")
+
+        return (
+            RPCMethod("sendTransaction"),
+            txn,
+            {
+                self._skip_preflight_key: opts.skip_preflight,
+                self._preflight_comm_key: opts.preflight_commitment,
+                self._encoding_key: "base64",
+                "maxRetries": 0  # type: ignore
+            },
+        )
+
 
 class BetterClient:
-    def __init__(self, client: Client, name: str, cluster_name: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, rpc_caller: RPCCaller) -> None:
+    def __init__(self, client: Client, name: str, cluster_name: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, rpc_caller: CompoundRPCCaller) -> None:
         self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.compatible_client: Client = client
         self.name: str = name
@@ -380,38 +484,44 @@ class BetterClient:
         self.skip_preflight: bool = skip_preflight
         self.encoding: str = encoding
         self.blockhash_cache_duration: int = blockhash_cache_duration
-        self.rpc_caller: RPCCaller = rpc_caller
-
-        # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451
-        # "I think you are better off doing 4,8,16,20,30"
-        self.retry_pauses: typing.Sequence[Decimal] = [Decimal(4), Decimal(
-            8), Decimal(16), Decimal(20), Decimal(30)]
+        self.rpc_caller: CompoundRPCCaller = rpc_caller
 
     @staticmethod
-    def from_configuration(name: str, cluster_name: str, cluster_url: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter) -> "BetterClient":
-        rpc_caller: RPCCaller = RPCCaller(name, cluster_url, stale_data_pauses_before_retry, instruction_reporter)
+    def from_configuration(name: str, cluster_name: str, cluster_urls: typing.Sequence[str], commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter) -> "BetterClient":
+        slot_holder: SlotHolder = SlotHolder()
+        rpc_callers: typing.List[RPCCaller] = []
+        for cluster_url in cluster_urls:
+            rpc_caller: RPCCaller = RPCCaller(name, cluster_url, stale_data_pauses_before_retry,
+                                              slot_holder, instruction_reporter)
+            rpc_callers += [rpc_caller]
+
+        provider: CompoundRPCCaller = CompoundRPCCaller(rpc_callers)
         blockhash_cache: typing.Union[BlockhashCache, bool] = False
         if blockhash_cache_duration > 0:
             blockhash_cache = BlockhashCache(blockhash_cache_duration)
-        client: Client = Client(cluster_url, commitment=commitment, blockhash_cache=blockhash_cache)
-        client._provider = rpc_caller
+        client: Client = _MaxRetriesZeroClient(cluster_url, commitment=commitment, blockhash_cache=blockhash_cache)
+        client._provider = provider
 
-        return BetterClient(client, name, cluster_name, commitment, skip_preflight, encoding, blockhash_cache_duration, rpc_caller)
+        return BetterClient(client, name, cluster_name, commitment, skip_preflight, encoding, blockhash_cache_duration, provider)
 
     @property
     def cluster_url(self) -> str:
-        return self.rpc_caller.cluster_url
+        return self.rpc_caller.current.cluster_url
+
+    @property
+    def cluster_urls(self) -> typing.Sequence[str]:
+        return [rpc_caller.cluster_url for rpc_caller in self.rpc_caller.all_providers]
 
     @property
     def instruction_reporter(self) -> InstructionReporter:
-        return self.rpc_caller.instruction_reporter
+        return self.rpc_caller.current.instruction_reporter
 
     @property
     def stale_data_pauses_before_retry(self) -> typing.Sequence[float]:
-        return self.rpc_caller.stale_data_pauses_before_retry
+        return self.rpc_caller.current.stale_data_pauses_before_retry
 
     def require_data_from_fresh_slot(self) -> None:
-        self.rpc_caller.require_data_from_fresh_slot()
+        self.rpc_caller.current.require_data_from_fresh_slot()
 
     def get_balance(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment) -> Decimal:
         resolved_commitment, _ = self.__resolve_defaults(commitment)
@@ -487,11 +597,11 @@ class BetterClient:
         response = self.compatible_client.send_transaction(transaction, *signers, opts=proper_opts)
         signature: str = str(response["result"])
 
-        if signature != __STUB_TRANSACTION_SIGNATURE:
+        if signature != _STUB_TRANSACTION_SIGNATURE:
             transaction_status = self.compatible_client.get_signature_statuses([signature])
             if "result" in transaction_status and "context" in transaction_status["result"] and "slot" in transaction_status["result"]["context"]:
                 slot: int = transaction_status["result"]["context"]["slot"]
-                self.rpc_caller.require_data_from_fresh_slot(slot)
+                self.rpc_caller.current.require_data_from_fresh_slot(slot)
             else:
                 self.logger.error(f"Could not get status for signature {signature}")
         else:
@@ -528,7 +638,7 @@ class BetterClient:
         return commitment, encoding
 
     def __str__(self) -> str:
-        return f"« 𝙱𝚎𝚝𝚝𝚎𝚛𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster_name}]: {self.cluster_url} »"
+        return f"« 𝙱𝚎𝚝𝚝𝚎𝚛𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster_name}]: {self.cluster_urls} »"
 
     def __repr__(self) -> str:
         return f"{self}"

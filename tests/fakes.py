@@ -29,9 +29,10 @@ class MockCompatibleClient(Client):
 
 class MockClient(mango.BetterClient):
     def __init__(self) -> None:
-        rpc = mango.RPCCaller("fake", "http://localhost", [], mango.InstructionReporter())
+        rpc = mango.RPCCaller("fake", "http://localhost", [], mango.SlotHolder(), mango.InstructionReporter())
+        compound = mango.CompoundRPCCaller([rpc])
         super().__init__(MockCompatibleClient(), "test", "local", Commitment("processed"),
-                         False, "base64", 0, rpc)
+                         False, "base64", 0, compound)
 
 
 def fake_public_key() -> PublicKey:
@@ -45,7 +46,7 @@ def fake_seeded_public_key(seed: str) -> PublicKey:
 def fake_context() -> mango.Context:
     context = mango.Context(name="Mango Test",
                             cluster_name="test",
-                            cluster_url="http://localhost",
+                            cluster_urls=["http://localhost", "http://localhost"],
                             skip_preflight=False,
                             commitment="processed",
                             encoding="base64",
