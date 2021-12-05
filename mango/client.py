@@ -432,6 +432,7 @@ class CompoundRPCCaller(HTTPProvider):
         if len(self.__providers) > 1:
             self.__providers = [*self.__providers[1:], *self.__providers[:1]]
             self.on_provider_change()
+        self.logger_.debug(f"Told to shift provider - now using: {self.__providers[0]}")
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
         last_exception: Exception
@@ -443,6 +444,7 @@ class CompoundRPCCaller(HTTPProvider):
                     # Rebase the providers' list so we continue to use this successful one (until it fails)
                     self.__providers = [*self.__providers[successful_index:], *self.__providers[:successful_index]]
                     self.on_provider_change()
+                    self.logger_.debug(f"Shifted provider - now using: {self.__providers[0]}")
                 return result
             except (RateLimitException,
                     NodeIsBehindException,
@@ -618,7 +620,7 @@ class BetterClient:
         # but retry it with the next provider in the list, with a fresh recent_blockhash. (Setting the transaction's
         # recent_blockhash to None makes the client fetch a fresh one.)
         last_exception: BlockhashNotFoundException
-        for _ in self.rpc_caller.all_providers:
+        for provider in self.rpc_caller.all_providers:
             try:
                 proper_commitment: Commitment = opts.preflight_commitment
                 if proper_commitment == UnspecifiedCommitment:
@@ -643,6 +645,8 @@ class BetterClient:
 
                 return signature
             except BlockhashNotFoundException as blockhash_not_found_exception:
+                self.logger.debug(
+                    f"Trying next provider after intercepting blockhash exception on provider {provider}: {blockhash_not_found_exception}")
                 last_exception = blockhash_not_found_exception
                 transaction.recent_blockhash = None
                 self.rpc_caller.shift_to_next_provider()
