@@ -68,12 +68,10 @@ class LotSizeConverter():
         return int(round(size * quote_factor) / self.quote_lot_size)
 
     def round_base(self, quantity: Decimal) -> Decimal:
-        lots: int = self.base_size_number_to_lots(quantity)
-        return self.base_size_lots_to_number(Decimal(lots))
+        return round(quantity / self.lot_size) * self.lot_size
 
     def round_quote(self, price: Decimal) -> Decimal:
-        lots: int = self.quote_size_number_to_lots(price)
-        return self.quote_size_lots_to_number(Decimal(lots))
+        return round(price / self.tick_size) * self.tick_size
 
     def __str__(self) -> str:
         return f"« 𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 {self.base.symbol}/{self.quote.symbol} [base lot size: {self.base_lot_size} ({self.base.decimals} decimals), quote lot size: {self.quote_lot_size} ({self.quote.decimals} decimals)] »"

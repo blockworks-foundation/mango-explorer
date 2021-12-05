@@ -18,37 +18,37 @@ def test_from_args() -> None:
 def test_rounds_price() -> None:
     context = fake_context()
     model_state = fake_model_state()
-    order: mango.Order = fake_order(price=Decimal("0.123456789"))
+    order: mango.Order = fake_order(price=Decimal("1.23456789"))
 
     actual: RoundToLotSizeElement = RoundToLotSizeElement()
     result = actual.process(context, model_state, [order])
 
-    assert result[0].price == Decimal("0.123457")
+    assert result[0].price == 1
     assert result[0].quantity == 1
 
 
 def test_rounds_quantity() -> None:
     context = fake_context()
     model_state = fake_model_state()
-    order: mango.Order = fake_order(quantity=Decimal("0.123456789"))
+    order: mango.Order = fake_order(quantity=Decimal("1.23456789"))
 
     actual: RoundToLotSizeElement = RoundToLotSizeElement()
     result = actual.process(context, model_state, [order])
 
     assert result[0].price == 1
-    assert result[0].quantity == Decimal("0.123457")
+    assert result[0].quantity == Decimal("1.234568")
 
 
 def test_rounds_price_and_quantity() -> None:
     context = fake_context()
     model_state = fake_model_state()
-    order: mango.Order = fake_order(price=Decimal("0.123456789"), quantity=Decimal("0.123456789"))
+    order: mango.Order = fake_order(price=Decimal("1.23456789"), quantity=Decimal("1.23456789"))
 
     actual: RoundToLotSizeElement = RoundToLotSizeElement()
     result = actual.process(context, model_state, [order])
 
-    assert result[0].price == Decimal("0.123457")
-    assert result[0].quantity == Decimal("0.123457")
+    assert result[0].price == 1
+    assert result[0].quantity == Decimal("1.234568")
 
 
 def test_removes_when_price_rounds_to_zero() -> None:
