@@ -12,6 +12,5 @@ def test_constructor() -> None:
 
     actual = mango.OwnedInstrumentValue(owner, token_value)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.owner == owner
     assert actual.token_value == token_value

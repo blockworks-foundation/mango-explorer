@@ -44,7 +44,7 @@ class LiquidatableState(enum.Flag):
 
 class LiquidatableReport:
     def __init__(self, group: Group, prices: typing.Sequence[InstrumentValue], account: Account, state: LiquidatableState, worthwhile_threshold: Decimal) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.group: Group = group
         self.prices: typing.Sequence[InstrumentValue] = prices
         self.account: Account = account

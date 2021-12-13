@@ -237,7 +237,7 @@ class RootBank(AddressableAccount):
 #
 class TokenBank():
     def __init__(self, token: Token, root_bank_address: PublicKey) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.token: Token = token
         self.root_bank_address: PublicKey = root_bank_address
 

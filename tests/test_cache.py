@@ -18,7 +18,6 @@ def test_cache_constructor() -> None:
     actual = mango.Cache(account_info, mango.Version.V1, meta_data, price_cache, root_bank_cache, perp_market_cache)
 
     assert actual is not None
-    assert actual.logger is not None
     assert actual.account_info == account_info
     assert actual.address == fake_seeded_public_key("cache")
     assert actual.meta_data == meta_data

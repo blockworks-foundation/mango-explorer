@@ -239,7 +239,7 @@ UnspecifiedEncoding = "unspecified"
 #
 class SlotHolder:
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.__latest_slot: int = 0
 
     @property
@@ -250,7 +250,7 @@ class SlotHolder:
         latest: int = latest_slot or self.latest_slot
         if latest >= self.latest_slot:
             self.__latest_slot = latest + 1
-            self.logger.debug(f"Requiring data from slot {self.latest_slot} onwards now.")
+            self._logger.debug(f"Requiring data from slot {self.latest_slot} onwards now.")
 
     def is_acceptable(self, slot_to_check: int) -> bool:
         if slot_to_check < self.__latest_slot:
@@ -258,7 +258,7 @@ class SlotHolder:
 
         if slot_to_check > self.__latest_slot:
             self.__latest_slot = slot_to_check
-            self.logger.debug(f"Only accepting data from slot {self.latest_slot} onwards now.")
+            self._logger.debug(f"Only accepting data from slot {self.latest_slot} onwards now.")
         return True
 
 
@@ -269,7 +269,7 @@ class SlotHolder:
 class RPCCaller(HTTPProvider):
     def __init__(self, name: str, cluster_url: str, stale_data_pauses_before_retry: typing.Sequence[float], slot_holder: SlotHolder, instruction_reporter: InstructionReporter):
         super().__init__(cluster_url)
-        self.logger_: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster_url: str = cluster_url
         self.stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry
@@ -306,7 +306,7 @@ class RPCCaller(HTTPProvider):
                 }
             except StaleSlotException as exception:
                 last_stale_slot_exception = exception
-                self.logger_.debug(f"Will retry after pause of {pause} seconds after getting stale slot: {exception}")
+                self._logger.debug(f"Will retry after pause of {pause} seconds after getting stale slot: {exception}")
                 time.sleep(pause)
             at_least_one_submission = True
 
@@ -350,9 +350,9 @@ class RPCCaller(HTTPProvider):
         if len(params) > 1 and "commitment" in params[1] and params[1]["commitment"] == Processed:
             if "result" in response and "context" in response["result"] and "slot" in response["result"]["context"]:
                 slot: int = response["result"]["context"]["slot"]
-                self.logger_.debug(f"{method}() data is from slot: {slot}")
+                self._logger.debug(f"{method}() data is from slot: {slot}")
                 if not self.slot_holder.is_acceptable(slot):
-                    self.logger_.warning(
+                    self._logger.warning(
                         f"Result is from slot: {slot} - latest slot is: {self.slot_holder.latest_slot}")
                     raise StaleSlotException(self.name, self.cluster_url, self.slot_holder.latest_slot, slot)
 
@@ -408,7 +408,7 @@ class RPCCaller(HTTPProvider):
 #
 class CompoundRPCCaller(HTTPProvider):
     def __init__(self, providers: typing.Sequence[RPCCaller]):
-        self.logger_: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.__providers: typing.Sequence[RPCCaller] = providers
         self.on_provider_change: typing.Callable[[], None] = lambda: None
 
@@ -432,7 +432,7 @@ class CompoundRPCCaller(HTTPProvider):
         if len(self.__providers) > 1:
             self.__providers = [*self.__providers[1:], *self.__providers[:1]]
             self.on_provider_change()
-        self.logger_.debug(f"Told to shift provider - now using: {self.__providers[0]}")
+        self._logger.debug(f"Told to shift provider - now using: {self.__providers[0]}")
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
         last_exception: Exception
@@ -444,14 +444,14 @@ class CompoundRPCCaller(HTTPProvider):
                     # Rebase the providers' list so we continue to use this successful one (until it fails)
                     self.__providers = [*self.__providers[successful_index:], *self.__providers[:successful_index]]
                     self.on_provider_change()
-                    self.logger_.debug(f"Shifted provider - now using: {self.__providers[0]}")
+                    self._logger.debug(f"Shifted provider - now using: {self.__providers[0]}")
                 return result
             except (RateLimitException,
                     NodeIsBehindException,
                     StaleSlotException,
                     FailedToFetchBlockhashException) as exception:
                 last_exception = exception
-                self.logger_.info(f"Moving to next provider - {provider} gave {exception}")
+                self._logger.info(f"Moving to next provider - {provider} gave {exception}")
 
         raise last_exception
 
@@ -492,7 +492,7 @@ class _MaxRetriesZeroClient(Client):
 
 class BetterClient:
     def __init__(self, client: Client, name: str, cluster_name: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, rpc_caller: CompoundRPCCaller) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.compatible_client: Client = client
         self.name: str = name
         self.cluster_name: str = cluster_name
@@ -639,13 +639,13 @@ class BetterClient:
                         slot: int = transaction_status["result"]["context"]["slot"]
                         self.rpc_caller.current.require_data_from_fresh_slot(slot)
                     else:
-                        self.logger.error(f"Could not get status for signature {signature}")
+                        self._logger.error(f"Could not get status for signature {signature}")
                 else:
-                    self.logger.error("Could not get status for stub signature")
+                    self._logger.error("Could not get status for stub signature")
 
                 return signature
             except BlockhashNotFoundException as blockhash_not_found_exception:
-                self.logger.debug(
+                self._logger.debug(
                     f"Trying next provider after intercepting blockhash exception on provider {provider}: {blockhash_not_found_exception}")
                 last_exception = blockhash_not_found_exception
                 transaction.recent_blockhash = None
@@ -654,7 +654,7 @@ class BetterClient:
         raise last_exception
 
     def wait_for_confirmation(self, transaction_ids: typing.Sequence[str], max_wait_in_seconds: int = 60) -> typing.Sequence[str]:
-        self.logger.info(f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}.")
+        self._logger.info(f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}.")
         all_confirmed: typing.List[str] = []
         start_time: datetime.datetime = datetime.datetime.now()
         cutoff: datetime.datetime = start_time + datetime.timedelta(seconds=max_wait_in_seconds)
@@ -663,13 +663,13 @@ class BetterClient:
                 time.sleep(1)
                 confirmed = self.get_confirmed_transaction(transaction_id)
                 if confirmed is not None:
-                    self.logger.info(
+                    self._logger.info(
                         f"Confirmed {transaction_id} after {datetime.datetime.now() - start_time} seconds.")
                     all_confirmed += [transaction_id]
                     break
 
         if len(all_confirmed) != len(transaction_ids):
-            self.logger.info(f"Timed out after {max_wait_in_seconds} seconds waiting on transaction {transaction_id}.")
+            self._logger.info(f"Timed out after {max_wait_in_seconds} seconds waiting on transaction {transaction_id}.")
         return all_confirmed
 
     def __resolve_defaults(self, commitment: typing.Optional[Commitment], encoding: typing.Optional[str] = None) -> typing.Tuple[Commitment, str]:

@@ -33,7 +33,6 @@ def test_spl_token_lookup() -> None:
     }
     actual = mango.SPLTokenLookup("test-filename", data)
     assert actual is not None
-    assert actual.logger is not None
     eth = actual.find_by_symbol("ETH")
     assert eth is not None
     assert eth.name == "Wrapped Ethereum (Sollet)"

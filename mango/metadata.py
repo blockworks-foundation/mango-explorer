@@ -24,7 +24,7 @@ from .version import Version
 #
 class Metadata():
     def __init__(self, data_type: typing.Any, version: Version, is_initialized: bool) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.data_type: typing.Any = data_type
         self.version: Version = version
         self.is_initialized: bool = is_initialized

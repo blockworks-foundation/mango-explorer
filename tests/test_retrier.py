@@ -11,7 +11,6 @@ def test_constructor() -> None:
     pauses: typing.Sequence[Decimal] = [Decimal(2)]
     actual = mango.RetryWithPauses(name, func, pauses)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.name == name
     assert actual.func == func
     assert actual.pauses == pauses

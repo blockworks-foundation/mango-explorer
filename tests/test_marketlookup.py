@@ -108,7 +108,6 @@ def test_serum_market_lookup() -> None:
     }
     actual = mango.SerumMarketLookup(fake_seeded_public_key("program ID"), data)
     assert actual is not None
-    assert actual.logger is not None
     eth_usdt = actual.find_by_symbol("ETH/USDT")
     assert eth_usdt is not None
     assert eth_usdt.address == PublicKey("7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF")

@@ -41,13 +41,13 @@ from .liquidationevent import LiquidationEvent
 #
 class NotificationTarget(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     def send(self, item: typing.Any) -> None:
         try:
             self.send_notification(item)
         except Exception as exception:
-            self.logger.error(f"Error sending {item} - {self} - {exception}")
+            self._logger.error(f"Error sending {item} - {self} - {exception}")
 
     @abc.abstractmethod
     def send_notification(self, item: typing.Any) -> None:
@@ -299,7 +299,7 @@ class CompoundNotificationTarget(NotificationTarget):
             except Exception as exception:
                 if not self.in_exception_handler:
                     self.in_exception_handler = True
-                    self.logger.error(f"Failed to send notification to: {target} - {exception}")
+                    self._logger.error(f"Failed to send notification to: {target} - {exception}")
             finally:
                 self.in_exception_handler = False
 

@@ -90,7 +90,7 @@ class BiasQuantityOnPositionElement(PairwiseElement):
             if buy.quantity != clamped_biased_buy_quantity:
                 new_buy = buy.with_quantity(clamped_biased_buy_quantity)
                 buy_bias_description = "BUY more" if clamped_biased_buy_quantity > buy.quantity else "BUY less"
-                self.logger.debug(f"""BUY order change - maximum position {self.maximum_position} with current position {current_position} and target position {self.target_position} creates a {buy_bias_description} bias:
+                self._logger.debug(f"""BUY order change - maximum position {self.maximum_position} with current position {current_position} and target position {self.target_position} creates a {buy_bias_description} bias:
     Old: {buy}
     New: {new_buy}""")
                 buy = new_buy
@@ -103,7 +103,7 @@ class BiasQuantityOnPositionElement(PairwiseElement):
             if sell.quantity != clamped_biased_sell_quantity:
                 new_sell = sell.with_quantity(clamped_biased_sell_quantity)
                 sell_bias_description = "SELL more" if clamped_biased_sell_quantity > sell.quantity else "SELL less"
-                self.logger.debug(f"""SELL order change - maximum position {self.maximum_position} with current position {current_position} and target position {self.target_position} creates a {sell_bias_description} bias:
+                self._logger.debug(f"""SELL order change - maximum position {self.maximum_position} with current position {current_position} and target position {self.target_position} creates a {sell_bias_description} bias:
     Old: {sell}
     New: {new_sell}""")
                 sell = new_sell

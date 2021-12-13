@@ -72,13 +72,13 @@ class TopOfBookElement(Element):
                     new_price = place_below.price - adjustment
 
             if new_price is None:
-                self.logger.debug(f"""Order change - no acceptable price from anyone else so leaving it as it is:
+                self._logger.debug(f"""Order change - no acceptable price from anyone else so leaving it as it is:
     Old: {order}
     New: {order}""")
                 new_orders += [order]
             else:
                 new_order: mango.Order = order.with_price(new_price)
-                self.logger.debug(f"""Order change - top of book from others is {self.adjustment_ticks} tick from {new_price}:
+                self._logger.debug(f"""Order change - top of book from others is {self.adjustment_ticks} tick from {new_price}:
     Old: {order}
     New: {new_order}""")
                 new_orders += [new_order]

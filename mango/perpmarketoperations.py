@@ -99,7 +99,7 @@ class PerpMarketOperations(MarketOperations):
         self.perp_market: PerpMarket = perp_market
 
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
-        self.logger.info(f"Cancelling {self.market_name} order {order}.")
+        self._logger.info(f"Cancelling {self.market_name} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(
             order, ok_if_missing=ok_if_missing)
@@ -112,7 +112,7 @@ class PerpMarketOperations(MarketOperations):
         client_id: int = self.context.generate_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         order_with_client_id: Order = order.with_client_id(client_id)
-        self.logger.info(f"Placing {self.market_name} order {order_with_client_id}.")
+        self._logger.info(f"Placing {self.market_name} order {order_with_client_id}.")
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
             order_with_client_id)
         accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)

@@ -98,7 +98,7 @@ class Price():
 #
 class Oracle(metaclass=abc.ABCMeta):
     def __init__(self, name: str, market: Market) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name = name
         self.market = market
 

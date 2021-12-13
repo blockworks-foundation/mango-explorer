@@ -43,7 +43,7 @@ class InventorySource(enum.Enum):
 #
 class Market(metaclass=abc.ABCMeta):
     def __init__(self, program_address: PublicKey, address: PublicKey, inventory_source: InventorySource, base: Instrument, quote: Token, lot_size_converter: LotSizeConverter) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.program_address: PublicKey = program_address
         self.address: PublicKey = address
         self.inventory_source: InventorySource = inventory_source

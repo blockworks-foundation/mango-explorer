@@ -56,7 +56,7 @@ from pathlib import Path
 
 class SimpleMarketMaker:
     def __init__(self, context: mango.Context, wallet: mango.Wallet, market: mango.SerumMarket, market_operations: mango.MarketOperations, oracle: mango.Oracle, spread_ratio: Decimal, position_size_ratio: Decimal, existing_order_tolerance: Decimal, pause: timedelta) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: mango.Context = context
         self.wallet: mango.Wallet = wallet
         self.market: mango.SerumMarket = market
@@ -75,12 +75,12 @@ class SimpleMarketMaker:
         self.cleanup()
 
         while not self.stop_requested:
-            self.logger.info("Starting fresh iteration.")
+            self._logger.info("Starting fresh iteration.")
 
             try:
                 # Update current state
                 price = self.oracle.fetch_price(self.context)
-                self.logger.info(f"Price is: {price}")
+                self._logger.info(f"Price is: {price}")
                 inventory = self.fetch_inventory()
 
                 # Calculate what we want the orders to be.
@@ -90,7 +90,7 @@ class SimpleMarketMaker:
                 current_orders = self.market_operations.load_my_orders()
                 buy_orders = [order for order in current_orders if order.side == mango.Side.BUY]
                 if self.orders_require_action(buy_orders, bid, buy_quantity):
-                    self.logger.info("Cancelling BUY orders.")
+                    self._logger.info("Cancelling BUY orders.")
                     for order in buy_orders:
                         self.market_operations.cancel_order(order)
                     buy_order: mango.Order = mango.Order.from_basic_info(
@@ -99,7 +99,7 @@ class SimpleMarketMaker:
 
                 sell_orders = [order for order in current_orders if order.side == mango.Side.SELL]
                 if self.orders_require_action(sell_orders, ask, sell_quantity):
-                    self.logger.info("Cancelling SELL orders.")
+                    self._logger.info("Cancelling SELL orders.")
                     for order in sell_orders:
                         self.market_operations.cancel_order(order)
                     sell_order: mango.Order = mango.Order.from_basic_info(
@@ -108,24 +108,24 @@ class SimpleMarketMaker:
 
                 self.update_health_on_successful_iteration()
             except Exception as exception:
-                self.logger.warning(
+                self._logger.warning(
                     f"Pausing and continuing after problem running market-making iteration: {exception} - {traceback.format_exc()}")
 
             # Wait and hope for fills.
-            self.logger.info(f"Pausing for {self.pause} seconds.")
+            self._logger.info(f"Pausing for {self.pause} seconds.")
             time.sleep(self.pause.seconds)
 
-        self.logger.info("Stopped.")
+        self._logger.info("Stopped.")
 
         self.cleanup()
 
     def stop(self) -> None:
-        self.logger.info("Stop requested.")
+        self._logger.info("Stop requested.")
         self.stop_requested = True
         Path(self.health_filename).unlink(missing_ok=True)
 
     def cleanup(self) -> None:
-        self.logger.info("Cleaning up.")
+        self._logger.info("Cleaning up.")
         orders = self.market_operations.load_my_orders()
         for order in orders:
             self.market_operations.cancel_order(order)
@@ -183,7 +183,7 @@ class SimpleMarketMaker:
         try:
             Path(self.health_filename).touch(mode=0o666, exist_ok=True)
         except Exception as exception:
-            self.logger.warning(f"Touching file '{self.health_filename}' raised exception: {exception}")
+            self._logger.warning(f"Touching file '{self.health_filename}' raised exception: {exception}")
 
     def __str__(self) -> str:
         return f"""« 𝚂𝚒𝚖𝚙𝚕𝚎𝙼𝚊𝚛𝚔𝚎𝚝𝙼𝚊𝚔𝚎𝚛 for market '{self.market.symbol}' »"""

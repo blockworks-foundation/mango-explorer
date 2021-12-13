@@ -28,7 +28,7 @@ from ..observables import EventSource
 #
 class Hedger(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.pulse_complete: EventSource[datetime] = EventSource[datetime]()
         self.pulse_error: EventSource[Exception] = EventSource[Exception]()
 

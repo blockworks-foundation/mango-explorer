@@ -10,4 +10,3 @@ def test_constructor() -> None:
     owner = fake_seeded_public_key("token owner")
     actual = mango.TokenAccount(fake_account_info(), mango.Version.V1, owner, token_value)
     assert actual is not None
-    assert actual.logger is not None

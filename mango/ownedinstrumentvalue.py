@@ -30,7 +30,7 @@ from .instrumentvalue import InstrumentValue
 
 class OwnedInstrumentValue:
     def __init__(self, owner: PublicKey, token_value: InstrumentValue) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.owner = owner
         self.token_value = token_value
 

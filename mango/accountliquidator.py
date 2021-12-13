@@ -45,7 +45,7 @@ from .liquidatablereport import LiquidatableReport
 
 class AccountLiquidator(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
     def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.Sequence[TransactionInstruction]:
@@ -69,5 +69,5 @@ class NullAccountLiquidator(AccountLiquidator):
         return []
 
     def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[typing.Sequence[str]]:
-        self.logger.info(f"Skipping liquidation of account [{liquidatable_report.account.address}]")
+        self._logger.info(f"Skipping liquidation of account [{liquidatable_report.account.address}]")
         return None

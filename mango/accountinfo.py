@@ -32,7 +32,7 @@ from .encoding import decode_binary, encode_binary
 #
 class AccountInfo:
     def __init__(self, address: PublicKey, executable: bool, lamports: Decimal, owner: PublicKey, rent_epoch: Decimal, data: bytes) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.address: PublicKey = address
         self.executable: bool = executable
         self.lamports: Decimal = lamports

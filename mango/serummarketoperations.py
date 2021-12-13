@@ -122,7 +122,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
 
     def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         if self.open_orders_address is None:
-            self.logger.debug("Returning empty crank instructions - no serum OpenOrders address provided.")
+            self._logger.debug("Returning empty crank instructions - no serum OpenOrders address provided.")
             return CombinableInstructions.empty()
 
         open_orders_to_crank: typing.Sequence[PublicKey] = [*open_orders_addresses, self.open_orders_address]
@@ -164,7 +164,7 @@ class SerumMarketOperations(MarketOperations):
         self.market_instruction_builder: SerumMarketInstructionBuilder = market_instruction_builder
 
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
-        self.logger.info(f"Cancelling {self.serum_market.symbol} order {order}.")
+        self._logger.info(f"Cancelling {self.serum_market.symbol} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(
             order, ok_if_missing=ok_if_missing)
@@ -179,7 +179,7 @@ class SerumMarketOperations(MarketOperations):
         order_with_client_id: Order = Order(id=0, client_id=client_id, side=order.side, price=order.price,
                                             quantity=order.quantity, owner=open_orders_address,
                                             order_type=order.order_type)
-        self.logger.info(f"Placing {self.serum_market.symbol} order {order_with_client_id}.")
+        self._logger.info(f"Placing {self.serum_market.symbol} order {order_with_client_id}.")
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
             order_with_client_id)
 

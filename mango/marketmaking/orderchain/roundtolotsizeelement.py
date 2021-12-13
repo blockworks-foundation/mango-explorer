@@ -46,12 +46,12 @@ class RoundToLotSizeElement(Element):
             new_quantity: Decimal = model_state.market.lot_size_converter.round_base(order.quantity)
             new_order: mango.Order = order.with_price(new_price).with_quantity(new_quantity)
             if new_order.price == 0 or new_order.quantity == 0:
-                self.logger.debug(f"""Order removed - price or quantity rounded to zero:
+                self._logger.debug(f"""Order removed - price or quantity rounded to zero:
     Old: {order}
     New: {new_order}""")
             elif (order.price != new_order.price) or (order.quantity != new_order.quantity):
                 new_orders += [new_order]
-                self.logger.debug(f"""Order change - price and quantity now aligned to lot size:
+                self._logger.debug(f"""Order change - price and quantity now aligned to lot size:
     Old: {order}
     New: {new_order}""")
             else:

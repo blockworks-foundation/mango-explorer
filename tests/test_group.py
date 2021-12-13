@@ -31,7 +31,6 @@ def test_construction() -> None:
                          cache_key, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault)
 
     assert actual is not None
-    assert actual.logger is not None
     assert actual.name == name
     assert actual.meta_data == meta_data
     assert actual.shared_quote_token == shared_quote_token.token

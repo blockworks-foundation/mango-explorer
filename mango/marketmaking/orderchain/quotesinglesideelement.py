@@ -44,11 +44,11 @@ class QuoteSingleSideElement(Element):
         new_orders: typing.List[mango.Order] = []
         for order in orders:
             if order.side == self.allowed:
-                self.logger.debug(f"""Allowing {order.side} order [allowed: {self.allowed}]:
+                self._logger.debug(f"""Allowing {order.side} order [allowed: {self.allowed}]:
     Allowed: {order}""")
                 new_orders += [order]
             else:
-                self.logger.debug(f"""Removing {order.side} order [allowed: {self.allowed}]:
+                self._logger.debug(f"""Removing {order.side} order [allowed: {self.allowed}]:
     Removed: {order}""")
 
         return new_orders

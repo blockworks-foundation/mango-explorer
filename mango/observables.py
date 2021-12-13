@@ -90,14 +90,14 @@ class TimestampedPrintingObserverSubscriber(PrintingObserverSubscriber):
 #
 class CollectingObserverSubscriber(rx.core.observer.observer.Observer):
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.collected: typing.List[typing.Any] = []
 
     def on_next(self, item: typing.Any) -> None:
         self.collected += [item]
 
     def on_error(self, ex: Exception) -> None:
-        self.logger.error(f"Received error: {ex}")
+        self._logger.error(f"Received error: {ex}")
 
     def on_completed(self) -> None:
         pass
@@ -162,7 +162,7 @@ class FunctionObserver(rx.core.observer.observer.Observer):
                  on_next: typing.Callable[[typing.Any], None],
                  on_error: typing.Callable[[Exception], None] = lambda _: None,
                  on_completed: typing.Callable[[], None] = lambda: None) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._on_next = on_next
         self._on_error = on_error
         self._on_completed = on_completed
@@ -171,19 +171,19 @@ class FunctionObserver(rx.core.observer.observer.Observer):
         try:
             self._on_next(value)
         except Exception as exception:
-            self.logger.warning(f"on_next callable raised exception: {exception}")
+            self._logger.warning(f"on_next callable raised exception: {exception}")
 
     def on_error(self, error: Exception) -> None:
         try:
             self._on_error(error)
         except Exception as exception:
-            self.logger.warning(f"on_error callable raised exception: {exception}")
+            self._logger.warning(f"on_error callable raised exception: {exception}")
 
     def on_completed(self) -> None:
         try:
             self._on_completed()
         except Exception as exception:
-            self.logger.warning(f"on_completed callable raised exception: {exception}")
+            self._logger.warning(f"on_completed callable raised exception: {exception}")
 
 
 # # 🥭 DisposingSubject
@@ -294,7 +294,7 @@ TEventDatum = typing.TypeVar('TEventDatum')
 class EventSource(rx.subject.subject.Subject, typing.Generic[TEventDatum]):
     def __init__(self) -> None:
         super().__init__()
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     def on_next(self, event: TEventDatum) -> None:
         super().on_next(event)
@@ -309,7 +309,7 @@ class EventSource(rx.subject.subject.Subject, typing.Generic[TEventDatum]):
         try:
             self.on_next(event)
         except Exception as exception:
-            self.logger.warning(f"Failed to publish event '{event}' - {exception}")
+            self._logger.warning(f"Failed to publish event '{event}' - {exception}")
 
     def dispose(self) -> None:
         super().dispose()

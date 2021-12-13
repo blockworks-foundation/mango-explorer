@@ -24,7 +24,7 @@ from .constants import SOL_DECIMALS, SOL_MINT_ADDRESS
 
 class Instrument:
     def __init__(self, symbol: str, name: str, decimals: Decimal) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.symbol: str = symbol.upper()
         self.name: str = name
         self.decimals: Decimal = decimals

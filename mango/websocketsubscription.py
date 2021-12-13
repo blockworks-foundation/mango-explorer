@@ -43,7 +43,7 @@ TSubscriptionInstance = typing.TypeVar('TSubscriptionInstance')
 class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], metaclass=abc.ABCMeta):
     def __init__(self, context: Context, address: PublicKey,
                  constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
         self.address: PublicKey = address
         self.id: int = context.generate_client_id()
@@ -83,13 +83,13 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
             id: int = int(response["id"])
             if id == self.id:
                 subscription_id: int = int(response["result"])
-                self.logger.info(f"Subscription created with id {subscription_id}.")
+                self._logger.info(f"Subscription created with id {subscription_id}.")
         elif (response["method"] == "accountNotification") or (response["method"] == "programNotification") or (response["method"] == "logsNotification"):
             subscription_id = response["params"]["subscription"]
             built = self.build_subscribed_instance(response["params"])
             self.publisher.publish(built)
         else:
-            self.logger.error(f"[{self.context.name}] Unknown response: {response}")
+            self._logger.error(f"[{self.context.name}] Unknown response: {response}")
 
     def build_subscribed_instance(self, response: RPCResponse) -> TSubscriptionInstance:
         account_info: AccountInfo = AccountInfo.from_response(response, self.address)
@@ -202,7 +202,7 @@ class WebSocketLogSubscription(WebSocketSubscription[LogEvent]):
 #
 class WebSocketSubscriptionManager(Disposable, metaclass=abc.ABCMeta):
     def __init__(self, context: Context, ping_interval: int = 10) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
         self.ping_interval: int = ping_interval
         self.subscriptions: typing.List[WebSocketSubscription[typing.Any]] = []
@@ -275,11 +275,11 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
     def add_subscription_id(self, id: int, subscription_id: int) -> None:
         for subscription in self.subscriptions:
             if subscription.id == id:
-                self.logger.info(
+                self._logger.info(
                     f"Setting ID {subscription_id} on subscription {subscription.id} for {subscription.address}.")
                 subscription.subscription_id = subscription_id
                 return
-        self.logger.error(f"[{self.context.name}] Subscription ID {id} not found")
+        self._logger.error(f"[{self.context.name}] Subscription ID {id} not found")
 
     def subscription_by_subscription_id(self, subscription_id: int) -> WebSocketSubscription[typing.Any]:
         for subscription in self.subscriptions:
@@ -298,7 +298,7 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
             built = subscription.build_subscribed_instance(response["params"])
             subscription.publisher.publish(built)
         else:
-            self.logger.error(f"[{self.context.name}] Unknown response: {response}")
+            self._logger.error(f"[{self.context.name}] Unknown response: {response}")
 
     def open_handler(self, ws: websocket.WebSocketApp) -> None:
         for subscription in self.subscriptions:

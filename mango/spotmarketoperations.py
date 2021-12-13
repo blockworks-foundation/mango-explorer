@@ -110,7 +110,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
 
     def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         if self.open_orders_address is None:
-            self.logger.debug("Returning empty crank instructions - no spot OpenOrders address provided.")
+            self._logger.debug("Returning empty crank instructions - no spot OpenOrders address provided.")
             return CombinableInstructions.empty()
 
         open_orders_to_crank: typing.Sequence[PublicKey] = [*open_orders_addresses, self.open_orders_address]
@@ -155,7 +155,7 @@ class SpotMarketOperations(MarketOperations):
         self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders_by_index[self.market_index]
 
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
-        self.logger.info(f"Cancelling {self.spot_market.symbol} order {order}.")
+        self._logger.info(f"Cancelling {self.spot_market.symbol} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(
             order, ok_if_missing=ok_if_missing)
@@ -169,14 +169,14 @@ class SpotMarketOperations(MarketOperations):
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         order_with_client_id: Order = order.with_client_id(client_id).with_owner(
             self.open_orders_address or SYSTEM_PROGRAM_ADDRESS)
-        self.logger.info(f"Placing {self.spot_market.symbol} order {order}.")
+        self._logger.info(f"Placing {self.spot_market.symbol} order {order}.")
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
             order_with_client_id)
         crank: CombinableInstructions = self._build_crank(add_self=True)
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
 
         transaction_ids = (signers + place + crank + settle).execute(self.context)
-        self.logger.info(f"Transaction IDs: {transaction_ids}.")
+        self._logger.info(f"Transaction IDs: {transaction_ids}.")
 
         return order_with_client_id
 

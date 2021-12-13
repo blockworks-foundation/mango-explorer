@@ -17,7 +17,6 @@ def test_node_bank_constructor() -> None:
 
     actual = mango.NodeBank(account_info, mango.Version.V1, meta_data, vault, balances)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.account_info == account_info
     assert actual.address == fake_seeded_public_key("node bank")
     assert actual.meta_data == meta_data
@@ -41,7 +40,6 @@ def test_root_bank_constructor() -> None:
     actual = mango.RootBank(account_info, mango.Version.V1, meta_data, optimal_util, optimal_rate,
                             max_rate, [node_bank], deposit_index, borrow_index, timestamp)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.account_info == account_info
     assert actual.address == fake_seeded_public_key("root bank")
     assert actual.meta_data == meta_data
@@ -61,7 +59,6 @@ def test_token_bank_constructor() -> None:
     actual = mango.TokenBank(token, root_bank_address)
 
     assert actual is not None
-    assert actual.logger is not None
     assert actual.token == token
     assert actual.root_bank_address == root_bank_address
 
@@ -70,7 +67,6 @@ def test_load_root_bank() -> None:
     actual = load_root_bank("tests/testdata/1deposit/root_bank0.json")
 
     assert actual is not None
-    assert actual.logger is not None
     assert actual.address == PublicKey("HUBX4iwWEUK5VrXXXcB7uhuKrfT4fpu2T9iZbg712JrN")
     assert actual.meta_data.version == mango.Version.V1
     assert actual.meta_data.data_type == mango.layouts.DATA_TYPE.RootBank

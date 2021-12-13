@@ -32,7 +32,7 @@ from ...modelstate import ModelState
 #
 class Element(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:

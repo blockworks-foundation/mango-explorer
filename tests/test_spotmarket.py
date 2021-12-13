@@ -12,7 +12,6 @@ def test_spot_market_stub_constructor() -> None:
     group_address = fake_seeded_public_key("group address")
     actual = mango.SpotMarketStub(program_address, address, base, quote, group_address)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.base == base
     assert actual.quote == quote
     assert actual.address == address

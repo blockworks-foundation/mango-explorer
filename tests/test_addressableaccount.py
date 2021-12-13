@@ -6,5 +6,4 @@ def test_constructor() -> None:
     account_info = fake_account_info()
     actual = mango.AddressableAccount(account_info)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.address == account_info.address

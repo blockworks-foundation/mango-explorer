@@ -28,7 +28,7 @@ from .version import Version
 class AccountFlags:
     def __init__(self, version: Version, initialized: bool, market: bool, open_orders: bool,
                  request_queue: bool, event_queue: bool, bids: bool, asks: bool, disabled: bool) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.version: Version = version
         self.initialized: bool = initialized
         self.market: bool = market

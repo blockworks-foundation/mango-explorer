@@ -38,7 +38,7 @@ from ..calculators.spotcollateralcalculator import SpotCollateralCalculator
 
 class ModelStateBuilder(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
     def build(self, context: mango.Context) -> ModelState:
@@ -79,7 +79,7 @@ class PollingModelStateBuilder(ModelStateBuilder):
         started_at = time.time()
         built: ModelState = self.poll(context)
         time_taken = time.time() - started_at
-        self.logger.debug(f"Poll for model state complete. Time taken: {time_taken:.2f} seconds.")
+        self._logger.debug(f"Poll for model state complete. Time taken: {time_taken:.2f} seconds.")
         return built
 
     @abc.abstractmethod

@@ -14,4 +14,3 @@ def test_constructor() -> None:
     actual = mango.OpenOrders(account_info, mango.Version.V1, program_address, flags, market,
                               owner, Decimal(0), Decimal(0), Decimal(0), Decimal(0), [], Decimal(0))
     assert actual is not None
-    assert actual.logger is not None

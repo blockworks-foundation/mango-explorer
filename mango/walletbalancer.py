@@ -231,7 +231,7 @@ def calculate_required_balance_changes(current_balances: typing.Sequence[Instrum
 class FilterSmallChanges:
     def __init__(self, action_threshold: Decimal, balances: typing.Sequence[InstrumentValue],
                  prices: typing.Sequence[InstrumentValue]) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.prices: typing.Dict[str, InstrumentValue] = {}
         total = Decimal(0)
         for balance in balances:
@@ -240,7 +240,7 @@ class FilterSmallChanges:
             total += price.value * balance.value
         self.total_balance = total
         self.action_threshold_value = total * action_threshold
-        self.logger.info(
+        self._logger.info(
             f"Wallet total balance of {total:,.8f} gives action threshold: {self.action_threshold_value:,.8f}")
 
     def allow(self, token_value: InstrumentValue) -> bool:
@@ -249,7 +249,7 @@ class FilterSmallChanges:
         absolute_value = value.copy_abs()
         result = absolute_value > self.action_threshold_value
 
-        self.logger.info(
+        self._logger.info(
             f"Worth doing? {result}. {token_value.token.name} trade is worth: {absolute_value:,.8f}, threshold is: {self.action_threshold_value:,.8f}.")
         return result
 
@@ -276,7 +276,7 @@ class FilterSmallChanges:
 #
 class WalletBalancer(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
     def balance(self, context: Context, prices: typing.Sequence[InstrumentValue]) -> None:
@@ -330,9 +330,9 @@ class LiveWalletBalancer(WalletBalancer):
             price = InstrumentValue.find_by_token(prices, bal.token)
             value = bal.value * price.value
             total_value += value
-        self.logger.info(f"Starting balances: {padding}{balances_report(balances)}")
+        self._logger.info(f"Starting balances: {padding}{balances_report(balances)}")
         total_token_value: InstrumentValue = InstrumentValue(self.quote_token, total_value)
-        self.logger.info(f"Total: {total_token_value}")
+        self._logger.info(f"Total: {total_token_value}")
 
         resolved_targets: typing.List[InstrumentValue] = []
         for target in self.targets:
@@ -340,19 +340,19 @@ class LiveWalletBalancer(WalletBalancer):
             resolved_targets += [target.resolve(price.token, price.value, total_value)]
 
         balance_changes = calculate_required_balance_changes(balances, resolved_targets)
-        self.logger.info(f"Desired balance changes: {padding}{balances_report(balance_changes)}")
+        self._logger.info(f"Desired balance changes: {padding}{balances_report(balance_changes)}")
 
         dont_bother = FilterSmallChanges(self.action_threshold, balances, prices)
         filtered_changes = list(filter(dont_bother.allow, balance_changes))
-        self.logger.info(f"Filtered balance changes: {padding}{balances_report(filtered_changes)}")
+        self._logger.info(f"Filtered balance changes: {padding}{balances_report(filtered_changes)}")
         if len(filtered_changes) == 0:
-            self.logger.info("No balance changes to make.")
+            self._logger.info("No balance changes to make.")
             return
 
         sorted_changes = sort_changes_for_trades(filtered_changes)
         self._make_changes(sorted_changes)
         updated_balances = self._fetch_balances(context, tokens)
-        self.logger.info(f"Finishing balances: {padding}{balances_report(updated_balances)}")
+        self._logger.info(f"Finishing balances: {padding}{balances_report(updated_balances)}")
 
     def _make_changes(self, balance_changes: typing.Sequence[InstrumentValue]) -> None:
         quote = self.quote_token.symbol
@@ -398,23 +398,23 @@ class LiveAccountBalancer(WalletBalancer):
             price = InstrumentValue.find_by_token(prices, bal.token)
             value = bal.value * price.value
             total_value += value
-        self.logger.info(f"Starting balances: {padding}{balances_report(balances)}")
+        self._logger.info(f"Starting balances: {padding}{balances_report(balances)}")
         quote_token: Token = self.account.shared_quote_token
         total_token_value: InstrumentValue = InstrumentValue(quote_token, total_value)
-        self.logger.info(f"Total: {total_token_value}")
+        self._logger.info(f"Total: {total_token_value}")
         resolved_targets: typing.List[InstrumentValue] = []
         for target in self.targets:
             price = InstrumentValue.find_by_symbol(prices, target.symbol)
             resolved_targets += [target.resolve(price.token, price.value, total_value)]
 
         balance_changes = calculate_required_balance_changes(balances, resolved_targets)
-        self.logger.info(f"Desired balance changes: {padding}{balances_report(balance_changes)}")
+        self._logger.info(f"Desired balance changes: {padding}{balances_report(balance_changes)}")
 
         dont_bother = FilterSmallChanges(self.action_threshold, balances, prices)
         filtered_changes = list(filter(dont_bother.allow, balance_changes))
-        self.logger.info(f"Worthwhile balance changes: {padding}{balances_report(filtered_changes)}")
+        self._logger.info(f"Worthwhile balance changes: {padding}{balances_report(filtered_changes)}")
         if len(filtered_changes) == 0:
-            self.logger.info("No balance changes to make.")
+            self._logger.info("No balance changes to make.")
             return
 
         sorted_changes = sort_changes_for_trades(filtered_changes)
@@ -422,7 +422,7 @@ class LiveAccountBalancer(WalletBalancer):
 
         updated_account: Account = Account.load(context, self.account.address, self.group)
         updated_balances = [basket_token.net_value for basket_token in updated_account.base_slots]
-        self.logger.info(f"Finishing balances: {padding}{balances_report(updated_balances)}")
+        self._logger.info(f"Finishing balances: {padding}{balances_report(updated_balances)}")
 
     def _make_changes(self, balance_changes: typing.Sequence[InstrumentValue]) -> None:
         quote = self.account.shared_quote_token.symbol

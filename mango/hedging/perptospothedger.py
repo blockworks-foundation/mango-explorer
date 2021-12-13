@@ -82,7 +82,7 @@ class PerpToSpotHedger(Hedger):
             # When we add the rounded perp position and token balances, we should get zero if we're delta-neutral.
             # If we have a target balance, subtract that to get our targetted delta neutral balance.
             delta: Decimal = perp_position_rounded + token_balance_rounded - self.target_balance
-            self.logger.debug(
+            self._logger.debug(
                 f"Delta from {self.underlying_market.symbol} to {self.hedging_market.symbol} is {delta:,.8f} {basket_token.base_instrument.symbol}")
 
             if delta != 0:
@@ -93,26 +93,26 @@ class PerpToSpotHedger(Hedger):
                 adjusted_price: Decimal = model_state.price.mid_price * price_adjustment_factor
                 quantity: Decimal = abs(delta)
                 if (self.max_hedge_chunk_quantity > 0) and (quantity > self.max_hedge_chunk_quantity):
-                    self.logger.debug(
+                    self._logger.debug(
                         f"Quantity to hedge ({quantity:,.8f}) is bigger than maximum quantity to hedge in one chunk {self.max_hedge_chunk_quantity:,.8f} - reducing quantity to {self.max_hedge_chunk_quantity:,.8f}.")
                     quantity = self.max_hedge_chunk_quantity
                 order: mango.Order = mango.Order.from_basic_info(side, adjusted_price, quantity, mango.OrderType.IOC)
-                self.logger.info(
+                self._logger.info(
                     f"Hedging perp position {perp_position} and token balance {token_balance} with {side} of {quantity:,.8f} at {up_or_down} ({model_state.price}) {adjusted_price:,.8f} on {self.hedging_market.symbol}\n\t{order}")
                 try:
                     self.market_operations.place_order(order)
                 except Exception:
-                    self.logger.error(
+                    self._logger.error(
                         f"[{context.name}] Failed to hedge on {self.hedging_market.symbol} using order {order} - {traceback.format_exc()}")
                     raise
 
             self.pulse_complete.on_next(datetime.now())
         except (mango.RateLimitException, mango.NodeIsBehindException, mango.BlockhashNotFoundException, mango.FailedToFetchBlockhashException) as common_exception:
             # Don't bother with a long traceback for these common problems.
-            self.logger.error(f"[{context.name}] Hedger problem on pulse: {common_exception}")
+            self._logger.error(f"[{context.name}] Hedger problem on pulse: {common_exception}")
             self.pulse_error.on_next(common_exception)
         except Exception as exception:
-            self.logger.error(f"[{context.name}] Hedger error on pulse:\n{traceback.format_exc()}")
+            self._logger.error(f"[{context.name}] Hedger error on pulse:\n{traceback.format_exc()}")
             self.pulse_error.on_next(exception)
 
     def __str__(self) -> str:

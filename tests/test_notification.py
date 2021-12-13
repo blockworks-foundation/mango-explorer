@@ -26,7 +26,6 @@ def test_telegram_notification_target_constructor() -> None:
     address = "chat@bot"
     actual = mango.TelegramNotificationTarget(address)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.chat_id == "chat"
     assert actual.bot_id == "bot"
 
@@ -35,7 +34,6 @@ def test_discord_notification_target_constructor() -> None:
     address = "discord-address"
     actual = mango.DiscordNotificationTarget(address)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.address == address
 
 
@@ -43,7 +41,6 @@ def test_mailjet_notification_target_constructor() -> None:
     encoded_parameters = "user:secret:subject:from%20name:from@address:to%20name%20with%20colon%3A:to@address"
     actual = mango.MailjetNotificationTarget(encoded_parameters)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.api_key == "user"
     assert actual.api_secret == "secret"
     assert actual.subject == "subject"
@@ -57,7 +54,6 @@ def test_csvfile_notification_target_constructor() -> None:
     filename = "test-filename"
     actual = mango.CsvFileNotificationTarget(filename)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.filename == filename
 
 
@@ -68,7 +64,6 @@ def test_filtering_notification_target_constructor() -> None:
         return True
     actual = mango.FilteringNotificationTarget(mock, func)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.inner_notifier == mock
     assert actual.filter_func == func
 

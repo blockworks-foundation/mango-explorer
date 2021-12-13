@@ -21,7 +21,6 @@ def test_constructor() -> None:
     actual = mango.PerpEventQueue(account_info, mango.Version.V1, meta_data, head, count,
                                   sequence_number, unprocessed_events, processed_events)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.account_info == account_info
     assert actual.meta_data == meta_data
     assert actual.address == address

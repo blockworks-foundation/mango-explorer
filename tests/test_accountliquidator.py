@@ -14,4 +14,3 @@ def test_account_liquidator_constructor() -> None:
 def test_null_account_liquidator_constructor() -> None:
     actual = mango.NullAccountLiquidator()
     assert actual is not None
-    assert actual.logger is not None

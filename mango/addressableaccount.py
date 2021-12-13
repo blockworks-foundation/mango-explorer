@@ -33,7 +33,7 @@ from .accountinfo import AccountInfo
 #
 class AddressableAccount(metaclass=abc.ABCMeta):
     def __init__(self, account_info: AccountInfo) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.account_info = account_info
 
     @property

@@ -30,7 +30,7 @@ from .market import Market
 
 class MarketLookup(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
     def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:

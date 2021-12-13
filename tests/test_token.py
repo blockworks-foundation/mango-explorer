@@ -11,7 +11,6 @@ def test_token_constructor() -> None:
     decimals = Decimal(18)
     actual = mango.Token(symbol, name, decimals, mint)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.symbol == symbol
     assert actual.name == name
     assert actual.mint == mint

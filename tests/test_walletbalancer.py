@@ -110,7 +110,6 @@ def test_filter_small_changes_constructor() -> None:
     expected_action_threshold_value = expected_total_balance / 100  # Action threshold is 0.01
     actual = mango.FilterSmallChanges(action_threshold, current_balances, current_prices)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.prices == expected_prices
     assert actual.total_balance == expected_total_balance
     assert actual.action_threshold_value == expected_action_threshold_value

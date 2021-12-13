@@ -35,7 +35,7 @@ class ReconnectingWebsocket:
     def __init__(self,
                  url: str,
                  on_open_call: typing.Callable[[websocket.WebSocketApp], None]) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.url = url
         self.on_open_call = on_open_call
         self.reconnect_required: bool = True
@@ -51,16 +51,16 @@ class ReconnectingWebsocket:
         self.item: rx.subject.subject.Subject = rx.subject.subject.Subject()
 
     def close(self) -> None:
-        self.logger.info(f"Closing WebSocket for {self.url}")
+        self._logger.info(f"Closing WebSocket for {self.url}")
         self.reconnect_required = False
         self._ws.close()
 
     def force_reconnect(self) -> None:
-        self.logger.info(f"Forcing a reconnect on WebSocket for {self.url}")
+        self._logger.info(f"Forcing a reconnect on WebSocket for {self.url}")
         self._ws.close()
 
     def _on_open(self, ws: websocket.WebSocketApp) -> None:
-        self.logger.info(f"Opening WebSocket for {self.url}")
+        self._logger.info(f"Opening WebSocket for {self.url}")
         if self.on_open_call:
             self.on_open_call(ws)
 
@@ -69,7 +69,7 @@ class ReconnectingWebsocket:
         self.item.on_next(data)
 
     def _on_error(self, *args: typing.Any) -> None:
-        self.logger.warning(f"WebSocket for {self.url} has error {args}")
+        self._logger.warning(f"WebSocket for {self.url} has error {args}")
 
     def _on_ping(self, *_: typing.Any) -> None:
         self.ping.on_next(datetime.now())
@@ -86,7 +86,7 @@ class ReconnectingWebsocket:
 
     def _run(self) -> None:
         while self.reconnect_required:
-            self.logger.info(f"WebSocket connecting to: {self.url}")
+            self._logger.info(f"WebSocket connecting to: {self.url}")
             self.connecting.on_next(datetime.now())
             self._ws = websocket.WebSocketApp(
                 self.url,

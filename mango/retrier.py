@@ -41,7 +41,7 @@ from decimal import Decimal
 #
 class RetryWithPauses:
     def __init__(self, name: str, func: typing.Callable[..., typing.Any], pauses: typing.Sequence[Decimal]) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.func: typing.Callable[..., typing.Any] = func
         self.pauses: typing.Sequence[Decimal] = pauses
@@ -57,28 +57,28 @@ class RetryWithPauses:
                     # "You will see HTTP respose codes 429 for too many requests
                     # or 413 for too much bandwidth."
                     if exception.response.status_code == 413:
-                        self.logger.info(
+                        self._logger.info(
                             f"Retriable call [{self.name}] rate limited (too much bandwidth) with error '{exception}'.")
                     elif exception.response.status_code == 429:
-                        self.logger.info(
+                        self._logger.info(
                             f"Retriable call [{self.name}] rate limited (too many requests) with error '{exception}'.")
                     else:
-                        self.logger.info(
+                        self._logger.info(
                             f"Retriable call [{self.name}] failed with unexpected HTTP error '{exception}'.")
                 else:
-                    self.logger.info(f"Retriable call [{self.name}] failed with unknown HTTP error '{exception}'.")
+                    self._logger.info(f"Retriable call [{self.name}] failed with unknown HTTP error '{exception}'.")
             except Exception as exception:
-                self.logger.info(f"Retriable call failed [{self.name}] with error '{exception}'.")
+                self._logger.info(f"Retriable call failed [{self.name}] with error '{exception}'.")
                 captured_exception = exception
 
             if sleep_time_on_error < 0:
-                self.logger.info(f"No more retries for [{self.name}] - propagating exception.")
+                self._logger.info(f"No more retries for [{self.name}] - propagating exception.")
                 raise captured_exception
 
-            self.logger.info(f"Will retry [{self.name}] call in {sleep_time_on_error} second(s).")
+            self._logger.info(f"Will retry [{self.name}] call in {sleep_time_on_error} second(s).")
             time.sleep(float(sleep_time_on_error))
 
-        self.logger.info(f"End of retry loop for [{self.name}] - propagating exception.")
+        self._logger.info(f"End of retry loop for [{self.name}] - propagating exception.")
         raise captured_exception
 
 

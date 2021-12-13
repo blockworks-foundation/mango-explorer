@@ -53,7 +53,6 @@ def test_construction() -> None:
                            is_bankrupt)
 
     assert actual is not None
-    assert actual.logger is not None
     assert actual.version == mango.Version.V1
     assert actual.meta_data == meta_data
     assert actual.owner == owner

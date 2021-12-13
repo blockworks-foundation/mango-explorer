@@ -79,5 +79,5 @@ class PerpCollateralCalculator(CollateralCalculator):
                 collateral_description += [f"{weighted:,.8f} USDC from {basket_token.base_instrument.symbol}"]
                 total += weighted
 
-        self.logger.debug(f"Weighted collateral: {', '.join(collateral_description)}")
+        self._logger.debug(f"Weighted collateral: {', '.join(collateral_description)}")
         return InstrumentValue(group.shared_quote_token, total)

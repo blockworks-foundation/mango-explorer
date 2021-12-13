@@ -60,7 +60,7 @@ The [full class is available](https://github.com/blockworks-foundation/mango-exp
 try:
     # Update current state
     price = self.oracle.fetch_price(self.context)
-    self.logger.info(f"Price is: {price}")
+    self._logger.info(f"Price is: {price}")
     inventory = self.fetch_inventory()
 
     # Calculate what we want the orders to be.
@@ -70,7 +70,7 @@ try:
     current_orders = self.market_operations.load_my_orders()
     buy_orders = [order for order in current_orders if order.side == mango.Side.BUY]
     if self.orders_require_action(buy_orders, bid, buy_quantity):
-        self.logger.info("Cancelling BUY orders.")
+        self._logger.info("Cancelling BUY orders.")
         for order in buy_orders:
             self.market_operations.cancel_order(order)
         buy_order: mango.Order = mango.Order.from_basic_info(
@@ -79,7 +79,7 @@ try:
 
     sell_orders = [order for order in current_orders if order.side == mango.Side.SELL]
     if self.orders_require_action(sell_orders, ask, sell_quantity):
-        self.logger.info("Cancelling SELL orders.")
+        self._logger.info("Cancelling SELL orders.")
         for order in sell_orders:
             self.market_operations.cancel_order(order)
         sell_order: mango.Order = mango.Order.from_basic_info(
@@ -88,11 +88,11 @@ try:
 
     self.update_health_on_successful_iteration()
 except Exception as exception:
-    self.logger.warning(
+    self._logger.warning(
         f"Pausing and continuing after problem running market-making iteration: {exception} - {traceback.format_exc()}")
 
 # Wait and hope for fills.
-self.logger.info(f"Pausing for {self.pause} seconds.")
+self._logger.info(f"Pausing for {self.pause} seconds.")
 time.sleep(self.pause.seconds)
 ```
 It’s following these steps:
@@ -152,7 +152,7 @@ def pulse(self, context: mango.Context, model_state: ModelState):
 
         cancellations = mango.CombinableInstructions.empty()
         for to_cancel in reconciled.to_cancel:
-            self.logger.info(f"Cancelling {self.market.symbol} {to_cancel}")
+            self._logger.info(f"Cancelling {self.market.symbol} {to_cancel}")
             cancel = self.market_instruction_builder.build_cancel_order_instructions(to_cancel, ok_if_missing=True)
             cancellations += cancel
 
@@ -162,7 +162,7 @@ def pulse(self, context: mango.Context, model_state: ModelState):
             to_place_with_client_id = to_place.with_client_id(desired_client_id)
             self.order_tracker.track(to_place_with_client_id)
 
-            self.logger.info(f"Placing {self.market.symbol} {to_place_with_client_id}")
+            self._logger.info(f"Placing {self.market.symbol} {to_place_with_client_id}")
             place_order = self.market_instruction_builder.build_place_order_instructions(to_place_with_client_id)
             place_orders += place_order
 
@@ -172,7 +172,7 @@ def pulse(self, context: mango.Context, model_state: ModelState):
 
         self.pulse_complete.on_next(datetime.now())
     except Exception as exception:
-        self.logger.error(f"[{context.name}] Market-maker error on pulse: {exception} - {traceback.format_exc()}")
+        self._logger.error(f"[{context.name}] Market-maker error on pulse: {exception} - {traceback.format_exc()}")
         self.pulse_error.on_next(exception)
 ```
 Again you can see the same steps:

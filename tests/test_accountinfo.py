@@ -13,7 +13,6 @@ def test_constructor() -> None:
     data: bytes = bytes([1, 2, 3])
     actual = mango.AccountInfo(address, executable, lamports, owner, rent_epoch, data)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.address == address
     assert actual.executable == executable
     assert actual.lamports == lamports

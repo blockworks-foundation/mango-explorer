@@ -55,7 +55,7 @@ from .wallet import Wallet
 #
 class TradeExecutor(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
     def buy(self, symbol: str, quantity: Decimal) -> Order:
@@ -80,12 +80,12 @@ class NullTradeExecutor(TradeExecutor):
         self.reporter: typing.Callable[[str], None] = reporter or (lambda _: None)
 
     def buy(self, symbol: str, quantity: Decimal) -> Order:
-        self.logger.info(f"Skipping BUY trade of {quantity:,.8f} of '{symbol}'.")
+        self._logger.info(f"Skipping BUY trade of {quantity:,.8f} of '{symbol}'.")
         self.reporter(f"Skipping BUY trade of {quantity:,.8f} of '{symbol}'.")
         return Order.from_basic_info(Side.BUY, Decimal(0), quantity)
 
     def sell(self, symbol: str, quantity: Decimal) -> Order:
-        self.logger.info(f"Skipping SELL trade of {quantity:,.8f} of '{symbol}'.")
+        self._logger.info(f"Skipping SELL trade of {quantity:,.8f} of '{symbol}'.")
         self.reporter(f"Skipping SELL trade of {quantity:,.8f} of '{symbol}'.")
         return Order.from_basic_info(Side.SELL, Decimal(0), quantity)
 
@@ -127,7 +127,7 @@ class ImmediateTradeExecutor(TradeExecutor):
         self._serum_fee_discount_token_address_loaded: bool = False
 
         def _reporter(text: str) -> None:
-            self.logger.info(text)
+            self._logger.info(text)
             if reporter is not None:
                 reporter(text)
         self.reporter = _reporter

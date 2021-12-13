@@ -74,7 +74,7 @@ class CombinableInstructions():
     __check_transaction_size_with_pyserum = False
 
     def __init__(self, signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.signers: typing.Sequence[Keypair] = signers
         self.instructions: typing.Sequence[TransactionInstruction] = instructions
 
@@ -220,11 +220,11 @@ class CombinableInstructions():
                                 ] = _split_instructions_into_chunks(context, self.signers, self.instructions)
 
         if len(chunks) == 1 and len(chunks[0]) == 0:
-            self.logger.info("No instructions to run.")
+            self._logger.info("No instructions to run.")
             return []
 
         if len(chunks) > 1:
-            self.logger.info(f"Running instructions in {len(chunks)} transactions.")
+            self._logger.info(f"Running instructions in {len(chunks)} transactions.")
 
         results: typing.List[str] = []
         for index, chunk in enumerate(chunks):
@@ -236,7 +236,7 @@ class CombinableInstructions():
             except Exception as exception:
                 starts_at = sum(len(ch) for ch in chunks[0:index])
                 if on_exception_continue:
-                    self.logger.error(f"""[{context.name}] Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction.
+                    self._logger.error(f"""[{context.name}] Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction.
 {exception}""")
                 else:
                     raise exception

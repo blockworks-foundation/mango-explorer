@@ -59,14 +59,14 @@ class BiasQuoteElement(PairwiseElement):
         if buy is not None:
             new_buy_price: Decimal = buy.price * bias_factor
             new_buy = buy.with_price(new_buy_price)
-            self.logger.debug(f"""Order change - bias factor of {bias_factor} shifted price to {bias_description}:
+            self._logger.debug(f"""Order change - bias factor of {bias_factor} shifted price to {bias_description}:
     Old: {buy}
     New: {new_buy}""")
 
         if sell is not None:
             new_sell_price: Decimal = sell.price * bias_factor
             new_sell = sell.with_price(new_sell_price)
-            self.logger.debug(f"""Order change - bias factor of {bias_factor} shifted price to {bias_description}:
+            self._logger.debug(f"""Order change - bias factor of {bias_factor} shifted price to {bias_description}:
     Old: {sell}
     New: {new_sell}""")
 

@@ -39,7 +39,7 @@ def _symbols_match(symbol1: str, symbol2: str) -> bool:
 #
 class InstrumentLookup(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
     def find_by_symbol(self, symbol: str) -> typing.Optional[Instrument]:

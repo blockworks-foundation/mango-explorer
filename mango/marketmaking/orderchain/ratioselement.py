@@ -88,7 +88,7 @@ class RatiosElement(Element):
                                                     quantity=base_position_size, order_type=self.order_type)
             ask_order = mango.Order.from_basic_info(mango.Side.SELL, price=ask,
                                                     quantity=base_position_size, order_type=self.order_type)
-            self.logger.debug(f"""Desired orders:
+            self._logger.debug(f"""Desired orders:
     Bid: {bid_order}
     Ask: {ask_order}""")
             new_orders += [bid_order, ask_order]

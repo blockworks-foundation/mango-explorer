@@ -62,7 +62,7 @@ class LiquidationProcessor:
     _AGE_WARNING_THRESHOLD = timedelta(minutes=2)
 
     def __init__(self, context: Context, name: str, account_liquidator: AccountLiquidator, wallet_balancer: WalletBalancer, worthwhile_threshold: Decimal = Decimal("0.01")) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
         self.name: str = name
         self.account_liquidator: AccountLiquidator = account_liquidator
@@ -76,7 +76,7 @@ class LiquidationProcessor:
         self.state_change: EventSource[LiquidationProcessor] = EventSource[LiquidationProcessor]()
 
     def update_accounts(self, ripe_accounts: typing.Sequence[Account]) -> None:
-        self.logger.info(
+        self._logger.info(
             f"Received {len(ripe_accounts)} ripe 🥭 margin accounts to process - prices last updated {self.prices_updated_at:%Y-%m-%d %H:%M:%S}")
         self._check_update_recency("prices", self.prices_updated_at)
         self.ripe_accounts = ripe_accounts
@@ -89,14 +89,14 @@ class LiquidationProcessor:
         started_at = time.time()
 
         if self.state == LiquidationProcessorState.STARTING:
-            self.logger.info("Still starting - skipping price update.")
+            self._logger.info("Still starting - skipping price update.")
             return
 
         if self.ripe_accounts is None:
-            self.logger.info("Ripe accounts is None - skipping price update.")
+            self._logger.info("Ripe accounts is None - skipping price update.")
             return
 
-        self.logger.info(
+        self._logger.info(
             f"Ripe accounts last updated {self.ripe_accounts_updated_at:%Y-%m-%d %H:%M:%S}")
         self._check_update_recency("ripe account", self.ripe_accounts_updated_at)
 
@@ -115,14 +115,14 @@ class LiquidationProcessor:
         report += [f"Of those {len(above_water)} above water margin accounts, {len(worthwhile)} are worthwhile margin accounts with more than ${self.worthwhile_threshold} net assets."]
 
         report_text = "\n    ".join(report)
-        self.logger.info(f"""Running on {len(self.ripe_accounts)} ripe accounts:
+        self._logger.info(f"""Running on {len(self.ripe_accounts)} ripe accounts:
     {report_text}""")
 
         self._liquidate_all(group, prices, worthwhile)
 
         self.prices_updated_at = datetime.now()
         time_taken = time.time() - started_at
-        self.logger.info(f"Check of all ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
+        self._logger.info(f"Check of all ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds.")
 
     def _liquidate_all(self, group: Group, prices: typing.Sequence[InstrumentValue], to_liquidate: typing.Sequence[LiquidatableReport]) -> None:
         to_process = list(to_liquidate)
@@ -140,30 +140,30 @@ class LiquidationProcessor:
                 updated_report = LiquidatableReport.build(
                     group, prices, updated_account, highest.worthwhile_threshold)
                 if not (updated_report.state & LiquidatableState.WORTHWHILE):
-                    self.logger.info(
+                    self._logger.info(
                         f"Margin account {updated_account.address} has been drained and is no longer worthwhile.")
                 else:
-                    self.logger.info(
+                    self._logger.info(
                         f"Margin account {updated_account.address} is still worthwhile - putting it back on list.")
                     to_process += [updated_report]
             except Exception as exception:
-                self.logger.error(
+                self._logger.error(
                     f"[{self.name}] Failed to liquidate account '{highest.account.address}' - {exception}.")
             finally:
                 # highest should always be in to_process, but we're outside the try-except block
                 # so let's be a little paranoid about it.
-                self.logger.info(f"Liquidatable accounts to process was: {len(to_process)}")
+                self._logger.info(f"Liquidatable accounts to process was: {len(to_process)}")
                 if highest in to_process:
                     to_process.remove(highest)
-                self.logger.info(f"Liquidatable accounts to process is now: {len(to_process)}")
+                self._logger.info(f"Liquidatable accounts to process is now: {len(to_process)}")
 
     def _check_update_recency(self, name: str, last_updated_at: datetime) -> None:
         how_long_ago_was_last_update = datetime.now() - last_updated_at
         if how_long_ago_was_last_update > LiquidationProcessor._AGE_ERROR_THRESHOLD:
             self.state = LiquidationProcessorState.UNHEALTHY
             self.state_change.on_next(self)
-            self.logger.error(
+            self._logger.error(
                 f"[{self.name}] Liquidator - last {name} update was {how_long_ago_was_last_update} ago - more than error threshold {LiquidationProcessor._AGE_ERROR_THRESHOLD}")
         elif how_long_ago_was_last_update > LiquidationProcessor._AGE_WARNING_THRESHOLD:
-            self.logger.warning(
+            self._logger.warning(
                 f"[{self.name}] Liquidator - last {name} update was {how_long_ago_was_last_update} ago - more than warning threshold {LiquidationProcessor._AGE_WARNING_THRESHOLD}")

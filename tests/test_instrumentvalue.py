@@ -9,6 +9,5 @@ def test_constructor() -> None:
     value = Decimal(27)
     actual = mango.InstrumentValue(token, value)
     assert actual is not None
-    assert actual.logger is not None
     assert actual.token == token
     assert actual.value == value

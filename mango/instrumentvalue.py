@@ -47,7 +47,7 @@ def _decimal_from_number(value: numbers.Number) -> Decimal:
 #
 class InstrumentValue:
     def __init__(self, token: Instrument, value: Decimal) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.token: Instrument = token
         self.value: Decimal = value
         if not isinstance(self.value, Decimal):

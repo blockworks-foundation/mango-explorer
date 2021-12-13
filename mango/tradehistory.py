@@ -96,7 +96,7 @@ class TradeHistory:
     }
 
     def __init__(self, seconds_pause_between_rest_calls: int = 1) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.__seconds_pause_between_rest_calls: int = seconds_pause_between_rest_calls
         self.__trades: pandas.DataFrame = pandas.DataFrame(columns=TradeHistory.COLUMNS)
 
@@ -300,20 +300,20 @@ class TradeHistory:
         spot: pandas.DataFrame
         perp: pandas.DataFrame
         if latest_trade is None:
-            self.logger.info("Downloading all spot trades.")
+            self._logger.info("Downloading all spot trades.")
             spot = TradeHistory.__download_all_spots(context, account)
-            self.logger.info("Downloading all perp trades.")
+            self._logger.info("Downloading all perp trades.")
             perp = TradeHistory.__download_all_perps(context, account)
         else:
             # Go back further than we need to so we can be sure we're not skipping any trades due to race conditions.
             # We remove duplicates a few lines further down.
             cutoff_safety_margin: timedelta = timedelta(hours=1)
             cutoff: datetime = latest_trade - cutoff_safety_margin
-            self.logger.info(
+            self._logger.info(
                 f"Downloading spot trades from {cutoff}, {cutoff_safety_margin} before latest stored trade at {latest_trade}")
             spot = TradeHistory.__download_updated_spots(context, account,
                                                          cutoff, self.__seconds_pause_between_rest_calls)
-            self.logger.info(
+            self._logger.info(
                 f"Downloading perp trades from {cutoff}, {cutoff_safety_margin} before latest stored trade at {latest_trade}")
             perp = TradeHistory.__download_updated_perps(context, account,
                                                          cutoff, self.__seconds_pause_between_rest_calls)
@@ -321,7 +321,7 @@ class TradeHistory:
         all_trades = pandas.concat([self.__trades, spot, perp])
         distinct_trades = all_trades.drop_duplicates()
         sorted_trades = distinct_trades.sort_values(["Timestamp", "Market", "SequenceNumber"], axis=0, ascending=True)
-        self.logger.info(f"Download complete. Data contains {len(sorted_trades)} trades.")
+        self._logger.info(f"Download complete. Data contains {len(sorted_trades)} trades.")
         self.__trades = sorted_trades
 
     def load(self, filename: str, ok_if_missing: bool = False) -> None:

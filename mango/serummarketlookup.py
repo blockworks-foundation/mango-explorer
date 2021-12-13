@@ -87,38 +87,38 @@ class SerumMarketLookup(MarketLookup):
         base_symbol, quote_symbol = symbol.split("/")
         base_data = SerumMarketLookup._find_data_by_symbol(base_symbol, self.token_data)
         if base_data is None:
-            self.logger.warning(f"Could not find data for base token '{base_symbol}'")
+            self._logger.warning(f"Could not find data for base token '{base_symbol}'")
             return None
         base = Token(base_data["symbol"], base_data["name"], Decimal(
             base_data["decimals"]), PublicKey(base_data["address"]))
 
         quote_data = SerumMarketLookup._find_data_by_symbol(quote_symbol, self.token_data)
         if quote_data is None:
-            self.logger.warning(f"Could not find data for quote token '{quote_symbol}'")
+            self._logger.warning(f"Could not find data for quote token '{quote_symbol}'")
             return None
         quote = Token(quote_data["symbol"], quote_data["name"], Decimal(
             quote_data["decimals"]), PublicKey(quote_data["address"]))
 
         if "extensions" not in base_data:
-            self.logger.warning(f"No markets found for base token '{base.symbol}'.")
+            self._logger.warning(f"No markets found for base token '{base.symbol}'.")
             return None
 
         if quote.symbol == "USDC":
             if "serumV3Usdc" not in base_data["extensions"]:
-                self.logger.warning(f"No USDC market found for base token '{base.symbol}'.")
+                self._logger.warning(f"No USDC market found for base token '{base.symbol}'.")
                 return None
 
             market_address_string = base_data["extensions"]["serumV3Usdc"]
             market_address = PublicKey(market_address_string)
         elif quote.symbol == "USDT":
             if "serumV3Usdt" not in base_data["extensions"]:
-                self.logger.warning(f"No USDT market found for base token '{base.symbol}'.")
+                self._logger.warning(f"No USDT market found for base token '{base.symbol}'.")
                 return None
 
             market_address_string = base_data["extensions"]["serumV3Usdt"]
             market_address = PublicKey(market_address_string)
         else:
-            self.logger.warning(
+            self._logger.warning(
                 f"Could not find market with quote token '{quote.symbol}'. Only markets based on USDC or USDT are supported.")
             return None
 

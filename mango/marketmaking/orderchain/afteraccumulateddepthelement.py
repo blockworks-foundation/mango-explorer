@@ -79,12 +79,12 @@ class AfterAccumulatedDepthElement(Element):
                     new_price = place_above.price + adjustment
 
             if new_price is None:
-                self.logger.debug(f"""Order change - no acceptable depth for quantity {depth} so removing:
+                self._logger.debug(f"""Order change - no acceptable depth for quantity {depth} so removing:
     Old: {order}
     New: None""")
             else:
                 new_order: mango.Order = order.with_price(new_price)
-                self.logger.debug(f"""Order change - accumulated depth of {depth} is {self.adjustment_ticks} tick from {new_price}:
+                self._logger.debug(f"""Order change - accumulated depth of {depth} is {self.adjustment_ticks} tick from {new_price}:
     Old: {order}
     New: {new_order}""")
                 new_orders += [new_order]

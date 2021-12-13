@@ -59,7 +59,7 @@ from .orders import Order, OrderBook
 #
 class MarketInstructionBuilder(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
     def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
@@ -106,7 +106,7 @@ class MarketInstructionBuilder(metaclass=abc.ABCMeta):
 #
 class MarketOperations(metaclass=abc.ABCMeta):
     def __init__(self, market: Market) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.market: Market = market
 
     @abc.abstractmethod
@@ -185,11 +185,11 @@ class NullMarketOperations(MarketOperations):
         self.market_name: str = market_name
 
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
-        self.logger.info(f"[Dry Run] Not cancelling order {order}.")
+        self._logger.info(f"[Dry Run] Not cancelling order {order}.")
         return [""]
 
     def place_order(self, order: Order) -> Order:
-        self.logger.info(f"[Dry Run] Not placing order {order}.")
+        self._logger.info(f"[Dry Run] Not placing order {order}.")
         return order
 
     def load_orderbook(self) -> OrderBook:

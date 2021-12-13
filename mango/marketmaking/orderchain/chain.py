@@ -32,7 +32,7 @@ from ...modelstate import ModelState
 #
 class Chain:
     def __init__(self, elements: typing.Sequence[Element]) -> None:
-        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.elements: typing.Sequence[Element] = elements
 
     def process(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:

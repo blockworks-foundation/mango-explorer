@@ -73,7 +73,7 @@ class ConfidenceIntervalElement(Element):
                                                     quantity=position_size, order_type=self.order_type)
             ask_order = mango.Order.from_basic_info(mango.Side.SELL, price=ask,
                                                     quantity=position_size, order_type=self.order_type)
-            self.logger.debug(f"""Desired orders:
+            self._logger.debug(f"""Desired orders:
     Bid: {bid_order}
     Ask: {ask_order}""")
             new_orders += [bid_order, ask_order]
@@ -83,7 +83,7 @@ class ConfidenceIntervalElement(Element):
 
         top_bid = model_state.top_bid
         top_ask = model_state.top_ask
-        self.logger.debug(f"""Initial desired orders - spread {model_state.spread} ({top_bid.price if top_bid else None} / {top_ask.price if top_ask else None}):
+        self._logger.debug(f"""Initial desired orders - spread {model_state.spread} ({top_bid.price if top_bid else None} / {top_ask.price if top_ask else None}):
     {order_text}""")
         return new_orders
 
