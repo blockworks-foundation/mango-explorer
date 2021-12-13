@@ -15,7 +15,7 @@
     {
       "chainId": 101,
       "symbol": "ADA",
-      "name": "ADA",
+      "name": "Cardano",
       "decimals": 6,
       "tags": [
         "no-solana-coin"
@@ -23,19 +23,6 @@
       "extensions": {
         "coingeckoId": "cardano",
         "website": "https://cardano.org/"
-      }
-    },
-    {
-      "chainId": 901,
-      "symbol": "AVAX",
-      "name": "Avalanche",
-      "decimals": 9,
-      "tags": [
-        "no-solana-coin"
-      ],
-      "extensions": {
-        "coingeckoId": "avalanche",
-        "website": "https://avax.network/"
       }
     }
   ],

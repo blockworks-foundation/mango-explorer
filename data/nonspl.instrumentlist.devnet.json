@@ -15,7 +15,7 @@
     {
       "chainId": 901,
       "symbol": "ADA",
-      "name": "ADA",
+      "name": "Cardano",
       "decimals": 6,
       "tags": [
         "no-solana-coin"
@@ -36,6 +36,19 @@
       "extensions": {
         "coingeckoId": "avalanche",
         "website": "https://avax.network/"
+      }
+    },
+    {
+      "chainId": 901,
+      "symbol": "LUNA",
+      "name": "Terra",
+      "decimals": 8,
+      "tags": [
+        "no-solana-coin"
+      ],
+      "extensions": {
+        "coingeckoId": "terra-luna",
+        "website": "https://terra.money/"
       }
     }
   ],
