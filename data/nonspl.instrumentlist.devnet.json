@@ -50,6 +50,19 @@
         "coingeckoId": "terra-luna",
         "website": "https://terra.money/"
       }
+    },
+    {
+      "chainId": 901,
+      "symbol": "BNB",
+      "name": "Binance Coin",
+      "decimals": 8,
+      "tags": [
+        "no-solana-coin"
+      ],
+      "extensions": {
+        "coingeckoId": "binance-coin",
+        "website": "https://www.binance.com/"
+      }
     }
   ],
   "version": {
