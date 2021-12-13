@@ -158,6 +158,14 @@
         {
           "symbol": "MSOL",
           "publicKey": "E4v1BBgoso9s64TQvmyownAVJbhbEPGyzA3qn4n46qj9"
+        },
+        {
+          "symbol": "BNB",
+          "publicKey": "4CkQJBxhU8EZ2UjhigbtdaPbpTe6mqf811fipYBFbSYN"
+        },
+        {
+          "symbol": "AVAX",
+          "publicKey": "C2GXZT21UUm6G3J4N26h6d3tpgfUhh6ok5aNi24K88Wu"
         }
       ],
       "perpMarkets": [
@@ -248,6 +256,28 @@
           "bidsKey": "ivYhvYgribqdCzDg4m8fUF9ejgJHE4mnRUseR4d9khN",
           "asksKey": "F4UTmEXxEUgGSL7P3HePAuz3PsXvx6hWr256vqVnzxKE",
           "eventsKey": "G6Dsw9KnP4G38hePtedTH6gDfDQmPJGJw8zipBJvKc12"
+        },
+        {
+          "name": "BNB-PERP",
+          "publicKey": "CqxX2QupYiYafBSbA519j4vRVxxecidbh2zwX66Lmqem",
+          "baseSymbol": "BNB",
+          "baseDecimals": 8,
+          "quoteDecimals": 6,
+          "marketIndex": 11,
+          "bidsKey": "6Pg82x4SSejLny5v1wSWs7QhnheLDq7EX1pMVY8LTsB3",
+          "asksKey": "6n2ooaNFP6X54ZiwDskhhVeW81F4hHNEibsJ8vfjVNDU",
+          "eventsKey": "GmX4qXMpXvs1DuUXNB4eqL1rfF8LeYEjkKgpFeYsm55n"
+        },
+        {
+          "name": "AVAX-PERP",
+          "publicKey": "EAC7jtzsoQwCbXj1M3DapWrNLnc3MBwXAarvWDPr2ZV9",
+          "baseSymbol": "AVAX",
+          "baseDecimals": 8,
+          "quoteDecimals": 6,
+          "marketIndex": 12,
+          "bidsKey": "BD1vpQjLXx7Rmd5n1SFNTLcwujPYTnFpoaArvPd9ixB9",
+          "asksKey": "8Q11iGHXFTr267J4bgbeEeWPYPSANVcs6NQWHQK4UrNs",
+          "eventsKey": "5Grgo9kLu692SUcJ6S7jtbi1WkdwiyRWgThAfN1PcvbL"
         }
       ],
       "spotMarkets": [
@@ -497,6 +527,10 @@
         {
           "symbol": "LUNA",
           "publicKey": "7rDLFn73inQQ3F1dYJhouHmbryngWZH5WMNGgEKcJZvf"
+        },
+        {
+          "symbol": "BNB",
+          "publicKey": "GwzBgrXb4PG59zjce24SF2b9JXbLEjJJTBkmytuEZj1b"
         }
       ],
       "perpMarkets": [
@@ -587,6 +621,17 @@
           "bidsKey": "ACPFzNGukMiv6nTJDfXvL4ctQpjo5Uwv45tSdoVbCEfg",
           "asksKey": "3qay74WyTeiqc3iJ3g7GpCUiMQ5wnGnVs4pW2dFdq3CP",
           "eventsKey": "65X4vefU5AkQJWD5S5fAzJeN5XqwnngdSN8RZ79zzi4f"
+        },
+        {
+          "name": "BNB-PERP",
+          "publicKey": "3Le8zLUKsa1kVr1Uq63DsStVdaekp3pJzcF8GaZpauK9",
+          "baseSymbol": "BNB",
+          "baseDecimals": 8,
+          "quoteDecimals": 6,
+          "marketIndex": 11,
+          "bidsKey": "GqwmfoAxgJLDDs5x1K6u1YVkHXSjPKG4GgwFoAgfGH1G",
+          "asksKey": "H57z5imzrExpqYJ4WP4MKEg8GyMV2VTQAbF25DEP9i7k",
+          "eventsKey": "96Y87LTz5Mops7wdT9EJo1eM79XToKYJJmRZxNatV85d"
         }
       ],
       "spotMarkets": [
