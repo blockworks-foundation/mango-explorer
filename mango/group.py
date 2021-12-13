@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import logging
 import typing
 
 from decimal import Decimal
@@ -292,8 +293,9 @@ class Group(AddressableAccount):
                         raise Exception(f"Cannot find base token or perp market info for index {index}")
                     perp_market = market_lookup.find_by_address(perp_market_info.address)
                     if perp_market is None:
-                        raise Exception(f"Cannot find base token or perp market for index {index}")
-                    base_instrument = perp_market.base
+                        logging.warning(f"Group cannot find base token or perp market for index {index}")
+                    else:
+                        base_instrument = perp_market.base
                 if perp_market_info is not None:
                     perp_lot_size_converter = LotSizeConverter(
                         base_instrument, perp_market_info.base_lot_size, quote_token_bank.token, perp_market_info.quote_lot_size)
