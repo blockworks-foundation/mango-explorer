@@ -97,4 +97,4 @@ class ToleranceOrderReconciler(OrderReconciler):
         return True
 
     def __str__(self) -> str:
-        return f"« 𝚃𝚘𝚕𝚎𝚛𝚊𝚗𝚌𝚎𝙾𝚛𝚍𝚎𝚛𝚁𝚎𝚌𝚘𝚗𝚌𝚒𝚕𝚎𝚛 [price tolerance: {self.price_tolerance}, quantity tolerance: {self.quantity_tolerance}] »"
+        return f"« ToleranceOrderReconciler [price tolerance: {self.price_tolerance}, quantity tolerance: {self.quantity_tolerance}] »"

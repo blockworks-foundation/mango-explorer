@@ -36,7 +36,7 @@ class Metadata():
 
     def __str__(self) -> str:
         init = "Initialized" if self.is_initialized else "Not Initialized"
-        return f"« 𝙼𝚎𝚝𝚊𝚍𝚊𝚝𝚊 {self.version} - {self.data_type}: {init} »"
+        return f"« Metadata {self.version} - {self.data_type}: {init} »"
 
     def __repr__(self) -> str:
         return f"{self}"

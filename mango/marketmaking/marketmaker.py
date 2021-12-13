@@ -118,7 +118,7 @@ Ignore:
             self.pulse_error.on_next(exception)
 
     def __str__(self) -> str:
-        return f"""« 𝙼𝚊𝚛𝚔𝚎𝚝𝙼𝚊𝚔𝚎𝚛 for market '{self.market.symbol}' »"""
+        return f"""« MarketMaker for market '{self.market.symbol}' »"""
 
     def __repr__(self) -> str:
         return f"{self}"

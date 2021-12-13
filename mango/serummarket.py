@@ -70,7 +70,7 @@ class SerumMarket(LoadedMarket):
         return all_open_orders[0].address
 
     def __str__(self) -> str:
-        return f"""« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} {self.address} [{self.program_address}]
+        return f"""« SerumMarket {self.symbol} {self.address} [{self.program_address}]
     Event Queue: {self.underlying_serum_market.state.event_queue()}
     Request Queue: {self.underlying_serum_market.state.request_queue()}
     Bids: {self.underlying_serum_market.state.bids()}
@@ -96,4 +96,4 @@ class SerumMarketStub(Market):
         return SerumMarket(self.program_address, self.address, self.base, self.quote, underlying_serum_market)
 
     def __str__(self) -> str:
-        return f"« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} {self.address} [{self.program_address}] »"
+        return f"« SerumMarketStub {self.symbol} {self.address} [{self.program_address}] »"

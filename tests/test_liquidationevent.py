@@ -23,7 +23,7 @@ def test_liquidation_event() -> None:
                                    balances_before, balances_after)
     assert str(event) == """« 🥭 Liqudation Event ✅ at 2021-05-17 12:20:56
     💧 Liquidator: Liquidator
-    🗃️ Group: Group
+    🏫 Group: Group
     📇 Signatures: ['signature']
     👛 Wallet: 11111111111111111111111111111112
     💳 Margin Account: 11111111111111111111111111111112

@@ -50,4 +50,4 @@ class Element(metaclass=abc.ABCMeta):
         return f"{self}"
 
     def __str__(self) -> str:
-        return """« 𝙴𝚕𝚎𝚖𝚎𝚗𝚝 »"""
+        return """« Element »"""

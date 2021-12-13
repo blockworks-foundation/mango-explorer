@@ -111,7 +111,7 @@ class ModelState:
         return list([o for o in all_orders if o.owner == self.order_owner])
 
     def __str__(self) -> str:
-        return f"""« 𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎 for market '{self.market.symbol}'
+        return f"""« ModelState for market '{self.market.symbol}'
     Group: {self.group_watcher.latest.address}
     Account: {self.account_watcher.latest.address}
     Price: {self.price_watcher.latest}

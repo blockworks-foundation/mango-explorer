@@ -160,10 +160,10 @@ class InstrumentValue:
         return format(str(self), format_spec)
 
     def __str__(self) -> str:
-        name = "« 𝚄𝚗-𝙽𝚊𝚖𝚎𝚍 𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝 »"
+        name = "« Un-Named Instrument »"
         if self.token and self.token.name:
             name = self.token.name
-        return f"« 𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝𝚅𝚊𝚕𝚞𝚎: {self.value:>18,.8f} {name} »"
+        return f"« InstrumentValue: {self.value:>18,.8f} {name} »"
 
     def __repr__(self) -> str:
         return f"{self}"

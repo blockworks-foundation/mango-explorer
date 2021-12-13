@@ -89,4 +89,4 @@ class ConfidenceIntervalElement(Element):
 
     def __str__(self) -> str:
         confidence_interval_levels = ", ".join(map(str, self.confidence_interval_levels)) or "None"
-        return f"« 𝙲𝚘𝚗𝚏𝚒𝚍𝚎𝚗𝚌𝚎𝙸𝚗𝚝𝚎𝚛𝚟𝚊𝚕𝙴𝚕𝚎𝚖𝚎𝚗𝚝 {self.order_type} - position size: {self.position_size_ratio}, confidence interval levels: {confidence_interval_levels} »"
+        return f"« ConfidenceIntervalElement {self.order_type} - position size: {self.position_size_ratio}, confidence interval levels: {confidence_interval_levels} »"

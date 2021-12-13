@@ -45,7 +45,7 @@ class ModelStateBuilder(metaclass=abc.ABCMeta):
         raise NotImplementedError("ModelStateBuilder.build() is not implemented on the base type.")
 
     def __str__(self) -> str:
-        return "« 𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"
+        return "« ModelStateBuilder »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -64,7 +64,7 @@ class WebsocketModelStateBuilder(ModelStateBuilder):
         return self.model_state
 
     def __str__(self) -> str:
-        return f"« 𝚆𝚎𝚋𝚜𝚘𝚌𝚔𝚎𝚝𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 for market '{self.model_state.market.symbol}' »"
+        return f"« WebsocketModelStateBuilder for market '{self.model_state.market.symbol}' »"
 
 
 # # 🥭 PollingModelStateBuilder class
@@ -101,7 +101,7 @@ class PollingModelStateBuilder(ModelStateBuilder):
                           placed_orders_container_watcher, inventory_watcher, orderbook_watcher)
 
     def __str__(self) -> str:
-        return "« 𝙿𝚘𝚕𝚕𝚒𝚗𝚐𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"
+        return "« PollingModelStateBuilder »"
 
 
 # # 🥭 SerumPollingModelStateBuilder class
@@ -176,7 +176,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
         return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook)
 
     def __str__(self) -> str:
-        return f"""« 𝚂𝚎𝚛𝚞𝚖𝙿𝚘𝚕𝚕𝚒𝚗𝚐𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 for market '{self.market.symbol}' »"""
+        return f"""« SerumPollingModelStateBuilder for market '{self.market.symbol}' »"""
 
 
 # # 🥭 SpotPollingModelStateBuilder class
@@ -261,7 +261,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
         return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook)
 
     def __str__(self) -> str:
-        return f"""« 𝚂𝚙𝚘𝚝𝙿𝚘𝚕𝚕𝚒𝚗𝚐𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 for market '{self.market.symbol}' »"""
+        return f"""« SpotPollingModelStateBuilder for market '{self.market.symbol}' »"""
 
 
 # # 🥭 PerpPollingModelStateBuilder class
@@ -325,4 +325,4 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook)
 
     def __str__(self) -> str:
-        return f"""« 𝙿𝚎𝚛𝚙𝙿𝚘𝚕𝚕𝚒𝚗𝚐𝙼𝚘𝚍𝚎𝚕𝚂𝚝𝚊𝚝𝚎𝙱𝚞𝚒𝚕𝚍𝚎𝚛 for market '{self.market.symbol}' »"""
+        return f"""« PerpPollingModelStateBuilder for market '{self.market.symbol}' »"""

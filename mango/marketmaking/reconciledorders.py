@@ -35,7 +35,7 @@ class ReconciledOrders:
         self.to_ignore: typing.List[mango.Order] = []
 
     def __str__(self) -> str:
-        return f"« 𝚁𝚎𝚌𝚘𝚗𝚌𝚒𝚕𝚎𝚍𝙾𝚛𝚍𝚎𝚛𝚜 [keep: {len(self.to_keep)}, place: {len(self.to_place)}, cancel: {len(self.to_cancel)}, ignore: {len(self.to_ignore)}] »"
+        return f"« ReconciledOrders [keep: {len(self.to_keep)}, place: {len(self.to_place)}, cancel: {len(self.to_cancel)}, ignore: {len(self.to_ignore)}] »"
 
     def __repr__(self) -> str:
         return f"{self}"

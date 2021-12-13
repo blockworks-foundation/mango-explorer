@@ -41,7 +41,7 @@ class LiquidationEvent:
         changes_text = "\n        ".join([f"{change.value:>15,.8f} {change.token.symbol}" for change in self.changes])
         return f"""« 🥭 Liqudation Event {result} at {self.timestamp}
     💧 Liquidator: {self.liquidator_name}
-    🗃️ Group: {self.group_name}
+    🏫 Group: {self.group_name}
     📇 Signatures: {self.signatures}
     👛 Wallet: {self.wallet_address}
     💳 Margin Account: {self.account_address}

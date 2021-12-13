@@ -47,6 +47,6 @@ class Chain:
     def __str__(self) -> str:
         elements = "\n    ".join(map(str, self.elements)) or "None"
 
-        return f"""« 𝙲𝚑𝚊𝚒𝚗 of {len(self.elements)} elements:
+        return f"""« Chain of {len(self.elements)} elements:
     {elements}
 »"""

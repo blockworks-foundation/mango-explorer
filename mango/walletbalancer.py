@@ -93,7 +93,7 @@ class FixedTargetBalance(TargetBalance):
         return InstrumentValue(instrument, self.value)
 
     def __str__(self) -> str:
-        return f"""« 𝙵𝚒𝚡𝚎𝚍𝚃𝚊𝚛𝚐𝚎𝚝𝙱𝚊𝚕𝚊𝚗𝚌𝚎 [{self.value} {self.symbol}] »"""
+        return f"""« FixedTargetBalance [{self.value} {self.symbol}] »"""
 
 
 # # 🥭 PercentageTargetBalance
@@ -119,10 +119,10 @@ class PercentageTargetBalance(TargetBalance):
         return InstrumentValue(instrument, target_size)
 
     def __str__(self) -> str:
-        return f"""« 𝙿𝚎𝚛𝚌𝚎𝚗𝚝𝚊𝚐𝚎𝚃𝚊𝚛𝚐𝚎𝚝𝙱𝚊𝚕𝚊𝚗𝚌𝚎 [{self.target_fraction * 100}% {self.symbol}] »"""
+        return f"""« PercentageTargetBalance [{self.target_fraction * 100}% {self.symbol}] »"""
 
 
-# # 🥭 parse_target_balance function
+# # 🥭 parse_target_balance function
 #
 # `argparse` handler for `TargetBalance` parsing. Can be used like:
 # parser.add_argument("--target", type=mango.parse_target_balance, action="append", required=True,
@@ -155,7 +155,7 @@ def parse_target_balance(to_parse: str) -> TargetBalance:
         return PercentageTargetBalance(symbol, numeric_value)
 
 
-# # 🥭 parse_fixed_target_balance function
+# # 🥭 parse_fixed_target_balance function
 #
 # `argparse` handler for `TargetBalance` parsing. Can only be used for `FixedTargetBalance`s - will raise an
 # error if a `PercentageTargetBalance` is attempted. This is useful for circumstances where percentage
@@ -188,7 +188,7 @@ def parse_fixed_target_balance(to_parse: str) -> TargetBalance:
     return FixedTargetBalance(symbol, numeric_value)
 
 
-# # 🥭 sort_changes_for_trades function
+# # 🥭 sort_changes_for_trades function
 #
 # It's important to process SELLs first, so we have enough funds in the quote balance for the
 # BUYs.

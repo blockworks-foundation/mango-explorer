@@ -64,7 +64,7 @@ class SpotMarket(LoadedMarket):
         return event_queue.unprocessed_events
 
     def __str__(self) -> str:
-        return f"""« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} {self.address} [{self.program_address}]
+        return f"""« SpotMarket {self.symbol} {self.address} [{self.program_address}]
     Event Queue: {self.underlying_serum_market.state.event_queue()}
     Request Queue: {self.underlying_serum_market.state.request_queue()}
     Bids: {self.underlying_serum_market.state.bids()}
@@ -93,4 +93,4 @@ class SpotMarketStub(Market):
         return SpotMarket(self.program_address, self.address, self.base, self.quote, actual_group, underlying_serum_market)
 
     def __str__(self) -> str:
-        return f"« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} {self.address} [{self.program_address}] »"
+        return f"« SpotMarketStub {self.symbol} {self.address} [{self.program_address}] »"

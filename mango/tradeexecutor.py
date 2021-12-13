@@ -170,4 +170,4 @@ class ImmediateTradeExecutor(TradeExecutor):
         return create_market_operations(self.context, self.wallet, self.account, market)
 
     def __str__(self) -> str:
-        return f"""« 𝙸𝚖𝚖𝚎𝚍𝚒𝚊𝚝𝚎𝚃𝚛𝚊𝚍𝚎𝙴𝚡𝚎𝚌𝚞𝚝𝚘𝚛 [{self.price_adjustment_factor}] »"""
+        return f"""« ImmediateTradeExecutor [{self.price_adjustment_factor}] »"""

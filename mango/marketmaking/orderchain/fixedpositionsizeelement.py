@@ -66,4 +66,4 @@ class FixedPositionSizeElement(PairwiseElement):
         return new_buy, new_sell
 
     def __str__(self) -> str:
-        return f"« 𝙵𝚒𝚡𝚎𝚍𝙿𝚘𝚜𝚒𝚝𝚒𝚘𝚗𝚂𝚒𝚣𝚎𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using position sizes: {self.position_sizes} »"
+        return f"« FixedPositionSizeElement using position sizes: {self.position_sizes} »"

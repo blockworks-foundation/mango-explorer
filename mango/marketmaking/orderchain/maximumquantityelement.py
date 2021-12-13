@@ -69,4 +69,4 @@ class MaximumQuantityElement(Element):
         return new_orders
 
     def __str__(self) -> str:
-        return f"« 𝙼𝚊𝚡𝚒𝚖𝚞𝚖𝚀𝚞𝚊𝚗𝚝𝚒𝚝𝚢𝙴𝚕𝚎𝚖𝚎𝚗𝚝 [maximum quantity: {self.maximum_quantity}, remove: {self.remove}] »"
+        return f"« MaximumQuantityElement [maximum quantity: {self.maximum_quantity}, remove: {self.remove}] »"

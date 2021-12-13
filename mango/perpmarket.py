@@ -78,7 +78,7 @@ class FundingRate(typing.NamedTuple):
         return FundingRate(symbol=symbol, rate=funding_rate, oracle_price=average_oracle_price, open_interest=open_interest, from_=from_timestamp, to=to_timestamp)
 
     def __str__(self) -> str:
-        return f"« 𝙵𝚞𝚗𝚍𝚒𝚗𝚐𝚁𝚊𝚝𝚎 {self.symbol} {self.rate:,.8%}, open interest: {self.open_interest:,.8f} from: {self.from_} to {self.to} »"
+        return f"« FundingRate {self.symbol} {self.rate:,.8%}, open interest: {self.open_interest:,.8f} from: {self.from_} to {self.to} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -166,7 +166,7 @@ class PerpMarket(LoadedMarket):
 
     def __str__(self) -> str:
         underlying: str = f"{self.underlying_perp_market}".replace("\n", "\n    ")
-        return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} {self.address} [{self.program_address}]
+        return f"""« PerpMarket {self.symbol} {self.address} [{self.program_address}]
     {underlying}
 »"""
 
@@ -191,4 +191,4 @@ class PerpMarketStub(Market):
         return f"{self.base.symbol}-PERP"
 
     def __str__(self) -> str:
-        return f"« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝚂𝚝𝚞𝚋 {self.symbol} {self.address} [{self.program_address}] »"
+        return f"« PerpMarketStub {self.symbol} {self.address} [{self.program_address}] »"

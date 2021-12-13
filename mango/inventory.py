@@ -54,7 +54,7 @@ class Inventory:
         liquidity_incentives: str = ""
         if self.liquidity_incentives.value > 0:
             liquidity_incentives = f" {self.liquidity_incentives}"
-        return f"« 𝙸𝚗𝚟𝚎𝚗𝚝𝚘𝚛𝚢 {self.symbol}{liquidity_incentives} [{self.base} / {self.quote}] ({self.available_collateral} available) »"
+        return f"« Inventory {self.symbol}{liquidity_incentives} [{self.base} / {self.quote}] ({self.available_collateral} available) »"
 
     def __repr__(self) -> str:
         return f"{self}"

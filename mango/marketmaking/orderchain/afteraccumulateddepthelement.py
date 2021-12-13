@@ -93,4 +93,4 @@ class AfterAccumulatedDepthElement(Element):
 
     def __str__(self) -> str:
         depth: str = f"{self.depth}" if self.depth is not None else "order quantity"
-        return f"« 𝙰𝚏𝚝𝚎𝚛𝙰𝚌𝚌𝚞𝚖𝚞𝚕𝚊𝚝𝚎𝚍𝙳𝚎𝚙𝚝𝚑𝙴𝚕𝚎𝚖𝚎𝚗𝚝 [depth: {depth}, adjustment ticks: {self.adjustment_ticks}] »"
+        return f"« AfterAccumulatedDepthElement [depth: {depth}, adjustment ticks: {self.adjustment_ticks}] »"

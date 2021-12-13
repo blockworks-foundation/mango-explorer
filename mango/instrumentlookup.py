@@ -67,7 +67,7 @@ class InstrumentLookup(metaclass=abc.ABCMeta):
         return f"{self}"
 
     def __str__(self) -> str:
-        return """« 𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝𝙻𝚘𝚘𝚔𝚞𝚙 »"""
+        return """« InstrumentLookup »"""
 
 
 # # 🥭 NullInstrumentLookup class
@@ -85,7 +85,7 @@ class NullInstrumentLookup(InstrumentLookup):
         return None
 
     def __str__(self) -> str:
-        return "« 𝙽𝚞𝚕𝚕𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝𝙻𝚘𝚘𝚔𝚞𝚙 »"
+        return "« NullInstrumentLookup »"
 
 
 # # 🥭 CompoundInstrumentLookup class
@@ -114,7 +114,7 @@ class CompoundInstrumentLookup(InstrumentLookup):
 
     def __str__(self) -> str:
         inner = "\n    ".join([f"{item}".replace("\n", "\n    ") for item in self.lookups])
-        return f"""« 𝙲𝚘𝚖𝚙𝚘𝚞𝚗𝚍𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝𝙻𝚘𝚘𝚔𝚞𝚙
+        return f"""« CompoundInstrumentLookup
     {inner}
 »"""
 
@@ -157,7 +157,7 @@ class NonSPLInstrumentLookup(InstrumentLookup):
             return NonSPLInstrumentLookup(filename, token_data)
 
     def __str__(self) -> str:
-        return f"« 𝙽𝚘𝚗𝚂𝙿𝙻𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝𝙻𝚘𝚘𝚔𝚞𝚙 [{self.filename}] »"
+        return f"« NonSPLInstrumentLookup [{self.filename}] »"
 
 
 # # 🥭 IdsJsonTokenLookup class
@@ -188,7 +188,7 @@ class IdsJsonTokenLookup(InstrumentLookup):
         return None
 
     def __str__(self) -> str:
-        return f"« 𝙸𝚍𝚜𝙹𝚜𝚘𝚗𝚃𝚘𝚔𝚎𝚗𝙻𝚘𝚘𝚔𝚞𝚙 [{self.cluster_name}, {self.group_name}] »"
+        return f"« IdsJsonTokenLookup [{self.cluster_name}, {self.group_name}] »"
 
 
 # # 🥭 SPLTokenLookup class
@@ -234,4 +234,4 @@ class SPLTokenLookup(InstrumentLookup):
             return SPLTokenLookup(filename, token_data)
 
     def __str__(self) -> str:
-        return f"« 𝚂𝙿𝙻𝚃𝚘𝚔𝚎𝚗𝙻𝚘𝚘𝚔𝚞𝚙 [{self.filename}] »"
+        return f"« SPLTokenLookup [{self.filename}] »"

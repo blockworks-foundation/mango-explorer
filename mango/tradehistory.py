@@ -339,7 +339,7 @@ class TradeHistory:
         self.__trades.to_csv(filename, index=False, mode="w")
 
     def __str__(self) -> str:
-        return f"« 𝚃𝚛𝚊𝚍𝚎𝙷𝚒𝚜𝚝𝚘𝚛𝚢 containing {len(self.__trades)} trades »"
+        return f"« TradeHistory containing {len(self.__trades)} trades »"
 
     def __repr__(self) -> str:
         return f"{self}"

@@ -182,7 +182,7 @@ class HealthCalculator:
         return health
 
     def __str__(self) -> str:
-        return f"« 𝙷𝚎𝚊𝚕𝚝𝚑𝙲𝚊𝚕𝚌𝚞𝚕𝚊𝚝𝚘𝚛 [{self.health_type}] »"
+        return f"« HealthCalculator [{self.health_type}] »"
 
     def __repr__(self) -> str:
         return f"{self}"

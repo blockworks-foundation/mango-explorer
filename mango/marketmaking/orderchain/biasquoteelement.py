@@ -73,4 +73,4 @@ class BiasQuoteElement(PairwiseElement):
         return new_buy, new_sell
 
     def __str__(self) -> str:
-        return f"« 𝙱𝚒𝚊𝚜𝚀𝚞𝚘𝚝𝚎𝙴𝚕𝚎𝚖𝚎𝚗𝚝 - bias factors: {self.bias_factors} »"
+        return f"« BiasQuoteElement - bias factors: {self.bias_factors} »"

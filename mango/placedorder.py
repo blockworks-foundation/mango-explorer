@@ -51,7 +51,7 @@ class PlacedOrder(typing.NamedTuple):
         return f"{self}"
 
     def __str__(self) -> str:
-        return f"« 𝙿𝚕𝚊𝚌𝚎𝚍𝙾𝚛𝚍𝚎𝚛 {self.side} [{self.id}] {self.client_id} »"
+        return f"« PlacedOrder {self.side} [{self.id}] {self.client_id} »"
 
 
 # # 🥭 PlacedOrdersContainer protocol

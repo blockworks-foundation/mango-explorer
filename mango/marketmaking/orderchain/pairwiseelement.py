@@ -83,4 +83,4 @@ class PairwiseElement(Element, metaclass=abc.ABCMeta):
         return new_orders
 
     def __str__(self) -> str:
-        return "« 𝙿𝚊𝚒𝚛𝚠𝚒𝚜𝚎𝙴𝚕𝚎𝚖𝚎𝚗𝚝 »"
+        return "« PairwiseElement »"

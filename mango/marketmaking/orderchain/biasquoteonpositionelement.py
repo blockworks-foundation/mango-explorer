@@ -83,4 +83,4 @@ class BiasQuoteOnPositionElement(PairwiseElement):
         return new_order
 
     def __str__(self) -> str:
-        return f"« 𝙱𝚒𝚊𝚜𝚀𝚞𝚘𝚝𝚎𝙾𝚗𝙿𝚘𝚜𝚒𝚝𝚒𝚘𝚗𝙴𝚕𝚎𝚖𝚎𝚗𝚝 - biases: {self.biases} »"
+        return f"« BiasQuoteOnPositionElement - biases: {self.biases} »"

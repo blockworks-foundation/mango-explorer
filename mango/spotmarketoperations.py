@@ -133,7 +133,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         return build_spot_openorders_instructions(self.context, self.wallet, self.group, self.account, self.raw_market)
 
     def __str__(self) -> str:
-        return f"« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 [{self.spot_market.symbol}] »"
+        return f"« SpotMarketInstructionBuilder [{self.spot_market.symbol}] »"
 
 
 # # 🥭 SpotMarketOperations class
@@ -232,4 +232,4 @@ class SpotMarketOperations(MarketOperations):
         return self.market_instruction_builder.build_crank_instructions(open_orders_to_crank, limit)
 
     def __str__(self) -> str:
-        return f"""« 𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.spot_market.symbol}] »"""
+        return f"« SpotMarketOperations [{self.spot_market.symbol}] »"

@@ -72,4 +72,4 @@ class PreventPostOnlyCrossingBookElement(Element):
         return new_orders
 
     def __str__(self) -> str:
-        return "« 𝙿𝚛𝚎𝚟𝚎𝚗𝚝𝙿𝚘𝚜𝚝𝙾𝚗𝚕𝚢𝙲𝚛𝚘𝚜𝚜𝚒𝚗𝚐𝙱𝚘𝚘𝚔𝙴𝚕𝚎𝚖𝚎𝚗𝚝 »"
+        return "« PreventPostOnlyCrossingBookElement »"

@@ -79,7 +79,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         return build_redeem_accrued_mango_instructions(self.context, self.wallet, self.perp_market, self.group, self.account, self.mngo_token_bank)
 
     def __str__(self) -> str:
-        return """« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝚜 »"""
+        return """« PerpMarketInstructionBuilder »"""
 
 
 # # 🥭 PerpMarketOperations
@@ -146,4 +146,4 @@ class PerpMarketOperations(MarketOperations):
         return list([o for o in [*orderbook.bids, *orderbook.asks] if o.owner == self.account.address])
 
     def __str__(self) -> str:
-        return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.market_name}] »"""
+        return f"""« PerpMarketOperations [{self.market_name}] »"""

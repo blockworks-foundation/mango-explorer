@@ -40,7 +40,7 @@ class InterestRates(typing.NamedTuple):
     borrow: Decimal
 
     def __str__(self) -> str:
-        return f"« 𝙸𝚗𝚝𝚎𝚛𝚎𝚜𝚝𝚁𝚊𝚝𝚎𝚜 Deposit: {self.deposit:,.2%} Borrow: {self.borrow:,.2%} »"
+        return f"« InterestRates Deposit: {self.deposit:,.2%} Borrow: {self.borrow:,.2%} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -55,7 +55,7 @@ class BankBalances(typing.NamedTuple):
     borrows: Decimal
 
     def __str__(self) -> str:
-        return f"« 𝙱𝚊𝚗𝚔𝙱𝚊𝚕𝚊𝚗𝚌𝚎𝚜 Deposits: {self.deposits:,.8f} Borrows: {self.borrows:,.8f} »"
+        return f"« BankBalances Deposits: {self.deposits:,.8f} Borrows: {self.borrows:,.8f} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -102,7 +102,7 @@ class NodeBank(AddressableAccount):
         return NodeBank.parse(account_info)
 
     def __str__(self) -> str:
-        return f"""« 𝙽𝚘𝚍𝚎𝙱𝚊𝚗𝚔 [{self.version}] {self.address}
+        return f"""« NodeBank [{self.version}] {self.address}
     {self.meta_data}
     Balances: {self.balances}
     Vault: {self.vault}
@@ -215,7 +215,7 @@ class RootBank(AddressableAccount):
         return found[0]
 
     def __str__(self) -> str:
-        return f"""« 𝚁𝚘𝚘𝚝𝙱𝚊𝚗𝚔 [{self.version}] {self.address}
+        return f"""« RootBank [{self.version}] {self.address}
     {self.meta_data}
     Optimal Util: {self.optimal_util:,.4f}
     Optimal Rate: {self.optimal_rate:,.4f}
@@ -315,7 +315,7 @@ class TokenBank():
         return InterestRates(deposit=deposit_rate, borrow=borrow_rate)
 
     def __str__(self) -> str:
-        return f"""« 𝚃𝚘𝚔𝚎𝚗𝙱𝚊𝚗𝚔 {self.token}
+        return f"""« TokenBank {self.token}
     Root Bank Address: {self.root_bank_address}
 »"""
 

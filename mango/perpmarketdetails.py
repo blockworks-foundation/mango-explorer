@@ -83,7 +83,7 @@ class LiquidityMiningInfo:
             estimated_remaining_seconds = estimated_duration_seconds - elapsed_seconds
             estimated_remaining = timedelta(seconds=int(estimated_remaining_seconds))
             estimated_end = now + estimated_remaining
-        return f"""« 𝙻𝚒𝚚𝚞𝚒𝚍𝚒𝚝𝚢𝙼𝚒𝚗𝚒𝚗𝚐𝙸𝚗𝚏𝚘 {self.version}
+        return f"""« LiquidityMiningInfo {self.version}
     Period Start     : {self.period_start}
     Period End (Est.): {estimated_end}
     Target Duration  : {self.target_period_length} hours
@@ -183,7 +183,7 @@ class PerpMarketDetails(AddressableAccount):
 
     def __str__(self) -> str:
         liquidity_mining_info: str = f"{self.liquidity_mining_info}".replace("\n", "\n        ")
-        return f"""« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙳𝚎𝚝𝚊𝚒𝚕𝚜 {self.version} [{self.address}]
+        return f"""« PerpMarketDetails {self.version} [{self.address}]
     {self.meta_data}
     Group: {self.group.address}
     Bids: {self.bids}

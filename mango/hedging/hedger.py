@@ -36,7 +36,7 @@ class Hedger(metaclass=abc.ABCMeta):
         raise NotImplementedError("Hedger.pulse() is not implemented on the base type.")
 
     def __str__(self) -> str:
-        return "« 𝙷𝚎𝚍𝚐𝚎𝚛 »"
+        return "« Hedger »"
 
     def __repr__(self) -> str:
         return f"{self}"

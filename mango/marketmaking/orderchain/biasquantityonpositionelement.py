@@ -111,4 +111,4 @@ class BiasQuantityOnPositionElement(PairwiseElement):
         return buy, sell
 
     def __str__(self) -> str:
-        return f"« 𝙱𝚒𝚊𝚜𝚀𝚞𝚊𝚗𝚝𝚒𝚝𝚢𝙾𝚗𝙿𝚘𝚜𝚒𝚝𝚒𝚘𝚗𝙴𝚕𝚎𝚖𝚎𝚗𝚝 - maximum: {self.maximum_position}, target: {self.target_position} »"
+        return f"« BiasQuantityOnPositionElement - maximum: {self.maximum_position}, target: {self.target_position} »"

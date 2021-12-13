@@ -74,7 +74,7 @@ class LotSizeConverter():
         return round(price / self.tick_size) * self.tick_size
 
     def __str__(self) -> str:
-        return f"« 𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 {self.base.symbol}/{self.quote.symbol} [base lot size: {self.base_lot_size} ({self.base.decimals} decimals), quote lot size: {self.quote_lot_size} ({self.quote.decimals} decimals)] »"
+        return f"« LotSizeConverter {self.base.symbol}/{self.quote.symbol} [base lot size: {self.base_lot_size} ({self.base.decimals} decimals), quote lot size: {self.quote_lot_size} ({self.quote.decimals} decimals)] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -106,7 +106,7 @@ class NullLotSizeConverter(LotSizeConverter):
         return round(size)
 
     def __str__(self) -> str:
-        return "« 𝙽𝚞𝚕𝚕𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 »"
+        return "« NullLotSizeConverter »"
 
 
 # # 🥭 RaisingLotSizeConverter class
@@ -141,4 +141,4 @@ class RaisingLotSizeConverter(LotSizeConverter):
             "RaisingLotSizeConverter.quote_size_number_to_lots() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called.")
 
     def __str__(self) -> str:
-        return "« 𝚁𝚊𝚒𝚜𝚒𝚗𝚐𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 »"
+        return "« RaisingLotSizeConverter »"

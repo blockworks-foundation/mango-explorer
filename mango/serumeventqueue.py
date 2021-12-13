@@ -49,7 +49,7 @@ class SerumEventFlags:
         flags += ["bid" if self.bid else None]
         flags += ["maker" if self.maker else None]
         flag_text = " | ".join(flag for flag in flags if flag is not None) or "None"
-        return f"« 𝚂𝚎𝚛𝚞𝚖𝙴𝚟𝚎𝚗𝚝𝙵𝚕𝚊𝚐𝚜: {flag_text} »"
+        return f"« SerumEventFlags: {flag_text} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -83,7 +83,7 @@ class SerumEvent:
                           layout.order_id, layout.public_key, layout.client_order_id)
 
     def __str__(self) -> str:
-        return f"""« 𝚂𝚎𝚛𝚞𝚖𝙴𝚟𝚎𝚗𝚝 {self.event_flags}
+        return f"""« SerumEvent {self.event_flags}
     Original Index: {self.original_index}
     Order ID: {self.order_id}
     Client Order ID: {self.client_order_id}
@@ -169,7 +169,7 @@ class SerumEventQueue(AddressableAccount):
                                                 for event in self.unprocessed_events if event is not None]) or "None"
         processed_events = "\n        ".join([f"{event}".replace("\n", "\n        ")
                                               for event in self.processed_events if event is not None]) or "None"
-        return f"""« 𝚂𝚎𝚛𝚞𝚖𝙴𝚟𝚎𝚗𝚝𝚀𝚞𝚎𝚞𝚎 [{self.version}] {self.address}
+        return f"""« SerumEventQueue [{self.version}] {self.address}
     {self.account_flags}
     Head: {self.head}
     Count: {self.count}

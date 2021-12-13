@@ -150,4 +150,4 @@ class TokenAccount(AddressableAccount):
         return TokenAccount.parse(account_info, instrument_lookup=context.instrument_lookup)
 
     def __str__(self) -> str:
-        return f"« 𝚃𝚘𝚔𝚎𝚗𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {self.address}, Owner: {self.owner}, Value: {self.value} »"
+        return f"« TokenAccount {self.address}, Owner: {self.owner}, Value: {self.value} »"

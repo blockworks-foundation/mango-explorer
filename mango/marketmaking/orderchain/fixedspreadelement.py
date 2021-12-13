@@ -70,4 +70,4 @@ class FixedSpreadElement(PairwiseElement):
         return new_buy, new_sell
 
     def __str__(self) -> str:
-        return f"« 𝙵𝚒𝚡𝚎𝚍𝚂𝚙𝚛𝚎𝚊𝚍𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using spreads {self.spreads} »"
+        return f"« FixedSpreadElement using spreads {self.spreads} »"

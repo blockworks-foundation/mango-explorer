@@ -67,7 +67,7 @@ class AccountSlot:
         perp_account: str = "None"
         if self.perp_account is not None:
             perp_account = f"{self.perp_account}".replace("\n", "\n        ")
-        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝚂𝚕𝚘𝚝 {self.base_instrument.symbol}
+        return f"""« AccountSlot {self.base_instrument.symbol}
     Net Value:     {self.net_value}
         Deposited: {self.deposit} (raw value: {self.raw_deposit})
         Borrowed:  {self.borrow} (raw value {self.raw_borrow})
@@ -371,17 +371,17 @@ class Account(AddressableAccount):
         item_to_update.spot_open_orders = spot_open_orders
 
     def __str__(self) -> str:
-        info = f"'{self.info}'" if self.info else "(𝑢𝑛-𝑛𝑎𝑚𝑒𝑑)"
+        info = f"'{self.info}'" if self.info else "(un-named)"
         shared_quote: str = f"{self.shared_quote}".replace("\n", "\n        ")
         slot_count = len(self.base_slots)
         slots = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.base_slots])
 
         symbols: typing.Sequence[str] = [slot.base_instrument.symbol for slot in self.base_slots]
         in_margin_basket = ", ".join(symbols) or "None"
-        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝 {info}, {self.version} [{self.address}]
+        return f"""« Account {info}, {self.version} [{self.address}]
     {self.meta_data}
     Owner: {self.owner}
-    Group: « 𝙶𝚛𝚘𝚞𝚙 '{self.group_name}' [{self.group_address}] »
+    Group: « Group '{self.group_name}' [{self.group_address}] »
     MSRM: {self.msrm_amount}
     Bankrupt? {self.is_bankrupt}
     Being Liquidated? {self.being_liquidated}

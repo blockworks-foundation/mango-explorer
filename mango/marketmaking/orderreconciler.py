@@ -36,7 +36,7 @@ class OrderReconciler(metaclass=abc.ABCMeta):
         raise NotImplementedError("OrderReconciler.reconcile() is not implemented on the base type.")
 
     def __str__(self) -> str:
-        return """« 𝙾𝚛𝚍𝚎𝚛𝚁𝚎𝚌𝚘𝚗𝚌𝚒𝚕𝚎𝚛 »"""
+        return """« OrderReconciler »"""
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -57,4 +57,4 @@ class NullOrderReconciler(OrderReconciler):
         return outcomes
 
     def __str__(self) -> str:
-        return """« 𝙽𝚞𝚕𝚕𝙾𝚛𝚍𝚎𝚛𝚁𝚎𝚌𝚘𝚗𝚌𝚒𝚕𝚎𝚛 »"""
+        return """« NullOrderReconciler »"""

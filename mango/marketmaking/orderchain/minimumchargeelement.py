@@ -90,4 +90,4 @@ class MinimumChargeElement(PairwiseElement):
         return new_buy, new_sell
 
     def __str__(self) -> str:
-        return f"« 𝙼𝚒𝚗𝚒𝚖𝚞𝚖𝙲𝚑𝚊𝚛𝚐𝚎𝙴𝚕𝚎𝚖𝚎𝚗𝚝 - minimum charge ratios: {self.minimumcharge_ratios} »"
+        return f"« MinimumChargeElement - minimum charge ratios: {self.minimumcharge_ratios} »"

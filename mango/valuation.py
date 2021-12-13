@@ -211,7 +211,7 @@ class Valuation:
 
         accounts_tokens: str = "\n        ".join(accounts)
         wallet_tokens: str = "\n        ".join([f"{item}" for item in self.wallet_tokens])
-        return f"""« 𝚅𝚊𝚕𝚞𝚊𝚝𝚒𝚘𝚗 of {address:<47} {self.value}
+        return f"""« Valuation of {address:<47} {self.value}
     Wallet Tokens (total: {wallet_total}):
         {wallet_tokens}
     {accounts_tokens}

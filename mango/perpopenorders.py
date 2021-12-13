@@ -32,7 +32,7 @@ class PerpOpenOrders:
     def __str__(self) -> str:
         placed_orders = "\n        ".join(map(str, self.placed_orders)) or "None"
 
-        return f"""« 𝙿𝚎𝚛𝚙𝙾𝚙𝚎𝚗𝙾𝚛𝚍𝚎𝚛𝚜
+        return f"""« PerpOpenOrders
     Orders:
         {placed_orders}
 »"""

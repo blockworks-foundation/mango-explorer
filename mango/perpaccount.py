@@ -116,9 +116,9 @@ class PerpAccount:
 
     def __str__(self) -> str:
         if self.empty:
-            return "« 𝙿𝚎𝚛𝚙𝙰𝚌𝚌𝚘𝚞𝚗𝚝 (empty) »"
+            return "« PerpAccount (empty) »"
         open_orders = f"{self.open_orders}".replace("\n", "\n        ")
-        return f"""« 𝙿𝚎𝚛𝚙𝙰𝚌𝚌𝚘𝚞𝚗𝚝
+        return f"""« PerpAccount
     Base Position: {self.base_token_value}
     Quote Position: {self.quote_position}
     Long Settled Funding: {self.long_settled_funding}

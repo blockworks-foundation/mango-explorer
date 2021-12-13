@@ -81,7 +81,7 @@ class PerpFillEvent(PerpEvent):
         return [self.maker, self.taker]
 
     def __str__(self) -> str:
-        return f"""« 𝙿𝚎𝚛𝚙𝙵𝚒𝚕𝚕𝙴𝚟𝚎𝚗𝚝 [{self.original_index}] [{self.timestamp}] {self.taker_side} {self.quantity:,.8f} at {self.price:,.8f}
+        return f"""« PerpFillEvent [{self.original_index}] [{self.timestamp}] {self.taker_side} {self.quantity:,.8f} at {self.price:,.8f}
     Maker: {self.maker}, {self.maker_order_id} / {self.maker_client_order_id}
     Taker: {self.taker}, {self.taker_order_id} / {self.taker_client_order_id}
     Best Initial: {self.best_initial}
@@ -108,7 +108,7 @@ class PerpOutEvent(PerpEvent):
         return [self.owner]
 
     def __str__(self) -> str:
-        return f"""« 𝙿𝚎𝚛𝚙𝙾𝚞𝚝𝙴𝚟𝚎𝚗𝚝 [{self.original_index}] [{self.owner}] {self.side} {self.quantity}, slot: {self.slot} »"""
+        return f"""« PerpOutEvent [{self.original_index}] [{self.owner}] {self.side} {self.quantity}, slot: {self.slot} »"""
 
 
 # # 🥭 PerpLiquidateEvent class
@@ -133,7 +133,7 @@ class PerpLiquidateEvent(PerpEvent):
         return [self.liquidatee, self.liquidator]
 
     def __str__(self) -> str:
-        return f"""« 𝙿𝚎𝚛𝚙𝙻𝚒𝚚𝚞𝚒𝚍𝚊𝚝𝚎𝙴𝚟𝚎𝚗𝚝 Liquidator {self.liquidator} liquidated {self.liquidatee} with {self.quantity} at {self.price} »"""
+        return f"""« PerpLiquidateEvent Liquidator {self.liquidator} liquidated {self.liquidatee} with {self.quantity} at {self.price} »"""
 
 
 # # 🥭 PerpUnknownEvent class
@@ -151,7 +151,7 @@ class PerpUnknownEvent(PerpEvent):
         return [self.owner]
 
     def __str__(self) -> str:
-        return f"« 𝙿𝚎𝚛𝚙𝚄𝚗𝚔𝚗𝚘𝚠𝚗𝙴𝚟𝚎𝚗𝚝 [{self.original_index}] [{self.owner}] »"
+        return f"« PerpUnknownEvent [{self.original_index}] [{self.owner}] »"
 
 
 # # 🥭 event_builder function
@@ -246,7 +246,7 @@ class PerpEventQueue(AddressableAccount):
                                                 for event in self.unprocessed_events if event is not None]) or "None"
         processed_events = "\n        ".join([f"{event}".replace("\n", "\n        ")
                                               for event in self.processed_events if event is not None]) or "None"
-        return f"""« 𝙿𝚎𝚛𝚙𝙴𝚟𝚎𝚗𝚝𝚀𝚞𝚎𝚞𝚎 [{self.version}] {self.address}
+        return f"""« PerpEventQueue [{self.version}] {self.address}
     {self.meta_data}
     Head: {self.head}
     Count: {self.count}

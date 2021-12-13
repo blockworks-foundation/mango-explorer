@@ -131,7 +131,7 @@ class Wallet:
         return wallet
 
     def __str__(self) -> str:
-        return f"« 𝚆𝚊𝚕𝚕𝚎𝚝 for {self.address} »"
+        return f"« Wallet for {self.address} »"
 
     def __repr__(self) -> str:
         return f"{self}"

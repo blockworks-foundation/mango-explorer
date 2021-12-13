@@ -56,7 +56,7 @@ class AccountLiquidator(metaclass=abc.ABCMeta):
         raise NotImplementedError("AccountLiquidator.liquidate() is not implemented on the base type.")
 
 
-# # 🌬️ NullAccountLiquidator class
+# # NullAccountLiquidator class
 #
 # A 'null', 'no-op', 'dry run' implementation of the `AccountLiquidator` class.
 #

@@ -214,7 +214,7 @@ class TransactionException(ClientException):
             logs = "No Logs"
             if len(self.logs) > 0:
                 logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
-            return f"""« 𝚃𝚛𝚊𝚗𝚜𝚊𝚌𝚝𝚒𝚘𝚗𝙴𝚡𝚌𝚎𝚙𝚝𝚒𝚘𝚗 in '{self.name}' [{self.rpc_method}]: {self.code}:: {self.message}{transaction_details}
+            return f"""« TransactionException in '{self.name}' [{self.rpc_method}]: {self.code}:: {self.message}{transaction_details}
     Accounts:
         {accounts}
     Errors:
@@ -395,7 +395,7 @@ class RPCCaller(HTTPProvider):
         return typing.cast(RPCResponse, response)
 
     def __str__(self) -> str:
-        return f"« 𝚁𝙿𝙲𝙲𝚊𝚕𝚕𝚎𝚛 [{self.cluster_url}] »"
+        return f"« RPCCaller [{self.cluster_url}] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -463,7 +463,7 @@ class CompoundRPCCaller(HTTPProvider):
         return False
 
     def __str__(self) -> str:
-        return f"« 𝙲𝚘𝚖𝚙𝚘𝚞𝚗𝚍𝚁𝙿𝙲𝙲𝚊𝚕𝚕𝚎𝚛 with {len(self.__providers)} providers - current head is: {self.__providers[0]} »"
+        return f"« CompoundRPCCaller with {len(self.__providers)} providers - current head is: {self.__providers[0]} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -682,7 +682,7 @@ class BetterClient:
         return commitment, encoding
 
     def __str__(self) -> str:
-        return f"« 𝙱𝚎𝚝𝚝𝚎𝚛𝙲𝚕𝚒𝚎𝚗𝚝 [{self.cluster_name}]: {self.cluster_urls} »"
+        return f"« BetterClient [{self.cluster_name}]: {self.cluster_urls} »"
 
     def __repr__(self) -> str:
         return f"{self}"

@@ -30,7 +30,7 @@ class NullHedger(Hedger):
         pass
 
     def __str__(self) -> str:
-        return "« 𝙽𝚞𝚕𝚕𝙷𝚎𝚍𝚐𝚎𝚛 »"
+        return "« NullHedger »"
 
     def __repr__(self) -> str:
         return f"{self}"

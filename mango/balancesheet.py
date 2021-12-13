@@ -21,10 +21,9 @@ from decimal import Decimal
 
 from .token import Token
 
+
 # # 🥭 BalanceSheet class
 #
-
-
 class BalanceSheet:
     def __init__(self, token: Token, liabilities: Decimal, settled_assets: Decimal, unsettled_assets: Decimal) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -53,11 +52,11 @@ class BalanceSheet:
             reporter(str(value))
 
     def __str__(self) -> str:
-        name = "«𝚄𝚗𝚜𝚙𝚎𝚌𝚒𝚏𝚒𝚎𝚍»"
+        name = "«Unspecified»"
         if self.token is not None:
             name = self.token.name
 
-        return f"""« 𝙱𝚊𝚕𝚊𝚗𝚌𝚎𝚂𝚑𝚎𝚎𝚝 [{name}]:
+        return f"""« BalanceSheet [{name}]:
     Assets :           {self.assets:>18,.8f}
     Settled Assets :   {self.settled_assets:>18,.8f}
     Unsettled Assets : {self.unsettled_assets:>18,.8f}

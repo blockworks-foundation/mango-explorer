@@ -58,7 +58,7 @@ class OwnedInstrumentValue:
         return changes
 
     def __str__(self) -> str:
-        return f"[{self.owner}]: {self.token_value}"
+        return f"« OwnedInstrumentValue [{self.owner}]: {self.token_value} »"
 
     def __repr__(self) -> str:
         return f"{self}"

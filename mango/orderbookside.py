@@ -139,7 +139,7 @@ class PerpOrderBookSide(AddressableAccount):
 
     def __str__(self) -> str:
         nodes = "\n        ".join([str(node).replace("\n", "\n        ") for node in self.orders()])
-        return f"""« 𝙿𝚎𝚛𝚙𝙾𝚛𝚍𝚎𝚛𝙱𝚘𝚘𝚔𝚂𝚒𝚍𝚎 {self.version} [{self.address}]
+        return f"""« PerpOrderBookSide {self.version} [{self.address}]
     {self.meta_data}
     Perp Market: {self.perp_market_details}
     Bump Index: {self.bump_index}

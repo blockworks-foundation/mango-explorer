@@ -52,7 +52,7 @@ class Instrument:
         return False
 
     def __str__(self) -> str:
-        return f"« 𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝 [{self.symbol}] '{self.name}' »"
+        return f"« Instrument [{self.symbol}] '{self.name}' »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -101,7 +101,7 @@ class Token(Instrument):
         return False
 
     def __str__(self) -> str:
-        return f"« 𝚃𝚘𝚔𝚎𝚗 [{self.symbol}] '{self.name}' [{self.mint} ({self.decimals} decimals)] »"
+        return f"« Token [{self.symbol}] '{self.name}' [{self.mint} ({self.decimals} decimals)] »"
 
 
 # # 🥭 SolToken object

@@ -53,7 +53,6 @@ from pathlib import Path
 #   into account is likely to be costly
 # * Place and Cancel instructions aren't batched into single transactions
 #
-
 class SimpleMarketMaker:
     def __init__(self, context: mango.Context, wallet: mango.Wallet, market: mango.SerumMarket, market_operations: mango.MarketOperations, oracle: mango.Oracle, spread_ratio: Decimal, position_size_ratio: Decimal, existing_order_tolerance: Decimal, pause: timedelta) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -186,7 +185,7 @@ class SimpleMarketMaker:
             self._logger.warning(f"Touching file '{self.health_filename}' raised exception: {exception}")
 
     def __str__(self) -> str:
-        return f"""« 𝚂𝚒𝚖𝚙𝚕𝚎𝙼𝚊𝚛𝚔𝚎𝚝𝙼𝚊𝚔𝚎𝚛 for market '{self.market.symbol}' »"""
+        return f"""« SimpleMarketMaker for market '{self.market.symbol}' »"""
 
     def __repr__(self) -> str:
         return f"{self}"

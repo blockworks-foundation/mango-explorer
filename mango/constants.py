@@ -63,7 +63,7 @@ SOL_DECIMAL_DIVISOR = decimal.Decimal(10 ** SOL_DECIMALS)
 NUM_TOKENS = 3
 
 
-# ## NUM_MARKETS
+# ## NUM_MARKETS
 #
 # There is one fewer market than tokens.
 #
@@ -140,7 +140,7 @@ class PackageVersion(typing.NamedTuple):
     last_commit: str
 
     def __str__(self) -> str:
-        return f"« 𝙿𝚊𝚌𝚔𝚊𝚐𝚎𝚅𝚎𝚛𝚜𝚒𝚘𝚗 {self.version} - '{self.last_commit}' »"
+        return f"« PackageVersion {self.version} - '{self.last_commit}' »"
 
     def __repr__(self) -> str:
         return f"{self}"

@@ -116,4 +116,4 @@ class PerpToSpotHedger(Hedger):
             self.pulse_error.on_next(exception)
 
     def __str__(self) -> str:
-        return f"« 𝙿𝚎𝚛𝚙𝚃𝚘𝚂𝚙𝚘𝚝𝙷𝚎𝚍𝚐𝚎𝚛 for underlying '{self.underlying_market.symbol}', hedging on '{self.hedging_market.symbol}' »"
+        return f"« PerpToSpotHedger for underlying '{self.underlying_market.symbol}', hedging on '{self.hedging_market.symbol}' »"

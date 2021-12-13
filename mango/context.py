@@ -110,7 +110,7 @@ class Context:
 
     def __str__(self) -> str:
         cluster_urls: str = indent_item_by(indent_collection_as_str(self.client.cluster_urls))
-        return f"""« 𝙲𝚘𝚗𝚝𝚎𝚡𝚝 '{self.name}':
+        return f"""« Context '{self.name}':
     Cluster Name: {self.client.cluster_name}
     Cluster URLs:
         {cluster_urls}

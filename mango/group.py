@@ -61,7 +61,7 @@ class GroupSlotSpotMarket:
         return GroupSlotSpotMarket.from_layout(layout)
 
     def __str__(self) -> str:
-        return f"""« 𝙶𝚛𝚘𝚞𝚙𝚂𝚕𝚘𝚝𝚂𝚙𝚘𝚝𝙼𝚊𝚛𝚔𝚎𝚝 [{self.address}]
+        return f"""« GroupSlotSpotMarket [{self.address}]
     Asset Weights:
         Initial: {self.init_asset_weight}
         Maintenance: {self.maint_asset_weight}
@@ -108,7 +108,7 @@ class GroupSlotPerpMarket:
         return GroupSlotPerpMarket.from_layout(layout)
 
     def __str__(self) -> str:
-        return f"""« 𝙶𝚛𝚘𝚞𝚙𝚂𝚕𝚘𝚝𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝 [{self.address}]
+        return f"""« GroupSlotPerpMarket [{self.address}]
     Asset Weights:
         Initial: {self.init_asset_weight}
         Maintenance: {self.maint_asset_weight}
@@ -144,7 +144,7 @@ class GroupSlot:
         quote_token_bank = f"{self.quote_token_bank}".replace("\n", "\n        ")
         spot_market_info = f"{self.spot_market}".replace("\n", "\n        ")
         perp_market_info = f"{self.perp_market}".replace("\n", "\n        ")
-        return f"""« 𝙶𝚛𝚘𝚞𝚙𝚂𝚕𝚘𝚝[{self.index}] {self.base_instrument}
+        return f"""« GroupSlot[{self.index}] {self.base_instrument}
     Base Token Info:
         {base_token_bank}
     Quote Token Info:
@@ -396,7 +396,7 @@ class Group(AddressableAccount):
     def __str__(self) -> str:
         slot_count = len(self.slots)
         slots = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.slots])
-        return f"""« 𝙶𝚛𝚘𝚞𝚙 {self.version} [{self.address}]
+        return f"""« Group {self.version} [{self.address}]
     {self.meta_data}
     Name: {self.name}
     Signer [Nonce: {self.signer_nonce}]: {self.signer_key}

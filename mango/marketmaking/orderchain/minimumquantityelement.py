@@ -69,4 +69,4 @@ class MinimumQuantityElement(Element):
         return new_orders
 
     def __str__(self) -> str:
-        return f"« 𝙼𝚒𝚗𝚒𝚖𝚞𝚖𝚀𝚞𝚊𝚗𝚝𝚒𝚝𝚢𝙴𝚕𝚎𝚖𝚎𝚗𝚝 [minimum quantity: {self.minimum_quantity}, remove: {self.remove}] »"
+        return f"« MinimumQuantityElement [minimum quantity: {self.minimum_quantity}, remove: {self.remove}] »"

@@ -54,7 +54,7 @@ class NotificationTarget(metaclass=abc.ABCMeta):
         raise NotImplementedError("NotificationTarget.send() is not implemented on the base type.")
 
     def __str__(self) -> str:
-        return "« 𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 »"
+        return "« NotificationTarget »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -92,7 +92,7 @@ class TelegramNotificationTarget(NotificationTarget):
         requests.post(url, json=payload, headers=headers)
 
     def __str__(self) -> str:
-        return f"« 𝚃𝚎𝚕𝚎𝚐𝚛𝚊𝚖𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 Chat ID: {self.chat_id} »"
+        return f"« TelegramNotificationTarget Chat ID: {self.chat_id} »"
 
 
 # # 🥭 DiscordNotificationTarget class
@@ -113,7 +113,7 @@ class DiscordNotificationTarget(NotificationTarget):
         requests.post(url, json=payload, headers=headers)
 
     def __str__(self) -> str:
-        return f"« 𝙳𝚒𝚜𝚌𝚘𝚛𝚍𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 Address: {self.address} »"
+        return f"« DiscordNotificationTarget Address: {self.address} »"
 
 
 # # 🥭 MailjetNotificationTarget class
@@ -204,7 +204,7 @@ class MailjetNotificationTarget(NotificationTarget):
         requests.post(url, json=payload, headers=headers, auth=(self.api_key, self.api_secret))
 
     def __str__(self) -> str:
-        return f"« 𝙼𝚊𝚒𝚕𝚓𝚎𝚝𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 To: '{self.to_name}' '{self.to_address}' with subject '{self.subject}' »"
+        return f"« MailjetNotificationTarget To: '{self.to_name}' '{self.to_address}' with subject '{self.subject}' »"
 
 
 # # 🥭 CsvFileNotificationTarget class
@@ -243,7 +243,7 @@ class CsvFileNotificationTarget(NotificationTarget):
                 file_writer.writerow(row_data)
 
     def __str__(self) -> str:
-        return f"« 𝙲𝚜𝚟𝙵𝚒𝚕𝚎𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 File: {self.filename} »"
+        return f"« CsvFileNotificationTarget File: {self.filename} »"
 
 
 # # 🥭 FilteringNotificationTarget class
@@ -262,7 +262,7 @@ class FilteringNotificationTarget(NotificationTarget):
             self.inner_notifier.send_notification(item)
 
     def __str__(self) -> str:
-        return f"« 𝙵𝚒𝚕𝚝𝚎𝚛𝚒𝚗𝚐𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 For: {self.inner_notifier} »"
+        return f"« FilteringNotificationTarget For: {self.inner_notifier} »"
 
 
 # # 🥭 ConsoleNotificationTarget class
@@ -278,7 +278,7 @@ class ConsoleNotificationTarget(NotificationTarget):
         print(self.name, item)
 
     def __str__(self) -> str:
-        return f"« 𝙲𝚘𝚗𝚜𝚘𝚕𝚎𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 '{self.name}' »"
+        return f"« ConsoleNotificationTarget '{self.name}' »"
 
 
 # # 🥭 CompoundNotificationTarget class
@@ -308,7 +308,7 @@ class CompoundNotificationTarget(NotificationTarget):
         for target in self.targets:
             inner += [f"{target}"]
         inner_text: str = "\n    ".join(inner)
-        return f"""« 𝙲𝚘𝚖𝚙𝚘𝚞𝚗𝚍𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝚃𝚊𝚛𝚐𝚎𝚝 with {len(self.targets)} inner targets:
+        return f"""« CompoundNotificationTarget with {len(self.targets)} inner targets:
     {inner_text}
 »"""
 
@@ -357,4 +357,4 @@ class NotificationHandler(logging.StreamHandler):
         self.target.send_notification(message)
 
     def __str__(self) -> str:
-        return "« 𝙽𝚘𝚝𝚒𝚏𝚒𝚌𝚊𝚝𝚒𝚘𝚗𝙷𝚊𝚗𝚍𝚕𝚎𝚛 »"
+        return "« NotificationHandler »"

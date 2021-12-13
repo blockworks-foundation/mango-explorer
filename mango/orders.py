@@ -212,7 +212,7 @@ class Order(typing.NamedTuple):
         order_type: str = ""
         if self.order_type != OrderType.UNKNOWN:
             order_type = f" {self.order_type}"
-        return f"« 𝙾𝚛𝚍𝚎𝚛 {owner}{self.side} for {self.quantity:,.8f} at {self.price:.8f} [ID: {self.id} / {self.client_id}]{order_type} »"
+        return f"« Order {owner}{self.side} for {self.quantity:,.8f} at {self.price:.8f} [ID: {self.id} / {self.client_id}]{order_type} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -324,7 +324,7 @@ class OrderBook:
         if self.spread != 0 and self.top_bid is not None:
             spread_percentage = (self.spread / self.top_bid.price)
             spread_description = f"{self.spread:,.8f}, {spread_percentage:,.3%}"
-        return f"« 𝙾𝚛𝚍𝚎𝚛𝙱𝚘𝚘𝚔 {self.symbol} [spread: {spread_description}]\n\t{text}\n»"
+        return f"« OrderBook {self.symbol} [spread: {spread_description}]\n\t{text}\n»"
 
     def __repr__(self) -> str:
         return f"{self}"

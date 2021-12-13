@@ -163,7 +163,7 @@ class LogEvent:
 
     def __str__(self) -> str:
         logs = "\n    ".join(self.logs)
-        return f"""« 𝙻𝚘𝚐𝙴𝚟𝚎𝚗𝚝 {self.signatures}
+        return f"""« LogEvent {self.signatures}
     {logs}
 »"""
 

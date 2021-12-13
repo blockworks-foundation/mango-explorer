@@ -45,7 +45,7 @@ class PriceCache:
         return PriceCache(layout.price, layout.last_update)
 
     def __str__(self) -> str:
-        return f"« 𝙿𝚛𝚒𝚌𝚎𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.price:,.20f} »"
+        return f"« PriceCache [{self.last_update}] {self.price:,.20f} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -68,7 +68,7 @@ class RootBankCache:
         return RootBankCache(layout.deposit_index, layout.borrow_index, layout.last_update)
 
     def __str__(self) -> str:
-        return f"« 𝚁𝚘𝚘𝚝𝙱𝚊𝚗𝚔𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.deposit_index:,.20f} / {self.borrow_index:,.20f} »"
+        return f"« RootBankCache [{self.last_update}] {self.deposit_index:,.20f} / {self.borrow_index:,.20f} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -91,7 +91,7 @@ class PerpMarketCache:
         return PerpMarketCache(layout.long_funding, layout.short_funding, layout.last_update)
 
     def __str__(self) -> str:
-        return f"« 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙲𝚊𝚌𝚑𝚎 [{self.last_update}] {self.long_funding:,.20f} / {self.short_funding:,.20f} »"
+        return f"« PerpMarketCache [{self.last_update}] {self.long_funding:,.20f} / {self.short_funding:,.20f} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -124,7 +124,7 @@ class MarketCache:
         return InstrumentValue(quote_token, price)
 
     def __str__(self) -> str:
-        return f"""« 𝙼𝚊𝚛𝚔𝚎𝚝𝙲𝚊𝚌𝚑𝚎
+        return f"""« MarketCache
     {self.price}
     {self.root_bank}
     {self.perp_market}
@@ -189,10 +189,10 @@ class Cache(AddressableAccount):
             for index, item in enumerate(items):
                 rendered += [f"{index}: {(item or stub)}".replace("\n", "\n            ")]
             return rendered
-        prices = "\n        ".join(_render_list(self.price_cache, "« No 𝙿𝚛𝚒𝚌𝚎𝙲𝚊𝚌𝚑𝚎 »"))
-        root_banks = "\n        ".join(_render_list(self.root_bank_cache, "« No 𝚁𝚘𝚘𝚝𝙱𝚊𝚗𝚔𝙲𝚊𝚌𝚑𝚎 »"))
-        perp_markets = "\n        ".join(_render_list(self.perp_market_cache, "« No 𝙿𝚎𝚛𝚙𝙼𝚊𝚛𝚔𝚎𝚝𝙲𝚊𝚌𝚑𝚎 »"))
-        return f"""« 𝙲𝚊𝚌𝚑𝚎 [{self.version}] {self.address}
+        prices = "\n        ".join(_render_list(self.price_cache, "« No PriceCache »"))
+        root_banks = "\n        ".join(_render_list(self.root_bank_cache, "« No RootBankCache »"))
+        perp_markets = "\n        ".join(_render_list(self.perp_market_cache, "« No PerpMarketCache »"))
+        return f"""« Cache [{self.version}] {self.address}
     {self.meta_data}
     Prices:
         {prices}

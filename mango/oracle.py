@@ -58,7 +58,7 @@ class OracleSource():
         self.market = market
 
     def __str__(self) -> str:
-        return f"« 𝙾𝚛𝚊𝚌𝚕𝚎𝚂𝚘𝚞𝚛𝚌𝚎 '{self.source_name}' from '{self.provider_name}' for market '{self.market.symbol}' [{self.supports}] »"
+        return f"« OracleSource '{self.source_name}' from '{self.provider_name}' for market '{self.market.symbol}' [{self.supports}] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -86,7 +86,7 @@ class Price():
         confidence = ""
         if self.source.supports & SupportedOracleFeature.CONFIDENCE:
             confidence = f" +/- {self.confidence:,.8f}"
-        return f"« 𝙿𝚛𝚒𝚌𝚎 [{self.source.provider_name}] {self.market.symbol} at {self.timestamp}: {self.mid_price:,.8f}{confidence} »"
+        return f"« Price [{self.source.provider_name}] {self.market.symbol} at {self.timestamp}: {self.mid_price:,.8f}{confidence} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -115,7 +115,7 @@ class Oracle(metaclass=abc.ABCMeta):
         raise NotImplementedError("Oracle.fetch_price() is not implemented on the base type.")
 
     def __str__(self) -> str:
-        return f"« 𝙾𝚛𝚊𝚌𝚕𝚎 {self.name} [{self.market.symbol}] »"
+        return f"« Oracle {self.name} [{self.market.symbol}] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -138,7 +138,7 @@ class OracleProvider(metaclass=abc.ABCMeta):
         raise NotImplementedError("OracleProvider.all_available_symbols() is not implemented on the base type.")
 
     def __str__(self) -> str:
-        return f"« 𝙾𝚛𝚊𝚌𝚕𝚎𝙿𝚛𝚘𝚟𝚒𝚍𝚎𝚛 {self.name} »"
+        return f"« OracleProvider {self.name} »"
 
     def __repr__(self) -> str:
         return f"{self}"

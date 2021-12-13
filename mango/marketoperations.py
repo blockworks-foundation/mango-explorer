@@ -171,7 +171,7 @@ class NullMarketInstructionBuilder(MarketInstructionBuilder):
         return CombinableInstructions.empty()
 
     def __str__(self) -> str:
-        return f"« 𝙽𝚞𝚕𝚕𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 {self.symbol} »"
+        return f"« NullMarketInstructionBuilder {self.symbol} »"
 
 
 # # 🥭 NullMarketOperations class
@@ -211,4 +211,4 @@ class NullMarketOperations(MarketOperations):
         return SYSTEM_PROGRAM_ADDRESS
 
     def __str__(self) -> str:
-        return f"""« 𝙳𝚛𝚢𝚁𝚞𝚗𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.market_name}] »"""
+        return f"""« NullMarketOperations [{self.market_name}] »"""

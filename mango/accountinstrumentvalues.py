@@ -138,7 +138,7 @@ class AccountInstrumentValues:
         return AccountInstrumentValues(base_token, quote_token, account_slot.raw_deposit, account_slot.deposit, account_slot.raw_borrow, account_slot.borrow, base_token_free, base_token_total, quote_token_free, quote_token_total, perp_base_position, perp_quote_position, taker_quote, bids_quantity, asks_quantity, long_settled_funding, short_settled_funding, lot_size_converter)
 
     def __str__(self) -> str:
-        return f"""« 𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝𝚅𝚊𝚕𝚞𝚎𝚜 {self.base_token.symbol}
+        return f"""« AccountInstrumentValues {self.base_token.symbol}
     Deposited  : {self.deposit}
     Borrowed   : {self.borrow}
     Unsettled:
@@ -231,7 +231,7 @@ class PricedAccountInstrumentValues(AccountInstrumentValues):
         return base_position, quote_position
 
     def __str__(self) -> str:
-        return f"""« 𝙿𝚛𝚒𝚌𝚎𝚍𝙰𝚌𝚌𝚘𝚞𝚗𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚖𝚎𝚗𝚝𝚅𝚊𝚕𝚞𝚎𝚜 {self.base_token.symbol} priced in {self.quote_token.symbol}
+        return f"""« PricedAccountInstrumentValues {self.base_token.symbol} priced in {self.quote_token.symbol}
     Deposited  : {self.original_account_token_values.deposit:<45} worth {self.deposit}
     Borrowed   : {self.original_account_token_values.borrow:<45} worth {self.borrow}
     Unsettled:

@@ -98,7 +98,7 @@ def test_btc_token_bank() -> None:
     assert interest_rates.deposit == Decimal("0.000743289949230430278650314704786385301")
     # Typescript says:                       0.0060962691428017024
     assert interest_rates.borrow == Decimal("0.00609626914280543412386251743252599320")
-    assert str(interest_rates) == "« 𝙸𝚗𝚝𝚎𝚛𝚎𝚜𝚝𝚁𝚊𝚝𝚎𝚜 Deposit: 0.07% Borrow: 0.61% »"
+    assert str(interest_rates) == "« InterestRates Deposit: 0.07% Borrow: 0.61% »"
 
 
 def test_usdc_token_bank() -> None:
@@ -120,4 +120,4 @@ def test_usdc_token_bank() -> None:
     assert interest_rates.deposit == Decimal("0.168744097876912914047144162858900625")
     # Typescript says:                        0.23058349895659091544
     assert interest_rates.borrow == Decimal("0.230583498956594527437928647548223725")
-    assert str(interest_rates) == "« 𝙸𝚗𝚝𝚎𝚛𝚎𝚜𝚝𝚁𝚊𝚝𝚎𝚜 Deposit: 16.87% Borrow: 23.06% »"
+    assert str(interest_rates) == "« InterestRates Deposit: 16.87% Borrow: 23.06% »"

@@ -147,7 +147,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         return CombinableInstructions.empty()
 
     def __str__(self) -> str:
-        return """« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝙸𝚗𝚜𝚝𝚛𝚞𝚌𝚝𝚒𝚘𝚗𝙱𝚞𝚒𝚕𝚍𝚎𝚛 »"""
+        return """« SerumMarketInstructionBuilder »"""
 
 
 # # 🥭 SerumMarketOperations class
@@ -234,4 +234,4 @@ class SerumMarketOperations(MarketOperations):
         return self.market_instruction_builder.build_crank_instructions(open_orders_to_crank, limit)
 
     def __str__(self) -> str:
-        return f"""« 𝚂𝚎𝚛𝚞𝚖𝙼𝚊𝚛𝚔𝚎𝚝𝙾𝚙𝚎𝚛𝚊𝚝𝚒𝚘𝚗𝚜 [{self.serum_market.symbol}] »"""
+        return f"""« SerumMarketOperations [{self.serum_market.symbol}] »"""

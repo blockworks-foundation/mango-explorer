@@ -56,7 +56,7 @@ class Market(metaclass=abc.ABCMeta):
         return f"{self.base.symbol}/{self.quote.symbol}"
 
     def __str__(self) -> str:
-        return f"« 𝙼𝚊𝚛𝚔𝚎𝚝 {self.symbol} »"
+        return f"« Market {self.symbol} »"
 
     def __repr__(self) -> str:
         return f"{self}"
