@@ -30,8 +30,6 @@ To prevent this, accounts have to provide collateral worth more than they borrow
 
 Being 'liquidated' means someone - anyone - can 'pay off' some of the borrowed tokens, in return for some of the collateral tokens. This 'paying off' earns the liquidator a premium of 5% - that is, 5% more collateral tokens are returned than the value of the borrowed tokens, making it a worthwhile task for the liquidator.
 
-For more details of the process and what it involves, see the [Liquidation notebook](Liquidation.ipynb).
-
 
 # 2. 💵 How Much Money?
 
