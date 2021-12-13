@@ -6,6 +6,7 @@ import os.path
 import sys
 import typing
 
+from datetime import datetime, timedelta, timezone
 from solana.publickey import PublicKey
 
 
@@ -21,6 +22,8 @@ parser.add_argument("--address", type=PublicKey, required=False,
                     help="Address of the Mango account to load (defaults to current wallet's Mango account)")
 parser.add_argument("--filename", type=str, required=False,
                     help="filename for loading and storing the trade history data in CSV format")
+parser.add_argument("--latest-24-hours", action="store_true", default=False,
+                    help="only retrieve and save the most revent 24 hours of trades")
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -40,6 +43,11 @@ for account in accounts:
     if filename is None:
         filename = f"trade-history-{account.address}.csv"
     history: mango.TradeHistory = mango.TradeHistory()
-    history.load(filename, ok_if_missing=True)
-    history.update(context, account)
+    if args.latest_24_hours:
+        cutoff: datetime = datetime.utcnow() - timedelta(hours=24)
+        cutoff = cutoff.replace(tzinfo=timezone(offset=timedelta()))
+        history.download_latest(context, account, cutoff)
+    else:
+        history.load(filename, ok_if_missing=True)
+        history.update(context, account)
     history.save(filename)

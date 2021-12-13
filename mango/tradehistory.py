@@ -36,7 +36,7 @@ from .context import Context
 # Downloads and unifies trade history data.
 #
 class TradeHistory:
-    COLUMNS = ["Timestamp", "Market", "Side", "MakerOrTaker", "Value", "Price", "Quantity", "Fee",
+    COLUMNS = ["Timestamp", "Market", "Side", "MakerOrTaker", "Change", "Price", "Quantity", "Fee",
                "SequenceNumber", "FeeTier", "MarketType", "OrderId"]
 
     __perp_column_name_mapper = {
@@ -88,7 +88,7 @@ class TradeHistory:
         "Timestamp": lambda value: parser.parse(value),
         "SequenceNumber": lambda value: Decimal(value),
         "Price": lambda value: Decimal(value),
-        "Value": lambda value: Decimal(value),
+        "Change": lambda value: Decimal(value),
         "Quantity": lambda value: Decimal(value),
         "Fee": lambda value: Decimal(value),
         "FeeTier": lambda value: Decimal(value),
@@ -198,8 +198,9 @@ class TradeHistory:
 
         frame["FeeTier"] = -1
         frame["Fee"] = frame.apply(__fee_calculator, axis=1)
-        frame["Value"] = (frame["Price"] * frame["Quantity"]) - frame["Fee"]
         frame["Side"] = frame.apply(__side_lookup, axis=1)
+        frame["Change"] = (frame["Price"] * frame["Quantity"]) - frame["Fee"]
+        frame["Change"] = frame["Change"].where(frame["Side"] == "sell", other=-frame["Change"])
         frame["OrderId"] = numpy.where(frame["MakerOrTaker"] == "maker",
                                        frame["makerOrderId"], frame["takerOrderId"])
 
@@ -285,7 +286,8 @@ class TradeHistory:
                 lambda timestamp: parser.parse(timestamp).replace(microsecond=0))
             frame["Market"] = frame.apply(TradeHistory.__market_lookup(context), axis=1)
             frame["MakerOrTaker"] = numpy.where(frame["maker"], "maker", "taker")
-            frame["Value"] = (frame["Price"] * frame["Quantity"]) - frame["Fee"]
+            frame["Change"] = (frame["Price"] * frame["Quantity"]) - frame["Fee"]
+            frame["Change"] = frame["Change"].where(frame["Side"] == "sell", other=-frame["Change"])
             frame["MarketType"] = "spot"
 
             return frame[TradeHistory.COLUMNS]
@@ -293,6 +295,28 @@ class TradeHistory:
     @property
     def trades(self) -> pandas.DataFrame:
         return self.__trades.copy(deep=True)
+
+    def download_latest(self, context: Context, account: Account, cutoff: datetime) -> None:
+        # Go back further than we need to so we can be sure we're not skipping any trades due to race conditions.
+        # We remove duplicates a few lines further down.
+        self._logger.info(f"Downloading spot trades from {cutoff}")
+        spot: pandas.DataFrame = TradeHistory.__download_updated_spots(context,
+                                                                       account,
+                                                                       cutoff,
+                                                                       self.__seconds_pause_between_rest_calls)
+        self._logger.info(f"Downloading perp trades from {cutoff}")
+        perp: pandas.DataFrame = TradeHistory.__download_updated_perps(context,
+                                                                       account,
+                                                                       cutoff,
+                                                                       self.__seconds_pause_between_rest_calls)
+
+        all_trades: pandas.DataFrame = pandas.concat([self.__trades, spot, perp])
+        all_trades = all_trades[all_trades["Timestamp"] >= cutoff]
+
+        distinct_trades = all_trades.drop_duplicates()
+        sorted_trades = distinct_trades.sort_values(["Timestamp", "Market", "SequenceNumber"], axis=0, ascending=True)
+        self._logger.info(f"Download complete. Data contains {len(sorted_trades)} trades.")
+        self.__trades = sorted_trades
 
     def update(self, context: Context, account: Account) -> None:
         latest_trade: typing.Optional[datetime] = self.__trades.loc[self.__trades.index[-1],
