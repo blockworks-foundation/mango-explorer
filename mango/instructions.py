@@ -580,7 +580,7 @@ class NewOrderV3InstructionBuilder(InstructionBuilder):
     def build(self) -> TransactionInstruction:
         instruction = self.market.make_place_order_instruction(
             self.source,
-            self.wallet.to_deprecated_solana_account(),
+            self.wallet.keypair,
             self.order_type,
             self.side,
             float(self.price),
