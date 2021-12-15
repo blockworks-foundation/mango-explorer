@@ -42,6 +42,27 @@ from .text import indent_collection_as_str
 _STUB_TRANSACTION_SIGNATURE: str = "stub-for-already-submitted-transaction-signature"
 
 
+# # 🥭 CompoundException class
+#
+# A `CompoundException` exception can hold all exceptions that were raised when trying to read or
+# write to Solana.
+#
+# The `Client` can rotate through multiple providers, switching when certain `Exception`s are thrown.
+# This exception allows all those exceptions to be gathered and inspected should all providers fail.
+#
+class CompoundException(Exception):
+    def __init__(self, name: str, all_exceptions: typing.Sequence[Exception]) -> None:
+        super().__init__(f"[{name}] Multiple errors captured for event")
+        self.name: str = name
+        self.all_exceptions: typing.Sequence[Exception] = all_exceptions
+
+    def __str__(self) -> str:
+        details: str = indent_collection_as_str(self.all_exceptions)
+        return f"""« CompoundException with {len(self.all_exceptions)} inner exceptions:
+    {details}
+»"""
+
+
 # # 🥭 ClientException class
 #
 # A `ClientException` exception base class that allows trapping and handling rate limiting
@@ -59,25 +80,6 @@ class ClientException(Exception):
 
     def __repr__(self) -> str:
         return f"{self}"
-
-
-# # 🥭 CompoundClientException class
-#
-# A `CompoundClientException` exception gathers all exceptions that were raised when trying to read or
-# write to Solana.
-#
-# The `Client` can rotate through multiple providers, switching when certain `ClientException`s are thrown.
-# This exception allows all those exceptions to be gathered and inspected should all providers fail.
-#
-class CompoundClientException(ClientException):
-    def __init__(self, all_exceptions: typing.Sequence[ClientException]) -> None:
-        self.all_exceptions: typing.Sequence[ClientException] = all_exceptions
-
-    def __str__(self) -> str:
-        details: str = indent_collection_as_str(self.all_exceptions)
-        return f"""« CompoundClientException with {len(self.all_exceptions)} inner exceptions:
-    {details}
-»"""
 
 
 # # 🥭 RateLimitException class
@@ -431,9 +433,10 @@ class RPCCaller(HTTPProvider):
 # and switch provider on exceptions that show that provider is no longer at the tip of the chain.
 #
 class CompoundRPCCaller(HTTPProvider):
-    def __init__(self, providers: typing.Sequence[RPCCaller]):
+    def __init__(self, name: str, providers: typing.Sequence[RPCCaller]):
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.__providers: typing.Sequence[RPCCaller] = providers
+        self.name: str = name
         self.on_provider_change: typing.Callable[[], None] = lambda: None
 
     @property
@@ -459,7 +462,7 @@ class CompoundRPCCaller(HTTPProvider):
         self._logger.debug(f"Told to shift provider - now using: {self.__providers[0]}")
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
-        all_exceptions: typing.List[ClientException] = []
+        all_exceptions: typing.List[Exception] = []
         for provider in self.__providers:
             try:
                 result = provider.make_request(method, *params)
@@ -470,14 +473,15 @@ class CompoundRPCCaller(HTTPProvider):
                     self.on_provider_change()
                     self._logger.debug(f"Shifted provider - now using: {self.__providers[0]}")
                 return result
-            except (RateLimitException,
+            except (requests.exceptions.HTTPError,
+                    RateLimitException,
                     NodeIsBehindException,
                     StaleSlotException,
                     FailedToFetchBlockhashException) as exception:
                 all_exceptions += [exception]
                 self._logger.info(f"Moving to next provider - {provider} gave {exception}")
 
-        raise CompoundClientException(all_exceptions)
+        raise CompoundException(self.name, all_exceptions)
 
     def is_connected(self) -> bool:
         # All we need for this to be true is for one of our providers to be connected.
@@ -535,7 +539,7 @@ class BetterClient:
                                               slot_holder, instruction_reporter)
             rpc_callers += [rpc_caller]
 
-        provider: CompoundRPCCaller = CompoundRPCCaller(rpc_callers)
+        provider: CompoundRPCCaller = CompoundRPCCaller(name, rpc_callers)
         blockhash_cache: typing.Union[BlockhashCache, bool] = False
         if blockhash_cache_duration > 0:
             blockhash_cache = BlockhashCache(blockhash_cache_duration)

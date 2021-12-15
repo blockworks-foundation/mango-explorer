@@ -30,7 +30,7 @@ from .cache import RootBankCache as RootBankCache
 from .client import BetterClient as BetterClient
 from .client import BlockhashNotFoundException as BlockhashNotFoundException
 from .client import ClientException as ClientException
-from .client import CompoundClientException as CompoundClientException
+from .client import CompoundException as CompoundException
 from .client import CompoundRPCCaller as CompoundRPCCaller
 from .client import FailedToFetchBlockhashException as FailedToFetchBlockhashException
 from .client import NodeIsBehindException as NodeIsBehindException
