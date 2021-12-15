@@ -28,7 +28,7 @@ from solana.blockhash import Blockhash, BlockhashCache
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
-from solana.rpc.commitment import Commitment, Processed
+from solana.rpc.commitment import Commitment, Processed, Finalized
 from solana.rpc.providers.http import HTTPProvider
 from solana.rpc.types import DataSliceOpts, MemcmpOpts, RPCMethod, RPCResponse, TokenAccountOpts, TxOpts
 from solana.transaction import Transaction
@@ -551,6 +551,8 @@ class BetterClient:
                 # Clear out the blockhash cache on retrying
                 logging.debug("Replacing client blockhash cache.")
                 client.blockhash_cache = BlockhashCache(blockhash_cache_duration)
+                blockhash_resp = client.get_recent_blockhash(Finalized)
+                client._process_blockhash_resp(blockhash_resp, used_immediately=False)
 
         provider.on_provider_change = __on_provider_change
 
