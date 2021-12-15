@@ -24,6 +24,32 @@
         "coingeckoId": "cardano",
         "website": "https://cardano.org/"
       }
+    },
+    {
+      "chainId": 101,
+      "symbol": "AVAX",
+      "name": "Avalanche",
+      "decimals": 8,
+      "tags": [
+        "no-solana-coin"
+      ],
+      "extensions": {
+        "coingeckoId": "avalanche",
+        "website": "https://avax.network/"
+      }
+    },
+    {
+      "chainId": 101,
+      "symbol": "BNB",
+      "name": "Binance Coin",
+      "decimals": 8,
+      "tags": [
+        "no-solana-coin"
+      ],
+      "extensions": {
+        "coingeckoId": "binance-coin",
+        "website": "https://www.binance.com/"
+      }
     }
   ],
   "version": {

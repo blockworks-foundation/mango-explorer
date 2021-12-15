@@ -267,8 +267,8 @@ class ContextBuilder:
             instrument_lookup = CompoundInstrumentLookup([
                 ids_json_token_lookup,
                 mainnet_overrides_token_lookup,
-                mainnet_spl_token_lookup,
-                mainnet_non_spl_instrument_lookup])
+                mainnet_non_spl_instrument_lookup,
+                mainnet_spl_token_lookup])
         elif actual_cluster == "devnet":
             devnet_overrides_token_lookup: InstrumentLookup = SPLTokenLookup.load(devnet_overrides_filename)
             devnet_token_filename = token_filename.rsplit('.', 1)[0] + ".devnet.json"
@@ -278,8 +278,8 @@ class ContextBuilder:
             instrument_lookup = CompoundInstrumentLookup([
                 ids_json_token_lookup,
                 devnet_overrides_token_lookup,
-                devnet_spl_token_lookup,
-                devnet_non_spl_instrument_lookup])
+                devnet_non_spl_instrument_lookup,
+                devnet_spl_token_lookup])
 
         ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(actual_cluster, instrument_lookup)
         all_market_lookup = ids_json_market_lookup

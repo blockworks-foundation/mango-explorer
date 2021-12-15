@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import os.path
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Shows the on-chain data of a Mango Markets Group.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+args: argparse.Namespace = mango.parse_args(parser)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+
+group = mango.Group.load(context)
+cache = group.fetch_cache(context)
+
+mango.output("Group cached oracle prices:")
+for slot in group.slots:
+    if slot.base_instrument is not None:
+        price = group.token_price_from_cache(cache, slot.base_instrument)
+        price_formatted = f"{price.value:,.8f}"
+        mango.output(f"{slot.base_instrument.symbol:<6}: {price_formatted:>18} {group.shared_quote_token.symbol}")
