@@ -380,8 +380,12 @@ class Group(AddressableAccount):
         raise Exception(f"Could not find token {instrument} in group {self.address}")
 
     def token_price_from_cache(self, cache: Cache, token: Instrument) -> InstrumentValue:
-        market_cache: MarketCache = self.market_cache_from_cache(cache, token)
-        return market_cache.adjusted_price(token, self.shared_quote_token)
+        if token == self.shared_quote_token:
+            # 1 USDC is always worth 1 USDC
+            return InstrumentValue(self.shared_quote_token, Decimal(1))
+        else:
+            market_cache: MarketCache = self.market_cache_from_cache(cache, token)
+            return market_cache.adjusted_price(token, self.shared_quote_token)
 
     def perp_market_cache_from_cache(self, cache: Cache, token: Instrument) -> typing.Optional[PerpMarketCache]:
         market_cache: MarketCache = self.market_cache_from_cache(cache, token)
