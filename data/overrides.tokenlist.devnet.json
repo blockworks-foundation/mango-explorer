@@ -1,0 +1,39 @@
+{
+  "name": "Mango Overrides Token List",
+  "description": "This file contains token details for specific tokens where we can't use the main SPL token registry. This is often the result of the SPL token registry changing symbols (e.g. ETH -> soETH) which will confuse lookups.",
+  "logoURI": "https://trade.mango.markets/assets/icons/logo.svg",
+  "keywords": [
+    "mango",
+    "solana",
+    "spl"
+  ],
+  "tags": {
+    "symbol-change": {
+      "name": "symbol-change",
+      "description": "Tokens that have a different symbol in the main SPL token registry"
+    },
+    "stablecoin": {
+      "name": "stablecoin",
+      "description": "Tokens that are fixed to an external asset, e.g. the US dollar"
+    },
+    "ethereum": {
+      "name": "ethereum",
+      "description": "Asset bridged from ethereum"
+    },
+    "wrapped-sollet": {
+      "name": "wrapped-sollet",
+      "description": "Asset wrapped using sollet bridge"
+    },
+    "wrapped": {
+      "name": "wrapped",
+      "description": "Asset wrapped using wormhole bridge"
+    }
+  },
+  "timestamp": "2021-12-15T14:00:00+0000",
+  "tokens": [],
+  "version": {
+    "major": 0,
+    "minor": 1,
+    "patch": 0
+  }
+}

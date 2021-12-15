@@ -119,11 +119,11 @@ def test_serum_market_lookup() -> None:
 def test_serum_market_lookups_with_full_data() -> None:
     market_lookup = mango.SerumMarketLookup.load(fake_seeded_public_key(
         "program ID"), mango.SPLTokenLookup.DefaultDataFilepath)
-    eth_usdt = market_lookup.find_by_symbol("ETH/USDT")
-    assert eth_usdt is not None
-    assert eth_usdt.base.symbol == "ETH"
-    assert eth_usdt.quote.symbol == "USDT"
-    assert eth_usdt.address == PublicKey("7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF")
+    srm_usdc = market_lookup.find_by_symbol("SRM/USDC")
+    assert srm_usdc is not None
+    assert srm_usdc.base.symbol == "SRM"
+    assert srm_usdc.quote.symbol == "USDC"
+    assert srm_usdc.address == PublicKey("ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA")
 
     btc_usdc = market_lookup.find_by_symbol("BTC/USDC")
     assert btc_usdc is not None
@@ -135,8 +135,58 @@ def test_serum_market_lookups_with_full_data() -> None:
         non_existant_market = market_lookup.find_by_symbol("ETH/BTC")
     assert non_existant_market is None  # No such market
 
-    srm_usdc = market_lookup.find_by_address(PublicKey("ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA"))
-    assert srm_usdc is not None
-    assert srm_usdc.base.symbol == "SRM"
-    assert srm_usdc.quote.symbol == "USDC"
-    assert srm_usdc.address == PublicKey("ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA")
+
+def test_overrides_with_full_data() -> None:
+    market_lookup = mango.SerumMarketLookup.load(fake_seeded_public_key(
+        "program ID"), "./data/overrides.tokenlist.json")
+    eth_usdt = market_lookup.find_by_symbol("ETH/USDT")
+    assert eth_usdt is not None
+    assert eth_usdt.base.symbol == "ETH"
+    assert eth_usdt.quote.symbol == "USDT"
+    assert eth_usdt.address == PublicKey("7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF")
+
+    eth_usdc = market_lookup.find_by_symbol("ETH/USDC")
+    assert eth_usdc is not None
+    assert eth_usdc.base.symbol == "ETH"
+    assert eth_usdc.quote.symbol == "USDC"
+    assert eth_usdc.address == PublicKey("4tSvZvnbyzHXLMTiFonMyxZoHmFqau1XArcRCVHLZ5gX")
+
+    with disable_logging():
+        non_existant_market = market_lookup.find_by_symbol("ETH/BTC")
+    assert non_existant_market is None  # No such market
+
+
+def test_compound_lookups_with_full_data() -> None:
+    overrides = mango.SerumMarketLookup.load(fake_seeded_public_key(
+        "program ID"), "./data/overrides.tokenlist.json")
+    spl = mango.SerumMarketLookup.load(fake_seeded_public_key(
+        "program ID"), mango.SPLTokenLookup.DefaultDataFilepath)
+    actual = mango.CompoundMarketLookup([overrides, spl])
+    # actual should now find instruments in either overrides or spl
+    eth_usdt = actual.find_by_symbol("ETH/USDT")
+    assert eth_usdt is not None
+    assert eth_usdt.base.symbol == "ETH"
+    assert eth_usdt.quote.symbol == "USDT"
+    assert eth_usdt.address == PublicKey("7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF")
+
+    eth_usdc = actual.find_by_symbol("ETH/USDC")
+    assert eth_usdc is not None
+    assert eth_usdc.base.symbol == "ETH"
+    assert eth_usdc.quote.symbol == "USDC"
+    assert eth_usdc.address == PublicKey("4tSvZvnbyzHXLMTiFonMyxZoHmFqau1XArcRCVHLZ5gX")
+
+    with disable_logging():
+        srm_usdc = actual.find_by_symbol("SRM/USDC")
+        assert srm_usdc is not None
+        assert srm_usdc.base.symbol == "SRM"
+        assert srm_usdc.quote.symbol == "USDC"
+        assert srm_usdc.address == PublicKey("ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA")
+
+        btc_usdc = actual.find_by_symbol("BTC/USDC")
+        assert btc_usdc is not None
+        assert btc_usdc.base.symbol == "BTC"
+        assert btc_usdc.quote.symbol == "USDC"
+        assert btc_usdc.address == PublicKey("A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw")
+
+        non_existant_market = actual.find_by_symbol("ETH/BTC")
+        assert non_existant_market is None  # No such market

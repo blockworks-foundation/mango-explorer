@@ -23,7 +23,7 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .client import BetterClient
-from .constants import MangoConstants
+from .constants import MangoConstants, DATA_PATH
 from .context import Context
 from .idsjsonmarketlookup import IdsJsonMarketLookup
 from .instrumentlookup import InstrumentLookup, CompoundInstrumentLookup, IdsJsonTokenLookup, NonSPLInstrumentLookup, SPLTokenLookup
@@ -241,31 +241,67 @@ class ContextBuilder:
 
         ids_json_token_lookup: InstrumentLookup = IdsJsonTokenLookup(actual_cluster, actual_group_name)
         instrument_lookup: InstrumentLookup = ids_json_token_lookup
+        mainnet_overrides_filename = os.path.join(DATA_PATH, "overrides.tokenlist.json")
+        devnet_overrides_filename = os.path.join(DATA_PATH, "overrides.tokenlist.devnet.json")
         if actual_cluster == "mainnet":
+            # 'Overrides' are for problematic situations.
+            #
+            # We want to be able to use the community-owned SPL Token Registry JSON file. It holds details
+            # of most tokens and allows our Serum code to work with any of them and their markets.
+            #
+            # The problems come when they decide to rename symbols, like they did with "ETH".
+            #
+            # Mango uses "ETH" with a mint 2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk and for a long time
+            # the SPL JSON file also used "ETH" with a mint of 2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk.
+            #
+            # Then the SPL JSON file was updated and the mint 2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk now
+            # has the symbol 'soETH' for 'Wrapped Ethereum (Sollet)', and "ETH" is now 'Wrapped Ether (Wormhole)'
+            # with a mint of 7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs.
+            #
+            # 'Overrides' allows us to put the details we expect for 'ETH' into our loader, ahead of the SPL
+            # JSON, so that our code and users can continue to use, for example, ETH/USDT, as they expect.
+            mainnet_overrides_token_lookup: InstrumentLookup = SPLTokenLookup.load(mainnet_overrides_filename)
             mainnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(token_filename)
             mainnet_non_spl_instrument_lookup: InstrumentLookup = NonSPLInstrumentLookup.load(
                 NonSPLInstrumentLookup.DefaultMainnetDataFilepath)
-            instrument_lookup = CompoundInstrumentLookup(
-                [ids_json_token_lookup, mainnet_spl_token_lookup, mainnet_non_spl_instrument_lookup])
+            instrument_lookup = CompoundInstrumentLookup([
+                ids_json_token_lookup,
+                mainnet_overrides_token_lookup,
+                mainnet_spl_token_lookup,
+                mainnet_non_spl_instrument_lookup])
         elif actual_cluster == "devnet":
+            devnet_overrides_token_lookup: InstrumentLookup = SPLTokenLookup.load(devnet_overrides_filename)
             devnet_token_filename = token_filename.rsplit('.', 1)[0] + ".devnet.json"
             devnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(devnet_token_filename)
             devnet_non_spl_instrument_lookup: InstrumentLookup = NonSPLInstrumentLookup.load(
                 NonSPLInstrumentLookup.DefaultDevnetDataFilepath)
-            instrument_lookup = CompoundInstrumentLookup(
-                [ids_json_token_lookup, devnet_spl_token_lookup, devnet_non_spl_instrument_lookup])
+            instrument_lookup = CompoundInstrumentLookup([
+                ids_json_token_lookup,
+                devnet_overrides_token_lookup,
+                devnet_spl_token_lookup,
+                devnet_non_spl_instrument_lookup])
 
         ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(actual_cluster, instrument_lookup)
         all_market_lookup = ids_json_market_lookup
         if actual_cluster == "mainnet":
+            mainnet_overrides_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
+                actual_serum_program_address, mainnet_overrides_filename)
             mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
                 actual_serum_program_address, token_filename)
-            all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, mainnet_serum_market_lookup])
+            all_market_lookup = CompoundMarketLookup([
+                ids_json_market_lookup,
+                mainnet_overrides_serum_market_lookup,
+                mainnet_serum_market_lookup])
         elif actual_cluster == "devnet":
+            devnet_overrides_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
+                actual_serum_program_address, devnet_overrides_filename)
             devnet_token_filename = token_filename.rsplit('.', 1)[0] + ".devnet.json"
             devnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
                 actual_serum_program_address, devnet_token_filename)
-            all_market_lookup = CompoundMarketLookup([ids_json_market_lookup, devnet_serum_market_lookup])
+            all_market_lookup = CompoundMarketLookup([
+                ids_json_market_lookup,
+                devnet_overrides_serum_market_lookup,
+                devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
 
         return Context(actual_name, actual_cluster, actual_cluster_urls, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_stale_data_pauses_before_retry, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup)
