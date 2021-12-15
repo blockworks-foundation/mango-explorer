@@ -152,7 +152,7 @@ def test_all_failing_raises_exception() -> None:
 
     assert actual.current == provider1
 
-    with pytest.raises(mango.TooManyRequestsRateLimitException):
+    with pytest.raises(mango.CompoundClientException):
         actual.make_request(__FAKE_RPC_METHOD, "fake")
 
     assert actual.current == provider1

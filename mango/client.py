@@ -36,6 +36,7 @@ from solana.transaction import Transaction
 from .constants import SOL_DECIMAL_DIVISOR
 from .instructionreporter import InstructionReporter
 from .logmessages import expand_log_messages
+from .text import indent_collection_as_str
 
 
 _STUB_TRANSACTION_SIGNATURE: str = "stub-for-already-submitted-transaction-signature"
@@ -58,6 +59,25 @@ class ClientException(Exception):
 
     def __repr__(self) -> str:
         return f"{self}"
+
+
+# # 🥭 CompoundClientException class
+#
+# A `CompoundClientException` exception gathers all exceptions that were raised when trying to read or
+# write to Solana.
+#
+# The `Client` can rotate through multiple providers, switching when certain `ClientException`s are thrown.
+# This exception allows all those exceptions to be gathered and inspected should all providers fail.
+#
+class CompoundClientException(ClientException):
+    def __init__(self, all_exceptions: typing.Sequence[ClientException]) -> None:
+        self.all_exceptions: typing.Sequence[ClientException] = all_exceptions
+
+    def __str__(self) -> str:
+        details: str = indent_collection_as_str(self.all_exceptions)
+        return f"""« CompoundClientException with {len(self.all_exceptions)} inner exceptions:
+    {details}
+»"""
 
 
 # # 🥭 RateLimitException class
@@ -392,6 +412,9 @@ class RPCCaller(HTTPProvider):
                                            self.cluster_url, method, parameters, response_text, error_accounts,
                                            error_err, error_logs, self.instruction_reporter)
 
+        if method == "getRecentBlockhash":
+            self._logger.debug(f"Recent blockhash fetched: {response}")
+
         # The call succeeded.
         return typing.cast(RPCResponse, response)
 
@@ -436,7 +459,7 @@ class CompoundRPCCaller(HTTPProvider):
         self._logger.debug(f"Told to shift provider - now using: {self.__providers[0]}")
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
-        last_exception: Exception
+        all_exceptions: typing.List[ClientException] = []
         for provider in self.__providers:
             try:
                 result = provider.make_request(method, *params)
@@ -451,10 +474,10 @@ class CompoundRPCCaller(HTTPProvider):
                     NodeIsBehindException,
                     StaleSlotException,
                     FailedToFetchBlockhashException) as exception:
-                last_exception = exception
+                all_exceptions += [exception]
                 self._logger.info(f"Moving to next provider - {provider} gave {exception}")
 
-        raise last_exception
+        raise CompoundClientException(all_exceptions)
 
     def is_connected(self) -> bool:
         # All we need for this to be true is for one of our providers to be connected.
@@ -522,8 +545,8 @@ class BetterClient:
         def __on_provider_change() -> None:
             if client.blockhash_cache:
                 # Clear out the blockhash cache on retrying
-                client.blockhash_cache.unused_blockhashes.clear()
-                client.blockhash_cache.used_blockhashes.clear()
+                logging.debug("Replacing client blockhash cache.")
+                client.blockhash_cache = BlockhashCache(blockhash_cache_duration)
 
         provider.on_provider_change = __on_provider_change
 
@@ -624,12 +647,14 @@ class BetterClient:
         for provider in self.rpc_caller.all_providers:
             try:
                 proper_commitment: Commitment = opts.preflight_commitment
+                proper_skip_preflight = opts.skip_preflight
                 if proper_commitment == UnspecifiedCommitment:
                     proper_commitment = self.commitment
+                    proper_skip_preflight = self.skip_preflight
 
                 proper_opts = TxOpts(preflight_commitment=proper_commitment,
                                      skip_confirmation=opts.skip_confirmation,
-                                     skip_preflight=opts.skip_preflight)
+                                     skip_preflight=proper_skip_preflight)
 
                 response = self.compatible_client.send_transaction(transaction, *signers, opts=proper_opts)
                 signature: str = str(response["result"])
