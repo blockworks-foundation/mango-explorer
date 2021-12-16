@@ -178,7 +178,7 @@ class TradeHistory:
                 fee_rate = row["makerFee"]
             else:
                 fee_rate = row["takerFee"]
-            return price * quantity * fee_rate
+            return price * quantity * -fee_rate
 
         if len(data["data"]) <= 1:
             return pandas.DataFrame(columns=TradeHistory.COLUMNS)
@@ -199,8 +199,8 @@ class TradeHistory:
         frame["FeeTier"] = -1
         frame["Fee"] = frame.apply(__fee_calculator, axis=1)
         frame["Side"] = frame.apply(__side_lookup, axis=1)
-        frame["Change"] = (frame["Price"] * frame["Quantity"]) - frame["Fee"]
-        frame["Change"] = frame["Change"].where(frame["Side"] == "sell", other=-frame["Change"])
+        frame["Value"] = frame["Price"] * frame["Quantity"]
+        frame["Change"] = frame["Value"].where(frame["Side"] == "sell", other=-frame["Value"]) + frame["Fee"]
         frame["OrderId"] = numpy.where(frame["MakerOrTaker"] == "maker",
                                        frame["makerOrderId"], frame["takerOrderId"])
 
@@ -286,8 +286,9 @@ class TradeHistory:
                 lambda timestamp: parser.parse(timestamp).replace(microsecond=0))
             frame["Market"] = frame.apply(TradeHistory.__market_lookup(context), axis=1)
             frame["MakerOrTaker"] = numpy.where(frame["maker"], "maker", "taker")
-            frame["Change"] = (frame["Price"] * frame["Quantity"]) - frame["Fee"]
-            frame["Change"] = frame["Change"].where(frame["Side"] == "sell", other=-frame["Change"])
+            frame["Fee"] = -frame["Fee"]
+            frame["Value"] = frame["Price"] * frame["Quantity"]
+            frame["Change"] = frame["Value"].where(frame["Side"] == "sell", other=-frame["Value"]) + frame["Fee"]
             frame["MarketType"] = "spot"
 
             return frame[TradeHistory.COLUMNS]
