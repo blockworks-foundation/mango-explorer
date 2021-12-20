@@ -222,34 +222,32 @@ class OrderBook:
     def __init__(self, symbol: str, lot_size_converter: LotSizeConverter, bids: typing.Sequence[Order], asks: typing.Sequence[Order]) -> None:
         self.symbol: str = symbol
         self.__lot_size_converter: LotSizeConverter = lot_size_converter
-        self.bids: typing.Sequence[Order] = bids
-        self.asks: typing.Sequence[Order] = asks
+        self.__bids: typing.Sequence[Order] = []
+        self.__asks: typing.Sequence[Order] = []
+        self.bids = bids
+        self.asks = asks
 
     @property
     def bids(self) -> typing.Sequence[Order]:
-        return self._bids
+        return self.__bids
 
     @bids.setter
-    def bids(self, bids: typing.Sequence[Order]):
+    def bids(self, bids: typing.Sequence[Order]) -> None:
         """ Sort bids high to low, so best bid is at index 0 """
         bids_list: typing.List[Order] = list(bids)
-        print(f'list of bids: {bids_list}')
         bids_list.sort(key=lambda order: order.id, reverse=True)
-        print(f'list of sorted bids: {bids_list}')
-        # bids_list.sort(key=lambda order: order.price, reverse=True)
-        self._bids = bids_list
+        self.__bids = bids_list
 
     @property
     def asks(self) -> typing.Sequence[Order]:
-        return self._asks
+        return self.__asks
 
     @asks.setter
-    def asks(self, asks: typing.Sequence[Order]):
+    def asks(self, asks: typing.Sequence[Order]) -> None:
         """ Sets asks low to high, so best ask is at index 0"""
         asks_list: typing.List[Order] = list(asks)
         asks_list.sort(key=lambda order: order.id)
-        # asks_list.sort(key=lambda order: order.price)
-        self._asks = asks_list
+        self.__asks = asks_list
 
     # The top bid is the highest price someone is willing to pay to BUY
     @property

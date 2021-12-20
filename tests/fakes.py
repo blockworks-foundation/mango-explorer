@@ -133,14 +133,15 @@ def fake_wallet() -> mango.Wallet:
 def fake_order(price: Decimal = Decimal(1), quantity: Decimal = Decimal(1), side: mango.Side = mango.Side.BUY, order_type: mango.OrderType = mango.OrderType.LIMIT) -> mango.Order:
     return mango.Order.from_basic_info(side=side, price=price, quantity=quantity, order_type=order_type)
 
-# serum ID structure - 16-byte 'int': low 8 bytes is a sequence number, high 8 bytes is price 
-def fake_order_id(index:int, price: int) -> int:
+
+# serum ID structure - 16-byte 'int': low 8 bytes is a sequence number, high 8 bytes is price
+def fake_order_id(index: int, price: int) -> int:
     # price needs to be max of 64bit/8bytes, considering signed int is not permitted
-    if index > 2**64-1 or price > 2**64-1:
+    if index > (2 ** 64) - 1 or price > (2 ** 64) - 1:
         raise ValueError(f"Provided index '{index}' or price '{price}' is bigger than 8 bytes int")
     index_bytes = index.to_bytes(8, byteorder='big', signed=False)
     price_bytes = price.to_bytes(8, byteorder='big', signed=False)
-    return int.from_bytes((price_bytes+index_bytes), byteorder='big', signed=False)
+    return int.from_bytes((price_bytes + index_bytes), byteorder='big', signed=False)
 
 
 def fake_price(market: mango.Market = fake_loaded_market(), price: Decimal = Decimal(100), bid: Decimal = Decimal(99), ask: Decimal = Decimal(101)) -> mango.Price:
