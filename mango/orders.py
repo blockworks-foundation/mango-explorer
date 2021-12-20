@@ -202,8 +202,8 @@ class Order(typing.NamedTuple):
         return order
 
     @staticmethod
-    def from_ids(id: int, client_id: int, side: Side = Side.BUY) -> "Order":
-        return Order(id=id, client_id=client_id, owner=SYSTEM_PROGRAM_ADDRESS, side=side, price=Decimal(0), quantity=Decimal(0), order_type=OrderType.UNKNOWN)
+    def from_ids(id: int, client_id: int, side: Side = Side.BUY, price: Decimal = Decimal(0), quantity: Decimal = Decimal(0)) -> "Order":
+        return Order(id=id, client_id=client_id, owner=SYSTEM_PROGRAM_ADDRESS, side=side, price=price, quantity=quantity, order_type=OrderType.UNKNOWN)
 
     def __str__(self) -> str:
         owner: str = ""
@@ -222,18 +222,34 @@ class OrderBook:
     def __init__(self, symbol: str, lot_size_converter: LotSizeConverter, bids: typing.Sequence[Order], asks: typing.Sequence[Order]) -> None:
         self.symbol: str = symbol
         self.__lot_size_converter: LotSizeConverter = lot_size_converter
+        self.bids: typing.Sequence[Order] = bids
+        self.asks: typing.Sequence[Order] = asks
 
-        # Sort bids high to low, so best bid is at index 0
+    @property
+    def bids(self) -> typing.Sequence[Order]:
+        return self._bids
+
+    @bids.setter
+    def bids(self, bids: typing.Sequence[Order]):
+        """ Sort bids high to low, so best bid is at index 0 """
         bids_list: typing.List[Order] = list(bids)
+        print(f'list of bids: {bids_list}')
         bids_list.sort(key=lambda order: order.id, reverse=True)
+        print(f'list of sorted bids: {bids_list}')
         # bids_list.sort(key=lambda order: order.price, reverse=True)
-        self.bids: typing.Sequence[Order] = bids_list
+        self._bids = bids_list
 
-        # Sort bids low to high, so best bid is at index 0
+    @property
+    def asks(self) -> typing.Sequence[Order]:
+        return self._asks
+
+    @asks.setter
+    def asks(self, asks: typing.Sequence[Order]):
+        """ Sets asks low to high, so best ask is at index 0"""
         asks_list: typing.List[Order] = list(asks)
         asks_list.sort(key=lambda order: order.id)
         # asks_list.sort(key=lambda order: order.price)
-        self.asks: typing.Sequence[Order] = asks_list
+        self._asks = asks_list
 
     # The top bid is the highest price someone is willing to pay to BUY
     @property
