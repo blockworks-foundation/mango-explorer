@@ -32,7 +32,7 @@ class PerpToSpotHedger(Hedger):
     def __init__(self, group: mango.Group, underlying_market: mango.PerpMarket,
                  hedging_market: mango.SpotMarket, market_operations: mango.MarketOperations,
                  max_price_slippage_factor: Decimal, max_hedge_chunk_quantity: Decimal,
-                 target_balance: mango.TargetBalance) -> None:
+                 target_balance: mango.TargetBalance, action_threshold: Decimal) -> None:
         super().__init__()
         if (underlying_market.base != hedging_market.base) or (underlying_market.quote != hedging_market.quote):
             raise Exception(
@@ -50,6 +50,7 @@ class PerpToSpotHedger(Hedger):
 
         resolved_target: mango.InstrumentValue = target_balance.resolve(hedging_market.base, Decimal(0), Decimal(0))
         self.target_balance: Decimal = self.hedging_market.lot_size_converter.round_base(resolved_target.value)
+        self.action_threshold: Decimal = action_threshold
 
         self.market_index: int = group.slot_by_perp_market_address(underlying_market.address).index
 
@@ -83,9 +84,9 @@ class PerpToSpotHedger(Hedger):
             # If we have a target balance, subtract that to get our targetted delta neutral balance.
             delta: Decimal = perp_position_rounded + token_balance_rounded - self.target_balance
             self._logger.debug(
-                f"Delta from {self.underlying_market.symbol} to {self.hedging_market.symbol} is {delta:,.8f} {basket_token.base_instrument.symbol}")
+                f"Delta from {self.underlying_market.symbol} to {self.hedging_market.symbol} is {delta:,.8f} {basket_token.base_instrument.symbol}, action threshold is: {self.action_threshold}")
 
-            if delta != 0:
+            if abs(delta) > self.action_threshold:
                 side: mango.Side = mango.Side.BUY if delta < 0 else mango.Side.SELL
                 up_or_down: str = "up to" if side == mango.Side.BUY else "down to"
                 price_adjustment_factor: Decimal = self.sell_price_adjustment_factor if side == mango.Side.SELL else self.buy_price_adjustment_factor

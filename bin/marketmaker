@@ -47,6 +47,8 @@ parser.add_argument("--hedging-max-chunk-quantity", type=Decimal, default=Decima
                     help="the maximum quantity of the hedge asset that will be traded in a single pulse. Trades larger than this size will be 'chunked' and spread across subsequent hedge pulses.")
 parser.add_argument("--hedging-target-balance", type=mango.parse_fixed_target_balance, required=False,
                     help="hedged balance to maintain - format is a token symbol plus target value, separated by a colon (e.g. 'ETH:2.5')")
+parser.add_argument("--hedging-action-threshold", type=Decimal, default=Decimal(0),
+                    help="minimum difference between spot and perp positions before action will be taken")
 parser.add_argument("--account-address", type=PublicKey,
                     help="address of the specific account to use, if more than one available")
 parser.add_argument("--notify-errors", type=mango.parse_notification_target, action="append", default=[],
@@ -126,7 +128,7 @@ if args.hedging_market is not None:
         target_balance = mango.FixedTargetBalance(hedging_market.base.symbol, Decimal(0))
     hedger = mango.hedging.PerpToSpotHedger(group, underlying_market, hedging_market,
                                             hedging_market_operations, args.hedging_max_price_slippage_factor,
-                                            args.hedging_max_chunk_quantity, target_balance)
+                                            args.hedging_max_chunk_quantity, target_balance, args.hedging_action_threshold)
 
 
 order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
