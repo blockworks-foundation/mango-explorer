@@ -116,7 +116,7 @@ class ContextBuilder:
         # Do this here so build() only ever has to handle the sequence of retry times. (It gets messy
         # passing around the sequnce *plus* the data to reconstruct it for build().)
         actual_maximum_stale_data_pauses: int = stale_data_maximum_retries or 20
-        actual_stale_data_pauses_before_retry: typing.Sequence[float] = []
+        actual_stale_data_pauses_before_retry: typing.Sequence[float] = [0.1] * 10
         if stale_data_pause_before_retry is not None:
             actual_stale_data_pauses_before_retry = [
                 float(stale_data_pause_before_retry)] * actual_maximum_stale_data_pauses
