@@ -18,6 +18,8 @@ import typing
 
 from decimal import Decimal
 
+from solana.publickey import PublicKey
+
 from .account import Account
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
@@ -27,10 +29,12 @@ from .group import Group
 from .layouts import layouts
 from .lotsizeconverter import NullLotSizeConverter
 from .openorders import OpenOrders
+from .orderbookside import PerpOrderBookSide
 from .perpeventqueue import PerpEventQueue
 from .perpmarketdetails import PerpMarketDetails
 from .serumeventqueue import SerumEventQueue
-from .tokenbank import NodeBank, RootBank
+from .token import Instrument, Token
+from .tokenbank import NodeBank, RootBank, TokenBank
 
 
 # # 🥭 build_account_info_converter function
@@ -69,5 +73,15 @@ def build_account_info_converter(context: Context, account_type: str) -> typing.
             group: Group = Group.load(context, group_address)
             return PerpMarketDetails.parse(account_info, group)
         return perp_market_details_loader
+    elif account_type_upper == "PERPORDERBOOKSIDE":
+        class __FakePerpMarketDetails(PerpMarketDetails):
+            def __init__(self) -> None:
+                self.base_instrument = Instrument("UNKNOWNBASE", "Unknown Base", Decimal(0))
+                self.quote_token = TokenBank(Token("UNKNOWNQUOTE", "Unknown Quote",
+                                             Decimal(0), PublicKey(0)), PublicKey(0))
+                self.base_lot_size = Decimal(1)
+                self.quote_lot_size = Decimal(1)
+
+        return lambda account_info: PerpOrderBookSide.parse(account_info, __FakePerpMarketDetails())
 
     raise Exception(f"Could not find AccountInfo converter for type {account_type}.")

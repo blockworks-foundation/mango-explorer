@@ -28,4 +28,4 @@ account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(contex
 if account_info is None:
     raise Exception(f"No account found at address: {args.address}")
 
-print(converter(account_info))
+mango.output(converter(account_info))

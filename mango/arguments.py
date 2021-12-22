@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import argparse
+import collections
 import enum
 import json
 import jsons
@@ -52,7 +53,11 @@ def output(obj: typing.Any) -> None:
         print(json.dumps(jsons.dump(obj, strip_attr=("data", "logger", "lot_size_converter", "tokens", "tokens_by_index", "slots", "base_tokens", "base_tokens_by_index", "oracles", "oracles_by_index", "spot_markets", "spot_markets_by_index", "perp_markets", "perp_markets_by_index", "shared_quote_token", "liquidity_incentive_token"),
               key_transformer=jsons.KEY_TRANSFORMER_CAMELCASE), sort_keys=True, indent=4))
     else:
-        print(obj)
+        if isinstance(obj, collections.Sequence) and not isinstance(obj, str):
+            for item in obj:
+                print(item)
+        else:
+            print(obj)
 
 
 # # 🥭 parse_args
