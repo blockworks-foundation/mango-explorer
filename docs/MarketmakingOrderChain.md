@@ -108,7 +108,7 @@ The `--afteraccumulateddepth-adjustment-ticks` parameter allows you to specify h
 
 > Accepts parameter: `--biasquantityonposition-maximum-position <DECIMAL>` (required)
 
-> Accepts parameter: `--biasquantityonposition-taget-position <DECIMAL>` (optional, default: 0)
+> Accepts parameter: `--biasquantityonposition-target-position <DECIMAL>` (optional, default: 0)
 
 Varies the order quantities to favour a target position.
 

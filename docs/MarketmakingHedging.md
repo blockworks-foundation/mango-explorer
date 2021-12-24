@@ -98,3 +98,14 @@ Instead you'd want your 2.4 BTC to be your neutral position. If you sold 0.5 BTC
 The `--hedging-target-balance` parameter allows you to specify what the target (neutral) position should be. The hedging functionality will then aim to achieve that target, with perp positions and spot balances adding and subtracting from it instead of 0.
 
 The format for the parameter is the same format as target balances for the `balance-account` and `balance-wallet` commands: it's the symbol, followed by a colon, followed by a fixed number. Percentage target balances aren't supported for this parameter, and the symbol must match the symbol of the base token on the `--hedging-market`.
+
+
+> Parameter: `--hedging-action-threshold`
+
+> Example Usage: `--hedging-action-threshold 2`
+
+To prevent overtrading when hedging, you may want to ignore small deltas between spot and perp until they become large enough to matter.
+
+This parameter tells the hedger to wait until a specific threshold is met before performing the hedging trade.
+
+As an example, marketmaking on SOL-PERP, to wait until the delta between perp and spot is 2 SOL or more, you would specify `--hedging-action-threshold 2`.
