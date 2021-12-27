@@ -9,6 +9,29 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 `mango-explorer` provides Python code to interface with [Mango Markets](https://mango.markets), along with a functional [marketmaker]](docs/MarketmakingQuickstart.md).
 
+
+## Installation
+
+`mango-explorer` is available as a [Python package on Pypi](https://pypi.org/project/mango-explorer) and can be installed as:
+
+```
+pip install mango-explorer
+```
+
+(Other ways of installing it or adding it as a dependency are available and will depend on the particular tools you are using.)
+
+`mango-explorer` is also available as a docker container with the name [opinionatedgeek/mango-explorer-v3](https://hub.docker.com/repository/docker/opinionatedgeek/mango-explorer-v3/).
+
+
+## Branches
+
+The latest version of the code is in the [main branch on Github](https://github.com/blockworks-foundation/mango-explorer).
+
+Code to integrate with Version 2 of Mango is in the [v2 branch](https://github.com/blockworks-foundation/mango-explorer/tree/v2).
+
+
+## Example
+
 Here's a brief but complete example of how to place and cancel an order. [This example is runnable in your browser](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=PlaceAndCancelOrders.ipynb)!
 
 ```
