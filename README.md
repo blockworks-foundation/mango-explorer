@@ -12,6 +12,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Installation
 
+![PyPI](https://img.shields.io/pypi/v/mango-explorer)
+
 `mango-explorer` is available as a [Python package on Pypi](https://pypi.org/project/mango-explorer) and can be installed as:
 
 ```
