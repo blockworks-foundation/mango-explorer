@@ -7,7 +7,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Introduction
 
-`mango-explorer` provides Python code to interface with [Mango Markets](https://mango.markets), along with a functional [marketmaker]](docs/MarketmakingQuickstart.md).
+`mango-explorer` provides Python code to interface with [Mango Markets](https://mango.markets), along with a functional [marketmaker](docs/MarketmakingQuickstart.md).
 
 
 ## Installation
