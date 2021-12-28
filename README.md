@@ -38,6 +38,7 @@ Here's a brief but complete example of how to place and cancel an order. [This e
 
 ```
 import decimal
+import os
 import time
 
 import mango
