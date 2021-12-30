@@ -61,15 +61,12 @@ market = mango.ensure_market_loaded(context, stub)
 
 market_operations = mango.create_market_operations(context, wallet, account, market, dry_run=False)
 
-print("Orders (initial):\n\t", market_operations.load_orderbook())
+print("Initial order book:\n\t", market_operations.load_orderbook())
+print("Your current orders:\n\t", market_operations.load_my_orders())
 
-# Check the current price in the devnet SOL-PERP Mango Markets oracle
-oracle = MarketOracle(market)
-price = oracle.fetch_price(context)
-
-# Go on - try to buy 1 SOL-PERP contract for the current best bid.
+# Go on - try to buy 1 SOL-PERP contract for $10.
 order = mango.Order.from_basic_info(side=mango.Side.BUY,
-                                    price=price.top_bid,
+                                    price=decimal.Decimal(10),
                                     quantity=decimal.Decimal(1),
                                     order_type=mango.OrderType.POST_ONLY)
 placed_order = market_operations.place_order(order)
@@ -78,7 +75,8 @@ print("\n\nPlaced order:\n\t", placed_order)
 print("\n\nSleeping for 10 seconds...")
 time.sleep(10)
 
-print("\n\nOrders (including our new order):\n", market_operations.load_orderbook())
+print("\n\nOrder book (including our new order):\n", market_operations.load_orderbook())
+print("Your current orders:\n\t", market_operations.load_my_orders())
 
 cancellation_signatures = market_operations.cancel_order(placed_order)
 print("\n\nCancellation signature:\n\t", cancellation_signatures)
@@ -86,7 +84,8 @@ print("\n\nCancellation signature:\n\t", cancellation_signatures)
 print("\n\nSleeping for 10 seconds...")
 time.sleep(10)
 
-print("\n\nOrders (without our order):\n", market_operations.load_orderbook())
+print("\n\nOrder book (without our order):\n", market_operations.load_orderbook())
+print("Your current orders:\n\t", market_operations.load_my_orders())
 
 ```
 
