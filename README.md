@@ -38,11 +38,9 @@ Here's a brief but complete example of how to place and cancel an order. [This e
 
 ```
 import decimal
+import mango
 import os
 import time
-
-import mango
-from mango.oracles.market.market import MarketOracle
 
 # Load the wallet from the environment variable 'KEYPAIR'. (Other mechanisms are available.)
 wallet = mango.Wallet(os.environ.get("KEYPAIR"))
