@@ -59,34 +59,31 @@ market = mango.ensure_market_loaded(context, stub)
 
 market_operations = mango.create_market_operations(context, wallet, account, market, dry_run=False)
 
-print("Orders (initial):")
-for order in market_operations.load_orders():
-    print(order)
+print("Initial order book:\n\t", market_operations.load_orderbook())
+print("Your current orders:\n\t", market_operations.load_my_orders())
 
-# Go on - try to buy 1 SOL for $10.
+# Go on - try to buy 1 SOL-PERP contract for $10.
 order = mango.Order.from_basic_info(side=mango.Side.BUY,
                                     price=decimal.Decimal(10),
                                     quantity=decimal.Decimal(1),
                                     order_type=mango.OrderType.POST_ONLY)
 placed_order = market_operations.place_order(order)
-print("\n\nplaced_order\n\t", placed_order)
+print("\n\nPlaced order:\n\t", placed_order)
 
 print("\n\nSleeping for 10 seconds...")
 time.sleep(10)
 
-print("\n\nOrders (including our new order):")
-for order in market_operations.load_orders():
-    print(order)
+print("\n\nOrder book (including our new order):\n", market_operations.load_orderbook())
+print("Your current orders:\n\t", market_operations.load_my_orders())
 
-cancellaton_signatures = market_operations.cancel_order(placed_order)
-print("\n\ncancellaton_signatures:\n\t", cancellaton_signatures)
+cancellation_signatures = market_operations.cancel_order(placed_order)
+print("\n\nCancellation signature:\n\t", cancellation_signatures)
 
 print("\n\nSleeping for 10 seconds...")
 time.sleep(10)
 
-print("\n\nOrders (without our order):")
-for order in market_operations.load_orders():
-    print(order)
+print("\n\nOrder book (without our order):\n", market_operations.load_orderbook())
+print("Your current orders:\n\t", market_operations.load_my_orders())
 
 ```
 
