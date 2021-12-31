@@ -531,6 +531,10 @@
         {
           "symbol": "BNB",
           "publicKey": "GwzBgrXb4PG59zjce24SF2b9JXbLEjJJTBkmytuEZj1b"
+        },
+        {
+          "symbol": "MATIC",
+          "publicKey": "5wZ8TQrizdWp4LKwBEPaer4AaNeLiPcQYuy5ddSr2Zfj"
         }
       ],
       "perpMarkets": [
@@ -632,6 +636,17 @@
           "bidsKey": "GqwmfoAxgJLDDs5x1K6u1YVkHXSjPKG4GgwFoAgfGH1G",
           "asksKey": "H57z5imzrExpqYJ4WP4MKEg8GyMV2VTQAbF25DEP9i7k",
           "eventsKey": "96Y87LTz5Mops7wdT9EJo1eM79XToKYJJmRZxNatV85d"
+        },
+        {
+          "name": "MATIC-PERP",
+          "publicKey": "Fmg4wXV9hYUNjAYeLX1gDBSC3ucKcYJGrZQus64n9h9N",
+          "baseSymbol": "MATIC",
+          "baseDecimals": 8,
+          "quoteDecimals": 6,
+          "marketIndex": 11,
+          "bidsKey": "BTHVQCnVmdZThbpCtxiVSANuRnfd89uGsYAfaGbqsC39",
+          "asksKey": "GgQsLPiiq6JjNUe2kmKpHJNtNSEXk2kHcMZE2AbG6HDW",
+          "eventsKey": "77maU5zdfYayqhqjBi2ocosM4PXvPXxbps2Up7dxDsMR"
         }
       ],
       "spotMarkets": [
