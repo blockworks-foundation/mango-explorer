@@ -63,6 +63,19 @@
         "coingeckoId": "binance-coin",
         "website": "https://www.binance.com/"
       }
+    },
+    {
+      "chainId": 901,
+      "symbol": "MATIC",
+      "name": "Polygon",
+      "decimals": 8,
+      "tags": [
+        "no-solana-coin"
+      ],
+      "extensions": {
+        "coingeckoId": "polygon",
+        "website": "https://polygon.technology/"
+      }
     }
   ],
   "version": {
