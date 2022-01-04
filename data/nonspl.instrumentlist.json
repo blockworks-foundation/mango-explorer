@@ -50,6 +50,19 @@
         "coingeckoId": "binance-coin",
         "website": "https://www.binance.com/"
       }
+    },
+    {
+      "chainId": 901,
+      "symbol": "LUNA",
+      "name": "Terra",
+      "decimals": 6,
+      "tags": [
+        "no-solana-coin"
+      ],
+      "extensions": {
+        "coingeckoId": "terra-luna",
+        "website": "https://terra.money/"
+      }
     }
   ],
   "version": {
