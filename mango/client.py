@@ -22,6 +22,7 @@ import typing
 
 
 from base64 import b64decode
+from dataclasses import dataclass
 from collections.abc import Mapping
 from concurrent.futures import Executor, ThreadPoolExecutor
 from decimal import Decimal
@@ -73,14 +74,14 @@ class CompoundException(Exception):
 # independent of other error handling.
 #
 class ClientException(Exception):
-    def __init__(self, message: str, name: str, cluster_url: str) -> None:
+    def __init__(self, message: str, name: str, cluster_rpc_url: str) -> None:
         super().__init__(message)
         self.message: str = message
         self.name: str = name
-        self.cluster_url: str = cluster_url
+        self.cluster_rpc_url: str = cluster_rpc_url
 
     def __str__(self) -> str:
-        return f"« {type(self)} '{self.message}' from '{self.name}' on {self.cluster_url} »"
+        return f"« {type(self)} '{self.message}' from '{self.name}' on {self.cluster_rpc_url} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -120,13 +121,13 @@ class TooManyRequestsRateLimitException(RateLimitException):
 # considers it 'recent') or when it's too new (and hasn't yet made it to the node that is responding).
 #
 class BlockhashNotFoundException(ClientException):
-    def __init__(self, name: str, cluster_url: str, blockhash: typing.Optional[Blockhash] = None) -> None:
-        message: str = f"Blockhash '{blockhash}' not found on {cluster_url}."
-        super().__init__(message, name, cluster_url)
+    def __init__(self, name: str, cluster_rpc_url: str, blockhash: typing.Optional[Blockhash] = None) -> None:
+        message: str = f"Blockhash '{blockhash}' not found on {cluster_rpc_url}."
+        super().__init__(message, name, cluster_rpc_url)
         self.blockhash: typing.Optional[Blockhash] = blockhash
 
     def __str__(self) -> str:
-        return f"« BlockhashNotFoundException '{self.name}' [{self.blockhash}] on {self.cluster_url} »"
+        return f"« BlockhashNotFoundException '{self.name}' [{self.blockhash}] on {self.cluster_rpc_url} »"
 
 
 # # 🥭 NodeIsBehindException class
@@ -135,13 +136,13 @@ class BlockhashNotFoundException(ClientException):
 # many slots.
 #
 class NodeIsBehindException(ClientException):
-    def __init__(self, name: str, cluster_url: str, slots_behind: int) -> None:
+    def __init__(self, name: str, cluster_rpc_url: str, slots_behind: int) -> None:
         message: str = f"Node is behind by {slots_behind} slots."
-        super().__init__(message, name, cluster_url)
+        super().__init__(message, name, cluster_rpc_url)
         self.slots_behind: int = slots_behind
 
     def __str__(self) -> str:
-        return f"« NodeIsBehindException '{self.name}' [behind by {self.slots_behind} slots] on {self.cluster_url} »"
+        return f"« NodeIsBehindException '{self.name}' [behind by {self.slots_behind} slots] on {self.cluster_rpc_url} »"
 
 
 # # 🥭 TransactionAlreadyProcessedException class
@@ -161,14 +162,14 @@ class TransactionAlreadyProcessedException(RateLimitException):
 # A `StaleSlotException` exception allows trapping and handling exceptions when data is received from
 #
 class StaleSlotException(ClientException):
-    def __init__(self, name: str, cluster_url: str, latest_seen_slot: int, just_returned_slot: int) -> None:
+    def __init__(self, name: str, cluster_rpc_url: str, latest_seen_slot: int, just_returned_slot: int) -> None:
         message: str = f"Stale slot received - received data from slot {just_returned_slot} having previously seen slot {latest_seen_slot}."
-        super().__init__(message, name, cluster_url)
+        super().__init__(message, name, cluster_rpc_url)
         self.latest_seen_slot: int = latest_seen_slot
         self.just_returned_slot: int = just_returned_slot
 
     def __str__(self) -> str:
-        return f"« StaleSlotException '{self.name}' [received data from slot {self.just_returned_slot} having previously seen slot {self.latest_seen_slot}] on {self.cluster_url} »"
+        return f"« StaleSlotException '{self.name}' [received data from slot {self.just_returned_slot} having previously seen slot {self.latest_seen_slot}] on {self.cluster_rpc_url} »"
 
 
 # # 🥭 FailedToFetchBlockhashException class
@@ -177,16 +178,16 @@ class StaleSlotException(ClientException):
 # to fetch a recent or distinct blockhash.
 #
 class FailedToFetchBlockhashException(ClientException):
-    def __init__(self, message: str, name: str, cluster_url: str, pauses: typing.Sequence[float]) -> None:
-        super().__init__(message, name, cluster_url)
+    def __init__(self, message: str, name: str, cluster_rpc_url: str, pauses: typing.Sequence[float]) -> None:
+        super().__init__(message, name, cluster_rpc_url)
         self.pauses: typing.Sequence[float] = pauses
 
     def __str__(self) -> str:
         if len(self.pauses) == 0:
-            return f"« FailedToFetchBlockhashException '{self.name}' Failed to get recent blockhash on {self.cluster_url} »"
+            return f"« FailedToFetchBlockhashException '{self.name}' Failed to get recent blockhash on {self.cluster_rpc_url} »"
 
         pauses_text = ",".join(f"{pause}" for pause in self.pauses[:-1])
-        return f"« FailedToFetchBlockhashException '{self.name}' Failed to get a fresh, recent blockhash after {len(self.pauses)} attempts - paused {pauses_text} seconds between attempts on {self.cluster_url} »"
+        return f"« FailedToFetchBlockhashException '{self.name}' Failed to get a fresh, recent blockhash after {len(self.pauses)} attempts - paused {pauses_text} seconds between attempts on {self.cluster_rpc_url} »"
 
 
 # # 🥭 TransactionException class
@@ -195,8 +196,8 @@ class FailedToFetchBlockhashException(ClientException):
 # of problems at the right place.
 #
 class TransactionException(ClientException):
-    def __init__(self, transaction: typing.Optional[Transaction], message: str, code: int, name: str, cluster_url: str, rpc_method: str, request_text: str, response_text: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None], instruction_reporter: InstructionReporter = InstructionReporter()) -> None:
-        super().__init__(message, name, cluster_url)
+    def __init__(self, transaction: typing.Optional[Transaction], message: str, code: int, name: str, cluster_rpc_url: str, rpc_method: str, request_text: str, response_text: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None], instruction_reporter: InstructionReporter = InstructionReporter()) -> None:
+        super().__init__(message, name, cluster_rpc_url)
         self.transaction: typing.Optional[Transaction] = transaction
         self.code: int = code
         self.rpc_method: str = rpc_method
@@ -346,11 +347,12 @@ class TransactionWatcher:
 # A `RPCCaller` extends the HTTPProvider with better error handling.
 #
 class RPCCaller(HTTPProvider):
-    def __init__(self, name: str, cluster_url: str, stale_data_pauses_before_retry: typing.Sequence[float], slot_holder: SlotHolder, instruction_reporter: InstructionReporter):
-        super().__init__(cluster_url)
+    def __init__(self, name: str, cluster_rpc_url: str, cluster_ws_url: str, stale_data_pauses_before_retry: typing.Sequence[float], slot_holder: SlotHolder, instruction_reporter: InstructionReporter):
+        super().__init__(cluster_rpc_url)
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
-        self.cluster_url: str = cluster_url
+        self.cluster_rpc_url: str = cluster_rpc_url
+        self.cluster_ws_url: str = cluster_ws_url
         self.stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry
         self.slot_holder: SlotHolder = slot_holder
         self.instruction_reporter: InstructionReporter = instruction_reporter
@@ -409,10 +411,10 @@ class RPCCaller(HTTPProvider):
         # "You will see HTTP respose codes 429 for too many requests or 413 for too much bandwidth."
         if raw_response.status_code == 413:
             raise TooMuchBandwidthRateLimitException(
-                f"Rate limited (too much bandwidth) calling method '{method}'.", self.name, self.cluster_url)
+                f"Rate limited (too much bandwidth) calling method '{method}'.", self.name, self.cluster_rpc_url)
         elif raw_response.status_code == 429:
             raise TooManyRequestsRateLimitException(
-                f"Rate limited (too many requests) calling method '{method}'.", self.name, self.cluster_url)
+                f"Rate limited (too many requests) calling method '{method}'.", self.name, self.cluster_rpc_url)
 
         # Not a rate-limit problem, but maybe there was some other error?
         raw_response.raise_for_status()
@@ -432,12 +434,12 @@ class RPCCaller(HTTPProvider):
                 if not self.slot_holder.is_acceptable(slot):
                     self._logger.warning(
                         f"Result is from stale slot: {slot} - latest slot is: {self.slot_holder.latest_slot}")
-                    raise StaleSlotException(self.name, self.cluster_url, self.slot_holder.latest_slot, slot)
+                    raise StaleSlotException(self.name, self.cluster_rpc_url, self.slot_holder.latest_slot, slot)
 
         if "error" in response:
             if response["error"] is str:
                 message: str = typing.cast(str, response["error"])
-                raise ClientException(f"Transaction failed: '{message}'", self.name, self.cluster_url)
+                raise ClientException(f"Transaction failed: '{message}'", self.name, self.cluster_rpc_url)
             else:
                 error = response["error"]
                 error_message: str = error["message"] if "message" in error else "No message"
@@ -456,17 +458,17 @@ class RPCCaller(HTTPProvider):
 
                 if error_code == -32005:
                     slots_behind: int = error["data"]["numSlotsBehind"] if "numSlotsBehind" in error["data"] else -1
-                    raise NodeIsBehindException(self.name, self.cluster_url, slots_behind)
+                    raise NodeIsBehindException(self.name, self.cluster_rpc_url, slots_behind)
 
                 if error_err == "BlockhashNotFound":
-                    raise BlockhashNotFoundException(self.name, self.cluster_url, blockhash)
+                    raise BlockhashNotFoundException(self.name, self.cluster_rpc_url, blockhash)
 
                 if error_err == "AlreadyProcessed":
-                    raise TransactionAlreadyProcessedException(error_message, self.name, self.cluster_url)
+                    raise TransactionAlreadyProcessedException(error_message, self.name, self.cluster_rpc_url)
 
                 exception_message: str = f"Transaction failed with: '{error_message}'"
                 raise TransactionException(transaction, exception_message, error_code, self.name,
-                                           self.cluster_url, method, parameters, response_text, error_accounts,
+                                           self.cluster_rpc_url, method, parameters, response_text, error_accounts,
                                            error_err, error_logs, self.instruction_reporter)
 
         if method == "getRecentBlockhash":
@@ -479,7 +481,7 @@ class RPCCaller(HTTPProvider):
         return typing.cast(RPCResponse, response)
 
     def __str__(self) -> str:
-        return f"« RPCCaller [{self.cluster_url}] »"
+        return f"« RPCCaller [{self.cluster_rpc_url}] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -559,6 +561,19 @@ class CompoundRPCCaller(HTTPProvider):
         return f"{self}"
 
 
+# # Data transfer class for cluster url
+#
+@dataclass
+class ClusterUrlData:
+    rpc: str  # http/https connection to contact RPC nodes
+    ws: str = ""  # ws/wss connection to register to RPC websocket
+
+    def __post_init__(self) -> None:
+        if not self.ws:
+            self.ws = self.rpc.replace("https:", "wss:", 1)
+            self.ws = self.ws.replace("http:", "ws:", 1)
+
+
 class BetterClient:
     def __init__(self, client: Client, name: str, cluster_name: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, rpc_caller: CompoundRPCCaller) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -573,11 +588,12 @@ class BetterClient:
         self.executor: Executor = ThreadPoolExecutor()
 
     @staticmethod
-    def from_configuration(name: str, cluster_name: str, cluster_urls: typing.Sequence[str], commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter) -> "BetterClient":
+    def from_configuration(name: str, cluster_name: str, cluster_urls: typing.Sequence[ClusterUrlData], commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter) -> "BetterClient":
         slot_holder: SlotHolder = SlotHolder()
         rpc_callers: typing.List[RPCCaller] = []
+        cluster_url: ClusterUrlData
         for cluster_url in cluster_urls:
-            rpc_caller: RPCCaller = RPCCaller(name, cluster_url, stale_data_pauses_before_retry,
+            rpc_caller: RPCCaller = RPCCaller(name, cluster_url.rpc, cluster_url.ws, stale_data_pauses_before_retry,
                                               slot_holder, instruction_reporter)
             rpc_callers += [rpc_caller]
 
@@ -585,7 +601,7 @@ class BetterClient:
         blockhash_cache: typing.Union[BlockhashCache, bool] = False
         if blockhash_cache_duration > 0:
             blockhash_cache = BlockhashCache(blockhash_cache_duration)
-        client: Client = Client(cluster_url, commitment=commitment, blockhash_cache=blockhash_cache)
+        client: Client = Client(endpoint=cluster_url.rpc, commitment=commitment, blockhash_cache=blockhash_cache)
         client._provider = provider
 
         def __on_provider_change() -> None:
@@ -601,12 +617,27 @@ class BetterClient:
         return BetterClient(client, name, cluster_name, commitment, skip_preflight, encoding, blockhash_cache_duration, provider)
 
     @property
-    def cluster_url(self) -> str:
-        return self.rpc_caller.current.cluster_url
+    def cluster_rpc_url(self) -> str:
+        return self.rpc_caller.current.cluster_rpc_url
 
     @property
-    def cluster_urls(self) -> typing.Sequence[str]:
-        return [rpc_caller.cluster_url for rpc_caller in self.rpc_caller.all_providers]
+    def cluster_rpc_urls(self) -> typing.Sequence[str]:
+        return [rpc_caller.cluster_rpc_url for rpc_caller in self.rpc_caller.all_providers]
+
+    @property
+    def cluster_ws_url(self) -> str:
+        return self.rpc_caller.current.cluster_ws_url
+
+    @property
+    def cluster_ws_urls(self) -> typing.Sequence[str]:
+        return [rpc_caller.cluster_ws_url for rpc_caller in self.rpc_caller.all_providers]
+
+    @property
+    def cluster_urls(self) -> typing.Sequence[ClusterUrlData]:
+        return [
+            ClusterUrlData(rpc=rpc_caller.cluster_rpc_url, ws=rpc_caller.cluster_ws_url)
+            for rpc_caller in self.rpc_caller.all_providers
+        ]
 
     @property
     def instruction_reporter(self) -> InstructionReporter:
@@ -702,8 +733,7 @@ class BetterClient:
 
                 proper_opts = TxOpts(preflight_commitment=proper_commitment,
                                      skip_confirmation=opts.skip_confirmation,
-                                     skip_preflight=proper_skip_preflight,
-                                     max_retries=0)
+                                     skip_preflight=proper_skip_preflight)
 
                 response = self.compatible_client.send_transaction(transaction, *signers, opts=proper_opts)
                 signature: str = str(response["result"])
@@ -755,7 +785,7 @@ class BetterClient:
         return commitment, encoding
 
     def __str__(self) -> str:
-        return f"« BetterClient [{self.cluster_name}]: {self.cluster_urls} »"
+        return f"« BetterClient [{self.cluster_name}]: {self.cluster_rpc_urls}, {self.cluster_ws_urls} »"
 
     def __repr__(self) -> str:
         return f"{self}"

@@ -57,6 +57,14 @@ For example, to switch to the public Solana endpoint you would specify:
 ---cluster-url https://api.mainnet-beta.solana.com
 ```
 
+There is an optional possibility to provide two parameters to the `--cluster-url` argument. Then the first parameter defines HTTP url of the RPC node
+and the second one defines WS url of the RPC node.
+
+For example, if you want to place order via one RPC node while loading market data via websocket connection from a different node
+```
+--cluster-url https://localhost:80 wss://localhost:443
+```
+
 There are several different RPC node providers now who provide free or premium RPC node connectivity. Use the URL they send you here.
 
 **Note** This parameter is unusual in that it can be specified multiple times. This allows you to provide multiple RPC nodes and have the program switch to the next node if a node displays problems. For example, you can specify `--cluster-url` 3 times (with 3 different RPC URLs) and if one node starts rate-limiting you, the program will automatically switch to using the next node you specified. You'll only see exceptions if all 3 nodes have problems at the same time.

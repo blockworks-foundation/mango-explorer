@@ -22,7 +22,7 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-from .client import BetterClient
+from .client import BetterClient, ClusterUrlData
 from .constants import MangoConstants, DATA_PATH
 from .context import Context
 from .idsjsonmarketlookup import IdsJsonMarketLookup
@@ -53,6 +53,25 @@ from .serummarketlookup import SerumMarketLookup
 # A `ContextBuilder` class to allow building `Context` objects without introducing circular dependencies.
 #
 class ContextBuilder:
+
+    # Utility class for parsing cluster-url command line parameter
+    #
+    class ParseClusterUrls(argparse.Action):
+        cluster_urls: typing.List[ClusterUrlData] = []
+
+        def __call__(self, parser: argparse.ArgumentParser, namespace: object, values: typing.Any, option_string: typing.Optional[str] = None) -> None:
+            if values:
+                if len(values) == 1:
+                    self.cluster_urls.append(ClusterUrlData(rpc=values[0]))
+                elif len(values) == 2:
+                    self.cluster_urls.append(ClusterUrlData(rpc=values[0], ws=values[1]))
+                else:
+                    raise parser.error(
+                        'Argument --cluster-url permits maximal two parameters. The first one configures HTTP connection url, the second one '
+                        'configures the WS connection url. Example: --cluster-url https://localhost:8181 wss://localhost:8282'
+                    )
+                setattr(namespace, self.dest, self.cluster_urls)
+
     # Configuring a `Context` is a common operation for command-line programs and can involve a
     # lot of duplicate code.
     #
@@ -63,8 +82,8 @@ class ContextBuilder:
         parser.add_argument("--name", type=str, default="Mango Explorer",
                             help="Name of the program (used in reports and alerts)")
         parser.add_argument("--cluster-name", type=str, default=None, help="Solana RPC cluster name")
-        parser.add_argument("--cluster-url", type=str, action="append", default=[],
-                            help="Solana RPC cluster URL (can be specified multiple times to provide failover when one errors)")
+        parser.add_argument("--cluster-url", nargs='*', type=str, action=ContextBuilder.ParseClusterUrls, default=[],
+                            help="Solana RPC cluster URL (can be specified multiple times to provide failover when one errors; optional second parameter value defines websocket connection)")
         parser.add_argument("--group-name", type=str, default=None, help="Mango group name")
         parser.add_argument("--group-address", type=PublicKey, default=None, help="Mango group address")
         parser.add_argument("--mango-program-address", type=PublicKey, default=None, help="Mango program address")
@@ -98,7 +117,7 @@ class ContextBuilder:
     def from_command_line_parameters(args: argparse.Namespace) -> Context:
         name: typing.Optional[str] = args.name
         cluster_name: typing.Optional[str] = args.cluster_name
-        cluster_urls: typing.Optional[typing.Sequence[str]] = args.cluster_url
+        cluster_urls: typing.Optional[typing.Sequence[ClusterUrlData]] = args.cluster_url
         group_name: typing.Optional[str] = args.group_name
         group_address: typing.Optional[PublicKey] = args.group_address
         mango_program_address: typing.Optional[PublicKey] = args.mango_program_address
@@ -151,7 +170,7 @@ class ContextBuilder:
     @staticmethod
     def forced_to_devnet(context: Context) -> Context:
         cluster_name: str = "devnet"
-        cluster_url: str = MangoConstants["cluster_urls"][cluster_name]
+        cluster_url: ClusterUrlData = ClusterUrlData(rpc=MangoConstants["cluster_urls"][cluster_name])
         fresh_context = copy.copy(context)
         fresh_context.client = BetterClient.from_configuration(context.name,
                                                                cluster_name,
@@ -168,7 +187,7 @@ class ContextBuilder:
     @staticmethod
     def forced_to_mainnet_beta(context: Context) -> Context:
         cluster_name: str = "mainnet"
-        cluster_url: str = MangoConstants["cluster_urls"][cluster_name]
+        cluster_url: ClusterUrlData = ClusterUrlData(rpc=MangoConstants["cluster_urls"][cluster_name])
         fresh_context = copy.copy(context)
         fresh_context.client = BetterClient.from_configuration(context.name,
                                                                cluster_name,
@@ -184,7 +203,8 @@ class ContextBuilder:
 
     @staticmethod
     def build(name: typing.Optional[str] = None, cluster_name: typing.Optional[str] = None,
-              cluster_urls: typing.Optional[typing.Sequence[str]] = None, skip_preflight: bool = False,
+              cluster_urls: typing.Optional[typing.Sequence[ClusterUrlData]] = None,
+              skip_preflight: bool = False,
               commitment: typing.Optional[str] = None, encoding: typing.Optional[str] = None,
               blockhash_cache_duration: typing.Optional[int] = None,
               stale_data_pauses_before_retry: typing.Optional[typing.Sequence[float]] = None,
@@ -213,13 +233,13 @@ class ContextBuilder:
         actual_blockhash_cache_duration: int = blockhash_cache_duration or 0
         actual_stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry or []
 
-        actual_cluster_urls: typing.Optional[typing.Sequence[str]] = cluster_urls
+        actual_cluster_urls: typing.Optional[typing.Sequence[ClusterUrlData]] = cluster_urls
         if actual_cluster_urls is None or len(actual_cluster_urls) == 0:
             cluster_url_from_environment: typing.Optional[str] = os.environ.get("CLUSTER_URL")
             if cluster_url_from_environment is not None and cluster_url_from_environment != "":
-                actual_cluster_urls = [cluster_url_from_environment]
+                actual_cluster_urls = [ClusterUrlData(rpc=cluster_url_from_environment)]
             else:
-                actual_cluster_urls = [MangoConstants["cluster_urls"][actual_cluster]]
+                actual_cluster_urls = [ClusterUrlData(rpc=MangoConstants["cluster_urls"][actual_cluster])]
 
         actual_skip_preflight: bool = skip_preflight
         actual_group_name: str = group_name or os.environ.get("GROUP_NAME") or default_group_data["name"]

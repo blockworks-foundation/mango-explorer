@@ -24,7 +24,7 @@ from rx.scheduler.threadpoolscheduler import ThreadPoolScheduler
 from solana.publickey import PublicKey
 from solana.rpc.commitment import Commitment
 
-from .client import BetterClient
+from .client import BetterClient, ClusterUrlData
 from .constants import MangoConstants
 from .instructionreporter import InstructionReporter, CompoundInstructionReporter
 from .instrumentlookup import InstrumentLookup
@@ -37,7 +37,7 @@ from .text import indent_collection_as_str, indent_item_by
 # A `Context` object to manage Solana connection and Mango configuration.
 #
 class Context:
-    def __init__(self, name: str, cluster_name: str, cluster_urls: typing.Sequence[str], skip_preflight: bool,
+    def __init__(self, name: str, cluster_name: str, cluster_urls: typing.Sequence[ClusterUrlData], skip_preflight: bool,
                  commitment: str, encoding: str, blockhash_cache_duration: int,
                  stale_data_pauses_before_retry: typing.Sequence[float], mango_program_address: PublicKey,
                  serum_program_address: PublicKey, group_name: str, group_address: PublicKey,
