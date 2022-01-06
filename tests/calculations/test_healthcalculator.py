@@ -25,30 +25,6 @@ def test_1deposit() -> None:
     assert health == Decimal("37904.2600000591928892771752953600134")
 
 
-def test_perp_account_no_spot_openorders() -> None:
-    context = fake_context()
-    group, cache, account, open_orders = load_data_from_directory("tests/testdata/perp_account_no_spot_openorders")
-
-    actual = HealthCalculator(context, HealthType.INITIAL)
-    health = actual.calculate(account, open_orders, group, cache)
-
-    # Typescript says: 341025333625.51856223547208912805
-    # TODO: This is significantly different from Typescript answer
-    assert health == Decimal("7036880.69722812395986194177339495613")
-
-
-def test_perp_account_no_spot_openorders_unhealthy() -> None:
-    context = fake_context()
-    group, cache, account, open_orders = load_data_from_directory(
-        "tests/testdata/perp_account_no_spot_openorders_unhealthy")
-
-    actual = HealthCalculator(context, HealthType.INITIAL)
-    health = actual.calculate(account, open_orders, group, cache)
-    # Typescript says: -848086876487.04950427436299875694
-    # TODO: This is significantly different from Typescript answer
-    assert health == Decimal("1100318.49506000114695611699892507857")
-
-
 def test_account1() -> None:
     context = fake_context()
     group, cache, account, open_orders = load_data_from_directory("tests/testdata/account1")
@@ -69,3 +45,26 @@ def test_account2() -> None:
     # Typescript says: 7516159604.84918334545095675026
     # TODO: This is slightly different from Typescript answer
     assert health == Decimal("-34471.8822627460347363357247598728190")
+
+
+def test_account3() -> None:
+    context = fake_context()
+    group, cache, account, open_orders = load_data_from_directory("tests/testdata/account3")
+
+    actual = HealthCalculator(context, HealthType.INITIAL)
+    health = actual.calculate(account, open_orders, group, cache)
+
+    # Typescript says: 341025333625.51856223547208912805
+    # TODO: This is significantly different from Typescript answer
+    assert health == Decimal("7036880.69722812395986194177339495613")
+
+
+def test_account4() -> None:
+    context = fake_context()
+    group, cache, account, open_orders = load_data_from_directory("tests/testdata/account4")
+
+    actual = HealthCalculator(context, HealthType.INITIAL)
+    health = actual.calculate(account, open_orders, group, cache)
+    # Typescript says: -848086876487.04950427436299875694
+    # TODO: This is significantly different from Typescript answer
+    assert health == Decimal("1100318.49506000114695611699892507857")

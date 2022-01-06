@@ -77,42 +77,52 @@ class PerpAccount:
         return False
 
     def unsettled_funding(self, perp_market_cache: PerpMarketCache) -> Decimal:
-        if self.base_position < 0:
-            return self.base_position * (perp_market_cache.short_funding - self.short_settled_funding)
+        base_position: Decimal = self.base_position
+        unsettled: Decimal
+        if base_position < 0:
+            unsettled = base_position * (perp_market_cache.short_funding - self.short_settled_funding)
         else:
-            return self.base_position * (perp_market_cache.long_funding - self.long_settled_funding)
+            unsettled = base_position * (perp_market_cache.long_funding - self.long_settled_funding)
+        return - self.lot_size_converter.quote.shift_to_decimals(unsettled)
 
     def asset_value(self, perp_market_cache: PerpMarketCache, price: Decimal) -> Decimal:
+        base_position: Decimal = self.lot_size_converter.adjust_to_quote_decimals(self.base_position)
         value: Decimal = Decimal(0)
-        if self.base_position > 0:
-            value = self.base_position * self.lot_size_converter.base_lot_size * price
+        if base_position > 0:
+            value = base_position * self.lot_size_converter.base_lot_size * price
+            value = self.lot_size_converter.quote.shift_to_decimals(value)
 
-        quote_position: Decimal = self.quote_position
-        if self.base_position > 0:
-            quote_position -= (perp_market_cache.long_funding - self.long_settled_funding) * self.base_position
-        elif self.base_position < 0:
-            quote_position -= (perp_market_cache.short_funding - self.short_settled_funding) * self.base_position
-
+        quote_position: Decimal = self.lot_size_converter.quote.shift_to_decimals(self.quote_position)
+        quote_position += self.unsettled_funding(perp_market_cache)
         if quote_position > 0:
             value += quote_position
 
-        return self.lot_size_converter.quote.shift_to_decimals(value)
+        return value
 
     def liability_value(self, perp_market_cache: PerpMarketCache, price: Decimal) -> Decimal:
+        base_position: Decimal = self.lot_size_converter.adjust_to_quote_decimals(self.base_position)
         value: Decimal = Decimal(0)
-        if self.base_position < 0:
-            value = self.base_position * self.lot_size_converter.base_lot_size * price
+        if base_position < 0:
+            value = base_position * self.lot_size_converter.base_lot_size * price
+            value = self.lot_size_converter.quote.shift_to_decimals(value)
 
-        quote_position: Decimal = self.quote_position
-        if self.base_position > 0:
-            quote_position -= (perp_market_cache.long_funding - self.long_settled_funding) * self.base_position
-        elif self.base_position < 0:
-            quote_position -= (perp_market_cache.short_funding - self.short_settled_funding) * self.base_position
-
+        quote_position: Decimal = self.lot_size_converter.quote.shift_to_decimals(self.quote_position)
+        quote_position += self.unsettled_funding(perp_market_cache)
         if quote_position < 0:
             value += quote_position
 
-        return self.lot_size_converter.quote.shift_to_decimals(-value)
+        return value
+
+    def current_value(self, perp_market_cache: PerpMarketCache, price: Decimal) -> Decimal:
+        base_position: Decimal = self.lot_size_converter.adjust_to_quote_decimals(self.base_position)
+        value: Decimal = base_position * self.lot_size_converter.base_lot_size * price
+
+        quote_position: Decimal = self.lot_size_converter.quote.shift_to_decimals(self.quote_position)
+        quote_position += self.unsettled_funding(perp_market_cache)
+
+        value += quote_position
+
+        return self.lot_size_converter.quote.shift_to_decimals(value)
 
     def __str__(self) -> str:
         if self.empty:

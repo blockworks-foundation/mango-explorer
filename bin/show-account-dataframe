@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import os.path
+import pandas
+import sys
+import typing
+
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Display the balances of all group tokens in the current wallet.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--address", type=PublicKey,
+                    help="Root address to check (if not provided, the wallet address is used)")
+args: argparse.Namespace = mango.parse_args(parser)
+
+address: typing.Optional[PublicKey] = args.address
+if address is None:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    address = wallet.address
+
+context: mango.Context = mango.ContextBuilder.from_command_line_parameters(args)
+group: mango.Group = mango.Group.load(context)
+cache: mango.Cache = mango.Cache.load(context, group.cache)
+
+address_account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(context, address)
+if address_account_info is None:
+    raise Exception(f"Could not load account data from address {address}")
+
+mango_accounts: typing.Sequence[mango.Account]
+if len(address_account_info.data) == mango.layouts.MANGO_ACCOUNT.sizeof():
+    mango_accounts = [mango.Account.parse(address_account_info, group, cache)]
+else:
+    mango_accounts = mango.Account.load_all_for_owner(context, address, group)
+
+for account in mango_accounts:
+    print("\n⚠ WARNING! ⚠ This is a work-in-progress and these figures may be wrong!\n")
+    pandas.set_option('display.max_columns', None)
+    pandas.set_option('display.width', None)
+    pandas.set_option('precision', 6)
+
+    open_orders: typing.Dict[str, mango.OpenOrders] = account.load_all_spot_open_orders(context)
+    frame: pandas.DataFrame = account.to_dataframe(group, open_orders, cache)
+    print(frame)
+
+    print("Init Health:", account.init_health(frame))
+    print("Maint Health:", account.maint_health(frame))
+    print("Total Value:", account.total_value(frame))

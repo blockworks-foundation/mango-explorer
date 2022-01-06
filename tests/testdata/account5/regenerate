@@ -1,0 +1,13 @@
+#! /usr/bin/env bash
+
+export CLUSTER_NAME=devnet
+show-account-info --address Ec2enZyoC4nGpEfu2sUNAa2nUGJHWxoUWYSEJ2hNTWTA --filename group.json
+show-account-info --address 8mFQbdXsFXt3R3cu3oSNS3bDZRwJRP18vyzd9J278J9z --filename cache.json
+show-account-info --address 5NaBydPDJuVAixVkANhWEA4AiAdNgBqeB2AySeHJMdUv --filename openorders0.json
+show-account-info --address FhNicR8YxjaMjH3r1BEh5V11JxHH7sbkjBL6tnAu3hYr --filename openorders1.json
+show-account-info --address 5AEiYQLPZEBUj85tTXp38bkb8tkoJTYSnGoL3qDi4DpG --filename openorders2.json
+show-account-info --address GzmCp2ke9AQJTvUJ9MJD1hJLvyqBhmBgSsP3iMsHvEuV --filename openorders3.json
+show-account-info --address 8HtU9HRZcrBZaFL1Rs7tVuFJsKMPs37SAwTNx5Co95Xv --filename openorders8.json
+
+# Devnet perp marketmaker
+show-account-info --address DRUZRfLQtki4ZYvRXhi5yGmyqCf6iMfTzxtBpxo6rbHu --filename account.json

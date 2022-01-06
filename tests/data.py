@@ -9,9 +9,13 @@ def load_group(filename: str) -> mango.Group:
     account_info: mango.AccountInfo = mango.AccountInfo.load_json(filename)
     mainnet_token_lookup: mango.InstrumentLookup = mango.IdsJsonTokenLookup("mainnet", "mainnet.1")
     devnet_token_lookup: mango.InstrumentLookup = mango.IdsJsonTokenLookup("devnet", "devnet.2")
+    devnet_non_spl_instrument_lookup: mango.InstrumentLookup = mango.NonSPLInstrumentLookup.load(
+        mango.NonSPLInstrumentLookup.DefaultDevnetDataFilepath)
     instrument_lookup: mango.InstrumentLookup = mango.CompoundInstrumentLookup(
-        [mainnet_token_lookup, devnet_token_lookup])
-    market_lookup: mango.MarketLookup = mango.NullMarketLookup()
+        [mainnet_token_lookup, devnet_token_lookup, devnet_non_spl_instrument_lookup])
+    mainnet_market_lookup: mango.MarketLookup = mango.IdsJsonMarketLookup("mainnet", instrument_lookup)
+    devnet_market_lookup: mango.MarketLookup = mango.IdsJsonMarketLookup("devnet", instrument_lookup)
+    market_lookup: mango.MarketLookup = mango.CompoundMarketLookup([mainnet_market_lookup, devnet_market_lookup])
     return mango.Group.parse(account_info, "devnet.2", instrument_lookup, market_lookup)
 
 

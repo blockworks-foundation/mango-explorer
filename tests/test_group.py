@@ -2,6 +2,7 @@ import pytest
 import typing
 
 from .context import mango
+from .data import load_group
 from .fakes import fake_account_info, fake_seeded_public_key, fake_token_bank, fake_instrument
 
 from decimal import Decimal
@@ -195,3 +196,62 @@ def test_slot_lookups() -> None:
     assert actual.slot_by_instrument(fake_instrument("slot3")) == slot3
     with pytest.raises(Exception):
         assert actual.slot_by_instrument(fake_instrument())
+
+
+def test_loaded_group_slot_lookups() -> None:
+    group = load_group("tests/testdata/account5/group.json")
+    assert len(group.slots) == 13
+
+    # « GroupSlot[0] « Token [MNGO] 'MNGO' [Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC (6 decimals)] »
+    assert group.slots_by_index[0] is not None
+    assert group.slots_by_index[0].base_instrument.symbol == "MNGO"
+
+    # « GroupSlot[1] « Token [BTC] 'BTC' [3UNBZ6o52WTWwjac2kPUb4FyodhU1vFkRJheu1Sh2TvU (6 decimals)] »
+    assert group.slots_by_index[1] is not None
+    assert group.slots_by_index[1].base_instrument.symbol == "BTC"
+
+    # « GroupSlot[2] « Token [ETH] 'ETH' [Cu84KB3tDL6SbFgToHMLYVDJJXdJjenNzSKikeAvzmkA (6 decimals)] »
+    assert group.slots_by_index[2] is not None
+    assert group.slots_by_index[2].base_instrument.symbol == "ETH"
+
+    # « GroupSlot[3] « Token [SOL] 'SOL' [So11111111111111111111111111111111111111112 (9 decimals)] »
+    assert group.slots_by_index[3] is not None
+    assert group.slots_by_index[3].base_instrument.symbol == "SOL"
+
+    # « GroupSlot[4] « Token [SRM] 'SRM' [AvtB6w9xboLwA145E221vhof5TddhqsChYcx7Fy3xVMH (6 decimals)] »
+    assert group.slots_by_index[4] is not None
+    assert group.slots_by_index[4].base_instrument.symbol == "SRM"
+
+    # « GroupSlot[5] « Token [RAY] 'RAY' [3YFQ7UYJ7sNGpXTKBxM3bYLVxKpzVudXAe4gLExh5b3n (6 decimals)] »
+    assert group.slots_by_index[5] is not None
+    assert group.slots_by_index[5].base_instrument.symbol == "RAY"
+
+    # « GroupSlot[6] « Token [USDT] 'USDT' [DAwBSXe6w9g37wdE2tCrFbho3QHKZi4PjuBytQCULap2 (6 decimals)] »
+    assert group.slots_by_index[6] is not None
+    assert group.slots_by_index[6].base_instrument.symbol == "USDT"
+
+    # « GroupSlot[7] « Instrument [ADA] 'Cardano' »
+    assert group.slots_by_index[7] is not None
+    assert group.slots_by_index[7].base_instrument.symbol == "ADA"
+
+    # « GroupSlot[8] « Token [FTT] 'FTT' [Fxh4bpZnRCnpg2vcH11ttmSTDSEeC5qWbPRZNZWnRnqY (6 decimals)] »
+    assert group.slots_by_index[8] is not None
+    assert group.slots_by_index[8].base_instrument.symbol == "FTT"
+
+    # « GroupSlot[9] « Instrument [AVAX] 'Avalanche' »
+    assert group.slots_by_index[9] is not None
+    assert group.slots_by_index[9].base_instrument.symbol == "AVAX"
+
+    # « GroupSlot[10] « Instrument [LUNA] 'Terra' »
+    assert group.slots_by_index[10] is not None
+    assert group.slots_by_index[10].base_instrument.symbol == "LUNA"
+
+    # « GroupSlot[11] « Instrument [BNB] 'Binance Coin' »
+    assert group.slots_by_index[11] is not None
+    assert group.slots_by_index[11].base_instrument.symbol == "BNB"
+
+    # « GroupSlot[12] « Instrument [MATIC] 'Polygon' »
+    assert group.slots_by_index[12] is not None
+    assert group.slots_by_index[12].base_instrument.symbol == "MATIC"
+    assert group.slots_by_index[13] is None
+    assert group.slots_by_index[14] is None

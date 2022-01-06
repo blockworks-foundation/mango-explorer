@@ -293,9 +293,13 @@ class Group(AddressableAccount):
                         raise Exception(f"Cannot find base token or perp market info for index {index}")
                     perp_market = market_lookup.find_by_address(perp_market_info.address)
                     if perp_market is None:
-                        logging.warning(f"Group cannot find base token or perp market for index {index}")
-                    else:
-                        base_instrument = perp_market.base
+                        in_slots += [False]
+                        logging.warning(
+                            f"Group cannot find base token or perp market for index {index} - {perp_market_info}")
+                        continue
+
+                    base_instrument = perp_market.base
+
                 if perp_market_info is not None:
                     perp_lot_size_converter = LotSizeConverter(
                         base_instrument, perp_market_info.base_lot_size, quote_token_bank.token, perp_market_info.quote_lot_size)
@@ -391,10 +395,18 @@ class Group(AddressableAccount):
         market_cache: MarketCache = self.market_cache_from_cache(cache, token)
         return market_cache.perp_market
 
-    def market_cache_from_cache(self, cache: Cache, instrument: Instrument) -> MarketCache:
-        slot: GroupSlot = self.slot_by_instrument(instrument)
+    def market_cache_from_cache_or_none(self, cache: Cache, instrument: Instrument) -> typing.Optional[MarketCache]:
+        slot: typing.Optional[GroupSlot] = self.slot_by_instrument_or_none(instrument)
+        if slot is None:
+            return None
         instrument_index: int = slot.index
         return cache.market_cache_for_index(instrument_index)
+
+    def market_cache_from_cache(self, cache: Cache, instrument: Instrument) -> MarketCache:
+        market_cache: typing.Optional[MarketCache] = self.market_cache_from_cache_or_none(cache, instrument)
+        if market_cache is not None:
+            return market_cache
+        raise Exception(f"Could not find market cache for instrument {instrument.symbol}")
 
     def fetch_cache(self, context: Context) -> Cache:
         return Cache.load(context, self.cache)

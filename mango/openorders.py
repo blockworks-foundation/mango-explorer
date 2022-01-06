@@ -77,6 +77,7 @@ class OpenOrders(AddressableAccount):
         base_token_total: Decimal = layout.base_token_total / base_divisor
         quote_token_free: Decimal = layout.quote_token_free / quote_divisor
         quote_token_total: Decimal = layout.quote_token_total / quote_divisor
+        referrer_rebate_accrued: Decimal = layout.referrer_rebate_accrued / quote_divisor
 
         placed_orders: typing.Sequence[PlacedOrder] = []
         if account_flags.initialized:
@@ -84,7 +85,7 @@ class OpenOrders(AddressableAccount):
                 layout.free_slot_bits, layout.is_bid_bits, layout.orders, layout.client_ids)
         return OpenOrders(account_info, Version.UNSPECIFIED, program_address, account_flags, layout.market,
                           layout.owner, base_token_free, base_token_total, quote_token_free,
-                          quote_token_total, placed_orders, layout.referrer_rebate_accrued)
+                          quote_token_total, placed_orders, referrer_rebate_accrued)
 
     @staticmethod
     def parse(account_info: AccountInfo, base_decimals: Decimal, quote_decimals: Decimal) -> "OpenOrders":
@@ -148,7 +149,7 @@ class OpenOrders(AddressableAccount):
     Owner: {self.owner}
     Base Token: {self.base_token_free:,.8f} of {self.base_token_total:,.8f}
     Quote Token: {self.quote_token_free:,.8f} of {self.quote_token_total:,.8f}
-    Referrer Rebate Accrued: {self.referrer_rebate_accrued}
+    Referrer Rebate Accrued: {self.referrer_rebate_accrued:,.8f}
     Orders:
         {placed_orders}
 »"""

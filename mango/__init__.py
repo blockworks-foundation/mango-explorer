@@ -42,6 +42,7 @@ from .client import TooMuchBandwidthRateLimitException as TooMuchBandwidthRateLi
 from .client import TransactionException as TransactionException
 from .combinableinstructions import CombinableInstructions as CombinableInstructions
 from .constants import MangoConstants as MangoConstants
+from .constants import DATA_PATH as DATA_PATH
 from .constants import SOL_DECIMAL_DIVISOR as SOL_DECIMAL_DIVISOR
 from .constants import SOL_DECIMALS as SOL_DECIMALS
 from .constants import SOL_MINT_ADDRESS as SOL_MINT_ADDRESS

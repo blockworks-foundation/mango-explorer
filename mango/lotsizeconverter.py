@@ -35,10 +35,17 @@ class LotSizeConverter():
     def tick_size(self) -> Decimal:
         return self.price_lots_to_number(Decimal(1))
 
-    def price_lots_to_number(self, price_lots: Decimal) -> Decimal:
+    def adjust_to_base_decimals(self, value: Decimal) -> Decimal:
         adjusted = 10 ** (self.base.decimals - self.quote.decimals)
+        return value * adjusted
+
+    def adjust_to_quote_decimals(self, value: Decimal) -> Decimal:
+        adjusted = 10 ** (self.quote.decimals - self.base.decimals)
+        return value * adjusted
+
+    def price_lots_to_number(self, price_lots: Decimal) -> Decimal:
         lots_to_native = self.quote_lot_size / self.base_lot_size
-        return (price_lots * lots_to_native) * adjusted
+        return self.adjust_to_base_decimals(price_lots * lots_to_native)
 
     def price_number_to_lots(self, price: Decimal) -> int:
         base_factor: Decimal = 10 ** self.base.decimals
