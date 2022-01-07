@@ -591,7 +591,7 @@ class Account(AddressableAccount):
         frame: pandas.DataFrame = pandas.DataFrame(asset_data)
         return frame
 
-    def weighted_assets(self, frame: pandas.DataFrame, weighting_name: str = "", include_unsettled_quote: bool = False) -> typing.Tuple[Decimal, Decimal]:
+    def weighted_assets(self, frame: pandas.DataFrame, weighting_name: str = "") -> typing.Tuple[Decimal, Decimal]:
         non_quote = frame.loc[frame["Symbol"] != self.shared_quote_token.symbol]
         quote = frame.loc[frame["Symbol"] == self.shared_quote_token.symbol, "SpotValue"].sum()
         quote += frame["PerpHealthQuote"].sum()
@@ -602,9 +602,6 @@ class Account(AddressableAccount):
             assets = quote
         else:
             liabilities = quote
-
-        if include_unsettled_quote:
-            assets += frame["QuoteUnsettled"].sum()
 
         spot_value_key = f"Spot{weighting_name}Value"
         perp_value_key = f"Perp{weighting_name}HealthBaseValue"
@@ -634,22 +631,22 @@ class Account(AddressableAccount):
         return assets, liabilities
 
     def init_health(self, frame: pandas.DataFrame) -> Decimal:
-        assets, liabilities = self.weighted_assets(frame, "Init", include_unsettled_quote=False)
+        assets, liabilities = self.weighted_assets(frame, "Init")
         return assets + liabilities
 
     def maint_health(self, frame: pandas.DataFrame) -> Decimal:
-        assets, liabilities = self.weighted_assets(frame, "Maint", include_unsettled_quote=False)
+        assets, liabilities = self.weighted_assets(frame, "Maint")
         return assets + liabilities
 
     def init_health_ratio(self, frame: pandas.DataFrame) -> Decimal:
-        assets, liabilities = self.weighted_assets(frame, "Init", include_unsettled_quote=False)
+        assets, liabilities = self.weighted_assets(frame, "Init")
         if liabilities == 0:
             return Decimal(100)
 
         return ((assets / -liabilities) - 1) * 100
 
     def maint_health_ratio(self, frame: pandas.DataFrame) -> Decimal:
-        assets, liabilities = self.weighted_assets(frame, "Maint", include_unsettled_quote=False)
+        assets, liabilities = self.weighted_assets(frame, "Maint")
         if liabilities == 0:
             return Decimal(100)
 
