@@ -664,6 +664,7 @@ class BetterClient:
 
                 response = self.compatible_client.send_transaction(transaction, *signers, opts=proper_opts)
                 signature: str = str(response["result"])
+                self._logger.debug(f"Transaction signature: {signature}")
 
                 if signature != _STUB_TRANSACTION_SIGNATURE:
                     transaction_status = self.compatible_client.get_signature_statuses([signature])
