@@ -658,7 +658,7 @@
           "baseSymbol": "MATIC",
           "baseDecimals": 8,
           "quoteDecimals": 6,
-          "marketIndex": 11,
+          "marketIndex": 12,
           "bidsKey": "BTHVQCnVmdZThbpCtxiVSANuRnfd89uGsYAfaGbqsC39",
           "asksKey": "GgQsLPiiq6JjNUe2kmKpHJNtNSEXk2kHcMZE2AbG6HDW",
           "eventsKey": "77maU5zdfYayqhqjBi2ocosM4PXvPXxbps2Up7dxDsMR"
