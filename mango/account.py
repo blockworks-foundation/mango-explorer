@@ -564,6 +564,10 @@ class Account(AddressableAccount):
                 "BaseLocked": base_open_locked,
                 "QuoteUnsettled": quote_open_unsettled,
                 "QuoteLocked": quote_open_locked,
+                "BaseUnsettledInMarginBasket": base_open_unsettled if slot.index < len(self.in_margin_basket) and self.in_margin_basket[slot.index] else Decimal(0),
+                "BaseLockedInMarginBasket": base_open_locked if slot.index < len(self.in_margin_basket) and self.in_margin_basket[slot.index] else Decimal(0),
+                "QuoteUnsettledInMarginBasket": quote_open_unsettled if slot.index < len(self.in_margin_basket) and self.in_margin_basket[slot.index] else Decimal(0),
+                "QuoteLockedInMarginBasket": quote_open_locked if slot.index < len(self.in_margin_basket) and self.in_margin_basket[slot.index] else Decimal(0),
                 "PerpPositionSize": perp_position,
                 "PerpNotionalPositionSize": perp_notional_position,
                 "PerpValue": perp_value,
@@ -595,6 +599,7 @@ class Account(AddressableAccount):
         non_quote = frame.loc[frame["Symbol"] != self.shared_quote_token.symbol]
         quote = frame.loc[frame["Symbol"] == self.shared_quote_token.symbol, "SpotValue"].sum()
         quote += frame["PerpHealthQuote"].sum()
+        quote += frame["QuoteUnsettledInMarginBasket"].sum()
 
         assets = Decimal(0)
         liabilities = Decimal(0)

@@ -1,0 +1,9 @@
+#! /usr/bin/env bash
+
+export CLUSTER_NAME=mainnet
+show-account-info --address 98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue --filename group.json
+show-account-info --address EBDRoayCDDUvDgCimta45ajQeXbexv7aKqJubruqpyvu --filename cache.json
+show-account-info --address 2tMPM5rt5Lgbq4YCNVXWY4TceBd6wZZB2Wfa9QdWERQt --filename openorders3.json
+
+# Random mainnet account that turned up in (incorrectly) liquidation calculations.
+show-account-info --address Fe4mJ7XWGssU7CL826LVU12uqG5mJvZ41suRtnczqNZ9 --filename account.json
