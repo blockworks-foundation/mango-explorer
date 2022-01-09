@@ -112,6 +112,33 @@
           "nodeKeys": [
             "H9jHd5YsHN4fg17aqng2WzJGTyinMDyQ2jin3iuiXPVD"
           ]
+        },
+        {
+          "symbol": "BNB",
+          "mintKey": "9gP2kCy3wA1ctvYWQk75guqXuHfrEomqydHLtcTCqiLa",
+          "decimals": 8,
+          "rootKey": "HBvFxqx8pX8GGMExXvKssY8ZK6FjoB2YHWg8UhuVdDTx",
+          "nodeKeys": [
+            "2e9qKNKdAQw9pmwxoCiKYyeKiaDetBiashktGTPgzSa8"
+          ]
+        },
+        {
+          "symbol": "AVAX",
+          "mintKey": "KgV1GvrHQmRBY8sHQQeUKwTm2r2h8t4C8qt12Cw1HVE",
+          "decimals": 8,
+          "rootKey": "5CAS4x9S9DRWMPz4YuY9PBiXRhhN9ZXjb7JtorvaSkCV",
+          "nodeKeys": [
+            "7FPdLxS1m9PhuFbCpQi1FJFNXmPFuwnbDXs16HxA1AEt"
+          ]
+        },
+        {
+          "symbol": "LUNA",
+          "mintKey": "F6v4wfAdJB8D8p77bMXZgYt8TDKsYxLYxH5AFhUkYx9W",
+          "decimals": 6,
+          "rootKey": "AUU8Zw5ezmZJBuWtMjfTTyP6eowkpNbH5pHh6uY5BHu7",
+          "nodeKeys": [
+            "BNpfdZZC8NP1PabGATRHH2ABh94U47zm1kjvneRSMSBE"
+          ]
         }
       ],
       "oracles": [
@@ -405,6 +432,39 @@
           "bidsKey": "8qyWhEcpuvEsdCmY1kvEnkTfgGeWHmi73Mta5jgWDTuT",
           "asksKey": "PPnJy6No31U45SVSjWTr45R8Q73X6bNHfxdFqr2vMq3",
           "eventsKey": "BC8Tdzz7rwvuYkJWKnPnyguva27PQP5DTxosHVQrEzg9"
+        },
+        {
+          "name": "BNB/USDC",
+          "publicKey": "3zzTxtDCt9PimwzGrgWJEbxZfSLetDMkdYegPanGNpMf",
+          "baseSymbol": "BNB",
+          "baseDecimals": 8,
+          "quoteDecimals": 6,
+          "marketIndex": 11,
+          "bidsKey": "8JJrdQEzMSoekpzy7qcYDs1hVJyWoRcfTHR2pGDgd7wy",
+          "asksKey": "A3TmGhemkp8u8d5HCLMyiBByvwDtp7khv9Vt3p1cqH8c",
+          "eventsKey": "ZYhSiaFWkuNTBzRFM9UPJXwHPyTGbujCKvPXhbssYPG"
+        },
+        {
+          "name": "AVAX/USDC",
+          "publicKey": "E8JQstcwjuqN5kdMyUJLNuaectymnhffkvfg1j286UCr",
+          "baseSymbol": "AVAX",
+          "baseDecimals": 8,
+          "quoteDecimals": 6,
+          "marketIndex": 12,
+          "bidsKey": "925NuYb44V63wNRooM5tBFNCXM5daD72m6KDxoCmYpYX",
+          "asksKey": "q2eUYuqJeBD6DndxDQ2tEuFqAe6j9j9jMtMnkkKU5P9",
+          "eventsKey": "HY7ZpmQ6VXLHKxN4cruFKMTNu42EbjPEDthyGPnsYYHq"
+        },
+        {
+          "name": "LUNA/USDC",
+          "publicKey": "HBTu8hNaoT3VyiSSzJYa8jwt9sDGKtJviSwFa11iXdmE",
+          "baseSymbol": "LUNA",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 13,
+          "bidsKey": "2qZyNiiupG9c3dZkmgPJ53XLMyb3uYnfmPrUfLBisEBn",
+          "asksKey": "2oVNv7BTvvRUuHmbPvMjafBVQhoAFVdWPCuKiDAPNsbD",
+          "eventsKey": "8fGeJPZGsW3kjnfGkGNU3dXWXkuDFEUK7RXeiMW2rmGm"
         }
       ]
     },
