@@ -29,6 +29,7 @@ jobs:
         with:
           config: >- # more at semgrep.dev/explore
             p/docker
+            p/gitlab-bandit
 
         # Instead of `config:`, use rules set in Semgrep App.
         # Get your token from semgrep.dev/manage/settings.
