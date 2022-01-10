@@ -28,6 +28,7 @@ from .instructions import build_cancel_perp_order_instructions, build_mango_cons
 from .marketoperations import MarketInstructionBuilder, MarketOperations
 from .orders import Order, OrderBook
 from .perpmarket import PerpMarket
+from .publickey import encode_public_key_for_sorting
 from .tokenbank import TokenBank
 from .wallet import Wallet
 
@@ -73,7 +74,19 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
     def build_crank_instructions(self, account_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         if self.perp_market.underlying_perp_market is None:
             raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
-        return build_mango_consume_events_instructions(self.context, self.group, self.perp_market.underlying_perp_market, account_addresses, limit)
+
+        addresses_to_crank: typing.Sequence[PublicKey] = [*account_addresses, self.account.address]
+        distinct_addresses_to_crank: typing.List[PublicKey] = []
+        for address in addresses_to_crank:
+            if address not in distinct_addresses_to_crank:
+                distinct_addresses_to_crank += [address]
+
+        limited_addresses_to_crank = distinct_addresses_to_crank[0:min(
+            int(limit), len(distinct_addresses_to_crank))]
+
+        limited_addresses_to_crank.sort(key=encode_public_key_for_sorting)
+
+        return build_mango_consume_events_instructions(self.context, self.group, self.perp_market.underlying_perp_market, limited_addresses_to_crank, limit)
 
     def build_redeem_instructions(self) -> CombinableInstructions:
         return build_redeem_accrued_mango_instructions(self.context, self.wallet, self.perp_market, self.group, self.account, self.mngo_token_bank)
