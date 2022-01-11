@@ -97,7 +97,7 @@ Ignore:
                 place_order = self.market_instruction_builder.build_place_order_instructions(to_place_with_client_id)
                 place_orders += place_order
 
-            crank = self.market_instruction_builder.build_crank_instructions([])
+            crank = self.market_instruction_builder.build_crank_instructions(model_state.accounts_to_crank)
             settle = self.market_instruction_builder.build_settle_instructions()
 
             redeem = mango.CombinableInstructions.empty()

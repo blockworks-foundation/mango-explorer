@@ -234,5 +234,75 @@ def test_publickey_sorting() -> None:
 
     test_keys.sort(key=mango.encode_public_key_for_sorting)
 
-    for counter in range(100):
+    for counter in range(len(test_keys)):
+        assert test_keys[counter] == expected[counter], f"Index {counter} - {test_keys[counter]} does not match expected {expected[counter]}"
+
+
+# This is the same test but with results from sorting in a BPF Solana runtime.
+#
+# This runtime is very limited so 14 is the maximum number of keys that I've been able to sort there.
+#
+def test_publickey_bpf_sorting() -> None:
+    test_keys = [
+        PublicKey("FaQzFknCYS1Dt1T8d7wXr6a8dxSZwgb1YyiR1pmWJBC"),
+        PublicKey("AuAYgwDerZryPif7Zw1ZqACYgJFRqmKwy3ZqASr2Wu7d"),
+        PublicKey("79bShRscEARLjd1gzYz7LMC76ft87AQZxcRk3ZPg7thf"),
+        PublicKey("HMbNVVb6uqqhuTaQU4RmKDeG3VZ1pvRn3PgnhfevbjWJ"),
+        PublicKey("FFzYWt9K2ZDeyxpDbvKbma6232baDHoCFGL1gZAKiox1"),
+        PublicKey("CpFj2d5uYjeh34FKh6iYRTE2dL3N9NaSrZtyZVZ7eQwa"),
+        PublicKey("FyjuBBN5fUHjtpB5LbSVW1mMocWCBebWJEecr1YN1TaQ"),
+        PublicKey("2zBRHRBd8mieLZ4nvYpJqw8D9Bc9tRhgnrBvLxw5rswv"),
+        PublicKey("GFQFVSEYN9ho4UwA4KJefTGrrnV8xKwyT2U5VoY4ABRw"),
+        PublicKey("E9UL1uyqoU6KNvQhn4dRhJ85jzu9zSQ8mnKK6zG6K2LH"),
+        PublicKey("789UPSUbj9TYSm12e66qo8PCE7RvDygqFKyy7qvCjtBD"),
+        PublicKey("Hgbt3PYF3CPjJxwgurNPtU7PxKWZawxbVYAY3PHuqcRY"),
+        PublicKey("jD2gcCANgvQM54brip9jT9L3PHfG3YmoBALQeWQ2QFt"),
+        PublicKey("8ZuYuQdGesgcKs6UaiHZNo44iijnsFJ4zUEF3KymUhjw")
+    ]
+
+    expected = [
+        PublicKey("FaQzFknCYS1Dt1T8d7wXr6a8dxSZwgb1YyiR1pmWJBC"),
+        PublicKey("jD2gcCANgvQM54brip9jT9L3PHfG3YmoBALQeWQ2QFt"),
+        PublicKey("2zBRHRBd8mieLZ4nvYpJqw8D9Bc9tRhgnrBvLxw5rswv"),
+        PublicKey("789UPSUbj9TYSm12e66qo8PCE7RvDygqFKyy7qvCjtBD"),
+        PublicKey("79bShRscEARLjd1gzYz7LMC76ft87AQZxcRk3ZPg7thf"),
+        PublicKey("8ZuYuQdGesgcKs6UaiHZNo44iijnsFJ4zUEF3KymUhjw"),
+        PublicKey("AuAYgwDerZryPif7Zw1ZqACYgJFRqmKwy3ZqASr2Wu7d"),
+        PublicKey("CpFj2d5uYjeh34FKh6iYRTE2dL3N9NaSrZtyZVZ7eQwa"),
+        PublicKey("E9UL1uyqoU6KNvQhn4dRhJ85jzu9zSQ8mnKK6zG6K2LH"),
+        PublicKey("FFzYWt9K2ZDeyxpDbvKbma6232baDHoCFGL1gZAKiox1"),
+        PublicKey("FyjuBBN5fUHjtpB5LbSVW1mMocWCBebWJEecr1YN1TaQ"),
+        PublicKey("GFQFVSEYN9ho4UwA4KJefTGrrnV8xKwyT2U5VoY4ABRw"),
+        PublicKey("HMbNVVb6uqqhuTaQU4RmKDeG3VZ1pvRn3PgnhfevbjWJ"),
+        PublicKey("Hgbt3PYF3CPjJxwgurNPtU7PxKWZawxbVYAY3PHuqcRY")
+    ]
+
+    test_keys.sort(key=mango.encode_public_key_for_sorting)
+
+    for counter in range(len(test_keys)):
+        assert test_keys[counter] == expected[counter], f"Index {counter} - {test_keys[counter]} does not match expected {expected[counter]}"
+
+
+# This is a short test to help with debugging, with results from the BPF Solana runtime.
+#
+def test_publickey_short_sorting() -> None:
+    test_keys = [
+        PublicKey("AuAYgwDerZryPif7Zw1ZqACYgJFRqmKwy3ZqASr2Wu7d"),
+        PublicKey("79bShRscEARLjd1gzYz7LMC76ft87AQZxcRk3ZPg7thf"),
+        PublicKey("HMbNVVb6uqqhuTaQU4RmKDeG3VZ1pvRn3PgnhfevbjWJ"),
+        PublicKey("FFzYWt9K2ZDeyxpDbvKbma6232baDHoCFGL1gZAKiox1"),
+        PublicKey("CpFj2d5uYjeh34FKh6iYRTE2dL3N9NaSrZtyZVZ7eQwa"),
+    ]
+
+    expected = [
+        PublicKey("79bShRscEARLjd1gzYz7LMC76ft87AQZxcRk3ZPg7thf"),
+        PublicKey("AuAYgwDerZryPif7Zw1ZqACYgJFRqmKwy3ZqASr2Wu7d"),
+        PublicKey("CpFj2d5uYjeh34FKh6iYRTE2dL3N9NaSrZtyZVZ7eQwa"),
+        PublicKey("FFzYWt9K2ZDeyxpDbvKbma6232baDHoCFGL1gZAKiox1"),
+        PublicKey("HMbNVVb6uqqhuTaQU4RmKDeG3VZ1pvRn3PgnhfevbjWJ")
+    ]
+
+    test_keys.sort(key=mango.encode_public_key_for_sorting)
+
+    for counter in range(len(test_keys)):
         assert test_keys[counter] == expected[counter], f"Index {counter} - {test_keys[counter]} does not match expected {expected[counter]}"

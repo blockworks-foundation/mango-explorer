@@ -55,12 +55,16 @@ class SpotMarket(LoadedMarket):
     def asks_address(self) -> PublicKey:
         return self.underlying_serum_market.state.asks()
 
+    @property
+    def event_queue_address(self) -> PublicKey:
+        return self.underlying_serum_market.state.event_queue()
+
     def parse_account_info_to_orders(self, account_info: AccountInfo) -> typing.Sequence[Order]:
         orderbook: PySerumOrderBook = PySerumOrderBook.from_bytes(self.underlying_serum_market.state, account_info.data)
         return list(map(Order.from_serum_order, orderbook.orders()))
 
     def unprocessed_events(self, context: Context) -> typing.Sequence[SerumEvent]:
-        event_queue: SerumEventQueue = SerumEventQueue.load(context, self.underlying_serum_market.state.event_queue())
+        event_queue: SerumEventQueue = SerumEventQueue.load(context, self.event_queue_address)
         return event_queue.unprocessed_events
 
     def __str__(self) -> str:

@@ -88,7 +88,7 @@ class PollingModelStateBuilder(ModelStateBuilder):
 
     def from_values(self, order_owner: PublicKey, market: mango.Market, group: mango.Group, account: mango.Account,
                     price: mango.Price, placed_orders_container: mango.PlacedOrdersContainer,
-                    inventory: mango.Inventory, orderbook: mango.OrderBook) -> ModelState:
+                    inventory: mango.Inventory, orderbook: mango.OrderBook, event_queue: mango.EventQueue) -> ModelState:
         group_watcher: mango.ManualUpdateWatcher[mango.Group] = mango.ManualUpdateWatcher(group)
         account_watcher: mango.ManualUpdateWatcher[mango.Account] = mango.ManualUpdateWatcher(account)
         price_watcher: mango.ManualUpdateWatcher[mango.Price] = mango.ManualUpdateWatcher(price)
@@ -96,9 +96,11 @@ class PollingModelStateBuilder(ModelStateBuilder):
             mango.PlacedOrdersContainer] = mango.ManualUpdateWatcher(placed_orders_container)
         inventory_watcher: mango.ManualUpdateWatcher[mango.Inventory] = mango.ManualUpdateWatcher(inventory)
         orderbook_watcher: mango.ManualUpdateWatcher[mango.OrderBook] = mango.ManualUpdateWatcher(orderbook)
+        event_queue_watcher: mango.ManualUpdateWatcher[mango.EventQueue] = mango.ManualUpdateWatcher(event_queue)
 
         return ModelState(order_owner, market, group_watcher, account_watcher, price_watcher,
-                          placed_orders_container_watcher, inventory_watcher, orderbook_watcher)
+                          placed_orders_container_watcher, inventory_watcher, orderbook_watcher,
+                          event_queue_watcher)
 
     def __str__(self) -> str:
         return "« PollingModelStateBuilder »"
@@ -145,7 +147,8 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
             self.base_inventory_token_account.address,
             self.quote_inventory_token_account.address,
             self.market.bids_address,
-            self.market.asks_address
+            self.market.asks_address,
+            self.market.event_queue_address
         ]
         account_infos: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(context, addresses)
         group: mango.Group = mango.Group.parse_with_context(context, account_infos[0])
@@ -162,6 +165,8 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
 
         orderbook: mango.OrderBook = self.market.parse_account_infos_to_orderbook(account_infos[6], account_infos[7])
 
+        event_queue: mango.EventQueue = mango.SerumEventQueue.parse(account_infos[8])
+
         price: mango.Price = self.oracle.fetch_price(context)
 
         available: Decimal = (base_inventory_token_account.value.value * price.mid_price) + \
@@ -173,7 +178,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
                                                      base_inventory_token_account.value,
                                                      quote_inventory_token_account.value)
 
-        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook)
+        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook, event_queue)
 
     def __str__(self) -> str:
         return f"""« SerumPollingModelStateBuilder for market '{self.market.symbol}' »"""
@@ -214,6 +219,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
             self.account_address,
             self.market.bids_address,
             self.market.asks_address,
+            self.market.event_queue_address,
             *self.all_open_orders_addresses
         ]
         account_infos: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(context, addresses)
@@ -225,7 +231,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
         self.all_open_orders_addresses = account.spot_open_orders
 
         spot_open_orders_account_infos_by_address = {
-            str(account_info.address): account_info for account_info in account_infos[5:]}
+            str(account_info.address): account_info for account_info in account_infos[6:]}
 
         all_open_orders: typing.Dict[str, mango.OpenOrders] = {}
         for basket_token in account.slots:
@@ -256,9 +262,11 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
 
         orderbook: mango.OrderBook = self.market.parse_account_infos_to_orderbook(account_infos[3], account_infos[4])
 
+        event_queue: mango.EventQueue = mango.SerumEventQueue.parse(account_infos[5])
+
         price: mango.Price = self.oracle.fetch_price(context)
 
-        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook)
+        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook, event_queue)
 
     def __str__(self) -> str:
         return f"""« SpotPollingModelStateBuilder for market '{self.market.symbol}' »"""
@@ -294,7 +302,8 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
             self.cache_address,
             self.account_address,
             self.market.underlying_perp_market.bids,
-            self.market.underlying_perp_market.asks
+            self.market.underlying_perp_market.asks,
+            self.market.event_queue_address
         ]
         account_infos: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(context, addresses)
         group: mango.Group = mango.Group.parse_with_context(context, account_infos[0])
@@ -320,9 +329,11 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
 
         orderbook: mango.OrderBook = self.market.parse_account_infos_to_orderbook(account_infos[3], account_infos[4])
 
+        event_queue: mango.EventQueue = mango.PerpEventQueue.parse(account_infos[5], self.market.lot_size_converter)
+
         price: mango.Price = self.oracle.fetch_price(context)
 
-        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook)
+        return self.from_values(self.order_owner, self.market, group, account, price, placed_orders_container, inventory, orderbook, event_queue)
 
     def __str__(self) -> str:
         return f"""« PerpPollingModelStateBuilder for market '{self.market.symbol}' »"""

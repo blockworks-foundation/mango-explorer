@@ -108,23 +108,20 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
                                               self.raw_market, self.group, self.open_orders_address,
                                               base_rootbank, base_nodebank, quote_rootbank, quote_nodebank)
 
-    def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         if self.open_orders_address is None:
             self._logger.debug("Returning empty crank instructions - no spot OpenOrders address provided.")
             return CombinableInstructions.empty()
 
-        open_orders_to_crank: typing.Sequence[PublicKey] = [*open_orders_addresses, self.open_orders_address]
-        distinct_open_orders_addresses: typing.List[PublicKey] = []
-        for oo in open_orders_to_crank:
-            if oo not in distinct_open_orders_addresses:
-                distinct_open_orders_addresses += [oo]
+        distinct_addresses: typing.List[PublicKey] = [self.open_orders_address]
+        for oo in addresses:
+            if oo not in distinct_addresses:
+                distinct_addresses += [oo]
 
-        limited_open_orders_addresses = distinct_open_orders_addresses[0:min(
-            int(limit), len(distinct_open_orders_addresses))]
+        limited_addresses = distinct_addresses[0:min(int(limit), len(distinct_addresses))]
+        limited_addresses.sort(key=encode_public_key_for_sorting)
 
-        limited_open_orders_addresses.sort(key=encode_public_key_for_sorting)
-
-        return build_serum_consume_events_instructions(self.context, self.spot_market.address, self.raw_market.state.event_queue(), limited_open_orders_addresses, int(limit))
+        return build_serum_consume_events_instructions(self.context, self.spot_market.address, self.raw_market.state.event_queue(), limited_addresses, int(limit))
 
     def build_redeem_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()

@@ -130,7 +130,9 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
             context, websocket_manager, health_check, disposer, wallet, market, price_watcher)
         latest_open_orders_observer: mango.Watcher[mango.PlacedOrdersContainer] = mango.build_serum_open_orders_watcher(
             context, websocket_manager, health_check, market, wallet)
-        latest_orderbook_watcher = mango.build_orderbook_watcher(
+        latest_orderbook_watcher: mango.Watcher[mango.OrderBook] = mango.build_orderbook_watcher(
+            context, websocket_manager, health_check, market)
+        latest_event_queue_watcher: mango.Watcher[mango.EventQueue] = mango.build_serum_event_queue_watcher(
             context, websocket_manager, health_check, market)
     elif isinstance(market, mango.SpotMarket):
         market_index: int = group.slot_by_spot_market_address(market.address).index
@@ -155,6 +157,8 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
             market, latest_account_observer, group_watcher, all_open_orders_watchers, cache_watcher)
         latest_orderbook_watcher = mango.build_orderbook_watcher(
             context, websocket_manager, health_check, market)
+        latest_event_queue_watcher = mango.build_spot_event_queue_watcher(
+            context, websocket_manager, health_check, market)
     elif isinstance(market, mango.PerpMarket):
         order_owner = account.address
         inventory_watcher = mango.PerpInventoryAccountWatcher(
@@ -163,10 +167,12 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
             context, websocket_manager, health_check, market, account, group, account_subscription)
         latest_orderbook_watcher = mango.build_orderbook_watcher(
             context, websocket_manager, health_check, market)
+        latest_event_queue_watcher = mango.build_perp_event_queue_watcher(
+            context, websocket_manager, health_check, market)
     else:
         raise Exception(f"Could not determine type of market {market.symbol}")
 
     model_state = ModelState(order_owner, market, group_watcher, latest_account_observer,
                              latest_price_observer, latest_open_orders_observer,
-                             inventory_watcher, latest_orderbook_watcher)
+                             inventory_watcher, latest_orderbook_watcher, latest_event_queue_watcher)
     return WebsocketModelStateBuilder(model_state)

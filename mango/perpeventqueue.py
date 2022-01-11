@@ -237,6 +237,22 @@ class PerpEventQueue(AddressableAccount):
             raise Exception(f"PerpEventQueue account not found at address '{address}'")
         return PerpEventQueue.parse(account_info, lot_size_converter)
 
+    @property
+    def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
+        to_crank: typing.List[PublicKey] = []
+        for event_to_crank in self.unprocessed_events:
+            to_crank += event_to_crank.accounts_to_crank
+
+        seen = []
+        distinct = []
+        for account in to_crank:
+            account_str = account.to_base58()
+            if account_str not in seen:
+                distinct += [account]
+                seen += [account_str]
+
+        return distinct
+
     @ property
     def capacity(self) -> int:
         return len(self.unprocessed_events) + len(self.processed_events)

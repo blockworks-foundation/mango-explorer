@@ -32,14 +32,17 @@ from .instrumentvalue import InstrumentValue
 from .inventory import Inventory
 from .loadedmarket import LoadedMarket
 from .market import Market, InventorySource
+from .modelstate import EventQueue
 from .observables import DisposePropagator, LatestItemObserverSubscriber
 from .openorders import OpenOrders
 from .oracle import Price
 from .oracle import OracleProvider
 from .oraclefactory import create_oracle_provider
 from .orders import OrderBook
+from .perpeventqueue import PerpEventQueue
 from .perpmarket import PerpMarket
 from .placedorder import PlacedOrdersContainer
+from .serumeventqueue import SerumEventQueue
 from .serummarket import SerumMarket
 from .spotmarket import SpotMarket
 from .spotmarketoperations import SpotMarketInstructionBuilder, SpotMarketOperations
@@ -240,3 +243,36 @@ def build_orderbook_watcher(context: Context, manager: WebSocketSubscriptionMana
     health_check.add("orderbook_bids_subscription", bids_subscription.publisher)
     health_check.add("orderbook_asks_subscription", asks_subscription.publisher)
     return orderbook_observer
+
+
+def build_serum_event_queue_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, serum_market: SerumMarket) -> Watcher[EventQueue]:
+    initial: EventQueue = SerumEventQueue.load(context, serum_market.event_queue_address)
+    subscription = WebSocketAccountSubscription[EventQueue](
+        context, serum_market.event_queue_address, lambda account_info: SerumEventQueue.parse(account_info))
+    manager.add(subscription)
+    latest_observer = LatestItemObserverSubscriber[EventQueue](initial)
+    subscription.publisher.subscribe(latest_observer)
+    health_check.add("event_queue_subscription", subscription.publisher)
+    return latest_observer
+
+
+def build_spot_event_queue_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, spot_market: SpotMarket) -> Watcher[EventQueue]:
+    initial: EventQueue = SerumEventQueue.load(context, spot_market.event_queue_address)
+    subscription = WebSocketAccountSubscription[EventQueue](
+        context, spot_market.event_queue_address, lambda account_info: SerumEventQueue.parse(account_info))
+    manager.add(subscription)
+    latest_observer = LatestItemObserverSubscriber[EventQueue](initial)
+    subscription.publisher.subscribe(latest_observer)
+    health_check.add("event_queue_subscription", subscription.publisher)
+    return latest_observer
+
+
+def build_perp_event_queue_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, perp_market: PerpMarket) -> Watcher[EventQueue]:
+    initial: EventQueue = PerpEventQueue.load(context, perp_market.event_queue_address, perp_market.lot_size_converter)
+    subscription = WebSocketAccountSubscription[EventQueue](
+        context, perp_market.event_queue_address, lambda account_info: PerpEventQueue.parse(account_info, perp_market.lot_size_converter))
+    manager.add(subscription)
+    latest_observer = LatestItemObserverSubscriber[EventQueue](initial)
+    subscription.publisher.subscribe(latest_observer)
+    health_check.add("event_queue_subscription", subscription.publisher)
+    return latest_observer

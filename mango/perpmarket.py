@@ -112,6 +112,10 @@ class PerpMarket(LoadedMarket):
     def asks_address(self) -> PublicKey:
         return self.underlying_perp_market.asks
 
+    @property
+    def event_queue_address(self) -> PublicKey:
+        return self.underlying_perp_market.event_queue
+
     def parse_account_info_to_orders(self, account_info: AccountInfo) -> typing.Sequence[Order]:
         side: PerpOrderBookSide = PerpOrderBookSide.parse(account_info, self.underlying_perp_market)
         return side.orders()
@@ -124,8 +128,7 @@ class PerpMarket(LoadedMarket):
         return FundingRate.from_stats_data(self.symbol, self.lot_size_converter, oldest_stats, newest_stats)
 
     def unprocessed_events(self, context: Context) -> typing.Sequence[PerpEvent]:
-        event_queue: PerpEventQueue = PerpEventQueue.load(
-            context, self.underlying_perp_market.event_queue, self.lot_size_converter)
+        event_queue: PerpEventQueue = PerpEventQueue.load(context, self.event_queue_address, self.lot_size_converter)
         return event_queue.unprocessed_events
 
     def accounts_to_crank(self, context: Context, additional_account_to_crank: typing.Optional[PublicKey]) -> typing.Sequence[PublicKey]:

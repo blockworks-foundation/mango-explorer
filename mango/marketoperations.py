@@ -77,7 +77,7 @@ class MarketInstructionBuilder(metaclass=abc.ABCMeta):
             "MarketInstructionBuilder.build_settle_instructions() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def build_crank_instructions(self, open_orders_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         raise NotImplementedError(
             "MarketInstructionBuilder.build_crank_instructions() is not implemented on the base type.")
 
@@ -164,7 +164,7 @@ class NullMarketInstructionBuilder(MarketInstructionBuilder):
     def build_settle_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
-    def build_crank_instructions(self, addresses_to_crank: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
     def build_redeem_instructions(self) -> CombinableInstructions:

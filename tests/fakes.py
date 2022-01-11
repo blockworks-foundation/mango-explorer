@@ -255,7 +255,8 @@ def fake_model_state(order_owner: typing.Optional[PublicKey] = None,
                      price: typing.Optional[mango.Price] = None,
                      placed_orders_container: typing.Optional[mango.PlacedOrdersContainer] = None,
                      inventory: typing.Optional[mango.Inventory] = None,
-                     orderbook: typing.Optional[mango.OrderBook] = None) -> mango.ModelState:
+                     orderbook: typing.Optional[mango.OrderBook] = None,
+                     event_queue: typing.Optional[mango.EventQueue] = None) -> mango.ModelState:
     order_owner = order_owner or fake_seeded_public_key("order owner")
     market = market or fake_loaded_market()
     group = group or fake_group()
@@ -264,6 +265,7 @@ def fake_model_state(order_owner: typing.Optional[PublicKey] = None,
     placed_orders_container = placed_orders_container or fake_placed_orders_container()
     inventory = inventory or fake_inventory()
     orderbook = orderbook or mango.OrderBook("FAKE", NullLotSizeConverter(), fake_bids(), fake_asks())
+    event_queue = event_queue or mango.NullEventQueue()
     group_watcher: mango.ManualUpdateWatcher[mango.Group] = mango.ManualUpdateWatcher(group)
     account_watcher: mango.ManualUpdateWatcher[mango.Account] = mango.ManualUpdateWatcher(account)
     price_watcher: mango.ManualUpdateWatcher[mango.Price] = mango.ManualUpdateWatcher(price)
@@ -271,10 +273,11 @@ def fake_model_state(order_owner: typing.Optional[PublicKey] = None,
         mango.PlacedOrdersContainer] = mango.ManualUpdateWatcher(placed_orders_container)
     inventory_watcher: mango.ManualUpdateWatcher[mango.Inventory] = mango.ManualUpdateWatcher(inventory)
     orderbook_watcher: mango.ManualUpdateWatcher[mango.OrderBook] = mango.ManualUpdateWatcher(orderbook)
+    event_queue_watcher: mango.ManualUpdateWatcher[mango.EventQueue] = mango.ManualUpdateWatcher(event_queue)
 
-    return mango.ModelState(order_owner, market, group_watcher,
-                            account_watcher, price_watcher, placed_orders_container_watcher,
-                            inventory_watcher, orderbook_watcher)
+    return mango.ModelState(order_owner, market, group_watcher, account_watcher, price_watcher,
+                            placed_orders_container_watcher, inventory_watcher, orderbook_watcher,
+                            event_queue_watcher)
 
 
 def fake_mango_instruction() -> mango.MangoInstruction:

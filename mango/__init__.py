@@ -122,6 +122,8 @@ from .marketoperations import MarketOperations as MarketOperations
 from .marketoperations import NullMarketInstructionBuilder as NullMarketInstructionBuilder
 from .marketoperations import NullMarketOperations as NullMarketOperations
 from .metadata import Metadata as Metadata
+from .modelstate import EventQueue as EventQueue
+from .modelstate import NullEventQueue as NullEventQueue
 from .modelstate import ModelState as ModelState
 from .notification import CompoundNotificationTarget as CompoundNotificationTarget
 from .notification import ConsoleNotificationTarget as ConsoleNotificationTarget
@@ -239,6 +241,9 @@ from .watchers import build_perp_open_orders_watcher as build_perp_open_orders_w
 from .watchers import build_price_watcher as build_price_watcher
 from .watchers import build_serum_inventory_watcher as build_serum_inventory_watcher
 from .watchers import build_orderbook_watcher as build_orderbook_watcher
+from .watchers import build_serum_event_queue_watcher as build_serum_event_queue_watcher
+from .watchers import build_spot_event_queue_watcher as build_spot_event_queue_watcher
+from .watchers import build_perp_event_queue_watcher as build_perp_event_queue_watcher
 from .websocketsubscription import IndividualWebSocketSubscriptionManager as IndividualWebSocketSubscriptionManager
 from .websocketsubscription import SharedWebSocketSubscriptionManager as SharedWebSocketSubscriptionManager
 from .websocketsubscription import WebSocketAccountSubscription as WebSocketAccountSubscription

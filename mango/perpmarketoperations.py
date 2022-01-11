@@ -71,22 +71,20 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
     def build_settle_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
-    def build_crank_instructions(self, account_addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
         if self.perp_market.underlying_perp_market is None:
             raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
 
-        addresses_to_crank: typing.Sequence[PublicKey] = [*account_addresses, self.account.address]
-        distinct_addresses_to_crank: typing.List[PublicKey] = []
-        for address in addresses_to_crank:
-            if address not in distinct_addresses_to_crank:
-                distinct_addresses_to_crank += [address]
+        distinct_addresses: typing.List[PublicKey] = [self.account.address]
+        for address in addresses:
+            if address not in distinct_addresses:
+                distinct_addresses += [address]
 
-        limited_addresses_to_crank = distinct_addresses_to_crank[0:min(
-            int(limit), len(distinct_addresses_to_crank))]
+        limited_addresses = distinct_addresses[0:min(int(limit), len(distinct_addresses))]
+        limited_addresses.sort(key=encode_public_key_for_sorting)
+        self._logger.debug(f"About to crank {len(limited_addresses)} addresses: {limited_addresses}")
 
-        limited_addresses_to_crank.sort(key=encode_public_key_for_sorting)
-
-        return build_mango_consume_events_instructions(self.context, self.group, self.perp_market.underlying_perp_market, limited_addresses_to_crank, limit)
+        return build_mango_consume_events_instructions(self.context, self.group, self.perp_market.underlying_perp_market, limited_addresses, limit)
 
     def build_redeem_instructions(self) -> CombinableInstructions:
         return build_redeem_accrued_mango_instructions(self.context, self.wallet, self.perp_market, self.group, self.account, self.mngo_token_bank)
@@ -141,7 +139,7 @@ class PerpMarketOperations(MarketOperations):
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        accounts_to_crank = self.perp_market.accounts_to_crank(self.context, None)
+        accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)
         crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank, limit)
         return (signers + crank).execute(self.context)
 
