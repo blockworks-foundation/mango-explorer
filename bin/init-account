@@ -26,12 +26,12 @@ all_instructions = signers + init
 transaction_ids = all_instructions.execute(context)
 
 if args.wait:
-    print("Waiting on transaction IDs:", transaction_ids)
+    mango.output("Waiting on transaction IDs:", transaction_ids)
     context.client.wait_for_confirmation(transaction_ids)
 
     accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
     if len(accounts) == 0:
         raise Exception("Failed to create Account")
-    print(accounts[-1])
+    mango.output(accounts[-1])
 else:
-    print("Transaction IDs:", transaction_ids)
+    mango.output("Transaction IDs:", transaction_ids)

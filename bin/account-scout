@@ -36,7 +36,7 @@ try:
     group = mango.Group.load(context)
     scout = mango.AccountScout()
     report = scout.verify_account_prepared_for_group(context, group, address)
-    print(report)
+    mango.output(report)
 except Exception as exception:
     logging.critical(f"account-scout stopped because of exception: {exception} - {traceback.format_exc()}")
 except:

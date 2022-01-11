@@ -19,6 +19,7 @@ import typing
 
 from decimal import Decimal
 
+from .output import output
 from .token import Token
 
 
@@ -47,7 +48,7 @@ class BalanceSheet:
         return self.assets / self.liabilities
 
     @staticmethod
-    def report(values: typing.Sequence["BalanceSheet"], reporter: typing.Callable[[str], None] = print) -> None:
+    def report(values: typing.Sequence["BalanceSheet"], reporter: typing.Callable[[str], None] = output) -> None:
         for value in values:
             reporter(str(value))
 

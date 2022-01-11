@@ -32,13 +32,13 @@ if market is None:
 
 oracle = oracle_provider.oracle_for_market(context, market)
 if oracle is None:
-    print(f"Could not find oracle for market {market.symbol} from provider {args.provider}.")
+    mango.output(f"Could not find oracle for market {market.symbol} from provider {args.provider}.")
 else:
     if not args.stream:
         price = oracle.fetch_price(context)
         mango.output(price)
     else:
-        print("Press <ENTER> to quit.")
+        mango.output("Press <ENTER> to quit.")
         price_subscription = oracle.to_streaming_observable(context)
         disposable = price_subscription.subscribe(mango.PrintingObserverSubscriber(False))
 

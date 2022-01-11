@@ -21,4 +21,4 @@ if market is None:
     raise Exception(f"Could not find market {market_symbol}")
 
 actual_market = mango.ensure_market_loaded(context, market)
-print(actual_market)
+mango.output(actual_market)

@@ -33,7 +33,7 @@ cache: mango.Cache = mango.Cache.load(context, group.cache)
 
 valuation: mango.Valuation = mango.Valuation.from_wallet(context, group, cache, address)
 
-print(valuation)
+mango.output(valuation)
 if args.json_filename is not None:
     with open(args.json_filename, "w") as json_file:
         json.dump(valuation.to_json_dict(), json_file, indent=4)

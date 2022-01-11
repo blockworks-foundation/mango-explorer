@@ -38,6 +38,6 @@ if market is None:
 
 market_operations = mango.create_market_operations(context, wallet, account, market, args.dry_run)
 crank = market_operations.crank(args.limit)
-print(crank)
+mango.output(crank)
 
 logging.info("Crank completed.")

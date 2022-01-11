@@ -21,8 +21,8 @@ wrapped_sol: mango.Token = mango.Token.ensure(context.instrument_lookup.find_by_
 token_accounts = mango.TokenAccount.fetch_all_for_owner_and_token(context, wallet.address, wrapped_sol)
 
 if len(token_accounts) == 0:
-    print("No wrapped SOL accounts.")
+    mango.output("No wrapped SOL accounts.")
 else:
-    print(f"{wrapped_sol.name}:")
+    mango.output(f"{wrapped_sol.name}:")
     for account in token_accounts:
-        print(f"    {account.address}: {account.value}")
+        mango.output(f"    {account.address}: {account.value}")

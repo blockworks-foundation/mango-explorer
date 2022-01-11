@@ -27,4 +27,4 @@ if address is None:
 
 group = mango.Group.load(context, context.group_address)
 mango_accounts = mango.Account.load_all_for_owner(context, address, group)
-print(mango_accounts)
+mango.output(mango_accounts)

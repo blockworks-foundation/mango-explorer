@@ -39,8 +39,8 @@ token_accounts: typing.Sequence[mango.TokenAccount] = mango.TokenAccount.fetch_a
     context, owner_address, token)
 
 if len(token_accounts) == 0:
-    print(f"No token accounts for {token}.")
+    mango.output(f"No token accounts for {token}.")
 else:
-    print(f"{token.name}:")
+    mango.output(f"{token.name}:")
     for account in token_accounts:
-        print(f"    {account.address}: {account.value}")
+        mango.output(f"    {account.address}: {account.value}")

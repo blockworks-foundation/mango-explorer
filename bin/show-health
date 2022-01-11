@@ -48,4 +48,4 @@ for basket_token in mango_account.slots:
                                     mango_account.shared_quote_token.decimals)
         spot_open_orders[str(basket_token.spot_open_orders)] = oo
 
-print("Health", health_calculator.calculate(mango_account, spot_open_orders, group, cache))
+mango.output("Health", health_calculator.calculate(mango_account, spot_open_orders, group, cache))

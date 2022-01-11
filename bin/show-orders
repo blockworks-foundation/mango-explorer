@@ -29,4 +29,4 @@ account = mango.Account.load_for_owner_by_address(context, wallet.address, group
 market = mango.load_market_by_symbol(context, args.market)
 
 orderbook = market.fetch_orderbook(context)
-print(orderbook)
+mango.output(orderbook)

@@ -37,6 +37,6 @@ if not isinstance(market, mango.SerumMarket):
 
 all_open_orders_for_market = mango.OpenOrders.load_for_market_and_owner(
     context, market.address, address, context.serum_program_address, market.base.decimals, market.quote.decimals)
-print(f"Found {len(all_open_orders_for_market)} Serum OpenOrders account(s) for market {market.symbol}.")
+mango.output(f"Found {len(all_open_orders_for_market)} Serum OpenOrders account(s) for market {market.symbol}.")
 for open_orders in all_open_orders_for_market:
-    print(open_orders)
+    mango.output(open_orders)

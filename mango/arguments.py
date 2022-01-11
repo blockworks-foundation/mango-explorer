@@ -14,50 +14,14 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import argparse
-import collections.abc
-import enum
-import json
-import jsons
 import logging
 import os
 import sys
 import typing
 
-from solana.publickey import PublicKey
 
 from .constants import WARNING_DISCLAIMER_TEXT, version
-
-
-# # 🥭 OutputFormat enum
-#
-# How should we format any output?
-#
-class OutputFormat(enum.Enum):
-    # We use strings here so that argparse can work with these as parameters.
-    TEXT = "TEXT"
-    JSON = "JSON"
-
-    def __str__(self) -> str:
-        return self.value
-
-    def __repr__(self) -> str:
-        return f"{self}"
-
-
-output_format: OutputFormat = OutputFormat.TEXT
-
-
-def output(obj: typing.Any) -> None:
-    if output_format == OutputFormat.JSON:
-        jsons.set_serializer(lambda pubkey, **kwargs: f"{pubkey}", PublicKey)
-        print(json.dumps(jsons.dump(obj, strip_attr=("data", "logger", "lot_size_converter", "tokens", "tokens_by_index", "slots", "base_tokens", "base_tokens_by_index", "oracles", "oracles_by_index", "spot_markets", "spot_markets_by_index", "perp_markets", "perp_markets_by_index", "shared_quote_token", "liquidity_incentive_token"),
-              key_transformer=jsons.KEY_TRANSFORMER_CAMELCASE), sort_keys=True, indent=4))
-    else:
-        if isinstance(obj, collections.abc.Sequence) and not isinstance(obj, str):
-            for item in obj:
-                print(item)
-        else:
-            print(obj)
+from .output import OutputFormat, output_formatter
 
 
 # # 🥭 parse_args
@@ -74,8 +38,7 @@ def parse_args(parser: argparse.ArgumentParser, logging_default: int = logging.I
 
     args: argparse.Namespace = parser.parse_args()
 
-    global output_format
-    output_format = args.output_format
+    output_formatter.format = args.output_format
 
     log_record_format: str = "%(asctime)s %(level_emoji)s %(name)-12.12s %(message)s"
     if args.log_suppress_timestamp:

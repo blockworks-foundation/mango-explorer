@@ -24,6 +24,7 @@ import typing
 from urllib.parse import unquote
 
 from .liquidationevent import LiquidationEvent
+from .output import output
 
 
 # # 🥭 Notification
@@ -275,7 +276,7 @@ class ConsoleNotificationTarget(NotificationTarget):
         self.name = name
 
     def send_notification(self, item: typing.Any) -> None:
-        print(self.name, item)
+        output(self.name, item)
 
     def __str__(self) -> str:
         return f"« ConsoleNotificationTarget '{self.name}' »"

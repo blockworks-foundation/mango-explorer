@@ -32,8 +32,8 @@ signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet
 
 close_instruction = mango.build_close_spl_account_instructions(context, wallet, args.address)
 
-print(f"Closing account: {args.address} with balance {token_account.value.value} lamports.")
+mango.output(f"Closing account: {args.address} with balance {token_account.value.value} lamports.")
 
 all_instructions = signers + close_instruction
 transaction_ids = all_instructions.execute(context)
-print(f"Transaction IDs: {transaction_ids}")
+mango.output(f"Transaction IDs: {transaction_ids}")

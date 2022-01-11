@@ -33,6 +33,6 @@ if market is None:
 
 market_operations = mango.create_market_operations(context, wallet, account, market, args.dry_run)
 orders = market_operations.load_my_orders()
-print(f"{len(orders)} order(s) to show.")
+mango.output(f"{len(orders)} order(s) to show.")
 for order in orders:
-    print(order)
+    mango.output(order)

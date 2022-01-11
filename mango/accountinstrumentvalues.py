@@ -219,7 +219,6 @@ class PricedAccountInstrumentValues(AccountInstrumentValues):
 
     def if_worst_execution(self) -> typing.Tuple[InstrumentValue, InstrumentValue]:
         taker_quote: InstrumentValue = InstrumentValue(self.perp_quote_position.token, self.raw_taker_quote)
-        # print("Quote calc", self.perp_quote_position, taker_quote, self.bids_quantity, self.price)
 
         if abs(self.if_all_bids_executed.value) > abs(self.if_all_asks_executed.value):
             base_position = self.if_all_bids_executed

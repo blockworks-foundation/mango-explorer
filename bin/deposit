@@ -52,4 +52,4 @@ deposit = mango.build_deposit_instructions(
 
 all_instructions = signers + deposit
 transaction_ids = all_instructions.execute(context)
-print("Transaction IDs:", transaction_ids)
+mango.output("Transaction IDs:", transaction_ids)

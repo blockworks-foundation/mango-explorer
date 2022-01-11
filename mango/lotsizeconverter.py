@@ -13,6 +13,8 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import jsons
+
 from decimal import Decimal
 
 from .token import Instrument
@@ -149,3 +151,6 @@ class RaisingLotSizeConverter(LotSizeConverter):
 
     def __str__(self) -> str:
         return "« RaisingLotSizeConverter »"
+
+
+jsons.set_serializer(lambda _, **__: "{}", RaisingLotSizeConverter)

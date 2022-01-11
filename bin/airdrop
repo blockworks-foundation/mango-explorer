@@ -40,9 +40,9 @@ quantity = token.shift_to_native(args.quantity)
 
 signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
 
-print(f"Airdropping {args.quantity} {args.symbol} to {destination}")
+mango.output(f"Airdropping {args.quantity} {args.symbol} to {destination}")
 airdrop = mango.build_faucet_airdrop_instructions(token.mint, destination, args.faucet, quantity)
 
 all_instructions = signers + airdrop
 transaction_ids = all_instructions.execute(context)
-print("Transaction IDs:", transaction_ids)
+mango.output("Transaction IDs:", transaction_ids)

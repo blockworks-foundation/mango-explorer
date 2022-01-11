@@ -40,15 +40,15 @@ else:
     mango_accounts = mango.Account.load_all_for_owner(context, address, group)
 
 for account in mango_accounts:
-    print("\n⚠ WARNING! ⚠ This is a work-in-progress and these figures may be wrong!\n")
+    mango.output("\n⚠ WARNING! ⚠ This is a work-in-progress and these figures may be wrong!\n")
     pandas.set_option('display.max_columns', None)
     pandas.set_option('display.width', None)
     pandas.set_option('precision', 6)
 
     open_orders: typing.Dict[str, mango.OpenOrders] = account.load_all_spot_open_orders(context)
     frame: pandas.DataFrame = account.to_dataframe(group, open_orders, cache)
-    print(frame)
+    mango.output(frame)
 
-    print("Init Health:", account.init_health(frame))
-    print("Maint Health:", account.maint_health(frame))
-    print("Total Value:", account.total_value(frame))
+    mango.output("Init Health:", account.init_health(frame))
+    mango.output("Maint Health:", account.maint_health(frame))
+    mango.output("Total Value:", account.total_value(frame))

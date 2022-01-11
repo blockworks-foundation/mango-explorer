@@ -33,4 +33,4 @@ else:
         notify: mango.NotificationTarget = mango.CompoundNotificationTarget(args.notify)
         report = f"Account \"{args.name} [{args.address}]\" on {context.client.cluster_name} has only {account_info.sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
         notify.send(report)
-        print(f"Notification sent: {report}")
+        mango.output(f"Notification sent: {report}")

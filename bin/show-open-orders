@@ -39,9 +39,9 @@ for slot in account.slots:
             raise Exception(f"No base token available for token {slot.base_instrument}.")
         open_orders = mango.OpenOrders.load(context, slot.spot_open_orders,
                                             slot.base_token_bank.token.decimals, slot.quote_token_bank.token.decimals)
-        print(slot.base_instrument)
-        print(open_orders)
+        mango.output(slot.base_instrument)
+        mango.output(open_orders)
         at_least_one_open_orders_account = True
 
 if not at_least_one_open_orders_account:
-    print(f"No OpenOrders accounts for {address}[{args.account_index}]")
+    mango.output(f"No OpenOrders accounts for {address}[{args.account_index}]")

@@ -42,7 +42,7 @@ def notifier(name: str) -> typing.Callable[[mango.AccountInfo], None]:
     def notify(account_info: mango.AccountInfo) -> None:
         report = f"Account \"{name} [{account_info.address}]\" on {context.client.cluster_name} has only {account_info.sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
         notify_balance.send(f"[{args.name}] {report}")
-        print(f"Notification sent: {report}")
+        mango.output(f"Notification sent: {report}")
     return notify
 
 

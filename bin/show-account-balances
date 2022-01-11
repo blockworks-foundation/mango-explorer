@@ -41,7 +41,7 @@ for slot_token_bank in group.tokens:
         balance = mango.InstrumentValue.fetch_total_value(context, address, slot_token_bank.token)
         balances += [balance]
 
-print(f"\nToken Balances [{address}]:")
+mango.output(f"\nToken Balances [{address}]:")
 total_in_wallet: mango.InstrumentValue = mango.InstrumentValue(group.shared_quote_token, Decimal(0))
 for balance in balances:
     if balance.value != 0:
@@ -57,8 +57,8 @@ for balance in balances:
                 balance_value: mango.InstrumentValue = balance * cached_token_price
                 total_in_wallet += balance_value
                 value_text = f" worth {balance_value}"
-        print(f"               {balance_text:<45}{value_text}")
-print(
+        mango.output(f"               {balance_text:<45}{value_text}")
+mango.output(
     f"Total Value:   {total_in_wallet}")
 
 
@@ -68,8 +68,8 @@ quote_token_free_in_open_orders: mango.InstrumentValue = mango.InstrumentValue(g
 quote_token_total_in_open_orders: mango.InstrumentValue = mango.InstrumentValue(group.shared_quote_token, Decimal(0))
 grand_total: mango.InstrumentValue = total_in_wallet
 for account in mango_accounts:
-    print("\n⚠ WARNING! ⚠ This is a work-in-progress and these figures may be wrong!\n")
-    print(f"\nAccount Balances [{account.address}]:")
+    mango.output("\n⚠ WARNING! ⚠ This is a work-in-progress and these figures may be wrong!\n")
+    mango.output(f"\nAccount Balances [{account.address}]:")
     at_least_one_output: bool = False
     open_orders: typing.Dict[str, mango.OpenOrders] = account.load_all_spot_open_orders(context)
     for asset in account.base_slots:
@@ -77,14 +77,14 @@ for account in mango_accounts:
             at_least_one_output = True
             report: mango.AccountInstrumentValues = mango.AccountInstrumentValues.from_account_basket_base_token(
                 asset, open_orders, group)
-            # print(report)
+            # mango.output(report)
             market_cache: mango.MarketCache = group.market_cache_from_cache(cache, report.base_token)
             price_from_cache: mango.InstrumentValue = group.token_price_from_cache(cache, report.base_token)
             priced_report: mango.AccountInstrumentValues = report.priced(market_cache)
             account_value += priced_report.net_value
             quote_token_free_in_open_orders += priced_report.quote_token_free
             quote_token_total_in_open_orders += priced_report.quote_token_total
-            print(priced_report)
+            mango.output(priced_report)
 
     quote_report = mango.AccountInstrumentValues(account.shared_quote_token,
                                                  account.shared_quote_token,
@@ -103,9 +103,9 @@ for account in mango_accounts:
                                                  Decimal(0), Decimal(0),
                                                  mango.NullLotSizeConverter())
     account_value += quote_report.net_value + quote_token_total_in_open_orders
-    print(quote_report)
+    mango.output(quote_report)
 
-    print(f"Account Total: {account_value}")
+    mango.output(f"Account Total: {account_value}")
     grand_total += account_value
 
-print(f"\nGrand Total:   {grand_total}")
+mango.output(f"\nGrand Total:   {grand_total}")

@@ -51,4 +51,4 @@ withdraw = mango.build_withdraw_instructions(
 
 all_instructions = signers + withdraw
 transaction_ids = all_instructions.execute(context)
-print("Transaction IDs:", transaction_ids)
+mango.output("Transaction IDs:", transaction_ids)

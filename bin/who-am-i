@@ -15,7 +15,7 @@ mango.Wallet.add_command_line_parameters(parser)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
-print(context)
+mango.output(context)
 
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-print("Wallet Address:", wallet.address)
+mango.output("Wallet Address:", wallet.address)

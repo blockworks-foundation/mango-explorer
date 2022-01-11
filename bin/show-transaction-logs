@@ -21,4 +21,4 @@ transaction = context.client.get_confirmed_transaction(args.signature)
 
 log_lines = mango.expand_log_messages(transaction["meta"]["logMessages"])
 logs = "\n".join(log_lines)
-print(logs)
+mango.output(logs)

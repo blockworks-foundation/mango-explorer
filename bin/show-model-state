@@ -47,4 +47,4 @@ model_state_builder: mango.marketmaking.ModelStateBuilder = mango.marketmaking.m
     mango.marketmaking.ModelUpdateMode.POLL, context, disposer, manager, health_check, wallet, group, account, market, oracle)
 
 model_state = model_state_builder.build(context)
-print(model_state)
+mango.output(model_state)

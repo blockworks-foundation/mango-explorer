@@ -28,7 +28,7 @@ try:
     logging.info(f"Signature: {signature}")
 
     report = mango.TransactionScout.load(context, signature)
-    print(report)
+    mango.output(report)
 except Exception as exception:
     logging.critical(f"transaction-scout stopped because of exception: {exception} - {traceback.format_exc()}")
 except:

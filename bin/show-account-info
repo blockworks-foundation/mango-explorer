@@ -22,10 +22,10 @@ context = mango.ContextBuilder.from_command_line_parameters(args)
 
 account_info = mango.AccountInfo.load(context, args.address)
 if account_info is None:
-    print(f"No account at '{args.address}'")
+    mango.output(f"No account at '{args.address}'")
 else:
     if args.filename is not None:
         account_info.save_json(args.filename)
     else:
-        print(account_info)
-        print("Account Data:", account_info.encoded_data())
+        mango.output(account_info)
+        mango.output("Account Data:", account_info.encoded_data())

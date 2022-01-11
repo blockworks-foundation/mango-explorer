@@ -64,7 +64,7 @@ try:
     market_maker = mango.simplemarketmaking.simplemarketmaker.SimpleMarketMaker(
         context, wallet, market, market_operations, oracle, args.spread_ratio, args.position_size_ratio, args.existing_order_tolerance, pause_duration)
 
-    print(f"Starting {market_maker} - use <Enter> to stop.")
+    mango.output(f"Starting {market_maker} - use <Enter> to stop.")
     thread = Thread(target=market_maker.start)
     thread.start()
 
@@ -75,7 +75,7 @@ try:
     except:
         pass
 
-    print(f"Stopping {market_maker} on next iteration...")
+    mango.output(f"Stopping {market_maker} on next iteration...")
     market_maker.stop()
 except Exception as exception:
     logging.critical(f"Market maker stopped because of exception: {exception} - {traceback.format_exc()}")

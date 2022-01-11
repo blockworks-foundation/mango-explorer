@@ -65,25 +65,25 @@ else:
 owner = wallet.keypair
 amount = int(args.quantity * Decimal(10 ** token.decimals))
 
-print("Balance:", source_account["account"]["data"]["parsed"]
-      ["info"]["tokenAmount"]["uiAmountString"], token.name)
+mango.output("Balance:", source_account["account"]["data"]["parsed"]
+             ["info"]["tokenAmount"]["uiAmountString"], token.name)
 text_amount = f"{amount} {token.name} (@ {token.decimals} decimal places)"
-print(f"Sending {text_amount}")
-print(f"    From: {source}")
-print(f"      To: {destination}")
+mango.output(f"Sending {text_amount}")
+mango.output(f"    From: {source}")
+mango.output(f"      To: {destination}")
 
 if args.dry_run:
-    print("Skipping actual transfer - dry run.")
+    mango.output("Skipping actual transfer - dry run.")
 else:
     transfer_response = spl_token.transfer(source, destination, owner, amount,
                                            opts=TxOpts(preflight_commitment=context.client.commitment))
     transaction_ids = [transfer_response["result"]]
-    print(f"Transaction IDs: {transaction_ids}")
+    mango.output(f"Transaction IDs: {transaction_ids}")
     if args.wait:
         context.client.wait_for_confirmation(transaction_ids)
 
         updated_balance = spl_token.get_balance(source)
         updated_balance_text = updated_balance["result"]["value"]["uiAmountString"]
-        print(f"{text_amount} sent. Balance now: {updated_balance_text} {token.name}")
+        mango.output(f"{text_amount} sent. Balance now: {updated_balance_text} {token.name}")
     else:
-        print(f"{text_amount} sent.")
+        mango.output(f"{text_amount} sent.")

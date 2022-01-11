@@ -20,7 +20,7 @@ def report_accrued(basket_token: mango.AccountSlot) -> None:
         accrued: mango.InstrumentValue = mango.InstrumentValue(basket_token.base_instrument, Decimal(0))
     else:
         accrued = basket_token.perp_account.mngo_accrued
-    print(f"Accrued in perp market [{symbol:>5}]: {accrued}")
+    mango.output(f"Accrued in perp market [{symbol:>5}]: {accrued}")
 
 
 def load_perp_market(context: mango.Context, group: mango.Group, slot: mango.GroupSlot) -> typing.Optional[mango.PerpMarket]:
@@ -106,7 +106,7 @@ else:
                                                              wallet, group, mngo, account, perp_market, basket_token)
 
 transaction_ids = all_instructions.execute(context)
-print("Transaction IDs:", transaction_ids)
+mango.output("Transaction IDs:", transaction_ids)
 
 if args.wait:
     context.client.wait_for_confirmation(transaction_ids)

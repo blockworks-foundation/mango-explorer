@@ -46,7 +46,7 @@ if account_info.owner == mango.SYSTEM_PROGRAM_ADDRESS:
 
 quantity = token.shift_to_native(args.quantity)
 
-print(f"Minting {args.quantity} {args.symbol} to {destination}")
+mango.output(f"Minting {args.quantity} {args.symbol} to {destination}")
 response = spl_token.mint_to(destination, wallet.address, int(quantity), multi_signers=[wallet.keypair])
 
-print(response["result"])
+mango.output(response["result"])

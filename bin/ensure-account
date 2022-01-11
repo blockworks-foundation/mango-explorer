@@ -23,18 +23,17 @@ group = mango.Group.load(context)
 accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
 
 if len(accounts) > 0:
-    print(f"At least one account already exists for group {group.address} and wallet {wallet.address}")
+    mango.output(f"At least one account already exists for group {group.address} and wallet {wallet.address}")
 else:
     signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
     init = mango.build_create_account_instructions(context, wallet, group)
     all_instructions = signers + init
     transaction_ids = all_instructions.execute(context)
 
-    print("Created account.")
+    mango.output("Created account.")
     if args.wait:
-        print("Waiting on transaction IDs:", transaction_ids)
+        mango.output("Waiting on transaction IDs:", transaction_ids)
         context.client.wait_for_confirmation(transaction_ids)
         accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
 
-for account in accounts:
-    print(account)
+mango.output(accounts)

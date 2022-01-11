@@ -23,6 +23,8 @@ from datetime import datetime
 from rx.core.typing import Disposable
 from rxpy_backpressure import BackPressure
 
+from .output import output
+
 
 # # 🥭 Observables
 #
@@ -60,16 +62,16 @@ class PrintingObserverSubscriber(rx.core.observer.observer.Observer):
 
     def on_next(self, item: typing.Any) -> None:
         self.report_no_output = False
-        print(self.counter, item)
+        output(self.counter, item)
         self.counter += 1
 
     def on_error(self, ex: Exception) -> None:
         self.report_no_output = False
-        print(ex)
+        output(ex)
 
     def on_completed(self) -> None:
         if self.report_no_output:
-            print("No items to show.")
+            output("No items to show.")
 
 
 # # 🥭 TimestampedPrintingObserverSubscriber class
@@ -233,7 +235,7 @@ def create_backpressure_skipping_observer(on_next: typing.Callable[[typing.Any],
 #
 def debug_print_item(title: str) -> typing.Callable[[typing.Any], typing.Any]:
     def _debug_print_item(item: typing.Any) -> typing.Any:
-        print(title, item)
+        output(title, item)
         return item
     return _debug_print_item
 

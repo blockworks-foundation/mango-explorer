@@ -43,4 +43,4 @@ market_operations = mango.create_market_operations(context, wallet, account, mar
 
 order = mango.Order.from_ids(id=args.id, client_id=args.client_id, side=args.side)
 cancellation = market_operations.cancel_order(order, ok_if_missing=args.ok_if_missing)
-print(cancellation)
+mango.output(cancellation)

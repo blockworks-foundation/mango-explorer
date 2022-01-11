@@ -84,16 +84,16 @@ try:
     liquidatable_report = mango.LiquidatableReport.build(group, [], account, worthwhile_threshold)
     transaction_ids = account_liquidator.liquidate(liquidatable_report)
     if transaction_ids is None or len(transaction_ids) == 0:
-        print("No transaction sent.")
+        mango.output("No transaction sent.")
     else:
-        print("Transaction ID:", transaction_ids)
-        print("Waiting for confirmation...")
+        mango.output("Transaction ID:", transaction_ids)
+        mango.output("Waiting for confirmation...")
 
         context.client.wait_for_confirmation(transaction_ids)
 
         for transaction_id in transaction_ids:
             transaction_scout = mango.TransactionScout.load(context, transaction_id)
-            print(str(transaction_scout))
+            mango.output(str(transaction_scout))
 
 except Exception as exception:
     logging.critical(f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}")

@@ -23,6 +23,7 @@ from solana.publickey import PublicKey
 from solana.rpc.types import TokenAccountOpts
 
 from .context import Context
+from .output import output
 from .token import Instrument, Token
 
 
@@ -80,7 +81,7 @@ class InstrumentValue:
         return value
 
     @staticmethod
-    def report(values: typing.Sequence["InstrumentValue"], reporter: typing.Callable[[str], None] = print) -> None:
+    def report(values: typing.Sequence["InstrumentValue"], reporter: typing.Callable[[str], None] = output) -> None:
         for value in values:
             reporter(f"{value.value:>18,.8f} {value.token.name}")
 

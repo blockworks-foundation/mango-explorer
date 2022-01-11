@@ -36,4 +36,4 @@ if market is None:
 loaded_market: mango.Market = mango.ensure_market_loaded(context, market)
 market_operations = mango.create_market_operations(context, wallet, account, market, args.dry_run)
 open_orders = market_operations.ensure_openorders()
-print(f"OpenOrders account for {market.symbol} is {open_orders}")
+mango.output(f"OpenOrders account for {market.symbol} is {open_orders}")

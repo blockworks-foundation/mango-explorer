@@ -31,14 +31,14 @@ associated_token_address = spl_token.get_associated_token_address(wallet.address
 token_account: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(context, associated_token_address)
 if token_account is not None:
     # The associated token account exists
-    print(f"Associated token account already exists at: {associated_token_address}.")
+    mango.output(f"Associated token account already exists at: {associated_token_address}.")
 else:
     # Create the proper associated token account.
     signer = mango.CombinableInstructions.from_wallet(wallet)
     create_instruction = spl_token.create_associated_token_account(wallet.address, wallet.address, token.mint)
     create = mango.CombinableInstructions.from_instruction(create_instruction)
 
-    print(f"No associated token account at: {associated_token_address} - creating...")
+    mango.output(f"No associated token account at: {associated_token_address} - creating...")
     transaction_ids = (signer + create).execute(context)
     context.client.wait_for_confirmation(transaction_ids)
-    print(f"Associated token account created at: {associated_token_address}.")
+    mango.output(f"Associated token account created at: {associated_token_address}.")

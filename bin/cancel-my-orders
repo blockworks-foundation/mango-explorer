@@ -34,9 +34,9 @@ if market is None:
 market_operations = mango.create_market_operations(context, wallet, account, market, args.dry_run)
 orders = market_operations.load_my_orders()
 if len(orders) == 0:
-    print(f"No open orders on {market.symbol}")
+    mango.output(f"No open orders on {market.symbol}")
 else:
     for order in orders:
-        print("Cancelling:", order)
+        mango.output("Cancelling:", order)
         cancellation = market_operations.cancel_order(order)
-        print(cancellation)
+        mango.output(cancellation)

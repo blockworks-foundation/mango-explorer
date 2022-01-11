@@ -36,10 +36,10 @@ close_instructions = mango.build_close_spl_account_instructions(context, wallet,
 
 all_instructions = signers + create_instructions + unwrap_instructions + close_instructions
 
-print("Unwrapping SOL:")
-print(f"    Temporary account: {wrapped_sol_address}")
-print(f"    Source: {largest_token_account.address}")
-print(f"    Destination: {wallet.address}")
+mango.output("Unwrapping SOL:")
+mango.output(f"    Temporary account: {wrapped_sol_address}")
+mango.output(f"    Source: {largest_token_account.address}")
+mango.output(f"    Destination: {wallet.address}")
 
 transaction_ids = all_instructions.execute(context)
-print(f"Transaction IDs: {transaction_ids}")
+mango.output(f"Transaction IDs: {transaction_ids}")

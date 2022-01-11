@@ -27,4 +27,4 @@ account_info: mango.AccountInfo = mango.AccountInfo.load_json(args.filename)
 if account_info is None:
     raise Exception(f"No account found at address: {args.filename}")
 
-print(converter(account_info))
+mango.output(converter(account_info))
