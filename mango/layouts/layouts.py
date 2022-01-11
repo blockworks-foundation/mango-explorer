@@ -817,7 +817,8 @@ ANY_NODE = construct.Struct(
     "tag" / DecimalAdapter(4),
     "data" / construct.Bytes(_NODE_SIZE - 4)
 )
-assert ANY_NODE.sizeof() == _NODE_SIZE
+if ANY_NODE.sizeof() != _NODE_SIZE:
+    raise Exception(f"Incorrect size for ANY_NODE: expected: {_NODE_SIZE}, got: {ANY_NODE.sizeof()}")
 
 
 # # 🥭 UNINITIALIZED_BOOK_NODE
@@ -829,7 +830,9 @@ UNINITIALIZED_BOOK_NODE = construct.Struct(
     "tag" / construct.Const(Decimal(0), DecimalAdapter(4)),
     "data" / construct.Bytes(_NODE_SIZE - 4)
 )
-assert UNINITIALIZED_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
+if UNINITIALIZED_BOOK_NODE.sizeof() != _NODE_SIZE:
+    raise Exception(
+        f"Incorrect size for UNINITIALIZED_BOOK_NODE: expected: {_NODE_SIZE}, got: {UNINITIALIZED_BOOK_NODE.sizeof()}")
 
 # # 🥭 INNER_BOOK_NODE
 #
@@ -854,7 +857,9 @@ INNER_BOOK_NODE = construct.Struct(
     "children" / construct.Array(2, DecimalAdapter(4)),
     "padding" / construct.Padding(_NODE_SIZE - 32)
 )
-assert INNER_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
+if INNER_BOOK_NODE.sizeof() != _NODE_SIZE:
+    raise Exception(
+        f"Incorrect size for INNER_BOOK_NODE: expected: {_NODE_SIZE}, got: {INNER_BOOK_NODE.sizeof()}")
 
 # # 🥭 LEAF_BOOK_NODE
 #
@@ -895,7 +900,9 @@ LEAF_BOOK_NODE = construct.Struct(
     "best_initial" / SignedDecimalAdapter(),
     "timestamp" / DatetimeAdapter()
 )
-assert LEAF_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
+if LEAF_BOOK_NODE.sizeof() != _NODE_SIZE:
+    raise Exception(
+        f"Incorrect size for LEAF_BOOK_NODE: expected: {_NODE_SIZE}, got: {LEAF_BOOK_NODE.sizeof()}")
 
 # # 🥭 FREE_BOOK_NODE
 #
@@ -915,9 +922,12 @@ FREE_BOOK_NODE = construct.Struct(
     "next" / DecimalAdapter(4),
     "padding" / construct.Padding(_NODE_SIZE - 8)
 )
-assert FREE_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
+if FREE_BOOK_NODE.sizeof() != _NODE_SIZE:
+    raise Exception(
+        f"Incorrect size for FREE_BOOK_NODE: expected: {_NODE_SIZE}, got: {FREE_BOOK_NODE.sizeof()}")
 
-# # 🥭 FREE_BOOK_NODE
+
+# # 🥭 LAST_FREE_BOOK_NODE
 #
 # Last Free Node is identical to free node, apart from the tag.
 #
@@ -927,7 +937,9 @@ LAST_FREE_BOOK_NODE = construct.Struct(
     "next" / DecimalAdapter(4),
     "padding" / construct.Padding(_NODE_SIZE - 8)
 )
-assert LAST_FREE_BOOK_NODE.sizeof() == ANY_NODE.sizeof()
+if LAST_FREE_BOOK_NODE.sizeof() != _NODE_SIZE:
+    raise Exception(
+        f"Incorrect size for LAST_FREE_BOOK_NODE: expected: {_NODE_SIZE}, got: {LAST_FREE_BOOK_NODE.sizeof()}")
 
 
 # # 🥭 ORDERBOOK_SIDE
@@ -1022,7 +1034,8 @@ FILL_EVENT = construct.Struct(
     "quantity" / SignedDecimalAdapter()
 )
 _EVENT_SIZE = 200
-assert FILL_EVENT.sizeof() == _EVENT_SIZE, f"Fill event size is {FILL_EVENT.sizeof()} when it should be {_EVENT_SIZE}."
+if FILL_EVENT.sizeof() != _EVENT_SIZE:
+    raise Exception(f"Fill event size is {FILL_EVENT.sizeof()} when it should be {_EVENT_SIZE}.")
 
 # # 🥭 OUT_EVENT
 #
@@ -1053,7 +1066,9 @@ OUT_EVENT = construct.Struct(
     "quantity" / SignedDecimalAdapter(),
     construct.Padding(_EVENT_SIZE - 64)
 )
-assert OUT_EVENT.sizeof() == _EVENT_SIZE, f"Out event size is {OUT_EVENT.sizeof()} when it should be {_EVENT_SIZE}."
+if OUT_EVENT.sizeof() != _EVENT_SIZE:
+    raise Exception(f"Out event size is {OUT_EVENT.sizeof()} when it should be {_EVENT_SIZE}.")
+
 
 # # 🥭 LIQUIDATE_EVENT
 #
@@ -1087,8 +1102,9 @@ LIQUIDATE_EVENT = construct.Struct(
     "liquidation_fee" / FloatI80F48Adapter(),
     construct.Padding(_EVENT_SIZE - 128)
 )
-assert LIQUIDATE_EVENT.sizeof(
-) == _EVENT_SIZE, f"Liquidate event size is {LIQUIDATE_EVENT.sizeof()} when it should be {_EVENT_SIZE}."
+if LIQUIDATE_EVENT.sizeof() != _EVENT_SIZE:
+    raise Exception(f"Liquidate event size is {LIQUIDATE_EVENT.sizeof()} when it should be {_EVENT_SIZE}.")
+
 
 UNKNOWN_EVENT = construct.Struct(
     "event_type" / construct.Bytes(1),
@@ -1096,8 +1112,9 @@ UNKNOWN_EVENT = construct.Struct(
     "owner" / PublicKeyAdapter(),
     construct.Padding(_EVENT_SIZE - 40)
 )
-assert UNKNOWN_EVENT.sizeof(
-) == _EVENT_SIZE, f"Unknown event size is {UNKNOWN_EVENT.sizeof()} when it should be {_EVENT_SIZE}."
+if UNKNOWN_EVENT.sizeof() != _EVENT_SIZE:
+    raise Exception(f"Unknown event size is {UNKNOWN_EVENT.sizeof()} when it should be {_EVENT_SIZE}.")
+
 
 # # 🥭 PERP_EVENT_QUEUE
 #
