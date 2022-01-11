@@ -151,8 +151,8 @@ def version() -> PackageVersion:
     # The exception is deliberately trapped and ignored - we just want to return "Unknown" in that situation.
     try:
         package_version = importlib.metadata.version("mango-explorer")
-    except Exception:
-        pass  # nosec
+    except Exception:  # nosec
+        pass
 
     version_filename: str = os.path.join(DATA_PATH, ".version")
     last_commit = f"Unknown (no version file found at '{version_filename}')."
