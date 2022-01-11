@@ -36,8 +36,10 @@ from .client import NodeIsBehindException as NodeIsBehindException
 from .client import RateLimitException as RateLimitException
 from .client import RPCCaller as RPCCaller
 from .client import SlotHolder as SlotHolder
+from .client import StaleSlotException as StaleSlotException
 from .client import TooManyRequestsRateLimitException as TooManyRequestsRateLimitException
 from .client import TooMuchBandwidthRateLimitException as TooMuchBandwidthRateLimitException
+from .client import TransactionAlreadyProcessedException as TransactionAlreadyProcessedException
 from .client import TransactionException as TransactionException
 from .combinableinstructions import CombinableInstructions as CombinableInstructions
 from .constants import MangoConstants as MangoConstants
