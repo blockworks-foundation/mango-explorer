@@ -396,6 +396,35 @@ class Account(AddressableAccount):
                 if spot_open_orders is None:
                     raise Exception(f"OpenOrders address {slot.spot_open_orders} at index {slot.index} not loaded.")
 
+                # Here's a comment from ckamm in https://github.com/blockworks-foundation/mango-v3/pull/78/files
+                # that describes some of the health calculations.
+                #
+                # // Two "worst-case" scenarios are considered:
+                # // 1. All bids are executed at current price, producing a base amount of bids_base_net
+                # //    when all quote_locked are converted to base.
+                # // 2. All asks are executed at current price, producing a base amount of asks_base_net
+                # //    because base_locked would be converted to quote.
+                #
+                # // Report the scenario that would have a worse outcome on health.
+                # //
+                # // Explanation: This function returns (base, quote) and the values later get used in
+                # //     health += (if base > 0 { asset_weight } else { liab_weight }) * base + quote
+                # // and here we return the scenario that will increase health the least.
+                # //
+                # // Correctness proof:
+                # // - always bids_base_net >= asks_base_net
+                # // - note that scenario 1 returns (a + b, c)
+                # //         and scenario 2 returns (a,     c + b), and b >= 0, c >= 0
+                # // - if a >= 0: scenario 1 will lead to less health as asset_weight <= 1.
+                # // - if a < 0 and b <= -a: scenario 2 will lead to less health as liab_weight >= 1.
+                # // - if a < 0 and b > -a:
+                # //   The health contributions of both scenarios are identical if
+                # //       asset_weight * (a + b) + c = liab_weight * a + c + b
+                # //   <=> b = (asset_weight - liab_weight) / (1 - asset_weight) * a
+                # //   <=> b = -2 a  since asset_weight + liab_weight = 2 by weight construction
+                # //   So the worse scenario switches when a + b = -a.
+                # // That means scenario 1 leads to less health whenever |a + b| > |a|.
+
                 # base total if all bids were executed
                 spot_bids_base_net = slot.net_value.value + \
                     (spot_open_orders.quote_token_locked / price.value) + spot_open_orders.base_token_total
