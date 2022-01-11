@@ -89,14 +89,14 @@ class SerumMarketLookup(MarketLookup):
         if base_data is None:
             self._logger.warning(f"Could not find data for base token '{base_symbol}'")
             return None
-        base = Token(base_data["symbol"], base_data["name"], Decimal(
+        base = Token(base_data["symbol"].upper(), base_data["name"], Decimal(
             base_data["decimals"]), PublicKey(base_data["address"]))
 
         quote_data = SerumMarketLookup._find_data_by_symbol(quote_symbol, self.token_data)
         if quote_data is None:
             self._logger.warning(f"Could not find data for quote token '{quote_symbol}'")
             return None
-        quote = Token(quote_data["symbol"], quote_data["name"], Decimal(
+        quote = Token(quote_data["symbol"].upper(), quote_data["name"], Decimal(
             quote_data["decimals"]), PublicKey(quote_data["address"]))
 
         if "extensions" not in base_data:
