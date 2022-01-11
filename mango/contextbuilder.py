@@ -115,11 +115,14 @@ class ContextBuilder:
 
         # Do this here so build() only ever has to handle the sequence of retry times. (It gets messy
         # passing around the sequnce *plus* the data to reconstruct it for build().)
-        actual_maximum_stale_data_pauses: int = stale_data_maximum_retries or 20
-        actual_stale_data_pauses_before_retry: typing.Sequence[float] = [0.1] * 10
-        if stale_data_pause_before_retry is not None:
-            actual_stale_data_pauses_before_retry = [
-                float(stale_data_pause_before_retry)] * actual_maximum_stale_data_pauses
+        actual_stale_data_pauses_before_retry: typing.Sequence[float]
+        if stale_data_maximum_retries == 0:
+            # Stale data checking is explicitly disabled
+            actual_stale_data_pauses_before_retry = []
+        else:
+            retries: int = stale_data_maximum_retries or 10
+            pause: Decimal = stale_data_pause_before_retry or Decimal("0.1")
+            actual_stale_data_pauses_before_retry = [float(pause)] * retries
 
         context: Context = ContextBuilder.build(name, cluster_name, cluster_urls, skip_preflight, commitment,
                                                 encoding, blockhash_cache_duration,

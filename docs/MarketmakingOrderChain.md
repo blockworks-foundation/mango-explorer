@@ -280,7 +280,7 @@ Note that one consequence of this processing of `Order`s is that the orders retu
 
 > Accepts parameter: `--maximumquantity-size <DECIMAL>` (required)
 
-> Accepts parameter: `--maximumquantity-remove` (optional, TRUE if spcified otherwise FALSE)
+> Accepts parameter: `--maximumquantity-remove` (optional, TRUE if specified otherwise FALSE)
 
 Ensures orders' quantities are always less than the maximum. Will either:
 * Remove the order if the position size is too high, or
@@ -300,7 +300,7 @@ If the order quantity is greater than `--maximumquantity-size`, then either:
 
 > Accepts parameter: `--minimumcharge-ratio <DECIMAL>` (required, multiple allowed, default: 0.0005)
 
-> Accepts parameter: `--minimumcharge-from-bid-ask` (optional, TRUE if spcified otherwise FALSE)
+> Accepts parameter: `--minimumcharge-from-bid-ask` (optional, TRUE if specified otherwise FALSE)
 
 This ensures that there’s a minimum value of spread to be paid by the taker.
 
@@ -330,7 +330,7 @@ Note that one consequence of this processing of `Order`s is that the orders retu
 
 > Accepts parameter: `--minimumquantity-size <DECIMAL>` (required)
 
-> Accepts parameter: `--minimumquantity-remove` (optional, TRUE if spcified otherwise FALSE)
+> Accepts parameter: `--minimumquantity-remove` (optional, TRUE if specified otherwise FALSE)
 
 Ensures orders' quantities are always greater than the minimum. Will either:
 * Remove the order if the position size is too low, or
@@ -370,7 +370,7 @@ For example, you can set the 'order chain' to have a `RatiosElement` asking for 
 
 > Accepts parameter: `--ratios-position-size <DECIMAL>` (required, multiple allowed, default: 0.01)
 
-> Accepts parameter: `--ratios-from-bid-ask` (optional, TRUE if spcified otherwise FALSE)
+> Accepts parameter: `--ratios-from-bid-ask` (optional, TRUE if specified otherwise FALSE)
 
 The `RatiosElement` builds orders using the specified ratio of available collateral for the position size and the specified ratio of the price for the spread. The position size is specified using the `--ratios-position-size` parameter, and the spread is specified using the `--ratios-spread` parameter.
 
