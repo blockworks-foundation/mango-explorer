@@ -149,10 +149,10 @@ class PackageVersion(typing.NamedTuple):
 def version() -> PackageVersion:
     package_version: str = "Unknown"
     # The exception is deliberately trapped and ignored - we just want to return "Unknown" in that situation.
-    try:  # nosec
+    try:
         package_version = importlib.metadata.version("mango-explorer")
     except Exception:
-        pass
+        pass  # nosec
 
     version_filename: str = os.path.join(DATA_PATH, ".version")
     last_commit = f"Unknown (no version file found at '{version_filename}')."
