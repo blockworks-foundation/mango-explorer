@@ -19,6 +19,7 @@ import rx.subject
 import rx.operators as ops
 import typing
 
+from dataclasses import dataclass
 from datetime import datetime
 from dateutil import parser
 from decimal import Decimal
@@ -42,7 +43,8 @@ from .token import Instrument, Token
 #
 # A simple way to package details of a funding rate in a single object.
 #
-class FundingRate(typing.NamedTuple):
+@dataclass
+class FundingRate:
     symbol: str
     rate: Decimal
     oracle_price: Decimal

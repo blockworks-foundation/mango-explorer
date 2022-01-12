@@ -19,6 +19,7 @@ import pandas
 import pyserum.enums
 import typing
 
+from dataclasses import dataclass
 from decimal import Decimal
 from pyserum.market.types import Order as PySerumOrder
 from solana.publickey import PublicKey
@@ -139,7 +140,8 @@ class OrderType(enum.Enum):
 #
 # A package that encapsulates common information about an order.
 #
-class Order(typing.NamedTuple):
+@dataclass
+class Order:
     id: int
     client_id: int
     owner: PublicKey

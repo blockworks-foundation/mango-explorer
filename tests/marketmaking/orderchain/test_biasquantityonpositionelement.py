@@ -4,12 +4,14 @@ import typing
 from ...context import mango
 from ...fakes import fake_context, fake_model_state, fake_order, fake_price, fake_inventory
 
+from dataclasses import dataclass
 from decimal import Decimal
 
 from mango.marketmaking.orderchain.biasquantityonpositionelement import BiasQuantityOnPositionElement
 
 
-class BQOPInput(typing.NamedTuple):
+@dataclass()
+class BQOPInput:
     buy: mango.Order
     sell: mango.Order
     current: Decimal

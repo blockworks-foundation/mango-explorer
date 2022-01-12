@@ -16,6 +16,7 @@
 
 import typing
 
+from dataclasses import dataclass
 from decimal import Decimal
 
 from .orders import Side
@@ -29,7 +30,8 @@ from .orders import Side
 # The information is usually split across 3 collections - 'is bid', 'orders' and 'client ID's. That can be a
 # little awkward to use, so this tuple packages it all together, per order.
 #
-class PlacedOrder(typing.NamedTuple):
+@dataclass
+class PlacedOrder:
     id: int
     client_id: int
     side: Side

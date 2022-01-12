@@ -20,6 +20,7 @@ import json
 import os.path
 import typing
 
+from dataclasses import dataclass
 from solana.publickey import PublicKey
 
 
@@ -135,7 +136,8 @@ with open(os.path.join(DATA_PATH, "ids.json")) as json_file:
 #
 # Runtime details of the current version of mango-explorer.
 #
-class PackageVersion(typing.NamedTuple):
+@dataclass
+class PackageVersion:
     version: str
     last_commit: str
 

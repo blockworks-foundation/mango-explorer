@@ -44,7 +44,7 @@ class OutputFormattter:
     format: OutputFormat
 
     def out(self, *obj: typing.Any) -> None:
-        if len(obj) == 1 and isinstance(obj[0], collections.abc.Sequence) and not isinstance(obj, str):
+        if len(obj) == 1 and isinstance(obj[0], collections.abc.Sequence) and not isinstance(obj[0], str):
             for item in obj[0]:
                 self.single_out(item)
         else:

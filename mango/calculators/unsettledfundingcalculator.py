@@ -13,15 +13,15 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-import typing
-
+from dataclasses import dataclass
 from decimal import Decimal
 
 from ..instrumentvalue import InstrumentValue
 from ..token import Token
 
 
-class UnsettledFundingParams(typing.NamedTuple):
+@dataclass
+class UnsettledFundingParams:
     quote_token: Token
     base_position: InstrumentValue
     long_funding: Decimal

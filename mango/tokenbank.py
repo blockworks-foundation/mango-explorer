@@ -16,6 +16,7 @@
 import logging
 import typing
 
+from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from solana.publickey import PublicKey
@@ -35,7 +36,8 @@ from .version import Version
 #
 # A simple way to package borrow and deposit rates together in a single object.
 #
-class InterestRates(typing.NamedTuple):
+@dataclass
+class InterestRates:
     deposit: Decimal
     borrow: Decimal
 
@@ -50,7 +52,8 @@ class InterestRates(typing.NamedTuple):
 #
 # A simple way to package borrow and deposit balances together in a single object.
 #
-class BankBalances(typing.NamedTuple):
+@dataclass
+class BankBalances:
     deposits: Decimal
     borrows: Decimal
 
