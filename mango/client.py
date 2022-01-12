@@ -57,6 +57,9 @@ class CompoundException(Exception):
         self.all_exceptions: typing.Sequence[Exception] = all_exceptions
 
     def __str__(self) -> str:
+        if len(self.all_exceptions) == 1:
+            return str(self.all_exceptions[0])
+
         details: str = indent_collection_as_str(self.all_exceptions)
         return f"""« CompoundException with {len(self.all_exceptions)} inner exceptions:
     {details}
@@ -480,6 +483,9 @@ class CompoundRPCCaller(HTTPProvider):
                     FailedToFetchBlockhashException) as exception:
                 all_exceptions += [exception]
                 self._logger.info(f"Moving to next provider - {provider} gave {exception}")
+
+        if len(all_exceptions) == 1:
+            raise all_exceptions[0]
 
         raise CompoundException(self.name, all_exceptions)
 
