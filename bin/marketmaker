@@ -109,7 +109,7 @@ if args.hedging_market is not None:
 
     underlying_market: mango.PerpMarket = market
 
-    hedging_market_symbol = args.hedging_market.upper()
+    hedging_market_symbol = args.hedging_market
     hedging_market_stub = context.market_lookup.find_by_symbol(hedging_market_symbol)
     if hedging_market_stub is None:
         raise Exception(f"Could not find market {hedging_market_symbol}")

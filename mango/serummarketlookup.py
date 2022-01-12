@@ -23,7 +23,7 @@ from solana.publickey import PublicKey
 from .market import Market
 from .marketlookup import MarketLookup
 from .serummarket import SerumMarketStub
-from .token import Token
+from .token import Instrument, Token
 
 
 # # 🥭 SerumMarketLookup class
@@ -64,7 +64,7 @@ class SerumMarketLookup(MarketLookup):
     @staticmethod
     def _find_data_by_symbol(symbol: str, token_data: typing.Dict[str, typing.Any]) -> typing.Optional[typing.Dict[str, typing.Any]]:
         for token in token_data["tokens"]:
-            if token["symbol"] == symbol:
+            if Instrument.symbols_match(token["symbol"], symbol):
                 return typing.cast(typing.Dict[str, typing.Any], token)
         return None
 

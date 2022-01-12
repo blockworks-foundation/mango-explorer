@@ -5,6 +5,14 @@ from solana.publickey import PublicKey
 from .fakes import fake_seeded_public_key
 
 
+def test_market_symbol_matching() -> None:
+    assert mango.Market.symbols_match("BTC/USDC", "BTC/USDC")
+    assert mango.Market.symbols_match("eth/usdc", "eth/usdc")
+    assert mango.Market.symbols_match("btc/usdc", "BTC/USDC")
+    assert mango.Market.symbols_match("ETH/USDC", "eth/usdc")
+    assert not mango.Market.symbols_match("ETH/USDC", "BTC/USDC")
+
+
 def test_serum_market_lookup() -> None:
     data = {
         "tokens": [
@@ -134,6 +142,16 @@ def test_serum_market_lookups_with_full_data() -> None:
     with disable_logging():
         non_existant_market = market_lookup.find_by_symbol("ETH/BTC")
     assert non_existant_market is None  # No such market
+
+
+def test_serum_market_case_insensitive_lookups_with_full_data() -> None:
+    market_lookup = mango.SerumMarketLookup.load(fake_seeded_public_key(
+        "program ID"), mango.SPLTokenLookup.DefaultDataFilepath)
+    srm_usdc = market_lookup.find_by_symbol("srm/usdc")
+    assert srm_usdc is not None
+    assert srm_usdc.base.symbol == "SRM"
+    assert srm_usdc.quote.symbol == "USDC"
+    assert srm_usdc.address == PublicKey("ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA")
 
 
 def test_overrides_with_full_data() -> None:

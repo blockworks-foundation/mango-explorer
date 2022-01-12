@@ -91,14 +91,13 @@ if args.all:
             all_instructions += build_redeem_instruction_for_account(
                 context, wallet, group, mngo, account, perp_market, basket_token)
 else:
-    market_symbol = args.market.upper()
-    market = context.market_lookup.find_by_symbol(market_symbol)
+    market = context.market_lookup.find_by_symbol(args.market)
     if market is None:
-        raise Exception(f"Could not find market {market_symbol}")
+        raise Exception(f"Could not find market {args.market}")
 
     loaded_market: mango.LoadedMarket = mango.ensure_market_loaded(context, market)
     if not isinstance(loaded_market, mango.PerpMarket):
-        raise Exception(f"Market {market_symbol} is not a perp market")
+        raise Exception(f"Market {args.market} is not a perp market")
     perp_market = loaded_market
 
     basket_token = find_basket_token_in_account(account, perp_market.base)

@@ -84,11 +84,11 @@ class IdsJsonMarketLookup(MarketLookup):
                 mango_program_address: PublicKey = PublicKey(group["mangoProgramId"])
                 if check_perps:
                     for market_data in group["perpMarkets"]:
-                        if market_data["name"].upper() == symbol.upper():
+                        if Market.symbols_match(market_data["name"], symbol):
                             return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
                 if check_spots:
                     for market_data in group["spotMarkets"]:
-                        if market_data["name"].upper() == symbol.upper():
+                        if Market.symbols_match(market_data["name"], symbol):
                             return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
         return None
 

@@ -70,7 +70,7 @@ from .wallet import Wallet
 #
 class TargetBalance(metaclass=abc.ABCMeta):
     def __init__(self, symbol: str) -> None:
-        self.symbol = symbol.upper()
+        self.symbol = symbol
 
     @abc.abstractmethod
     def resolve(self, instrument: Instrument, current_price: Decimal, total_value: Decimal) -> InstrumentValue:

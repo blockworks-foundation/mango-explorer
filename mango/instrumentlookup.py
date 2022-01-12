@@ -26,10 +26,6 @@ from .constants import DATA_PATH, MangoConstants
 from .token import Instrument, Token
 
 
-def _symbols_match(symbol1: str, symbol2: str) -> bool:
-    return symbol1.upper() == symbol2.upper()
-
-
 # # 🥭 InstrumentLookup class
 #
 # This class allows us to look up token symbols, names, decimals, and possibly mint addresses from Mango
@@ -142,7 +138,7 @@ class NonSPLInstrumentLookup(InstrumentLookup):
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Instrument]:
         for token in self.token_data["tokens"]:
-            if _symbols_match(token["symbol"], symbol):
+            if Instrument.symbols_match(token["symbol"], symbol):
                 return Instrument(token["symbol"], token["name"], Decimal(token["decimals"]))
 
         return None
@@ -174,7 +170,7 @@ class IdsJsonTokenLookup(InstrumentLookup):
         for group in MangoConstants["groups"]:
             if group["cluster"] == self.cluster_name and group["name"] == self.group_name:
                 for token in group["tokens"]:
-                    if _symbols_match(token["symbol"], symbol):
+                    if Instrument.symbols_match(token["symbol"], symbol):
                         return Token(token["symbol"], token["symbol"], Decimal(token["decimals"]), PublicKey(token["mintKey"]))
         return None
 
@@ -214,7 +210,7 @@ class SPLTokenLookup(InstrumentLookup):
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
         for token in self.token_data["tokens"]:
-            if _symbols_match(token["symbol"], symbol):
+            if Instrument.symbols_match(token["symbol"], symbol):
                 return Token(token["symbol"], token["name"], Decimal(token["decimals"]), PublicKey(token["address"]))
 
         return None

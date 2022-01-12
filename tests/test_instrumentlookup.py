@@ -39,6 +39,9 @@ def test_spl_token_lookup() -> None:
     btc = actual.find_by_symbol("BTC")
     assert btc is not None
     assert btc.name == "Wrapped Bitcoin (Sollet)"
+    usdc = actual.find_by_symbol("usDC")
+    assert usdc is not None
+    assert usdc.name == "USD Coin"
 
 
 def test_spl_token_lookups_with_full_data() -> None:

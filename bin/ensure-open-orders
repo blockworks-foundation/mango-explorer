@@ -28,10 +28,9 @@ if len(accounts) == 0:
     raise Exception(f"No Mango account exists for group {group.address} and wallet {wallet.address}")
 account = accounts[args.account_index]
 
-market_symbol = args.market.upper()
-market = context.market_lookup.find_by_symbol(market_symbol)
+market = context.market_lookup.find_by_symbol(args.market)
 if market is None:
-    raise Exception(f"Could not find market {market_symbol}")
+    raise Exception(f"Could not find market {args.market}")
 
 loaded_market: mango.Market = mango.ensure_market_loaded(context, market)
 market_operations = mango.create_market_operations(context, wallet, account, market, args.dry_run)

@@ -36,14 +36,12 @@ try:
 
     logging.info(f"Wallet address: {wallet.address}")
 
-    symbol = args.symbol.upper()
-
     if args.dry_run:
         trade_executor: mango.TradeExecutor = mango.NullTradeExecutor()
     else:
         trade_executor = mango.ImmediateTradeExecutor(context, wallet, None, adjustment_factor)
 
-    order = trade_executor.sell(symbol, args.quantity)
+    order = trade_executor.sell(args.symbol, args.quantity)
     logging.info(f"Sell completed for {order}")
 except Exception as exception:
     logging.critical(f"Buy stopped because of exception: {exception} - {traceback.format_exc()}")

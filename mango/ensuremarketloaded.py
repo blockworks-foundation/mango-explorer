@@ -51,9 +51,8 @@ def ensure_market_loaded(context: Context, market: Market) -> LoadedMarket:
 # throws if anything goes wrong rather than return None.
 #
 def load_market_by_symbol(context: Context, symbol: str) -> LoadedMarket:
-    market_symbol = symbol.upper()
-    market = context.market_lookup.find_by_symbol(market_symbol)
+    market = context.market_lookup.find_by_symbol(symbol)
     if market is None:
-        raise Exception(f"Could not find market {market_symbol}")
+        raise Exception(f"Could not find market {symbol}")
 
     return ensure_market_loaded(context, market)

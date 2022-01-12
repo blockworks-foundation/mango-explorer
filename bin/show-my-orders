@@ -26,10 +26,9 @@ wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_address)
 account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
 
-market_symbol = args.market.upper()
-market = context.market_lookup.find_by_symbol(market_symbol)
+market = context.market_lookup.find_by_symbol(args.market)
 if market is None:
-    raise Exception(f"Could not find market {market_symbol}")
+    raise Exception(f"Could not find market {args.market}")
 
 market_operations = mango.create_market_operations(context, wallet, account, market, args.dry_run)
 orders = market_operations.load_my_orders()

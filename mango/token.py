@@ -29,6 +29,10 @@ class Instrument:
         self.name: str = name
         self.decimals: Decimal = decimals
 
+    @staticmethod
+    def symbols_match(symbol1: str, symbol2: str) -> bool:
+        return symbol1.upper() == symbol2.upper()
+
     def round(self, value: Decimal) -> Decimal:
         return round(value, int(self.decimals))
 

@@ -78,14 +78,14 @@ def test_percentage_target_balance() -> None:
 def test_target_balance_parser_fixedvalue() -> None:
     parsed = mango.parse_target_balance("eth:70")
     assert isinstance(parsed, mango.FixedTargetBalance)
-    assert parsed.symbol == "ETH"
+    assert parsed.symbol == "eth"  # Case is preserved but comparisons should be case-insensitive
     assert parsed.value == Decimal(70)
 
 
 def test_target_balance_parser_percentagevalue() -> None:
     parsed = mango.parse_target_balance("btc:10%")
     assert isinstance(parsed, mango.PercentageTargetBalance)
-    assert parsed.symbol == "BTC"
+    assert parsed.symbol == "btc"  # Case is preserved but comparisons should be case-insensitive
     assert parsed.target_fraction == Decimal("0.1")
 
 

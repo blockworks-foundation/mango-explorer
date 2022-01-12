@@ -51,6 +51,13 @@ class Market(metaclass=abc.ABCMeta):
         self.quote: Token = quote
         self.lot_size_converter: LotSizeConverter = lot_size_converter
 
+    @staticmethod
+    def symbols_match(symbol1: str, symbol2: str) -> bool:
+        return symbol1.upper() == symbol2.upper()
+
+    def symbol_matches(self, symbol: str) -> bool:
+        return self.symbol.upper() == symbol.upper()
+
     @property
     def symbol(self) -> str:
         return f"{self.base.symbol}/{self.quote.symbol}"

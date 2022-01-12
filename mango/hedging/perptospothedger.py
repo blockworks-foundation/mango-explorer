@@ -38,7 +38,7 @@ class PerpToSpotHedger(Hedger):
             raise Exception(
                 f"Market {hedging_market.symbol} cannot be used to hedge market {underlying_market.symbol}.")
 
-        if target_balance.symbol != hedging_market.base.symbol:
+        if not mango.Instrument.symbols_match(target_balance.symbol, hedging_market.base.symbol):
             raise Exception(f"Cannot target {target_balance.symbol} when hedging on {hedging_market.symbol}")
 
         self.underlying_market: mango.PerpMarket = underlying_market

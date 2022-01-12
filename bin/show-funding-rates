@@ -19,13 +19,12 @@ args: argparse.Namespace = mango.parse_args(parser)
 context = mango.ContextBuilder.from_command_line_parameters(args)
 group = mango.Group.load(context)
 
-market_symbol = args.market.upper()
-market = context.market_lookup.find_by_symbol(market_symbol)
+market = context.market_lookup.find_by_symbol(args.market)
 if market is None:
-    raise Exception(f"Could not find market {market_symbol}")
+    raise Exception(f"Could not find market {args.market}")
 
 perp_market = mango.ensure_market_loaded(context, market)
 if not isinstance(perp_market, mango.PerpMarket):
-    raise Exception(f"Market {market_symbol} is not a perp market.")
+    raise Exception(f"Market {args.market} is not a perp market.")
 
 mango.output(perp_market.fetch_funding(context))
