@@ -1252,6 +1252,21 @@ PLACE_PERP_ORDER = construct.Struct(
     "order_type" / DecimalAdapter(1)  # { limit: 0, ioc: 1, postOnly: 2 }
 )
 
+# /// Cancel all perp open orders (batch cancel)
+# ///
+# /// Accounts expected: 6
+# /// 0. `[]` mango_group_ai - MangoGroup
+# /// 1. `[writable]` mango_account_ai - MangoAccount
+# /// 2. `[signer]` owner_ai - Owner of Mango Account
+# /// 3. `[writable]` perp_market_ai - PerpMarket
+# /// 4. `[writable]` bids_ai - Bids acc
+# /// 5. `[writable]` asks_ai - Asks acc
+CANCEL_ALL_PERP_ORDERS = construct.Struct(
+    "variant" / construct.Const(39, construct.BytesInteger(4, swapped=True)),
+
+    "limit" / DecimalAdapter(1)
+)
+
 # /// Initialize a Mango account for a user
 # ///
 # /// Accounts expected by this instruction (4):
@@ -1565,7 +1580,7 @@ InstructionParsersByVariant = {
     36: UNSPECIFIED,  # WITHDRAW_MSRM,
     37: UNSPECIFIED,  # CHANGE_PERP_MARKET_PARAMS,
     38: UNSPECIFIED,  # SET_GROUP_ADMIN,
-    39: UNSPECIFIED,  # CANCEL_ALL_PERP_ORDERS,
+    39: CANCEL_ALL_PERP_ORDERS,  # CANCEL_ALL_PERP_ORDERS,
     40: UNSPECIFIED,  # FORCE_SETTLE_QUOTE_POSITIONS,
     41: PLACE_SPOT_ORDER_2,  # PLACE_SPOT_ORDER_2,
     42: UNSPECIFIED,  # INIT_ADVANCED_ORDERS,

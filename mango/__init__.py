@@ -71,6 +71,7 @@ from .idsjsonmarketlookup import IdsJsonMarketLookup as IdsJsonMarketLookup
 from .inventory import Inventory as Inventory
 from .inventory import PerpInventoryAccountWatcher as PerpInventoryAccountWatcher
 from .inventory import SpotInventoryAccountWatcher as SpotInventoryAccountWatcher
+from .instructions import build_cancel_all_perp_orders_instructions as build_cancel_all_perp_orders_instructions
 from .instructions import build_cancel_perp_order_instructions as build_cancel_perp_order_instructions
 from .instructions import build_cancel_spot_order_instructions as build_cancel_spot_order_instructions
 from .instructions import build_close_spl_account_instructions as build_close_spl_account_instructions

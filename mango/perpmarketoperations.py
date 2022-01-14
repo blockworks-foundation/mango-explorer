@@ -24,7 +24,7 @@ from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import Group
-from .instructions import build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_place_perp_order_instructions, build_redeem_accrued_mango_instructions
+from .instructions import build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_cancel_all_perp_orders_instructions, build_place_perp_order_instructions, build_redeem_accrued_mango_instructions
 from .marketoperations import MarketInstructionBuilder, MarketOperations
 from .orders import Order, OrderBook
 from .perpmarket import PerpMarket
@@ -88,6 +88,12 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
 
     def build_redeem_instructions(self) -> CombinableInstructions:
         return build_redeem_accrued_mango_instructions(self.context, self.wallet, self.perp_market, self.group, self.account, self.mngo_token_bank)
+
+    def build_cancel_all_orders_instructions(self, limit: Decimal = Decimal(32)) -> CombinableInstructions:
+        if self.perp_market.underlying_perp_market is None:
+            raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
+        return build_cancel_all_perp_orders_instructions(
+            self.context, self.wallet, self.account, self.perp_market.underlying_perp_market, limit)
 
     def __str__(self) -> str:
         return """« PerpMarketInstructionBuilder »"""

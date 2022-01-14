@@ -301,7 +301,7 @@ def build_compound_serum_place_order_instructions(context: Context, wallet: Wall
     return place_order + consume_events + settle
 
 
-# # 🥭 build_cancel_perp_order_instruction function
+# # 🥭 build_cancel_perp_order_instructions function
 #
 # Builds the instructions necessary for cancelling a perp order.
 #
@@ -392,6 +392,38 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
                     "client_order_id": client_order_id,
                     "side": raw_side,
                     "order_type": raw_order_type
+                })
+        )
+    ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+# # 🥭 build_cancel_all_perp_orders_instructions function
+#
+# Builds the instructions necessary for cancelling all perp orders.
+#
+def build_cancel_all_perp_orders_instructions(context: Context, wallet: Wallet, account: Account, perp_market_details: PerpMarketDetails, limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    # Accounts expected by this instruction (seems to be the same as CANCEL_PERP_ORDER and CANCEL_PERP_ORDER_BY_CLIENT_ID):
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
+    # { isSigner: true, isWritable: false, pubkey: ownerPk },
+    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: bidsPk },
+    # { isSigner: false, isWritable: true, pubkey: asksPk },
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(is_signer=False, is_writable=False, pubkey=account.group_address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.address),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks)
+            ],
+            program_id=context.mango_program_address,
+            data=layouts.CANCEL_ALL_PERP_ORDERS.build(
+                {
+                    "limit": limit
                 })
         )
     ]

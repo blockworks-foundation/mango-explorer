@@ -17,6 +17,7 @@ import datetime
 import json
 import logging
 import requests
+import threading
 import time
 import typing
 
@@ -286,6 +287,51 @@ class SlotHolder:
             self.__latest_slot = slot_to_check
             self._logger.debug(f"Only accepting data from slot {self.latest_slot} onwards now.")
         return True
+
+
+class TransactionWatcher:
+    def __init__(self, client: Client, slot_holder: SlotHolder, signature: str):
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.client: Client = client
+        self.slot_holder: SlotHolder = slot_holder
+        self.signature: str = signature
+
+    def report_on_transaction(self) -> None:
+        for pause in [0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]:
+            transaction_response = self.client.get_signature_statuses([self.signature])
+            self._logger.debug(f"Transaction response: {transaction_response}")
+            if "result" in transaction_response and "value" in transaction_response["result"]:
+                [status] = transaction_response["result"]["value"]
+                if status is not None:
+                    # value should be a dict that looks like:
+                    # {
+                    #   'confirmationStatus': 'processed',
+                    #   'confirmations': 0,
+                    #   'err': None,
+                    #   'slot': 116230143,
+                    #   'status': {'Ok': None}
+                    # }
+                    # If there's an error it should look like:
+                    # {
+                    #     'slot': 116235922,
+                    #     'confirmations': 0,
+                    #     'status': {'Err': {'InstructionError': [0, {'Custom': 24}]}},
+                    #     'err': {
+                    #         'InstructionError': [0, {'Custom': 24}]
+                    #     },
+                    #     'confirmationStatus': 'processed'
+                    # }
+                    if status["err"] is not None:
+                        self._logger.debug(f"Transaction {self.signature} failed with error {status['err']}")
+                        return
+
+                    confirmation_status: str = status["confirmationStatus"]
+                    slot: int = status["slot"]
+                    self.slot_holder.require_data_from_fresh_slot(slot)
+                    self._logger.debug(
+                        f"Transaction {self.signature} reached confirmation status {confirmation_status} in slot {slot}")
+                    return
+            time.sleep(pause)
 
 
 # # 🥭 RPCCaller class
@@ -673,12 +719,9 @@ class BetterClient:
                 self._logger.debug(f"Transaction signature: {signature}")
 
                 if signature != _STUB_TRANSACTION_SIGNATURE:
-                    transaction_status = self.compatible_client.get_signature_statuses([signature])
-                    if "result" in transaction_status and "context" in transaction_status["result"] and "slot" in transaction_status["result"]["context"]:
-                        slot: int = transaction_status["result"]["context"]["slot"]
-                        self.rpc_caller.current.require_data_from_fresh_slot(slot)
-                    else:
-                        self._logger.error(f"Could not get status for signature {signature}")
+                    tx_reporter: TransactionWatcher = TransactionWatcher(
+                        self.compatible_client, self.rpc_caller.current.slot_holder, signature)
+                    threading.Thread(target=tx_reporter.report_on_transaction)
                 else:
                     self._logger.error("Could not get status for stub signature")
 

@@ -1,5 +1,5 @@
 {
-    "version": "0.0.0",
+    "version": "0.1.0",
     "name": "mango_logs",
     "instructions": [],
     "events": [
@@ -730,6 +730,40 @@
                 {
                     "name": "redeemedMngo",
                     "type": "u64",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "CancelAllPerpOrdersLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "mangoAccount",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "allOrderIds",
+                    "type": {
+                        "vec": "i128"
+                    },
+                    "index": false
+                },
+                {
+                    "name": "canceledOrderIds",
+                    "type": {
+                        "vec": "i128"
+                    },
                     "index": false
                 }
             ]

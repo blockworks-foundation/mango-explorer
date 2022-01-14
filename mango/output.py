@@ -43,20 +43,34 @@ class OutputFormat(enum.Enum):
 class OutputFormattter:
     format: OutputFormat
 
+    def __to_json(self, obj: typing.Any) -> str:
+        return json.dumps(jsons.dump(obj, strip_attr=("data", "_logger", "lot_size_converter", "tokens", "tokens_by_index", "slots", "base_tokens", "base_tokens_by_index", "oracles", "oracles_by_index", "spot_markets", "spot_markets_by_index", "perp_markets", "perp_markets_by_index", "shared_quote_token", "liquidity_incentive_token"),
+                                     key_transformer=jsons.KEY_TRANSFORMER_CAMELCASE), sort_keys=True, indent=4)
+
     def out(self, *obj: typing.Any) -> None:
         if len(obj) == 1 and isinstance(obj[0], collections.abc.Sequence) and not isinstance(obj[0], str):
             for item in obj[0]:
                 self.single_out(item)
+        elif isinstance(obj[0], str):
+            self.multi_out(*obj)
         else:
-            self.single_out(*obj)
+            for item in obj:
+                self.single_out(item)
 
     def single_out(self, obj: typing.Any) -> None:
+        if self.format == OutputFormat.JSON:
+            json_value: str = self.__to_json(obj)
+            print(json_value)
+        else:
+            print(obj)
+
+    def multi_out(self, *obj: typing.Any) -> None:
         if self.format == OutputFormat.JSON:
             json_value: str = json.dumps(jsons.dump(obj, strip_attr=("data", "_logger", "lot_size_converter", "tokens", "tokens_by_index", "slots", "base_tokens", "base_tokens_by_index", "oracles", "oracles_by_index", "spot_markets", "spot_markets_by_index", "perp_markets", "perp_markets_by_index", "shared_quote_token", "liquidity_incentive_token"),
                                                     key_transformer=jsons.KEY_TRANSFORMER_CAMELCASE), sort_keys=True, indent=4)
             print(json_value)
         else:
-            print(obj)
+            print(*obj)
 
 
 output_formatter: OutputFormattter = OutputFormattter(OutputFormat.TEXT)
