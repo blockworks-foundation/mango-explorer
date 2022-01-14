@@ -17,13 +17,13 @@ import datetime
 import json
 import logging
 import requests
-import threading
 import time
 import typing
 
 
 from base64 import b64decode, b64encode
 from collections.abc import Mapping
+from concurrent.futures import Executor, ThreadPoolExecutor
 from decimal import Decimal
 from solana.blockhash import Blockhash, BlockhashCache
 from solana.keypair import Keypair
@@ -299,7 +299,6 @@ class TransactionWatcher:
     def report_on_transaction(self) -> None:
         for pause in [0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]:
             transaction_response = self.client.get_signature_statuses([self.signature])
-            self._logger.debug(f"Transaction response: {transaction_response}")
             if "result" in transaction_response and "value" in transaction_response["result"]:
                 [status] = transaction_response["result"]["value"]
                 if status is not None:
@@ -322,14 +321,14 @@ class TransactionWatcher:
                     #     'confirmationStatus': 'processed'
                     # }
                     if status["err"] is not None:
-                        self._logger.debug(f"Transaction {self.signature} failed with error {status['err']}")
+                        self._logger.warning(f"Transaction {self.signature} failed with error {status['err']}")
                         return
 
                     confirmation_status: str = status["confirmationStatus"]
                     slot: int = status["slot"]
                     self.slot_holder.require_data_from_fresh_slot(slot)
-                    self._logger.debug(
-                        f"Transaction {self.signature} reached confirmation status {confirmation_status} in slot {slot}")
+                    self._logger.info(
+                        f"Transaction {self.signature} reached confirmation status '{confirmation_status}' in slot {slot}")
                     return
             time.sleep(pause)
 
@@ -581,6 +580,7 @@ class BetterClient:
         self.encoding: str = encoding
         self.blockhash_cache_duration: int = blockhash_cache_duration
         self.rpc_caller: CompoundRPCCaller = rpc_caller
+        self.executor: Executor = ThreadPoolExecutor()
 
     @staticmethod
     def from_configuration(name: str, cluster_name: str, cluster_urls: typing.Sequence[str], commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter) -> "BetterClient":
@@ -721,7 +721,7 @@ class BetterClient:
                 if signature != _STUB_TRANSACTION_SIGNATURE:
                     tx_reporter: TransactionWatcher = TransactionWatcher(
                         self.compatible_client, self.rpc_caller.current.slot_holder, signature)
-                    threading.Thread(target=tx_reporter.report_on_transaction)
+                    self.executor.submit(tx_reporter.report_on_transaction)
                 else:
                     self._logger.error("Could not get status for stub signature")
 
