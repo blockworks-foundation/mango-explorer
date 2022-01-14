@@ -83,10 +83,15 @@ Ignore:
     {mango.indent_collection_as_str(reconciled.to_ignore)}""")
 
             cancellations = mango.CombinableInstructions.empty()
-            for to_cancel in reconciled.to_cancel:
-                self._logger.info(f"Cancelling {self.market.symbol} {to_cancel}")
-                cancel = self.market_instruction_builder.build_cancel_order_instructions(to_cancel, ok_if_missing=True)
-                cancellations += cancel
+            # Perp markets have a CANCEL_ALL instruction that Spot and Serum markets don't. Use it if we can.
+            if reconciled.cancelling_all and isinstance(self.market_instruction_builder, mango.PerpMarketInstructionBuilder):
+                cancellations = self.market_instruction_builder.build_cancel_all_orders_instructions()
+            else:
+                for to_cancel in reconciled.to_cancel:
+                    self._logger.info(f"Cancelling {self.market.symbol} {to_cancel}")
+                    cancel = self.market_instruction_builder.build_cancel_order_instructions(
+                        to_cancel, ok_if_missing=True)
+                    cancellations += cancel
 
             place_orders = mango.CombinableInstructions.empty()
             for to_place in reconciled.to_place:

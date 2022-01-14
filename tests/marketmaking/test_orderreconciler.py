@@ -26,6 +26,8 @@ def test_nulloperation() -> None:
     assert result.to_cancel == []
     assert result.to_place == []
 
+    assert not result.cancelling_all
+
 
 def test_alwaysreplace() -> None:
     existing = [
@@ -45,3 +47,5 @@ def test_alwaysreplace() -> None:
     assert result.to_ignore == []
     assert result.to_cancel == existing
     assert result.to_place == desired
+
+    assert result.cancelling_all

@@ -34,6 +34,10 @@ class ReconciledOrders:
         self.to_cancel: typing.List[mango.Order] = []
         self.to_ignore: typing.List[mango.Order] = []
 
+    @property
+    def cancelling_all(self) -> bool:
+        return len(self.to_keep) == 0 and len(self.to_cancel) > 0
+
     def __str__(self) -> str:
         return f"« ReconciledOrders [keep: {len(self.to_keep)}, place: {len(self.to_place)}, cancel: {len(self.to_cancel)}, ignore: {len(self.to_ignore)}] »"
 
