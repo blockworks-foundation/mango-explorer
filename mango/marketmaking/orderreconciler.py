@@ -58,3 +58,21 @@ class NullOrderReconciler(OrderReconciler):
 
     def __str__(self) -> str:
         return """« NullOrderReconciler »"""
+
+
+# # 🥭 AlwaysReplaceOrderReconciler class
+#
+# Implementation of OrderReconciler that never keeps orders, just always cancels and replaces.
+#
+class AlwaysReplaceOrderReconciler(OrderReconciler):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def reconcile(self, _: ModelState, existing_orders: typing.Sequence[mango.Order], desired_orders: typing.Sequence[mango.Order]) -> ReconciledOrders:
+        outcomes: ReconciledOrders = ReconciledOrders()
+        outcomes.to_cancel = list(existing_orders)
+        outcomes.to_place = list(desired_orders)
+        return outcomes
+
+    def __str__(self) -> str:
+        return """« AlwaysReplaceOrderReconciler »"""

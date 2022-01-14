@@ -131,8 +131,12 @@ if args.hedging_market is not None:
                                             args.hedging_max_chunk_quantity, target_balance, args.hedging_action_threshold)
 
 
-order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
-    args.existing_order_tolerance, args.existing_order_tolerance)
+order_reconciler: mango.marketmaking.OrderReconciler
+if args.existing_order_tolerance < 0:
+    order_reconciler = mango.marketmaking.AlwaysReplaceOrderReconciler()
+else:
+    order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
+        args.existing_order_tolerance, args.existing_order_tolerance)
 
 desired_orders_chain: chain.Chain = chainbuilder.ChainBuilder.from_command_line_parameters(args)
 logging.info(f"Desired orders chain: {desired_orders_chain}")

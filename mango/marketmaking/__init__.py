@@ -16,6 +16,7 @@ from .modelstatebuilder import SpotPollingModelStateBuilder as SpotPollingModelS
 from .modelstatebuilder import WebsocketModelStateBuilder as WebsocketModelStateBuilder
 from .modelstatebuilderfactory import ModelUpdateMode as ModelUpdateMode
 from .modelstatebuilderfactory import model_state_builder_factory as model_state_builder_factory
+from .orderreconciler import AlwaysReplaceOrderReconciler as AlwaysReplaceOrderReconciler
 from .orderreconciler import NullOrderReconciler as NullOrderReconciler
 from .orderreconciler import OrderReconciler as OrderReconciler
 from .reconciledorders import ReconciledOrders as ReconciledOrders
