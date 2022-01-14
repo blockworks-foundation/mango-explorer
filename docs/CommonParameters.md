@@ -164,6 +164,11 @@ For example, to retry up to 15 times and pause 0.3 seconds between retries (taki
 --stale-data-maximum-retries 15 --stale-data-pause-before-retry 0.3
 ```
 
+To disable this functionality completely, set  `--stale-data-maximum-retries` to zero:
+```
+--stale-data-maximum-retries 0
+```
+
 
 # 11. `--gma-chunk-size` parameter
 
