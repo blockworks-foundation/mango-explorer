@@ -85,6 +85,8 @@ Ignore:
             cancellations = mango.CombinableInstructions.empty()
             # Perp markets have a CANCEL_ALL instruction that Spot and Serum markets don't. Use it if we can.
             if reconciled.cancelling_all and isinstance(self.market_instruction_builder, mango.PerpMarketInstructionBuilder):
+                ids = [f"{ord.id} / {ord.client_id}" for ord in reconciled.to_cancel]
+                self._logger.info(f"Cancelling all orders on {self.market.symbol} - currently {len(ids)}: {ids}")
                 cancellations = self.market_instruction_builder.build_cancel_all_orders_instructions()
             else:
                 for to_cancel in reconciled.to_cancel:
