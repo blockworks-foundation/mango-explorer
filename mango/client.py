@@ -297,11 +297,14 @@ class TransactionWatcher:
         self.signature: str = signature
 
     def report_on_transaction(self) -> None:
+        started_at: float = time.time()
         for pause in [0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]:
             transaction_response = self.client.get_signature_statuses([self.signature])
             if "result" in transaction_response and "value" in transaction_response["result"]:
                 [status] = transaction_response["result"]["value"]
                 if status is not None:
+                    time_taken: float = time.time() - started_at
+
                     # value should be a dict that looks like:
                     # {
                     #   'confirmationStatus': 'processed',
@@ -321,16 +324,21 @@ class TransactionWatcher:
                     #     'confirmationStatus': 'processed'
                     # }
                     if status["err"] is not None:
-                        self._logger.warning(f"Transaction {self.signature} failed with error {status['err']}")
+                        self._logger.warning(
+                            f"Transaction {self.signature} failed after {time_taken} seconds with error {status['err']}")
                         return
 
                     confirmation_status: str = status["confirmationStatus"]
                     slot: int = status["slot"]
                     self.slot_holder.require_data_from_fresh_slot(slot)
                     self._logger.info(
-                        f"Transaction {self.signature} reached confirmation status '{confirmation_status}' in slot {slot}")
+                        f"Transaction {self.signature} reached confirmation status '{confirmation_status}' in slot {slot} after {time_taken} seconds")
                     return
             time.sleep(pause)
+
+        time_wasted_looking: float = time.time() - started_at
+        self._logger.warning(
+            f"Transaction {self.signature} disappeared despite spending {time_wasted_looking} seconds waiting for it")
 
 
 # # 🥭 RPCCaller class
