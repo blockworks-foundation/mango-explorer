@@ -209,7 +209,7 @@ def build_serum_inventory_watcher(context: Context, manager: WebSocketSubscripti
     return LamdaUpdateWatcher(serum_inventory_accessor)
 
 
-def build_orderbook_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, market: LoadedMarket) -> Watcher[OrderBook]:
+def build_orderbook_watcher(context: Context, manager: WebSocketSubscriptionManager, health_check: HealthCheck, market: LoadedMarket) -> LatestItemObserverSubscriber[OrderBook]:
     orderbook_addresses: typing.List[PublicKey] = [
         market.bids_address,
         market.asks_address
