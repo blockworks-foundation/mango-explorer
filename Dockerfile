@@ -1,8 +1,8 @@
 FROM python:3.10-slim
 
-RUN sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
-
 RUN apt-get update && apt-get -y install bc curl zlib1g-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
 
 RUN mkdir /app 
 COPY ./pyproject.toml ./poetry.lock ./
