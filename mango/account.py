@@ -345,6 +345,34 @@ class Account(AddressableAccount):
         return accounts
 
     @staticmethod
+    def load_all_for_delegate(context: Context, delegate: PublicKey, group: Group) -> typing.Sequence["Account"]:
+        # mango_group is just after the METADATA, which is the first entry.
+        group_offset = layouts.METADATA.sizeof()
+        # delegate is a PublicKey which is 32 bytes that ends 5 bytes before the end of the layout
+        delegate_offset = layouts.MANGO_ACCOUNT.sizeof() - 37
+        filters = [
+            MemcmpOpts(
+                offset=group_offset,
+                bytes=encode_key(group.address)
+            ),
+            MemcmpOpts(
+                offset=delegate_offset,
+                bytes=encode_key(delegate)
+            )
+        ]
+
+        results = context.client.get_program_accounts(
+            context.mango_program_address, memcmp_opts=filters, data_size=layouts.MANGO_ACCOUNT.sizeof())
+        cache: Cache = group.fetch_cache(context)
+        accounts: typing.List[Account] = []
+        for account_data in results:
+            address = PublicKey(account_data["pubkey"])
+            account_info = AccountInfo._from_response_values(account_data["account"], address)
+            account = Account.parse(account_info, group, cache)
+            accounts += [account]
+        return accounts
+
+    @staticmethod
     def load_for_owner_by_address(context: Context, owner: PublicKey, group: Group, account_address: typing.Optional[PublicKey]) -> "Account":
         if account_address is not None:
             return Account.load(context, account_address, group)

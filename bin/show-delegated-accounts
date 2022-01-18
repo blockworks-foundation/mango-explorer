@@ -15,19 +15,19 @@ parser = argparse.ArgumentParser(description="Shows details of a Mango account."
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey, required=False,
-                    help="address of the owner of the account (defaults to the root address of the wallet)")
+                    help="address of the delegate of the account (defaults to the root address of the wallet)")
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 
-owner = args.address
-if owner is None:
+delegate = args.address
+if delegate is None:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-    owner = wallet.address
+    delegate = wallet.address
 
 group = mango.Group.load(context, context.group_address)
-mango_accounts = mango.Account.load_all_for_owner(context, owner, group)
+mango_accounts = mango.Account.load_all_for_delegate(context, delegate, group)
 if len(mango_accounts) == 0:
-    mango.output(f"Owner {owner} has no accounts.")
+    mango.output(f"Account {delegate} has no accounts delegated to it.")
 else:
     mango.output(mango_accounts)

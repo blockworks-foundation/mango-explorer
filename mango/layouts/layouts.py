@@ -1570,6 +1570,20 @@ CREATE_MANGO_ACCOUNT = construct.Struct(
 )
 
 
+# /// https://github.com/blockworks-foundation/mango-v3/pull/97/
+# /// Set delegate authority to mango account which can do everything regular account can do
+# /// except Withdraw and CloseMangoAccount. Set to Pubkey::default() to revoke delegate
+# ///
+# /// Accounts expected: 4
+# /// 0. `[]` mango_group_ai - MangoGroup
+# /// 1. `[writable]` mango_account_ai - MangoAccount
+# /// 2. `[signer]` owner_ai - Owner of Mango Account
+# /// 3. `[]` delegate_ai - delegate
+SET_DELEGATE = construct.Struct(
+    "variant" / construct.Const(58, construct.BytesInteger(4, swapped=True))
+)
+
+
 UNSPECIFIED = construct.Struct(
     "variant" / DecimalAdapter(4)
 )
@@ -1633,7 +1647,7 @@ InstructionParsersByVariant = {
     55: CREATE_MANGO_ACCOUNT,  # CREATE_MANGO_ACCOUNT,
     56: UNSPECIFIED,  # UPGRADE_MANGO_ACCOUNT_V0_V1,
     57: UNSPECIFIED,  # CANCEL_PERP_ORDER_SIDE,
-    58: UNSPECIFIED,  # SET_DELEGATE,
+    58: SET_DELEGATE,  # SET_DELEGATE,
     59: UNSPECIFIED,  # CHANGE_SPOT_MARKET_PARAMS,
     60: UNSPECIFIED,  # CREATE_SPOT_OPEN_ORDERS,
 }

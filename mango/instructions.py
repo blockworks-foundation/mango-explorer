@@ -879,3 +879,37 @@ def build_faucet_airdrop_instructions(token_mint: PublicKey, destination: Public
         })
     )
     return CombinableInstructions(signers=[], instructions=[faucet_airdrop_instruction])
+
+
+# # 🥭 build_set_account_delegate_instructions function
+#
+# Creates an instruction to delegate account operations (except Withdraw and CloseAccount) to a
+# different account.
+#
+# Set to SYSTEM_PROGRAM_ADDRESS to revoke delegate.
+#
+def build_set_account_delegate_instructions(context: Context, wallet: Wallet, group: Group, account: Account, delegate: PublicKey) -> CombinableInstructions:
+    # /// https://github.com/blockworks-foundation/mango-v3/pull/97/
+    # /// Set delegate authority to mango account which can do everything regular account can do
+    # /// except Withdraw and CloseMangoAccount. Set to Pubkey::default() to revoke delegate
+    # ///
+    # /// Accounts expected: 4
+    # /// 0. `[]` mango_group_ai - MangoGroup
+    # /// 1. `[writable]` mango_account_ai - MangoAccount
+    # /// 2. `[signer]` owner_ai - Owner of Mango Account
+    # /// 3. `[]` delegate_ai - delegate
+    set_delegate_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=delegate)
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.SET_DELEGATE.build({})
+    )
+    return CombinableInstructions(signers=[], instructions=[set_delegate_instruction])
+
+
+def build_unset_account_delegate_instructions(context: Context, wallet: Wallet, group: Group, account: Account) -> CombinableInstructions:
+    return build_set_account_delegate_instructions(context, wallet, group, account, SYSTEM_PROGRAM_ADDRESS)
