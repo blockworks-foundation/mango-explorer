@@ -48,10 +48,13 @@ def test_construction() -> None:
     msrm_amount = Decimal(0)
     being_liquidated = False
     is_bankrupt = False
+    advanced_orders = fake_seeded_public_key("advanced_orders")
+    not_upgradable = False
+    delegate = fake_seeded_public_key("delegate")
 
     actual = mango.Account(account_info, mango.Version.V1, meta_data, "Test Group", group, owner, info, quote,
                            in_margin_basket, active_in_basket, basket, msrm_amount, being_liquidated,
-                           is_bankrupt)
+                           is_bankrupt, advanced_orders, not_upgradable, delegate)
 
     assert actual is not None
     assert actual.version == mango.Version.V1
@@ -69,6 +72,9 @@ def test_construction() -> None:
     assert actual.msrm_amount == msrm_amount
     assert actual.being_liquidated == being_liquidated
     assert actual.is_bankrupt == is_bankrupt
+    assert actual.advanced_orders == advanced_orders
+    assert actual.not_upgradable == not_upgradable
+    assert actual.delegate == delegate
 
 
 def test_slot_lookups() -> None:
@@ -100,10 +106,13 @@ def test_slot_lookups() -> None:
     msrm_amount = Decimal(0)
     being_liquidated = False
     is_bankrupt = False
+    advanced_orders = fake_seeded_public_key("advanced_orders")
+    not_upgradable = False
+    delegate = fake_seeded_public_key("delegate")
 
     actual = mango.Account(account_info, mango.Version.V1, meta_data, "Test Group", group, owner, info, quote_slot,
                            in_margin_basket, active_in_basket, slots, msrm_amount, being_liquidated,
-                           is_bankrupt)
+                           is_bankrupt, advanced_orders, not_upgradable, delegate)
 
     assert actual.shared_quote == quote_slot
     assert actual.shared_quote_token == quote_slot.base_instrument

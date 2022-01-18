@@ -100,7 +100,8 @@ class Account(AddressableAccount):
                  in_margin_basket: typing.Sequence[bool],
                  slot_indices: typing.Sequence[bool],
                  base_slots: typing.Sequence[AccountSlot],
-                 msrm_amount: Decimal, being_liquidated: bool, is_bankrupt: bool) -> None:
+                 msrm_amount: Decimal, being_liquidated: bool, is_bankrupt: bool,
+                 advanced_orders: PublicKey, not_upgradable: bool, delegate: PublicKey) -> None:
         super().__init__(account_info)
         self.version: Version = version
 
@@ -116,6 +117,9 @@ class Account(AddressableAccount):
         self.msrm_amount: Decimal = msrm_amount
         self.being_liquidated: bool = being_liquidated
         self.is_bankrupt: bool = is_bankrupt
+        self.advanced_orders: PublicKey = advanced_orders
+        self.not_upgradable: bool = not_upgradable
+        self.delegate: PublicKey = delegate
 
     @property
     def shared_quote_token(self) -> Token:
@@ -263,8 +267,13 @@ class Account(AddressableAccount):
         msrm_amount: Decimal = layout.msrm_amount
         being_liquidated: bool = bool(layout.being_liquidated)
         is_bankrupt: bool = bool(layout.is_bankrupt)
+        advanced_orders: PublicKey = layout.advanced_orders
+        not_upgradable: bool = bool(layout.not_upgradable)
+        delegate: PublicKey = layout.delegate
 
-        return Account(account_info, version, meta_data, group.name, group.address, owner, info, quote, in_margin_basket, active_in_basket, slots, msrm_amount, being_liquidated, is_bankrupt)
+        return Account(account_info, version, meta_data, group.name, group.address, owner, info, quote,
+                       in_margin_basket, active_in_basket, slots, msrm_amount, being_liquidated, is_bankrupt,
+                       advanced_orders, not_upgradable, delegate)
 
     @staticmethod
     def parse(account_info: AccountInfo, group: Group, cache: Cache) -> "Account":
@@ -715,9 +724,12 @@ class Account(AddressableAccount):
         return f"""« Account {info}, {self.version} [{self.address}]
     {self.meta_data}
     Owner: {self.owner}
+    Delegated To: {self.delegate}
     Group: « Group '{self.group_name}' [{self.group_address}] »
+    Advanced Orders Account: {self.advanced_orders}
     MSRM: {self.msrm_amount}
     Bankrupt? {self.is_bankrupt}
+    Upgradable? {not self.not_upgradable}
     Being Liquidated? {self.being_liquidated}
     Shared Quote Token:
         {shared_quote}

@@ -51,6 +51,8 @@ def test_construction() -> None:
     assert actual.srm_vault == srm_vault
     assert actual.msrm_vault == msrm_vault
     assert actual.fees_vault == fees_vault
+    assert actual.max_mango_accounts == max_mango_accounts
+    assert actual.num_mango_accounts == num_mango_accounts
 
 
 def test_slot_lookups() -> None:

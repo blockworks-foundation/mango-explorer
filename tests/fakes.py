@@ -175,7 +175,8 @@ def fake_account() -> mango.Account:
     quote = fake_account_slot()
     return mango.Account(fake_account_info(), mango.Version.V1, meta_data, "GROUPNAME",
                          fake_seeded_public_key("group"), fake_seeded_public_key("owner"), "INFO",
-                         quote, [], [], [], Decimal(1), False, False)
+                         quote, [], [], [], Decimal(1), False, False, fake_seeded_public_key("advanced_orders"),
+                         False, fake_seeded_public_key("delegate"))
 
 
 def fake_root_bank() -> mango.RootBank:

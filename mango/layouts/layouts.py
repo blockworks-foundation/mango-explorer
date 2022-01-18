@@ -683,8 +683,21 @@ PERP_ACCOUNT = construct.Struct(
 #     /// This account cannot do anything except go through `resolve_bankruptcy`
 #     pub is_bankrupt: bool,
 #     pub info: [u8; INFO_LEN],
+#
+#     /// Starts off as zero pubkey and points to the AdvancedOrders account
+#     pub advanced_orders_key: Pubkey,
+#
+#     /// Can this account be upgraded to v1 so it can be closed
+#     pub not_upgradable: bool,
+#
+#     // Alternative authority/signer of transactions for a mango account
+#     pub delegate: Pubkey,
+#
 #     /// padding for expansions
-#     pub padding: [u8; 70],
+#     /// Note: future expansion can also be just done via isolated PDAs
+#     /// which can be computed independently and dont need to be linked from
+#     /// this account
+#     pub padding: [u8; 5],
 # }
 # ```
 MANGO_ACCOUNT = construct.Struct(
@@ -703,9 +716,12 @@ MANGO_ACCOUNT = construct.Struct(
     "client_order_ids" / construct.Array(MAX_PERP_OPEN_ORDERS, DecimalAdapter()),
     "msrm_amount" / DecimalAdapter(),
     "being_liquidated" / DecimalAdapter(1),
-    "is_bankrupt" / DecimalAdapter(1),
+    "is_bankrupt" / construct.Flag,
     "info" / construct.PaddedString(32, "utf8"),
-    construct.Padding(70)
+    "advanced_orders" / PublicKeyAdapter(),
+    "not_upgradable" / construct.Flag,
+    "delegate" / PublicKeyAdapter(),
+    construct.Padding(5)
 )
 
 # # 🥭 LIQUIDITY_MINING_INFO
