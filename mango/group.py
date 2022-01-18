@@ -173,7 +173,8 @@ class Group(AddressableAccount):
                  slots: typing.Sequence[GroupSlot],
                  signer_nonce: Decimal, signer_key: PublicKey,
                  admin: PublicKey, serum_program_address: PublicKey, cache: PublicKey, valid_interval: Decimal,
-                 insurance_vault: PublicKey, srm_vault: PublicKey, msrm_vault: PublicKey, fees_vault: PublicKey) -> None:
+                 insurance_vault: PublicKey, srm_vault: PublicKey, msrm_vault: PublicKey, fees_vault: PublicKey,
+                 max_mango_accounts: Decimal, num_mango_accounts: Decimal) -> None:
         super().__init__(account_info)
         self.version: Version = version
         self.name: str = name
@@ -192,6 +193,8 @@ class Group(AddressableAccount):
         self.srm_vault: PublicKey = srm_vault
         self.msrm_vault: PublicKey = msrm_vault
         self.fees_vault: PublicKey = fees_vault
+        self.max_mango_accounts: Decimal = max_mango_accounts
+        self.num_mango_accounts: Decimal = num_mango_accounts
 
     @property
     def shared_quote_token(self) -> Token:
@@ -320,8 +323,10 @@ class Group(AddressableAccount):
         srm_vault: PublicKey = layout.srm_vault
         msrm_vault: PublicKey = layout.msrm_vault
         fees_vault: PublicKey = layout.fees_vault
+        max_mango_accounts: Decimal = layout.max_mango_accounts
+        num_mango_accounts: Decimal = layout.num_mango_accounts
 
-        return Group(account_info, version, name, meta_data, quote_token_bank, in_slots, slots, signer_nonce, signer_key, admin, serum_program_address, cache_address, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault)
+        return Group(account_info, version, name, meta_data, quote_token_bank, in_slots, slots, signer_nonce, signer_key, admin, serum_program_address, cache_address, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault, max_mango_accounts, num_mango_accounts)
 
     @staticmethod
     def parse(account_info: AccountInfo, name: str, instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> "Group":
@@ -425,6 +430,7 @@ class Group(AddressableAccount):
     SRM Vault: {self.srm_vault}
     MSRM Vault: {self.msrm_vault}
     Fees Vault: {self.fees_vault}
+    Num Accounts: {self.num_mango_accounts:,} out of {self.max_mango_accounts:,}
     Valid Interval: {self.valid_interval}
     Basket [{slot_count} markets]:
         {slots}

@@ -210,10 +210,13 @@ def fake_group() -> mango.Group:
     srm_vault = fake_seeded_public_key("srm vault")
     msrm_vault = fake_seeded_public_key("msrm vault")
     fees_vault = fake_seeded_public_key("fees vault")
+    max_mango_accounts = Decimal(1000000)
+    num_mango_accounts = Decimal(1)
 
     return mango.Group(account_info, mango.Version.V1, name, meta_data, quote_info, [], [],
                        signer_nonce, signer_key, admin_key, serum_program_address, cache_key,
-                       valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault)
+                       valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault,
+                       max_mango_accounts, num_mango_accounts)
 
 
 def fake_prices(prices: typing.Sequence[str]) -> typing.Sequence[mango.InstrumentValue]:

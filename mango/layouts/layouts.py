@@ -515,7 +515,11 @@ PERP_MARKET_INFO = construct.Struct(
 #     pub msrm_vault: Pubkey,
 #     pub fees_vault: Pubkey,
 #
-#     pub padding: [u8; 32], // padding used for future expansions
+#     pub max_mango_accounts: u32, // limits maximum number of MangoAccounts.v1 (closeable) accounts
+#     pub num_mango_accounts: u32, // number of MangoAccounts.v1
+#
+#     pub padding: [u8; 24], // padding used for future expansions
+#
 # }
 # ```
 GROUP = construct.Struct(
@@ -535,7 +539,9 @@ GROUP = construct.Struct(
     "srm_vault" / PublicKeyAdapter(),
     "msrm_vault" / PublicKeyAdapter(),
     "fees_vault" / PublicKeyAdapter(),
-    construct.Padding(32)
+    "max_mango_accounts" / DecimalAdapter(4),
+    "num_mango_accounts" / DecimalAdapter(4),
+    construct.Padding(24)
 )
 
 # # 🥭 ROOT_BANK

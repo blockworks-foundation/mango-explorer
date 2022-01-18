@@ -26,10 +26,13 @@ def test_construction() -> None:
     srm_vault = fake_seeded_public_key("SRM vault")
     msrm_vault = fake_seeded_public_key("MSRM vault")
     fees_vault = fake_seeded_public_key("fees vault")
+    max_mango_accounts = Decimal(50)
+    num_mango_accounts = Decimal(49)
 
     actual = mango.Group(account_info, mango.Version.V1, name, meta_data, shared_quote_token, in_basket,
                          slots, signer_nonce, signer_key, admin_key, serum_program_address,
-                         cache_key, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault)
+                         cache_key, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault,
+                         max_mango_accounts, num_mango_accounts)
 
     assert actual is not None
     assert actual.name == name
@@ -65,6 +68,8 @@ def test_slot_lookups() -> None:
     srm_vault = fake_seeded_public_key("SRM vault")
     msrm_vault = fake_seeded_public_key("MSRM vault")
     fees_vault = fake_seeded_public_key("fees vault")
+    max_mango_accounts = Decimal(30)
+    num_mango_accounts = Decimal(4)
 
     # This is the more relevant stuff here.
     shared_quote_token_bank = fake_token_bank("FAKEQUOTE")
@@ -91,7 +96,8 @@ def test_slot_lookups() -> None:
 
     actual = mango.Group(account_info, mango.Version.V1, name, meta_data, shared_quote_token_bank, in_basket,
                          slots, signer_nonce, signer_key, admin_key, serum_program_address,
-                         cache_key, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault)
+                         cache_key, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault,
+                         max_mango_accounts, num_mango_accounts)
 
     assert actual.shared_quote == shared_quote_token_bank
     assert actual.liquidity_incentive_token_bank == mngo_token_bank
