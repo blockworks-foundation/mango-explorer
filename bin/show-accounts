@@ -15,16 +15,19 @@ parser = argparse.ArgumentParser(description="Shows details of a Merps account."
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--address", type=PublicKey, required=False,
-                    help="address of account (defaults to the root address of the wallet)")
+                    help="address of the owner of the account (defaults to the root address of the wallet)")
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 
-address = args.address
-if address is None:
+owner = args.address
+if owner is None:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-    address = wallet.address
+    owner = wallet.address
 
 group = mango.Group.load(context, context.group_address)
-mango_accounts = mango.Account.load_all_for_owner(context, address, group)
-mango.output(mango_accounts)
+mango_accounts = mango.Account.load_all_for_owner(context, owner, group)
+if len(mango_accounts) == 0:
+    mango.output(f"Owner {owner} has no accounts.")
+else:
+    mango.output(mango_accounts)

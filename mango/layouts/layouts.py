@@ -1267,20 +1267,6 @@ CANCEL_ALL_PERP_ORDERS = construct.Struct(
     "limit" / DecimalAdapter(1)
 )
 
-# /// Initialize a Mango account for a user
-# ///
-# /// Accounts expected by this instruction (4):
-# ///
-# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
-# /// 1. `[writable]` mango_account_ai - the mango account data
-# /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
-# /// 3. `[]` rent_ai - Rent sysvar account
-# InitMangoAccount,
-INIT_MANGO_ACCOUNT = construct.Struct(
-    "variant" / construct.Const(1, construct.BytesInteger(4, swapped=True))
-)
-
-
 # Cancel a Perp order using it's ID and Side.
 #
 # 0. `[]` mangoGroupPk
@@ -1536,13 +1522,39 @@ REDEEM_MNGO = construct.Struct(
     "variant" / construct.Const(33, construct.BytesInteger(4, swapped=True))
 )
 
+# /// Delete a mango account and return lamports
+# ///
+# /// Accounts expected by this instruction (3):
+# ///
+# /// 0. `[writable]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[writable]` mango_account_ai - the mango account data
+# /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
+CLOSE_MANGO_ACCOUNT = construct.Struct(
+    "variant" / construct.Const(50, construct.BytesInteger(4, swapped=True))
+)
+
+
+# /// Create a PDA mango account for a user
+# ///
+# /// Accounts expected by this instruction (4):
+# ///
+# /// 0. `[writable]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[writable]` mango_account_ai - the mango account data
+# /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
+# /// 3. `[]` system_prog_ai - System program
+CREATE_MANGO_ACCOUNT = construct.Struct(
+    "variant" / construct.Const(55, construct.BytesInteger(4, swapped=True)),
+    "account_num" / DecimalAdapter()
+)
+
+
 UNSPECIFIED = construct.Struct(
     "variant" / DecimalAdapter(4)
 )
 
 InstructionParsersByVariant = {
     0: UNSPECIFIED,  # INIT_MANGO_GROUP,
-    1: INIT_MANGO_ACCOUNT,  # INIT_MANGO_ACCOUNT,
+    1: UNSPECIFIED,  # INIT_MANGO_ACCOUNT,
     2: DEPOSIT,  # DEPOSIT,
     3: WITHDRAW,  # WITHDRAW,
     4: UNSPECIFIED,  # ADD_SPOT_MARKET,
@@ -1590,4 +1602,16 @@ InstructionParsersByVariant = {
     46: UNSPECIFIED,  # CREATE_PERP_MARKET,
     47: UNSPECIFIED,  # CHANGE_PERP_MARKET_PARAMS2,
     48: UNSPECIFIED,  # UPDATE_MARGIN_BASKET,
+    49: UNSPECIFIED,  # CHANG_MAX_MANGO_ACCOUNTS,
+    50: CLOSE_MANGO_ACCOUNT,  # CLOSE_MANGO_ACCOUNT,
+    51: UNSPECIFIED,  # CLOSE_SPOT_OPEN_ORDERS,
+    52: UNSPECIFIED,  # CLOSE_ADVANCED_ORDERS,
+    53: UNSPECIFIED,  # CREATE_DUST_ACCOUNT,
+    54: UNSPECIFIED,  # RESOLVE_DUST,
+    55: CREATE_MANGO_ACCOUNT,  # CREATE_MANGO_ACCOUNT,
+    56: UNSPECIFIED,  # UPGRADE_MANGO_ACCOUNT_V0_V1,
+    57: UNSPECIFIED,  # CANCEL_PERP_ORDER_SIDE,
+    58: UNSPECIFIED,  # SET_DELEGATE,
+    59: UNSPECIFIED,  # CHANGE_SPOT_MARKET_PARAMS,
+    60: UNSPECIFIED,  # CREATE_SPOT_OPEN_ORDERS,
 }

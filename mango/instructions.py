@@ -462,25 +462,33 @@ def build_mango_consume_events_instructions(context: Context, group: Group, perp
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
-def build_create_account_instructions(context: Context, wallet: Wallet, group: Group) -> CombinableInstructions:
-    create_account_instructions = build_create_solana_account_instructions(
-        context, wallet, context.mango_program_address, layouts.MANGO_ACCOUNT.sizeof())
-    mango_account_address = create_account_instructions.signers[0].public_key
+# The old INIT_MANGO_ACCOUNT instruction is now superseded by CREATE_MANGO_ACCOUNT
+def build_create_account_instructions(context: Context, wallet: Wallet, group: Group, account_num: Decimal = Decimal(1)) -> CombinableInstructions:
+    mango_account_address_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
+        [
+            bytes(group.address),
+            bytes(wallet.address),
+            int(account_num).to_bytes(8, "little")
+        ],
+        context.mango_program_address
+    )
+    mango_account_address: PublicKey = mango_account_address_and_nonce[0]
 
-    # /// 0. `[]` mango_group_ai - Group that this mango account is for
+    # /// 0. `[writable]` mango_group_ai - MangoGroup that this mango account is for
     # /// 1. `[writable]` mango_account_ai - the mango account data
     # /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
-    # /// 3. `[]` rent_ai - Rent sysvar account
-    init = TransactionInstruction(
+    # /// 3. `[]` system_prog_ai - System program
+    create = TransactionInstruction(
         keys=[
-            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=group.address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=mango_account_address),
-            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address)
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=SYSTEM_PROGRAM_ADDRESS)
         ],
         program_id=context.mango_program_address,
-        data=layouts.INIT_MANGO_ACCOUNT.build({})
+        data=layouts.CREATE_MANGO_ACCOUNT.build({"account_num": account_num})
     )
-    return create_account_instructions + CombinableInstructions(signers=[], instructions=[init])
+    return CombinableInstructions(signers=[], instructions=[create])
 
 
 # /// Deposit funds into mango account
