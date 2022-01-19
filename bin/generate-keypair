@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import os.path
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="generates a Solana keypair and writes it to an ID file")
+mango.ContextBuilder.add_command_line_parameters(parser)
+parser.add_argument("--filename", type=str, default="id.json",
+                    help="filename for saving the JSON-formatted keypair (default: id.json)")
+parser.add_argument("--overwrite", action="store_true", default=False, help="overwrite the file if it exists")
+args: argparse.Namespace = mango.parse_args(parser)
+
+if os.path.isdir(args.filename):
+    mango.output(f"""ERROR: Filename parameter {args.filename} is a directory, not a file.
+
+This can happen when docker auto-creates -v parameters if they don't already exist. To work around this problem, the file {args.filename} must exist before the first time the docker container is run.
+
+If you are running this command via docker, and this error is unexpected, run the following:
+  rmdir '{args.filename}'
+  touch '{args.filename}'
+  chmod 600 '{args.filename}'
+
+Then run your generate-keypair command again.""")
+else:
+    wallet = mango.Wallet.create()
+    wallet.save(args.filename, args.overwrite)
+    mango.output(f"""
+Wrote new keypair to {args.filename}
+==================================================================================
+pubkey: {wallet.address}
+==================================================================================""")

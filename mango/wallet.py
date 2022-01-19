@@ -71,7 +71,7 @@ class Wallet:
             raise Exception(f"Wallet file '{filename}' already exists.")
 
         with open(filename, "w") as json_file:
-            json.dump(list(self.secret_key), json_file)
+            json.dump(list(self.keypair.secret_key), json_file)
 
     @staticmethod
     def load(filename: str = _DEFAULT_WALLET_FILENAME) -> "Wallet":
@@ -85,9 +85,8 @@ class Wallet:
 
     @staticmethod
     def create() -> "Wallet":
-        new_account = Keypair()
-        new_secret_key = new_account.secret_key
-        return Wallet(new_secret_key)
+        new_account = Keypair.generate()
+        return Wallet(new_account.secret_key)
 
     # Configuring a `Wallet` is a common operation for command-line programs and can involve a
     # lot of duplicate code.

@@ -146,29 +146,15 @@ It’s probably a good idea to put this alias in your `.profile` or `.bashrc` (o
 
 Run the following command to create your wallet:
 ```
-# mango-explorer solana-keygen new --force --outfile /app/id.json
+# mango-explorer generate-keypair --filename /app/id.json --overwrite
 ```
 (/app/id.json is not a typo in the command - it’s the path to the ID file in the docker container’s context - it’s mapped to the ~/mango-explorer/id.json file.)
 
-This will ask you for a passphrase to protect your wallet - just press ENTER for no passphrase (`mango-explorer` assumes no passphrase on key files).
-
 The output will be something like the following:
 ```
-Generating a new keypair
-
-For added security, enter a BIP39 passphrase
-
-NOTE! This passphrase improves security of the recovery seed phrase NOT the
-keypair file itself, which is stored as insecure plain text
-
-BIP39 Passphrase (empty for none):
-
 Wrote new keypair to /app/id.json
 ==================================================================================
 pubkey: 6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB
-==================================================================================
-Save this seed phrase and your BIP39 passphrase to recover your new keypair:
-finger embrace similar anger type laptop public romance then elevator build border
 ==================================================================================
 ```
 This is what a successful run of the command looks like. It creates a Solana wallet and writes its secret key to ~/mango-explorer/id.json. **Looking after this file is entirely your responsibility. If you lose this file, you lose the private key for all the funds in the wallet. If you give it to someone else you give them the entire contents of your wallet.** This is not a big deal on devnet but it’s very important on mainnet.
