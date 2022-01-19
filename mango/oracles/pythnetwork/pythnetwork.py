@@ -112,6 +112,8 @@ class PythOracle(Oracle):
 class PythOracleProvider(OracleProvider):
     def __init__(self, context: Context) -> None:
         self.address: PublicKey = PYTH_MAINNET_MAPPING_ROOT if context.client.cluster_name == "mainnet" else PYTH_DEVNET_MAPPING_ROOT
+        self.__symbol_prefix = "" if context.client.cluster_name == "mainnet" else "Crypto."
+
         super().__init__(f"Pyth Oracle Factory [{self.address}]")
         self.context: Context = context
 
@@ -133,7 +135,8 @@ class PythOracleProvider(OracleProvider):
 
     def _market_symbol_to_pyth_symbol(self, symbol: str) -> str:
         normalised = symbol.upper()
-        fixed_usdt = re.sub("USDT$", "USD", normalised)
+        prefixed = self.__symbol_prefix + normalised
+        fixed_usdt = re.sub("USDT$", "USD", prefixed)
         fixed_usdc = re.sub("USDC$", "USD", fixed_usdt)
         fixed_perp = re.sub("\\-PERP$", "/USD", fixed_usdc)
         return fixed_perp
