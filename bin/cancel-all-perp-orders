@@ -39,9 +39,6 @@ if args.dry_run:
     mango.output("Dry run - no cancellations performed.")
 else:
     instruction_builder = mango.PerpMarketInstructionBuilder(context, wallet, group, account, market)
-    market_operations = mango.PerpMarketOperations(market.symbol, context, wallet, instruction_builder, account, market)
-
-    instruction_builder = mango.PerpMarketInstructionBuilder(context, wallet, group, account, market)
     cancel_all = instruction_builder.build_cancel_all_orders_instructions()
 
     signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)

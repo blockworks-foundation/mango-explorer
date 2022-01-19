@@ -35,7 +35,16 @@ orders = market_operations.load_my_orders()
 if len(orders) == 0:
     mango.output(f"No open orders on {market.symbol}")
 else:
-    for order in orders:
-        mango.output("Cancelling:", order)
-        cancellation = market_operations.cancel_order(order)
-        mango.output(cancellation)
+    if isinstance(market_operations.market, mango.PerpMarket):
+        instruction_builder = mango.PerpMarketInstructionBuilder(
+            context, wallet, group, account, market_operations.market)
+        cancel_all = instruction_builder.build_cancel_all_orders_instructions()
+
+        signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
+        cancel_all_signatures = (signers + cancel_all).execute(context)
+        mango.output(f"Cancelling all perp orders: {cancel_all_signatures}")
+    else:
+        for order in orders:
+            mango.output("Cancelling:", order)
+            cancellation_signatures = market_operations.cancel_order(order)
+            mango.output(f"Cancellation signature: {cancellation_signatures}")
