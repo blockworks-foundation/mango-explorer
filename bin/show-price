@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+import argparse
+import logging
+import os
+import os.path
+import sys
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Displays the price from the Pyth Network.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+parser.add_argument("--provider", type=str, required=True,
+                    help="name of the price provider to use (e.g. pyth)")
+parser.add_argument("--market", type=str, required=True,
+                    help="market symbol to display (e.g. ETH/USDC)")
+parser.add_argument("--stream", action="store_true", default=False,
+                    help="stream the prices until stopped")
+args: argparse.Namespace = mango.parse_args(parser)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+
+logging.info(str(context))
+
+oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, args.provider)
+
+market = context.market_lookup.find_by_symbol(args.market)
+if market is None:
+    raise Exception(f"Could not find market {args.market}.")
+
+oracle = oracle_provider.oracle_for_market(context, market)
+if oracle is None:
+    mango.output(f"Could not find oracle for market {market.symbol} from provider {args.provider}.")
+else:
+    if not args.stream:
+        price = oracle.fetch_price(context)
+        mango.output(price)
+    else:
+        mango.output("Press <ENTER> to quit.")
+        price_subscription = oracle.to_streaming_observable(context)
+        disposable = price_subscription.subscribe(mango.PrintingObserverSubscriber(False))
+
+        # Wait - don't exit
+        input()
+        disposable.dispose()

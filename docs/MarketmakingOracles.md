@@ -22,11 +22,11 @@ Specifics to each of these implementations are detailed later in the 'Oracle Ref
 
 You can see an example of using an oracle to fetch the current price by using the following command:
 ```
-$ fetch-price --symbol BTC/USDC --provider ftx
+$ show-price --market BTC/USDC --provider ftx
 ```
 Alternatively, to get the current price of the BTC perp on Mango:
 ```
-$ fetch-price --symbol BTC-PERP --provider market
+$ show-price --market BTC-PERP --provider market
 ```
 
 
