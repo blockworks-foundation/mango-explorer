@@ -530,6 +530,7 @@ class CompoundRPCCaller(HTTPProvider):
                     self._logger.debug(f"Shifted provider - now using: {self.__providers[0]}")
                 return result
             except (requests.exceptions.HTTPError,
+                    requests.exceptions.ConnectionError,
                     RateLimitException,
                     NodeIsBehindException,
                     StaleSlotException,
