@@ -60,7 +60,7 @@ class Wallet:
     def __init__(self, secret_key: bytes) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.secret_key: bytes = secret_key[0:32]
-        self.keypair: Keypair = Keypair(self.secret_key)
+        self.keypair: Keypair = Keypair.from_secret_key(self.secret_key)
 
     @property
     def address(self) -> PublicKey:
@@ -81,7 +81,7 @@ class Wallet:
         else:
             with open(filename) as json_file:
                 data = json.load(json_file)
-                return Wallet(data)
+                return Wallet(bytes(bytearray(data)))
 
     @staticmethod
     def create() -> "Wallet":
@@ -113,7 +113,7 @@ class Wallet:
         if environment_secret_key is not None:
             secret_key_bytes = json.loads(environment_secret_key)
             if len(secret_key_bytes) >= 32:
-                return Wallet(secret_key_bytes)
+                return Wallet(bytes(secret_key_bytes))
 
         # Here we should have values for all our parameters.
         id_filename = args.id_file

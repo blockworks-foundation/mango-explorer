@@ -345,9 +345,9 @@ def parse_notification_target(target: str) -> NotificationTarget:
 # `NotificationTarget` to be plugged in to the `logging` subsystem to receive log messages
 # and notify however it chooses.
 #
-class NotificationHandler(logging.StreamHandler):
+class NotificationHandler(logging.StreamHandler):  # type: ignore
     def __init__(self, target: NotificationTarget) -> None:
-        logging.StreamHandler.__init__(self)
+        super().__init__()
         self.target = target
 
     def emit(self, record: logging.LogRecord) -> None:

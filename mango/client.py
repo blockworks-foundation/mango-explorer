@@ -556,27 +556,6 @@ class CompoundRPCCaller(HTTPProvider):
         return f"{self}"
 
 
-# This is purely to pass `maxRetries`: 0 in the TxOpts. (solana-py doesn't currently support this but Solana does.)
-class _MaxRetriesZeroClient(Client):
-    def _send_raw_transaction_args(
-        self, txn: typing.Union[bytes, str], opts: TxOpts
-    ) -> typing.Tuple[RPCMethod, str, typing.Dict[str, typing.Union[bool, Commitment, str]]]:
-
-        if isinstance(txn, bytes):
-            txn = b64encode(txn).decode("utf-8")
-
-        return (
-            RPCMethod("sendTransaction"),
-            txn,
-            {
-                self._skip_preflight_key: opts.skip_preflight,
-                self._preflight_comm_key: opts.preflight_commitment,
-                self._encoding_key: "base64",
-                "maxRetries": 0  # type: ignore
-            },
-        )
-
-
 class BetterClient:
     def __init__(self, client: Client, name: str, cluster_name: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, rpc_caller: CompoundRPCCaller) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -603,7 +582,7 @@ class BetterClient:
         blockhash_cache: typing.Union[BlockhashCache, bool] = False
         if blockhash_cache_duration > 0:
             blockhash_cache = BlockhashCache(blockhash_cache_duration)
-        client: Client = _MaxRetriesZeroClient(cluster_url, commitment=commitment, blockhash_cache=blockhash_cache)
+        client: Client = Client(cluster_url, commitment=commitment, blockhash_cache=blockhash_cache)
         client._provider = provider
 
         def __on_provider_change() -> None:
@@ -720,7 +699,8 @@ class BetterClient:
 
                 proper_opts = TxOpts(preflight_commitment=proper_commitment,
                                      skip_confirmation=opts.skip_confirmation,
-                                     skip_preflight=proper_skip_preflight)
+                                     skip_preflight=proper_skip_preflight,
+                                     max_retries=0)
 
                 response = self.compatible_client.send_transaction(transaction, *signers, opts=proper_opts)
                 signature: str = str(response["result"])
