@@ -87,7 +87,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
         return build_spot_place_order_instructions(self.context, self.wallet, self.group, self.account,
-                                                   self.raw_market, order.order_type, order.side, order.price,
+                                                   self.spot_market, order.order_type, order.side, order.price,
                                                    order.quantity, order.client_id,
                                                    self.fee_discount_token_address)
 
@@ -127,7 +127,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         return CombinableInstructions.empty()
 
     def build_create_openorders_instructions(self) -> CombinableInstructions:
-        return build_spot_openorders_instructions(self.context, self.wallet, self.group, self.account, self.raw_market)
+        return build_spot_openorders_instructions(self.context, self.wallet, self.group, self.account, self.spot_market)
 
     def __str__(self) -> str:
         return f"« SpotMarketInstructionBuilder [{self.spot_market.symbol}] »"
@@ -190,11 +190,12 @@ class SpotMarketOperations(MarketOperations):
     def create_openorders(self) -> PublicKey:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         create_open_orders: CombinableInstructions = self.market_instruction_builder.build_create_openorders_instructions()
-        open_orders_address: PublicKey = create_open_orders.signers[0].public_key
         (signers + create_open_orders).execute(self.context)
 
-        # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
-        # the Account so that future uses (like later in this method) have access to it in the right place.
+        # These lines are a little nasty. Now that we know we have an OpenOrders account at this address,
+        # update the Account so that future uses (like later in this method) have access to it in the right
+        # place.
+        open_orders_address: PublicKey = self.spot_market.derive_open_orders_address(self.context, self.account)
         self.account.update_spot_open_orders_for_market(self.market_index, open_orders_address)
 
         return open_orders_address

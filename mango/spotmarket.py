@@ -20,6 +20,7 @@ from pyserum.market.market import Market as PySerumMarket
 from pyserum.market.orderbook import OrderBook as PySerumOrderBook
 from solana.publickey import PublicKey
 
+from .account import Account
 from .accountinfo import AccountInfo
 from .context import Context
 from .group import Group
@@ -66,6 +67,19 @@ class SpotMarket(LoadedMarket):
     def unprocessed_events(self, context: Context) -> typing.Sequence[SerumEvent]:
         event_queue: SerumEventQueue = SerumEventQueue.load(context, self.event_queue_address)
         return event_queue.unprocessed_events
+
+    def derive_open_orders_address(self, context: Context, account: Account) -> PublicKey:
+        slot = account.slot_by_instrument(self.base)
+        open_orders_address_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
+            [
+                bytes(self.address),
+                int(slot.index).to_bytes(8, "little"),
+                b"OpenOrders"
+            ],
+            context.mango_program_address
+        )
+        open_orders_address: PublicKey = open_orders_address_and_nonce[0]
+        return open_orders_address
 
     def __str__(self) -> str:
         return f"""« SpotMarket {self.symbol} {self.address} [{self.program_address}]

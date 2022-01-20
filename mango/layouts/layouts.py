@@ -1254,57 +1254,6 @@ SERUM_INSTRUCTION_VARIANT_FINDER = construct.Struct(
     "variant" / construct.BytesInteger(4, swapped=True)
 )
 
-# /// Place an order on a perp market
-# /// Accounts expected by this instruction (6):
-# /// 0. `[]` mango_group_ai - TODO
-# /// 1. `[writable]` mango_account_ai - TODO
-# /// 2. `[signer]` owner_ai - TODO
-# /// 3. `[]` mango_cache_ai - TODO
-# /// 4. `[writable]` perp_market_ai - TODO
-# /// 5. `[writable]` bids_ai - TODO
-# /// 6. `[writable]` asks_ai - TODO
-# /// 7. `[writable]` event_queue_ai - TODO
-PLACE_PERP_ORDER = construct.Struct(
-    "variant" / construct.Const(12, construct.BytesInteger(4, swapped=True)),
-
-    "price" / SignedDecimalAdapter(),
-    "quantity" / SignedDecimalAdapter(),
-    "client_order_id" / DecimalAdapter(),
-    "side" / DecimalAdapter(1),  # { buy: 0, sell: 1 }
-    "order_type" / DecimalAdapter(1)  # { limit: 0, ioc: 1, postOnly: 2 }
-)
-
-# /// Cancel all perp open orders (batch cancel)
-# ///
-# /// Accounts expected: 6
-# /// 0. `[]` mango_group_ai - MangoGroup
-# /// 1. `[writable]` mango_account_ai - MangoAccount
-# /// 2. `[signer]` owner_ai - Owner of Mango Account
-# /// 3. `[writable]` perp_market_ai - PerpMarket
-# /// 4. `[writable]` bids_ai - Bids acc
-# /// 5. `[writable]` asks_ai - Asks acc
-CANCEL_ALL_PERP_ORDERS = construct.Struct(
-    "variant" / construct.Const(39, construct.BytesInteger(4, swapped=True)),
-
-    "limit" / DecimalAdapter(1)
-)
-
-# Cancel a Perp order using it's ID and Side.
-#
-# 0. `[]` mangoGroupPk
-# 1. `[writable]` mangoAccountPk
-# 2. `[signer]` ownerPk
-# 3. `[writable]` perpMarketPk
-# 4. `[writable]` bidsPk
-# 5. `[writable]` asksPk
-# 6. `[writable]` eventQueuePk
-CANCEL_PERP_ORDER = construct.Struct(
-    "variant" / construct.Const(14, construct.BytesInteger(4, swapped=True)),
-
-    "order_id" / DecimalAdapter(16),
-    "invalid_id_ok" / construct.Flag
-)
-
 
 # /// Deposit funds into mango account
 # ///
@@ -1400,6 +1349,152 @@ PLACE_SPOT_ORDER = construct.Struct(
     'limit' / DecimalAdapter(2),  # 50
 )
 
+
+# /// Place an order on a perp market
+# /// Accounts expected by this instruction (6):
+# /// 0. `[]` mango_group_ai - TODO
+# /// 1. `[writable]` mango_account_ai - TODO
+# /// 2. `[signer]` owner_ai - TODO
+# /// 3. `[]` mango_cache_ai - TODO
+# /// 4. `[writable]` perp_market_ai - TODO
+# /// 5. `[writable]` bids_ai - TODO
+# /// 6. `[writable]` asks_ai - TODO
+# /// 7. `[writable]` event_queue_ai - TODO
+PLACE_PERP_ORDER = construct.Struct(
+    "variant" / construct.Const(12, construct.BytesInteger(4, swapped=True)),
+
+    "price" / SignedDecimalAdapter(),
+    "quantity" / SignedDecimalAdapter(),
+    "client_order_id" / DecimalAdapter(),
+    "side" / DecimalAdapter(1),  # { buy: 0, sell: 1 }
+    "order_type" / DecimalAdapter(1)  # { limit: 0, ioc: 1, postOnly: 2 }
+)
+
+
+# Cancel a Perp order using only it's client ID.
+#
+# 0. `[]` mangoGroupPk
+# 1. `[writable]` mangoAccountPk
+# 2. `[signer]` ownerPk
+# 3. `[writable]` perpMarketPk
+# 4. `[writable]` bidsPk
+# 5. `[writable]` asksPk
+# 6. `[writable]` eventQueuePk
+CANCEL_PERP_ORDER_BY_CLIENT_ID = construct.Struct(
+    "variant" / construct.Const(13, construct.BytesInteger(4, swapped=True)),
+
+    "client_order_id" / DecimalAdapter(),
+    "invalid_id_ok" / construct.Flag
+)
+
+
+# Cancel a Perp order using it's ID and Side.
+#
+# 0. `[]` mangoGroupPk
+# 1. `[writable]` mangoAccountPk
+# 2. `[signer]` ownerPk
+# 3. `[writable]` perpMarketPk
+# 4. `[writable]` bidsPk
+# 5. `[writable]` asksPk
+# 6. `[writable]` eventQueuePk
+CANCEL_PERP_ORDER = construct.Struct(
+    "variant" / construct.Const(14, construct.BytesInteger(4, swapped=True)),
+
+    "order_id" / DecimalAdapter(16),
+    "invalid_id_ok" / construct.Flag
+)
+
+
+# Run the Mango crank.
+#
+# 0. `[]` mangoGroupPk
+# 1. `[]` perpMarketPk
+# 2. `[writable]` eventQueuePk
+# 3+ `[writable]` mangoAccountPks...
+CONSUME_EVENTS = construct.Struct(
+    "variant" / construct.Const(15, construct.BytesInteger(4, swapped=True)),
+
+    "limit" / DecimalAdapter()
+)
+
+
+# /// Settle all funds from serum dex open orders
+# ///
+# /// Accounts expected by this instruction (18):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[]` mango_cache_ai - MangoCache for this MangoGroup
+# /// 2. `[signer]` owner_ai - MangoAccount owner
+# /// 3. `[writable]` mango_account_ai - MangoAccount
+# /// 4. `[]` dex_prog_ai - program id of serum dex
+# /// 5.  `[writable]` spot_market_ai - dex MarketState account
+# /// 6.  `[writable]` open_orders_ai - open orders for this market for this MangoAccount
+# /// 7. `[]` signer_ai - MangoGroup signer key
+# /// 8. `[writable]` dex_base_ai - base vault for dex MarketState
+# /// 9. `[writable]` dex_quote_ai - quote vault for dex MarketState
+# /// 10. `[]` base_root_bank_ai - MangoGroup base vault acc
+# /// 11. `[writable]` base_node_bank_ai - MangoGroup quote vault acc
+# /// 12. `[]` quote_root_bank_ai - MangoGroup quote vault acc
+# /// 13. `[writable]` quote_node_bank_ai - MangoGroup quote vault acc
+# /// 14. `[writable]` base_vault_ai - MangoGroup base vault acc
+# /// 15. `[writable]` quote_vault_ai - MangoGroup quote vault acc
+# /// 16. `[]` dex_signer_ai - dex Market signer account
+# /// 17. `[]` spl token program
+SETTLE_FUNDS = construct.Struct(
+    "variant" / construct.Const(19, construct.BytesInteger(4, swapped=True))
+)
+
+
+# /// Cancel an order using dex instruction
+# ///
+# /// Accounts expected by this instruction ():
+# ///
+# CancelSpotOrder {
+#     order: serum_dex::instruction::CancelOrderInstructionV2,
+# },
+CANCEL_SPOT_ORDER = construct.Struct(
+    "variant" / construct.Const(20, construct.BytesInteger(4, swapped=True)),
+
+    'side' / DecimalAdapter(4),
+    "order_id" / DecimalAdapter(16)
+)
+
+
+# /// Redeem the mngo_accrued in a PerpAccount for MNGO in MangoAccount deposits
+# ///
+# /// Accounts expected by this instruction (11):
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[]` mango_cache_ai - MangoCache
+# /// 2. `[writable]` mango_account_ai - MangoAccount
+# /// 3. `[signer]` owner_ai - MangoAccount owner
+# /// 4. `[]` perp_market_ai - PerpMarket
+# /// 5. `[writable]` mngo_perp_vault_ai
+# /// 6. `[]` mngo_root_bank_ai
+# /// 7. `[writable]` mngo_node_bank_ai
+# /// 8. `[writable]` mngo_bank_vault_ai
+# /// 9. `[]` signer_ai - Group Signer Account
+# /// 10. `[]` token_prog_ai - SPL Token program id
+REDEEM_MNGO = construct.Struct(
+    "variant" / construct.Const(33, construct.BytesInteger(4, swapped=True))
+)
+
+
+# /// Cancel all perp open orders (batch cancel)
+# ///
+# /// Accounts expected: 6
+# /// 0. `[]` mango_group_ai - MangoGroup
+# /// 1. `[writable]` mango_account_ai - MangoAccount
+# /// 2. `[signer]` owner_ai - Owner of Mango Account
+# /// 3. `[writable]` perp_market_ai - PerpMarket
+# /// 4. `[writable]` bids_ai - Bids acc
+# /// 5. `[writable]` asks_ai - Asks acc
+CANCEL_ALL_PERP_ORDERS = construct.Struct(
+    "variant" / construct.Const(39, construct.BytesInteger(4, swapped=True)),
+
+    "limit" / DecimalAdapter(1)
+)
+
+
 # Seems identical to PLACE_SPOT_ORDER except for variant.
 # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
 # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
@@ -1441,108 +1536,6 @@ PLACE_SPOT_ORDER_2 = construct.Struct(
     'limit' / DecimalAdapter(2),  # 50
 )
 
-# /// Cancel an order using dex instruction
-# ///
-# /// Accounts expected by this instruction ():
-# ///
-# CancelSpotOrder {
-#     order: serum_dex::instruction::CancelOrderInstructionV2,
-# },
-CANCEL_SPOT_ORDER = construct.Struct(
-    "variant" / construct.Const(20, construct.BytesInteger(4, swapped=True)),
-
-    'side' / DecimalAdapter(4),
-    "order_id" / DecimalAdapter(16)
-)
-
-
-# Cancel a Perp order using only it's client ID.
-#
-# 0. `[]` mangoGroupPk
-# 1. `[writable]` mangoAccountPk
-# 2. `[signer]` ownerPk
-# 3. `[writable]` perpMarketPk
-# 4. `[writable]` bidsPk
-# 5. `[writable]` asksPk
-# 6. `[writable]` eventQueuePk
-CANCEL_PERP_ORDER_BY_CLIENT_ID = construct.Struct(
-    "variant" / construct.Const(13, construct.BytesInteger(4, swapped=True)),
-
-    "client_order_id" / DecimalAdapter(),
-    "invalid_id_ok" / construct.Flag
-)
-
-# Run the Mango crank.
-#
-# 0. `[]` mangoGroupPk
-# 1. `[]` perpMarketPk
-# 2. `[writable]` eventQueuePk
-# 3+ `[writable]` mangoAccountPks...
-CONSUME_EVENTS = construct.Struct(
-    "variant" / construct.Const(15, construct.BytesInteger(4, swapped=True)),
-
-    "limit" / DecimalAdapter()
-)
-
-# /// Settle all funds from serum dex open orders
-# ///
-# /// Accounts expected by this instruction (18):
-# ///
-# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
-# /// 1. `[]` mango_cache_ai - MangoCache for this MangoGroup
-# /// 2. `[signer]` owner_ai - MangoAccount owner
-# /// 3. `[writable]` mango_account_ai - MangoAccount
-# /// 4. `[]` dex_prog_ai - program id of serum dex
-# /// 5.  `[writable]` spot_market_ai - dex MarketState account
-# /// 6.  `[writable]` open_orders_ai - open orders for this market for this MangoAccount
-# /// 7. `[]` signer_ai - MangoGroup signer key
-# /// 8. `[writable]` dex_base_ai - base vault for dex MarketState
-# /// 9. `[writable]` dex_quote_ai - quote vault for dex MarketState
-# /// 10. `[]` base_root_bank_ai - MangoGroup base vault acc
-# /// 11. `[writable]` base_node_bank_ai - MangoGroup quote vault acc
-# /// 12. `[]` quote_root_bank_ai - MangoGroup quote vault acc
-# /// 13. `[writable]` quote_node_bank_ai - MangoGroup quote vault acc
-# /// 14. `[writable]` base_vault_ai - MangoGroup base vault acc
-# /// 15. `[writable]` quote_vault_ai - MangoGroup quote vault acc
-# /// 16. `[]` dex_signer_ai - dex Market signer account
-# /// 17. `[]` spl token program
-SETTLE_FUNDS = construct.Struct(
-    "variant" / construct.Const(19, construct.BytesInteger(4, swapped=True))
-)
-
-# /// Initialize open orders
-# ///
-# /// Accounts expected by this instruction (8):
-# ///
-# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
-# /// 1. `[writable]` mango_account_ai - MangoAccount
-# /// 2. `[signer]` owner_ai - MangoAccount owner
-# /// 3. `[]` dex_prog_ai - program id of serum dex
-# /// 4. `[writable]` open_orders_ai - open orders for this market for this MangoAccount
-# /// 5. `[]` spot_market_ai - dex MarketState account
-# /// 6. `[]` signer_ai - Group Signer Account
-# /// 7. `[]` rent_ai - Rent sysvar account
-INIT_SPOT_OPEN_ORDERS = construct.Struct(
-    "variant" / construct.Const(32, construct.BytesInteger(4, swapped=True))
-)
-
-# /// Redeem the mngo_accrued in a PerpAccount for MNGO in MangoAccount deposits
-# ///
-# /// Accounts expected by this instruction (11):
-# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
-# /// 1. `[]` mango_cache_ai - MangoCache
-# /// 2. `[writable]` mango_account_ai - MangoAccount
-# /// 3. `[signer]` owner_ai - MangoAccount owner
-# /// 4. `[]` perp_market_ai - PerpMarket
-# /// 5. `[writable]` mngo_perp_vault_ai
-# /// 6. `[]` mngo_root_bank_ai
-# /// 7. `[writable]` mngo_node_bank_ai
-# /// 8. `[writable]` mngo_bank_vault_ai
-# /// 9. `[]` signer_ai - Group Signer Account
-# /// 10. `[]` token_prog_ai - SPL Token program id
-REDEEM_MNGO = construct.Struct(
-    "variant" / construct.Const(33, construct.BytesInteger(4, swapped=True))
-)
 
 # /// Delete a mango account and return lamports
 # ///
@@ -1584,9 +1577,27 @@ SET_DELEGATE = construct.Struct(
 )
 
 
+# /// Create an OpenOrders PDA and initialize it with InitOpenOrders call to serum dex
+# ///
+# /// Accounts expected by this instruction (8):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[writable]` mango_account_ai - MangoAccount
+# /// 2. `[signer]` owner_ai - MangoAccount owner
+# /// 3. `[]` dex_prog_ai - program id of serum dex
+# /// 4. `[writable]` open_orders_ai - open orders PDA
+# /// 5. `[]` spot_market_ai - dex MarketState account
+# /// 6. `[]` signer_ai - Group Signer Account
+# /// 7. `[]` system_prog_ai - System program
+CREATE_SPOT_OPEN_ORDERS = construct.Struct(
+    "variant" / construct.Const(60, construct.BytesInteger(4, swapped=True))
+)
+
+
 UNSPECIFIED = construct.Struct(
     "variant" / DecimalAdapter(4)
 )
+
 
 InstructionParsersByVariant = {
     0: UNSPECIFIED,  # INIT_MANGO_GROUP,
@@ -1621,7 +1632,7 @@ InstructionParsersByVariant = {
     29: UNSPECIFIED,  # SETTLE_FEES,
     30: UNSPECIFIED,  # RESOLVE_PERP_BANKRUPTCY,
     31: UNSPECIFIED,  # RESOLVE_TOKEN_BANKRUPTCY,
-    32: INIT_SPOT_OPEN_ORDERS,  # INIT_SPOT_OPEN_ORDERS,
+    32: UNSPECIFIED,  # INIT_SPOT_OPEN_ORDERS,
     33: REDEEM_MNGO,  # REDEEM_MNGO,
     34: UNSPECIFIED,  # ADD_MANGO_ACCOUNT_INFO,
     35: UNSPECIFIED,  # DEPOSIT_MSRM,
@@ -1649,5 +1660,5 @@ InstructionParsersByVariant = {
     57: UNSPECIFIED,  # CANCEL_PERP_ORDER_SIDE,
     58: SET_DELEGATE,  # SET_DELEGATE,
     59: UNSPECIFIED,  # CHANGE_SPOT_MARKET_PARAMS,
-    60: UNSPECIFIED,  # CREATE_SPOT_OPEN_ORDERS,
+    60: CREATE_SPOT_OPEN_ORDERS,  # CREATE_SPOT_OPEN_ORDERS,
 }

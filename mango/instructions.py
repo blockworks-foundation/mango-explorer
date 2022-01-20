@@ -26,7 +26,6 @@ from pyserum.open_orders_account import make_create_account_instruction as pyser
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.system_program import CreateAccountParams, create_account
-from solana.sysvar import SYSVAR_RENT_PUBKEY
 from solana.transaction import AccountMeta, TransactionInstruction
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
 from spl.token.instructions import CloseAccountParams, InitializeAccountParams, TransferParams, close_account, create_associated_token_account, initialize_account, transfer
@@ -40,6 +39,7 @@ from .layouts import layouts
 from .orders import Order, OrderType, Side
 from .perpmarket import PerpMarket
 from .perpmarketdetails import PerpMarketDetails
+from .spotmarket import SpotMarket
 from .token import Token
 from .tokenaccount import TokenAccount
 from .tokenbank import TokenBank, NodeBank, RootBank
@@ -265,7 +265,7 @@ def build_spot_settle_instructions(context: Context, wallet: Wallet, account: Ac
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID)
         ],
         program_id=context.mango_program_address,
-        data=layouts.SETTLE_FUNDS.build(dict())
+        data=layouts.SETTLE_FUNDS.build({})
     )
 
     return CombinableInstructions(signers=[], instructions=[settle_instruction])
@@ -577,29 +577,37 @@ def build_withdraw_instructions(context: Context, wallet: Wallet, group: Group, 
     return CombinableInstructions(signers=[], instructions=[withdraw])
 
 
-def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: Group, account: Account, market: PySerumMarket) -> CombinableInstructions:
+def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket) -> CombinableInstructions:
     instructions: CombinableInstructions = CombinableInstructions.empty()
-    create_open_orders = build_create_solana_account_instructions(
-        context, wallet, context.serum_program_address, layouts.OPEN_ORDERS.sizeof())
-    instructions += create_open_orders
 
-    open_orders_address = create_open_orders.signers[0].public_key
+    # Spot OpenOrders accounts use a PDA as of v3.3
+    open_orders_address: PublicKey = spot_market.derive_open_orders_address(context, account)
 
-    initialise_open_orders_instruction = TransactionInstruction(
+    # /// Accounts expected by this instruction (8):
+    # ///
+    # /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+    # /// 1. `[writable]` mango_account_ai - MangoAccount
+    # /// 2. `[signer]` owner_ai - MangoAccount owner
+    # /// 3. `[]` dex_prog_ai - program id of serum dex
+    # /// 4. `[writable]` open_orders_ai - open orders PDA
+    # /// 5. `[]` spot_market_ai - dex MarketState account
+    # /// 6. `[]` signer_ai - Group Signer Account
+    # /// 7. `[]` system_prog_ai - System program
+    create_open_orders_instruction = TransactionInstruction(
         keys=[
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
             AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
             AccountMeta(is_signer=False, is_writable=False, pubkey=context.serum_program_address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=open_orders_address),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=market.state.public_key()),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=spot_market.address),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=SYSVAR_RENT_PUBKEY)
+            AccountMeta(is_signer=False, is_writable=False, pubkey=SYSTEM_PROGRAM_ADDRESS)
         ],
         program_id=context.mango_program_address,
-        data=layouts.INIT_SPOT_OPEN_ORDERS.build(dict())
+        data=layouts.CREATE_SPOT_OPEN_ORDERS.build({})
     )
-    instructions += CombinableInstructions(signers=[], instructions=[initialise_open_orders_instruction])
+    instructions += CombinableInstructions(signers=[], instructions=[create_open_orders_instruction])
     return instructions
 
 
@@ -637,19 +645,18 @@ def build_spot_openorders_instructions(context: Context, wallet: Wallet, group: 
 #   pubkey,
 # })),
 def build_spot_place_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account,
-                                        market: PySerumMarket,
-                                        order_type: OrderType, side: Side, price: Decimal,
-                                        quantity: Decimal, client_id: int,
+                                        spot_market: SpotMarket, order_type: OrderType, side: Side,
+                                        price: Decimal, quantity: Decimal, client_id: int,
                                         fee_discount_address: PublicKey) -> CombinableInstructions:
     instructions: CombinableInstructions = CombinableInstructions.empty()
 
-    spot_market_address = market.state.public_key()
-    slot = group.slot_by_spot_market_address(spot_market_address)
+    slot = group.slot_by_spot_market_address(spot_market.address)
     market_index = slot.index
+    pyserum_market = spot_market.underlying_serum_market
 
     open_orders_address = account.spot_open_orders_by_index[market_index]
     if open_orders_address is None:
-        create_open_orders = build_spot_openorders_instructions(context, wallet, group, account, market)
+        create_open_orders = build_spot_openorders_instructions(context, wallet, group, account, spot_market)
         instructions += create_open_orders
 
         open_orders_address = create_open_orders.signers[0].public_key
@@ -660,13 +667,13 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
 
     serum_order_type: pyserum.enums.OrderType = order_type.to_serum()
     serum_side: pyserum.enums.Side = side.to_serum()
-    intrinsic_price = market.state.price_number_to_lots(float(price))
-    max_base_quantity = market.state.base_size_number_to_lots(float(quantity))
-    max_quote_quantity = market.state.base_size_number_to_lots(
-        float(quantity)) * market.state.quote_lot_size() * market.state.price_number_to_lots(float(price))
+    intrinsic_price = pyserum_market.state.price_number_to_lots(float(price))
+    max_base_quantity = pyserum_market.state.base_size_number_to_lots(float(quantity))
+    max_quote_quantity = pyserum_market.state.base_size_number_to_lots(
+        float(quantity)) * pyserum_market.state.quote_lot_size() * pyserum_market.state.price_number_to_lots(float(price))
 
     base_token_banks = [
-        token_bank for token_bank in group.base_tokens_by_index if token_bank is not None and token_bank.token.mint == market.state.base_mint()]
+        token_bank for token_bank in group.base_tokens_by_index if token_bank is not None and token_bank.token.mint == pyserum_market.state.base_mint()]
     if len(base_token_banks) != 1:
         raise Exception(
             f"Could not find base token info for group {group.address} - length was {len(base_token_banks)} when it should be 1.")
@@ -679,8 +686,11 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
     quote_node_bank: NodeBank = quote_root_bank.pick_node_bank(context)
 
     vault_signer = PublicKey.create_program_address(
-        [bytes(market.state.public_key()), market.state.vault_signer_nonce().to_bytes(8, byteorder="little")],
-        market.state.program_id(),
+        [
+            bytes(spot_market.address),
+            pyserum_market.state.vault_signer_nonce().to_bytes(8, byteorder="little")
+        ],
+        pyserum_market.state.program_id(),
     )
 
     place_spot_instruction = TransactionInstruction(
@@ -690,13 +700,13 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
             AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
             AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
             AccountMeta(is_signer=False, is_writable=False, pubkey=context.serum_program_address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.public_key()),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.bids()),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.asks()),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.request_queue()),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.event_queue()),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.base_vault()),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=market.state.quote_vault()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=spot_market.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=spot_market.bids_address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=spot_market.asks_address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=pyserum_market.state.request_queue()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=spot_market.event_queue_address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=pyserum_market.state.base_vault()),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=pyserum_market.state.quote_vault()),
             AccountMeta(is_signer=False, is_writable=False, pubkey=base_root_bank.address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=base_node_bank.address),
             AccountMeta(is_signer=False, is_writable=True, pubkey=base_node_bank.vault),
@@ -834,7 +844,7 @@ def build_redeem_accrued_mango_instructions(context: Context, wallet: Wallet, pe
             AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID)
         ],
         program_id=context.mango_program_address,
-        data=layouts.REDEEM_MNGO.build(dict())
+        data=layouts.REDEEM_MNGO.build({})
     )
     return CombinableInstructions(signers=[], instructions=[redeem_accrued_mango_instruction])
 
