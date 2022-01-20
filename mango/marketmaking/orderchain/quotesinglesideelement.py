@@ -54,4 +54,4 @@ class QuoteSingleSideElement(Element):
         return new_orders
 
     def __str__(self) -> str:
-        return "« 𝚀𝚞𝚘𝚝𝚎𝚂𝚒𝚗𝚐𝚕𝚎𝚂𝚒𝚍𝚎𝙴𝚕𝚎𝚖𝚎𝚗𝚝 »"
+        return "« QuoteSingleSideElement »"

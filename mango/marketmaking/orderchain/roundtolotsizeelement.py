@@ -60,4 +60,4 @@ class RoundToLotSizeElement(Element):
         return new_orders
 
     def __str__(self) -> str:
-        return "« 𝚁𝚘𝚞𝚗𝚍𝚃𝚘𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙴𝚕𝚎𝚖𝚎𝚗𝚝 »"
+        return "« RoundToLotSizeElement »"

@@ -99,4 +99,4 @@ class RatiosElement(Element):
         spread_ratios = ", ".join(map(str, self.spread_ratios)) or "None"
         position_size_ratios = ", ".join(map(str, self.position_size_ratios)) or "None"
         from_description = "from bid/ask" if self.from_bid_ask else "from mid price"
-        return f"« 𝚁𝚊𝚝𝚒𝚘𝚜𝙴𝚕𝚎𝚖𝚎𝚗𝚝 using ratios - spread(s): {spread_ratios} {from_description}, position size(s): {position_size_ratios} »"
+        return f"« RatiosElement using ratios - spread(s): {spread_ratios} {from_description}, position size(s): {position_size_ratios} »"

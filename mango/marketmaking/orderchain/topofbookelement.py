@@ -86,4 +86,4 @@ class TopOfBookElement(Element):
         return new_orders
 
     def __str__(self) -> str:
-        return f"« 𝚃𝚘𝚙𝙾𝚏𝙱𝚘𝚘𝚔𝙴𝚕𝚎𝚖𝚎𝚗𝚝 [adjustment ticks: {self.adjustment_ticks}] »"
+        return f"« TopOfBookElement [adjustment ticks: {self.adjustment_ticks}] »"
