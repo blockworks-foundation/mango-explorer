@@ -429,10 +429,9 @@ class RPCCaller(HTTPProvider):
         if len(params) > 1 and "commitment" in params[1] and params[1]["commitment"] == Processed:
             if "result" in response and isinstance(response["result"], Mapping) and "context" in response["result"] and isinstance(response["result"]["context"], Mapping) and "slot" in response["result"]["context"]:
                 slot: int = response["result"]["context"]["slot"]
-                self._logger.debug(f"{method}() data is from slot: {slot}")
                 if not self.slot_holder.is_acceptable(slot):
                     self._logger.warning(
-                        f"Result is from slot: {slot} - latest slot is: {self.slot_holder.latest_slot}")
+                        f"Result is from stale slot: {slot} - latest slot is: {self.slot_holder.latest_slot}")
                     raise StaleSlotException(self.name, self.cluster_url, self.slot_holder.latest_slot, slot)
 
         if "error" in response:
@@ -471,7 +470,10 @@ class RPCCaller(HTTPProvider):
                                            error_err, error_logs, self.instruction_reporter)
 
         if method == "getRecentBlockhash":
-            self._logger.debug(f"Recent blockhash fetched: {response}")
+            if "result" in response and "value" in response["result"] and "blockhash" in response["result"]["value"] and "context" in response["result"] and "slot" in response["result"]["context"]:
+                fresh_blockhash = Blockhash(response["result"]["value"]["blockhash"])
+                fresh_blockhash_slot = Blockhash(response["result"]["context"]["slot"])
+                self._logger.debug(f"Recent blockhash [slot: {fresh_blockhash_slot}]: {fresh_blockhash}")
 
         # The call succeeded.
         return typing.cast(RPCResponse, response)
