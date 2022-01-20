@@ -493,8 +493,9 @@ Here are some parameters that are commonly passed to the `marketmaker`.
 
 - `--oracle-provider` **** You can pick the oracle to use for price information. Pyth is a common choice because the other options don’t provide a ‘confidence value’. Options are:
     - pyth
-    - serum
+    - market
     - ftx
+    - stub
 
 - `--confidenceinterval-level` A weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread.
 
