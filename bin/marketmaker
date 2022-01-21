@@ -38,8 +38,10 @@ parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal(
                     help="tolerance in price and quantity when matching existing orders or cancelling/replacing")
 parser.add_argument("--redeem-threshold", type=Decimal,
                     help="threshold above which liquidity incentives will be automatically moved to the account (default: no moving)")
-parser.add_argument("--pulse-interval", type=int, default=10,
+parser.add_argument("--pulse-interval", type=float, default=10.0,
                     help="number of seconds between each 'pulse' of the market maker")
+parser.add_argument("--hedging-pulse-interval", type=float,
+                    help="number of seconds between each 'pulse' of the hedger (if hedging configured) - defaults to the --pulse-interval value if not specified")
 parser.add_argument("--hedging-market", type=str, help="spot market symbol to use for hedging (e.g. ETH/USDC)")
 parser.add_argument("--hedging-max-price-slippage-factor", type=Decimal, default=Decimal("0.05"),
                     help="the maximum value the IOC hedging order price can slip by when hedging (default is 0.05 for 5%%)")
@@ -164,7 +166,7 @@ mango.InstrumentValue.report([asset for asset in account.net_values if asset is 
 manager.open()
 
 
-def pulse_action(_: int) -> None:
+def combined_pulse_action(_: int) -> None:
     try:
         context.client.require_data_from_fresh_slot()
         model_state: mango.ModelState = model_state_builder.build(context)
@@ -174,14 +176,50 @@ def pulse_action(_: int) -> None:
         logging.error(f"Pulse action failed: {traceback.format_exc()}")
 
 
-pulse_disposable = rx.interval(args.pulse_interval).pipe(
+def marketmaking_pulse_action(_: int) -> None:
+    try:
+        context.client.require_data_from_fresh_slot()
+        model_state: mango.ModelState = model_state_builder.build(context)
+        market_maker.pulse(context, model_state)
+    except Exception:
+        logging.error(f"Pulse action failed: {traceback.format_exc()}")
+
+
+def hedging_pulse_action(_: int) -> None:
+    try:
+        model_state: mango.ModelState = model_state_builder.build(context)
+        hedger.pulse(context, model_state)
+    except Exception:
+        logging.error(f"Pulse action failed: {traceback.format_exc()}")
+
+
+hedging_pulse_interval: float = args.hedging_pulse_interval or args.pulse_interval
+separate_hedge_pulse = False
+if isinstance(hedger, mango.hedging.NullHedger):
+    logging.info(f"Using a pulse action with an interval of {args.pulse_interval} seconds.")
+    pulse_action = marketmaking_pulse_action
+elif hedging_pulse_interval == args.pulse_interval:
+    logging.info(f"Using a combined pulse action with an interval of {args.pulse_interval} seconds.")
+    pulse_action = combined_pulse_action
+else:
+    logging.info(
+        f"Using separate pulse actions with a marketmaking interval of {args.pulse_interval} seconds and a hedging interval of {hedging_pulse_interval} seconds.")
+    pulse_action = marketmaking_pulse_action
+    hedging_pulse_disposable = rx.interval(hedging_pulse_interval).pipe(
+        rx.operators.observe_on(context.create_thread_pool_scheduler()),
+        rx.operators.start_with(-1),
+        rx.operators.catch(mango.observable_pipeline_error_reporter),
+        rx.operators.retry()
+    ).subscribe(mango.create_backpressure_skipping_observer(on_next=hedging_pulse_action, on_error=mango.log_subscription_error))
+    disposer.add_disposable(hedging_pulse_disposable)
+
+marketmaking_pulse_disposable = rx.interval(args.pulse_interval).pipe(
     rx.operators.observe_on(context.create_thread_pool_scheduler()),
     rx.operators.start_with(-1),
     rx.operators.catch(mango.observable_pipeline_error_reporter),
     rx.operators.retry()
-).subscribe(
-    on_next=pulse_action)
-disposer.add_disposable(pulse_disposable)
+).subscribe(mango.create_backpressure_skipping_observer(on_next=pulse_action, on_error=mango.log_subscription_error))
+disposer.add_disposable(marketmaking_pulse_disposable)
 
 # Wait - don't exit. Exiting will be handled by signals/interrupts.
 waiter = threading.Event()
