@@ -11,7 +11,7 @@ __FAKE_RPC_METHOD = RPCMethod("fake")
 
 class FakeRPCCaller(mango.RPCCaller):
     def __init__(self) -> None:
-        super().__init__("Fake", "https://localhost", [0.1, 0.2], mango.SlotHolder(), mango.InstructionReporter())
+        super().__init__("Fake", "https://localhost", "wss://localhost", [0.1, 0.2], mango.SlotHolder(), mango.InstructionReporter())
         self.called = False
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
@@ -25,7 +25,7 @@ class FakeRPCCaller(mango.RPCCaller):
 
 class RaisingRPCCaller(mango.RPCCaller):
     def __init__(self) -> None:
-        super().__init__("Fake", "https://localhost", [0.1, 0.2], mango.SlotHolder(), mango.InstructionReporter())
+        super().__init__("Fake", "https://localhost", "wss://localhost", [0.1, 0.2], mango.SlotHolder(), mango.InstructionReporter())
         self.called = False
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:

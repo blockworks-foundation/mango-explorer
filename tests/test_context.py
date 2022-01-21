@@ -25,7 +25,8 @@ def test_new_from_cluster() -> None:
     context_has_default_values(mango.ContextBuilder.default())
     derived = mango.ContextBuilder.build(cluster_name="devnet")
     assert derived.client.cluster_name == "devnet"
-    assert derived.client.cluster_url == "https://mango.devnet.rpcpool.com"
+    assert derived.client.cluster_rpc_url == "https://mango.devnet.rpcpool.com"
+    assert derived.client.cluster_ws_url == "wss://mango.devnet.rpcpool.com"
     assert derived.mango_program_address == PublicKey("4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA")
     assert derived.serum_program_address == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
     assert derived.group_name == "devnet.2"

@@ -27,6 +27,7 @@ from .cache import PerpMarketCache as PerpMarketCache
 from .cache import PriceCache as PriceCache
 from .cache import RootBankCache as RootBankCache
 from .client import BetterClient as BetterClient
+from .client import ClusterUrlData as ClusterUrlData
 from .client import BlockhashNotFoundException as BlockhashNotFoundException
 from .client import ClientException as ClientException
 from .client import CompoundException as CompoundException

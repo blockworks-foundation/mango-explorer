@@ -59,7 +59,7 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
         raise NotImplementedError("WebSocketSubscription.build_request() is not implemented on the base type.")
 
     def open(self,) -> None:
-        websocket_url: str = self.context.client.cluster_url.replace("https", "wss", 1)
+        websocket_url: str = self.context.client.cluster_ws_url
 
         def on_open(sock: websocket.WebSocketApp) -> None:
             sock.send(self.build_request())
@@ -256,7 +256,7 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
         self._pong_subscription: typing.Optional[Disposable] = None
 
     def open(self) -> None:
-        websocket_url = self.context.client.cluster_url.replace("https", "wss", 1)
+        websocket_url = self.context.client.cluster_ws_url
         ws: ReconnectingWebsocket = ReconnectingWebsocket(websocket_url, self.open_handler)
         ws.item.subscribe(on_next=self.on_item)  # type: ignore[call-arg]
         ws.ping_interval = self.ping_interval
