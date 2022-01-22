@@ -61,7 +61,17 @@ class SerumInstructionReporter(InstructionReporter):
     def report(self, instruction: TransactionInstruction) -> str:
         initial = layouts.SERUM_INSTRUCTION_VARIANT_FINDER.parse(instruction.data)
         instruction_type = PySerumInstructionType(initial.variant)
-        return f"« Serum Instruction: {instruction_type.name}: " + "".join("{:02x}".format(x) for x in instruction.data) + "»"
+        data = "".join("{:02x}".format(x) for x in instruction.data)
+        keys: typing.List[str] = []
+        for index, key in enumerate(instruction.keys):
+            is_writable: str = "Writable " if key.is_writable else "Read-Only"
+            is_signer: str = "Signer" if key.is_signer else "      "
+            pubkey: str = str(key.pubkey)
+            keys += [f"\tKey[{index: >2}]: {pubkey: <45} {is_writable} {is_signer}"]
+        key_details: str = "\n".join(keys)
+        return f"""« Serum Instruction: {instruction_type.name}: {data}
+{key_details}
+»"""
 
 
 # # 🥭 MangoInstructionReporter class

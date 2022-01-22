@@ -291,7 +291,14 @@ class MangoInstruction:
 
     def __str__(self) -> str:
         parameters = self.describe_parameters() or "None"
-        return f"« {self.instruction_type.name}: {parameters} »"
+        keys: typing.List[str] = []
+        for index, key in enumerate(self.accounts):
+            pubkey: str = str(key)
+            keys += [f"\tKey[{index: >2}]: {pubkey}"]
+        key_details: str = "\n".join(keys)
+        return f"""« {self.instruction_type.name}: {parameters}
+{key_details}
+»"""
 
     def __repr__(self) -> str:
         return f"{self}"
