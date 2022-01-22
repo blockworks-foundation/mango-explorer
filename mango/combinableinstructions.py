@@ -34,12 +34,12 @@ _SIGNATURE_LENGTH = 64
 def _split_instructions_into_chunks(context: Context, signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> typing.Sequence[typing.Sequence[TransactionInstruction]]:
     vetted_chunks: typing.List[typing.List[TransactionInstruction]] = []
     current_chunk: typing.List[TransactionInstruction] = []
-    for instruction in instructions:
+    for counter, instruction in enumerate(instructions):
         instruction_size_on_its_own = CombinableInstructions.transaction_size(signers, [instruction])
         if instruction_size_on_its_own >= _MAXIMUM_TRANSACTION_LENGTH:
             report = context.client.instruction_reporter.report(instruction)
             raise Exception(
-                f"Instruction exceeds maximum size - creates a transaction {instruction_size_on_its_own} bytes long:\n{report}")
+                f"Instruction exceeds maximum size - instruction {counter} has {len(instruction.keys)} keys and creates a transaction {instruction_size_on_its_own} bytes long:\n{report}")
 
         in_progress_chunk = current_chunk + [instruction]
         transaction_size = CombinableInstructions.transaction_size(signers, in_progress_chunk)
