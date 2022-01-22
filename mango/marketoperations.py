@@ -114,7 +114,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
         raise NotImplementedError("MarketOperations.cancel_order() is not implemented on the base type.")
 
     @abc.abstractmethod
-    def place_order(self, order: Order) -> Order:
+    def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
         raise NotImplementedError("MarketOperations.place_order() is not implemented on the base type.")
 
     @abc.abstractmethod
@@ -188,7 +188,7 @@ class NullMarketOperations(MarketOperations):
         self._logger.info(f"[Dry Run] Not cancelling order {order}.")
         return [""]
 
-    def place_order(self, order: Order) -> Order:
+    def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
         self._logger.info(f"[Dry Run] Not placing order {order}.")
         return order
 

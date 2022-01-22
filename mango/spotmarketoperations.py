@@ -161,7 +161,7 @@ class SpotMarketOperations(MarketOperations):
 
         return (signers + cancel + crank + settle).execute(self.context)
 
-    def place_order(self, order: Order) -> Order:
+    def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
         client_id: int = self.context.generate_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         order_with_client_id: Order = order.with_client_id(client_id).with_owner(
@@ -169,7 +169,7 @@ class SpotMarketOperations(MarketOperations):
         self._logger.info(f"Placing {self.spot_market.symbol} order {order}.")
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
             order_with_client_id)
-        crank: CombinableInstructions = self._build_crank(add_self=True)
+        crank: CombinableInstructions = self._build_crank(limit=crank_limit, add_self=True)
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
 
         transaction_ids = (signers + place + crank + settle).execute(self.context)

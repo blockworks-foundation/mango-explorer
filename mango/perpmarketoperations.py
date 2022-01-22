@@ -125,7 +125,7 @@ class PerpMarketOperations(MarketOperations):
         settle = self.market_instruction_builder.build_settle_instructions()
         return (signers + cancel + crank + settle).execute(self.context)
 
-    def place_order(self, order: Order) -> Order:
+    def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
         client_id: int = self.context.generate_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         order_with_client_id: Order = order.with_client_id(client_id)
@@ -133,7 +133,7 @@ class PerpMarketOperations(MarketOperations):
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
             order_with_client_id)
         accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)
-        crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank)
+        crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank, limit=crank_limit)
         settle = self.market_instruction_builder.build_settle_instructions()
         (signers + place + crank + settle).execute(self.context)
         return order_with_client_id

@@ -169,7 +169,7 @@ class SerumMarketOperations(MarketOperations):
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
         return (signers + cancel + crank + settle).execute(self.context)
 
-    def place_order(self, order: Order) -> Order:
+    def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
         client_id: int = self.context.generate_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         open_orders_address = self.market_instruction_builder.open_orders_address or SYSTEM_PROGRAM_ADDRESS
@@ -180,7 +180,7 @@ class SerumMarketOperations(MarketOperations):
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
             order_with_client_id)
 
-        crank: CombinableInstructions = self._build_crank()
+        crank: CombinableInstructions = self._build_crank(crank_limit)
         settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
 
         (signers + place + crank + settle).execute(self.context)
