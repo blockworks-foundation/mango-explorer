@@ -411,10 +411,10 @@ class RPCCaller(HTTPProvider):
         # "You will see HTTP respose codes 429 for too many requests or 413 for too much bandwidth."
         if raw_response.status_code == 413:
             raise TooMuchBandwidthRateLimitException(
-                f"Rate limited (too much bandwidth) calling method '{method}'.", self.name, self.cluster_rpc_url)
+                f"Rate limited (too much bandwidth) calling method '{method}' on {self.cluster_rpc_url}", self.name, self.cluster_rpc_url)
         elif raw_response.status_code == 429:
             raise TooManyRequestsRateLimitException(
-                f"Rate limited (too many requests) calling method '{method}'.", self.name, self.cluster_rpc_url)
+                f"Rate limited (too many requests) calling method '{method}' on {self.cluster_rpc_url}", self.name, self.cluster_rpc_url)
 
         # Not a rate-limit problem, but maybe there was some other error?
         raw_response.raise_for_status()
