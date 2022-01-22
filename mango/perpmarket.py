@@ -133,24 +133,6 @@ class PerpMarket(LoadedMarket):
         event_queue: PerpEventQueue = PerpEventQueue.load(context, self.event_queue_address, self.lot_size_converter)
         return event_queue.unprocessed_events
 
-    def accounts_to_crank(self, context: Context, additional_account_to_crank: typing.Optional[PublicKey]) -> typing.Sequence[PublicKey]:
-        accounts_to_crank: typing.List[PublicKey] = []
-        for event_to_crank in self.unprocessed_events(context):
-            accounts_to_crank += event_to_crank.accounts_to_crank
-
-        if additional_account_to_crank is not None:
-            accounts_to_crank += [additional_account_to_crank]
-
-        seen = []
-        distinct = []
-        for account in accounts_to_crank:
-            account_str = account.to_base58()
-            if account_str not in seen:
-                distinct += [account]
-                seen += [account_str]
-        distinct.sort(key=lambda address: address._key or [0])
-        return distinct
-
     def observe_events(self, context: Context, interval: int = 30) -> DisposingSubject:
         perp_event_queue: PerpEventQueue = PerpEventQueue.load(
             context, self.underlying_perp_market.event_queue, self.lot_size_converter)

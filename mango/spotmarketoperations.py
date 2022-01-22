@@ -121,6 +121,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         limited_addresses = distinct_addresses[0:min(int(limit), len(distinct_addresses))]
         limited_addresses.sort(key=encode_public_key_for_sorting)
 
+        self._logger.debug(f"About to crank {len(limited_addresses)} addresses: {limited_addresses}")
         return build_serum_consume_events_instructions(self.context, self.spot_market.address, self.raw_market.state.event_queue(), limited_addresses, int(limit))
 
     def build_redeem_instructions(self) -> CombinableInstructions:
@@ -227,6 +228,8 @@ class SpotMarketOperations(MarketOperations):
         if len(open_orders_to_crank) == 0:
             return CombinableInstructions.empty()
 
+        self._logger.debug(
+            f"Building crank instruction with {len(open_orders_to_crank)} public keys, throttled to {limit}")
         return self.market_instruction_builder.build_crank_instructions(open_orders_to_crank, limit)
 
     def __str__(self) -> str:

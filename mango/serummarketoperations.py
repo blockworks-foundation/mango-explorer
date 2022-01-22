@@ -133,6 +133,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         limited_addresses = distinct_addresses[0:min(int(limit), len(distinct_addresses))]
         limited_addresses.sort(key=encode_public_key_for_sorting)
 
+        self._logger.debug(f"About to crank {len(limited_addresses)} addresses: {limited_addresses}")
         return build_serum_consume_events_instructions(self.context, self.serum_market.address, self.raw_market.state.event_queue(), limited_addresses, int(limit))
 
     def build_create_openorders_instructions(self) -> CombinableInstructions:
@@ -220,14 +221,19 @@ class SerumMarketOperations(MarketOperations):
         orderbook: OrderBook = self.load_orderbook()
         return list([o for o in [*orderbook.bids, *orderbook.asks] if o.owner == open_orders_address])
 
-    def _build_crank(self, limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def _build_crank(self, limit: Decimal = Decimal(32), add_self: bool = False) -> CombinableInstructions:
         open_orders_to_crank: typing.List[PublicKey] = []
         for event in self.serum_market.unprocessed_events(self.context):
             open_orders_to_crank += [event.public_key]
 
+        if add_self and self.market_instruction_builder.open_orders_address is not None:
+            open_orders_to_crank += [self.market_instruction_builder.open_orders_address]
+
         if len(open_orders_to_crank) == 0:
             return CombinableInstructions.empty()
 
+        self._logger.debug(
+            f"Building crank instruction with {len(open_orders_to_crank)} public keys, throttled to {limit}")
         return self.market_instruction_builder.build_crank_instructions(open_orders_to_crank, limit)
 
     def __str__(self) -> str:

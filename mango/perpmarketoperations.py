@@ -120,8 +120,7 @@ class PerpMarketOperations(MarketOperations):
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
         cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(
             order, ok_if_missing=ok_if_missing)
-        accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)
-        crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank)
+        crank = self._build_crank(add_self=True)
         settle = self.market_instruction_builder.build_settle_instructions()
         return (signers + cancel + crank + settle).execute(self.context)
 
@@ -132,8 +131,7 @@ class PerpMarketOperations(MarketOperations):
         self._logger.info(f"Placing {self.market_name} order {order_with_client_id}.")
         place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
             order_with_client_id)
-        accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)
-        crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank, limit=crank_limit)
+        crank = self._build_crank(add_self=True, limit=crank_limit)
         settle = self.market_instruction_builder.build_settle_instructions()
         (signers + place + crank + settle).execute(self.context)
         return order_with_client_id
@@ -145,8 +143,7 @@ class PerpMarketOperations(MarketOperations):
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        accounts_to_crank = self.perp_market.accounts_to_crank(self.context, self.account.address)
-        crank = self.market_instruction_builder.build_crank_instructions(accounts_to_crank, limit)
+        crank = self._build_crank(limit=limit)
         return (signers + crank).execute(self.context)
 
     def create_openorders(self) -> PublicKey:
@@ -161,6 +158,21 @@ class PerpMarketOperations(MarketOperations):
     def load_my_orders(self) -> typing.Sequence[Order]:
         orderbook: OrderBook = self.load_orderbook()
         return list([o for o in [*orderbook.bids, *orderbook.asks] if o.owner == self.account.address])
+
+    def _build_crank(self, limit: Decimal = Decimal(32), add_self: bool = False) -> CombinableInstructions:
+        accounts_to_crank: typing.List[PublicKey] = []
+        for event_to_crank in self.perp_market.unprocessed_events(self.context):
+            accounts_to_crank += event_to_crank.accounts_to_crank
+
+        if add_self:
+            accounts_to_crank += [self.account.address]
+
+        if len(accounts_to_crank) == 0:
+            return CombinableInstructions.empty()
+
+        self._logger.debug(
+            f"Building crank instruction with {len(accounts_to_crank)} public keys, throttled to {limit}")
+        return self.market_instruction_builder.build_crank_instructions(accounts_to_crank, limit)
 
     def __str__(self) -> str:
         return f"""« PerpMarketOperations [{self.market_name}] »"""
