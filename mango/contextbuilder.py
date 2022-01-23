@@ -95,6 +95,8 @@ class ContextBuilder:
                             help="Encoding to request when receiving data from Solana (options are 'base58' (slow), 'base64', 'base64+zstd', or 'jsonParsed')")
         parser.add_argument("--blockhash-cache-duration", type=int,
                             help="How long (in seconds) to cache 'recent' blockhashes")
+        parser.add_argument("--http-request-timeout", type=float, default=20,
+                            help="What is the timeout for HTTP requests to when calling to RPC nodes (in seconds), -1 means no timeout")
         parser.add_argument("--stale-data-pause-before-retry", type=Decimal,
                             help="How long (in seconds, e.g. 0.1) to pause after retrieving stale data before retrying")
         parser.add_argument("--stale-data-maximum-retries", type=int,
@@ -126,6 +128,7 @@ class ContextBuilder:
         commitment: typing.Optional[str] = args.commitment
         encoding: typing.Optional[str] = args.encoding
         blockhash_cache_duration: typing.Optional[int] = args.blockhash_cache_duration
+        http_request_timeout: typing.Optional[float] = args.http_request_timeout
         stale_data_pause_before_retry: typing.Optional[Decimal] = args.stale_data_pause_before_retry
         stale_data_maximum_retries: typing.Optional[int] = args.stale_data_maximum_retries
         gma_chunk_size: typing.Optional[Decimal] = args.gma_chunk_size
@@ -144,7 +147,7 @@ class ContextBuilder:
             actual_stale_data_pauses_before_retry = [float(pause)] * retries
 
         context: Context = ContextBuilder.build(name, cluster_name, cluster_urls, skip_preflight, commitment,
-                                                encoding, blockhash_cache_duration,
+                                                encoding, blockhash_cache_duration, http_request_timeout,
                                                 actual_stale_data_pauses_before_retry,
                                                 group_name, group_address, mango_program_address,
                                                 serum_program_address, gma_chunk_size, gma_chunk_pause,
@@ -161,7 +164,7 @@ class ContextBuilder:
     def from_group_name(context: Context, group_name: str) -> Context:
         return ContextBuilder.build(context.name, context.client.cluster_name, context.client.cluster_urls,
                                     context.client.skip_preflight, context.client.commitment,
-                                    context.client.encoding, context.client.blockhash_cache_duration,
+                                    context.client.encoding, context.client.blockhash_cache_duration, None,
                                     context.client.stale_data_pauses_before_retry,
                                     group_name, None, None, None,
                                     context.gma_chunk_size, context.gma_chunk_pause,
@@ -179,6 +182,7 @@ class ContextBuilder:
                                                                context.client.skip_preflight,
                                                                context.client.encoding,
                                                                context.client.blockhash_cache_duration,
+                                                               -1,
                                                                context.client.stale_data_pauses_before_retry,
                                                                context.client.instruction_reporter)
 
@@ -196,6 +200,7 @@ class ContextBuilder:
                                                                context.client.skip_preflight,
                                                                context.client.encoding,
                                                                context.client.blockhash_cache_duration,
+                                                               -1,
                                                                context.client.stale_data_pauses_before_retry,
                                                                context.client.instruction_reporter)
 
@@ -207,6 +212,7 @@ class ContextBuilder:
               skip_preflight: bool = False,
               commitment: typing.Optional[str] = None, encoding: typing.Optional[str] = None,
               blockhash_cache_duration: typing.Optional[int] = None,
+              http_request_timeout: typing.Optional[float] = None,
               stale_data_pauses_before_retry: typing.Optional[typing.Sequence[float]] = None,
               group_name: typing.Optional[str] = None, group_address: typing.Optional[PublicKey] = None,
               program_address: typing.Optional[PublicKey] = None, serum_program_address: typing.Optional[PublicKey] = None,
@@ -232,6 +238,7 @@ class ContextBuilder:
         actual_encoding: str = encoding or "base64"
         actual_blockhash_cache_duration: int = blockhash_cache_duration or 0
         actual_stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry or []
+        actual_http_request_timeout: float = http_request_timeout or -1
 
         actual_cluster_urls: typing.Optional[typing.Sequence[ClusterUrlData]] = cluster_urls
         if actual_cluster_urls is None or len(actual_cluster_urls) == 0:
@@ -327,4 +334,4 @@ class ContextBuilder:
                 devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
 
-        return Context(actual_name, actual_cluster, actual_cluster_urls, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_stale_data_pauses_before_retry, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup)
+        return Context(actual_name, actual_cluster, actual_cluster_urls, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_http_request_timeout, actual_stale_data_pauses_before_retry, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup)

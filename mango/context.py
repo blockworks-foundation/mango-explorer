@@ -38,7 +38,7 @@ from .text import indent_collection_as_str, indent_item_by
 #
 class Context:
     def __init__(self, name: str, cluster_name: str, cluster_urls: typing.Sequence[ClusterUrlData], skip_preflight: bool,
-                 commitment: str, encoding: str, blockhash_cache_duration: int,
+                 commitment: str, encoding: str, blockhash_cache_duration: int, http_request_timeout: float,
                  stale_data_pauses_before_retry: typing.Sequence[float], mango_program_address: PublicKey,
                  serum_program_address: PublicKey, group_name: str, group_address: PublicKey,
                  gma_chunk_size: Decimal, gma_chunk_pause: Decimal, instrument_lookup: InstrumentLookup,
@@ -48,7 +48,7 @@ class Context:
         instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_addresses(
             mango_program_address, serum_program_address)
         self.client: BetterClient = BetterClient.from_configuration(name, cluster_name, cluster_urls, Commitment(
-            commitment), skip_preflight, encoding, blockhash_cache_duration, stale_data_pauses_before_retry, instruction_reporter)
+            commitment), skip_preflight, encoding, blockhash_cache_duration, http_request_timeout, stale_data_pauses_before_retry, instruction_reporter)
         self.mango_program_address: PublicKey = mango_program_address
         self.serum_program_address: PublicKey = serum_program_address
         self.group_name: str = group_name

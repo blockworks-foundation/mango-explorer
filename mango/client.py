@@ -347,12 +347,13 @@ class TransactionWatcher:
 # A `RPCCaller` extends the HTTPProvider with better error handling.
 #
 class RPCCaller(HTTPProvider):
-    def __init__(self, name: str, cluster_rpc_url: str, cluster_ws_url: str, stale_data_pauses_before_retry: typing.Sequence[float], slot_holder: SlotHolder, instruction_reporter: InstructionReporter):
+    def __init__(self, name: str, cluster_rpc_url: str, cluster_ws_url: str, http_request_timeout: float, stale_data_pauses_before_retry: typing.Sequence[float], slot_holder: SlotHolder, instruction_reporter: InstructionReporter):
         super().__init__(cluster_rpc_url)
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster_rpc_url: str = cluster_rpc_url
         self.cluster_ws_url: str = cluster_ws_url
+        self.http_request_timeout: float = http_request_timeout
         self.stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry
         self.slot_holder: SlotHolder = slot_holder
         self.instruction_reporter: InstructionReporter = instruction_reporter
@@ -403,7 +404,8 @@ class RPCCaller(HTTPProvider):
         # return self._after_request(raw_response=raw_response, method=method)
 
         request_kwargs = self._before_request(method=method, params=params, is_async=False)
-        raw_response = requests.post(**request_kwargs)
+        http_post_timeout: typing.Union[float, None] = self.http_request_timeout if self.http_request_timeout >= 0 else None
+        raw_response = requests.post(**request_kwargs, timeout=http_post_timeout)
 
         # Some custom exceptions specifically for rate-limiting. This allows calling code to handle this
         # specific case if they so choose.
@@ -535,6 +537,7 @@ class CompoundRPCCaller(HTTPProvider):
                 return result
             except (requests.exceptions.HTTPError,
                     requests.exceptions.ConnectionError,
+                    requests.exceptions.Timeout,
                     RateLimitException,
                     NodeIsBehindException,
                     StaleSlotException,
@@ -588,12 +591,12 @@ class BetterClient:
         self.executor: Executor = ThreadPoolExecutor()
 
     @staticmethod
-    def from_configuration(name: str, cluster_name: str, cluster_urls: typing.Sequence[ClusterUrlData], commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter) -> "BetterClient":
+    def from_configuration(name: str, cluster_name: str, cluster_urls: typing.Sequence[ClusterUrlData], commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, http_request_timeout: float, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter) -> "BetterClient":
         slot_holder: SlotHolder = SlotHolder()
         rpc_callers: typing.List[RPCCaller] = []
         cluster_url: ClusterUrlData
         for cluster_url in cluster_urls:
-            rpc_caller: RPCCaller = RPCCaller(name, cluster_url.rpc, cluster_url.ws, stale_data_pauses_before_retry,
+            rpc_caller: RPCCaller = RPCCaller(name, cluster_url.rpc, cluster_url.ws, http_request_timeout, stale_data_pauses_before_retry,
                                               slot_holder, instruction_reporter)
             rpc_callers += [rpc_caller]
 
