@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import enum
 import datetime
 import json
 import logging
@@ -23,7 +24,9 @@ import typing
 
 from base64 import b64decode
 from dataclasses import dataclass
+from datetime import timedelta
 from collections.abc import Mapping
+from collections import deque
 from concurrent.futures import Executor, ThreadPoolExecutor
 from decimal import Decimal
 from solana.blockhash import Blockhash, BlockhashCache
@@ -290,21 +293,59 @@ class SlotHolder:
         return True
 
 
+class TransactionOutcome(enum.Enum):
+    SUCCESS = "SUCCESS"
+    FAIL = "FAIL"
+    TIMEOUT = "TIMEOUT"
+
+    def __str__(self) -> str:
+        return self.value
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+@dataclass
+class TransactionStatus:
+    signature: str
+    outcome: TransactionOutcome
+    sent: datetime
+    duration: timedelta
+    # TODO: Might want to add 'message'
+
+
+class TransactionStatusCollector:
+    transactions: typing.Sequence[TransactionStatus]
+
+    def __init__(self, maxlength=100):
+        self.transactions = deque(maxlen=maxlength)
+
+    def add_transaction(self, status: TransactionStatus):
+        self.transactions.append(status)
+
+
+class NullTransactionStatusCollector(TransactionStatusCollector):
+    def add_transaction(self, status: TransactionStatus):
+        pass
+
+
 class TransactionWatcher:
-    def __init__(self, client: Client, slot_holder: SlotHolder, signature: str):
+    def __init__(self, client: Client, slot_holder: SlotHolder, signature: str, collector: TransactionStatusCollector):
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.client: Client = client
         self.slot_holder: SlotHolder = slot_holder
         self.signature: str = signature
+        self.collector = collector
 
     def report_on_transaction(self) -> None:
-        started_at: float = time.time()
+        started_at: datetime = datetime.datetime.now()
         for pause in [0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]:
             transaction_response = self.client.get_signature_statuses([self.signature])
             if "result" in transaction_response and "value" in transaction_response["result"]:
                 [status] = transaction_response["result"]["value"]
                 if status is not None:
-                    time_taken: float = time.time() - started_at
+                    delta: timedelta = datetime.datetime.now() - started_at
+                    time_taken: float = delta.microseconds / 1000000
 
                     # value should be a dict that looks like:
                     # {
@@ -326,20 +367,24 @@ class TransactionWatcher:
                     # }
                     if status["err"] is not None:
                         self._logger.warning(
-                            f"Transaction {self.signature} failed after {time_taken} seconds with error {status['err']}")
+                            f"Transaction {self.signature} failed after {time_taken:.2f} seconds with error {status['err']}")
+                        self.collector.add_transaction(TransactionStatus(self.signature, TransactionOutcome.FAIL, started_at, delta))
                         return
 
                     confirmation_status: str = status["confirmationStatus"]
                     slot: int = status["slot"]
                     self.slot_holder.require_data_from_fresh_slot(slot)
+                    self.collector.add_transaction(TransactionStatus(self.signature, TransactionOutcome.SUCCESS, started_at, delta))
                     self._logger.info(
-                        f"Transaction {self.signature} reached confirmation status '{confirmation_status}' in slot {slot} after {time_taken} seconds")
+                        f"Transaction {self.signature} reached confirmation status '{confirmation_status}' in slot {slot} after {time_taken:.2f} seconds")
                     return
             time.sleep(pause)
 
-        time_wasted_looking: float = time.time() - started_at
+        delta = datetime.datetime.now() - started_at
+        time_wasted_looking: float = delta.microseconds / 1000000
+        self.collector.add_transaction(TransactionStatus(self.signature, TransactionOutcome.TIMEOUT, started_at, delta))
         self._logger.warning(
-            f"Transaction {self.signature} disappeared despite spending {time_wasted_looking} seconds waiting for it")
+            f"Transaction {self.signature} disappeared despite spending {time_wasted_looking:.2f} seconds waiting for it")
 
 
 # # 🥭 RPCCaller class
@@ -578,7 +623,7 @@ class ClusterUrlData:
 
 
 class BetterClient:
-    def __init__(self, client: Client, name: str, cluster_name: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, rpc_caller: CompoundRPCCaller) -> None:
+    def __init__(self, client: Client, name: str, cluster_name: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, rpc_caller: CompoundRPCCaller, transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.compatible_client: Client = client
         self.name: str = name
@@ -589,9 +634,10 @@ class BetterClient:
         self.blockhash_cache_duration: int = blockhash_cache_duration
         self.rpc_caller: CompoundRPCCaller = rpc_caller
         self.executor: Executor = ThreadPoolExecutor()
+        self.transaction_status_collector: TransactionStatusCollector = transaction_status_collector
 
     @staticmethod
-    def from_configuration(name: str, cluster_name: str, cluster_urls: typing.Sequence[ClusterUrlData], commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, http_request_timeout: float, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter) -> "BetterClient":
+    def from_configuration(name: str, cluster_name: str, cluster_urls: typing.Sequence[ClusterUrlData], commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, http_request_timeout: float, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter, transaction_status_collector: TransactionStatusCollector) -> "BetterClient":
         slot_holder: SlotHolder = SlotHolder()
         rpc_callers: typing.List[RPCCaller] = []
         cluster_url: ClusterUrlData
@@ -617,7 +663,7 @@ class BetterClient:
 
         provider.on_provider_change = __on_provider_change
 
-        return BetterClient(client, name, cluster_name, commitment, skip_preflight, encoding, blockhash_cache_duration, provider)
+        return BetterClient(client, name, cluster_name, commitment, skip_preflight, encoding, blockhash_cache_duration, provider, transaction_status_collector)
 
     @property
     def cluster_rpc_url(self) -> str:
@@ -744,7 +790,7 @@ class BetterClient:
 
                 if signature != _STUB_TRANSACTION_SIGNATURE:
                     tx_reporter: TransactionWatcher = TransactionWatcher(
-                        self.compatible_client, self.rpc_caller.current.slot_holder, signature)
+                        self.compatible_client, self.rpc_caller.current.slot_holder, signature, self.transaction_status_collector)
                     self.executor.submit(tx_reporter.report_on_transaction)
                 else:
                     self._logger.error("Could not get status for stub signature")

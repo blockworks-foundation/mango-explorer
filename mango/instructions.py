@@ -391,7 +391,8 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
                     "quantity": native_quantity,
                     "client_order_id": client_order_id,
                     "side": raw_side,
-                    "order_type": raw_order_type
+                    "order_type": raw_order_type,
+
                 })
         )
     ]

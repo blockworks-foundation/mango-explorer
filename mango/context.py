@@ -24,7 +24,7 @@ from rx.scheduler.threadpoolscheduler import ThreadPoolScheduler
 from solana.publickey import PublicKey
 from solana.rpc.commitment import Commitment
 
-from .client import BetterClient, ClusterUrlData
+from .client import BetterClient, ClusterUrlData, TransactionStatusCollector, NullTransactionStatusCollector
 from .constants import MangoConstants
 from .instructionreporter import InstructionReporter, CompoundInstructionReporter
 from .instrumentlookup import InstrumentLookup
@@ -42,13 +42,13 @@ class Context:
                  stale_data_pauses_before_retry: typing.Sequence[float], mango_program_address: PublicKey,
                  serum_program_address: PublicKey, group_name: str, group_address: PublicKey,
                  gma_chunk_size: Decimal, gma_chunk_pause: Decimal, instrument_lookup: InstrumentLookup,
-                 market_lookup: MarketLookup) -> None:
+                 market_lookup: MarketLookup, transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_addresses(
             mango_program_address, serum_program_address)
         self.client: BetterClient = BetterClient.from_configuration(name, cluster_name, cluster_urls, Commitment(
-            commitment), skip_preflight, encoding, blockhash_cache_duration, http_request_timeout, stale_data_pauses_before_retry, instruction_reporter)
+            commitment), skip_preflight, encoding, blockhash_cache_duration, http_request_timeout, stale_data_pauses_before_retry, instruction_reporter, transaction_status_collector)
         self.mango_program_address: PublicKey = mango_program_address
         self.serum_program_address: PublicKey = serum_program_address
         self.group_name: str = group_name
