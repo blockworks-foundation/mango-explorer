@@ -32,7 +32,8 @@ class PerpToSpotHedger(Hedger):
     def __init__(self, group: mango.Group, underlying_market: mango.PerpMarket,
                  hedging_market: mango.SpotMarket, market_operations: mango.MarketOperations,
                  max_price_slippage_factor: Decimal, max_hedge_chunk_quantity: Decimal,
-                 target_balance: mango.TargetBalance, action_threshold: Decimal) -> None:
+                 target_balance: mango.TargetBalance, action_threshold: Decimal,
+                 pause_threshold: int = 0) -> None:
         super().__init__()
         if (underlying_market.base != hedging_market.base) or (underlying_market.quote != hedging_market.quote):
             raise Exception(
@@ -54,7 +55,15 @@ class PerpToSpotHedger(Hedger):
 
         self.market_index: int = group.slot_by_perp_market_address(underlying_market.address).index
 
+        self.pause_threshold: int = pause_threshold
+        self.pause_counter: int = self.pause_threshold
+
     def pulse(self, context: mango.Context, model_state: mango.ModelState) -> None:
+        if self.pause_counter < self.pause_threshold:
+            self.pause_counter += 1
+            self._logger.debug(f"Pausing trades for {self.pause_threshold} pulses - this is pulse {self.pause_counter}")
+            return
+
         try:
             perp_account: typing.Optional[mango.PerpAccount] = model_state.account.perp_accounts_by_index[self.market_index]
             if perp_account is None:
@@ -65,22 +74,6 @@ class PerpToSpotHedger(Hedger):
             if basket_token is None:
                 raise Exception(
                     f"Could not find basket token at index {self.market_index} in account {model_state.account.address}.")
-
-            # # Latency can be important here so fetch fresh Account data in one gulp.
-            # fresh_data: typing.Sequence[mango.AccountInfo] = mango.AccountInfo.load_multiple(
-            #     context, [model_state.group.address, model_state.group.cache, model_state.account.address])
-            # fresh_group: mango.Group = mango.Group.parse_with_context(context, fresh_data[0])
-            # fresh_cache: mango.Cache = mango.Cache.parse(fresh_data[1])
-            # fresh_account: mango.Account = mango.Account.parse(fresh_data[2], fresh_group, fresh_cache)
-            # perp_account: typing.Optional[mango.PerpAccount] = fresh_account.perp_accounts_by_index[self.market_index]
-            # if perp_account is None:
-            #     raise Exception(
-            #         f"Could not find perp account at index {self.market_index} in account {fresh_account.address}.")
-
-            # basket_token: typing.Optional[mango.AccountSlot] = fresh_account.slots_by_index[self.market_index]
-            # if basket_token is None:
-            #     raise Exception(
-            #         f"Could not find basket token at index {self.market_index} in account {fresh_account.address}.")
 
             token_balance: mango.InstrumentValue = basket_token.net_value
             perp_position: mango.InstrumentValue = perp_account.base_token_value
@@ -112,6 +105,7 @@ class PerpToSpotHedger(Hedger):
                     f"Hedging perp position {perp_position} and token balance {token_balance} with {side} of {quantity:,.8f} at {up_or_down} ({model_state.price}) {adjusted_price:,.8f} on {self.hedging_market.symbol}\n\t{order}")
                 try:
                     self.market_operations.place_order(order)
+                    self.pause_counter = 0
                 except Exception:
                     self._logger.error(
                         f"[{context.name}] Failed to hedge on {self.hedging_market.symbol} using order {order} - {traceback.format_exc()}")
