@@ -315,7 +315,7 @@ class TransactionStatus:
 
 
 class TransactionStatusCollector:
-    transactions: typing.Sequence[TransactionStatus]
+    transactions: typing.Deque[TransactionStatus]
 
     def __init__(self, maxlength=100):
         self.transactions = deque(maxlen=maxlength)
@@ -345,7 +345,7 @@ class TransactionWatcher:
                 [status] = transaction_response["result"]["value"]
                 if status is not None:
                     delta: timedelta = datetime.datetime.now() - started_at
-                    time_taken: float = delta.microseconds / 1000000
+                    time_taken: float = delta.seconds + delta.microseconds / 1000000
 
                     # value should be a dict that looks like:
                     # {
@@ -381,7 +381,7 @@ class TransactionWatcher:
             time.sleep(pause)
 
         delta = datetime.datetime.now() - started_at
-        time_wasted_looking: float = delta.microseconds / 1000000
+        time_wasted_looking: float = delta.seconds + delta.microseconds / 1000000
         self.collector.add_transaction(TransactionStatus(self.signature, TransactionOutcome.TIMEOUT, started_at, delta))
         self._logger.warning(
             f"Transaction {self.signature} disappeared despite spending {time_wasted_looking:.2f} seconds waiting for it")
