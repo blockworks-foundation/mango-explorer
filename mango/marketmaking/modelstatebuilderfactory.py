@@ -125,7 +125,7 @@ def _websocket_model_state_builder_factory(context: mango.Context, disposer: man
         order_owner: PublicKey = market.find_openorders_address_for_owner(
             context, wallet.address) or SYSTEM_PROGRAM_ADDRESS
         price_watcher: mango.Watcher[mango.Price] = mango.build_price_watcher(
-            context, websocket_manager, health_check, disposer, "serum", market)
+            context, websocket_manager, health_check, disposer, "market", market)
         inventory_watcher: mango.Watcher[mango.Inventory] = mango.build_serum_inventory_watcher(
             context, websocket_manager, health_check, disposer, wallet, market, price_watcher)
         latest_open_orders_observer: mango.Watcher[mango.PlacedOrdersContainer] = mango.build_serum_open_orders_watcher(
