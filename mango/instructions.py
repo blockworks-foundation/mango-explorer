@@ -345,7 +345,7 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, accou
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
-def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market_details: PerpMarketDetails, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType) -> CombinableInstructions:
+def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market_details: PerpMarketDetails, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType, reduce_only: bool = False) -> CombinableInstructions:
     # { buy: 0, sell: 1 }
     raw_side: int = 1 if side == Side.SELL else 0
     raw_order_type: int = order_type.to_perp()
@@ -391,7 +391,8 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
                     "quantity": native_quantity,
                     "client_order_id": client_order_id,
                     "side": raw_side,
-                    "order_type": raw_order_type
+                    "order_type": raw_order_type,
+                    "reduce_only": reduce_only
                 })
         )
     ]

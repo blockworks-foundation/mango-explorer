@@ -165,6 +165,8 @@ class SpotMarketOperations(MarketOperations):
     def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
         client_id: int = self.context.generate_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        if order.reduce_only is True:
+            self._logger.warning("Ignoring reduce_only flag on order because spot markets don't support it.")
         order_with_client_id: Order = order.with_client_id(client_id).with_owner(
             self.open_orders_address or SYSTEM_PROGRAM_ADDRESS)
         self._logger.info(f"Placing {self.spot_market.symbol} order {order}.")

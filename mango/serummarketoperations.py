@@ -173,6 +173,8 @@ class SerumMarketOperations(MarketOperations):
     def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
         client_id: int = self.context.generate_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        if order.reduce_only is True:
+            self._logger.warning("Ignoring reduce_only flag on order because Serum doesn't support it.")
         open_orders_address = self.market_instruction_builder.open_orders_address or SYSTEM_PROGRAM_ADDRESS
         order_with_client_id: Order = Order(id=0, client_id=client_id, side=order.side, price=order.price,
                                             quantity=order.quantity, owner=open_orders_address,
