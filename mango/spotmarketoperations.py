@@ -118,6 +118,10 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
             if oo not in distinct_addresses:
                 distinct_addresses += [oo]
 
+        if len(distinct_addresses) > limit:
+            self._logger.warn(
+                f"Cranking limited to {limit} of {len(distinct_addresses)} addresses waiting to be cranked.")
+
         limited_addresses = distinct_addresses[0:min(int(limit), len(distinct_addresses))]
         limited_addresses.sort(key=encode_public_key_for_sorting)
 
