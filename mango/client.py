@@ -14,7 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import enum
-import datetime
 import json
 import logging
 import requests
@@ -24,7 +23,7 @@ import typing
 
 from base64 import b64decode
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from collections.abc import Mapping
 from collections import deque
 from concurrent.futures import Executor, ThreadPoolExecutor
@@ -311,21 +310,18 @@ class TransactionStatus:
     outcome: TransactionOutcome
     sent: datetime
     duration: timedelta
-    # TODO: Might want to add 'message'
 
 
 class TransactionStatusCollector:
-    transactions: typing.Deque[TransactionStatus]
+    def __init__(self, maxlength: int = 100) -> None:
+        self.transactions: typing.Deque[TransactionStatus] = deque(maxlen=maxlength)
 
-    def __init__(self, maxlength=100):
-        self.transactions = deque(maxlen=maxlength)
-
-    def add_transaction(self, status: TransactionStatus):
+    def add_transaction(self, status: TransactionStatus) -> None:
         self.transactions.append(status)
 
 
 class NullTransactionStatusCollector(TransactionStatusCollector):
-    def add_transaction(self, status: TransactionStatus):
+    def add_transaction(self, status: TransactionStatus) -> None:
         pass
 
 
@@ -338,13 +334,13 @@ class TransactionWatcher:
         self.collector = collector
 
     def report_on_transaction(self) -> None:
-        started_at: datetime = datetime.datetime.now()
+        started_at: datetime = datetime.now()
         for pause in [0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]:
             transaction_response = self.client.get_signature_statuses([self.signature])
             if "result" in transaction_response and "value" in transaction_response["result"]:
                 [status] = transaction_response["result"]["value"]
                 if status is not None:
-                    delta: timedelta = datetime.datetime.now() - started_at
+                    delta: timedelta = datetime.now() - started_at
                     time_taken: float = delta.seconds + delta.microseconds / 1000000
 
                     # value should be a dict that looks like:
@@ -368,19 +364,21 @@ class TransactionWatcher:
                     if status["err"] is not None:
                         self._logger.warning(
                             f"Transaction {self.signature} failed after {time_taken:.2f} seconds with error {status['err']}")
-                        self.collector.add_transaction(TransactionStatus(self.signature, TransactionOutcome.FAIL, started_at, delta))
+                        self.collector.add_transaction(TransactionStatus(
+                            self.signature, TransactionOutcome.FAIL, started_at, delta))
                         return
 
                     confirmation_status: str = status["confirmationStatus"]
                     slot: int = status["slot"]
                     self.slot_holder.require_data_from_fresh_slot(slot)
-                    self.collector.add_transaction(TransactionStatus(self.signature, TransactionOutcome.SUCCESS, started_at, delta))
+                    self.collector.add_transaction(TransactionStatus(
+                        self.signature, TransactionOutcome.SUCCESS, started_at, delta))
                     self._logger.info(
                         f"Transaction {self.signature} reached confirmation status '{confirmation_status}' in slot {slot} after {time_taken:.2f} seconds")
                     return
             time.sleep(pause)
 
-        delta = datetime.datetime.now() - started_at
+        delta = datetime.now() - started_at
         time_wasted_looking: float = delta.seconds + delta.microseconds / 1000000
         self.collector.add_transaction(TransactionStatus(self.signature, TransactionOutcome.TIMEOUT, started_at, delta))
         self._logger.warning(
@@ -449,7 +447,8 @@ class RPCCaller(HTTPProvider):
         # return self._after_request(raw_response=raw_response, method=method)
 
         request_kwargs = self._before_request(method=method, params=params, is_async=False)
-        http_post_timeout: typing.Union[float, None] = self.http_request_timeout if self.http_request_timeout >= 0 else None
+        http_post_timeout: typing.Union[float,
+                                        None] = self.http_request_timeout if self.http_request_timeout >= 0 else None
         raw_response = requests.post(**request_kwargs, timeout=http_post_timeout)
 
         # Some custom exceptions specifically for rate-limiting. This allows calling code to handle this
@@ -623,7 +622,7 @@ class ClusterUrlData:
 
 
 class BetterClient:
-    def __init__(self, client: Client, name: str, cluster_name: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, rpc_caller: CompoundRPCCaller, transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector) -> None:
+    def __init__(self, client: Client, name: str, cluster_name: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, rpc_caller: CompoundRPCCaller, transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector()) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.compatible_client: Client = client
         self.name: str = name
@@ -808,15 +807,15 @@ class BetterClient:
     def wait_for_confirmation(self, transaction_ids: typing.Sequence[str], max_wait_in_seconds: int = 60) -> typing.Sequence[str]:
         self._logger.info(f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}.")
         all_confirmed: typing.List[str] = []
-        start_time: datetime.datetime = datetime.datetime.now()
-        cutoff: datetime.datetime = start_time + datetime.timedelta(seconds=max_wait_in_seconds)
+        start_time: datetime = datetime.now()
+        cutoff: datetime = start_time + timedelta(seconds=max_wait_in_seconds)
         for transaction_id in transaction_ids:
-            while datetime.datetime.now() < cutoff:
+            while datetime.now() < cutoff:
                 time.sleep(1)
                 confirmed = self.get_confirmed_transaction(transaction_id)
                 if confirmed is not None:
                     self._logger.info(
-                        f"Confirmed {transaction_id} after {datetime.datetime.now() - start_time} seconds.")
+                        f"Confirmed {transaction_id} after {datetime.now() - start_time} seconds.")
                     all_confirmed += [transaction_id]
                     break
 

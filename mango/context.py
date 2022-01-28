@@ -42,7 +42,7 @@ class Context:
                  stale_data_pauses_before_retry: typing.Sequence[float], mango_program_address: PublicKey,
                  serum_program_address: PublicKey, group_name: str, group_address: PublicKey,
                  gma_chunk_size: Decimal, gma_chunk_pause: Decimal, instrument_lookup: InstrumentLookup,
-                 market_lookup: MarketLookup, transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector) -> None:
+                 market_lookup: MarketLookup, transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector()) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_addresses(

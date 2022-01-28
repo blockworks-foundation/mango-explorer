@@ -184,7 +184,8 @@ class ContextBuilder:
                                                                context.client.blockhash_cache_duration,
                                                                -1,
                                                                context.client.stale_data_pauses_before_retry,
-                                                               context.client.instruction_reporter)
+                                                               context.client.instruction_reporter,
+                                                               context.client.transaction_status_collector)
 
         return fresh_context
 
@@ -202,7 +203,8 @@ class ContextBuilder:
                                                                context.client.blockhash_cache_duration,
                                                                -1,
                                                                context.client.stale_data_pauses_before_retry,
-                                                               context.client.instruction_reporter)
+                                                               context.client.instruction_reporter,
+                                                               context.client.transaction_status_collector)
 
         return fresh_context
 
@@ -218,7 +220,7 @@ class ContextBuilder:
               program_address: typing.Optional[PublicKey] = None, serum_program_address: typing.Optional[PublicKey] = None,
               gma_chunk_size: typing.Optional[Decimal] = None, gma_chunk_pause: typing.Optional[Decimal] = None,
               token_filename: str = SPLTokenLookup.DefaultDataFilepath,
-              transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector) -> "Context":
+              transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector()) -> "Context":
         def __public_key_or_none(address: typing.Optional[str]) -> typing.Optional[PublicKey]:
             if address is not None and address != "":
                 return PublicKey(address)
