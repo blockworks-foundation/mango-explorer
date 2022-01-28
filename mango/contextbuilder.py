@@ -22,7 +22,7 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-from .client import BetterClient, ClusterUrlData
+from .client import BetterClient, ClusterUrlData, TransactionStatusCollector, NullTransactionStatusCollector
 from .constants import MangoConstants, DATA_PATH
 from .context import Context
 from .idsjsonmarketlookup import IdsJsonMarketLookup
@@ -217,7 +217,8 @@ class ContextBuilder:
               group_name: typing.Optional[str] = None, group_address: typing.Optional[PublicKey] = None,
               program_address: typing.Optional[PublicKey] = None, serum_program_address: typing.Optional[PublicKey] = None,
               gma_chunk_size: typing.Optional[Decimal] = None, gma_chunk_pause: typing.Optional[Decimal] = None,
-              token_filename: str = SPLTokenLookup.DefaultDataFilepath) -> "Context":
+              token_filename: str = SPLTokenLookup.DefaultDataFilepath,
+              transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector) -> "Context":
         def __public_key_or_none(address: typing.Optional[str]) -> typing.Optional[PublicKey]:
             if address is not None and address != "":
                 return PublicKey(address)
@@ -334,4 +335,4 @@ class ContextBuilder:
                 devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
 
-        return Context(actual_name, actual_cluster, actual_cluster_urls, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_http_request_timeout, actual_stale_data_pauses_before_retry, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup)
+        return Context(actual_name, actual_cluster, actual_cluster_urls, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_http_request_timeout, actual_stale_data_pauses_before_retry, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup, transaction_status_collector)
