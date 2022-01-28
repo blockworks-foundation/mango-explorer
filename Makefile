@@ -2,6 +2,7 @@
 commands := $(wildcard bin/*)
 
 setup: ## Install all the build and lint dependencies
+	pip --no-cache-dir install poetry
 	poetry install --no-interaction
 
 upgrade: ## Upgrade all the build and lint dependencies

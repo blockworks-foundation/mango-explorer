@@ -2,9 +2,10 @@
 MARKET=${1:-BTC-PERP}
 POSITION_SIZE_CEILING=${2:-1}
 IMMEDIATE_BUY_ADJUSTMENT=${3:-100}
+MAX_PAUSE=${4:-30}
 ORACLE_MARKET=${MARKET//\-PERP/\/USDC}
 
-printf "Running on market %s with random position size (maximum %f) and IOC prices +/- %f from current price\nPress Control+C to stop...\n" $MARKET $POSITION_SIZE_CEILING $IMMEDIATE_BUY_ADJUSTMENT
+printf "Running on market %s with random position size (maximum %f) and IOC prices +/- %f from current price, with a maximum pause between trades of %s seconds.\nPress Control+C to stop...\n" $MARKET $POSITION_SIZE_CEILING $IMMEDIATE_BUY_ADJUSTMENT $MAX_PAUSE
 while :
 do
     cancel-my-orders --name "Random Taker ${MARKET} (cancel)" --market $MARKET --log-level ERROR
@@ -14,7 +15,7 @@ do
     place-order --name "Random Taker ${MARKET} (place buy)" --market $MARKET --order-type IOC --log-level ERROR \
         --side BUY --quantity $RANDOM_POSITION_SIZE --price $(echo "$CURRENT_PRICE + $IMMEDIATE_BUY_ADJUSTMENT" | bc)
 
-    PAUSE_FOR=$((1 + $RANDOM % 30))
+    PAUSE_FOR=$((1 + $RANDOM % $MAX_PAUSE))
     printf "Pausing after BUY for %d seconds.\n" ${PAUSE_FOR}
     sleep ${PAUSE_FOR}
 
@@ -23,7 +24,7 @@ do
     place-order --name "Random Taker ${MARKET} (place sell)" --market $MARKET --order-type IOC --log-level ERROR \
         --side SELL --quantity $RANDOM_POSITION_SIZE --price $(echo "$CURRENT_PRICE - $IMMEDIATE_BUY_ADJUSTMENT" | bc)
 
-    PAUSE_FOR=$((1 + $RANDOM % 30))
+    PAUSE_FOR=$((1 + $RANDOM % $MAX_PAUSE))
     printf "Pausing after SELL for %d seconds.\n" ${PAUSE_FOR}
     sleep ${PAUSE_FOR}
 

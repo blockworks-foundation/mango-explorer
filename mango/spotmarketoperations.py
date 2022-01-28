@@ -118,6 +118,10 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
             if oo not in distinct_addresses:
                 distinct_addresses += [oo]
 
+        if len(distinct_addresses) > limit:
+            self._logger.warn(
+                f"Cranking limited to {limit} of {len(distinct_addresses)} addresses waiting to be cranked.")
+
         limited_addresses = distinct_addresses[0:min(int(limit), len(distinct_addresses))]
         limited_addresses.sort(key=encode_public_key_for_sorting)
 
@@ -165,6 +169,8 @@ class SpotMarketOperations(MarketOperations):
     def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
         client_id: int = self.context.generate_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        if order.reduce_only is True:
+            self._logger.warning("Ignoring reduce_only flag on order because spot markets don't support it.")
         order_with_client_id: Order = order.with_client_id(client_id).with_owner(
             self.open_orders_address or SYSTEM_PROGRAM_ADDRESS)
         self._logger.info(f"Placing {self.spot_market.symbol} order {order}.")

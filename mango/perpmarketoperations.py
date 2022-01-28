@@ -66,7 +66,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         if self.perp_market.underlying_perp_market is None:
             raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
         return build_place_perp_order_instructions(
-            self.context, self.wallet, self.perp_market.underlying_perp_market.group, self.account, self.perp_market.underlying_perp_market, order.price, order.quantity, order.client_id, order.side, order.order_type)
+            self.context, self.wallet, self.perp_market.underlying_perp_market.group, self.account, self.perp_market.underlying_perp_market, order.price, order.quantity, order.client_id, order.side, order.order_type, order.reduce_only)
 
     def build_settle_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()
@@ -79,6 +79,10 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         for address in addresses:
             if address not in distinct_addresses:
                 distinct_addresses += [address]
+
+        if len(distinct_addresses) > limit:
+            self._logger.warn(
+                f"Cranking limited to {limit} of {len(distinct_addresses)} addresses waiting to be cranked.")
 
         limited_addresses = distinct_addresses[0:min(int(limit), len(distinct_addresses))]
         limited_addresses.sort(key=encode_public_key_for_sorting)

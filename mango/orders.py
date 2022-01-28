@@ -149,6 +149,7 @@ class Order:
     price: Decimal
     quantity: Decimal
     order_type: OrderType
+    reduce_only: bool = False
 
     @staticmethod
     def read_sequence_number(id: int) -> Decimal:
@@ -165,27 +166,27 @@ class Order:
     # Returns an identical order with the ID changed.
     def with_id(self, id: int) -> "Order":
         return Order(id=id, side=self.side, price=self.price, quantity=self.quantity,
-                     client_id=self.client_id, owner=self.owner, order_type=self.order_type)
+                     client_id=self.client_id, owner=self.owner, order_type=self.order_type, reduce_only=self.reduce_only)
 
     # Returns an identical order with the Client ID changed.
     def with_client_id(self, client_id: int) -> "Order":
         return Order(id=self.id, side=self.side, price=self.price, quantity=self.quantity,
-                     client_id=client_id, owner=self.owner, order_type=self.order_type)
+                     client_id=client_id, owner=self.owner, order_type=self.order_type, reduce_only=self.reduce_only)
 
     # Returns an identical order with the price changed.
     def with_price(self, price: Decimal) -> "Order":
         return Order(id=self.id, side=self.side, price=price, quantity=self.quantity,
-                     client_id=self.client_id, owner=self.owner, order_type=self.order_type)
+                     client_id=self.client_id, owner=self.owner, order_type=self.order_type, reduce_only=self.reduce_only)
 
     # Returns an identical order with the quantity changed.
     def with_quantity(self, quantity: Decimal) -> "Order":
         return Order(id=self.id, side=self.side, price=self.price, quantity=quantity,
-                     client_id=self.client_id, owner=self.owner, order_type=self.order_type)
+                     client_id=self.client_id, owner=self.owner, order_type=self.order_type, reduce_only=self.reduce_only)
 
     # Returns an identical order with the owner changed.
     def with_owner(self, owner: PublicKey) -> "Order":
         return Order(id=self.id, side=self.side, price=self.price, quantity=self.quantity,
-                     client_id=self.client_id, owner=owner, order_type=self.order_type)
+                     client_id=self.client_id, owner=owner, order_type=self.order_type, reduce_only=self.reduce_only)
 
     @staticmethod
     def from_serum_order(serum_order: PySerumOrder) -> "Order":
@@ -198,14 +199,14 @@ class Order:
         return order
 
     @staticmethod
-    def from_basic_info(side: Side, price: Decimal, quantity: Decimal, order_type: OrderType = OrderType.UNKNOWN) -> "Order":
+    def from_basic_info(side: Side, price: Decimal, quantity: Decimal, order_type: OrderType = OrderType.UNKNOWN, reduce_only: bool = False) -> "Order":
         order = Order(id=0, side=side, price=price, quantity=quantity, client_id=0,
-                      owner=SYSTEM_PROGRAM_ADDRESS, order_type=order_type)
+                      owner=SYSTEM_PROGRAM_ADDRESS, order_type=order_type, reduce_only=reduce_only)
         return order
 
     @staticmethod
     def from_ids(id: int, client_id: int, side: Side = Side.BUY, price: Decimal = Decimal(0), quantity: Decimal = Decimal(0)) -> "Order":
-        return Order(id=id, client_id=client_id, owner=SYSTEM_PROGRAM_ADDRESS, side=side, price=price, quantity=quantity, order_type=OrderType.UNKNOWN)
+        return Order(id=id, client_id=client_id, owner=SYSTEM_PROGRAM_ADDRESS, side=side, price=price, quantity=quantity, order_type=OrderType.UNKNOWN, reduce_only=False)
 
     def __str__(self) -> str:
         owner: str = ""
@@ -214,7 +215,7 @@ class Order:
         order_type: str = ""
         if self.order_type != OrderType.UNKNOWN:
             order_type = f" {self.order_type}"
-        return f"« Order {owner}{self.side} for {self.quantity:,.8f} at {self.price:.8f} [ID: {self.id} / {self.client_id}]{order_type} »"
+        return f"« Order {owner}{self.side} for {self.quantity:,.8f} at {self.price:.8f} [ID: {self.id} / {self.client_id}]{order_type}{' reduceOnly' if self.reduce_only else ''}»"
 
     def __repr__(self) -> str:
         return f"{self}"

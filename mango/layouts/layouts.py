@@ -1367,7 +1367,8 @@ PLACE_PERP_ORDER = construct.Struct(
     "quantity" / SignedDecimalAdapter(),
     "client_order_id" / DecimalAdapter(),
     "side" / DecimalAdapter(1),  # { buy: 0, sell: 1 }
-    "order_type" / DecimalAdapter(1)  # { limit: 0, ioc: 1, postOnly: 2 }
+    "order_type" / DecimalAdapter(1),  # { limit: 0, ioc: 1, postOnly: 2 }
+    "reduce_only" / construct.Flag
 )
 
 
