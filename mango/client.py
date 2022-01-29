@@ -474,7 +474,7 @@ class RPCCaller(HTTPProvider):
         # newer slot.
         #
         # Only do this check if we're using a commitment level of 'processed'.
-        if len(params) > 1 and "commitment" in params[1] and params[1]["commitment"] == Processed:
+        if isinstance(params, Mapping) and len(params) > 1 and "commitment" in params[1] and params[1]["commitment"] == Processed:
             if "result" in response and isinstance(response["result"], Mapping) and "context" in response["result"] and isinstance(response["result"]["context"], Mapping) and "slot" in response["result"]["context"]:
                 slot: int = response["result"]["context"]["slot"]
                 if not self.slot_holder.is_acceptable(slot):

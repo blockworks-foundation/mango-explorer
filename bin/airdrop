@@ -4,21 +4,47 @@ import argparse
 import os
 import os.path
 import sys
+import typing
 
 from decimal import Decimal
-from spl.token.client import Token as SolanaSPLToken
-from spl.token.constants import TOKEN_PROGRAM_ID
 from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 import mango  # nopep8
 
+
+def airdrop_token(context: mango.Context, wallet: mango.Wallet, token: mango.Token, faucet: typing.Optional[PublicKey], quantity: Decimal) -> None:
+    if faucet is None:
+        raise Exception(f"Faucet must be specified for airdropping {token.symbol}")
+
+    # This is a root wallet account - get the associated token account
+    destination: PublicKey = mango.TokenAccount.find_or_create_token_address_to_use(
+        context, wallet, wallet.address, token)
+
+    signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
+
+    mango.output(f"Airdropping {quantity} {token.symbol} to {destination}")
+    native_quantity = token.shift_to_native(quantity)
+    airdrop = mango.build_faucet_airdrop_instructions(token.mint, destination, faucet, native_quantity)
+
+    all_instructions = signers + airdrop
+    transaction_ids = all_instructions.execute(context)
+    mango.output("Transaction IDs:", transaction_ids)
+
+
+def airdrop_sol(context: mango.Context, wallet: mango.Wallet, token: mango.Token, quantity: Decimal) -> None:
+    mango.output(f"Airdropping {quantity} {token.symbol} to {wallet.address}")
+    lamports = token.shift_to_native(quantity)
+    response = context.client.compatible_client.request_airdrop(wallet.address, int(lamports))
+    mango.output("Transaction IDs:", [response["result"]])
+
+
 parser = argparse.ArgumentParser(description="mint SPL tokens to your wallet")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument("--symbol", type=str, required=True, help="token symbol to airdrop (e.g. USDC)")
-parser.add_argument("--faucet", type=PublicKey, required=True, help="public key of the faucet")
+parser.add_argument("--faucet", type=PublicKey, required=False, help="public key of the faucet")
 parser.add_argument("--quantity", type=Decimal, required=True, help="quantity token to airdrop")
 args: argparse.Namespace = mango.parse_args(parser)
 
@@ -30,19 +56,7 @@ if instrument is None:
     raise Exception(f"Could not find instrument with symbol '{args.symbol}'.")
 token: mango.Token = mango.Token.ensure(instrument)
 
-spl_token = SolanaSPLToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair)
-
-# This is a root wallet account - get the associated token account
-destination: PublicKey = mango.TokenAccount.find_or_create_token_address_to_use(
-    context, wallet, wallet.address, token)
-
-quantity = token.shift_to_native(args.quantity)
-
-signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
-
-mango.output(f"Airdropping {args.quantity} {args.symbol} to {destination}")
-airdrop = mango.build_faucet_airdrop_instructions(token.mint, destination, args.faucet, quantity)
-
-all_instructions = signers + airdrop
-transaction_ids = all_instructions.execute(context)
-mango.output("Transaction IDs:", transaction_ids)
+if token.symbol == "SOL":
+    airdrop_sol(context, wallet, token, args.quantity)
+else:
+    airdrop_token(context, wallet, token, args.faucet, args.quantity)

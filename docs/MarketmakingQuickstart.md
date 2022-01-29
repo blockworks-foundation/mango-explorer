@@ -197,16 +197,17 @@ SOL tokens are needed for running operations on the Solana blockchain, similar t
 
 To do this, run the command:
 ```
-# mango-explorer solana airdrop 1 6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB --url devnet
+# mango-explorer airdrop --symbol SOL --quantity 1 --url devnet
 ```
-This will transfer 1 SOL to **6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB**, the address shown above when creating the wallet. You should substitute the public key of the account you created. (You can run this command again and again to get more devnet SOL, should you ever need it.) You should see output like:
-```
-Requesting airdrop of 1 SOL
+This will transfer 1 SOL to **6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB**, the address shown above when creating the wallet.
 
-Signature: 3sGEkKZ3L1WUdXbFgpB1KtrKAHunrHSomfEFaFVyJiQYxCRRgEqnSJWbLFcgEbaWQ7VtB52GNvVxbW73KdFZxAwu
-
-1 SOL
+You should see output like:
 ```
+Airdropping 1 SOL to 6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB
+Transaction IDs: ['4FJGNLu1SuE2tXPgykjoGE1Pi5SWAkveMgLCJTmw7FJwwFwhyE9BA12xAcAkLt41nECcxytocMR67zZU4A3awurR']
+```
+
+Airdrops of devnet SOL are limited. Requesting more than 1 SOL is (currently) likely to fail but you can run this command again later to get more devnet SOL should you need it. 
 
 When the transfer completes (it’s very fast!) it appears in the wallet and you can check that using the `show-account-balances` command:
 ```
