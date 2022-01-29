@@ -56,7 +56,9 @@ if instrument is None:
     raise Exception(f"Could not find instrument with symbol '{args.symbol}'.")
 token: mango.Token = mango.Token.ensure(instrument)
 
-if token.symbol == "SOL":
+# The loaded `token` variable will be from the `context`, so if it's SOL it will be
+# 'wrapped SOL' with a 1112 mint address, not regular SOL with a 1111 mint address.
+if token.symbol == mango.SolToken.symbol:
     airdrop_sol(context, wallet, token, args.quantity)
 else:
     airdrop_token(context, wallet, token, args.faucet, args.quantity)
