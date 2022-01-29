@@ -24,24 +24,14 @@ from .constants import WARNING_DISCLAIMER_TEXT, version
 from .output import OutputFormat, output_formatter
 
 
-# # 🥭 parse_args
+# # 🥭 setup_logging
 #
-# This function parses CLI arguments and sets up common logging for all commands.
+# This function sets up logging for mango-explorer commands. It's optional when running
+# your own programs, but calling this allows you to have a simple, consistent approach.
 #
-def parse_args(parser: argparse.ArgumentParser, logging_default: int = logging.INFO) -> argparse.Namespace:
-    parser.add_argument("--log-level", default=logging_default, type=lambda level: typing.cast(object, getattr(logging, level)),
-                        help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
-    parser.add_argument("--log-suppress-timestamp", default=False, action="store_true",
-                        help="Suppress timestamp in log output (useful for systems that supply their own timestamp on log messages)")
-    parser.add_argument("--output-format", type=OutputFormat, default=OutputFormat.TEXT,
-                        choices=list(OutputFormat), help="output format - can be TEXT (the default) or JSON")
-
-    args: argparse.Namespace = parser.parse_args()
-
-    output_formatter.format = args.output_format
-
+def setup_logging(log_level: int, suppress_timestamp: bool) -> None:
     log_record_format: str = "%(asctime)s %(level_emoji)s %(name)-12.12s %(message)s"
-    if args.log_suppress_timestamp:
+    if suppress_timestamp:
         log_record_format = "%(level_emoji)s %(name)-12.12s %(message)s"
 
     # Make logging a little more verbose than the default.
@@ -69,7 +59,26 @@ def parse_args(parser: argparse.ArgumentParser, logging_default: int = logging.I
 
     logging.setLogRecordFactory(_emojified_record_factory)
 
-    logging.getLogger().setLevel(args.log_level)
+    logging.getLogger().setLevel(log_level)
+
+
+# # 🥭 parse_args
+#
+# This function parses CLI arguments and sets up common logging for all commands.
+#
+def parse_args(parser: argparse.ArgumentParser, logging_default: int = logging.INFO) -> argparse.Namespace:
+    parser.add_argument("--log-level", default=logging_default, type=lambda level: typing.cast(object, getattr(logging, level)),
+                        help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
+    parser.add_argument("--log-suppress-timestamp", default=False, action="store_true",
+                        help="Suppress timestamp in log output (useful for systems that supply their own timestamp on log messages)")
+    parser.add_argument("--output-format", type=OutputFormat, default=OutputFormat.TEXT,
+                        choices=list(OutputFormat), help="output format - can be TEXT (the default) or JSON")
+
+    args: argparse.Namespace = parser.parse_args()
+    output_formatter.format = args.output_format
+
+    setup_logging(args.log_level, args.log_suppress_timestamp)
+
     logging.warning(WARNING_DISCLAIMER_TEXT)
 
     if logging.getLogger().isEnabledFor(logging.DEBUG):
