@@ -282,8 +282,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
                  market: mango.PerpMarket,
                  oracle: mango.Oracle,
                  group_address: PublicKey,
-                 cache_address: PublicKey,
-                 account_address: PublicKey
+                 cache_address: PublicKey
                  ) -> None:
         super().__init__()
         self.order_owner: PublicKey = order_owner
@@ -292,7 +291,6 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
 
         self.group_address: PublicKey = group_address
         self.cache_address: PublicKey = cache_address
-        self.account_address: PublicKey = account_address
 
         self.collateral_calculator: CollateralCalculator = PerpCollateralCalculator()
 
@@ -300,7 +298,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         addresses: typing.List[PublicKey] = [
             self.group_address,
             self.cache_address,
-            self.account_address,
+            self.order_owner,
             self.market.underlying_perp_market.bids,
             self.market.underlying_perp_market.asks,
             self.market.event_queue_address

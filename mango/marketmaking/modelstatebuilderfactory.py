@@ -99,7 +99,7 @@ def _polling_spot_model_state_builder_factory(group: mango.Group, account: mango
 
 def _polling_perp_model_state_builder_factory(group: mango.Group, account: mango.Account, market: mango.PerpMarket,
                                               oracle: mango.Oracle) -> ModelStateBuilder:
-    return PerpPollingModelStateBuilder(account.address, market, oracle, group.address, group.cache, account.address)
+    return PerpPollingModelStateBuilder(account.address, market, oracle, group.address, group.cache)
 
 
 def _websocket_model_state_builder_factory(context: mango.Context, disposer: mango.DisposePropagator,
