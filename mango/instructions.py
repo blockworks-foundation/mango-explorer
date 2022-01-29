@@ -14,6 +14,7 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
+import logging
 import pyserum.enums
 import typing
 
@@ -660,7 +661,7 @@ def build_spot_place_order_instructions(context: Context, wallet: Wallet, group:
         create_open_orders = build_spot_openorders_instructions(context, wallet, group, account, spot_market)
         instructions += create_open_orders
 
-        open_orders_address = create_open_orders.signers[0].public_key
+        open_orders_address = spot_market.derive_open_orders_address(context, account)
 
         # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
         # the Account so that future uses (like later in this method) have access to it in the right place.
