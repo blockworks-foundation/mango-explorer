@@ -14,7 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import logging
 import pyserum.enums
 import typing
 
