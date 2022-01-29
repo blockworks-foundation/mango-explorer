@@ -157,13 +157,16 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
 # This class performs standard operations on the Serum orderbook.
 #
 class SerumMarketOperations(MarketOperations):
-    def __init__(self, context: Context, wallet: Wallet, serum_market: SerumMarket,
+    def __init__(self, context: Context, wallet: Wallet,
                  market_instruction_builder: SerumMarketInstructionBuilder) -> None:
-        super().__init__(serum_market)
+        super().__init__(market_instruction_builder.serum_market)
         self.context: Context = context
         self.wallet: Wallet = wallet
-        self.serum_market: SerumMarket = serum_market
         self.market_instruction_builder: SerumMarketInstructionBuilder = market_instruction_builder
+
+    @property
+    def serum_market(self) -> SerumMarket:
+        return self.market_instruction_builder.serum_market
 
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
         self._logger.info(f"Cancelling {self.serum_market.symbol} order {order}.")

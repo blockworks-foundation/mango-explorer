@@ -37,7 +37,7 @@ if len(orders) == 0:
 else:
     if isinstance(market_operations.market, mango.PerpMarket):
         instruction_builder = mango.PerpMarketInstructionBuilder(
-            context, wallet, group, account, market_operations.market)
+            context, wallet, market_operations.market, group, account)
         cancel_all = instruction_builder.build_cancel_all_orders_instructions()
 
         signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)

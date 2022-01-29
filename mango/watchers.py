@@ -88,9 +88,9 @@ def build_spot_open_orders_watcher(context: Context, manager: WebSocketSubscript
     open_orders_address = account.spot_open_orders_by_index[market_index]
     if open_orders_address is None:
         spot_market_instruction_builder: SpotMarketInstructionBuilder = SpotMarketInstructionBuilder.load(
-            context, wallet, spot_market.group, account, spot_market)
+            context, wallet, spot_market, spot_market.group, account)
         market_operations: SpotMarketOperations = SpotMarketOperations(
-            context, wallet, spot_market.group, account, spot_market, spot_market_instruction_builder)
+            context, wallet, account, spot_market_instruction_builder)
         open_orders_address = market_operations.create_openorders()
         logging.info(f"Created {spot_market.symbol} OpenOrders at: {open_orders_address}")
 

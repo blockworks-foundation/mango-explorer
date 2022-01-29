@@ -42,15 +42,15 @@ from .wallet import Wallet
 # on initial setup in the `load()` method.
 #
 class SpotMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account,
-                 spot_market: SpotMarket, raw_market: PySerumMarket, market_index: int,
-                 fee_discount_token_address: PublicKey) -> None:
+    def __init__(self, context: Context, wallet: Wallet, spot_market: SpotMarket,
+                 group: Group, account: Account, raw_market: PySerumMarket,
+                 market_index: int, fee_discount_token_address: PublicKey) -> None:
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
+        self.spot_market: SpotMarket = spot_market
         self.group: Group = group
         self.account: Account = account
-        self.spot_market: SpotMarket = spot_market
         self.raw_market: PySerumMarket = raw_market
         self.market_index: int = market_index
         self.fee_discount_token_address: PublicKey = fee_discount_token_address
@@ -58,7 +58,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders_by_index[self.market_index]
 
     @staticmethod
-    def load(context: Context, wallet: Wallet, group: Group, account: Account, spot_market: SpotMarket) -> "SpotMarketInstructionBuilder":
+    def load(context: Context, wallet: Wallet, spot_market: SpotMarket, group: Group, account: Account) -> "SpotMarketInstructionBuilder":
         raw_market: PySerumMarket = PySerumMarket.load(
             context.client.compatible_client, spot_market.address, context.serum_program_address)
 
@@ -76,7 +76,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         slot = group.slot_by_spot_market_address(spot_market.address)
         market_index = slot.index
 
-        return SpotMarketInstructionBuilder(context, wallet, group, account, spot_market, raw_market, market_index, fee_discount_token_address)
+        return SpotMarketInstructionBuilder(context, wallet, spot_market, group, account, raw_market, market_index, fee_discount_token_address)
 
     def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
         if self.open_orders_address is None:
@@ -143,18 +143,24 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
 # This class puts trades on the Serum orderbook. It doesn't do anything complicated.
 #
 class SpotMarketOperations(MarketOperations):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account,
-                 spot_market: SpotMarket, market_instruction_builder: SpotMarketInstructionBuilder) -> None:
-        super().__init__(spot_market)
+    def __init__(self, context: Context, wallet: Wallet, account: Account,
+                 market_instruction_builder: SpotMarketInstructionBuilder) -> None:
+        super().__init__(market_instruction_builder.spot_market)
         self.context: Context = context
         self.wallet: Wallet = wallet
-        self.group: Group = group
         self.account: Account = account
-        self.spot_market: SpotMarket = spot_market
         self.market_instruction_builder: SpotMarketInstructionBuilder = market_instruction_builder
 
-        self.market_index: int = group.slot_by_spot_market_address(spot_market.address).index
+        self.market_index: int = self.group.slot_by_spot_market_address(self.spot_market.address).index
         self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders_by_index[self.market_index]
+
+    @property
+    def spot_market(self) -> SpotMarket:
+        return self.market_instruction_builder.spot_market
+
+    @property
+    def group(self) -> Group:
+        return self.market_instruction_builder.group
 
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
         self._logger.info(f"Cancelling {self.spot_market.symbol} order {order}.")

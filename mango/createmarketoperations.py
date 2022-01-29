@@ -41,10 +41,9 @@ def create_market_instruction_builder(context: Context, wallet: Wallet, account:
     if isinstance(loaded_market, SerumMarket):
         return SerumMarketInstructionBuilder.load(context, wallet, loaded_market)
     elif isinstance(loaded_market, SpotMarket):
-        return SpotMarketInstructionBuilder.load(context, wallet, loaded_market.group, account, loaded_market)
+        return SpotMarketInstructionBuilder.load(context, wallet, loaded_market, loaded_market.group, account)
     elif isinstance(loaded_market, PerpMarket):
-        return PerpMarketInstructionBuilder.load(
-            context, wallet, loaded_market.group, account, loaded_market)
+        return PerpMarketInstructionBuilder.load(context, wallet, loaded_market, loaded_market.group, account)
     else:
         raise Exception(f"Could not find market instructions builder for market {market.symbol}")
 
@@ -61,18 +60,18 @@ def create_market_operations(context: Context, wallet: Wallet, account: typing.O
     if isinstance(loaded_market, SerumMarket):
         serum_market_instruction_builder: SerumMarketInstructionBuilder = SerumMarketInstructionBuilder.load(
             context, wallet, loaded_market)
-        return SerumMarketOperations(context, wallet, loaded_market, serum_market_instruction_builder)
+        return SerumMarketOperations(context, wallet, serum_market_instruction_builder)
     elif isinstance(loaded_market, SpotMarket):
         if account is None:
             raise Exception("Account is required for SpotMarket operations.")
         spot_market_instruction_builder: SpotMarketInstructionBuilder = SpotMarketInstructionBuilder.load(
-            context, wallet, loaded_market.group, account, loaded_market)
-        return SpotMarketOperations(context, wallet, loaded_market.group, account, loaded_market, spot_market_instruction_builder)
+            context, wallet, loaded_market, loaded_market.group, account)
+        return SpotMarketOperations(context, wallet, account, spot_market_instruction_builder)
     elif isinstance(loaded_market, PerpMarket):
         if account is None:
             raise Exception("Account is required for PerpMarket operations.")
         perp_market_instruction_builder: PerpMarketInstructionBuilder = PerpMarketInstructionBuilder.load(
-            context, wallet, loaded_market.underlying_perp_market.group, account, loaded_market)
-        return PerpMarketOperations(loaded_market.symbol, context, wallet, perp_market_instruction_builder, account, loaded_market)
+            context, wallet, loaded_market, loaded_market.underlying_perp_market.group, account)
+        return PerpMarketOperations(context, wallet, account, perp_market_instruction_builder)
     else:
         raise Exception(f"Could not find market operations handler for market {market.symbol}")

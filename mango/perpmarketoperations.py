@@ -42,19 +42,19 @@ from .wallet import Wallet
 # on initial setup in the `load()` method.
 #
 class PerpMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, group: Group, account: Account,
-                 perp_market: PerpMarket) -> None:
+    def __init__(self, context: Context, wallet: Wallet, perp_market: PerpMarket,
+                 group: Group, account: Account) -> None:
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
+        self.perp_market: PerpMarket = perp_market
         self.group: Group = group
         self.account: Account = account
-        self.perp_market: PerpMarket = perp_market
         self.mngo_token_bank: TokenBank = self.group.liquidity_incentive_token_bank
 
     @staticmethod
-    def load(context: Context, wallet: Wallet, group: Group, account: Account, perp_market: PerpMarket) -> "PerpMarketInstructionBuilder":
-        return PerpMarketInstructionBuilder(context, wallet, group, account, perp_market)
+    def load(context: Context, wallet: Wallet, perp_market: PerpMarket, group: Group, account: Account) -> "PerpMarketInstructionBuilder":
+        return PerpMarketInstructionBuilder(context, wallet, perp_market, group, account)
 
     def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
         if self.perp_market.underlying_perp_market is None:
@@ -108,16 +108,21 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
 # This file deals with placing orders for Perps.
 #
 class PerpMarketOperations(MarketOperations):
-    def __init__(self, market_name: str, context: Context, wallet: Wallet,
-                 market_instruction_builder: PerpMarketInstructionBuilder,
-                 account: Account, perp_market: PerpMarket) -> None:
-        super().__init__(perp_market)
-        self.market_name: str = market_name
+    def __init__(self, context: Context, wallet: Wallet, account: Account,
+                 market_instruction_builder: PerpMarketInstructionBuilder) -> None:
+        super().__init__(market_instruction_builder.perp_market)
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.market_instruction_builder: PerpMarketInstructionBuilder = market_instruction_builder
         self.account: Account = account
-        self.perp_market: PerpMarket = perp_market
+
+    @property
+    def perp_market(self) -> PerpMarket:
+        return self.market_instruction_builder.perp_market
+
+    @property
+    def market_name(self) -> str:
+        return self.perp_market.symbol
 
     def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
         self._logger.info(f"Cancelling {self.market_name} order {order}.")
