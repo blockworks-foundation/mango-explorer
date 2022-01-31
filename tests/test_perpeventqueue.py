@@ -5,6 +5,7 @@ from solana.publickey import PublicKey
 from .context import mango
 from .fakes import fake_account_info, fake_seeded_public_key
 
+from datetime import datetime
 from decimal import Decimal
 
 
@@ -48,6 +49,17 @@ class TstPE(mango.PerpEvent):
 
     def __str__(self) -> str:
         return f"« TstPE [{self.event_type}] »"
+
+
+class TstFillPE(mango.PerpFillEvent):
+    def __init__(self, maker: PublicKey, maker_id: int, taker: PublicKey, taker_id: int):
+        super().__init__(0, Decimal(0), datetime.now(), mango.Side.BUY,
+                         Decimal(1), Decimal(1), Decimal(1), Decimal(1), True,
+                         maker, Decimal(maker_id), Decimal(0),
+                         taker, Decimal(taker_id), Decimal(0))
+
+    def __str__(self) -> str:
+        return f"« TstFillPE [{self.maker_order_id} / {self.taker_order_id}] »"
 
 
 def test_unseen_with_no_changes() -> None:
@@ -123,3 +135,97 @@ def test_unseen_with_two_unprocessed_changes_wrapping_around() -> None:
     assert len(unseen) == 2
     assert unseen[0] == marker1
     assert unseen[1] == marker2
+
+
+def test_fills_for_account() -> None:
+    user1 = fake_seeded_public_key("user1")
+    user2 = fake_seeded_public_key("user2")
+    user3 = fake_seeded_public_key("user3")
+    order1 = TstFillPE(user1, 11, user2, 21)
+    order2 = TstFillPE(user2, 12, user3, 22)
+    order3 = TstFillPE(user3, 13, user1, 23)
+    pev = _fake_pev(Decimal(4), Decimal(0), Decimal(7), [], [order1, order2, order3])
+
+    my_fills = pev.fills_for_account(user1)
+    assert len(my_fills) == 2
+    assert my_fills[0] == order1
+    assert my_fills[1] == order3
+
+
+def test_no_fills_for_account() -> None:
+    user1 = fake_seeded_public_key("user1")
+    user2 = fake_seeded_public_key("user2")
+    user3 = fake_seeded_public_key("user3")
+    user4 = fake_seeded_public_key("user4")
+    order1 = TstFillPE(user1, 11, user2, 21)
+    order2 = TstFillPE(user2, 12, user3, 22)
+    order3 = TstFillPE(user3, 13, user1, 23)
+    pev = _fake_pev(Decimal(4), Decimal(0), Decimal(7), [], [order1, order2, order3])
+
+    my_fills = pev.fills_for_account(user4)
+    assert len(my_fills) == 0
+
+
+def test_unseen_fills_for_account() -> None:
+    user1 = fake_seeded_public_key("user1")
+    user2 = fake_seeded_public_key("user2")
+    user3 = fake_seeded_public_key("user3")
+    order1 = TstFillPE(user1, 11, user2, 21)
+    order2 = TstFillPE(user2, 12, user3, 22)
+    order3 = TstFillPE(user3, 13, user1, 23)
+    pev1 = _fake_pev(Decimal(4), Decimal(0), Decimal(7), [], [order1, order2, order3])
+
+    actual = mango.UnseenAccountFillEventTracker(pev1, user1)
+
+    order4 = TstFillPE(user3, 14, user2, 24)
+    order5 = TstFillPE(user1, 15, user3, 25)
+    order6 = TstFillPE(user2, 16, user1, 26)
+    pev2 = _fake_pev(Decimal(4), Decimal(0), Decimal(7), [], [order1, order2, order3, order4, order5, order6])
+
+    my_unseen_fills = actual.unseen(pev2)
+    assert len(my_unseen_fills) == 2
+    assert my_unseen_fills[0] == order5
+    assert my_unseen_fills[1] == order6
+
+
+def test_no_unseen_fills_for_account() -> None:
+    # Exactly the same test as before but with user4 as the account we're watching for.
+    user1 = fake_seeded_public_key("user1")
+    user2 = fake_seeded_public_key("user2")
+    user3 = fake_seeded_public_key("user3")
+    user4 = fake_seeded_public_key("user4")
+    order1 = TstFillPE(user1, 11, user2, 21)
+    order2 = TstFillPE(user2, 12, user3, 22)
+    order3 = TstFillPE(user3, 13, user1, 23)
+    pev1 = _fake_pev(Decimal(4), Decimal(0), Decimal(7), [], [order1, order2, order3])
+
+    actual = mango.UnseenAccountFillEventTracker(pev1, user4)
+
+    order4 = TstFillPE(user3, 14, user2, 24)
+    order5 = TstFillPE(user1, 15, user3, 25)
+    order6 = TstFillPE(user2, 16, user1, 26)
+    pev2 = _fake_pev(Decimal(4), Decimal(0), Decimal(7), [], [order1, order2, order3, order4, order5, order6])
+
+    my_unseen_fills = actual.unseen(pev2)
+    assert len(my_unseen_fills) == 0
+
+
+def test_no_changes_in_unseen_fills_for_account() -> None:
+    user1 = fake_seeded_public_key("user1")
+    user2 = fake_seeded_public_key("user2")
+    user3 = fake_seeded_public_key("user3")
+    user4 = fake_seeded_public_key("user4")
+    order1 = TstFillPE(user1, 11, user2, 21)
+    order2 = TstFillPE(user2, 12, user3, 22)
+    order3 = TstFillPE(user3, 13, user1, 23)
+    pev1 = _fake_pev(Decimal(4), Decimal(0), Decimal(7), [], [order1, order2, order3])
+
+    actual = mango.UnseenAccountFillEventTracker(pev1, user1)
+
+    order4 = TstFillPE(user3, 14, user2, 24)
+    order5 = TstFillPE(user4, 15, user3, 25)
+    order6 = TstFillPE(user2, 16, user4, 26)
+    pev2 = _fake_pev(Decimal(4), Decimal(0), Decimal(7), [], [order1, order2, order3, order4, order5, order6])
+
+    my_unseen_fills = actual.unseen(pev2)
+    assert len(my_unseen_fills) == 0

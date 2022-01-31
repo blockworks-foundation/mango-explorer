@@ -177,6 +177,7 @@ from .perpeventqueue import PerpEventQueue as PerpEventQueue
 from .perpeventqueue import PerpFillEvent as PerpFillEvent
 from .perpeventqueue import PerpOutEvent as PerpOutEvent
 from .perpeventqueue import PerpUnknownEvent as PerpUnknownEvent
+from .perpeventqueue import UnseenAccountFillEventTracker as UnseenAccountFillEventTracker
 from .perpeventqueue import UnseenPerpEventChangesTracker as UnseenPerpEventChangesTracker
 from .perpmarket import PerpMarket as PerpMarket
 from .perpmarket import PerpMarketStub as PerpMarketStub

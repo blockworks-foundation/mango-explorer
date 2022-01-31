@@ -77,6 +77,10 @@ class PerpFillEvent(PerpEvent):
         self.taker_client_order_id: Decimal = taker_client_order_id
 
     @property
+    def key(self) -> str:
+        return f"{self.maker_order_id}/{self.taker_order_id}"
+
+    @property
     def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
         return [self.maker, self.taker]
 
@@ -253,6 +257,20 @@ class PerpEventQueue(AddressableAccount):
 
         return distinct
 
+    def events_for_account(self, mango_account_address: PublicKey) -> typing.Sequence[PerpEvent]:
+        events: typing.List[PerpEvent] = []
+        for event in [*self.processed_events, *self.unprocessed_events]:
+            if mango_account_address in event.accounts_to_crank:
+                events += [event]
+        return events
+
+    def fills_for_account(self, mango_account_address: PublicKey) -> typing.Sequence[PerpFillEvent]:
+        fills: typing.List[PerpFillEvent] = []
+        for event in self.events_for_account(mango_account_address):
+            if isinstance(event, PerpFillEvent):
+                fills += [event]
+        return fills
+
     @ property
     def capacity(self) -> int:
         return len(self.unprocessed_events) + len(self.processed_events)
@@ -296,5 +314,42 @@ class UnseenPerpEventChangesTracker:
             number_of_changes: Decimal = new_sequence_number - self.last_sequence_number
             unseen = [*event_queue.processed_events, *event_queue.unprocessed_events][0 - int(number_of_changes):]
             self.last_sequence_number = new_sequence_number
+
+        return unseen
+
+
+# # 🥭 UnseenAccountFillEventTracker class
+#
+# `UnseenAccountFillEventTracker` tracks fills for a specific Mango Account in a specific
+# `PerpEventQueue`. When an updated version of the `PerpEventQueue` is passed to `unseen()`,
+# any new fills are returned.
+#
+class UnseenAccountFillEventTracker:
+    def __init__(self, initial: PerpEventQueue, mango_account_address: PublicKey) -> None:
+        self.mango_account_address: PublicKey = mango_account_address
+        self.last_sequence_number: Decimal = initial.sequence_number
+        initial_fills: typing.Sequence[PerpFillEvent] = initial.fills_for_account(mango_account_address)
+        self.last_key: str = initial_fills[-1].key if len(initial_fills) > 0 else ""
+
+    def unseen(self, event_queue: PerpEventQueue) -> typing.Sequence[PerpEvent]:
+        fills: typing.Sequence[PerpFillEvent] = event_queue.fills_for_account(self.mango_account_address)
+        if len(fills) == 0:
+            return []
+
+        last_key_position: int = -1
+        for counter, fill in enumerate(fills):
+            if fill.key == self.last_key:
+                last_key_position = counter
+                break
+
+        unseen: typing.Sequence[PerpFillEvent]
+        if last_key_position == -1:
+            # We haven't seen any of these fills
+            unseen = fills
+        elif last_key_position == len(fills) - 1:
+            unseen = []
+        else:
+            unseen = fills[last_key_position + 1:]
+            self.last_key = unseen[-1].key
 
         return unseen
