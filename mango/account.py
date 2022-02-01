@@ -731,7 +731,7 @@ class Account(AddressableAccount):
     def is_liquidatable(self, frame: pandas.DataFrame) -> bool:
         if self.being_liquidated and self.init_health(frame) < 0:
             return True
-        elif self.init_health(frame) < 0:
+        elif self.maint_health(frame) < 0:
             return True
         return False
 
