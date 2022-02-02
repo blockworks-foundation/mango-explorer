@@ -72,7 +72,7 @@ class SpotMarket(LoadedMarket):
         slot = account.slot_by_instrument(self.base)
         open_orders_address_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
             [
-                bytes(self.address),
+                bytes(account.address),
                 int(slot.index).to_bytes(8, "little"),
                 b"OpenOrders"
             ],
