@@ -37,7 +37,7 @@ publish-package:
 	poetry publish
 
 docker-build:
-	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer-v3:latest
+	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" --platform linux/amd64 . -t opinionatedgeek/mango-explorer-v3:latest
 
 docker-push:
 	docker push opinionatedgeek/mango-explorer-v3:latest
