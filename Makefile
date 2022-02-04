@@ -45,7 +45,7 @@ docker-push:
 docker: docker-build docker-push
 
 docker-experimental-build:
-	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" . -t opinionatedgeek/mango-explorer-v3:experimental
+	docker build --build-arg=LAST_COMMIT="`git log -1 --format='%h [%ad] - %s'`" --platform linux/amd64 . -t opinionatedgeek/mango-explorer-v3:experimental
 
 docker-experimental-push:
 	docker push opinionatedgeek/mango-explorer-v3:experimental
