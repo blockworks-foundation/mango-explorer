@@ -55,7 +55,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         self.market_index: int = market_index
         self.fee_discount_token_address: PublicKey = fee_discount_token_address
 
-        self.open_orders_address: typing.Optional[PublicKey] = spot_market.derive_open_orders_address(self.context, self.account)
+        self.open_orders_address: typing.Optional[PublicKey] = self.spot_market.derive_open_orders_address(self.context, self.account)
 
     @staticmethod
     def load(context: Context, wallet: Wallet, spot_market: SpotMarket, group: Group, account: Account) -> "SpotMarketInstructionBuilder":
