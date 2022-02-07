@@ -288,6 +288,9 @@ class OrderBook:
         else:
             return top_ask.price - top_bid.price
 
+    def all_orders_for_owner(self, owner_address: PublicKey) -> typing.Sequence[Order]:
+        return list([o for o in [*self.bids, *self.asks] if o.owner == owner_address])
+
     def to_dataframe(self) -> pandas.DataFrame:
         column_mapper = {
             "id": "Id",

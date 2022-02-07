@@ -308,7 +308,7 @@ class TransactionOutcome(enum.Enum):
 class TransactionStatus:
     signature: str
     outcome: TransactionOutcome
-    err: typing.Optional[typing.Dict]
+    err: typing.Optional[typing.Dict[str, typing.Any]]
     sent: datetime
     duration: timedelta
 

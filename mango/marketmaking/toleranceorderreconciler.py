@@ -46,6 +46,10 @@ class ToleranceOrderReconciler(OrderReconciler):
         self.price_tolerance: Decimal = price_tolerance
         self.quantity_tolerance: Decimal = quantity_tolerance
 
+    @staticmethod
+    def zero_tolerance_order_reconciler() -> "ToleranceOrderReconciler":
+        return ToleranceOrderReconciler(Decimal(0), Decimal(0))
+
     def reconcile(self, _: ModelState, existing_orders: typing.Sequence[mango.Order], desired_orders: typing.Sequence[mango.Order]) -> ReconciledOrders:
         remaining_existing_orders: typing.List[mango.Order] = list(existing_orders)
         outcomes: ReconciledOrders = ReconciledOrders()

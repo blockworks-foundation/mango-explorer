@@ -140,6 +140,14 @@ class GroupSlot:
         self.perp_lot_size_converter: LotSizeConverter = perp_lot_size_converter
         self.oracle: PublicKey = oracle
 
+    @property
+    def spot_market_symbol(self) -> str:
+        return f"{self.base_instrument.symbol}/{self.quote_token_bank.token.symbol}"
+
+    @property
+    def perp_market_symbol(self) -> str:
+        return f"{self.base_instrument.symbol}-PERP"
+
     def __str__(self) -> str:
         base_token_bank = f"{self.base_token_bank}".replace("\n", "\n        ")
         quote_token_bank = f"{self.quote_token_bank}".replace("\n", "\n        ")

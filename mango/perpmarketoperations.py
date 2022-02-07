@@ -166,7 +166,7 @@ class PerpMarketOperations(MarketOperations):
 
     def load_my_orders(self) -> typing.Sequence[Order]:
         orderbook: OrderBook = self.load_orderbook()
-        return list([o for o in [*orderbook.bids, *orderbook.asks] if o.owner == self.account.address])
+        return orderbook.all_orders_for_owner(self.account.address)
 
     def _build_crank(self, limit: Decimal = Decimal(32), add_self: bool = False) -> CombinableInstructions:
         accounts_to_crank: typing.List[PublicKey] = []

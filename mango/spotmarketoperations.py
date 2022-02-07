@@ -227,7 +227,7 @@ class SpotMarketOperations(MarketOperations):
             return []
 
         orderbook: OrderBook = self.load_orderbook()
-        return list([o for o in [*orderbook.bids, *orderbook.asks] if o.owner == self.open_orders_address])
+        return orderbook.all_orders_for_owner(self.open_orders_address)
 
     def _build_crank(self, limit: Decimal = Decimal(32), add_self: bool = False) -> CombinableInstructions:
         open_orders_to_crank: typing.List[PublicKey] = []

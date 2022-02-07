@@ -397,6 +397,20 @@ class Account(AddressableAccount):
 
         raise Exception(f"Could not find token {instrument} in account {self.address}")
 
+    def slot_by_spot_open_orders_or_none(self, spot_open_orders: PublicKey) -> typing.Optional[AccountSlot]:
+        for slot in self.slots:
+            if slot.spot_open_orders == spot_open_orders:
+                return slot
+
+        return None
+
+    def slot_by_spot_open_orders(self, spot_open_orders: PublicKey) -> AccountSlot:
+        slot: typing.Optional[AccountSlot] = self.slot_by_spot_open_orders_or_none(spot_open_orders)
+        if slot is not None:
+            return slot
+
+        raise Exception(f"Could not find spot open orders {spot_open_orders} in account {self.address}")
+
     def load_all_spot_open_orders(self, context: Context) -> typing.Dict[str, OpenOrders]:
         spot_open_orders_account_infos = AccountInfo.load_multiple(context, self.spot_open_orders)
         spot_open_orders_account_infos_by_address = {
