@@ -308,6 +308,7 @@ class TransactionOutcome(enum.Enum):
 class TransactionStatus:
     signature: str
     outcome: TransactionOutcome
+    err: typing.Optional[typing.Dict]
     sent: datetime
     duration: timedelta
 
@@ -361,18 +362,19 @@ class TransactionWatcher:
                     #     },
                     #     'confirmationStatus': 'processed'
                     # }
-                    if status["err"] is not None:
+                    err = status["err"]
+                    if err is not None:
                         self._logger.warning(
-                            f"Transaction {self.signature} failed after {time_taken:.2f} seconds with error {status['err']}")
+                            f"Transaction {self.signature} failed after {time_taken:.2f} seconds with error {err}")
                         self.collector.add_transaction(TransactionStatus(
-                            self.signature, TransactionOutcome.FAIL, started_at, delta))
+                            self.signature, TransactionOutcome.FAIL, err, started_at, delta))
                         return
 
                     confirmation_status: str = status["confirmationStatus"]
                     slot: int = status["slot"]
                     self.slot_holder.require_data_from_fresh_slot(slot)
                     self.collector.add_transaction(TransactionStatus(
-                        self.signature, TransactionOutcome.SUCCESS, started_at, delta))
+                        self.signature, TransactionOutcome.SUCCESS, None, started_at, delta))
                     self._logger.info(
                         f"Transaction {self.signature} reached confirmation status '{confirmation_status}' in slot {slot} after {time_taken:.2f} seconds")
                     return
@@ -380,7 +382,8 @@ class TransactionWatcher:
 
         delta = datetime.now() - started_at
         time_wasted_looking: float = delta.seconds + delta.microseconds / 1000000
-        self.collector.add_transaction(TransactionStatus(self.signature, TransactionOutcome.TIMEOUT, started_at, delta))
+        self.collector.add_transaction(TransactionStatus(
+            self.signature, TransactionOutcome.TIMEOUT, None, started_at, delta))
         self._logger.warning(
             f"Transaction {self.signature} disappeared despite spending {time_wasted_looking:.2f} seconds waiting for it")
 
