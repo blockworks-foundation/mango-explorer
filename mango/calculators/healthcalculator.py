@@ -152,15 +152,14 @@ class HealthCalculator:
         # print("Health (start)", health)
         for priced_report in priced_reports:
             slot: GroupSlot = group.slot_by_instrument(priced_report.base_token)
+            spot_health = Decimal(0)
             spot_market: typing.Optional[GroupSlotSpotMarket] = slot.spot_market
-            if spot_market is None:
-                raise Exception(f"Could not find market for spot token {priced_report.base_token.symbol}.")
+            if spot_market is not None:
+                base_value, quote_value = self._calculate_pessimistic_spot_value(priced_report)
 
-            base_value, quote_value = self._calculate_pessimistic_spot_value(priced_report)
-
-            spot_weight = spot_market.init_asset_weight if base_value > 0 else spot_market.init_liab_weight
-            spot_health = base_value.value * spot_weight
-            # print("Weights", base_value.value, "*", spot_weight, spot_health)
+                spot_weight = spot_market.init_asset_weight if base_value > 0 else spot_market.init_liab_weight
+                spot_health = base_value.value * spot_weight
+                # print("Weights", base_value.value, "*", spot_weight, spot_health)
 
             perp_base, perp_quote = priced_report.if_worst_execution()
             perp_market: typing.Optional[GroupSlotPerpMarket] = slot.perp_market
