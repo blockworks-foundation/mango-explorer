@@ -35,15 +35,19 @@ class InstructionReporter:
         return True
 
     def report(self, instruction: TransactionInstruction) -> str:
-        report: typing.List[str] = []
+        instruction_data = "".join("{:02x}".format(x) for x in instruction.data)
+        keys: typing.List[str] = []
         for index, key in enumerate(instruction.keys):
             is_writable: str = "Writable " if key.is_writable else "Read-Only"
             is_signer: str = "Signer" if key.is_signer else "      "
             pubkey: str = str(key.pubkey)
-            report += [f"Key[{index: >2}]: {pubkey: <45} {is_writable} {is_signer}"]
-        report += [f"Program ID: {instruction.program_id}"]
-        report += ["Data: " + "".join("{:02x}".format(x) for x in instruction.data)]
-        return "\n".join(report)
+            keys += [f"    Key[{index: >2}]: {pubkey: <45} {is_writable} {is_signer}"]
+        key_details: str = "\n".join(keys)
+        return f"""« Unknown Instruction:
+    Program ID: {instruction.program_id}
+    Data: {instruction_data}
+{key_details}
+»"""
 
 
 # # 🥭 SerumInstructionReporter class
@@ -61,15 +65,18 @@ class SerumInstructionReporter(InstructionReporter):
     def report(self, instruction: TransactionInstruction) -> str:
         initial = layouts.SERUM_INSTRUCTION_VARIANT_FINDER.parse(instruction.data)
         instruction_type = PySerumInstructionType(initial.variant)
+        instruction_data = "".join("{:02x}".format(x) for x in instruction.data)
         data = "".join("{:02x}".format(x) for x in instruction.data)
         keys: typing.List[str] = []
         for index, key in enumerate(instruction.keys):
             is_writable: str = "Writable " if key.is_writable else "Read-Only"
             is_signer: str = "Signer" if key.is_signer else "      "
             pubkey: str = str(key.pubkey)
-            keys += [f"\tKey[{index: >2}]: {pubkey: <45} {is_writable} {is_signer}"]
+            keys += [f"    Key[{index: >2}]: {pubkey: <45} {is_writable} {is_signer}"]
         key_details: str = "\n".join(keys)
         return f"""« Serum Instruction: {instruction_type.name}: {data}
+    Program ID: {instruction.program_id}
+    Data: {instruction_data}
 {key_details}
 »"""
 
@@ -97,8 +104,19 @@ class MangoInstructionReporter(InstructionReporter):
         parsed = parser.parse(instruction.data)
         instruction_type = InstructionType(int(parsed.variant))
 
-        details = super().report(instruction)
-        return str(MangoInstruction(instruction_type, parsed, accounts)) + "\nInstruction Details:\n" + details
+        instruction_data = "".join("{:02x}".format(x) for x in instruction.data)
+        mango_instruction = MangoInstruction(instruction_type, parsed, accounts)
+        parameters = mango_instruction.describe_parameters() or "None"
+        keys: typing.List[str] = []
+        for index, key in enumerate(mango_instruction.accounts):
+            pubkey: str = str(key)
+            keys += [f"    Key[{index: >2}]: {pubkey}"]
+        key_details: str = "\n".join(keys)
+        return f"""« Mango Instruction {mango_instruction.instruction_type.name}: {parameters}
+    Program ID: {instruction.program_id}
+    Data: {instruction_data}
+{key_details}
+»"""
 
 
 # # 🥭 CompoundInstructionReporter class

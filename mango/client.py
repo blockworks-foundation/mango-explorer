@@ -221,15 +221,6 @@ class TransactionException(ClientException):
 
     def __str__(self) -> str:
         try:
-            request_details: str = ""
-            response_details: str = ""
-            if logging.DEBUG >= logging.root.level:
-                request_details = f"""
-    Request:
-        {self.request_text}"""
-            response_details = f"""
-    Response:
-        {self.response_text}"""
             transaction_details = ""
             if self.transaction is not None:
                 instruction_details = "\n".join(
@@ -250,7 +241,7 @@ class TransactionException(ClientException):
     Errors:
         {errors}
     Logs:
-        {logs}{request_details}{response_details}
+        {logs}
 »"""
         except Exception as exception:
             return f"TransactionException printing failed with: {exception}"
