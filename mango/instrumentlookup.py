@@ -202,6 +202,9 @@ class IdsJsonTokenLookup(InstrumentLookup):
 #
 class SPLTokenLookup(InstrumentLookup):
     DefaultDataFilepath = os.path.join(DATA_PATH, "solana.tokenlist.json")
+    DevnetDataFilepath = os.path.join(DATA_PATH, "solana.tokenlist.devnet.json")
+    OverridesDataFilepath = os.path.join(DATA_PATH, "overrides.tokenlist.json")
+    DevnetOverridesDataFilepath = os.path.join(DATA_PATH, "overrides.tokenlist.devnet.json")
 
     def __init__(self, filename: str, token_data: typing.Dict[str, typing.Any]) -> None:
         super().__init__()

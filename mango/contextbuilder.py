@@ -23,7 +23,7 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .client import BetterClient, ClusterUrlData, TransactionStatusCollector, NullTransactionStatusCollector
-from .constants import MangoConstants, DATA_PATH
+from .constants import MangoConstants
 from .context import Context
 from .idsjsonmarketlookup import IdsJsonMarketLookup
 from .instrumentlookup import InstrumentLookup, CompoundInstrumentLookup, IdsJsonTokenLookup, NonSPLInstrumentLookup, SPLTokenLookup
@@ -106,9 +106,6 @@ class ContextBuilder:
         parser.add_argument("--gma-chunk-pause", type=Decimal, default=None,
                             help="number of seconds to pause between successive getMultipleAccounts() calls to avoid rate limiting")
 
-        parser.add_argument("--token-data-file", type=str, default=SPLTokenLookup.DefaultDataFilepath,
-                            help="data file that contains token symbols, names, mints and decimals (format is same as https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json)")
-
     # This function is the converse of `add_command_line_parameters()` - it takes
     # an argument of parsed command-line parameters and expects to see the ones it added
     # to that collection in the `add_command_line_parameters()` call.
@@ -133,7 +130,6 @@ class ContextBuilder:
         stale_data_maximum_retries: typing.Optional[int] = args.stale_data_maximum_retries
         gma_chunk_size: typing.Optional[Decimal] = args.gma_chunk_size
         gma_chunk_pause: typing.Optional[Decimal] = args.gma_chunk_pause
-        token_filename: str = args.token_data_file
 
         # Do this here so build() only ever has to handle the sequence of retry times. (It gets messy
         # passing around the sequnce *plus* the data to reconstruct it for build().)
@@ -150,8 +146,7 @@ class ContextBuilder:
                                                 encoding, blockhash_cache_duration, http_request_timeout,
                                                 actual_stale_data_pauses_before_retry,
                                                 group_name, group_address, mango_program_address,
-                                                serum_program_address, gma_chunk_size, gma_chunk_pause,
-                                                token_filename)
+                                                serum_program_address, gma_chunk_size, gma_chunk_pause)
         logging.debug(f"{context}")
 
         return context
@@ -167,8 +162,7 @@ class ContextBuilder:
                                     context.client.encoding, context.client.blockhash_cache_duration, None,
                                     context.client.stale_data_pauses_before_retry,
                                     group_name, None, None, None,
-                                    context.gma_chunk_size, context.gma_chunk_pause,
-                                    SPLTokenLookup.DefaultDataFilepath)
+                                    context.gma_chunk_size, context.gma_chunk_pause)
 
     @staticmethod
     def forced_to_devnet(context: Context) -> Context:
@@ -219,7 +213,6 @@ class ContextBuilder:
               group_name: typing.Optional[str] = None, group_address: typing.Optional[PublicKey] = None,
               program_address: typing.Optional[PublicKey] = None, serum_program_address: typing.Optional[PublicKey] = None,
               gma_chunk_size: typing.Optional[Decimal] = None, gma_chunk_pause: typing.Optional[Decimal] = None,
-              token_filename: str = SPLTokenLookup.DefaultDataFilepath,
               transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector()) -> "Context":
         def __public_key_or_none(address: typing.Optional[str]) -> typing.Optional[PublicKey]:
             if address is not None and address != "":
@@ -274,8 +267,6 @@ class ContextBuilder:
 
         ids_json_token_lookup: InstrumentLookup = IdsJsonTokenLookup(actual_cluster, actual_group_name)
         instrument_lookup: InstrumentLookup = ids_json_token_lookup
-        mainnet_overrides_filename = os.path.join(DATA_PATH, "overrides.tokenlist.json")
-        devnet_overrides_filename = os.path.join(DATA_PATH, "overrides.tokenlist.devnet.json")
         if actual_cluster == "mainnet":
             # 'Overrides' are for problematic situations.
             #
@@ -293,8 +284,8 @@ class ContextBuilder:
             #
             # 'Overrides' allows us to put the details we expect for 'ETH' into our loader, ahead of the SPL
             # JSON, so that our code and users can continue to use, for example, ETH/USDT, as they expect.
-            mainnet_overrides_token_lookup: InstrumentLookup = SPLTokenLookup.load(mainnet_overrides_filename)
-            mainnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(token_filename)
+            mainnet_overrides_token_lookup: InstrumentLookup = SPLTokenLookup.load(SPLTokenLookup.OverridesDataFilepath)
+            mainnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(SPLTokenLookup.DefaultDataFilepath)
             mainnet_non_spl_instrument_lookup: InstrumentLookup = NonSPLInstrumentLookup.load(
                 NonSPLInstrumentLookup.DefaultMainnetDataFilepath)
             instrument_lookup = CompoundInstrumentLookup([
@@ -303,9 +294,9 @@ class ContextBuilder:
                 mainnet_non_spl_instrument_lookup,
                 mainnet_spl_token_lookup])
         elif actual_cluster == "devnet":
-            devnet_overrides_token_lookup: InstrumentLookup = SPLTokenLookup.load(devnet_overrides_filename)
-            devnet_token_filename = token_filename.rsplit('.', 1)[0] + ".devnet.json"
-            devnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(devnet_token_filename)
+            devnet_overrides_token_lookup: InstrumentLookup = SPLTokenLookup.load(
+                SPLTokenLookup.DevnetOverridesDataFilepath)
+            devnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(SPLTokenLookup.DevnetDataFilepath)
             devnet_non_spl_instrument_lookup: InstrumentLookup = NonSPLInstrumentLookup.load(
                 NonSPLInstrumentLookup.DefaultDevnetDataFilepath)
             instrument_lookup = CompoundInstrumentLookup([
@@ -318,19 +309,18 @@ class ContextBuilder:
         all_market_lookup = ids_json_market_lookup
         if actual_cluster == "mainnet":
             mainnet_overrides_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
-                actual_serum_program_address, mainnet_overrides_filename)
+                actual_serum_program_address, SPLTokenLookup.OverridesDataFilepath)
             mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
-                actual_serum_program_address, token_filename)
+                actual_serum_program_address, SPLTokenLookup.DefaultDataFilepath)
             all_market_lookup = CompoundMarketLookup([
                 ids_json_market_lookup,
                 mainnet_overrides_serum_market_lookup,
                 mainnet_serum_market_lookup])
         elif actual_cluster == "devnet":
             devnet_overrides_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
-                actual_serum_program_address, devnet_overrides_filename)
-            devnet_token_filename = token_filename.rsplit('.', 1)[0] + ".devnet.json"
+                actual_serum_program_address, SPLTokenLookup.DevnetOverridesDataFilepath)
             devnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
-                actual_serum_program_address, devnet_token_filename)
+                actual_serum_program_address, SPLTokenLookup.DevnetDataFilepath)
             all_market_lookup = CompoundMarketLookup([
                 ids_json_market_lookup,
                 devnet_overrides_serum_market_lookup,
