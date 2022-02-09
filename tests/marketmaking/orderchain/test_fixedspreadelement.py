@@ -59,8 +59,12 @@ def test_three_spreads_six_paired_orders_different_order_updated() -> None:
     order5: mango.Order = fake_order(price=Decimal(12), side=mango.Side.SELL)
     order6: mango.Order = fake_order(price=Decimal(13), side=mango.Side.SELL)
 
-    actual: FixedSpreadElement = FixedSpreadElement([Decimal(4), Decimal(6), Decimal(8)])
-    result = actual.process(context, model_state, [order4, order3, order1, order2, order6, order5])
+    actual: FixedSpreadElement = FixedSpreadElement(
+        [Decimal(4), Decimal(6), Decimal(8)]
+    )
+    result = actual.process(
+        context, model_state, [order4, order3, order1, order2, order6, order5]
+    )
 
     assert result[0].price == 8
     assert result[1].price == 12
@@ -81,7 +85,9 @@ def test_two_spreads_six_paired_orders_different_order_updated() -> None:
     order6: mango.Order = fake_order(price=Decimal(13), side=mango.Side.SELL)
 
     actual: FixedSpreadElement = FixedSpreadElement([Decimal(4), Decimal(6)])
-    result = actual.process(context, model_state, [order4, order3, order1, order2, order6, order5])
+    result = actual.process(
+        context, model_state, [order4, order3, order1, order2, order6, order5]
+    )
 
     assert result[0].price == 8
     assert result[1].price == 12

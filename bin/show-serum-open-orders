@@ -8,16 +8,20 @@ import typing
 
 from solana.publickey import PublicKey
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows Mango open orders accounts.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--market", type=str, required=True, help="market symbol (e.g. ETH/USDC)")
-parser.add_argument("--address", type=PublicKey,
-                    help="Root address to check (if not provided, the wallet address is used)")
+parser.add_argument(
+    "--market", type=str, required=True, help="market symbol (e.g. ETH/USDC)"
+)
+parser.add_argument(
+    "--address",
+    type=PublicKey,
+    help="Root address to check (if not provided, the wallet address is used)",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -35,7 +39,15 @@ if not isinstance(market, mango.SerumMarket):
     raise Exception(f"Market {args.market} is not a Serum market: {market}")
 
 all_open_orders_for_market = mango.OpenOrders.load_for_market_and_owner(
-    context, market.address, address, context.serum_program_address, market.base.decimals, market.quote.decimals)
-mango.output(f"Found {len(all_open_orders_for_market)} Serum OpenOrders account(s) for market {market.symbol}.")
+    context,
+    market.address,
+    address,
+    context.serum_program_address,
+    market.base.decimals,
+    market.quote.decimals,
+)
+mango.output(
+    f"Found {len(all_open_orders_for_market)} Serum OpenOrders account(s) for market {market.symbol}."
+)
 for open_orders in all_open_orders_for_market:
     mango.output(open_orders)

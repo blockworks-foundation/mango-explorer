@@ -35,23 +35,29 @@ def setup_logging(log_level: int, suppress_timestamp: bool) -> None:
         log_record_format = "%(level_emoji)s %(name)-12.12s %(message)s"
 
     # Make logging a little more verbose than the default.
-    logging.basicConfig(level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S", format=log_record_format)
+    logging.basicConfig(
+        level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S", format=log_record_format
+    )
 
     # Stop libraries outputting lots of information unless it's a warning or worse.
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("solanaweb3").setLevel(logging.WARNING)
 
-    default_log_record_factory: typing.Callable[..., logging.LogRecord] = logging.getLogRecordFactory()
+    default_log_record_factory: typing.Callable[
+        ..., logging.LogRecord
+    ] = logging.getLogRecordFactory()
     log_levels: typing.Dict[int, str] = {
         logging.CRITICAL: "🛑",
         logging.ERROR: "🚨",
         logging.WARNING: "⚠",
         logging.INFO: "ⓘ",
-        logging.DEBUG: "🐛"
+        logging.DEBUG: "🐛",
     }
 
-    def _emojified_record_factory(*args: typing.Any, **kwargs: typing.Any) -> logging.LogRecord:
+    def _emojified_record_factory(
+        *args: typing.Any, **kwargs: typing.Any
+    ) -> logging.LogRecord:
         record = default_log_record_factory(*args, **kwargs)
         # Here's where we add our own format keywords.
         setattr(record, "level_emoji", log_levels[record.levelno])
@@ -66,13 +72,28 @@ def setup_logging(log_level: int, suppress_timestamp: bool) -> None:
 #
 # This function parses CLI arguments and sets up common logging for all commands.
 #
-def parse_args(parser: argparse.ArgumentParser, logging_default: int = logging.INFO) -> argparse.Namespace:
-    parser.add_argument("--log-level", default=logging_default, type=lambda level: typing.cast(object, getattr(logging, level)),
-                        help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)")
-    parser.add_argument("--log-suppress-timestamp", default=False, action="store_true",
-                        help="Suppress timestamp in log output (useful for systems that supply their own timestamp on log messages)")
-    parser.add_argument("--output-format", type=OutputFormat, default=OutputFormat.TEXT,
-                        choices=list(OutputFormat), help="output format - can be TEXT (the default) or JSON")
+def parse_args(
+    parser: argparse.ArgumentParser, logging_default: int = logging.INFO
+) -> argparse.Namespace:
+    parser.add_argument(
+        "--log-level",
+        default=logging_default,
+        type=lambda level: typing.cast(object, getattr(logging, level)),
+        help="level of verbosity to log (possible values: DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+    )
+    parser.add_argument(
+        "--log-suppress-timestamp",
+        default=False,
+        action="store_true",
+        help="Suppress timestamp in log output (useful for systems that supply their own timestamp on log messages)",
+    )
+    parser.add_argument(
+        "--output-format",
+        type=OutputFormat,
+        default=OutputFormat.TEXT,
+        choices=list(OutputFormat),
+        help="output format - can be TEXT (the default) or JSON",
+    )
 
     args: argparse.Namespace = parser.parse_args()
     output_formatter.format = args.output_format
@@ -87,7 +108,9 @@ def parse_args(parser: argparse.ArgumentParser, logging_default: int = logging.I
             all_arguments += [f"    --{arg} {getattr(args, arg)}"]
         all_arguments.sort()
         all_arguments_rendered = "\n".join(all_arguments)
-        logging.debug(f"{os.path.basename(sys.argv[0])} arguments:\n{all_arguments_rendered}")
+        logging.debug(
+            f"{os.path.basename(sys.argv[0])} arguments:\n{all_arguments_rendered}"
+        )
 
         logging.debug(f"Version: {version()}")
 

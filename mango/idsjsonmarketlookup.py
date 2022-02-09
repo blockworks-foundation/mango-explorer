@@ -51,21 +51,38 @@ class IdsJsonMarketLookup(MarketLookup):
         self.instrument_lookup: InstrumentLookup = instrument_lookup
 
     @staticmethod
-    def _from_dict(market_type: IdsJsonMarketType, mango_program_address: PublicKey, group_address: PublicKey, data: typing.Dict[str, typing.Any], instrument_lookup: InstrumentLookup, quote_symbol: str) -> Market:
+    def _from_dict(
+        market_type: IdsJsonMarketType,
+        mango_program_address: PublicKey,
+        group_address: PublicKey,
+        data: typing.Dict[str, typing.Any],
+        instrument_lookup: InstrumentLookup,
+        quote_symbol: str,
+    ) -> Market:
         base_symbol = data["baseSymbol"]
-        base_instrument: typing.Optional[Instrument] = instrument_lookup.find_by_symbol(base_symbol)
+        base_instrument: typing.Optional[Instrument] = instrument_lookup.find_by_symbol(
+            base_symbol
+        )
         if base_instrument is None:
-            raise Exception(f"Could not find base instrument with symbol '{base_symbol}'")
-        quote_instrument: typing.Optional[Instrument] = instrument_lookup.find_by_symbol(quote_symbol)
+            raise Exception(
+                f"Could not find base instrument with symbol '{base_symbol}'"
+            )
+        quote_instrument: typing.Optional[
+            Instrument
+        ] = instrument_lookup.find_by_symbol(quote_symbol)
         if quote_instrument is None:
             raise Exception(f"Could not find quote token with symbol '{quote_symbol}'")
         quote: Token = Token.ensure(quote_instrument)
         address = PublicKey(data["publicKey"])
         if market_type == IdsJsonMarketType.PERP:
-            return PerpMarketStub(mango_program_address, address, base_instrument, quote, group_address)
+            return PerpMarketStub(
+                mango_program_address, address, base_instrument, quote, group_address
+            )
         else:
             base: Token = Token.ensure(base_instrument)
-            return SpotMarketStub(mango_program_address, address, base, quote, group_address)
+            return SpotMarketStub(
+                mango_program_address, address, base, quote, group_address
+            )
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:
         check_spots = True
@@ -73,10 +90,14 @@ class IdsJsonMarketLookup(MarketLookup):
         symbol = symbol.upper()
         if symbol.startswith("SPOT:"):
             symbol = symbol.split(":", 1)[1]
-            check_perps = False  # Skip perp markets because we're explicitly told it's a spot
+            check_perps = (
+                False  # Skip perp markets because we're explicitly told it's a spot
+            )
         elif symbol.startswith("PERP:"):
             symbol = symbol.split(":", 1)[1]
-            check_spots = False  # Skip spot markets because we're explicitly told it's a perp
+            check_spots = (
+                False  # Skip spot markets because we're explicitly told it's a perp
+            )
 
         for group in MangoConstants["groups"]:
             if group["cluster"] == self.cluster_name:
@@ -85,11 +106,25 @@ class IdsJsonMarketLookup(MarketLookup):
                 if check_perps:
                     for market_data in group["perpMarkets"]:
                         if Market.symbols_match(market_data["name"], symbol):
-                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
+                            return IdsJsonMarketLookup._from_dict(
+                                IdsJsonMarketType.PERP,
+                                mango_program_address,
+                                group_address,
+                                market_data,
+                                self.instrument_lookup,
+                                group["quoteSymbol"],
+                            )
                 if check_spots:
                     for market_data in group["spotMarkets"]:
                         if Market.symbols_match(market_data["name"], symbol):
-                            return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
+                            return IdsJsonMarketLookup._from_dict(
+                                IdsJsonMarketType.SPOT,
+                                mango_program_address,
+                                group_address,
+                                market_data,
+                                self.instrument_lookup,
+                                group["quoteSymbol"],
+                            )
         return None
 
     def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
@@ -99,10 +134,24 @@ class IdsJsonMarketLookup(MarketLookup):
                 mango_program_address: PublicKey = PublicKey(group["mangoProgramId"])
                 for market_data in group["perpMarkets"]:
                     if market_data["publicKey"] == str(address):
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
+                        return IdsJsonMarketLookup._from_dict(
+                            IdsJsonMarketType.PERP,
+                            mango_program_address,
+                            group_address,
+                            market_data,
+                            self.instrument_lookup,
+                            group["quoteSymbol"],
+                        )
                 for market_data in group["spotMarkets"]:
                     if market_data["publicKey"] == str(address):
-                        return IdsJsonMarketLookup._from_dict(IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
+                        return IdsJsonMarketLookup._from_dict(
+                            IdsJsonMarketType.SPOT,
+                            mango_program_address,
+                            group_address,
+                            market_data,
+                            self.instrument_lookup,
+                            group["quoteSymbol"],
+                        )
         return None
 
     def all_markets(self) -> typing.Sequence[Market]:
@@ -113,11 +162,23 @@ class IdsJsonMarketLookup(MarketLookup):
                 mango_program_address: PublicKey = PublicKey(group["mangoProgramId"])
                 for market_data in group["perpMarkets"]:
                     market = IdsJsonMarketLookup._from_dict(
-                        IdsJsonMarketType.PERP, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
+                        IdsJsonMarketType.PERP,
+                        mango_program_address,
+                        group_address,
+                        market_data,
+                        self.instrument_lookup,
+                        group["quoteSymbol"],
+                    )
                     markets = [market]
                 for market_data in group["spotMarkets"]:
                     market = IdsJsonMarketLookup._from_dict(
-                        IdsJsonMarketType.SPOT, mango_program_address, group_address, market_data, self.instrument_lookup, group["quoteSymbol"])
+                        IdsJsonMarketType.SPOT,
+                        mango_program_address,
+                        group_address,
+                        market_data,
+                        self.instrument_lookup,
+                        group["quoteSymbol"],
+                    )
                     markets = [market]
 
         return markets

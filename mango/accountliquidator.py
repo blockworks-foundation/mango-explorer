@@ -43,17 +43,26 @@ from .liquidatablereport import LiquidatableReport
 # is just the `liquidate()` method.
 #
 
+
 class AccountLiquidator(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.Sequence[TransactionInstruction]:
-        raise NotImplementedError("AccountLiquidator.prepare_instructions() is not implemented on the base type.")
+    def prepare_instructions(
+        self, liquidatable_report: LiquidatableReport
+    ) -> typing.Sequence[TransactionInstruction]:
+        raise NotImplementedError(
+            "AccountLiquidator.prepare_instructions() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
-    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[typing.Sequence[str]]:
-        raise NotImplementedError("AccountLiquidator.liquidate() is not implemented on the base type.")
+    def liquidate(
+        self, liquidatable_report: LiquidatableReport
+    ) -> typing.Optional[typing.Sequence[str]]:
+        raise NotImplementedError(
+            "AccountLiquidator.liquidate() is not implemented on the base type."
+        )
 
 
 # # NullAccountLiquidator class
@@ -61,13 +70,20 @@ class AccountLiquidator(metaclass=abc.ABCMeta):
 # A 'null', 'no-op', 'dry run' implementation of the `AccountLiquidator` class.
 #
 
+
 class NullAccountLiquidator(AccountLiquidator):
     def __init__(self) -> None:
         super().__init__()
 
-    def prepare_instructions(self, liquidatable_report: LiquidatableReport) -> typing.Sequence[TransactionInstruction]:
+    def prepare_instructions(
+        self, liquidatable_report: LiquidatableReport
+    ) -> typing.Sequence[TransactionInstruction]:
         return []
 
-    def liquidate(self, liquidatable_report: LiquidatableReport) -> typing.Optional[typing.Sequence[str]]:
-        self._logger.info(f"Skipping liquidation of account [{liquidatable_report.account.address}]")
+    def liquidate(
+        self, liquidatable_report: LiquidatableReport
+    ) -> typing.Optional[typing.Sequence[str]]:
+        self._logger.info(
+            f"Skipping liquidation of account [{liquidatable_report.account.address}]"
+        )
         return None

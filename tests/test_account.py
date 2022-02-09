@@ -2,7 +2,17 @@ import pytest
 
 from .context import mango
 from .data import load_data_from_directory
-from .fakes import fake_account, fake_account_info, fake_context, fake_seeded_public_key, fake_token_bank, fake_instrument, fake_instrument_value, fake_perp_account, fake_token
+from .fakes import (
+    fake_account,
+    fake_account_info,
+    fake_context,
+    fake_seeded_public_key,
+    fake_token_bank,
+    fake_instrument,
+    fake_instrument_value,
+    fake_perp_account,
+    fake_token,
+)
 
 from decimal import Decimal
 from mango.layouts import layouts
@@ -21,8 +31,18 @@ def test_construction() -> None:
     quote_deposit = fake_instrument_value(raw_quote_deposit)
     raw_quote_borrow = Decimal(5)
     quote_borrow = fake_instrument_value(raw_quote_borrow)
-    quote = mango.AccountSlot(3, fake_instrument(), fake_token_bank(), fake_token_bank(), raw_quote_deposit,
-                              quote_deposit, raw_quote_borrow, quote_borrow, None, None)
+    quote = mango.AccountSlot(
+        3,
+        fake_instrument(),
+        fake_token_bank(),
+        fake_token_bank(),
+        raw_quote_deposit,
+        quote_deposit,
+        raw_quote_borrow,
+        quote_borrow,
+        None,
+        None,
+    )
     raw_deposit1 = Decimal(1)
     deposit1 = fake_instrument_value(raw_deposit1)
     raw_deposit2 = Decimal(2)
@@ -39,12 +59,42 @@ def test_construction() -> None:
     perp2 = fake_perp_account()
     perp3 = fake_perp_account()
     basket = [
-        mango.AccountSlot(0, fake_instrument(), fake_token_bank(), fake_token_bank(), raw_deposit1, deposit1,
-                          raw_borrow1, borrow1, fake_seeded_public_key("spot openorders 1"), perp1),
-        mango.AccountSlot(1, fake_instrument(), fake_token_bank(), fake_token_bank(), raw_deposit2, deposit2,
-                          raw_borrow2, borrow2, fake_seeded_public_key("spot openorders 2"), perp2),
-        mango.AccountSlot(2, fake_instrument(), fake_token_bank(), fake_token_bank(), raw_deposit3, deposit3,
-                          raw_borrow3, borrow3, fake_seeded_public_key("spot openorders 3"), perp3),
+        mango.AccountSlot(
+            0,
+            fake_instrument(),
+            fake_token_bank(),
+            fake_token_bank(),
+            raw_deposit1,
+            deposit1,
+            raw_borrow1,
+            borrow1,
+            fake_seeded_public_key("spot openorders 1"),
+            perp1,
+        ),
+        mango.AccountSlot(
+            1,
+            fake_instrument(),
+            fake_token_bank(),
+            fake_token_bank(),
+            raw_deposit2,
+            deposit2,
+            raw_borrow2,
+            borrow2,
+            fake_seeded_public_key("spot openorders 2"),
+            perp2,
+        ),
+        mango.AccountSlot(
+            2,
+            fake_instrument(),
+            fake_token_bank(),
+            fake_token_bank(),
+            raw_deposit3,
+            deposit3,
+            raw_borrow3,
+            borrow3,
+            fake_seeded_public_key("spot openorders 3"),
+            perp3,
+        ),
     ]
     msrm_amount = Decimal(0)
     being_liquidated = False
@@ -53,9 +103,25 @@ def test_construction() -> None:
     not_upgradable = False
     delegate = fake_seeded_public_key("delegate")
 
-    actual = mango.Account(account_info, mango.Version.V1, meta_data, "Test Group", group, owner, info, quote,
-                           in_margin_basket, active_in_basket, basket, msrm_amount, being_liquidated,
-                           is_bankrupt, advanced_orders, not_upgradable, delegate)
+    actual = mango.Account(
+        account_info,
+        mango.Version.V1,
+        meta_data,
+        "Test Group",
+        group,
+        owner,
+        info,
+        quote,
+        in_margin_basket,
+        active_in_basket,
+        basket,
+        msrm_amount,
+        being_liquidated,
+        is_bankrupt,
+        advanced_orders,
+        not_upgradable,
+        delegate,
+    )
 
     assert actual is not None
     assert actual.version == mango.Version.V1
@@ -63,12 +129,38 @@ def test_construction() -> None:
     assert actual.owner == owner
     assert actual.slot_indices == active_in_basket
     assert actual.in_margin_basket == in_margin_basket
-    assert actual.deposits_by_index == [None, deposit1, None, deposit2, deposit3, quote_deposit]
-    assert actual.borrows_by_index == [None, borrow1, None, borrow2, borrow3, quote_borrow]
-    assert actual.net_values_by_index == [None, deposit1 - borrow1, None,
-                                          deposit2 - borrow2, deposit3 - borrow3, quote_deposit - quote_borrow]
-    assert actual.spot_open_orders_by_index == [None, fake_seeded_public_key("spot openorders 1"), None, fake_seeded_public_key(
-        "spot openorders 2"), fake_seeded_public_key("spot openorders 3"), None]
+    assert actual.deposits_by_index == [
+        None,
+        deposit1,
+        None,
+        deposit2,
+        deposit3,
+        quote_deposit,
+    ]
+    assert actual.borrows_by_index == [
+        None,
+        borrow1,
+        None,
+        borrow2,
+        borrow3,
+        quote_borrow,
+    ]
+    assert actual.net_values_by_index == [
+        None,
+        deposit1 - borrow1,
+        None,
+        deposit2 - borrow2,
+        deposit3 - borrow3,
+        quote_deposit - quote_borrow,
+    ]
+    assert actual.spot_open_orders_by_index == [
+        None,
+        fake_seeded_public_key("spot openorders 1"),
+        None,
+        fake_seeded_public_key("spot openorders 2"),
+        fake_seeded_public_key("spot openorders 3"),
+        None,
+    ]
     assert actual.perp_accounts_by_index == [None, perp1, None, perp2, perp3, None]
     assert actual.msrm_amount == msrm_amount
     assert actual.being_liquidated == being_liquidated
@@ -87,22 +179,57 @@ def test_slot_lookups() -> None:
     in_margin_basket = [False, False, False, False, False, False, False]
     active_in_basket = [False, True, False, True, True, False, False]
     zero_value = Decimal(0)
-    quote_slot = mango.AccountSlot(3, fake_token("FAKEQUOTE"), fake_token_bank("FAKEQUOTE"), fake_token_bank(), zero_value,
-                                   fake_instrument_value(Decimal(10)), zero_value, fake_instrument_value(Decimal(2)), None, None)
+    quote_slot = mango.AccountSlot(
+        3,
+        fake_token("FAKEQUOTE"),
+        fake_token_bank("FAKEQUOTE"),
+        fake_token_bank(),
+        zero_value,
+        fake_instrument_value(Decimal(10)),
+        zero_value,
+        fake_instrument_value(Decimal(2)),
+        None,
+        None,
+    )
     perp2 = fake_perp_account()
     perp3 = fake_perp_account()
     slots = [
-        mango.AccountSlot(1, fake_instrument("slot1"), fake_token_bank(), fake_token_bank(),
-                          zero_value, fake_instrument_value(Decimal(2)),
-                          zero_value, fake_instrument_value(Decimal(1)),
-                          fake_seeded_public_key("spot openorders 1"), None),
-        mango.AccountSlot(3, fake_token("MNGO"), fake_token_bank("MNGO"), fake_token_bank(),
-                          zero_value, fake_instrument_value(Decimal(6)),
-                          zero_value, fake_instrument_value(Decimal(4)),
-                          fake_seeded_public_key("spot openorders 2"), perp2),
-        mango.AccountSlot(4, fake_instrument("slot3"), fake_token_bank(), fake_token_bank(),
-                          zero_value, fake_instrument_value(Decimal(5)),
-                          zero_value, fake_instrument_value(Decimal(8)), None, perp3),
+        mango.AccountSlot(
+            1,
+            fake_instrument("slot1"),
+            fake_token_bank(),
+            fake_token_bank(),
+            zero_value,
+            fake_instrument_value(Decimal(2)),
+            zero_value,
+            fake_instrument_value(Decimal(1)),
+            fake_seeded_public_key("spot openorders 1"),
+            None,
+        ),
+        mango.AccountSlot(
+            3,
+            fake_token("MNGO"),
+            fake_token_bank("MNGO"),
+            fake_token_bank(),
+            zero_value,
+            fake_instrument_value(Decimal(6)),
+            zero_value,
+            fake_instrument_value(Decimal(4)),
+            fake_seeded_public_key("spot openorders 2"),
+            perp2,
+        ),
+        mango.AccountSlot(
+            4,
+            fake_instrument("slot3"),
+            fake_token_bank(),
+            fake_token_bank(),
+            zero_value,
+            fake_instrument_value(Decimal(5)),
+            zero_value,
+            fake_instrument_value(Decimal(8)),
+            None,
+            perp3,
+        ),
     ]
     msrm_amount = Decimal(0)
     being_liquidated = False
@@ -111,9 +238,25 @@ def test_slot_lookups() -> None:
     not_upgradable = False
     delegate = fake_seeded_public_key("delegate")
 
-    actual = mango.Account(account_info, mango.Version.V1, meta_data, "Test Group", group, owner, info, quote_slot,
-                           in_margin_basket, active_in_basket, slots, msrm_amount, being_liquidated,
-                           is_bankrupt, advanced_orders, not_upgradable, delegate)
+    actual = mango.Account(
+        account_info,
+        mango.Version.V1,
+        meta_data,
+        "Test Group",
+        group,
+        owner,
+        info,
+        quote_slot,
+        in_margin_basket,
+        active_in_basket,
+        slots,
+        msrm_amount,
+        being_liquidated,
+        is_bankrupt,
+        advanced_orders,
+        not_upgradable,
+        delegate,
+    )
 
     assert actual.shared_quote == quote_slot
     assert actual.shared_quote_token == quote_slot.base_instrument
@@ -192,7 +335,9 @@ def test_slot_lookups() -> None:
     assert actual.spot_open_orders[0] == slots[0].spot_open_orders
     assert actual.spot_open_orders[1] == slots[1].spot_open_orders
 
-    assert len(actual.spot_open_orders_by_index) == 8  # Shared Quote is included but should always be None
+    assert (
+        len(actual.spot_open_orders_by_index) == 8
+    )  # Shared Quote is included but should always be None
     assert actual.spot_open_orders_by_index[0] is None
     assert actual.spot_open_orders_by_index[1] == slots[0].spot_open_orders
     assert actual.spot_open_orders_by_index[2] is None
@@ -207,7 +352,9 @@ def test_slot_lookups() -> None:
     assert actual.perp_accounts[0] == slots[1].perp_account
     assert actual.perp_accounts[1] == slots[2].perp_account
 
-    assert len(actual.perp_accounts_by_index) == 8  # Shared Quote is included but should always be None
+    assert (
+        len(actual.perp_accounts_by_index) == 8
+    )  # Shared Quote is included but should always be None
     assert actual.perp_accounts_by_index[0] is None
     assert actual.perp_accounts_by_index[1] is None
     assert actual.perp_accounts_by_index[2] is None
@@ -228,7 +375,9 @@ def test_slot_lookups() -> None:
 
 
 def test_loaded_account_slot_lookups() -> None:
-    group, cache, account, open_orders = load_data_from_directory("tests/testdata/account5")
+    group, cache, account, open_orders = load_data_from_directory(
+        "tests/testdata/account5"
+    )
     assert len(account.slots) == 14
 
     # « GroupSlot[0] « Token [MNGO] 'MNGO' [Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC (6 decimals)] »
@@ -289,8 +438,12 @@ def test_loaded_account_slot_lookups() -> None:
 
 
 def test_derive_referrer_memory_address() -> None:
-    context = fake_context(mango_program_address=PublicKey("4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA"))
-    account = fake_account(address=PublicKey("FG99s25HS1UKcP1jMx72Gezg6KZCC7DuKXhNW51XC1qi"))
+    context = fake_context(
+        mango_program_address=PublicKey("4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA")
+    )
+    account = fake_account(
+        address=PublicKey("FG99s25HS1UKcP1jMx72Gezg6KZCC7DuKXhNW51XC1qi")
+    )
     actual = account.derive_referrer_memory_address(context)
 
     # Value derived using mango-client-v3: 3CMpC1UzdLrAnGz6HZVoBsDLAHpTABkUJr8iPyEHwehr

@@ -42,7 +42,9 @@ class InterestRates:
     borrow: Decimal
 
     def __str__(self) -> str:
-        return f"« InterestRates Deposit: {self.deposit:,.2%} Borrow: {self.borrow:,.2%} »"
+        return (
+            f"« InterestRates Deposit: {self.deposit:,.2%} Borrow: {self.borrow:,.2%} »"
+        )
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -69,8 +71,14 @@ class BankBalances:
 # `NodeBank` stores details of deposits/borrows and vault.
 #
 class NodeBank(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
-                 vault: PublicKey, balances: BankBalances) -> None:
+    def __init__(
+        self,
+        account_info: AccountInfo,
+        version: Version,
+        meta_data: Metadata,
+        vault: PublicKey,
+        balances: BankBalances,
+    ) -> None:
         super().__init__(account_info)
         self.version: Version = version
         self.meta_data: Metadata = meta_data
@@ -78,7 +86,9 @@ class NodeBank(AddressableAccount):
         self.balances: BankBalances = balances
 
     @staticmethod
-    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version) -> "NodeBank":
+    def from_layout(
+        layout: typing.Any, account_info: AccountInfo, version: Version
+    ) -> "NodeBank":
         meta_data: Metadata = layout.meta_data
         deposits: Decimal = layout.deposits
         borrows: Decimal = layout.borrows
@@ -92,7 +102,8 @@ class NodeBank(AddressableAccount):
         data = account_info.data
         if len(data) != layouts.NODE_BANK.sizeof():
             raise Exception(
-                f"NodeBank data length ({len(data)}) does not match expected size ({layouts.NODE_BANK.sizeof()})")
+                f"NodeBank data length ({len(data)}) does not match expected size ({layouts.NODE_BANK.sizeof()})"
+            )
 
         layout = layouts.NODE_BANK.parse(data)
         return NodeBank.from_layout(layout, account_info, Version.V1)
@@ -120,10 +131,19 @@ class NodeBank(AddressableAccount):
 # `RootBank` stores details of how to reach `NodeBank`.
 #
 class RootBank(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version, meta_data: Metadata,
-                 optimal_util: Decimal, optimal_rate: Decimal, max_rate: Decimal,
-                 node_banks: typing.Sequence[PublicKey], deposit_index: Decimal,
-                 borrow_index: Decimal, last_updated: datetime) -> None:
+    def __init__(
+        self,
+        account_info: AccountInfo,
+        version: Version,
+        meta_data: Metadata,
+        optimal_util: Decimal,
+        optimal_rate: Decimal,
+        max_rate: Decimal,
+        node_banks: typing.Sequence[PublicKey],
+        deposit_index: Decimal,
+        borrow_index: Decimal,
+        last_updated: datetime,
+    ) -> None:
         super().__init__(account_info)
         self.version: Version = version
 
@@ -142,7 +162,9 @@ class RootBank(AddressableAccount):
 
     def ensure_node_banks(self, context: Context) -> typing.Sequence[NodeBank]:
         if self.loaded_node_banks is None:
-            node_bank_account_infos = AccountInfo.load_multiple(context, self.node_banks)
+            node_bank_account_infos = AccountInfo.load_multiple(
+                context, self.node_banks
+            )
             self.loaded_node_banks = list(map(NodeBank.parse, node_bank_account_infos))
         return self.loaded_node_banks
 
@@ -164,7 +186,9 @@ class RootBank(AddressableAccount):
         return BankBalances(deposits=total_deposits, borrows=total_borrows)
 
     @staticmethod
-    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version) -> "RootBank":
+    def from_layout(
+        layout: typing.Any, account_info: AccountInfo, version: Version
+    ) -> "RootBank":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
 
         optimal_util: Decimal = layout.optimal_util
@@ -172,19 +196,33 @@ class RootBank(AddressableAccount):
         max_rate: Decimal = layout.max_rate
 
         num_node_banks: Decimal = layout.num_node_banks
-        node_banks: typing.Sequence[PublicKey] = layout.node_banks[0:int(num_node_banks)]
+        node_banks: typing.Sequence[PublicKey] = layout.node_banks[
+            0 : int(num_node_banks)
+        ]
         deposit_index: Decimal = layout.deposit_index
         borrow_index: Decimal = layout.borrow_index
         last_updated: datetime = layout.last_updated
 
-        return RootBank(account_info, version, meta_data, optimal_util, optimal_rate, max_rate, node_banks, deposit_index, borrow_index, last_updated)
+        return RootBank(
+            account_info,
+            version,
+            meta_data,
+            optimal_util,
+            optimal_rate,
+            max_rate,
+            node_banks,
+            deposit_index,
+            borrow_index,
+            last_updated,
+        )
 
     @staticmethod
     def parse(account_info: AccountInfo) -> "RootBank":
         data = account_info.data
         if len(data) != layouts.ROOT_BANK.sizeof():
             raise Exception(
-                f"RootBank data length ({len(data)}) does not match expected size ({layouts.ROOT_BANK.sizeof()})")
+                f"RootBank data length ({len(data)}) does not match expected size ({layouts.ROOT_BANK.sizeof()})"
+            )
 
         layout = layouts.ROOT_BANK.parse(data)
         return RootBank.from_layout(layout, account_info, Version.V1)
@@ -197,7 +235,9 @@ class RootBank(AddressableAccount):
         return RootBank.parse(account_info)
 
     @staticmethod
-    def load_multiple(context: Context, addresses: typing.Sequence[PublicKey]) -> typing.Sequence["RootBank"]:
+    def load_multiple(
+        context: Context, addresses: typing.Sequence[PublicKey]
+    ) -> typing.Sequence["RootBank"]:
         account_infos = AccountInfo.load_multiple(context, addresses)
         root_banks = []
         for account_info in account_infos:
@@ -207,13 +247,17 @@ class RootBank(AddressableAccount):
         return root_banks
 
     @staticmethod
-    def find_by_address(values: typing.Sequence["RootBank"], address: PublicKey) -> "RootBank":
+    def find_by_address(
+        values: typing.Sequence["RootBank"], address: PublicKey
+    ) -> "RootBank":
         found = [value for value in values if value.address == address]
         if len(found) == 0:
             raise Exception(f"RootBank '{address}' not found in root banks: {values}")
 
         if len(found) > 1:
-            raise Exception(f"RootBank '{address}' matched multiple root banks in: {values}")
+            raise Exception(
+                f"RootBank '{address}' matched multiple root banks in: {values}"
+            )
 
         return found[0]
 
@@ -238,7 +282,7 @@ class RootBank(AddressableAccount):
 #
 # `TokenBank` defines additional information for a `Token`.
 #
-class TokenBank():
+class TokenBank:
     def __init__(self, token: Token, root_bank_address: PublicKey) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.token: Token = token
@@ -247,11 +291,15 @@ class TokenBank():
         self.loaded_root_bank: typing.Optional[RootBank] = None
 
     @staticmethod
-    def from_layout_or_none(layout: typing.Any, instrument_lookup: InstrumentLookup) -> typing.Optional["TokenBank"]:
+    def from_layout_or_none(
+        layout: typing.Any, instrument_lookup: InstrumentLookup
+    ) -> typing.Optional["TokenBank"]:
         if layout.mint is None:
             return None
 
-        instrument: typing.Optional[Instrument] = instrument_lookup.find_by_mint(layout.mint)
+        instrument: typing.Optional[Instrument] = instrument_lookup.find_by_mint(
+            layout.mint
+        )
         if instrument is None:
             raise Exception(f"Token with mint {layout.mint} could not be found.")
         token: Token = Token.ensure(instrument)
@@ -260,23 +308,35 @@ class TokenBank():
 
         if decimals != token.decimals:
             raise Exception(
-                f"Conflict between number of decimals in token static data {token.decimals} and group {decimals} for token {token.symbol}.")
+                f"Conflict between number of decimals in token static data {token.decimals} and group {decimals} for token {token.symbol}."
+            )
 
         return TokenBank(token, root_bank_address)
 
     @staticmethod
-    def find_by_symbol(values: typing.Sequence[typing.Optional["TokenBank"]], symbol: str) -> "TokenBank":
+    def find_by_symbol(
+        values: typing.Sequence[typing.Optional["TokenBank"]], symbol: str
+    ) -> "TokenBank":
         found = [
-            value for value in values if value is not None and value.token is not None and value.token.symbol_matches(symbol)]
+            value
+            for value in values
+            if value is not None
+            and value.token is not None
+            and value.token.symbol_matches(symbol)
+        ]
         if len(found) == 0:
             raise Exception(f"Token '{symbol}' not found in token infos: {values}")
 
         if len(found) > 1:
-            raise Exception(f"Token '{symbol}' matched multiple tokens in infos: {values}")
+            raise Exception(
+                f"Token '{symbol}' matched multiple tokens in infos: {values}"
+            )
 
         return found[0]
 
-    def root_bank_cache_from_cache(self, cache: Cache, index: int) -> typing.Optional[RootBankCache]:
+    def root_bank_cache_from_cache(
+        self, cache: Cache, index: int
+    ) -> typing.Optional[RootBankCache]:
         return cache.root_bank_cache[index]
 
     def ensure_root_bank(self, context: Context) -> RootBank:
@@ -306,7 +366,9 @@ class TokenBank():
                     borrow_rate = slope * utilization
                 else:
                     extra_utilization = utilization - root_bank.optimal_util
-                    slope = (root_bank.max_rate - root_bank.optimal_rate) / (1 - root_bank.optimal_util)
+                    slope = (root_bank.max_rate - root_bank.optimal_rate) / (
+                        1 - root_bank.optimal_util
+                    )
                     borrow_rate = root_bank.optimal_rate + (slope * extra_utilization)
 
             if balances.deposits == 0:

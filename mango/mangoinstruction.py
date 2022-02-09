@@ -197,7 +197,12 @@ _target_indices: typing.Dict[InstructionType, int] = {
 # transaction. Keeping it all together here makes many things simpler.
 #
 class MangoInstruction:
-    def __init__(self, instruction_type: InstructionType, instruction_data: typing.Any, accounts: typing.Sequence[PublicKey]) -> None:
+    def __init__(
+        self,
+        instruction_type: InstructionType,
+        instruction_data: typing.Any,
+        accounts: typing.Sequence[PublicKey],
+    ) -> None:
         self.instruction_type = instruction_type
         self.instruction_data = instruction_data
         self.accounts = accounts

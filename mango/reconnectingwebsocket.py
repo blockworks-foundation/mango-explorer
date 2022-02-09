@@ -32,22 +32,26 @@ from threading import Thread
 # will continue to automatically reconnect, until it is explicitly closed.
 #
 class ReconnectingWebsocket:
-    def __init__(self,
-                 url: str,
-                 on_open_call: typing.Callable[[websocket.WebSocketApp], None]) -> None:
+    def __init__(
+        self, url: str, on_open_call: typing.Callable[[websocket.WebSocketApp], None]
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.url = url
         self.on_open_call = on_open_call
         self.reconnect_required: bool = True
         self.ping_interval: int = 0
-        self.connecting: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
-            datetime.now())
-        self.disconnected: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
-            datetime.now())
-        self.ping: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
-            datetime.now())
-        self.pong: rx.subject.behaviorsubject.BehaviorSubject = rx.subject.behaviorsubject.BehaviorSubject(
-            datetime.now())
+        self.connecting: rx.subject.behaviorsubject.BehaviorSubject = (
+            rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
+        )
+        self.disconnected: rx.subject.behaviorsubject.BehaviorSubject = (
+            rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
+        )
+        self.ping: rx.subject.behaviorsubject.BehaviorSubject = (
+            rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
+        )
+        self.pong: rx.subject.behaviorsubject.BehaviorSubject = (
+            rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
+        )
         self.item: rx.subject.subject.Subject = rx.subject.subject.Subject()
 
     def close(self) -> None:
@@ -94,7 +98,7 @@ class ReconnectingWebsocket:
                 on_message=self._on_message,
                 on_error=self._on_error,
                 on_ping=self._on_ping,
-                on_pong=self._on_pong
+                on_pong=self._on_pong,
             )
             self._ws.run_forever(ping_interval=self.ping_interval)
             self.disconnected.on_next(datetime.now())

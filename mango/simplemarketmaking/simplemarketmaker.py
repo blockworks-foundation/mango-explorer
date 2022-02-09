@@ -54,7 +54,18 @@ from pathlib import Path
 # * Place and Cancel instructions aren't batched into single transactions
 #
 class SimpleMarketMaker:
-    def __init__(self, context: mango.Context, wallet: mango.Wallet, market: mango.SerumMarket, market_operations: mango.MarketOperations, oracle: mango.Oracle, spread_ratio: Decimal, position_size_ratio: Decimal, existing_order_tolerance: Decimal, pause: timedelta) -> None:
+    def __init__(
+        self,
+        context: mango.Context,
+        wallet: mango.Wallet,
+        market: mango.SerumMarket,
+        market_operations: mango.MarketOperations,
+        oracle: mango.Oracle,
+        spread_ratio: Decimal,
+        position_size_ratio: Decimal,
+        existing_order_tolerance: Decimal,
+        pause: timedelta,
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: mango.Context = context
         self.wallet: mango.Wallet = wallet
@@ -84,31 +95,40 @@ class SimpleMarketMaker:
 
                 # Calculate what we want the orders to be.
                 bid, ask = self.calculate_order_prices(price)
-                buy_quantity, sell_quantity = self.calculate_order_quantities(price, inventory)
+                buy_quantity, sell_quantity = self.calculate_order_quantities(
+                    price, inventory
+                )
 
                 current_orders = self.market_operations.load_my_orders()
-                buy_orders = [order for order in current_orders if order.side == mango.Side.BUY]
+                buy_orders = [
+                    order for order in current_orders if order.side == mango.Side.BUY
+                ]
                 if self.orders_require_action(buy_orders, bid, buy_quantity):
                     self._logger.info("Cancelling BUY orders.")
                     for order in buy_orders:
                         self.market_operations.cancel_order(order)
                     buy_order: mango.Order = mango.Order.from_basic_info(
-                        mango.Side.BUY, bid, buy_quantity, mango.OrderType.POST_ONLY)
+                        mango.Side.BUY, bid, buy_quantity, mango.OrderType.POST_ONLY
+                    )
                     self.market_operations.place_order(buy_order)
 
-                sell_orders = [order for order in current_orders if order.side == mango.Side.SELL]
+                sell_orders = [
+                    order for order in current_orders if order.side == mango.Side.SELL
+                ]
                 if self.orders_require_action(sell_orders, ask, sell_quantity):
                     self._logger.info("Cancelling SELL orders.")
                     for order in sell_orders:
                         self.market_operations.cancel_order(order)
                     sell_order: mango.Order = mango.Order.from_basic_info(
-                        mango.Side.SELL, ask, sell_quantity, mango.OrderType.POST_ONLY)
+                        mango.Side.SELL, ask, sell_quantity, mango.OrderType.POST_ONLY
+                    )
                     self.market_operations.place_order(sell_order)
 
                 self.update_health_on_successful_iteration()
             except Exception as exception:
                 self._logger.warning(
-                    f"Pausing and continuing after problem running market-making iteration: {exception} - {traceback.format_exc()}")
+                    f"Pausing and continuing after problem running market-making iteration: {exception} - {traceback.format_exc()}"
+                )
 
             # Wait and hope for fills.
             self._logger.info(f"Pausing for {self.pause} seconds.")
@@ -129,60 +149,100 @@ class SimpleMarketMaker:
         for order in orders:
             self.market_operations.cancel_order(order)
 
-    def fetch_inventory(self) -> typing.Sequence[typing.Optional[mango.InstrumentValue]]:
+    def fetch_inventory(
+        self,
+    ) -> typing.Sequence[typing.Optional[mango.InstrumentValue]]:
         if self.market.inventory_source == mango.InventorySource.SPL_TOKENS:
             base_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
-                self.context, self.wallet.address, self.market.base)
+                self.context, self.wallet.address, self.market.base
+            )
             if base_account is None:
                 raise Exception(
-                    f"Could not find token account owned by {self.wallet.address} for base token {self.market.base}.")
+                    f"Could not find token account owned by {self.wallet.address} for base token {self.market.base}."
+                )
             quote_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
-                self.context, self.wallet.address, self.market.quote)
+                self.context, self.wallet.address, self.market.quote
+            )
             if quote_account is None:
                 raise Exception(
-                    f"Could not find token account owned by {self.wallet.address} for quote token {self.market.quote}.")
+                    f"Could not find token account owned by {self.wallet.address} for quote token {self.market.quote}."
+                )
             return [base_account.value, quote_account.value]
         else:
             group = mango.Group.load(self.context)
-            accounts = mango.Account.load_all_for_owner(self.context, self.wallet.address, group)
+            accounts = mango.Account.load_all_for_owner(
+                self.context, self.wallet.address, group
+            )
             if len(accounts) == 0:
                 raise Exception("No Mango account found.")
 
             account = accounts[0]
             return account.net_values_by_index
 
-    def calculate_order_prices(self, price: mango.Price) -> typing.Tuple[Decimal, Decimal]:
+    def calculate_order_prices(
+        self, price: mango.Price
+    ) -> typing.Tuple[Decimal, Decimal]:
         bid = price.mid_price - (price.mid_price * self.spread_ratio)
         ask = price.mid_price + (price.mid_price * self.spread_ratio)
 
         return (bid, ask)
 
-    def calculate_order_quantities(self, price: mango.Price, inventory: typing.Sequence[typing.Optional[mango.InstrumentValue]]) -> typing.Tuple[Decimal, Decimal]:
-        base_tokens: typing.Optional[mango.InstrumentValue] = mango.InstrumentValue.find_by_token(
-            inventory, self.market.base)
+    def calculate_order_quantities(
+        self,
+        price: mango.Price,
+        inventory: typing.Sequence[typing.Optional[mango.InstrumentValue]],
+    ) -> typing.Tuple[Decimal, Decimal]:
+        base_tokens: typing.Optional[
+            mango.InstrumentValue
+        ] = mango.InstrumentValue.find_by_token(inventory, self.market.base)
         if base_tokens is None:
-            raise Exception(f"Could not find market-maker base token {self.market.base.symbol} in inventory.")
+            raise Exception(
+                f"Could not find market-maker base token {self.market.base.symbol} in inventory."
+            )
 
-        quote_tokens: typing.Optional[mango.InstrumentValue] = mango.InstrumentValue.find_by_token(
-            inventory, self.market.quote)
+        quote_tokens: typing.Optional[
+            mango.InstrumentValue
+        ] = mango.InstrumentValue.find_by_token(inventory, self.market.quote)
         if quote_tokens is None:
-            raise Exception(f"Could not find market-maker quote token {self.market.quote.symbol} in inventory.")
+            raise Exception(
+                f"Could not find market-maker quote token {self.market.quote.symbol} in inventory."
+            )
 
         buy_quantity = base_tokens.value * self.position_size_ratio
-        sell_quantity = (quote_tokens.value / price.mid_price) * self.position_size_ratio
+        sell_quantity = (
+            quote_tokens.value / price.mid_price
+        ) * self.position_size_ratio
         return (buy_quantity, sell_quantity)
 
-    def orders_require_action(self, orders: typing.Sequence[mango.Order], price: Decimal, quantity: Decimal) -> bool:
-        def within_tolerance(target_value: Decimal, order_value: Decimal, tolerance: Decimal) -> bool:
+    def orders_require_action(
+        self, orders: typing.Sequence[mango.Order], price: Decimal, quantity: Decimal
+    ) -> bool:
+        def within_tolerance(
+            target_value: Decimal, order_value: Decimal, tolerance: Decimal
+        ) -> bool:
             tolerated = order_value * tolerance
-            return bool((order_value < (target_value + tolerated)) and (order_value > (target_value - tolerated)))
-        return len(orders) == 0 or not all([(within_tolerance(price, order.price, self.existing_order_tolerance)) and within_tolerance(quantity, order.quantity, self.existing_order_tolerance) for order in orders])
+            return bool(
+                (order_value < (target_value + tolerated))
+                and (order_value > (target_value - tolerated))
+            )
+
+        return len(orders) == 0 or not all(
+            [
+                (within_tolerance(price, order.price, self.existing_order_tolerance))
+                and within_tolerance(
+                    quantity, order.quantity, self.existing_order_tolerance
+                )
+                for order in orders
+            ]
+        )
 
     def update_health_on_successful_iteration(self) -> None:
         try:
             Path(self.health_filename).touch(mode=0o666, exist_ok=True)
         except Exception as exception:
-            self._logger.warning(f"Touching file '{self.health_filename}' raised exception: {exception}")
+            self._logger.warning(
+                f"Touching file '{self.health_filename}' raised exception: {exception}"
+            )
 
     def __str__(self) -> str:
         return f"""« SimpleMarketMaker for market '{self.market.symbol}' »"""

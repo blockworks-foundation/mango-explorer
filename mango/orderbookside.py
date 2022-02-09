@@ -50,10 +50,19 @@ class OrderBookSideType(enum.Enum):
 # `PerpOrderBookSide` holds orders for one side of a market.
 #
 class PerpOrderBookSide(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version,
-                 meta_data: Metadata, perp_market_details: PerpMarketDetails, bump_index: Decimal,
-                 free_list_len: Decimal, free_list_head: Decimal, root_node: Decimal,
-                 leaf_count: Decimal, nodes: typing.Any) -> None:
+    def __init__(
+        self,
+        account_info: AccountInfo,
+        version: Version,
+        meta_data: Metadata,
+        perp_market_details: PerpMarketDetails,
+        bump_index: Decimal,
+        free_list_len: Decimal,
+        free_list_head: Decimal,
+        root_node: Decimal,
+        leaf_count: Decimal,
+        nodes: typing.Any,
+    ) -> None:
         super().__init__(account_info)
         self.version: Version = version
 
@@ -67,7 +76,12 @@ class PerpOrderBookSide(AddressableAccount):
         self.nodes: typing.Any = nodes
 
     @staticmethod
-    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version, perp_market_details: PerpMarketDetails) -> "PerpOrderBookSide":
+    def from_layout(
+        layout: typing.Any,
+        account_info: AccountInfo,
+        version: Version,
+        perp_market_details: PerpMarketDetails,
+    ) -> "PerpOrderBookSide":
         meta_data = Metadata.from_layout(layout.meta_data)
         bump_index: Decimal = layout.bump_index
         free_list_len: Decimal = layout.free_list_len
@@ -76,23 +90,43 @@ class PerpOrderBookSide(AddressableAccount):
         leaf_count: Decimal = layout.leaf_count
         nodes: typing.Any = layout.nodes
 
-        return PerpOrderBookSide(account_info, version, meta_data, perp_market_details, bump_index, free_list_len, free_list_head, root_node, leaf_count, nodes)
+        return PerpOrderBookSide(
+            account_info,
+            version,
+            meta_data,
+            perp_market_details,
+            bump_index,
+            free_list_len,
+            free_list_head,
+            root_node,
+            leaf_count,
+            nodes,
+        )
 
     @staticmethod
-    def parse(account_info: AccountInfo, perp_market_details: PerpMarketDetails) -> "PerpOrderBookSide":
+    def parse(
+        account_info: AccountInfo, perp_market_details: PerpMarketDetails
+    ) -> "PerpOrderBookSide":
         data = account_info.data
         if len(data) != layouts.ORDERBOOK_SIDE.sizeof():
             raise Exception(
-                f"PerpOrderBookSide data length ({len(data)}) does not match expected size ({layouts.ORDERBOOK_SIDE.sizeof()})")
+                f"PerpOrderBookSide data length ({len(data)}) does not match expected size ({layouts.ORDERBOOK_SIDE.sizeof()})"
+            )
 
         layout = layouts.ORDERBOOK_SIDE.parse(data)
-        return PerpOrderBookSide.from_layout(layout, account_info, Version.V1, perp_market_details)
+        return PerpOrderBookSide.from_layout(
+            layout, account_info, Version.V1, perp_market_details
+        )
 
     @staticmethod
-    def load(context: Context, address: PublicKey, perp_market_details: PerpMarketDetails) -> "PerpOrderBookSide":
+    def load(
+        context: Context, address: PublicKey, perp_market_details: PerpMarketDetails
+    ) -> "PerpOrderBookSide":
         account_info = AccountInfo.load(context, address)
         if account_info is None:
-            raise Exception(f"PerpOrderBookSide account not found at address '{address}'")
+            raise Exception(
+                f"PerpOrderBookSide account not found at address '{address}'"
+            )
         return PerpOrderBookSide.parse(account_info, perp_market_details)
 
     def orders(self) -> typing.Sequence[Order]:
@@ -113,23 +147,33 @@ class PerpOrderBookSide(AddressableAccount):
                 price = node.key["price"]
                 quantity = node.quantity
 
-                decimals_differential = self.perp_market_details.base_instrument.decimals - \
-                    self.perp_market_details.quote_token.token.decimals
+                decimals_differential = (
+                    self.perp_market_details.base_instrument.decimals
+                    - self.perp_market_details.quote_token.token.decimals
+                )
                 native_to_ui = Decimal(10) ** decimals_differential
                 quote_lot_size = self.perp_market_details.quote_lot_size
                 base_lot_size = self.perp_market_details.base_lot_size
                 actual_price = price * (quote_lot_size / base_lot_size) * native_to_ui
 
-                base_factor = Decimal(10) ** self.perp_market_details.base_instrument.decimals
-                actual_quantity = (quantity * self.perp_market_details.base_lot_size) / base_factor
+                base_factor = (
+                    Decimal(10) ** self.perp_market_details.base_instrument.decimals
+                )
+                actual_quantity = (
+                    quantity * self.perp_market_details.base_lot_size
+                ) / base_factor
 
-                orders += [Order(int(node.key["order_id"]),
-                                 node.client_order_id,
-                                 node.owner,
-                                 order_side,
-                                 actual_price,
-                                 actual_quantity,
-                                 OrderType.UNKNOWN)]
+                orders += [
+                    Order(
+                        int(node.key["order_id"]),
+                        node.client_order_id,
+                        node.owner,
+                        order_side,
+                        actual_price,
+                        actual_quantity,
+                        OrderType.UNKNOWN,
+                    )
+                ]
             elif node.type_name == "inner":
                 if order_side == Side.BUY:
                     stack = [*stack, node.children[0], node.children[1]]
@@ -138,7 +182,9 @@ class PerpOrderBookSide(AddressableAccount):
         return orders
 
     def __str__(self) -> str:
-        nodes = "\n        ".join([str(node).replace("\n", "\n        ") for node in self.orders()])
+        nodes = "\n        ".join(
+            [str(node).replace("\n", "\n        ") for node in self.orders()]
+        )
         return f"""« PerpOrderBookSide {self.version} [{self.address}]
     {self.meta_data}
     Perp Market: {self.perp_market_details}

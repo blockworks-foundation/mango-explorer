@@ -55,7 +55,9 @@ def _load_idl_parsers_from_json_file(filepath: str) -> typing.Dict[bytes, IdlTyp
         sha = hashlib.sha256(f"event:{name}".encode())
         return sha.digest()[0:8]
 
-    def _context_counter_lookup(field_counter: str) -> typing.Callable[[typing.Any], int]:
+    def _context_counter_lookup(
+        field_counter: str,
+    ) -> typing.Callable[[typing.Any], int]:
         return lambda ctx: int(ctx[field_counter])
 
     with open(filepath, encoding="utf-8") as json_file:
@@ -74,7 +76,12 @@ def _load_idl_parsers_from_json_file(filepath: str) -> typing.Dict[bytes, IdlTyp
                 counter_name: str = f"{field_name}_count"
                 fields += [counter_name / construct.BytesInteger(4, swapped=True)]
                 inner_loader = _known_idl_type_adapters[inner_type]
-                fields += [field_name / construct.Array(_context_counter_lookup(counter_name), inner_loader())]
+                fields += [
+                    field_name
+                    / construct.Array(
+                        _context_counter_lookup(counter_name), inner_loader()
+                    )
+                ]
             else:
                 fields += [field_name / _known_idl_type_adapters[field_type]()]
         layout_loaders[discriminator] = IdlType(event_name, construct.Struct(*fields))
@@ -83,7 +90,9 @@ def _load_idl_parsers_from_json_file(filepath: str) -> typing.Dict[bytes, IdlTyp
 
 class IdlParser:
     def __init__(self, filepath: str):
-        self.parsers: typing.Dict[bytes, IdlType] = _load_idl_parsers_from_json_file(filepath)
+        self.parsers: typing.Dict[bytes, IdlType] = _load_idl_parsers_from_json_file(
+            filepath
+        )
 
     def parse(self, binary_data: bytes) -> typing.Tuple[str, typing.Any]:
         discriminator: bytes = binary_data[0:8]

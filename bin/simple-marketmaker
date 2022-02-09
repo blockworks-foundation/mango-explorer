@@ -13,36 +13,66 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 from threading import Thread
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 import mango.simplemarketmaking.simplemarketmaker  # nopep8
 
 parser = argparse.ArgumentParser(description="Runs a simple market-maker.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--market", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)")
-parser.add_argument("--spread-ratio", type=Decimal, required=True,
-                    help="fraction of the mid price to be added and subtracted to calculate buy and sell prices")
-parser.add_argument("--position-size-ratio", type=Decimal, required=True,
-                    help="fraction of the token inventory to be bought or sold in each order")
-parser.add_argument("--existing-order-tolerance", type=Decimal, default=Decimal("0.001"),
-                    help="fraction of the token inventory to be bought or sold in each order")
-parser.add_argument("--pause-duration", type=int, default=10,
-                    help="number of seconds to pause between placing orders and cancelling them")
-parser.add_argument("--oracle-provider", type=str, default="serum",
-                    help="name of the oracle service providing the prices")
-parser.add_argument("--account-address", type=PublicKey,
-                    help="address of the specific account to use, if more than one available")
-parser.add_argument("--dry-run", action="store_true", default=False,
-                    help="runs as read-only and does not perform any transactions")
+parser.add_argument(
+    "--market", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)"
+)
+parser.add_argument(
+    "--spread-ratio",
+    type=Decimal,
+    required=True,
+    help="fraction of the mid price to be added and subtracted to calculate buy and sell prices",
+)
+parser.add_argument(
+    "--position-size-ratio",
+    type=Decimal,
+    required=True,
+    help="fraction of the token inventory to be bought or sold in each order",
+)
+parser.add_argument(
+    "--existing-order-tolerance",
+    type=Decimal,
+    default=Decimal("0.001"),
+    help="fraction of the token inventory to be bought or sold in each order",
+)
+parser.add_argument(
+    "--pause-duration",
+    type=int,
+    default=10,
+    help="number of seconds to pause between placing orders and cancelling them",
+)
+parser.add_argument(
+    "--oracle-provider",
+    type=str,
+    default="serum",
+    help="name of the oracle service providing the prices",
+)
+parser.add_argument(
+    "--account-address",
+    type=PublicKey,
+    help="address of the specific account to use, if more than one available",
+)
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    default=False,
+    help="runs as read-only and does not perform any transactions",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 try:
     context = mango.ContextBuilder.from_command_line_parameters(args)
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     group = mango.Group.load(context, context.group_address)
-    account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
+    account = mango.Account.load_for_owner_by_address(
+        context, wallet.address, group, args.account_address
+    )
 
     market_stub = context.market_lookup.find_by_symbol(args.market)
     if market_stub is None:
@@ -52,16 +82,28 @@ try:
         raise Exception(f"Market is not a serum market: {market}")
 
     market_operations: mango.MarketOperations = mango.create_market_operations(
-        context, wallet, account, market, args.dry_run)
+        context, wallet, account, market, args.dry_run
+    )
 
-    oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, args.oracle_provider)
+    oracle_provider: mango.OracleProvider = mango.create_oracle_provider(
+        context, args.oracle_provider
+    )
     oracle = oracle_provider.oracle_for_market(context, market)
     if oracle is None:
         raise Exception(f"Could not find oracle for spot market {args.market}")
 
     pause_duration = timedelta(seconds=args.pause_duration)
     market_maker = mango.simplemarketmaking.simplemarketmaker.SimpleMarketMaker(
-        context, wallet, market, market_operations, oracle, args.spread_ratio, args.position_size_ratio, args.existing_order_tolerance, pause_duration)
+        context,
+        wallet,
+        market,
+        market_operations,
+        oracle,
+        args.spread_ratio,
+        args.position_size_ratio,
+        args.existing_order_tolerance,
+        pause_duration,
+    )
 
     mango.output(f"Starting {market_maker} - use <Enter> to stop.")
     thread = Thread(target=market_maker.start)
@@ -77,6 +119,10 @@ try:
     mango.output(f"Stopping {market_maker} on next iteration...")
     market_maker.stop()
 except Exception as exception:
-    logging.critical(f"Market maker stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(
+        f"Market maker stopped because of exception: {exception} - {traceback.format_exc()}"
+    )
 except:
-    logging.critical(f"Market maker stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(
+        f"Market maker stopped because of uncatchable error: {traceback.format_exc()}"
+    )

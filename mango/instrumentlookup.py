@@ -39,11 +39,15 @@ class InstrumentLookup(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def find_by_symbol(self, symbol: str) -> typing.Optional[Instrument]:
-        raise NotImplementedError("InstrumentLookup.find_by_symbol() is not implemented on the base type.")
+        raise NotImplementedError(
+            "InstrumentLookup.find_by_symbol() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def find_by_mint(self, mint: PublicKey) -> typing.Optional[Instrument]:
-        raise NotImplementedError("InstrumentLookup.find_by_mint() is not implemented on the base type.")
+        raise NotImplementedError(
+            "InstrumentLookup.find_by_mint() is not implemented on the base type."
+        )
 
     def find_by_symbol_or_raise(self, symbol: str) -> Instrument:
         token = self.find_by_symbol(symbol)
@@ -109,7 +113,9 @@ class CompoundInstrumentLookup(InstrumentLookup):
         return None
 
     def __str__(self) -> str:
-        inner = "\n    ".join([f"{item}".replace("\n", "\n    ") for item in self.lookups])
+        inner = "\n    ".join(
+            [f"{item}".replace("\n", "\n    ") for item in self.lookups]
+        )
         return f"""« CompoundInstrumentLookup
     {inner}
 »"""
@@ -129,7 +135,9 @@ class CompoundInstrumentLookup(InstrumentLookup):
 #
 class NonSPLInstrumentLookup(InstrumentLookup):
     DefaultMainnetDataFilepath = os.path.join(DATA_PATH, "nonspl.instrumentlist.json")
-    DefaultDevnetDataFilepath = os.path.join(DATA_PATH, "nonspl.instrumentlist.devnet.json")
+    DefaultDevnetDataFilepath = os.path.join(
+        DATA_PATH, "nonspl.instrumentlist.devnet.json"
+    )
 
     def __init__(self, filename: str, token_data: typing.Dict[str, typing.Any]) -> None:
         super().__init__()
@@ -139,7 +147,9 @@ class NonSPLInstrumentLookup(InstrumentLookup):
     def find_by_symbol(self, symbol: str) -> typing.Optional[Instrument]:
         for token in self.token_data["tokens"]:
             if Instrument.symbols_match(token["symbol"], symbol):
-                return Instrument(token["symbol"], token["name"], Decimal(token["decimals"]))
+                return Instrument(
+                    token["symbol"], token["name"], Decimal(token["decimals"])
+                )
 
         return None
 
@@ -168,19 +178,35 @@ class IdsJsonTokenLookup(InstrumentLookup):
 
     def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
         for group in MangoConstants["groups"]:
-            if group["cluster"] == self.cluster_name and group["name"] == self.group_name:
+            if (
+                group["cluster"] == self.cluster_name
+                and group["name"] == self.group_name
+            ):
                 for token in group["tokens"]:
                     if Instrument.symbols_match(token["symbol"], symbol):
-                        return Token(token["symbol"], token["symbol"], Decimal(token["decimals"]), PublicKey(token["mintKey"]))
+                        return Token(
+                            token["symbol"],
+                            token["symbol"],
+                            Decimal(token["decimals"]),
+                            PublicKey(token["mintKey"]),
+                        )
         return None
 
     def find_by_mint(self, mint: PublicKey) -> typing.Optional[Token]:
         mint_str = str(mint)
         for group in MangoConstants["groups"]:
-            if group["cluster"] == self.cluster_name and group["name"] == self.group_name:
+            if (
+                group["cluster"] == self.cluster_name
+                and group["name"] == self.group_name
+            ):
                 for token in group["tokens"]:
                     if token["mintKey"] == mint_str:
-                        return Token(token["symbol"], token["symbol"], Decimal(token["decimals"]), PublicKey(token["mintKey"]))
+                        return Token(
+                            token["symbol"],
+                            token["symbol"],
+                            Decimal(token["decimals"]),
+                            PublicKey(token["mintKey"]),
+                        )
         return None
 
     def __str__(self) -> str:
@@ -204,7 +230,9 @@ class SPLTokenLookup(InstrumentLookup):
     DefaultDataFilepath = os.path.join(DATA_PATH, "solana.tokenlist.json")
     DevnetDataFilepath = os.path.join(DATA_PATH, "solana.tokenlist.devnet.json")
     OverridesDataFilepath = os.path.join(DATA_PATH, "overrides.tokenlist.json")
-    DevnetOverridesDataFilepath = os.path.join(DATA_PATH, "overrides.tokenlist.devnet.json")
+    DevnetOverridesDataFilepath = os.path.join(
+        DATA_PATH, "overrides.tokenlist.devnet.json"
+    )
 
     def __init__(self, filename: str, token_data: typing.Dict[str, typing.Any]) -> None:
         super().__init__()
@@ -214,7 +242,12 @@ class SPLTokenLookup(InstrumentLookup):
     def find_by_symbol(self, symbol: str) -> typing.Optional[Token]:
         for token in self.token_data["tokens"]:
             if Instrument.symbols_match(token["symbol"], symbol):
-                return Token(token["symbol"], token["name"], Decimal(token["decimals"]), PublicKey(token["address"]))
+                return Token(
+                    token["symbol"],
+                    token["name"],
+                    Decimal(token["decimals"]),
+                    PublicKey(token["address"]),
+                )
 
         return None
 
@@ -222,7 +255,12 @@ class SPLTokenLookup(InstrumentLookup):
         mint_string: str = str(mint)
         for token in self.token_data["tokens"]:
             if token["address"] == mint_string:
-                return Token(token["symbol"], token["name"], Decimal(token["decimals"]), PublicKey(token["address"]))
+                return Token(
+                    token["symbol"],
+                    token["name"],
+                    Decimal(token["decimals"]),
+                    PublicKey(token["address"]),
+                )
 
         return None
 

@@ -35,7 +35,9 @@ class Chain:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.elements: typing.Sequence[Element] = elements
 
-    def process(self, context: mango.Context, model_state: ModelState) -> typing.Sequence[mango.Order]:
+    def process(
+        self, context: mango.Context, model_state: ModelState
+    ) -> typing.Sequence[mango.Order]:
         orders: typing.Sequence[mango.Order] = []
         for element in self.elements:
             orders = element.process(context, model_state, orders)

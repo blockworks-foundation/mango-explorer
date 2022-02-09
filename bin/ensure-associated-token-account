@@ -8,15 +8,18 @@ import typing
 
 import spl.token.instructions as spl_token
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="mint SPL tokens to your wallet")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--symbol", type=str, required=True,
-                    help="token symbol to ensure the associated token account exists (e.g. USDC)")
+parser.add_argument(
+    "--symbol",
+    type=str,
+    required=True,
+    help="token symbol to ensure the associated token account exists (e.g. USDC)",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -27,18 +30,28 @@ if instrument is None:
     raise Exception(f"Could not find instrument with symbol '{args.symbol}'.")
 token: mango.Token = mango.Token.ensure(instrument)
 
-associated_token_address = spl_token.get_associated_token_address(wallet.address, token.mint)
-token_account: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(context, associated_token_address)
+associated_token_address = spl_token.get_associated_token_address(
+    wallet.address, token.mint
+)
+token_account: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(
+    context, associated_token_address
+)
 if token_account is not None:
     # The associated token account exists
-    mango.output(f"Associated token account already exists at: {associated_token_address}.")
+    mango.output(
+        f"Associated token account already exists at: {associated_token_address}."
+    )
 else:
     # Create the proper associated token account.
     signer = mango.CombinableInstructions.from_wallet(wallet)
-    create_instruction = spl_token.create_associated_token_account(wallet.address, wallet.address, token.mint)
+    create_instruction = spl_token.create_associated_token_account(
+        wallet.address, wallet.address, token.mint
+    )
     create = mango.CombinableInstructions.from_instruction(create_instruction)
 
-    mango.output(f"No associated token account at: {associated_token_address} - creating...")
+    mango.output(
+        f"No associated token account at: {associated_token_address} - creating..."
+    )
     transaction_ids = (signer + create).execute(context)
     context.client.wait_for_confirmation(transaction_ids)
     mango.output(f"Associated token account created at: {associated_token_address}.")

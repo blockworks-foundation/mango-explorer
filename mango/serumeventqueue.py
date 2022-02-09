@@ -31,7 +31,9 @@ from .version import Version
 # `SerumEventFlags` stores flags describing a `SerumEvent`.
 #
 class SerumEventFlags:
-    def __init__(self, version: Version, fill: bool, out: bool, bid: bool, maker: bool) -> None:
+    def __init__(
+        self, version: Version, fill: bool, out: bool, bid: bool, maker: bool
+    ) -> None:
         self.version: Version = version
         self.fill: bool = fill
         self.out: bool = out
@@ -40,7 +42,13 @@ class SerumEventFlags:
 
     @staticmethod
     def from_layout(layout: typing.Any) -> "SerumEventFlags":
-        return SerumEventFlags(Version.UNSPECIFIED, bool(layout.fill), bool(layout.out), bool(layout.bid), bool(layout.maker))
+        return SerumEventFlags(
+            Version.UNSPECIFIED,
+            bool(layout.fill),
+            bool(layout.out),
+            bool(layout.bid),
+            bool(layout.maker),
+        )
 
     def __str__(self) -> str:
         flags: typing.List[typing.Optional[str]] = []
@@ -60,9 +68,19 @@ class SerumEventFlags:
 # `SerumEvent` stores details of an actual event in Serum.
 #
 class SerumEvent:
-    def __init__(self, version: Version, event_flags: SerumEventFlags, open_order_slot: Decimal, fee_tier: Decimal,
-                 native_quantity_released: Decimal, native_quantity_paid: Decimal, native_fee_or_rebate: Decimal,
-                 order_id: Decimal, public_key: PublicKey, client_order_id: Decimal) -> None:
+    def __init__(
+        self,
+        version: Version,
+        event_flags: SerumEventFlags,
+        open_order_slot: Decimal,
+        fee_tier: Decimal,
+        native_quantity_released: Decimal,
+        native_quantity_paid: Decimal,
+        native_fee_or_rebate: Decimal,
+        order_id: Decimal,
+        public_key: PublicKey,
+        client_order_id: Decimal,
+    ) -> None:
         self.version: Version = version
         self.event_flags: SerumEventFlags = event_flags
         self.open_order_slot: Decimal = open_order_slot
@@ -78,9 +96,18 @@ class SerumEvent:
     @staticmethod
     def from_layout(layout: typing.Any) -> "SerumEvent":
         event_flags: SerumEventFlags = SerumEventFlags.from_layout(layout.event_flags)
-        return SerumEvent(Version.UNSPECIFIED, event_flags, layout.open_order_slot, layout.fee_tier,
-                          layout.native_quantity_released, layout.native_quantity_paid, layout.native_fee_or_rebate,
-                          layout.order_id, layout.public_key, layout.client_order_id)
+        return SerumEvent(
+            Version.UNSPECIFIED,
+            event_flags,
+            layout.open_order_slot,
+            layout.fee_tier,
+            layout.native_quantity_released,
+            layout.native_quantity_paid,
+            layout.native_fee_or_rebate,
+            layout.order_id,
+            layout.public_key,
+            layout.client_order_id,
+        )
 
     def __str__(self) -> str:
         return f"""« SerumEvent {self.event_flags}
@@ -110,10 +137,17 @@ class SerumEvent:
 # market is new and there hasn't been a trade on it yet.
 #
 class SerumEventQueue(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version, account_flags: AccountFlags,
-                 head: Decimal, count: Decimal, sequence_number: Decimal,
-                 unprocessed_events: typing.Sequence[SerumEvent],
-                 processed_events: typing.Sequence[SerumEvent]) -> None:
+    def __init__(
+        self,
+        account_info: AccountInfo,
+        version: Version,
+        account_flags: AccountFlags,
+        head: Decimal,
+        count: Decimal,
+        sequence_number: Decimal,
+        unprocessed_events: typing.Sequence[SerumEvent],
+        processed_events: typing.Sequence[SerumEvent],
+    ) -> None:
         super().__init__(account_info)
         self.version: Version = version
 
@@ -125,35 +159,50 @@ class SerumEventQueue(AddressableAccount):
         self.processed_events: typing.Sequence[SerumEvent] = processed_events
 
     @staticmethod
-    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version) -> "SerumEventQueue":
+    def from_layout(
+        layout: typing.Any, account_info: AccountInfo, version: Version
+    ) -> "SerumEventQueue":
         account_flags: AccountFlags = AccountFlags.from_layout(layout.account_flags)
         head: Decimal = layout.head
         count: Decimal = layout.count
         seq_num: Decimal = layout.next_seq_num
         events: typing.List[SerumEvent] = list(
-            map(SerumEvent.from_layout, [evt for evt in layout.events if evt is not None]))
+            map(
+                SerumEvent.from_layout,
+                [evt for evt in layout.events if evt is not None],
+            )
+        )
         for index, event in enumerate(events):
             event.original_index = Decimal(index)
 
         # Events are stored in a ringbuffer, and the oldest is overwritten when a new event arrives.
         # Make it a bit simpler to use by splitting at the insertion point and swapping the two pieces
         # around so that users don't have to do modulo arithmetic on the capacity.
-        ordered_events = events[int(head):] + events[0:int(head)]
+        ordered_events = events[int(head) :] + events[0 : int(head)]
 
         # Now chop the oldest-to-newest list of events into processed and unprocessed. The `count`
         # property holds the number of unprocessed events.
-        unprocessed_events = ordered_events[0:int(count)]
-        processed_events = ordered_events[int(count):]
+        unprocessed_events = ordered_events[0 : int(count)]
+        processed_events = ordered_events[int(count) :]
 
-        return SerumEventQueue(account_info, version, account_flags, head, count, seq_num, unprocessed_events, processed_events)
+        return SerumEventQueue(
+            account_info,
+            version,
+            account_flags,
+            head,
+            count,
+            seq_num,
+            unprocessed_events,
+            processed_events,
+        )
 
-    @ staticmethod
+    @staticmethod
     def parse(account_info: AccountInfo) -> "SerumEventQueue":
         # Data length isn't fixed so can't check we get the right value the way we normally do.
         layout = layouts.SERUM_EVENT_QUEUE.parse(account_info.data)
         return SerumEventQueue.from_layout(layout, account_info, Version.V1)
 
-    @ staticmethod
+    @staticmethod
     def load(context: Context, address: PublicKey) -> "SerumEventQueue":
         account_info = AccountInfo.load(context, address)
         if account_info is None:
@@ -181,10 +230,26 @@ class SerumEventQueue(AddressableAccount):
         return len(self.unprocessed_events) + len(self.processed_events)
 
     def __str__(self) -> str:
-        unprocessed_events = "\n        ".join([f"{event}".replace("\n", "\n        ")
-                                                for event in self.unprocessed_events if event is not None]) or "None"
-        processed_events = "\n        ".join([f"{event}".replace("\n", "\n        ")
-                                              for event in self.processed_events if event is not None]) or "None"
+        unprocessed_events = (
+            "\n        ".join(
+                [
+                    f"{event}".replace("\n", "\n        ")
+                    for event in self.unprocessed_events
+                    if event is not None
+                ]
+            )
+            or "None"
+        )
+        processed_events = (
+            "\n        ".join(
+                [
+                    f"{event}".replace("\n", "\n        ")
+                    for event in self.processed_events
+                    if event is not None
+                ]
+            )
+            or "None"
+        )
         return f"""« SerumEventQueue [{self.version}] {self.address}
     {self.account_flags}
     Head: {self.head}
@@ -217,7 +282,9 @@ class UnseenSerumEventChangesTracker:
         new_sequence_number: Decimal = event_queue.sequence_number
         if self.last_sequence_number != new_sequence_number:
             number_of_changes: Decimal = new_sequence_number - self.last_sequence_number
-            unseen = [*event_queue.processed_events, *event_queue.unprocessed_events][0 - int(number_of_changes):]
+            unseen = [*event_queue.processed_events, *event_queue.unprocessed_events][
+                0 - int(number_of_changes) :
+            ]
             self.last_sequence_number = new_sequence_number
 
         return unseen

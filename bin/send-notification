@@ -7,25 +7,35 @@ import os.path
 import sys
 import traceback
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Sends SOL to a different address.")
-parser.add_argument("--notification-target", type=mango.parse_notification_target, required=True, action="append",
-                    help="The notification target - a compound string that varies depending on the target")
+parser.add_argument(
+    "--notification-target",
+    type=mango.parse_notification_target,
+    required=True,
+    action="append",
+    help="The notification target - a compound string that varies depending on the target",
+)
 parser.add_argument("--message", type=str, help="Message to send")
 args: argparse.Namespace = mango.parse_args(parser)
 
 try:
-    notify: mango.NotificationTarget = mango.CompoundNotificationTarget(args.notification_target)
+    notify: mango.NotificationTarget = mango.CompoundNotificationTarget(
+        args.notification_target
+    )
     mango.output("Sending to:", notify)
     notify.send(args.message)
 
     mango.output("Notifications sent")
 except Exception as exception:
-    logging.critical(f"send-notification stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(
+        f"send-notification stopped because of exception: {exception} - {traceback.format_exc()}"
+    )
 except:
-    logging.critical(f"send-notification stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(
+        f"send-notification stopped because of uncatchable error: {traceback.format_exc()}"
+    )

@@ -29,11 +29,22 @@ from .token import Instrument, Token
 # Perp accounts aren't directly addressable. They exist as a sub-object of a full Mango `Account` object.
 #
 class PerpAccount:
-    def __init__(self, base_position: Decimal, quote_position: Decimal, long_settled_funding: Decimal,
-                 short_settled_funding: Decimal, bids_quantity: Decimal, asks_quantity: Decimal,
-                 taker_base: Decimal, taker_quote: Decimal, mngo_accrued: InstrumentValue,
-                 open_orders: PerpOpenOrders, lot_size_converter: LotSizeConverter,
-                 base_token_value: InstrumentValue, quote_position_raw: Decimal) -> None:
+    def __init__(
+        self,
+        base_position: Decimal,
+        quote_position: Decimal,
+        long_settled_funding: Decimal,
+        short_settled_funding: Decimal,
+        bids_quantity: Decimal,
+        asks_quantity: Decimal,
+        taker_base: Decimal,
+        taker_quote: Decimal,
+        mngo_accrued: InstrumentValue,
+        open_orders: PerpOpenOrders,
+        lot_size_converter: LotSizeConverter,
+        base_token_value: InstrumentValue,
+        quote_position_raw: Decimal,
+    ) -> None:
         self.base_position: Decimal = base_position
         self.quote_position: Decimal = quote_position
         self.long_settled_funding: Decimal = long_settled_funding
@@ -49,7 +60,14 @@ class PerpAccount:
         self.quote_position_raw: Decimal = quote_position_raw
 
     @staticmethod
-    def from_layout(layout: typing.Any, base_token: Instrument, quote_token: Token, open_orders: PerpOpenOrders, lot_size_converter: LotSizeConverter, mngo_token: Token) -> "PerpAccount":
+    def from_layout(
+        layout: typing.Any,
+        base_token: Instrument,
+        quote_token: Token,
+        open_orders: PerpOpenOrders,
+        lot_size_converter: LotSizeConverter,
+        mngo_token: Token,
+    ) -> "PerpAccount":
         base_position: Decimal = layout.base_position
         quote_position: Decimal = layout.quote_position
         long_settled_funding: Decimal = layout.long_settled_funding
@@ -59,20 +77,45 @@ class PerpAccount:
         taker_base: Decimal = layout.taker_base
         taker_quote: Decimal = layout.taker_quote
         mngo_accrued_raw: Decimal = layout.mngo_accrued
-        mngo_accrued: InstrumentValue = InstrumentValue(mngo_token, mngo_token.shift_to_decimals(mngo_accrued_raw))
+        mngo_accrued: InstrumentValue = InstrumentValue(
+            mngo_token, mngo_token.shift_to_decimals(mngo_accrued_raw)
+        )
 
-        base_position_raw = (base_position + taker_base) * lot_size_converter.base_lot_size
-        base_token_value: InstrumentValue = InstrumentValue(base_token, base_token.shift_to_decimals(base_position_raw))
+        base_position_raw = (
+            base_position + taker_base
+        ) * lot_size_converter.base_lot_size
+        base_token_value: InstrumentValue = InstrumentValue(
+            base_token, base_token.shift_to_decimals(base_position_raw)
+        )
 
         quote_position_raw: Decimal = quote_token.shift_to_decimals(quote_position)
 
-        return PerpAccount(base_position, quote_position, long_settled_funding, short_settled_funding,
-                           bids_quantity, asks_quantity, taker_base, taker_quote, mngo_accrued, open_orders,
-                           lot_size_converter, base_token_value, quote_position_raw)
+        return PerpAccount(
+            base_position,
+            quote_position,
+            long_settled_funding,
+            short_settled_funding,
+            bids_quantity,
+            asks_quantity,
+            taker_base,
+            taker_quote,
+            mngo_accrued,
+            open_orders,
+            lot_size_converter,
+            base_token_value,
+            quote_position_raw,
+        )
 
     @property
     def empty(self) -> bool:
-        if self.base_position == Decimal(0) and self.quote_position == Decimal(0) and self.long_settled_funding == Decimal(0) and self.short_settled_funding == Decimal(0) and self.mngo_accrued.value == Decimal(0) and self.open_orders.empty:
+        if (
+            self.base_position == Decimal(0)
+            and self.quote_position == Decimal(0)
+            and self.long_settled_funding == Decimal(0)
+            and self.short_settled_funding == Decimal(0)
+            and self.mngo_accrued.value == Decimal(0)
+            and self.open_orders.empty
+        ):
             return True
         return False
 
@@ -80,44 +123,66 @@ class PerpAccount:
         base_position: Decimal = self.base_position
         unsettled: Decimal
         if base_position < 0:
-            unsettled = base_position * (perp_market_cache.short_funding - self.short_settled_funding)
+            unsettled = base_position * (
+                perp_market_cache.short_funding - self.short_settled_funding
+            )
         else:
-            unsettled = base_position * (perp_market_cache.long_funding - self.long_settled_funding)
-        return - self.lot_size_converter.quote.shift_to_decimals(unsettled)
+            unsettled = base_position * (
+                perp_market_cache.long_funding - self.long_settled_funding
+            )
+        return -self.lot_size_converter.quote.shift_to_decimals(unsettled)
 
-    def asset_value(self, perp_market_cache: PerpMarketCache, price: Decimal) -> Decimal:
-        base_position: Decimal = self.lot_size_converter.adjust_to_quote_decimals(self.base_position)
+    def asset_value(
+        self, perp_market_cache: PerpMarketCache, price: Decimal
+    ) -> Decimal:
+        base_position: Decimal = self.lot_size_converter.adjust_to_quote_decimals(
+            self.base_position
+        )
         value: Decimal = Decimal(0)
         if base_position > 0:
             value = base_position * self.lot_size_converter.base_lot_size * price
             value = self.lot_size_converter.quote.shift_to_decimals(value)
 
-        quote_position: Decimal = self.lot_size_converter.quote.shift_to_decimals(self.quote_position)
+        quote_position: Decimal = self.lot_size_converter.quote.shift_to_decimals(
+            self.quote_position
+        )
         quote_position += self.unsettled_funding(perp_market_cache)
         if quote_position > 0:
             value += quote_position
 
         return value
 
-    def liability_value(self, perp_market_cache: PerpMarketCache, price: Decimal) -> Decimal:
-        base_position: Decimal = self.lot_size_converter.adjust_to_quote_decimals(self.base_position)
+    def liability_value(
+        self, perp_market_cache: PerpMarketCache, price: Decimal
+    ) -> Decimal:
+        base_position: Decimal = self.lot_size_converter.adjust_to_quote_decimals(
+            self.base_position
+        )
         value: Decimal = Decimal(0)
         if base_position < 0:
             value = base_position * self.lot_size_converter.base_lot_size * price
             value = self.lot_size_converter.quote.shift_to_decimals(value)
 
-        quote_position: Decimal = self.lot_size_converter.quote.shift_to_decimals(self.quote_position)
+        quote_position: Decimal = self.lot_size_converter.quote.shift_to_decimals(
+            self.quote_position
+        )
         quote_position += self.unsettled_funding(perp_market_cache)
         if quote_position < 0:
             value += quote_position
 
         return value
 
-    def current_value(self, perp_market_cache: PerpMarketCache, price: Decimal) -> Decimal:
-        base_position: Decimal = self.lot_size_converter.adjust_to_quote_decimals(self.base_position)
+    def current_value(
+        self, perp_market_cache: PerpMarketCache, price: Decimal
+    ) -> Decimal:
+        base_position: Decimal = self.lot_size_converter.adjust_to_quote_decimals(
+            self.base_position
+        )
         value: Decimal = base_position * self.lot_size_converter.base_lot_size * price
 
-        quote_position: Decimal = self.lot_size_converter.quote.shift_to_decimals(self.quote_position)
+        quote_position: Decimal = self.lot_size_converter.quote.shift_to_decimals(
+            self.quote_position
+        )
         quote_position += self.unsettled_funding(perp_market_cache)
 
         value += quote_position

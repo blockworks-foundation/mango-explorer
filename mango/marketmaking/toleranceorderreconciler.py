@@ -50,7 +50,12 @@ class ToleranceOrderReconciler(OrderReconciler):
     def zero_tolerance_order_reconciler() -> "ToleranceOrderReconciler":
         return ToleranceOrderReconciler(Decimal(0), Decimal(0))
 
-    def reconcile(self, _: ModelState, existing_orders: typing.Sequence[mango.Order], desired_orders: typing.Sequence[mango.Order]) -> ReconciledOrders:
+    def reconcile(
+        self,
+        _: ModelState,
+        existing_orders: typing.Sequence[mango.Order],
+        desired_orders: typing.Sequence[mango.Order],
+    ) -> ReconciledOrders:
         remaining_existing_orders: typing.List[mango.Order] = list(existing_orders)
         outcomes: ReconciledOrders = ReconciledOrders()
         for desired in desired_orders:
@@ -67,14 +72,22 @@ class ToleranceOrderReconciler(OrderReconciler):
         outcomes.to_cancel = remaining_existing_orders
 
         in_count = len(existing_orders) + len(desired_orders)
-        out_count = len(outcomes.to_place) + len(outcomes.to_cancel) + len(outcomes.to_keep) + len(outcomes.to_ignore)
+        out_count = (
+            len(outcomes.to_place)
+            + len(outcomes.to_cancel)
+            + len(outcomes.to_keep)
+            + len(outcomes.to_ignore)
+        )
         if in_count != out_count:
             raise Exception(
-                f"Failure processing all desired orders. Count of orders in: {in_count}. Count of orders out: {out_count}.")
+                f"Failure processing all desired orders. Count of orders in: {in_count}. Count of orders out: {out_count}."
+            )
 
         return outcomes
 
-    def find_acceptable_order(self, desired: mango.Order, existing_orders: typing.Sequence[mango.Order]) -> typing.Optional[mango.Order]:
+    def find_acceptable_order(
+        self, desired: mango.Order, existing_orders: typing.Sequence[mango.Order]
+    ) -> typing.Optional[mango.Order]:
         for existing in existing_orders:
             if self.is_within_tolderance(existing, desired):
                 return existing

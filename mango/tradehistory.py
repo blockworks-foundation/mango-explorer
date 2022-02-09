@@ -36,14 +36,26 @@ from .context import Context
 # Downloads and unifies trade history data.
 #
 class TradeHistory:
-    COLUMNS = ["Timestamp", "Market", "Side", "MakerOrTaker", "Change", "Price", "Quantity", "Fee",
-               "SequenceNumber", "FeeTier", "MarketType", "OrderId"]
+    COLUMNS = [
+        "Timestamp",
+        "Market",
+        "Side",
+        "MakerOrTaker",
+        "Change",
+        "Price",
+        "Quantity",
+        "Fee",
+        "SequenceNumber",
+        "FeeTier",
+        "MarketType",
+        "OrderId",
+    ]
 
     __perp_column_name_mapper = {
         "loadTimestamp": "Timestamp",
         "seqNum": "SequenceNumber",
         "price": "Price",
-        "quantity": "Quantity"
+        "quantity": "Quantity",
     }
 
     __spot_column_name_mapper = {
@@ -54,7 +66,7 @@ class TradeHistory:
         "side": "Side",
         "feeCost": "Fee",
         "feeTier": "FeeTier",
-        "orderId": "OrderId"
+        "orderId": "OrderId",
     }
 
     __decimal_spot_columns = [
@@ -71,7 +83,7 @@ class TradeHistory:
         "quoteTokenDecimals",
         "price",
         "feeCost",
-        "size"
+        "size",
     ]
 
     __decimal_perp_columns = [
@@ -81,7 +93,7 @@ class TradeHistory:
         "makerOrderId",
         "takerOrderId",
         "price",
-        "quantity"
+        "quantity",
     ]
 
     __column_converters = {
@@ -92,7 +104,7 @@ class TradeHistory:
         "Quantity": lambda value: Decimal(value),
         "Fee": lambda value: Decimal(value),
         "FeeTier": lambda value: Decimal(value),
-        "OrderId": lambda value: Decimal(value)
+        "OrderId": lambda value: Decimal(value),
     }
 
     def __init__(self, seconds_pause_between_rest_calls: int = 1) -> None:
@@ -108,6 +120,7 @@ class TradeHistory:
             if market is None:
                 raise Exception(f"No market found with address {address}")
             return market.symbol
+
         return __safe_lookup
 
     @staticmethod
@@ -120,12 +133,19 @@ class TradeHistory:
     def __download_all_perps(context: Context, account: Account) -> pandas.DataFrame:
         url = f"https://event-history-api.herokuapp.com/perp_trades/{account.address}?page=all"
         data = TradeHistory.__download_json(url)
-        trades: pandas.DataFrame = TradeHistory.__perp_data_to_dataframe(context, account, data)
+        trades: pandas.DataFrame = TradeHistory.__perp_data_to_dataframe(
+            context, account, data
+        )
 
         return trades
 
     @staticmethod
-    def __download_updated_perps(context: Context, account: Account, newer_than: typing.Optional[datetime], seconds_pause_between_rest_calls: int) -> pandas.DataFrame:
+    def __download_updated_perps(
+        context: Context,
+        account: Account,
+        newer_than: typing.Optional[datetime],
+        seconds_pause_between_rest_calls: int,
+    ) -> pandas.DataFrame:
         trades: pandas.DataFrame = pandas.DataFrame(columns=TradeHistory.COLUMNS)
         page: int = 0
         complete: bool = False
@@ -133,12 +153,16 @@ class TradeHistory:
             page += 1
             url = f"https://event-history-api.herokuapp.com/perp_trades/{account.address}?page={page}"
             data = TradeHistory.__download_json(url)
-            frame: pandas.DataFrame = TradeHistory.__perp_data_to_dataframe(context, account, data)
+            frame: pandas.DataFrame = TradeHistory.__perp_data_to_dataframe(
+                context, account, data
+            )
             if len(frame) == 0:
                 complete = True
             else:
                 trades = trades.append(frame)
-                if (newer_than is not None) and (frame.loc[frame.index[-1], "Timestamp"] < newer_than):
+                if (newer_than is not None) and (
+                    frame.loc[frame.index[-1], "Timestamp"] < newer_than
+                ):
                     complete = True
                 else:
                     time.sleep(seconds_pause_between_rest_calls)
@@ -146,7 +170,9 @@ class TradeHistory:
         return trades
 
     @staticmethod
-    def __perp_data_to_dataframe(context: Context, account: Account, data: typing.Any) -> pandas.DataFrame:
+    def __perp_data_to_dataframe(
+        context: Context, account: Account, data: typing.Any
+    ) -> pandas.DataFrame:
         # Perp data is an array of JSON packages like:
         # {
         #     "loadTimestamp": "2021-09-02T10:54:56.000Z",
@@ -188,21 +214,33 @@ class TradeHistory:
             for column_name in TradeHistory.__decimal_perp_columns:
                 trade[column_name] = Decimal(trade[column_name])
 
-        frame = pandas.DataFrame(trade_data).rename(mapper=TradeHistory.__perp_column_name_mapper, axis=1, copy=True)
-        frame["Timestamp"] = frame["Timestamp"].apply(lambda timestamp: parser.parse(timestamp).replace(microsecond=0))
+        frame = pandas.DataFrame(trade_data).rename(
+            mapper=TradeHistory.__perp_column_name_mapper, axis=1, copy=True
+        )
+        frame["Timestamp"] = frame["Timestamp"].apply(
+            lambda timestamp: parser.parse(timestamp).replace(microsecond=0)
+        )
         frame["Market"] = frame.apply(TradeHistory.__market_lookup(context), axis=1)
         frame["MarketType"] = "perp"
 
         this_address = f"{account.address}"
-        frame["MakerOrTaker"] = frame["maker"].apply(lambda addy: "maker" if addy == this_address else "taker")
+        frame["MakerOrTaker"] = frame["maker"].apply(
+            lambda addy: "maker" if addy == this_address else "taker"
+        )
 
         frame["FeeTier"] = -1
         frame["Fee"] = frame.apply(__fee_calculator, axis=1)
         frame["Side"] = frame.apply(__side_lookup, axis=1)
         frame["Value"] = frame["Price"] * frame["Quantity"]
-        frame["Change"] = frame["Value"].where(frame["Side"] == "sell", other=-frame["Value"]) + frame["Fee"]
-        frame["OrderId"] = numpy.where(frame["MakerOrTaker"] == "maker",
-                                       frame["makerOrderId"], frame["takerOrderId"])
+        frame["Change"] = (
+            frame["Value"].where(frame["Side"] == "sell", other=-frame["Value"])
+            + frame["Fee"]
+        )
+        frame["OrderId"] = numpy.where(
+            frame["MakerOrTaker"] == "maker",
+            frame["makerOrderId"],
+            frame["takerOrderId"],
+        )
 
         return frame[TradeHistory.COLUMNS]
 
@@ -218,7 +256,12 @@ class TradeHistory:
         return trades
 
     @staticmethod
-    def __download_updated_spots(context: Context, account: Account, newer_than: typing.Optional[datetime], seconds_pause_between_rest_calls: int) -> pandas.DataFrame:
+    def __download_updated_spots(
+        context: Context,
+        account: Account,
+        newer_than: typing.Optional[datetime],
+        seconds_pause_between_rest_calls: int,
+    ) -> pandas.DataFrame:
         trades: pandas.DataFrame = pandas.DataFrame(columns=TradeHistory.COLUMNS)
         for spot_open_orders_address in account.spot_open_orders:
             page: int = 0
@@ -242,7 +285,9 @@ class TradeHistory:
         return trades
 
     @staticmethod
-    def __spot_data_to_dataframe(context: Context, account: Account, data: typing.Any) -> pandas.DataFrame:
+    def __spot_data_to_dataframe(
+        context: Context, account: Account, data: typing.Any
+    ) -> pandas.DataFrame:
         # Spot data is an array of JSON packages like:
         # {
         #     "loadTimestamp": "2021-10-05T16:04:50.717Z",
@@ -281,14 +326,19 @@ class TradeHistory:
                     trade[column_name] = Decimal(trade[column_name])
 
             frame = pandas.DataFrame(trade_data).rename(
-                mapper=TradeHistory.__spot_column_name_mapper, axis=1, copy=True)
+                mapper=TradeHistory.__spot_column_name_mapper, axis=1, copy=True
+            )
             frame["Timestamp"] = frame["Timestamp"].apply(
-                lambda timestamp: parser.parse(timestamp).replace(microsecond=0))
+                lambda timestamp: parser.parse(timestamp).replace(microsecond=0)
+            )
             frame["Market"] = frame.apply(TradeHistory.__market_lookup(context), axis=1)
             frame["MakerOrTaker"] = numpy.where(frame["maker"], "maker", "taker")
             frame["Fee"] = -frame["Fee"]
             frame["Value"] = frame["Price"] * frame["Quantity"]
-            frame["Change"] = frame["Value"].where(frame["Side"] == "sell", other=-frame["Value"]) + frame["Fee"]
+            frame["Change"] = (
+                frame["Value"].where(frame["Side"] == "sell", other=-frame["Value"])
+                + frame["Fee"]
+            )
             frame["MarketType"] = "spot"
 
             return frame[TradeHistory.COLUMNS]
@@ -297,31 +347,38 @@ class TradeHistory:
     def trades(self) -> pandas.DataFrame:
         return self.__trades.copy(deep=True)
 
-    def download_latest(self, context: Context, account: Account, cutoff: datetime) -> None:
+    def download_latest(
+        self, context: Context, account: Account, cutoff: datetime
+    ) -> None:
         # Go back further than we need to so we can be sure we're not skipping any trades due to race conditions.
         # We remove duplicates a few lines further down.
         self._logger.info(f"Downloading spot trades from {cutoff}")
-        spot: pandas.DataFrame = TradeHistory.__download_updated_spots(context,
-                                                                       account,
-                                                                       cutoff,
-                                                                       self.__seconds_pause_between_rest_calls)
+        spot: pandas.DataFrame = TradeHistory.__download_updated_spots(
+            context, account, cutoff, self.__seconds_pause_between_rest_calls
+        )
         self._logger.info(f"Downloading perp trades from {cutoff}")
-        perp: pandas.DataFrame = TradeHistory.__download_updated_perps(context,
-                                                                       account,
-                                                                       cutoff,
-                                                                       self.__seconds_pause_between_rest_calls)
+        perp: pandas.DataFrame = TradeHistory.__download_updated_perps(
+            context, account, cutoff, self.__seconds_pause_between_rest_calls
+        )
 
         all_trades: pandas.DataFrame = pandas.concat([self.__trades, spot, perp])
         all_trades = all_trades[all_trades["Timestamp"] >= cutoff]
 
         distinct_trades = all_trades.drop_duplicates()
-        sorted_trades = distinct_trades.sort_values(["Timestamp", "Market", "SequenceNumber"], axis=0, ascending=True)
-        self._logger.info(f"Download complete. Data contains {len(sorted_trades)} trades.")
+        sorted_trades = distinct_trades.sort_values(
+            ["Timestamp", "Market", "SequenceNumber"], axis=0, ascending=True
+        )
+        self._logger.info(
+            f"Download complete. Data contains {len(sorted_trades)} trades."
+        )
         self.__trades = sorted_trades
 
     def update(self, context: Context, account: Account) -> None:
-        latest_trade: typing.Optional[datetime] = self.__trades.loc[self.__trades.index[-1],
-                                                                    "Timestamp"] if len(self.__trades) > 0 else None
+        latest_trade: typing.Optional[datetime] = (
+            self.__trades.loc[self.__trades.index[-1], "Timestamp"]
+            if len(self.__trades) > 0
+            else None
+        )
         spot: pandas.DataFrame
         perp: pandas.DataFrame
         if latest_trade is None:
@@ -335,18 +392,26 @@ class TradeHistory:
             cutoff_safety_margin: timedelta = timedelta(hours=1)
             cutoff: datetime = latest_trade - cutoff_safety_margin
             self._logger.info(
-                f"Downloading spot trades from {cutoff}, {cutoff_safety_margin} before latest stored trade at {latest_trade}")
-            spot = TradeHistory.__download_updated_spots(context, account,
-                                                         cutoff, self.__seconds_pause_between_rest_calls)
+                f"Downloading spot trades from {cutoff}, {cutoff_safety_margin} before latest stored trade at {latest_trade}"
+            )
+            spot = TradeHistory.__download_updated_spots(
+                context, account, cutoff, self.__seconds_pause_between_rest_calls
+            )
             self._logger.info(
-                f"Downloading perp trades from {cutoff}, {cutoff_safety_margin} before latest stored trade at {latest_trade}")
-            perp = TradeHistory.__download_updated_perps(context, account,
-                                                         cutoff, self.__seconds_pause_between_rest_calls)
+                f"Downloading perp trades from {cutoff}, {cutoff_safety_margin} before latest stored trade at {latest_trade}"
+            )
+            perp = TradeHistory.__download_updated_perps(
+                context, account, cutoff, self.__seconds_pause_between_rest_calls
+            )
 
         all_trades = pandas.concat([self.__trades, spot, perp])
         distinct_trades = all_trades.drop_duplicates()
-        sorted_trades = distinct_trades.sort_values(["Timestamp", "Market", "SequenceNumber"], axis=0, ascending=True)
-        self._logger.info(f"Download complete. Data contains {len(sorted_trades)} trades.")
+        sorted_trades = distinct_trades.sort_values(
+            ["Timestamp", "Market", "SequenceNumber"], axis=0, ascending=True
+        )
+        self._logger.info(
+            f"Download complete. Data contains {len(sorted_trades)} trades."
+        )
         self.__trades = sorted_trades
 
     def load(self, filename: str, ok_if_missing: bool = False) -> None:
@@ -354,9 +419,11 @@ class TradeHistory:
             if not ok_if_missing:
                 raise Exception(f"File {filename} does not exist or is not a file.")
         else:
-            existing = pandas.read_csv(filename,
-                                       float_precision="round_trip",
-                                       converters=TradeHistory.__column_converters)
+            existing = pandas.read_csv(
+                filename,
+                float_precision="round_trip",
+                converters=TradeHistory.__column_converters,
+            )
 
             self.__trades = self.__trades.append(existing)
 

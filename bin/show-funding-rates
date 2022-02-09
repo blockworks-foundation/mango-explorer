@@ -6,14 +6,19 @@ import os.path
 import sys
 
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(
-    description="Shows the current funding rates for a perp market in a Mango Markets Group.")
+    description="Shows the current funding rates for a perp market in a Mango Markets Group."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
-parser.add_argument("--market", type=str, required=True, help="symbol of the market to look up, e.g. 'ETH-PERP'")
+parser.add_argument(
+    "--market",
+    type=str,
+    required=True,
+    help="symbol of the market to look up, e.g. 'ETH-PERP'",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)

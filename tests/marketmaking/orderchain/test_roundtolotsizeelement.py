@@ -10,7 +10,9 @@ from mango.marketmaking.orderchain.roundtolotsizeelement import RoundToLotSizeEl
 
 def test_from_args() -> None:
     args: argparse.Namespace = argparse.Namespace()
-    actual: RoundToLotSizeElement = RoundToLotSizeElement.from_command_line_parameters(args)
+    actual: RoundToLotSizeElement = RoundToLotSizeElement.from_command_line_parameters(
+        args
+    )
     assert actual is not None
     assert isinstance(actual, RoundToLotSizeElement)
 
@@ -42,7 +44,9 @@ def test_rounds_quantity() -> None:
 def test_rounds_price_and_quantity() -> None:
     context = fake_context()
     model_state = fake_model_state()
-    order: mango.Order = fake_order(price=Decimal("1.23456789"), quantity=Decimal("1.23456789"))
+    order: mango.Order = fake_order(
+        price=Decimal("1.23456789"), quantity=Decimal("1.23456789")
+    )
 
     actual: RoundToLotSizeElement = RoundToLotSizeElement()
     result = actual.process(context, model_state, [order])
@@ -76,7 +80,9 @@ def test_removes_when_quantity_rounds_to_zero() -> None:
 def test_removes_when_price_and_quantity_round_to_zero() -> None:
     context = fake_context()
     model_state = fake_model_state()
-    order: mango.Order = fake_order(price=Decimal("0.0000001"), quantity=Decimal("0.0000001"))
+    order: mango.Order = fake_order(
+        price=Decimal("0.0000001"), quantity=Decimal("0.0000001")
+    )
 
     actual: RoundToLotSizeElement = RoundToLotSizeElement()
     result = actual.process(context, model_state, [order])

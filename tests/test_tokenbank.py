@@ -9,7 +9,9 @@ from solana.publickey import PublicKey
 
 def test_node_bank_constructor() -> None:
     account_info = fake_account_info(fake_seeded_public_key("node bank"))
-    meta_data = mango.Metadata(mango.layouts.DATA_TYPE.parse(bytearray(b'\x03')), mango.Version.V1, True)
+    meta_data = mango.Metadata(
+        mango.layouts.DATA_TYPE.parse(bytearray(b"\x03")), mango.Version.V1, True
+    )
     deposits = Decimal(1000)
     borrows = Decimal(100)
     balances = mango.BankBalances(deposits=deposits, borrows=borrows)
@@ -28,7 +30,9 @@ def test_node_bank_constructor() -> None:
 
 def test_root_bank_constructor() -> None:
     account_info = fake_account_info(fake_seeded_public_key("root bank"))
-    meta_data = mango.Metadata(mango.layouts.DATA_TYPE.parse(bytearray(b'\x02')), mango.Version.V1, True)
+    meta_data = mango.Metadata(
+        mango.layouts.DATA_TYPE.parse(bytearray(b"\x02")), mango.Version.V1, True
+    )
     optimal_util = Decimal("0.7")
     optimal_rate = Decimal("0.06")
     max_rate = Decimal("1.5")
@@ -37,8 +41,18 @@ def test_root_bank_constructor() -> None:
     borrow_index = Decimal(12345)
     timestamp = datetime.now()
 
-    actual = mango.RootBank(account_info, mango.Version.V1, meta_data, optimal_util, optimal_rate,
-                            max_rate, [node_bank], deposit_index, borrow_index, timestamp)
+    actual = mango.RootBank(
+        account_info,
+        mango.Version.V1,
+        meta_data,
+        optimal_util,
+        optimal_rate,
+        max_rate,
+        [node_bank],
+        deposit_index,
+        borrow_index,
+        timestamp,
+    )
     assert actual is not None
     assert actual.account_info == account_info
     assert actual.address == fake_seeded_public_key("root bank")
@@ -74,15 +88,21 @@ def test_load_root_bank() -> None:
     assert actual.optimal_util == Decimal("0.69999999999999928946")
     assert actual.optimal_rate == Decimal("0.05999999999999872102")
     assert actual.max_rate == Decimal("1.5")
-    assert actual.node_banks[0] == PublicKey("J2Lmnc1e4frMnBEJARPoHtfpcohLfN67HdK1inXjTFSM")
+    assert actual.node_banks[0] == PublicKey(
+        "J2Lmnc1e4frMnBEJARPoHtfpcohLfN67HdK1inXjTFSM"
+    )
     assert actual.deposit_index == Decimal("1000154.42276607355830719825")
     assert actual.borrow_index == Decimal("1000219.00867863010088498754")
     assert actual.last_updated == datetime(2021, 10, 4, 14, 58, 5, 0, timezone.utc)
 
 
 def test_btc_token_bank() -> None:
-    btc = mango.Token("BTC", "Wrapped Bitcoin (Sollet)", Decimal(
-        6), PublicKey("9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E"))
+    btc = mango.Token(
+        "BTC",
+        "Wrapped Bitcoin (Sollet)",
+        Decimal(6),
+        PublicKey("9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E"),
+    )
 
     root_bank = load_root_bank("tests/testdata/tokenbank/btc_root_bank.json")
     node_bank = load_node_bank("tests/testdata/tokenbank/btc_node_bank.json")
@@ -95,15 +115,21 @@ def test_btc_token_bank() -> None:
     interest_rates = actual.fetch_interest_rates(context)
 
     # Typescript says:                        0.00074328994922723268
-    assert interest_rates.deposit == Decimal("0.000743289949230430278650314704786385301")
+    assert interest_rates.deposit == Decimal(
+        "0.000743289949230430278650314704786385301"
+    )
     # Typescript says:                       0.0060962691428017024
     assert interest_rates.borrow == Decimal("0.00609626914280543412386251743252599320")
     assert str(interest_rates) == "« InterestRates Deposit: 0.07% Borrow: 0.61% »"
 
 
 def test_usdc_token_bank() -> None:
-    usdc = mango.Token("USDC", "USD Coin", Decimal(
-        6), PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"))
+    usdc = mango.Token(
+        "USDC",
+        "USD Coin",
+        Decimal(6),
+        PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
+    )
 
     root_bank = load_root_bank("tests/testdata/tokenbank/usdc_root_bank.json")
     node_bank = load_node_bank("tests/testdata/tokenbank/usdc_node_bank.json")

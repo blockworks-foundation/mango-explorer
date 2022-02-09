@@ -22,8 +22,14 @@ from .token import Instrument
 
 # # 🥭 LotSizeConverter class
 #
-class LotSizeConverter():
-    def __init__(self, base: Instrument, base_lot_size: Decimal, quote: Instrument, quote_lot_size: Decimal) -> None:
+class LotSizeConverter:
+    def __init__(
+        self,
+        base: Instrument,
+        base_lot_size: Decimal,
+        quote: Instrument,
+        quote_lot_size: Decimal,
+    ) -> None:
         self.base: Instrument = base
         self.base_lot_size: Decimal = base_lot_size
         self.quote: Instrument = quote
@@ -50,30 +56,33 @@ class LotSizeConverter():
         return self.adjust_to_base_decimals(price_lots * lots_to_native)
 
     def price_number_to_lots(self, price: Decimal) -> int:
-        base_factor: Decimal = 10 ** self.base.decimals
-        quote_factor: Decimal = 10 ** self.quote.decimals
-        return round((price * quote_factor * self.base_lot_size) / (base_factor * self.quote_lot_size))
+        base_factor: Decimal = 10**self.base.decimals
+        quote_factor: Decimal = 10**self.quote.decimals
+        return round(
+            (price * quote_factor * self.base_lot_size)
+            / (base_factor * self.quote_lot_size)
+        )
 
     def base_size_lots_to_number(self, size_lots: Decimal) -> Decimal:
         size: int = round(size_lots)
-        base_factor: Decimal = 10 ** self.base.decimals
+        base_factor: Decimal = 10**self.base.decimals
         return Decimal(size * self.base_lot_size) / base_factor
 
     def base_size_number_to_lots(self, size: Decimal) -> int:
-        base_factor: Decimal = 10 ** self.base.decimals
+        base_factor: Decimal = 10**self.base.decimals
         return int(round(size * base_factor) / self.base_lot_size)
 
     def quote_size_lots_to_number(self, size_lots: Decimal) -> Decimal:
         size: int = round(size_lots)
-        quote_factor: Decimal = 10 ** self.quote.decimals
+        quote_factor: Decimal = 10**self.quote.decimals
         return Decimal(size * self.quote_lot_size) / quote_factor
 
     def quote_lots_to_number(self, size_lots: Decimal) -> Decimal:
-        quote_factor: Decimal = 10 ** self.quote.decimals
+        quote_factor: Decimal = 10**self.quote.decimals
         return Decimal(size_lots * self.quote_lot_size) / quote_factor
 
     def quote_size_number_to_lots(self, size: Decimal) -> int:
-        quote_factor: Decimal = 10 ** self.quote.decimals
+        quote_factor: Decimal = 10**self.quote.decimals
         return int(round(size * quote_factor) / self.quote_lot_size)
 
     def round_base(self, quantity: Decimal) -> Decimal:
@@ -93,8 +102,12 @@ class LotSizeConverter():
 #
 class NullLotSizeConverter(LotSizeConverter):
     def __init__(self) -> None:
-        super().__init__(Instrument("NULLBASE", "Null Base", Decimal(0)), Decimal(
-            1), Instrument("NULLQUOTE", "Null Quote", Decimal(0)), Decimal(1))
+        super().__init__(
+            Instrument("NULLBASE", "Null Base", Decimal(0)),
+            Decimal(1),
+            Instrument("NULLQUOTE", "Null Quote", Decimal(0)),
+            Decimal(1),
+        )
 
     def price_lots_to_number(self, price_lots: Decimal) -> Decimal:
         return price_lots
@@ -122,32 +135,42 @@ class NullLotSizeConverter(LotSizeConverter):
 #
 class RaisingLotSizeConverter(LotSizeConverter):
     def __init__(self) -> None:
-        super().__init__(Instrument("RAISINGBASE", "Raising Base", Decimal(0)), Decimal(-1),
-                         Instrument("RAISINGQUOTE", "Raising Quote", Decimal(0)), Decimal(-1))
+        super().__init__(
+            Instrument("RAISINGBASE", "Raising Base", Decimal(0)),
+            Decimal(-1),
+            Instrument("RAISINGQUOTE", "Raising Quote", Decimal(0)),
+            Decimal(-1),
+        )
 
     def price_lots_to_number(self, price_lots: Decimal) -> Decimal:
         raise NotImplementedError(
-            "RaisingLotSizeConverter.price_lots_to_number() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called.")
+            "RaisingLotSizeConverter.price_lots_to_number() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called."
+        )
 
     def price_number_to_lots(self, price: Decimal) -> int:
         raise NotImplementedError(
-            "RaisingLotSizeConverter.price_number_to_lots() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called.")
+            "RaisingLotSizeConverter.price_number_to_lots() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called."
+        )
 
     def base_size_lots_to_number(self, size_lots: Decimal) -> Decimal:
         raise NotImplementedError(
-            "RaisingLotSizeConverter.base_size_lots_to_number() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called.")
+            "RaisingLotSizeConverter.base_size_lots_to_number() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called."
+        )
 
     def base_size_number_to_lots(self, size: Decimal) -> int:
         raise NotImplementedError(
-            "RaisingLotSizeConverter.base_size_number_to_lots() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called.")
+            "RaisingLotSizeConverter.base_size_number_to_lots() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called."
+        )
 
     def quote_size_lots_to_number(self, size_lots: Decimal) -> Decimal:
         raise NotImplementedError(
-            "RaisingLotSizeConverter.quote_size_lots_to_number() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called.")
+            "RaisingLotSizeConverter.quote_size_lots_to_number() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called."
+        )
 
     def quote_size_number_to_lots(self, size: Decimal) -> int:
         raise NotImplementedError(
-            "RaisingLotSizeConverter.quote_size_number_to_lots() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called.")
+            "RaisingLotSizeConverter.quote_size_number_to_lots() is not implemented. RaisingLotSizeConverter is a stub used where no LotSizeConverter members should be called."
+        )
 
     def __str__(self) -> str:
         return "« RaisingLotSizeConverter »"

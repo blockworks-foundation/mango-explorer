@@ -33,8 +33,12 @@ class UnsettledFundingParams:
 def calculate_unsettled_funding(params: UnsettledFundingParams) -> InstrumentValue:
     result: Decimal
     if params.base_position > 0:
-        result = params.base_position.value * (params.long_funding - params.long_settled_funding)
+        result = params.base_position.value * (
+            params.long_funding - params.long_settled_funding
+        )
     else:
-        result = params.base_position.value * (params.short_funding - params.short_settled_funding)
+        result = params.base_position.value * (
+            params.short_funding - params.short_settled_funding
+        )
 
     return InstrumentValue(params.quote_token, result)

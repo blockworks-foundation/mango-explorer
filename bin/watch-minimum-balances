@@ -14,35 +14,62 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(
-    description="Watches one or many accounts (via a websocket) and sends a notification if the SOL balance falls below the --minimum-sol-balance threshold.")
+    description="Watches one or many accounts (via a websocket) and sends a notification if the SOL balance falls below the --minimum-sol-balance threshold."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--named-address", type=str, required=True, action="append", default=[],
-                    help="Name and address of the Solana account to watch, separated by a colon")
-parser.add_argument("--minimum-sol-balance", type=Decimal, default=Decimal("0.1"),
-                    help="the minimum SOL balance required for the alert. A SOL balance less than this value will trigger a nofitication.")
-parser.add_argument("--timer-limit", type=int, default=(60 * 60),
-                    help="notifications for an account will be sent at most once per timer-limit seconds, and accounts will be polled once per timer-limit seconds irrespective of websocket activity")
-parser.add_argument("--notify", type=mango.parse_notification_target, action="append", default=[],
-                    help="The notification target for low balance events")
-parser.add_argument("--notify-events", type=mango.parse_notification_target, action="append", default=[],
-                    help="The notification target for startup events")
+parser.add_argument(
+    "--named-address",
+    type=str,
+    required=True,
+    action="append",
+    default=[],
+    help="Name and address of the Solana account to watch, separated by a colon",
+)
+parser.add_argument(
+    "--minimum-sol-balance",
+    type=Decimal,
+    default=Decimal("0.1"),
+    help="the minimum SOL balance required for the alert. A SOL balance less than this value will trigger a nofitication.",
+)
+parser.add_argument(
+    "--timer-limit",
+    type=int,
+    default=(60 * 60),
+    help="notifications for an account will be sent at most once per timer-limit seconds, and accounts will be polled once per timer-limit seconds irrespective of websocket activity",
+)
+parser.add_argument(
+    "--notify",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for low balance events",
+)
+parser.add_argument(
+    "--notify-events",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for startup events",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 notify_balance: mango.NotificationTarget = mango.CompoundNotificationTarget(args.notify)
-notify_event: mango.NotificationTarget = mango.CompoundNotificationTarget(args.notify_events)
+notify_event: mango.NotificationTarget = mango.CompoundNotificationTarget(
+    args.notify_events
+)
 
 
 def notifier(name: str) -> typing.Callable[[mango.AccountInfo], None]:
     def notify(account_info: mango.AccountInfo) -> None:
-        report = f"Account \"{name} [{account_info.address}]\" on {context.client.cluster_name} has only {account_info.sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL."
+        report = f'Account "{name} [{account_info.address}]" on {context.client.cluster_name} has only {account_info.sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL.'
         notify_balance.send(f"[{args.name}] {report}")
         mango.output(f"Notification sent: {report}")
+
     return notify
 
 
@@ -55,7 +82,13 @@ def log_account(account_info: mango.AccountInfo) -> mango.AccountInfo:
     return account_info
 
 
-def add_subscription_for_parameter(context: mango.Context, manager: mango.WebSocketSubscriptionManager, health_check: mango.HealthCheck, timer_limit: int, name_and_address: str) -> None:
+def add_subscription_for_parameter(
+    context: mango.Context,
+    manager: mango.WebSocketSubscriptionManager,
+    health_check: mango.HealthCheck,
+    timer_limit: int,
+    name_and_address: str,
+) -> None:
     name, address_str = name_and_address.split(":")
     address = PublicKey(address_str)
 
@@ -63,19 +96,22 @@ def add_subscription_for_parameter(context: mango.Context, manager: mango.WebSoc
     if immediate is None:
         raise Exception(f"No account '{name}' at {address_str}.")
 
-    account_subscription = mango.WebSocketAccountSubscription(context, address, lambda account_info: account_info)
+    account_subscription = mango.WebSocketAccountSubscription(
+        context, address, lambda account_info: account_info
+    )
     manager.add(account_subscription)
 
     on_change = account_subscription.publisher.pipe(rx.operators.start_with(immediate))
     on_timer = rx.interval(timer_limit).pipe(
-        rx.operators.map(lambda _: mango.AccountInfo.load(context, address)))
+        rx.operators.map(lambda _: mango.AccountInfo.load(context, address))
+    )
     rx.merge(on_change, on_timer).pipe(
         rx.operators.observe_on(context.create_thread_pool_scheduler()),
         rx.operators.map(log_account),
         rx.operators.filter(account_fails_balance_check),
         rx.operators.throttle_first(timer_limit),
         rx.operators.catch(mango.observable_pipeline_error_reporter),
-        rx.operators.retry()
+        rx.operators.retry(),
     ).subscribe(notifier(name))
 
 
@@ -91,7 +127,9 @@ disposer.add_disposable(health_check)
 health_check.add("ws_pong", manager.pong)
 
 for name_and_address in args.named_address:
-    add_subscription_for_parameter(context, manager, health_check, args.timer_limit, name_and_address)
+    add_subscription_for_parameter(
+        context, manager, health_check, args.timer_limit, name_and_address
+    )
 
 manager.open()
 

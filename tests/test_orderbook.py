@@ -48,7 +48,9 @@ def test_orderbook_spread() -> None:
 
 
 # ASK is SELL, BID is BUY
-def _construct_order_book_side(askOrBidSide: mango.Side, size: int) -> typing.Sequence[mango.Order]:
+def _construct_order_book_side(
+    askOrBidSide: mango.Side, size: int
+) -> typing.Sequence[mango.Order]:
     result_orders: typing.List[mango.Order] = []
     for index, price in enumerate(random.sample(range(1, 1000), size)):
         constructed_id = fake_order_id(index, price)
@@ -64,15 +66,14 @@ def _construct_order_book_side(askOrBidSide: mango.Side, size: int) -> typing.Se
 
 
 def _construct_order_book(
-    bids: typing.Sequence[mango.Order],
-    asks: typing.Sequence[mango.Order]
+    bids: typing.Sequence[mango.Order], asks: typing.Sequence[mango.Order]
 ) -> mango.OrderBook:
     # construct orderbook
     return mango.OrderBook(
-        symbol='TEST',
+        symbol="TEST",
         lot_size_converter=mango.NullLotSizeConverter(),
         bids=bids,
-        asks=asks
+        asks=asks,
     )
 
 

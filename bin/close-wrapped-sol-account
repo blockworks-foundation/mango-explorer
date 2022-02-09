@@ -7,32 +7,40 @@ import typing
 
 from solana.publickey import PublicKey
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Closes a Wrapped SOL account.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--address", type=PublicKey,
-                    help="Public key of the Wrapped SOL account to close")
+parser.add_argument(
+    "--address", type=PublicKey, help="Public key of the Wrapped SOL account to close"
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-wrapped_sol: mango.Token = mango.Token.ensure(context.instrument_lookup.find_by_symbol_or_raise("SOL"))
+wrapped_sol: mango.Token = mango.Token.ensure(
+    context.instrument_lookup.find_by_symbol_or_raise("SOL")
+)
 
-token_account: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(context, args.address)
+token_account: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(
+    context, args.address
+)
 if (token_account is None) or (token_account.value.token != wrapped_sol):
     raise Exception(f"Account {args.address} is not a {wrapped_sol.name} account.")
 
 payer: PublicKey = wallet.address
 signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
 
-close_instruction = mango.build_close_spl_account_instructions(context, wallet, args.address)
+close_instruction = mango.build_close_spl_account_instructions(
+    context, wallet, args.address
+)
 
-mango.output(f"Closing account: {args.address} with balance {token_account.value.value} lamports.")
+mango.output(
+    f"Closing account: {args.address} with balance {token_account.value.value} lamports."
+)
 
 all_instructions = signers + close_instruction
 transaction_ids = all_instructions.execute(context)

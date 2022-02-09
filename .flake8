@@ -1,5 +1,5 @@
 [flake8]
-ignore = D203,W503
+ignore = D203,E203,W503
 exclude = .venv,.git,__pycache__,.ipynb_checkpoints,docs
 per-file-ignores =
     # imported but unused

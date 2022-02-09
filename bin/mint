@@ -11,17 +11,23 @@ from spl.token.client import Token as SolanaSPLToken
 from spl.token.constants import TOKEN_PROGRAM_ID
 from solana.publickey import PublicKey
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="mint SPL tokens to your wallet")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--symbol", type=str, required=True, help="token symbol to mint (e.g. USDC)")
-parser.add_argument("--quantity", type=Decimal, required=True, help="quantity token to deposit")
-parser.add_argument("--address", type=PublicKey,
-                    help="Destination address for the minted token - can be either the actual token address or the address of the owner of the token address")
+parser.add_argument(
+    "--symbol", type=str, required=True, help="token symbol to mint (e.g. USDC)"
+)
+parser.add_argument(
+    "--quantity", type=Decimal, required=True, help="quantity token to deposit"
+)
+parser.add_argument(
+    "--address",
+    type=PublicKey,
+    help="Destination address for the minted token - can be either the actual token address or the address of the owner of the token address",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -32,21 +38,28 @@ if instrument is None:
     raise Exception(f"Could not find instrument with symbol '{args.symbol}'.")
 token: mango.Token = mango.Token.ensure(instrument)
 
-spl_token = SolanaSPLToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair)
+spl_token = SolanaSPLToken(
+    context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair
+)
 
 # Is the address an actual token account? Or is it the SOL address of the owner?
-account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(context, args.address)
+account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(
+    context, args.address
+)
 if account_info is None:
     raise Exception(f"Could not find account at address {args.address}.")
 
 if account_info.owner == mango.SYSTEM_PROGRAM_ADDRESS:
     # This is a root wallet account - get the associated token account
     destination: PublicKey = mango.TokenAccount.find_or_create_token_address_to_use(
-        context, wallet, args.address, token)
+        context, wallet, args.address, token
+    )
 
 quantity = token.shift_to_native(args.quantity)
 
 mango.output(f"Minting {args.quantity} {args.symbol} to {destination}")
-response = spl_token.mint_to(destination, wallet.address, int(quantity), multi_signers=[wallet.keypair])
+response = spl_token.mint_to(
+    destination, wallet.address, int(quantity), multi_signers=[wallet.keypair]
+)
 
 mango.output(response["result"])

@@ -37,29 +37,59 @@ class PreventPostOnlyCrossingBookElement(Element):
         pass
 
     @staticmethod
-    def from_command_line_parameters(args: argparse.Namespace) -> "PreventPostOnlyCrossingBookElement":
+    def from_command_line_parameters(
+        args: argparse.Namespace,
+    ) -> "PreventPostOnlyCrossingBookElement":
         return PreventPostOnlyCrossingBookElement()
 
-    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
+    def process(
+        self,
+        context: mango.Context,
+        model_state: ModelState,
+        orders: typing.Sequence[mango.Order],
+    ) -> typing.Sequence[mango.Order]:
         new_orders: typing.List[mango.Order] = []
         for order in orders:
             if order.order_type == mango.OrderType.POST_ONLY:
-                top_bid: typing.Optional[Decimal] = model_state.top_bid.price if model_state.top_bid is not None else None
-                top_ask: typing.Optional[Decimal] = model_state.top_ask.price if model_state.top_ask is not None else None
-                if order.side == mango.Side.BUY and top_ask is not None and order.price >= top_ask:
-                    new_buy_price: Decimal = top_ask - model_state.market.lot_size_converter.tick_size
+                top_bid: typing.Optional[Decimal] = (
+                    model_state.top_bid.price
+                    if model_state.top_bid is not None
+                    else None
+                )
+                top_ask: typing.Optional[Decimal] = (
+                    model_state.top_ask.price
+                    if model_state.top_ask is not None
+                    else None
+                )
+                if (
+                    order.side == mango.Side.BUY
+                    and top_ask is not None
+                    and order.price >= top_ask
+                ):
+                    new_buy_price: Decimal = (
+                        top_ask - model_state.market.lot_size_converter.tick_size
+                    )
                     new_buy: mango.Order = order.with_price(new_buy_price)
-                    self._logger.debug(f"""Order change - would cross the orderbook {top_bid} / {top_ask}:
+                    self._logger.debug(
+                        f"""Order change - would cross the orderbook {top_bid} / {top_ask}:
     Old: {order}
-    New: {new_buy}""")
+    New: {new_buy}"""
+                    )
                     new_orders += [new_buy]
-                elif order.side == mango.Side.SELL and top_bid is not None and order.price <= top_bid:
-                    new_sell_price: Decimal = top_bid + model_state.market.lot_size_converter.tick_size
+                elif (
+                    order.side == mango.Side.SELL
+                    and top_bid is not None
+                    and order.price <= top_bid
+                ):
+                    new_sell_price: Decimal = (
+                        top_bid + model_state.market.lot_size_converter.tick_size
+                    )
                     new_sell: mango.Order = order.with_price(new_sell_price)
                     self._logger.debug(
                         f"""Order change - would cross the orderbook {top_bid} / {top_ask}:
     Old: {order}
-    New: {new_sell}""")
+    New: {new_sell}"""
+                    )
 
                     new_orders += [new_sell]
                 else:

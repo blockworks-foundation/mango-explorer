@@ -84,7 +84,9 @@ class ScoutReport:
             if len(text_list) == 0:
                 return "None"
             padding = "\n        "
-            return padding.join(map(lambda text: text.replace("\n", padding), text_list))
+            return padding.join(
+                map(lambda text: text.replace("\n", padding), text_list)
+            )
 
         error_text = _pad(self.errors)
         warning_text = _pad(self.warnings)
@@ -120,16 +122,23 @@ class ScoutReport:
 # Passing all checks here with no errors will be a precondition on liquidator startup.
 #
 
+
 class AccountScout:
     def __init__(self) -> None:
         pass
 
-    def require_account_prepared_for_group(self, context: Context, group: Group, account_address: PublicKey) -> None:
+    def require_account_prepared_for_group(
+        self, context: Context, group: Group, account_address: PublicKey
+    ) -> None:
         report = self.verify_account_prepared_for_group(context, group, account_address)
         if report.has_errors:
-            raise Exception(f"Account '{account_address}' is not prepared for group '{group.address}':\n\n{report}")
+            raise Exception(
+                f"Account '{account_address}' is not prepared for group '{group.address}':\n\n{report}"
+            )
 
-    def verify_account_prepared_for_group(self, context: Context, group: Group, account_address: PublicKey) -> ScoutReport:
+    def verify_account_prepared_for_group(
+        self, context: Context, group: Group, account_address: PublicKey
+    ) -> ScoutReport:
         report = ScoutReport(account_address)
 
         # First of all, the account must actually exist. If it doesn't, just return early.
@@ -147,18 +156,23 @@ class AccountScout:
         for basket_token in group.tokens:
             if isinstance(basket_token.token, Token):
                 token_accounts = TokenAccount.fetch_all_for_owner_and_token(
-                    context, account_address, basket_token.token)
+                    context, account_address, basket_token.token
+                )
                 if len(token_accounts) == 0:
                     report.add_error(
-                        f"Account '{account_address}' has no account for token '{basket_token.token.name}'.")
+                        f"Account '{account_address}' has no account for token '{basket_token.token.name}'."
+                    )
                 else:
                     report.add_detail(
-                        f"Account '{account_address}' has {len(token_accounts)} {basket_token.token.name} token account(s): {[ta.address for ta in token_accounts]}")
+                        f"Account '{account_address}' has {len(token_accounts)} {basket_token.token.name} token account(s): {[ta.address for ta in token_accounts]}"
+                    )
 
         # May have one or more Mango Markets margin account, but it's optional for liquidating
         accounts = Account.load_all_for_owner(context, account_address, group)
         if len(accounts) == 0:
-            report.add_detail(f"Account '{account_address}' has no Mango Markets margin accounts.")
+            report.add_detail(
+                f"Account '{account_address}' has no Mango Markets margin accounts."
+            )
         else:
             for account in accounts:
                 report.add_detail(f"Margin account: {account}")

@@ -5,15 +5,20 @@ import os
 import os.path
 import sys
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
-parser = argparse.ArgumentParser(description="Ensure a Mango account exists for the wallet and group.")
+parser = argparse.ArgumentParser(
+    description="Ensure a Mango account exists for the wallet and group."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--wait", action="store_true", default=False,
-                    help="wait until the transaction is confirmed")
+parser.add_argument(
+    "--wait",
+    action="store_true",
+    default=False,
+    help="wait until the transaction is confirmed",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -23,9 +28,13 @@ group = mango.Group.load(context)
 accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
 
 if len(accounts) > 0:
-    mango.output(f"At least one account already exists for group {group.address} and wallet {wallet.address}")
+    mango.output(
+        f"At least one account already exists for group {group.address} and wallet {wallet.address}"
+    )
 else:
-    signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
+    signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(
+        wallet
+    )
     init = mango.build_create_account_instructions(context, wallet, group)
     all_instructions = signers + init
     transaction_ids = all_instructions.execute(context)

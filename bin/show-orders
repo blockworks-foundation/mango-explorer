@@ -7,24 +7,34 @@ import sys
 
 from solana.publickey import PublicKey
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows all orders on a market.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--market", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)")
-parser.add_argument("--account-address", type=PublicKey,
-                    help="address of the specific account to use, if more than one available")
-parser.add_argument("--dry-run", action="store_true", default=False,
-                    help="runs as read-only and does not perform any transactions")
+parser.add_argument(
+    "--market", type=str, required=True, help="market symbol to buy (e.g. ETH/USDC)"
+)
+parser.add_argument(
+    "--account-address",
+    type=PublicKey,
+    help="address of the specific account to use, if more than one available",
+)
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    default=False,
+    help="runs as read-only and does not perform any transactions",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_address)
-account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
+account = mango.Account.load_for_owner_by_address(
+    context, wallet.address, group, args.account_address
+)
 
 market = mango.load_market_by_symbol(context, args.market)
 

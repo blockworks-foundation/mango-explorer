@@ -7,7 +7,9 @@ from mango.calculators.healthcalculator import HealthType, HealthCalculator
 
 def test_empty() -> None:
     context = fake_context()
-    group, cache, account, open_orders = load_data_from_directory("tests/testdata/empty")
+    group, cache, account, open_orders = load_data_from_directory(
+        "tests/testdata/empty"
+    )
 
     actual = HealthCalculator(context, HealthType.INITIAL)
     health = actual.calculate(account, open_orders, group, cache)
@@ -17,7 +19,9 @@ def test_empty() -> None:
 
 def test_1deposit() -> None:
     context = fake_context()
-    group, cache, account, open_orders = load_data_from_directory("tests/testdata/1deposit")
+    group, cache, account, open_orders = load_data_from_directory(
+        "tests/testdata/1deposit"
+    )
 
     actual = HealthCalculator(context, HealthType.INITIAL)
     health = actual.calculate(account, open_orders, group, cache)
@@ -27,7 +31,9 @@ def test_1deposit() -> None:
 
 def test_account1() -> None:
     context = fake_context()
-    group, cache, account, open_orders = load_data_from_directory("tests/testdata/account1")
+    group, cache, account, open_orders = load_data_from_directory(
+        "tests/testdata/account1"
+    )
 
     actual = HealthCalculator(context, HealthType.INITIAL)
     health = actual.calculate(account, open_orders, group, cache)
@@ -38,7 +44,9 @@ def test_account1() -> None:
 
 def test_account2() -> None:
     context = fake_context()
-    group, cache, account, open_orders = load_data_from_directory("tests/testdata/account2")
+    group, cache, account, open_orders = load_data_from_directory(
+        "tests/testdata/account2"
+    )
 
     actual = HealthCalculator(context, HealthType.INITIAL)
     health = actual.calculate(account, open_orders, group, cache)
@@ -49,7 +57,9 @@ def test_account2() -> None:
 
 def test_account3() -> None:
     context = fake_context()
-    group, cache, account, open_orders = load_data_from_directory("tests/testdata/account3")
+    group, cache, account, open_orders = load_data_from_directory(
+        "tests/testdata/account3"
+    )
 
     actual = HealthCalculator(context, HealthType.INITIAL)
     health = actual.calculate(account, open_orders, group, cache)
@@ -61,7 +71,9 @@ def test_account3() -> None:
 
 def test_account4() -> None:
     context = fake_context()
-    group, cache, account, open_orders = load_data_from_directory("tests/testdata/account4")
+    group, cache, account, open_orders = load_data_from_directory(
+        "tests/testdata/account4"
+    )
 
     actual = HealthCalculator(context, HealthType.INITIAL)
     health = actual.calculate(account, open_orders, group, cache)

@@ -18,13 +18,15 @@ import typing
 from .idl import IdlParser, lazy_load_cached_idl_parser
 
 
-def expand_log_messages(original_messages: typing.Sequence[str]) -> typing.Sequence[str]:
+def expand_log_messages(
+    original_messages: typing.Sequence[str],
+) -> typing.Sequence[str]:
     idl_parser: IdlParser = lazy_load_cached_idl_parser("mango_logs.json")
     expanded_messages: typing.List[str] = []
     parse_next_line: bool = False
     for message in original_messages:
         if parse_next_line:
-            encoded: str = message[len("Program log: "):]
+            encoded: str = message[len("Program log: ") :]
             name, parsed = idl_parser.decode_and_parse(encoded)
             expanded_messages += ["Mango " + name + " " + str(parsed)]
             parse_next_line = False

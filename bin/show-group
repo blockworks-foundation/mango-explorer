@@ -7,11 +7,12 @@ import os.path
 import sys
 import traceback
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
-parser = argparse.ArgumentParser(description="Shows the on-chain data of a Mango Markets Group.")
+parser = argparse.ArgumentParser(
+    description="Shows the on-chain data of a Mango Markets Group."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
 args: argparse.Namespace = mango.parse_args(parser)
 
@@ -21,6 +22,10 @@ try:
     group = mango.Group.load(context)
     mango.output(group)
 except Exception as exception:
-    logging.critical(f"show-group stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(
+        f"show-group stopped because of exception: {exception} - {traceback.format_exc()}"
+    )
 except:
-    logging.critical(f"show-group stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(
+        f"show-group stopped because of uncatchable error: {traceback.format_exc()}"
+    )

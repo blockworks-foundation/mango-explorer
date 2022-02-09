@@ -27,7 +27,13 @@ from ...context import Context
 from ...ensuremarketloaded import ensure_market_loaded
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
-from ...oracle import Oracle, OracleProvider, OracleSource, Price, SupportedOracleFeature
+from ...oracle import (
+    Oracle,
+    OracleProvider,
+    OracleSource,
+    Price,
+    SupportedOracleFeature,
+)
 from ...perpmarket import PerpMarket
 from ...spotmarket import SpotMarket
 
@@ -65,7 +71,9 @@ class StubOracle(Oracle):
         cache: Cache = Cache.load(context, self.cache_address)
         raw_price = cache.price_cache[self.index]
         if raw_price is None:
-            raise Exception(f"Stub Oracle does not contain a price for market {self.symbol} at index {self.index}.")
+            raise Exception(
+                f"Stub Oracle does not contain a price for market {self.symbol} at index {self.index}."
+            )
         # Should convert raw_price to actual price.
         # Discord on stub price from lagzda:
         #   https://discord.com/channels/791995070613159966/853370356244152360/871871877382033478
@@ -73,9 +81,19 @@ class StubOracle(Oracle):
         # base I did the incorrect change. Instead of adjusting RAY etc stub oracles prices from 2 to
         # 2_000_000, I should've adjusted the Pyth oracles prices which soon will be deployed. That
         # will give you the consistent results, but you'll need to adjust your code"
-        return Price(self.source, datetime.now(), self.market, raw_price.price, raw_price.price, raw_price.price, StubOracleConfidence)
+        return Price(
+            self.source,
+            datetime.now(),
+            self.market,
+            raw_price.price,
+            raw_price.price,
+            raw_price.price,
+            StubOracleConfidence,
+        )
 
-    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable[Price]:
+    def to_streaming_observable(
+        self, context: Context
+    ) -> rx.core.typing.Observable[Price]:
         prices = rx.interval(1).pipe(
             ops.observe_on(context.create_thread_pool_scheduler()),
             ops.start_with(-1),
@@ -91,17 +109,24 @@ class StubOracle(Oracle):
 # Implements the `OracleProvider` abstract base class specialised to the Serum Network.
 #
 
+
 class StubOracleProvider(OracleProvider):
     def __init__(self) -> None:
         super().__init__("Stub Oracle Factory")
 
-    def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
+    def oracle_for_market(
+        self, context: Context, market: Market
+    ) -> typing.Optional[Oracle]:
         loaded_market: Market = ensure_market_loaded(context, market)
         if isinstance(loaded_market, SpotMarket):
-            spot_index: int = loaded_market.group.slot_by_spot_market_address(loaded_market.address).index
+            spot_index: int = loaded_market.group.slot_by_spot_market_address(
+                loaded_market.address
+            ).index
             return StubOracle(loaded_market, spot_index, loaded_market.group.cache)
         elif isinstance(loaded_market, PerpMarket):
-            perp_index: int = loaded_market.group.slot_by_perp_market_address(loaded_market.address).index
+            perp_index: int = loaded_market.group.slot_by_perp_market_address(
+                loaded_market.address
+            ).index
             return StubOracle(loaded_market, perp_index, loaded_market.group.cache)
 
         return None

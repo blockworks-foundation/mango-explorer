@@ -25,9 +25,20 @@ from .version import Version
 # Encapsulates the Serum AccountFlags data.
 #
 
+
 class AccountFlags:
-    def __init__(self, version: Version, initialized: bool, market: bool, open_orders: bool,
-                 request_queue: bool, event_queue: bool, bids: bool, asks: bool, disabled: bool) -> None:
+    def __init__(
+        self,
+        version: Version,
+        initialized: bool,
+        market: bool,
+        open_orders: bool,
+        request_queue: bool,
+        event_queue: bool,
+        bids: bool,
+        asks: bool,
+        disabled: bool,
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.version: Version = version
         self.initialized: bool = initialized
@@ -41,9 +52,17 @@ class AccountFlags:
 
     @staticmethod
     def from_layout(layout: typing.Any) -> "AccountFlags":
-        return AccountFlags(Version.UNSPECIFIED, layout.initialized, layout.market,
-                            layout.open_orders, layout.request_queue, layout.event_queue,
-                            layout.bids, layout.asks, layout.disabled)
+        return AccountFlags(
+            Version.UNSPECIFIED,
+            layout.initialized,
+            layout.market,
+            layout.open_orders,
+            layout.request_queue,
+            layout.event_queue,
+            layout.bids,
+            layout.asks,
+            layout.disabled,
+        )
 
     def __str__(self) -> str:
         flags: typing.List[typing.Optional[str]] = []

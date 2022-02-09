@@ -6,35 +6,55 @@ import sys
 
 from decimal import Decimal
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
-parser = argparse.ArgumentParser(description="Unwraps Wrapped SOL to Pure SOL and adds it to the wallet account.")
+parser = argparse.ArgumentParser(
+    description="Unwraps Wrapped SOL to Pure SOL and adds it to the wallet account."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of SOL to unwrap")
+parser.add_argument(
+    "--quantity", type=Decimal, required=True, help="quantity of SOL to unwrap"
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-wrapped_sol: mango.Token = mango.Token.ensure(context.instrument_lookup.find_by_symbol_or_raise("SOL"))
+wrapped_sol: mango.Token = mango.Token.ensure(
+    context.instrument_lookup.find_by_symbol_or_raise("SOL")
+)
 
 largest_token_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
-    context, wallet.address, wrapped_sol)
+    context, wallet.address, wrapped_sol
+)
 if largest_token_account is None:
     raise Exception(f"No {wrapped_sol.name} accounts found for owner {wallet.address}.")
 
-signers: mango.CombinableInstructions = mango.CombinableInstructions.from_signers([wallet.keypair])
-create_instructions = mango.build_create_spl_account_instructions(context, wallet, wrapped_sol)
+signers: mango.CombinableInstructions = mango.CombinableInstructions.from_signers(
+    [wallet.keypair]
+)
+create_instructions = mango.build_create_spl_account_instructions(
+    context, wallet, wrapped_sol
+)
 wrapped_sol_address = create_instructions.signers[0].public_key
 
 unwrap_instructions = mango.build_transfer_spl_tokens_instructions(
-    context, wallet, wrapped_sol, largest_token_account.address, wrapped_sol_address, args.quantity)
-close_instructions = mango.build_close_spl_account_instructions(context, wallet, wrapped_sol_address)
+    context,
+    wallet,
+    wrapped_sol,
+    largest_token_account.address,
+    wrapped_sol_address,
+    args.quantity,
+)
+close_instructions = mango.build_close_spl_account_instructions(
+    context, wallet, wrapped_sol_address
+)
 
-all_instructions = signers + create_instructions + unwrap_instructions + close_instructions
+all_instructions = (
+    signers + create_instructions + unwrap_instructions + close_instructions
+)
 
 mango.output("Unwrapping SOL:")
 mango.output(f"    Temporary account: {wrapped_sol_address}")

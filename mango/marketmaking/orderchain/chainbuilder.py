@@ -39,7 +39,7 @@ _DEFAULT_CHAIN = [
     "minimumcharge",
     "biasquoteonposition",
     "preventpostonlycrossingbook",
-    "roundtolotsize"
+    "roundtolotsize",
 ]
 
 
@@ -51,8 +51,13 @@ _DEFAULT_CHAIN = [
 class ChainBuilder:
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--chain", type=str, action="append", default=[],
-                            help="The specific order chain elements to use instead of the default chain")
+        parser.add_argument(
+            "--chain",
+            type=str,
+            action="append",
+            default=[],
+            help="The specific order chain elements to use instead of the default chain",
+        )
         # OrderType is used by multiple elements so specify it here rather than have them fighting over which
         # one specifies it.
         # Now add args for all the elements.

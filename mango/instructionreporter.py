@@ -98,9 +98,12 @@ class MangoInstructionReporter(InstructionReporter):
         parser = layouts.InstructionParsersByVariant[initial.variant]
         if parser is None:
             raise Exception(
-                f"Could not find instruction parser for variant {initial.variant} / {InstructionType(initial.variant)}.")
+                f"Could not find instruction parser for variant {initial.variant} / {InstructionType(initial.variant)}."
+            )
 
-        accounts: typing.List[PublicKey] = list(map(lambda meta: meta.pubkey, instruction.keys))
+        accounts: typing.List[PublicKey] = list(
+            map(lambda meta: meta.pubkey, instruction.keys)
+        )
         parsed = parser.parse(instruction.data)
         instruction_type = InstructionType(int(parsed.variant))
 
@@ -139,10 +142,13 @@ class CompoundInstructionReporter(InstructionReporter):
             if reporter.matches(instruction):
                 return reporter.report(instruction)
         raise Exception(
-            f"Could not find instruction reporter for instruction {instruction}.")
+            f"Could not find instruction reporter for instruction {instruction}."
+        )
 
     @staticmethod
-    def from_addresses(mango_program_address: PublicKey, serum_program_address: PublicKey) -> InstructionReporter:
+    def from_addresses(
+        mango_program_address: PublicKey, serum_program_address: PublicKey
+    ) -> InstructionReporter:
         base: InstructionReporter = InstructionReporter()
         serum: InstructionReporter = SerumInstructionReporter(serum_program_address)
         mango: InstructionReporter = MangoInstructionReporter(mango_program_address)

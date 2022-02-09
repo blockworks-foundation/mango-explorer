@@ -13,21 +13,43 @@ import threading
 from solana.publickey import PublicKey
 from solana.rpc.commitment import Max
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
-parser = argparse.ArgumentParser(description="Show program logs for an account, as they arrive.")
+parser = argparse.ArgumentParser(
+    description="Show program logs for an account, as they arrive."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--address", type=PublicKey, action="append", default=[], required=True,
-                    help="Address of the Solana account to watch (can be specified multiple times)")
-parser.add_argument("--notify", type=mango.parse_notification_target, action="append", default=[],
-                    help="The notification target for all liquidation events")
-parser.add_argument("--notify-successful", type=mango.parse_notification_target,
-                    action="append", default=[], help="The notification target for successful liquidations")
-parser.add_argument("--notify-failed", type=mango.parse_notification_target,
-                    action="append", default=[], help="The notification target for failed liquidations")
+parser.add_argument(
+    "--address",
+    type=PublicKey,
+    action="append",
+    default=[],
+    required=True,
+    help="Address of the Solana account to watch (can be specified multiple times)",
+)
+parser.add_argument(
+    "--notify",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for all liquidation events",
+)
+parser.add_argument(
+    "--notify-successful",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for successful liquidations",
+)
+parser.add_argument(
+    "--notify-failed",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for failed liquidations",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -54,10 +76,12 @@ publisher.pipe(
     # rx.operators.map(mango.debug_print_item("Transaction")),
     # rx.operators.delay(30),  # Wait for the transaction to be fully confirmed
     # rx.operators.map(mango.debug_print_item("After Delay")),
-    rx.operators.map(lambda log_event: mango.TransactionScout.load(context, log_event.signatures[0])),
+    rx.operators.map(
+        lambda log_event: mango.TransactionScout.load(context, log_event.signatures[0])
+    ),
     rx.operators.filter(lambda item: item is not None),
     rx.operators.catch(mango.observable_pipeline_error_reporter),
-    rx.operators.retry()
+    rx.operators.retry(),
 ).subscribe(mango.PrintingObserverSubscriber(False))
 
 manager.open()

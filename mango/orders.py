@@ -155,58 +155,133 @@ class Order:
     def read_sequence_number(id: int) -> Decimal:
         id_bytes = id.to_bytes(16, byteorder="little", signed=False)
         low_order = id_bytes[:8]
-        return Decimal(int.from_bytes(low_order, 'little', signed=False))
+        return Decimal(int.from_bytes(low_order, "little", signed=False))
 
     @staticmethod
     def read_price(id: int) -> Decimal:
         id_bytes = id.to_bytes(16, byteorder="little", signed=False)
         high_order = id_bytes[8:]
-        return Decimal(int.from_bytes(high_order, 'little', signed=False))
+        return Decimal(int.from_bytes(high_order, "little", signed=False))
 
     # Returns an identical order with the ID changed.
     def with_id(self, id: int) -> "Order":
-        return Order(id=id, side=self.side, price=self.price, quantity=self.quantity,
-                     client_id=self.client_id, owner=self.owner, order_type=self.order_type, reduce_only=self.reduce_only)
+        return Order(
+            id=id,
+            side=self.side,
+            price=self.price,
+            quantity=self.quantity,
+            client_id=self.client_id,
+            owner=self.owner,
+            order_type=self.order_type,
+            reduce_only=self.reduce_only,
+        )
 
     # Returns an identical order with the Client ID changed.
     def with_client_id(self, client_id: int) -> "Order":
-        return Order(id=self.id, side=self.side, price=self.price, quantity=self.quantity,
-                     client_id=client_id, owner=self.owner, order_type=self.order_type, reduce_only=self.reduce_only)
+        return Order(
+            id=self.id,
+            side=self.side,
+            price=self.price,
+            quantity=self.quantity,
+            client_id=client_id,
+            owner=self.owner,
+            order_type=self.order_type,
+            reduce_only=self.reduce_only,
+        )
 
     # Returns an identical order with the price changed.
     def with_price(self, price: Decimal) -> "Order":
-        return Order(id=self.id, side=self.side, price=price, quantity=self.quantity,
-                     client_id=self.client_id, owner=self.owner, order_type=self.order_type, reduce_only=self.reduce_only)
+        return Order(
+            id=self.id,
+            side=self.side,
+            price=price,
+            quantity=self.quantity,
+            client_id=self.client_id,
+            owner=self.owner,
+            order_type=self.order_type,
+            reduce_only=self.reduce_only,
+        )
 
     # Returns an identical order with the quantity changed.
     def with_quantity(self, quantity: Decimal) -> "Order":
-        return Order(id=self.id, side=self.side, price=self.price, quantity=quantity,
-                     client_id=self.client_id, owner=self.owner, order_type=self.order_type, reduce_only=self.reduce_only)
+        return Order(
+            id=self.id,
+            side=self.side,
+            price=self.price,
+            quantity=quantity,
+            client_id=self.client_id,
+            owner=self.owner,
+            order_type=self.order_type,
+            reduce_only=self.reduce_only,
+        )
 
     # Returns an identical order with the owner changed.
     def with_owner(self, owner: PublicKey) -> "Order":
-        return Order(id=self.id, side=self.side, price=self.price, quantity=self.quantity,
-                     client_id=self.client_id, owner=owner, order_type=self.order_type, reduce_only=self.reduce_only)
+        return Order(
+            id=self.id,
+            side=self.side,
+            price=self.price,
+            quantity=self.quantity,
+            client_id=self.client_id,
+            owner=owner,
+            order_type=self.order_type,
+            reduce_only=self.reduce_only,
+        )
 
     @staticmethod
     def from_serum_order(serum_order: PySerumOrder) -> "Order":
         price = Decimal(serum_order.info.price)
         quantity = Decimal(serum_order.info.size)
         side = Side.from_value(serum_order.side)
-        order = Order(id=serum_order.order_id, side=side, price=price, quantity=quantity,
-                      client_id=serum_order.client_id, owner=serum_order.open_order_address,
-                      order_type=OrderType.UNKNOWN)
+        order = Order(
+            id=serum_order.order_id,
+            side=side,
+            price=price,
+            quantity=quantity,
+            client_id=serum_order.client_id,
+            owner=serum_order.open_order_address,
+            order_type=OrderType.UNKNOWN,
+        )
         return order
 
     @staticmethod
-    def from_basic_info(side: Side, price: Decimal, quantity: Decimal, order_type: OrderType = OrderType.UNKNOWN, reduce_only: bool = False) -> "Order":
-        order = Order(id=0, side=side, price=price, quantity=quantity, client_id=0,
-                      owner=SYSTEM_PROGRAM_ADDRESS, order_type=order_type, reduce_only=reduce_only)
+    def from_basic_info(
+        side: Side,
+        price: Decimal,
+        quantity: Decimal,
+        order_type: OrderType = OrderType.UNKNOWN,
+        reduce_only: bool = False,
+    ) -> "Order":
+        order = Order(
+            id=0,
+            side=side,
+            price=price,
+            quantity=quantity,
+            client_id=0,
+            owner=SYSTEM_PROGRAM_ADDRESS,
+            order_type=order_type,
+            reduce_only=reduce_only,
+        )
         return order
 
     @staticmethod
-    def from_ids(id: int, client_id: int, side: Side = Side.BUY, price: Decimal = Decimal(0), quantity: Decimal = Decimal(0)) -> "Order":
-        return Order(id=id, client_id=client_id, owner=SYSTEM_PROGRAM_ADDRESS, side=side, price=price, quantity=quantity, order_type=OrderType.UNKNOWN, reduce_only=False)
+    def from_ids(
+        id: int,
+        client_id: int,
+        side: Side = Side.BUY,
+        price: Decimal = Decimal(0),
+        quantity: Decimal = Decimal(0),
+    ) -> "Order":
+        return Order(
+            id=id,
+            client_id=client_id,
+            owner=SYSTEM_PROGRAM_ADDRESS,
+            side=side,
+            price=price,
+            quantity=quantity,
+            order_type=OrderType.UNKNOWN,
+            reduce_only=False,
+        )
 
     def __str__(self) -> str:
         owner: str = ""
@@ -222,7 +297,13 @@ class Order:
 
 
 class OrderBook:
-    def __init__(self, symbol: str, lot_size_converter: LotSizeConverter, bids: typing.Sequence[Order], asks: typing.Sequence[Order]) -> None:
+    def __init__(
+        self,
+        symbol: str,
+        lot_size_converter: LotSizeConverter,
+        bids: typing.Sequence[Order],
+        asks: typing.Sequence[Order],
+    ) -> None:
         self.symbol: str = symbol
         self.__lot_size_converter: LotSizeConverter = lot_size_converter
         self.__bids: typing.Sequence[Order] = []
@@ -236,7 +317,7 @@ class OrderBook:
 
     @bids.setter
     def bids(self, bids: typing.Sequence[Order]) -> None:
-        """ Sort bids high to low, so best bid is at index 0 """
+        """Sort bids high to low, so best bid is at index 0"""
         bids_list: typing.List[Order] = list(bids)
         bids_list.sort(key=lambda order: order.id, reverse=True)
         self.__bids = bids_list
@@ -247,7 +328,7 @@ class OrderBook:
 
     @asks.setter
     def asks(self, asks: typing.Sequence[Order]) -> None:
-        """ Sets asks low to high, so best ask is at index 0"""
+        """Sets asks low to high, so best ask is at index 0"""
         asks_list: typing.List[Order] = list(asks)
         asks_list.sort(key=lambda order: order.id)
         self.__asks = asks_list
@@ -298,14 +379,16 @@ class OrderBook:
             "owner": "Owner",
             "side": "Side",
             "price": "Price",
-            "quantity": "Quantity"
+            "quantity": "Quantity",
         }
 
         frame: pandas.DataFrame = pandas.DataFrame([*reversed(self.bids), *self.asks])
         frame = frame.drop(["order_type"], axis=1)
         frame = frame.rename(mapper=column_mapper, axis=1, copy=True)
         frame["Price"] = pandas.to_numeric(frame["Price"])
-        frame["QuantityLots"] = frame["Quantity"].apply(self.__lot_size_converter.base_size_number_to_lots)
+        frame["QuantityLots"] = frame["Quantity"].apply(
+            self.__lot_size_converter.base_size_number_to_lots
+        )
         frame["Quantity"] = pandas.to_numeric(frame["Quantity"])
         frame["PriceLots"] = pandas.to_numeric(frame["Id"].apply(Order.read_price))
         frame["SequenceNumber"] = frame["Id"].apply(Order.read_sequence_number)
@@ -322,7 +405,14 @@ class OrderBook:
     def to_l2_dataframe(self) -> pandas.DataFrame:
         frame: pandas.DataFrame = self.to_dataframe()
 
-        return frame.groupby("Price").agg({"PriceLots": "first", "Side": "first", "Quantity": "sum", "QuantityLots": "sum"})
+        return frame.groupby("Price").agg(
+            {
+                "PriceLots": "first",
+                "Side": "first",
+                "Quantity": "sum",
+                "QuantityLots": "sum",
+            }
+        )
 
     def to_l3_dataframe(self) -> pandas.DataFrame:
         return self.to_dataframe()
@@ -332,6 +422,7 @@ class OrderBook:
             quantity = f"{order.quantity:,.8f}"
             price = f"{order.price:,.8f}"
             return f"{order.side} {quantity:>20} at {price:>20}"
+
         orders_to_show = 5
         lines = []
         for counter in range(orders_to_show):
@@ -342,7 +433,7 @@ class OrderBook:
         text = "\n\t".join(lines)
         spread_description = "N/A"
         if self.spread != 0 and self.top_bid is not None:
-            spread_percentage = (self.spread / self.top_bid.price)
+            spread_percentage = self.spread / self.top_bid.price
             spread_description = f"{self.spread:,.8f}, {spread_percentage:,.3%}"
         return f"« OrderBook {self.symbol} [spread: {spread_description}]\n\t{text}\n»"
 

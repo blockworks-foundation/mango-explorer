@@ -15,7 +15,7 @@ bids: typing.Sequence[mango.Order] = [
     fake_order(price=Decimal(76), quantity=Decimal(1), side=mango.Side.BUY),
     fake_order(price=Decimal(75), quantity=Decimal(5), side=mango.Side.BUY),
     fake_order(price=Decimal(74), quantity=Decimal(3), side=mango.Side.BUY),
-    fake_order(price=Decimal(73), quantity=Decimal(7), side=mango.Side.BUY)
+    fake_order(price=Decimal(73), quantity=Decimal(7), side=mango.Side.BUY),
 ]
 asks: typing.Sequence[mango.Order] = [
     fake_order(price=Decimal(82), quantity=Decimal(3), side=mango.Side.SELL),
@@ -23,9 +23,11 @@ asks: typing.Sequence[mango.Order] = [
     fake_order(price=Decimal(84), quantity=Decimal(1), side=mango.Side.SELL),
     fake_order(price=Decimal(85), quantity=Decimal(3), side=mango.Side.SELL),
     fake_order(price=Decimal(86), quantity=Decimal(3), side=mango.Side.SELL),
-    fake_order(price=Decimal(87), quantity=Decimal(7), side=mango.Side.SELL)
+    fake_order(price=Decimal(87), quantity=Decimal(7), side=mango.Side.SELL),
 ]
-orderbook: mango.OrderBook = mango.OrderBook("TEST", mango.NullLotSizeConverter(), bids, asks)
+orderbook: mango.OrderBook = mango.OrderBook(
+    "TEST", mango.NullLotSizeConverter(), bids, asks
+)
 model_state = fake_model_state(orderbook=orderbook)
 
 
@@ -37,7 +39,9 @@ def test_from_args() -> None:
 
 def test_bid_price_updated() -> None:
     context = fake_context()
-    order: mango.Order = fake_order(price=Decimal(75), quantity=Decimal(7), side=mango.Side.BUY)
+    order: mango.Order = fake_order(
+        price=Decimal(75), quantity=Decimal(7), side=mango.Side.BUY
+    )
 
     actual: TopOfBookElement = TopOfBookElement()
     result = actual.process(context, model_state, [order])
@@ -47,7 +51,9 @@ def test_bid_price_updated() -> None:
 
 def test_ask_price_updated() -> None:
     context = fake_context()
-    order: mango.Order = fake_order(price=Decimal(85), quantity=Decimal(6), side=mango.Side.SELL)
+    order: mango.Order = fake_order(
+        price=Decimal(85), quantity=Decimal(6), side=mango.Side.SELL
+    )
 
     actual: TopOfBookElement = TopOfBookElement()
     result = actual.process(context, model_state, [order])
@@ -58,26 +64,40 @@ def test_ask_price_updated() -> None:
 def test_top_check_ignores_own_orders_updated() -> None:
     order_owner: PublicKey = fake_seeded_public_key("order owner")
     bids: typing.Sequence[mango.Order] = [
-        fake_order(price=Decimal(78), quantity=Decimal(1), side=mango.Side.BUY).with_owner(order_owner),
+        fake_order(
+            price=Decimal(78), quantity=Decimal(1), side=mango.Side.BUY
+        ).with_owner(order_owner),
         fake_order(price=Decimal(77), quantity=Decimal(2), side=mango.Side.BUY),
         fake_order(price=Decimal(76), quantity=Decimal(1), side=mango.Side.BUY),
-        fake_order(price=Decimal(75), quantity=Decimal(5), side=mango.Side.BUY).with_owner(order_owner),
+        fake_order(
+            price=Decimal(75), quantity=Decimal(5), side=mango.Side.BUY
+        ).with_owner(order_owner),
         fake_order(price=Decimal(74), quantity=Decimal(3), side=mango.Side.BUY),
-        fake_order(price=Decimal(73), quantity=Decimal(7), side=mango.Side.BUY)
+        fake_order(price=Decimal(73), quantity=Decimal(7), side=mango.Side.BUY),
     ]
     asks: typing.Sequence[mango.Order] = [
-        fake_order(price=Decimal(82), quantity=Decimal(3), side=mango.Side.SELL).with_owner(order_owner),
+        fake_order(
+            price=Decimal(82), quantity=Decimal(3), side=mango.Side.SELL
+        ).with_owner(order_owner),
         fake_order(price=Decimal(83), quantity=Decimal(1), side=mango.Side.SELL),
         fake_order(price=Decimal(84), quantity=Decimal(1), side=mango.Side.SELL),
-        fake_order(price=Decimal(85), quantity=Decimal(3), side=mango.Side.SELL).with_owner(order_owner),
+        fake_order(
+            price=Decimal(85), quantity=Decimal(3), side=mango.Side.SELL
+        ).with_owner(order_owner),
         fake_order(price=Decimal(86), quantity=Decimal(3), side=mango.Side.SELL),
-        fake_order(price=Decimal(87), quantity=Decimal(7), side=mango.Side.SELL)
+        fake_order(price=Decimal(87), quantity=Decimal(7), side=mango.Side.SELL),
     ]
-    orderbook: mango.OrderBook = mango.OrderBook("TEST", mango.NullLotSizeConverter(), bids, asks)
+    orderbook: mango.OrderBook = mango.OrderBook(
+        "TEST", mango.NullLotSizeConverter(), bids, asks
+    )
     model_state = fake_model_state(order_owner=order_owner, orderbook=orderbook)
     context = fake_context()
-    buy: mango.Order = fake_order(price=Decimal(75), quantity=Decimal(6), side=mango.Side.BUY)
-    sell: mango.Order = fake_order(price=Decimal(85), quantity=Decimal(6), side=mango.Side.SELL)
+    buy: mango.Order = fake_order(
+        price=Decimal(75), quantity=Decimal(6), side=mango.Side.BUY
+    )
+    sell: mango.Order = fake_order(
+        price=Decimal(85), quantity=Decimal(6), side=mango.Side.SELL
+    )
 
     actual: TopOfBookElement = TopOfBookElement()
     result = actual.process(context, model_state, [buy, sell])
@@ -88,7 +108,9 @@ def test_top_check_ignores_own_orders_updated() -> None:
 
 def test_bid_price_updated_at_instead_of_after() -> None:
     context = fake_context()
-    order: mango.Order = fake_order(price=Decimal(75), quantity=Decimal(7), side=mango.Side.BUY)
+    order: mango.Order = fake_order(
+        price=Decimal(75), quantity=Decimal(7), side=mango.Side.BUY
+    )
 
     actual: TopOfBookElement = TopOfBookElement(Decimal(0))
     result = actual.process(context, model_state, [order])
@@ -99,7 +121,9 @@ def test_bid_price_updated_at_instead_of_after() -> None:
 
 def test_ask_price_updated_at_instead_of_after() -> None:
     context = fake_context()
-    order: mango.Order = fake_order(price=Decimal(85), quantity=Decimal(6), side=mango.Side.SELL)
+    order: mango.Order = fake_order(
+        price=Decimal(85), quantity=Decimal(6), side=mango.Side.SELL
+    )
 
     actual: TopOfBookElement = TopOfBookElement(Decimal(0))
     result = actual.process(context, model_state, [order])
@@ -110,7 +134,9 @@ def test_ask_price_updated_at_instead_of_after() -> None:
 
 def test_bid_price_updated_two_ticks_better() -> None:
     context = fake_context()
-    order: mango.Order = fake_order(price=Decimal(75), quantity=Decimal(7), side=mango.Side.BUY)
+    order: mango.Order = fake_order(
+        price=Decimal(75), quantity=Decimal(7), side=mango.Side.BUY
+    )
 
     actual: TopOfBookElement = TopOfBookElement(Decimal(2))
     result = actual.process(context, model_state, [order])
@@ -121,7 +147,9 @@ def test_bid_price_updated_two_ticks_better() -> None:
 
 def test_ask_price_updated_two_ticks_better() -> None:
     context = fake_context()
-    order: mango.Order = fake_order(price=Decimal(85), quantity=Decimal(6), side=mango.Side.SELL)
+    order: mango.Order = fake_order(
+        price=Decimal(85), quantity=Decimal(6), side=mango.Side.SELL
+    )
 
     actual: TopOfBookElement = TopOfBookElement(Decimal(2))
     result = actual.process(context, model_state, [order])

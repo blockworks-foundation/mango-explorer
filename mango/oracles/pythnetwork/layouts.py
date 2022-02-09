@@ -31,7 +31,7 @@ from ...layouts.layouts import DecimalAdapter, PublicKeyAdapter
 # Pyth defines some constants.
 #
 
-MAGIC = 0xa1b2c3d4
+MAGIC = 0xA1B2C3D4
 VERSION_2 = 2
 VERSION = VERSION_2
 MAP_TABLE_SIZE = 640
@@ -57,7 +57,9 @@ PYTH_MAINNET_MAPPING_ROOT = PublicKey("AHtgzX45WTKfkPG53L6WYhGEXwQkN1BVknET3sVsL
 #   Price
 # }
 
-ACCOUNT_TYPE = construct.Enum(construct.Int32ul, Unknown=0, Mapping=1, Product=2, Price=3)
+ACCOUNT_TYPE = construct.Enum(
+    construct.Int32ul, Unknown=0, Mapping=1, Product=2, Price=3
+)
 
 
 # # 🥭 PythStringDictionaryAdapter
@@ -66,16 +68,27 @@ ACCOUNT_TYPE = construct.Enum(construct.Int32ul, Unknown=0, Mapping=1, Product=2
 # specify the string length as an int followed by that number of UTF-8 characters.
 #
 if typing.TYPE_CHECKING:
-    class StringDictionaryAdapter(construct.Adapter[typing.Any, str, typing.Any, typing.Any]):
+
+    class StringDictionaryAdapter(
+        construct.Adapter[typing.Any, str, typing.Any, typing.Any]
+    ):
         def __init__(self) -> None:
             pass
+
 else:
+
     class StringDictionaryAdapter(construct.Adapter):
         def __init__(self) -> None:
-            super().__init__(construct.RepeatUntil(lambda contents, lst, ctx: contents == "",
-                                                   construct.PascalString(construct.VarInt, "utf8")))
+            super().__init__(
+                construct.RepeatUntil(
+                    lambda contents, lst, ctx: contents == "",
+                    construct.PascalString(construct.VarInt, "utf8"),
+                )
+            )
 
-        def _decode(self, obj: typing.Sequence[str], context: typing.Any, path: typing.Any) -> typing.Dict[str, str]:
+        def _decode(
+            self, obj: typing.Sequence[str], context: typing.Any, path: typing.Any
+        ) -> typing.Dict[str, str]:
             result: typing.Dict[str, str] = {}
             for counter in range(int(len(obj) / 2)):
                 index: int = counter * 2
@@ -84,7 +97,9 @@ else:
                 result[key] = value
             return result
 
-        def _encode(self, obj: typing.Any, context: typing.Any, path: typing.Any) -> str:
+        def _encode(
+            self, obj: typing.Any, context: typing.Any, path: typing.Any
+        ) -> str:
             # Can only encode string values.
             return str(obj)
 
@@ -114,7 +129,7 @@ MAPPING = construct.Struct(
     "num" / DecimalAdapter(4),
     "unused" / DecimalAdapter(4),
     "next" / PublicKeyAdapter(),
-    "products" / construct.Array(MAP_TABLE_SIZE, PublicKeyAdapter())
+    "products" / construct.Array(MAP_TABLE_SIZE, PublicKeyAdapter()),
 )
 
 
@@ -140,7 +155,7 @@ PRODUCT = construct.Struct(
     "atype" / ACCOUNT_TYPE,
     "size" / DecimalAdapter(4),
     "px_acc" / PublicKeyAdapter(),
-    "attr" / StringDictionaryAdapter()
+    "attr" / StringDictionaryAdapter(),
 )
 
 
@@ -161,9 +176,10 @@ PRODUCT = construct.Struct(
 PRICE_INFO = construct.Struct(
     "price" / DecimalAdapter(),
     "conf" / DecimalAdapter(),
-    "status" / construct.Enum(construct.Int32ul, Unknown=0, Trading=1, Halted=2, Auction=3),
+    "status"
+    / construct.Enum(construct.Int32ul, Unknown=0, Trading=1, Halted=2, Auction=3),
     "corp_act" / construct.Enum(construct.Int32ul, NoCorpAct=0),
-    "pub_slot" / DecimalAdapter()
+    "pub_slot" / DecimalAdapter(),
 )
 
 
@@ -180,9 +196,7 @@ PRICE_INFO = construct.Struct(
 #   latest     : PriceInfo       // latest contributing price (not in agg.)
 # }
 PRICE_COMP = construct.Struct(
-    "publisher" / PublicKeyAdapter(),
-    "agg" / PRICE_INFO,
-    "latest" / PRICE_INFO
+    "publisher" / PublicKeyAdapter(), "agg" / PRICE_INFO, "latest" / PRICE_INFO
 )
 
 
@@ -227,5 +241,5 @@ PRICE = construct.Struct(
     "next" / PublicKeyAdapter(),
     "agg_pub" / PublicKeyAdapter(),
     "agg" / PRICE_INFO,
-    "comp" / construct.Array(32, PRICE_COMP)
+    "comp" / construct.Array(32, PRICE_COMP),
 )

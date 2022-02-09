@@ -30,6 +30,7 @@ from .instrumentvalue import InstrumentValue
 # A margin account may have a combination of these flag values.
 #
 
+
 class LiquidatableState(enum.Flag):
     UNSET = 0
     RIPE = enum.auto()
@@ -42,8 +43,16 @@ class LiquidatableState(enum.Flag):
 # # 🥭 LiquidatableReport class
 #
 
+
 class LiquidatableReport:
-    def __init__(self, group: Group, prices: typing.Sequence[InstrumentValue], account: Account, state: LiquidatableState, worthwhile_threshold: Decimal) -> None:
+    def __init__(
+        self,
+        group: Group,
+        prices: typing.Sequence[InstrumentValue],
+        account: Account,
+        state: LiquidatableState,
+        worthwhile_threshold: Decimal,
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.group: Group = group
         self.prices: typing.Sequence[InstrumentValue] = prices
@@ -52,5 +61,12 @@ class LiquidatableReport:
         self.worthwhile_threshold: Decimal = worthwhile_threshold
 
     @staticmethod
-    def build(group: Group, prices: typing.Sequence[InstrumentValue], account: Account, worthwhile_threshold: Decimal) -> "LiquidatableReport":
-        return LiquidatableReport(group, prices, account, LiquidatableState.UNSET, worthwhile_threshold)
+    def build(
+        group: Group,
+        prices: typing.Sequence[InstrumentValue],
+        account: Account,
+        worthwhile_threshold: Decimal,
+    ) -> "LiquidatableReport":
+        return LiquidatableReport(
+            group, prices, account, LiquidatableState.UNSET, worthwhile_threshold
+        )

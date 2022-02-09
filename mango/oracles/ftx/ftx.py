@@ -27,7 +27,13 @@ from rx.subject.subject import Subject
 from ...context import Context
 from ...market import Market
 from ...observables import DisposePropagator, DisposeWrapper
-from ...oracle import Oracle, OracleProvider, OracleSource, Price, SupportedOracleFeature
+from ...oracle import (
+    Oracle,
+    OracleProvider,
+    OracleSource,
+    Price,
+    SupportedOracleFeature,
+)
 from ...reconnectingwebsocket import ReconnectingWebsocket
 
 
@@ -60,7 +66,9 @@ class FtxOracle(Oracle):
         super().__init__(name, market)
         self.market: Market = market
         self.ftx_symbol: str = ftx_symbol
-        features: SupportedOracleFeature = SupportedOracleFeature.MID_PRICE | SupportedOracleFeature.TOP_BID_AND_OFFER
+        features: SupportedOracleFeature = (
+            SupportedOracleFeature.MID_PRICE | SupportedOracleFeature.TOP_BID_AND_OFFER
+        )
         self.source: OracleSource = OracleSource("FTX", name, features, market)
 
     def fetch_price(self, context: Context) -> Price:
@@ -69,7 +77,15 @@ class FtxOracle(Oracle):
         ask = Decimal(result["ask"])
         price = Decimal(result["price"])
 
-        return Price(self.source, datetime.now(), self.market, bid, price, ask, FtxOracleConfidence)
+        return Price(
+            self.source,
+            datetime.now(),
+            self.market,
+            bid,
+            price,
+            ask,
+            FtxOracleConfidence,
+        )
 
     def to_streaming_observable(self, _: Context) -> rx.core.typing.Observable[Price]:
         subject = Subject()
@@ -81,16 +97,29 @@ class FtxOracle(Oracle):
                 mid = (bid + ask) / Decimal(2)
                 time = data["data"]["time"]
                 timestamp = datetime.fromtimestamp(time)
-                price = Price(self.source, timestamp, self.market, bid, mid, ask, FtxOracleConfidence)
+                price = Price(
+                    self.source,
+                    timestamp,
+                    self.market,
+                    bid,
+                    mid,
+                    ask,
+                    FtxOracleConfidence,
+                )
                 subject.on_next(price)
 
         def on_open(sock: websocket.WebSocketApp) -> None:
-            sock.send(f"""{{"op": "subscribe", "channel": "ticker", "market": "{self.ftx_symbol}"}}""")
+            sock.send(
+                f"""{{"op": "subscribe", "channel": "ticker", "market": "{self.ftx_symbol}"}}"""
+            )
 
         ws: ReconnectingWebsocket = ReconnectingWebsocket("wss://ftx.com/ws/", on_open)
         ws.item.subscribe(on_next=_on_item)  # type: ignore[call-arg]
 
-        def subscribe(observer: rx.core.typing.Observer[Price], scheduler_: typing.Optional[rx.core.typing.Scheduler] = None) -> rx.core.typing.Disposable:
+        def subscribe(
+            observer: rx.core.typing.Observer[Price],
+            scheduler_: typing.Optional[rx.core.typing.Scheduler] = None,
+        ) -> rx.core.typing.Disposable:
             subject.subscribe(observer, scheduler=scheduler_)  # type: ignore
 
             disposable = DisposePropagator()
@@ -111,11 +140,14 @@ class FtxOracle(Oracle):
 # Implements the `OracleProvider` abstract base class specialised to the Ftx Network.
 #
 
+
 class FtxOracleProvider(OracleProvider):
     def __init__(self) -> None:
         super().__init__("Ftx Oracle Factory")
 
-    def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
+    def oracle_for_market(
+        self, context: Context, market: Market
+    ) -> typing.Optional[Oracle]:
         symbol = self._market_symbol_to_ftx_symbol(market.symbol)
         return FtxOracle(market, symbol)
 

@@ -37,17 +37,32 @@ class BiasQuoteOnPositionElement(PairwiseElement):
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--biasquoteonposition-bias", type=Decimal, action="append",
-                            help="bias to apply to quotes based on inventory position")
+        parser.add_argument(
+            "--biasquoteonposition-bias",
+            type=Decimal,
+            action="append",
+            help="bias to apply to quotes based on inventory position",
+        )
 
     @staticmethod
-    def from_command_line_parameters(args: argparse.Namespace) -> "BiasQuoteOnPositionElement":
+    def from_command_line_parameters(
+        args: argparse.Namespace,
+    ) -> "BiasQuoteOnPositionElement":
         biases: typing.Sequence[Decimal] = args.biasquoteonposition_bias or [Decimal(0)]
         return BiasQuoteOnPositionElement(biases)
 
-    def process_order_pair(self, context: mango.Context, model_state: ModelState, index: int, buy: typing.Optional[mango.Order], sell: typing.Optional[mango.Order]) -> typing.Tuple[typing.Optional[mango.Order], typing.Optional[mango.Order]]:
+    def process_order_pair(
+        self,
+        context: mango.Context,
+        model_state: ModelState,
+        index: int,
+        buy: typing.Optional[mango.Order],
+        sell: typing.Optional[mango.Order],
+    ) -> typing.Tuple[typing.Optional[mango.Order], typing.Optional[mango.Order]]:
         # If no bias is explicitly specified for this element, just use the last specified bias.
-        bias: Decimal = self.biases[index] if index < len(self.biases) else self.biases[-1]
+        bias: Decimal = (
+            self.biases[index] if index < len(self.biases) else self.biases[-1]
+        )
         if bias == 0:
             # Zero bias results in no changes to orders.
             return buy, sell
@@ -71,15 +86,19 @@ class BiasQuoteOnPositionElement(PairwiseElement):
     #  So if my standard size I'm quoting is 0.0002 BTC, my current position is +0.0010 BTC, and pos_lean
     #  is -0.0001, you would move your quotes down by 0.0005 (or 5bps)
     # (Private chat link: https://discord.com/channels/@me/832570058861314048/878343278523723787)
-    def bias_order(self, order: mango.Order, inventory_bias: Decimal, base_inventory_value: Decimal) -> mango.Order:
+    def bias_order(
+        self, order: mango.Order, inventory_bias: Decimal, base_inventory_value: Decimal
+    ) -> mango.Order:
         bias_factor = inventory_bias * -1
         bias = 1 + ((base_inventory_value / order.quantity) * bias_factor)
         new_price: Decimal = order.price * bias
         new_order: mango.Order = order.with_price(new_price)
         bias_description = "BUY more" if bias > 1 else "SELL more"
-        self._logger.debug(f"""Order change - bias {inventory_bias} on inventory {base_inventory_value} / {order.quantity} creates a ({bias_description}) bias factor of {bias}:
+        self._logger.debug(
+            f"""Order change - bias {inventory_bias} on inventory {base_inventory_value} / {order.quantity} creates a ({bias_description}) bias factor of {bias}:
     Old: {order}
-    New: {new_order}""")
+    New: {new_order}"""
+        )
         return new_order
 
     def __str__(self) -> str:

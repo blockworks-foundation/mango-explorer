@@ -38,7 +38,14 @@ from .version import Version
 # # 🥭 GroupSlotSpotMarket class
 #
 class GroupSlotSpotMarket:
-    def __init__(self, address: PublicKey, maint_asset_weight: Decimal, init_asset_weight: Decimal, maint_liab_weight: Decimal, init_liab_weight: Decimal) -> None:
+    def __init__(
+        self,
+        address: PublicKey,
+        maint_asset_weight: Decimal,
+        init_asset_weight: Decimal,
+        maint_liab_weight: Decimal,
+        init_liab_weight: Decimal,
+    ) -> None:
         self.address: PublicKey = address
         self.maint_asset_weight: Decimal = maint_asset_weight
         self.init_asset_weight: Decimal = init_asset_weight
@@ -52,11 +59,21 @@ class GroupSlotSpotMarket:
         init_asset_weight: Decimal = round(layout.init_asset_weight, 8)
         maint_liab_weight: Decimal = round(layout.maint_liab_weight, 8)
         init_liab_weight: Decimal = round(layout.init_liab_weight, 8)
-        return GroupSlotSpotMarket(spot_market, maint_asset_weight, init_asset_weight, maint_liab_weight, init_liab_weight)
+        return GroupSlotSpotMarket(
+            spot_market,
+            maint_asset_weight,
+            init_asset_weight,
+            maint_liab_weight,
+            init_liab_weight,
+        )
 
     @staticmethod
-    def from_layout_or_none(layout: typing.Any) -> typing.Optional["GroupSlotSpotMarket"]:
-        if (layout.spot_market is None) or (layout.spot_market == SYSTEM_PROGRAM_ADDRESS):
+    def from_layout_or_none(
+        layout: typing.Any,
+    ) -> typing.Optional["GroupSlotSpotMarket"]:
+        if (layout.spot_market is None) or (
+            layout.spot_market == SYSTEM_PROGRAM_ADDRESS
+        ):
             return None
 
         return GroupSlotSpotMarket.from_layout(layout)
@@ -78,7 +95,17 @@ class GroupSlotSpotMarket:
 # # 🥭 GroupSlotPerpMarket class
 #
 class GroupSlotPerpMarket:
-    def __init__(self, address: PublicKey, maint_asset_weight: Decimal, init_asset_weight: Decimal, maint_liab_weight: Decimal, init_liab_weight: Decimal, liquidation_fee: Decimal, base_lot_size: Decimal, quote_lot_size: Decimal) -> None:
+    def __init__(
+        self,
+        address: PublicKey,
+        maint_asset_weight: Decimal,
+        init_asset_weight: Decimal,
+        maint_liab_weight: Decimal,
+        init_liab_weight: Decimal,
+        liquidation_fee: Decimal,
+        base_lot_size: Decimal,
+        quote_lot_size: Decimal,
+    ) -> None:
         self.address: PublicKey = address
         self.maint_asset_weight: Decimal = maint_asset_weight
         self.init_asset_weight: Decimal = init_asset_weight
@@ -99,11 +126,24 @@ class GroupSlotPerpMarket:
         base_lot_size: Decimal = layout.base_lot_size
         quote_lot_size: Decimal = layout.quote_lot_size
 
-        return GroupSlotPerpMarket(perp_market, maint_asset_weight, init_asset_weight, maint_liab_weight, init_liab_weight, liquidation_fee, base_lot_size, quote_lot_size)
+        return GroupSlotPerpMarket(
+            perp_market,
+            maint_asset_weight,
+            init_asset_weight,
+            maint_liab_weight,
+            init_liab_weight,
+            liquidation_fee,
+            base_lot_size,
+            quote_lot_size,
+        )
 
     @staticmethod
-    def from_layout_or_none(layout: typing.Any) -> typing.Optional["GroupSlotPerpMarket"]:
-        if (layout.perp_market is None) or (layout.perp_market == SYSTEM_PROGRAM_ADDRESS):
+    def from_layout_or_none(
+        layout: typing.Any,
+    ) -> typing.Optional["GroupSlotPerpMarket"]:
+        if (layout.perp_market is None) or (
+            layout.perp_market == SYSTEM_PROGRAM_ADDRESS
+        ):
             return None
 
         return GroupSlotPerpMarket.from_layout(layout)
@@ -130,7 +170,17 @@ class GroupSlotPerpMarket:
 # `GroupSlot` gathers indexed slot items together instead of separate arrays.
 #
 class GroupSlot:
-    def __init__(self, index: int, base_instrument: Instrument, base_token_bank: typing.Optional[TokenBank], quote_token_bank: TokenBank, spot_market_info: typing.Optional[GroupSlotSpotMarket], perp_market_info: typing.Optional[GroupSlotPerpMarket], perp_lot_size_converter: LotSizeConverter, oracle: PublicKey) -> None:
+    def __init__(
+        self,
+        index: int,
+        base_instrument: Instrument,
+        base_token_bank: typing.Optional[TokenBank],
+        quote_token_bank: TokenBank,
+        spot_market_info: typing.Optional[GroupSlotSpotMarket],
+        perp_market_info: typing.Optional[GroupSlotPerpMarket],
+        perp_lot_size_converter: LotSizeConverter,
+        oracle: PublicKey,
+    ) -> None:
         self.index: int = index
         self.base_instrument: Instrument = base_instrument
         self.base_token_bank: typing.Optional[TokenBank] = base_token_bank
@@ -174,17 +224,31 @@ class GroupSlot:
 # `Group` defines root functionality for Mango Markets.
 #
 class Group(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version, name: str,
-                 meta_data: Metadata,
-                 shared_quote: TokenBank,
-                 slot_indices: typing.Sequence[bool],
-                 slots: typing.Sequence[GroupSlot],
-                 signer_nonce: Decimal, signer_key: PublicKey,
-                 admin: PublicKey, serum_program_address: PublicKey, cache: PublicKey, valid_interval: Decimal,
-                 insurance_vault: PublicKey, srm_vault: PublicKey, msrm_vault: PublicKey, fees_vault: PublicKey,
-                 max_mango_accounts: Decimal, num_mango_accounts: Decimal,
-                 referral_surcharge_centibps: Decimal, referral_share_centibps: Decimal,
-                 referral_mngo_required: Decimal) -> None:
+    def __init__(
+        self,
+        account_info: AccountInfo,
+        version: Version,
+        name: str,
+        meta_data: Metadata,
+        shared_quote: TokenBank,
+        slot_indices: typing.Sequence[bool],
+        slots: typing.Sequence[GroupSlot],
+        signer_nonce: Decimal,
+        signer_key: PublicKey,
+        admin: PublicKey,
+        serum_program_address: PublicKey,
+        cache: PublicKey,
+        valid_interval: Decimal,
+        insurance_vault: PublicKey,
+        srm_vault: PublicKey,
+        msrm_vault: PublicKey,
+        fees_vault: PublicKey,
+        max_mango_accounts: Decimal,
+        num_mango_accounts: Decimal,
+        referral_surcharge_centibps: Decimal,
+        referral_share_centibps: Decimal,
+        referral_mngo_required: Decimal,
+    ) -> None:
         super().__init__(account_info)
         self.version: Version = version
         self.name: str = name
@@ -219,7 +283,9 @@ class Group(AddressableAccount):
             if token_bank.token.symbol_matches("MNGO"):
                 return token_bank
 
-        raise Exception(f"Could not find token info for symbol 'MNGO' in group {self.address}")
+        raise Exception(
+            f"Could not find token info for symbol 'MNGO' in group {self.address}"
+        )
 
     @property
     def liquidity_incentive_token(self) -> Token:
@@ -248,11 +314,18 @@ class Group(AddressableAccount):
 
     @property
     def base_tokens(self) -> typing.Sequence[TokenBank]:
-        return [slot.base_token_bank for slot in self.slots if slot.base_token_bank is not None]
+        return [
+            slot.base_token_bank
+            for slot in self.slots
+            if slot.base_token_bank is not None
+        ]
 
     @property
     def base_tokens_by_index(self) -> typing.Sequence[typing.Optional[TokenBank]]:
-        return [slot.base_token_bank if slot is not None else None for slot in self.slots_by_index]
+        return [
+            slot.base_token_bank if slot is not None else None
+            for slot in self.slots_by_index
+        ]
 
     @property
     def oracles(self) -> typing.Sequence[PublicKey]:
@@ -260,29 +333,49 @@ class Group(AddressableAccount):
 
     @property
     def oracles_by_index(self) -> typing.Sequence[typing.Optional[PublicKey]]:
-        return [slot.oracle if slot is not None else None for slot in self.slots_by_index]
+        return [
+            slot.oracle if slot is not None else None for slot in self.slots_by_index
+        ]
 
     @property
     def spot_markets(self) -> typing.Sequence[GroupSlotSpotMarket]:
         return [slot.spot_market for slot in self.slots if slot.spot_market is not None]
 
     @property
-    def spot_markets_by_index(self) -> typing.Sequence[typing.Optional[GroupSlotSpotMarket]]:
-        return [slot.spot_market if slot is not None else None for slot in self.slots_by_index]
+    def spot_markets_by_index(
+        self,
+    ) -> typing.Sequence[typing.Optional[GroupSlotSpotMarket]]:
+        return [
+            slot.spot_market if slot is not None else None
+            for slot in self.slots_by_index
+        ]
 
     @property
     def perp_markets(self) -> typing.Sequence[GroupSlotPerpMarket]:
         return [slot.perp_market for slot in self.slots if slot.perp_market is not None]
 
     @property
-    def perp_markets_by_index(self) -> typing.Sequence[typing.Optional[GroupSlotPerpMarket]]:
-        return [slot.perp_market if slot is not None else None for slot in self.slots_by_index]
+    def perp_markets_by_index(
+        self,
+    ) -> typing.Sequence[typing.Optional[GroupSlotPerpMarket]]:
+        return [
+            slot.perp_market if slot is not None else None
+            for slot in self.slots_by_index
+        ]
 
     @staticmethod
-    def from_layout(layout: typing.Any, name: str, account_info: AccountInfo, version: Version, instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> "Group":
+    def from_layout(
+        layout: typing.Any,
+        name: str,
+        account_info: AccountInfo,
+        version: Version,
+        instrument_lookup: InstrumentLookup,
+        market_lookup: MarketLookup,
+    ) -> "Group":
         meta_data: Metadata = Metadata.from_layout(layout.meta_data)
         tokens: typing.List[typing.Optional[TokenBank]] = [
-            TokenBank.from_layout_or_none(t, instrument_lookup) for t in layout.tokens]
+            TokenBank.from_layout_or_none(t, instrument_lookup) for t in layout.tokens
+        ]
 
         # By convention, the shared quote token is always at the end.
         quote_token_bank: typing.Optional[TokenBank] = tokens[-1]
@@ -291,10 +384,12 @@ class Group(AddressableAccount):
         slots: typing.List[GroupSlot] = []
         in_slots: typing.List[bool] = []
         for index in range(len(tokens) - 1):
-            spot_market_info: typing.Optional[GroupSlotSpotMarket] = GroupSlotSpotMarket.from_layout_or_none(
-                layout.spot_markets[index])
-            perp_market_info: typing.Optional[GroupSlotPerpMarket] = GroupSlotPerpMarket.from_layout_or_none(
-                layout.perp_markets[index])
+            spot_market_info: typing.Optional[
+                GroupSlotSpotMarket
+            ] = GroupSlotSpotMarket.from_layout_or_none(layout.spot_markets[index])
+            perp_market_info: typing.Optional[
+                GroupSlotPerpMarket
+            ] = GroupSlotPerpMarket.from_layout_or_none(layout.perp_markets[index])
             if (spot_market_info is None) and (perp_market_info is None):
                 in_slots += [False]
             else:
@@ -306,23 +401,40 @@ class Group(AddressableAccount):
                 else:
                     # It's possible there's no underlying SPL token and we have a pure PERP market.
                     if perp_market_info is None:
-                        raise Exception(f"Cannot find base token or perp market info for index {index}")
-                    perp_market = market_lookup.find_by_address(perp_market_info.address)
+                        raise Exception(
+                            f"Cannot find base token or perp market info for index {index}"
+                        )
+                    perp_market = market_lookup.find_by_address(
+                        perp_market_info.address
+                    )
                     if perp_market is None:
                         in_slots += [False]
                         logging.warning(
-                            f"Group cannot find base token or perp market for index {index} - {perp_market_info}")
+                            f"Group cannot find base token or perp market for index {index} - {perp_market_info}"
+                        )
                         continue
 
                     base_instrument = perp_market.base
 
                 if perp_market_info is not None:
                     perp_lot_size_converter = LotSizeConverter(
-                        base_instrument, perp_market_info.base_lot_size, quote_token_bank.token, perp_market_info.quote_lot_size)
+                        base_instrument,
+                        perp_market_info.base_lot_size,
+                        quote_token_bank.token,
+                        perp_market_info.quote_lot_size,
+                    )
 
                 oracle: PublicKey = layout.oracles[index]
-                slot: GroupSlot = GroupSlot(index, base_instrument, base_token_bank, quote_token_bank,
-                                            spot_market_info, perp_market_info, perp_lot_size_converter, oracle)
+                slot: GroupSlot = GroupSlot(
+                    index,
+                    base_instrument,
+                    base_token_bank,
+                    quote_token_bank,
+                    spot_market_info,
+                    perp_market_info,
+                    perp_lot_size_converter,
+                    oracle,
+                )
                 slots += [slot]
                 in_slots += [True]
 
@@ -343,22 +455,55 @@ class Group(AddressableAccount):
         referral_share_centibps: Decimal = layout.referral_share_centibps
         referral_mngo_required: Decimal = layout.referral_mngo_required
 
-        return Group(account_info, version, name, meta_data, quote_token_bank, in_slots, slots, signer_nonce, signer_key, admin, serum_program_address, cache_address, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault, max_mango_accounts, num_mango_accounts, referral_surcharge_centibps, referral_share_centibps, referral_mngo_required)
+        return Group(
+            account_info,
+            version,
+            name,
+            meta_data,
+            quote_token_bank,
+            in_slots,
+            slots,
+            signer_nonce,
+            signer_key,
+            admin,
+            serum_program_address,
+            cache_address,
+            valid_interval,
+            insurance_vault,
+            srm_vault,
+            msrm_vault,
+            fees_vault,
+            max_mango_accounts,
+            num_mango_accounts,
+            referral_surcharge_centibps,
+            referral_share_centibps,
+            referral_mngo_required,
+        )
 
     @staticmethod
-    def parse(account_info: AccountInfo, name: str, instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> "Group":
+    def parse(
+        account_info: AccountInfo,
+        name: str,
+        instrument_lookup: InstrumentLookup,
+        market_lookup: MarketLookup,
+    ) -> "Group":
         data = account_info.data
         if len(data) != layouts.GROUP.sizeof():
             raise Exception(
-                f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP.sizeof()})")
+                f"Group data length ({len(data)}) does not match expected size ({layouts.GROUP.sizeof()})"
+            )
 
         layout = layouts.GROUP.parse(data)
-        return Group.from_layout(layout, name, account_info, Version.V3, instrument_lookup, market_lookup)
+        return Group.from_layout(
+            layout, name, account_info, Version.V3, instrument_lookup, market_lookup
+        )
 
     @staticmethod
     def parse_with_context(context: Context, account_info: AccountInfo) -> "Group":
         name = context.lookup_group_name(account_info.address)
-        return Group.parse(account_info, name, context.instrument_lookup, context.market_lookup)
+        return Group.parse(
+            account_info, name, context.instrument_lookup, context.market_lookup
+        )
 
     @staticmethod
     def load(context: Context, address: typing.Optional[PublicKey] = None) -> "Group":
@@ -368,23 +513,37 @@ class Group(AddressableAccount):
             raise Exception(f"Group account not found at address '{group_address}'")
 
         name = context.lookup_group_name(account_info.address)
-        return Group.parse(account_info, name, context.instrument_lookup, context.market_lookup)
+        return Group.parse(
+            account_info, name, context.instrument_lookup, context.market_lookup
+        )
 
     def slot_by_spot_market_address(self, spot_market_address: PublicKey) -> GroupSlot:
         for slot in self.slots:
-            if slot.spot_market is not None and slot.spot_market.address == spot_market_address:
+            if (
+                slot.spot_market is not None
+                and slot.spot_market.address == spot_market_address
+            ):
                 return slot
 
-        raise Exception(f"Could not find spot market {spot_market_address} in group {self.address}")
+        raise Exception(
+            f"Could not find spot market {spot_market_address} in group {self.address}"
+        )
 
     def slot_by_perp_market_address(self, perp_market_address: PublicKey) -> GroupSlot:
         for slot in self.slots:
-            if slot.perp_market is not None and slot.perp_market.address == perp_market_address:
+            if (
+                slot.perp_market is not None
+                and slot.perp_market.address == perp_market_address
+            ):
                 return slot
 
-        raise Exception(f"Could not find perp market {perp_market_address} in group {self.address}")
+        raise Exception(
+            f"Could not find perp market {perp_market_address} in group {self.address}"
+        )
 
-    def slot_by_instrument_or_none(self, instrument: Instrument) -> typing.Optional[GroupSlot]:
+    def slot_by_instrument_or_none(
+        self, instrument: Instrument
+    ) -> typing.Optional[GroupSlot]:
         for slot in self.slots:
             if slot.base_instrument == instrument:
                 return slot
@@ -405,7 +564,9 @@ class Group(AddressableAccount):
 
         raise Exception(f"Could not find token {instrument} in group {self.address}")
 
-    def token_price_from_cache(self, cache: Cache, token: Instrument) -> InstrumentValue:
+    def token_price_from_cache(
+        self, cache: Cache, token: Instrument
+    ) -> InstrumentValue:
         if token == self.shared_quote_token:
             # 1 USDC is always worth 1 USDC
             return InstrumentValue(self.shared_quote_token, Decimal(1))
@@ -413,22 +574,32 @@ class Group(AddressableAccount):
             market_cache: MarketCache = self.market_cache_from_cache(cache, token)
             return market_cache.adjusted_price(token, self.shared_quote_token)
 
-    def perp_market_cache_from_cache(self, cache: Cache, token: Instrument) -> typing.Optional[PerpMarketCache]:
+    def perp_market_cache_from_cache(
+        self, cache: Cache, token: Instrument
+    ) -> typing.Optional[PerpMarketCache]:
         market_cache: MarketCache = self.market_cache_from_cache(cache, token)
         return market_cache.perp_market
 
-    def market_cache_from_cache_or_none(self, cache: Cache, instrument: Instrument) -> typing.Optional[MarketCache]:
+    def market_cache_from_cache_or_none(
+        self, cache: Cache, instrument: Instrument
+    ) -> typing.Optional[MarketCache]:
         slot: typing.Optional[GroupSlot] = self.slot_by_instrument_or_none(instrument)
         if slot is None:
             return None
         instrument_index: int = slot.index
         return cache.market_cache_for_index(instrument_index)
 
-    def market_cache_from_cache(self, cache: Cache, instrument: Instrument) -> MarketCache:
-        market_cache: typing.Optional[MarketCache] = self.market_cache_from_cache_or_none(cache, instrument)
+    def market_cache_from_cache(
+        self, cache: Cache, instrument: Instrument
+    ) -> MarketCache:
+        market_cache: typing.Optional[
+            MarketCache
+        ] = self.market_cache_from_cache_or_none(cache, instrument)
         if market_cache is not None:
             return market_cache
-        raise Exception(f"Could not find market cache for instrument {instrument.symbol}")
+        raise Exception(
+            f"Could not find market cache for instrument {instrument.symbol}"
+        )
 
     def fetch_cache(self, context: Context) -> Cache:
         return Cache.load(context, self.cache)
@@ -437,26 +608,26 @@ class Group(AddressableAccount):
         if not isinstance(id, str):
             raise Exception(f"Referrer ID '{id}' is not a string")
 
-        id_bytes = id.encode('utf-8')
+        id_bytes = id.encode("utf-8")
         if len(id_bytes) > 32:
             raise Exception(f"Referrer ID '{id}' is too long - maximum is 32 bytes")
 
         id_bytes_padded = id_bytes.ljust(32, b"\0")
 
-        referrer_record_address_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
-            [
-                bytes(self.address),
-                b"ReferrerIdRecord",
-                id_bytes_padded
-            ],
-            context.mango_program_address
+        referrer_record_address_and_nonce: typing.Tuple[
+            PublicKey, int
+        ] = PublicKey.find_program_address(
+            [bytes(self.address), b"ReferrerIdRecord", id_bytes_padded],
+            context.mango_program_address,
         )
 
         return referrer_record_address_and_nonce[0]
 
     def __str__(self) -> str:
         slot_count = len(self.slots)
-        slots = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.slots])
+        slots = "\n        ".join(
+            [f"{item}".replace("\n", "\n        ") for item in self.slots]
+        )
         return f"""« Group {self.version} [{self.address}]
     {self.meta_data}
     Name: {self.name}

@@ -8,28 +8,55 @@ import sys
 import time
 import traceback
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
-parser = argparse.ArgumentParser(description="Run a single pass of the liquidator for a Mango Markets group.")
+parser = argparse.ArgumentParser(
+    description="Run a single pass of the liquidator for a Mango Markets group."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--notify-liquidations", type=mango.parse_notification_target, action="append", default=[],
-                    help="The notification target for liquidation events")
-parser.add_argument("--notify-successful-liquidations", type=mango.parse_notification_target,
-                    action="append", default=[], help="The notification target for successful liquidation events")
-parser.add_argument("--notify-failed-liquidations", type=mango.parse_notification_target,
-                    action="append", default=[], help="The notification target for failed liquidation events")
-parser.add_argument("--notify-errors", type=mango.parse_notification_target, action="append", default=[],
-                    help="The notification target for error events")
-parser.add_argument("--dry-run", action="store_true", default=False,
-                    help="runs as read-only and does not perform any transactions")
+parser.add_argument(
+    "--notify-liquidations",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for liquidation events",
+)
+parser.add_argument(
+    "--notify-successful-liquidations",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for successful liquidation events",
+)
+parser.add_argument(
+    "--notify-failed-liquidations",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for failed liquidation events",
+)
+parser.add_argument(
+    "--notify-errors",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for error events",
+)
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    default=False,
+    help="runs as read-only and does not perform any transactions",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
-handler = mango.NotificationHandler(mango.CompoundNotificationTarget(args.notify_errors))
+handler = mango.NotificationHandler(
+    mango.CompoundNotificationTarget(args.notify_errors)
+)
 handler.setLevel(logging.ERROR)
 logging.getLogger().addHandler(handler)
 
@@ -48,22 +75,27 @@ try:
     report = scout.verify_account_prepared_for_group(context, group, wallet.address)
     logging.info(f"Wallet account report: {report}")
     if report.has_errors:
-        raise Exception(f"Account '{wallet.address}' is not prepared for group '{group.address}'.")
+        raise Exception(
+            f"Account '{wallet.address}' is not prepared for group '{group.address}'."
+        )
 
     logging.info("Wallet accounts OK.")
 
     liquidations_publisher = mango.EventSource[mango.LiquidationEvent]()
-    liquidations_publisher.subscribe(on_next=mango.CompoundNotificationTarget(
-        args.notify_liquidations).send)  # type: ignore[call-arg]
+    liquidations_publisher.subscribe(
+        on_next=mango.CompoundNotificationTarget(args.notify_liquidations).send
+    )  # type: ignore[call-arg]
 
     on_success = mango.FilteringNotificationTarget(
         mango.CompoundNotificationTarget(args.notify_successful_liquidations),
-        lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded)
+        lambda item: isinstance(item, mango.LiquidationEvent) and item.succeeded,
+    )
     liquidations_publisher.subscribe(on_next=on_success.send)  # type: ignore[call-arg]
 
     on_failed = mango.FilteringNotificationTarget(
         mango.CompoundNotificationTarget(args.notify_failed_liquidations),
-        lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded)
+        lambda item: isinstance(item, mango.LiquidationEvent) and not item.succeeded,
+    )
     liquidations_publisher.subscribe(on_next=on_failed.send)  # type: ignore[call-arg]
 
     # TODO: Add proper liquidator classes here when they're written for V3
@@ -74,7 +106,9 @@ try:
 
     wallet_balancer = mango.NullWalletBalancer()
 
-    liquidation_processor = mango.LiquidationProcessor(context, liquidator_name, account_liquidator, wallet_balancer)
+    liquidation_processor = mango.LiquidationProcessor(
+        context, liquidator_name, account_liquidator, wallet_balancer
+    )
 
     started_at = time.time()
     liquidation_processor.update_accounts([])
@@ -84,11 +118,17 @@ try:
     liquidation_processor.update_prices(group, [])
 
     time_taken = time.time() - started_at
-    logging.info(f"Check of all margin accounts complete. Time taken: {time_taken:.2f} seconds.")
+    logging.info(
+        f"Check of all margin accounts complete. Time taken: {time_taken:.2f} seconds."
+    )
 
 except Exception as exception:
-    logging.critical(f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(
+        f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}"
+    )
 except:
-    logging.critical(f"Liquidator stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(
+        f"Liquidator stopped because of uncatchable error: {traceback.format_exc()}"
+    )
 finally:
     logging.info("Liquidator completed.")

@@ -59,11 +59,15 @@ class TradeExecutor(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def buy(self, symbol: str, quantity: Decimal) -> Order:
-        raise NotImplementedError("TradeExecutor.buy() is not implemented on the base type.")
+        raise NotImplementedError(
+            "TradeExecutor.buy() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def sell(self, symbol: str, quantity: Decimal) -> Order:
-        raise NotImplementedError("TradeExecutor.sell() is not implemented on the base type.")
+        raise NotImplementedError(
+            "TradeExecutor.sell() is not implemented on the base type."
+        )
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -75,7 +79,9 @@ class TradeExecutor(metaclass=abc.ABCMeta):
 # is expected, but which will not actually trade.
 #
 class NullTradeExecutor(TradeExecutor):
-    def __init__(self, reporter: typing.Optional[typing.Callable[[str], None]] = None) -> None:
+    def __init__(
+        self, reporter: typing.Optional[typing.Callable[[str], None]] = None
+    ) -> None:
         super().__init__()
         self.reporter: typing.Callable[[str], None] = reporter or (lambda _: None)
 
@@ -117,7 +123,14 @@ class NullTradeExecutor(TradeExecutor):
 # assuming) the price exceeded the price specified.
 #
 class ImmediateTradeExecutor(TradeExecutor):
-    def __init__(self, context: Context, wallet: Wallet, account: typing.Optional[Account], price_adjustment_factor: Decimal = Decimal(0), reporter: typing.Optional[typing.Callable[[str], None]] = None) -> None:
+    def __init__(
+        self,
+        context: Context,
+        wallet: Wallet,
+        account: typing.Optional[Account],
+        price_adjustment_factor: Decimal = Decimal(0),
+        reporter: typing.Optional[typing.Callable[[str], None]] = None,
+    ) -> None:
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
@@ -130,6 +143,7 @@ class ImmediateTradeExecutor(TradeExecutor):
             self._logger.info(text)
             if reporter is not None:
                 reporter(text)
+
         self.reporter = _reporter
 
     def buy(self, symbol: str, quantity: Decimal) -> Order:
@@ -142,7 +156,9 @@ class ImmediateTradeExecutor(TradeExecutor):
 
         increase_factor = Decimal(1) + self.price_adjustment_factor
         price = top_ask * increase_factor
-        self.reporter(f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_ask}")
+        self.reporter(
+            f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_ask}"
+        )
 
         order = Order.from_basic_info(Side.BUY, price, quantity, OrderType.IOC)
         return market_operations.place_order(order)
@@ -157,7 +173,9 @@ class ImmediateTradeExecutor(TradeExecutor):
 
         decrease_factor = Decimal(1) - self.price_adjustment_factor
         price = top_bid * decrease_factor
-        self.reporter(f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_bid}")
+        self.reporter(
+            f"Price {price} - adjusted by {self.price_adjustment_factor} from {top_bid}"
+        )
 
         order = Order.from_basic_info(Side.SELL, price, quantity, OrderType.IOC)
         return market_operations.place_order(order)

@@ -43,8 +43,17 @@ class PairwiseElement(Element, metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         super().__init__()
 
-    def process_order_pair(self, context: mango.Context, model_state: ModelState, index: int, buy: typing.Optional[mango.Order], sell: typing.Optional[mango.Order]) -> typing.Tuple[typing.Optional[mango.Order], typing.Optional[mango.Order]]:
-        raise NotImplementedError("PairwiseElement.process_order_pair() is not implemented on the base type.")
+    def process_order_pair(
+        self,
+        context: mango.Context,
+        model_state: ModelState,
+        index: int,
+        buy: typing.Optional[mango.Order],
+        sell: typing.Optional[mango.Order],
+    ) -> typing.Tuple[typing.Optional[mango.Order], typing.Optional[mango.Order]]:
+        raise NotImplementedError(
+            "PairwiseElement.process_order_pair() is not implemented on the base type."
+        )
 
     # If multiple levels are specified, we want to process them in order.
     #
@@ -61,19 +70,34 @@ class PairwiseElement(Element, metaclass=abc.ABCMeta):
     # * Sort the two lists so closest to top-of-book is at index 0
     # * Call process_order_pair() for each paired BUY and SELL, with the index parameter being
     #   the index into the BUY and SELL lists.
-    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
-        buys: typing.List[mango.Order] = list([order for order in orders if order.side == mango.Side.BUY])
+    def process(
+        self,
+        context: mango.Context,
+        model_state: ModelState,
+        orders: typing.Sequence[mango.Order],
+    ) -> typing.Sequence[mango.Order]:
+        buys: typing.List[mango.Order] = list(
+            [order for order in orders if order.side == mango.Side.BUY]
+        )
         buys.sort(key=lambda order: order.price, reverse=True)
-        sells: typing.List[mango.Order] = list([order for order in orders if order.side == mango.Side.SELL])
+        sells: typing.List[mango.Order] = list(
+            [order for order in orders if order.side == mango.Side.SELL]
+        )
         sells.sort(key=lambda order: order.price)
 
         pair_count: int = max(len(buys), len(sells))
         new_orders: typing.List[mango.Order] = []
         for index in range(pair_count):
-            old_buy: typing.Optional[mango.Order] = buys[index] if index < len(buys) else None
-            old_sell: typing.Optional[mango.Order] = sells[index] if index < len(sells) else None
+            old_buy: typing.Optional[mango.Order] = (
+                buys[index] if index < len(buys) else None
+            )
+            old_sell: typing.Optional[mango.Order] = (
+                sells[index] if index < len(sells) else None
+            )
 
-            (new_buy, new_sell) = self.process_order_pair(context, model_state, index, old_buy, old_sell)
+            (new_buy, new_sell) = self.process_order_pair(
+                context, model_state, index, old_buy, old_sell
+            )
             if new_buy is not None:
                 new_orders += [new_buy]
 

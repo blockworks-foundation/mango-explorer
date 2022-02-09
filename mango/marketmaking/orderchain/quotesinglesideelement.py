@@ -32,24 +32,38 @@ class QuoteSingleSideElement(Element):
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--quotesingleside-side", type=mango.Side,
-                            help="the single side to quote on - if BUY, all SELLs will be removed from desired orders, if SELL, all BUYs will be removed.")
+        parser.add_argument(
+            "--quotesingleside-side",
+            type=mango.Side,
+            help="the single side to quote on - if BUY, all SELLs will be removed from desired orders, if SELL, all BUYs will be removed.",
+        )
 
     @staticmethod
-    def from_command_line_parameters(args: argparse.Namespace) -> "QuoteSingleSideElement":
+    def from_command_line_parameters(
+        args: argparse.Namespace,
+    ) -> "QuoteSingleSideElement":
         side: mango.Side = args.quotesingleside_side
         return QuoteSingleSideElement(side)
 
-    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
+    def process(
+        self,
+        context: mango.Context,
+        model_state: ModelState,
+        orders: typing.Sequence[mango.Order],
+    ) -> typing.Sequence[mango.Order]:
         new_orders: typing.List[mango.Order] = []
         for order in orders:
             if order.side == self.allowed:
-                self._logger.debug(f"""Allowing {order.side} order [allowed: {self.allowed}]:
-    Allowed: {order}""")
+                self._logger.debug(
+                    f"""Allowing {order.side} order [allowed: {self.allowed}]:
+    Allowed: {order}"""
+                )
                 new_orders += [order]
             else:
-                self._logger.debug(f"""Removing {order.side} order [allowed: {self.allowed}]:
-    Removed: {order}""")
+                self._logger.debug(
+                    f"""Removing {order.side} order [allowed: {self.allowed}]:
+    Removed: {order}"""
+                )
 
         return new_orders
 

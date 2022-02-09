@@ -24,7 +24,18 @@ from .instrumentvalue import InstrumentValue
 # # 🥭 LiquidationEvent class
 #
 class LiquidationEvent:
-    def __init__(self, timestamp: datetime.datetime, liquidator_name: str, group_name: str, succeeded: bool, signatures: typing.Sequence[str], wallet_address: PublicKey, account_address: PublicKey, balances_before: typing.Sequence[InstrumentValue], balances_after: typing.Sequence[InstrumentValue]) -> None:
+    def __init__(
+        self,
+        timestamp: datetime.datetime,
+        liquidator_name: str,
+        group_name: str,
+        succeeded: bool,
+        signatures: typing.Sequence[str],
+        wallet_address: PublicKey,
+        account_address: PublicKey,
+        balances_before: typing.Sequence[InstrumentValue],
+        balances_after: typing.Sequence[InstrumentValue],
+    ) -> None:
         self.timestamp: datetime.datetime = timestamp
         self.liquidator_name: str = liquidator_name
         self.group_name: str = group_name
@@ -34,11 +45,15 @@ class LiquidationEvent:
         self.account_address: PublicKey = account_address
         self.balances_before: typing.Sequence[InstrumentValue] = balances_before
         self.balances_after: typing.Sequence[InstrumentValue] = balances_after
-        self.changes: typing.Sequence[InstrumentValue] = InstrumentValue.changes(balances_before, balances_after)
+        self.changes: typing.Sequence[InstrumentValue] = InstrumentValue.changes(
+            balances_before, balances_after
+        )
 
     def __str__(self) -> str:
         result = "✅" if self.succeeded else "❌"
-        changes_text = "\n        ".join([f"{change.value:>15,.8f} {change.token.symbol}" for change in self.changes])
+        changes_text = "\n        ".join(
+            [f"{change.value:>15,.8f} {change.token.symbol}" for change in self.changes]
+        )
         return f"""« 🥭 Liqudation Event {result} at {self.timestamp}
     💧 Liquidator: {self.liquidator_name}
     🏫 Group: {self.group_name}

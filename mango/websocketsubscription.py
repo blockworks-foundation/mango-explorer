@@ -37,32 +37,47 @@ from .reconnectingwebsocket import ReconnectingWebsocket
 #
 
 
-TSubscriptionInstance = typing.TypeVar('TSubscriptionInstance')
+TSubscriptionInstance = typing.TypeVar("TSubscriptionInstance")
 
 
-class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], metaclass=abc.ABCMeta):
-    def __init__(self, context: Context, address: PublicKey,
-                 constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]) -> None:
+class WebSocketSubscription(
+    Disposable, typing.Generic[TSubscriptionInstance], metaclass=abc.ABCMeta
+):
+    def __init__(
+        self,
+        context: Context,
+        address: PublicKey,
+        constructor: typing.Callable[[AccountInfo], TSubscriptionInstance],
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
         self.address: PublicKey = address
         self.id: int = context.generate_client_id()
         self.subscription_id: int = 0
-        self.from_account_info: typing.Callable[[AccountInfo], TSubscriptionInstance] = constructor
-        self.publisher: EventSource[TSubscriptionInstance] = EventSource[TSubscriptionInstance]()
+        self.from_account_info: typing.Callable[
+            [AccountInfo], TSubscriptionInstance
+        ] = constructor
+        self.publisher: EventSource[TSubscriptionInstance] = EventSource[
+            TSubscriptionInstance
+        ]()
         self.ws: typing.Optional[ReconnectingWebsocket] = None
         self.pong: BehaviorSubject = BehaviorSubject(datetime.now())
         self._pong_subscription: typing.Optional[Disposable] = None
 
     @abc.abstractmethod
     def build_request(self) -> str:
-        raise NotImplementedError("WebSocketSubscription.build_request() is not implemented on the base type.")
+        raise NotImplementedError(
+            "WebSocketSubscription.build_request() is not implemented on the base type."
+        )
 
-    def open(self,) -> None:
+    def open(
+        self,
+    ) -> None:
         websocket_url: str = self.context.client.cluster_ws_url
 
         def on_open(sock: websocket.WebSocketApp) -> None:
             sock.send(self.build_request())
+
         ws: ReconnectingWebsocket = ReconnectingWebsocket(websocket_url, on_open)
         ws.item.subscribe(on_next=self._on_item)  # type: ignore[call-arg]
         ws.ping_interval = self.context.ping_interval
@@ -84,7 +99,11 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
             if id == self.id:
                 subscription_id: int = int(response["result"])
                 self._logger.info(f"Subscription created with id {subscription_id}.")
-        elif (response["method"] == "accountNotification") or (response["method"] == "programNotification") or (response["method"] == "logsNotification"):
+        elif (
+            (response["method"] == "accountNotification")
+            or (response["method"] == "programNotification")
+            or (response["method"] == "logsNotification")
+        ):
             subscription_id = response["params"]["subscription"]
             built = self.build_subscribed_instance(response["params"])
             self.publisher.publish(built)
@@ -108,49 +127,75 @@ class WebSocketSubscription(Disposable, typing.Generic[TSubscriptionInstance], m
 
 
 class WebSocketProgramSubscription(WebSocketSubscription[TSubscriptionInstance]):
-    def __init__(self, context: Context, address: PublicKey,
-                 constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]) -> None:
+    def __init__(
+        self,
+        context: Context,
+        address: PublicKey,
+        constructor: typing.Callable[[AccountInfo], TSubscriptionInstance],
+    ) -> None:
         super().__init__(context, address, constructor)
 
     def build_request(self) -> str:
-        return """
+        return (
+            """
 {
     "jsonrpc": "2.0",
-    "id": \"""" + str(self.id) + """\",
+    "id": \""""
+            + str(self.id)
+            + """\",
     "method": "programSubscribe",
-    "params": [\"""" + str(self.address) + """\",
+    "params": [\""""
+            + str(self.address)
+            + """\",
         {
             "encoding": "base64",
-            "commitment": \"""" + str(self.context.client.commitment) + """\"
+            "commitment": \""""
+            + str(self.context.client.commitment)
+            + """\"
         }
   ]
 }
 """
+        )
 
 
 class WebSocketAccountSubscription(WebSocketSubscription[TSubscriptionInstance]):
-    def __init__(self, context: Context, address: PublicKey,
-                 constructor: typing.Callable[[AccountInfo], TSubscriptionInstance]) -> None:
+    def __init__(
+        self,
+        context: Context,
+        address: PublicKey,
+        constructor: typing.Callable[[AccountInfo], TSubscriptionInstance],
+    ) -> None:
         super().__init__(context, address, constructor)
 
     def build_request(self) -> str:
-        return """
+        return (
+            """
 {
     "jsonrpc": "2.0",
-    "id": \"""" + str(self.id) + """\",
+    "id": \""""
+            + str(self.id)
+            + """\",
     "method": "accountSubscribe",
-    "params": [\"""" + str(self.address) + """\",
+    "params": [\""""
+            + str(self.address)
+            + """\",
         {
             "encoding": "base64",
-           "commitment": \"""" + str(self.context.client.commitment) + """\"
+           "commitment": \""""
+            + str(self.context.client.commitment)
+            + """\"
         }
     ]
 }
 """
+        )
 
 
 class LogEvent:
-    def __init__(self, signatures: typing.Sequence[str], logs: typing.Sequence[str]) -> None:
+    def __init__(
+        self, signatures: typing.Sequence[str], logs: typing.Sequence[str]
+    ) -> None:
         self.signatures: typing.Sequence[str] = signatures
         self.logs: typing.Sequence[str] = logs
 
@@ -176,21 +221,29 @@ class WebSocketLogSubscription(WebSocketSubscription[LogEvent]):
         super().__init__(context, address, lambda _: LogEvent([""], []))
 
     def build_request(self) -> str:
-        return """
+        return (
+            """
 {
     "jsonrpc": "2.0",
-    "id": \"""" + str(self.id) + """\",
+    "id": \""""
+            + str(self.id)
+            + """\",
     "method": "logsSubscribe",
     "params": [
         {
-            "mentions": [ \"""" + str(self.address) + """\" ]
+            "mentions": [ \""""
+            + str(self.address)
+            + """\" ]
         },
         {
-            "commitment": \"""" + str(self.context.client.commitment) + """\"
+            "commitment": \""""
+            + str(self.context.client.commitment)
+            + """\"
         }
     ]
 }
 """
+        )
 
     def build(self, response: RPCResponse) -> LogEvent:
         return LogEvent.from_response(response)
@@ -211,10 +264,14 @@ class WebSocketSubscriptionManager(Disposable, metaclass=abc.ABCMeta):
         self.subscriptions += [subscription]
 
     def open(self) -> None:
-        raise NotImplementedError("WebSocketSubscription.build_request() is not implemented on the base type.")
+        raise NotImplementedError(
+            "WebSocketSubscription.build_request() is not implemented on the base type."
+        )
 
     def close(self) -> None:
-        raise NotImplementedError("WebSocketSubscription.build_request() is not implemented on the base type.")
+        raise NotImplementedError(
+            "WebSocketSubscription.build_request() is not implemented on the base type."
+        )
 
     def on_disconnected(self, ws: websocket.WebSocketApp) -> None:
         for subscription in self.subscriptions:
@@ -257,7 +314,9 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
 
     def open(self) -> None:
         websocket_url = self.context.client.cluster_ws_url
-        ws: ReconnectingWebsocket = ReconnectingWebsocket(websocket_url, self.open_handler)
+        ws: ReconnectingWebsocket = ReconnectingWebsocket(
+            websocket_url, self.open_handler
+        )
         ws.item.subscribe(on_next=self.on_item)  # type: ignore[call-arg]
         ws.ping_interval = self.ping_interval
         self.ws = ws
@@ -276,23 +335,32 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
         for subscription in self.subscriptions:
             if subscription.id == id:
                 self._logger.info(
-                    f"Setting ID {subscription_id} on subscription {subscription.id} for {subscription.address}.")
+                    f"Setting ID {subscription_id} on subscription {subscription.id} for {subscription.address}."
+                )
                 subscription.subscription_id = subscription_id
                 return
         self._logger.error(f"[{self.context.name}] Subscription ID {id} not found")
 
-    def subscription_by_subscription_id(self, subscription_id: int) -> WebSocketSubscription[typing.Any]:
+    def subscription_by_subscription_id(
+        self, subscription_id: int
+    ) -> WebSocketSubscription[typing.Any]:
         for subscription in self.subscriptions:
             if subscription.subscription_id == subscription_id:
                 return subscription
-        raise Exception(f"[{self.context.name}] No subscription with subscription ID {subscription_id} could be found.")
+        raise Exception(
+            f"[{self.context.name}] No subscription with subscription ID {subscription_id} could be found."
+        )
 
     def on_item(self, response: typing.Dict[str, typing.Any]) -> None:
         if "method" not in response:
             id: int = int(response["id"])
             subscription_id: int = int(response["result"])
             self.add_subscription_id(id, subscription_id)
-        elif (response["method"] == "accountNotification") or (response["method"] == "programNotification") or (response["method"] == "logsNotification"):
+        elif (
+            (response["method"] == "accountNotification")
+            or (response["method"] == "programNotification")
+            or (response["method"] == "logsNotification")
+        ):
             subscription_id = response["params"]["subscription"]
             subscription = self.subscription_by_subscription_id(subscription_id)
             built = subscription.build_subscribed_instance(response["params"])

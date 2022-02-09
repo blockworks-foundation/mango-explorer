@@ -10,20 +10,31 @@ from datetime import datetime, timedelta, timezone
 from solana.publickey import PublicKey
 
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(
-    description="Downloads perp and spot trades for the current wallet. Will perform incremental updates to the given filename instead of re-downloading all trades.")
+    description="Downloads perp and spot trades for the current wallet. Will perform incremental updates to the given filename instead of re-downloading all trades."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--address", type=PublicKey, required=False,
-                    help="Address of the Mango account to load (defaults to current wallet's Mango account)")
-parser.add_argument("--filename", type=str, required=False,
-                    help="filename for loading and storing the trade history data in CSV format")
-parser.add_argument("--most-recent-hours", type=int,
-                    help="only retrieve and save the most recent number of hours (e.g. --most-recent-hours 24)")
+parser.add_argument(
+    "--address",
+    type=PublicKey,
+    required=False,
+    help="Address of the Mango account to load (defaults to current wallet's Mango account)",
+)
+parser.add_argument(
+    "--filename",
+    type=str,
+    required=False,
+    help="filename for loading and storing the trade history data in CSV format",
+)
+parser.add_argument(
+    "--most-recent-hours",
+    type=int,
+    help="only retrieve and save the most recent number of hours (e.g. --most-recent-hours 24)",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)

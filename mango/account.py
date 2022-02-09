@@ -44,7 +44,19 @@ from .version import Version
 # `AccountSlot` gathers slot items together instead of separate arrays.
 #
 class AccountSlot:
-    def __init__(self, index: int, base_instrument: Instrument, base_token_bank: typing.Optional[TokenBank], quote_token_bank: TokenBank, raw_deposit: Decimal, deposit: InstrumentValue, raw_borrow: Decimal, borrow: InstrumentValue, spot_open_orders: typing.Optional[PublicKey], perp_account: typing.Optional[PerpAccount]) -> None:
+    def __init__(
+        self,
+        index: int,
+        base_instrument: Instrument,
+        base_token_bank: typing.Optional[TokenBank],
+        quote_token_bank: TokenBank,
+        raw_deposit: Decimal,
+        deposit: InstrumentValue,
+        raw_borrow: Decimal,
+        borrow: InstrumentValue,
+        spot_open_orders: typing.Optional[PublicKey],
+        perp_account: typing.Optional[PerpAccount],
+    ) -> None:
         self.index: int = index
         self.base_instrument: Instrument = base_instrument
         self.base_token_bank: typing.Optional[TokenBank] = base_token_bank
@@ -94,14 +106,26 @@ class Account(AddressableAccount):
     def __sum_pos(dataframe: pandas.DataFrame, name: str) -> Decimal:
         return typing.cast(Decimal, dataframe.loc[dataframe[name] > 0, name].sum())
 
-    def __init__(self, account_info: AccountInfo, version: Version,
-                 meta_data: Metadata, group_name: str, group_address: PublicKey, owner: PublicKey,
-                 info: str, shared_quote: AccountSlot,
-                 in_margin_basket: typing.Sequence[bool],
-                 slot_indices: typing.Sequence[bool],
-                 base_slots: typing.Sequence[AccountSlot],
-                 msrm_amount: Decimal, being_liquidated: bool, is_bankrupt: bool,
-                 advanced_orders: PublicKey, not_upgradable: bool, delegate: PublicKey) -> None:
+    def __init__(
+        self,
+        account_info: AccountInfo,
+        version: Version,
+        meta_data: Metadata,
+        group_name: str,
+        group_address: PublicKey,
+        owner: PublicKey,
+        info: str,
+        shared_quote: AccountSlot,
+        in_margin_basket: typing.Sequence[bool],
+        slot_indices: typing.Sequence[bool],
+        base_slots: typing.Sequence[AccountSlot],
+        msrm_amount: Decimal,
+        being_liquidated: bool,
+        is_bankrupt: bool,
+        advanced_orders: PublicKey,
+        not_upgradable: bool,
+        delegate: PublicKey,
+    ) -> None:
         super().__init__(account_info)
         self.version: Version = version
 
@@ -152,7 +176,9 @@ class Account(AddressableAccount):
 
     @property
     def deposits_by_index(self) -> typing.Sequence[typing.Optional[InstrumentValue]]:
-        return [slot.deposit if slot is not None else None for slot in self.slots_by_index]
+        return [
+            slot.deposit if slot is not None else None for slot in self.slots_by_index
+        ]
 
     @property
     def borrows(self) -> typing.Sequence[InstrumentValue]:
@@ -160,7 +186,9 @@ class Account(AddressableAccount):
 
     @property
     def borrows_by_index(self) -> typing.Sequence[typing.Optional[InstrumentValue]]:
-        return [slot.borrow if slot is not None else None for slot in self.slots_by_index]
+        return [
+            slot.borrow if slot is not None else None for slot in self.slots_by_index
+        ]
 
     @property
     def net_values(self) -> typing.Sequence[InstrumentValue]:
@@ -168,35 +196,60 @@ class Account(AddressableAccount):
 
     @property
     def net_values_by_index(self) -> typing.Sequence[typing.Optional[InstrumentValue]]:
-        return [slot.net_value if slot is not None else None for slot in self.slots_by_index]
+        return [
+            slot.net_value if slot is not None else None for slot in self.slots_by_index
+        ]
 
     @property
     def spot_open_orders(self) -> typing.Sequence[PublicKey]:
-        return [slot.spot_open_orders for slot in self.base_slots if slot.spot_open_orders is not None]
+        return [
+            slot.spot_open_orders
+            for slot in self.base_slots
+            if slot.spot_open_orders is not None
+        ]
 
     @property
     def spot_open_orders_by_index(self) -> typing.Sequence[typing.Optional[PublicKey]]:
-        return [slot.spot_open_orders if slot is not None else None for slot in self.slots_by_index]
+        return [
+            slot.spot_open_orders if slot is not None else None
+            for slot in self.slots_by_index
+        ]
 
     @property
     def perp_accounts(self) -> typing.Sequence[PerpAccount]:
-        return [slot.perp_account for slot in self.base_slots if slot.perp_account is not None]
+        return [
+            slot.perp_account
+            for slot in self.base_slots
+            if slot.perp_account is not None
+        ]
 
     @property
     def perp_accounts_by_index(self) -> typing.Sequence[typing.Optional[PerpAccount]]:
-        return [slot.perp_account if slot is not None else None for slot in self.slots_by_index]
+        return [
+            slot.perp_account if slot is not None else None
+            for slot in self.slots_by_index
+        ]
 
     @staticmethod
-    def from_layout(layout: typing.Any, account_info: AccountInfo, version: Version, group: Group, cache: Cache) -> "Account":
+    def from_layout(
+        layout: typing.Any,
+        account_info: AccountInfo,
+        version: Version,
+        group: Group,
+        cache: Cache,
+    ) -> "Account":
         meta_data = Metadata.from_layout(layout.meta_data)
         owner: PublicKey = layout.owner
         info: str = layout.info
         mngo_token = group.liquidity_incentive_token
-        in_margin_basket: typing.Sequence[bool] = list([bool(in_basket) for in_basket in layout.in_margin_basket])
+        in_margin_basket: typing.Sequence[bool] = list(
+            [bool(in_basket) for in_basket in layout.in_margin_basket]
+        )
         active_in_basket: typing.List[bool] = []
         slots: typing.List[AccountSlot] = []
-        placed_orders_all_markets: typing.List[typing.List[PlacedOrder]] = [[]
-                                                                            for _ in range(len(group.slot_indices) - 1)]
+        placed_orders_all_markets: typing.List[typing.List[PlacedOrder]] = [
+            [] for _ in range(len(group.slot_indices) - 1)
+        ]
         for index, order_market in enumerate(layout.order_market):
             if order_market != 0xFF:
                 side = Side.from_value(layout.order_side[index])
@@ -219,16 +272,23 @@ class Account(AddressableAccount):
                 intrinsic_borrow: Decimal = Decimal(0)
                 if token_bank is not None:
                     raw_deposit = layout.deposits[index]
-                    root_bank_cache: typing.Optional[RootBankCache] = token_bank.root_bank_cache_from_cache(
-                        cache, index)
+                    root_bank_cache: typing.Optional[
+                        RootBankCache
+                    ] = token_bank.root_bank_cache_from_cache(cache, index)
                     if root_bank_cache is None:
-                        raise Exception(f"No root bank cache found for token {token_bank} at index {index}")
+                        raise Exception(
+                            f"No root bank cache found for token {token_bank} at index {index}"
+                        )
                     intrinsic_deposit = root_bank_cache.deposit_index * raw_deposit
                     raw_borrow = layout.borrows[index]
                     intrinsic_borrow = root_bank_cache.borrow_index * raw_borrow
 
-                deposit = InstrumentValue(instrument, instrument.shift_to_decimals(intrinsic_deposit))
-                borrow = InstrumentValue(instrument, instrument.shift_to_decimals(intrinsic_borrow))
+                deposit = InstrumentValue(
+                    instrument, instrument.shift_to_decimals(intrinsic_deposit)
+                )
+                borrow = InstrumentValue(
+                    instrument, instrument.shift_to_decimals(intrinsic_borrow)
+                )
 
                 perp_open_orders = PerpOpenOrders(placed_orders_all_markets[index])
 
@@ -238,11 +298,21 @@ class Account(AddressableAccount):
                     quote_token,
                     perp_open_orders,
                     group_slot.perp_lot_size_converter,
-                    mngo_token)
+                    mngo_token,
+                )
                 spot_open_orders = layout.spot_open_orders[index]
-                account_slot: AccountSlot = AccountSlot(index, instrument, token_bank, quote_token_bank,
-                                                        raw_deposit, deposit, raw_borrow, borrow,
-                                                        spot_open_orders, perp_account)
+                account_slot: AccountSlot = AccountSlot(
+                    index,
+                    instrument,
+                    token_bank,
+                    quote_token_bank,
+                    raw_deposit,
+                    deposit,
+                    raw_borrow,
+                    borrow,
+                    spot_open_orders,
+                    perp_account,
+                )
 
                 slots += [account_slot]
                 active_in_basket += [True]
@@ -251,18 +321,36 @@ class Account(AddressableAccount):
 
         quote_index: int = len(layout.deposits) - 1
         raw_quote_deposit: Decimal = layout.deposits[quote_index]
-        quote_root_bank_cache: typing.Optional[RootBankCache] = quote_token_bank.root_bank_cache_from_cache(
-            cache, quote_index)
+        quote_root_bank_cache: typing.Optional[
+            RootBankCache
+        ] = quote_token_bank.root_bank_cache_from_cache(cache, quote_index)
         if quote_root_bank_cache is None:
-            raise Exception(f"No root bank cache found for quote token {quote_token_bank} at index {index}")
-        intrinsic_quote_deposit = quote_root_bank_cache.deposit_index * raw_quote_deposit
-        quote_deposit = InstrumentValue(quote_token, quote_token.shift_to_decimals(intrinsic_quote_deposit))
+            raise Exception(
+                f"No root bank cache found for quote token {quote_token_bank} at index {index}"
+            )
+        intrinsic_quote_deposit = (
+            quote_root_bank_cache.deposit_index * raw_quote_deposit
+        )
+        quote_deposit = InstrumentValue(
+            quote_token, quote_token.shift_to_decimals(intrinsic_quote_deposit)
+        )
         raw_quote_borrow: Decimal = layout.borrows[quote_index]
         intrinsic_quote_borrow = quote_root_bank_cache.borrow_index * raw_quote_borrow
-        quote_borrow = InstrumentValue(quote_token, quote_token.shift_to_decimals(intrinsic_quote_borrow))
-        quote: AccountSlot = AccountSlot(len(layout.deposits) - 1, quote_token_bank.token, quote_token_bank,
-                                         quote_token_bank, raw_quote_deposit, quote_deposit, raw_quote_borrow,
-                                         quote_borrow, None, None)
+        quote_borrow = InstrumentValue(
+            quote_token, quote_token.shift_to_decimals(intrinsic_quote_borrow)
+        )
+        quote: AccountSlot = AccountSlot(
+            len(layout.deposits) - 1,
+            quote_token_bank.token,
+            quote_token_bank,
+            quote_token_bank,
+            raw_quote_deposit,
+            quote_deposit,
+            raw_quote_borrow,
+            quote_borrow,
+            None,
+            None,
+        )
 
         msrm_amount: Decimal = layout.msrm_amount
         being_liquidated: bool = bool(layout.being_liquidated)
@@ -271,16 +359,33 @@ class Account(AddressableAccount):
         not_upgradable: bool = bool(layout.not_upgradable)
         delegate: PublicKey = layout.delegate
 
-        return Account(account_info, version, meta_data, group.name, group.address, owner, info, quote,
-                       in_margin_basket, active_in_basket, slots, msrm_amount, being_liquidated, is_bankrupt,
-                       advanced_orders, not_upgradable, delegate)
+        return Account(
+            account_info,
+            version,
+            meta_data,
+            group.name,
+            group.address,
+            owner,
+            info,
+            quote,
+            in_margin_basket,
+            active_in_basket,
+            slots,
+            msrm_amount,
+            being_liquidated,
+            is_bankrupt,
+            advanced_orders,
+            not_upgradable,
+            delegate,
+        )
 
     @staticmethod
     def parse(account_info: AccountInfo, group: Group, cache: Cache) -> "Account":
         data = account_info.data
         if len(data) != layouts.MANGO_ACCOUNT.sizeof():
             raise Exception(
-                f"Account data length ({len(data)}) does not match expected size ({layouts.MANGO_ACCOUNT.sizeof()})")
+                f"Account data length ({len(data)}) does not match expected size ({layouts.MANGO_ACCOUNT.sizeof()})"
+            )
 
         layout = layouts.MANGO_ACCOUNT.parse(data)
         return Account.from_layout(layout, account_info, Version.V3, group, cache)
@@ -298,92 +403,105 @@ class Account(AddressableAccount):
         # mango_group is just after the METADATA, which is the first entry.
         group_offset = layouts.METADATA.sizeof()
         # owner is just after mango_group in the layout, and it's a PublicKey which is 32 bytes.
-        filters = [
-            MemcmpOpts(
-                offset=group_offset,
-                bytes=encode_key(group.address)
-            )
-        ]
+        filters = [MemcmpOpts(offset=group_offset, bytes=encode_key(group.address))]
 
         results = context.client.get_program_accounts(
-            context.mango_program_address, memcmp_opts=filters, data_size=layouts.MANGO_ACCOUNT.sizeof())
+            context.mango_program_address,
+            memcmp_opts=filters,
+            data_size=layouts.MANGO_ACCOUNT.sizeof(),
+        )
         cache: Cache = group.fetch_cache(context)
         accounts: typing.List[Account] = []
         for account_data in results:
             address = PublicKey(account_data["pubkey"])
-            account_info = AccountInfo._from_response_values(account_data["account"], address)
+            account_info = AccountInfo._from_response_values(
+                account_data["account"], address
+            )
             account = Account.parse(account_info, group, cache)
             accounts += [account]
         return accounts
 
     @staticmethod
-    def load_all_for_owner(context: Context, owner: PublicKey, group: Group) -> typing.Sequence["Account"]:
+    def load_all_for_owner(
+        context: Context, owner: PublicKey, group: Group
+    ) -> typing.Sequence["Account"]:
         # mango_group is just after the METADATA, which is the first entry.
         group_offset = layouts.METADATA.sizeof()
         # owner is just after mango_group in the layout, and it's a PublicKey which is 32 bytes.
         owner_offset = group_offset + 32
         filters = [
-            MemcmpOpts(
-                offset=group_offset,
-                bytes=encode_key(group.address)
-            ),
-            MemcmpOpts(
-                offset=owner_offset,
-                bytes=encode_key(owner)
-            )
+            MemcmpOpts(offset=group_offset, bytes=encode_key(group.address)),
+            MemcmpOpts(offset=owner_offset, bytes=encode_key(owner)),
         ]
 
         results = context.client.get_program_accounts(
-            context.mango_program_address, memcmp_opts=filters, data_size=layouts.MANGO_ACCOUNT.sizeof())
+            context.mango_program_address,
+            memcmp_opts=filters,
+            data_size=layouts.MANGO_ACCOUNT.sizeof(),
+        )
         cache: Cache = group.fetch_cache(context)
         accounts: typing.List[Account] = []
         for account_data in results:
             address = PublicKey(account_data["pubkey"])
-            account_info = AccountInfo._from_response_values(account_data["account"], address)
+            account_info = AccountInfo._from_response_values(
+                account_data["account"], address
+            )
             account = Account.parse(account_info, group, cache)
             accounts += [account]
         return accounts
 
     @staticmethod
-    def load_all_for_delegate(context: Context, delegate: PublicKey, group: Group) -> typing.Sequence["Account"]:
+    def load_all_for_delegate(
+        context: Context, delegate: PublicKey, group: Group
+    ) -> typing.Sequence["Account"]:
         # mango_group is just after the METADATA, which is the first entry.
         group_offset = layouts.METADATA.sizeof()
         # delegate is a PublicKey which is 32 bytes that ends 5 bytes before the end of the layout
         delegate_offset = layouts.MANGO_ACCOUNT.sizeof() - 37
         filters = [
-            MemcmpOpts(
-                offset=group_offset,
-                bytes=encode_key(group.address)
-            ),
-            MemcmpOpts(
-                offset=delegate_offset,
-                bytes=encode_key(delegate)
-            )
+            MemcmpOpts(offset=group_offset, bytes=encode_key(group.address)),
+            MemcmpOpts(offset=delegate_offset, bytes=encode_key(delegate)),
         ]
 
         results = context.client.get_program_accounts(
-            context.mango_program_address, memcmp_opts=filters, data_size=layouts.MANGO_ACCOUNT.sizeof())
+            context.mango_program_address,
+            memcmp_opts=filters,
+            data_size=layouts.MANGO_ACCOUNT.sizeof(),
+        )
         cache: Cache = group.fetch_cache(context)
         accounts: typing.List[Account] = []
         for account_data in results:
             address = PublicKey(account_data["pubkey"])
-            account_info = AccountInfo._from_response_values(account_data["account"], address)
+            account_info = AccountInfo._from_response_values(
+                account_data["account"], address
+            )
             account = Account.parse(account_info, group, cache)
             accounts += [account]
         return accounts
 
     @staticmethod
-    def load_for_owner_by_address(context: Context, owner: PublicKey, group: Group, account_address: typing.Optional[PublicKey]) -> "Account":
+    def load_for_owner_by_address(
+        context: Context,
+        owner: PublicKey,
+        group: Group,
+        account_address: typing.Optional[PublicKey],
+    ) -> "Account":
         if account_address is not None:
             return Account.load(context, account_address, group)
 
-        accounts: typing.Sequence[Account] = Account.load_all_for_owner(context, owner, group)
+        accounts: typing.Sequence[Account] = Account.load_all_for_owner(
+            context, owner, group
+        )
         if len(accounts) > 1:
-            raise Exception(f"More than 1 Mango account for owner '{owner}' and which to choose not specified.")
+            raise Exception(
+                f"More than 1 Mango account for owner '{owner}' and which to choose not specified."
+            )
 
         return accounts[0]
 
-    def slot_by_instrument_or_none(self, instrument: Instrument) -> typing.Optional[AccountSlot]:
+    def slot_by_instrument_or_none(
+        self, instrument: Instrument
+    ) -> typing.Optional[AccountSlot]:
         for slot in self.slots:
             if slot.base_instrument == instrument:
                 return slot
@@ -397,7 +515,9 @@ class Account(AddressableAccount):
 
         raise Exception(f"Could not find token {instrument} in account {self.address}")
 
-    def slot_by_spot_open_orders_or_none(self, spot_open_orders: PublicKey) -> typing.Optional[AccountSlot]:
+    def slot_by_spot_open_orders_or_none(
+        self, spot_open_orders: PublicKey
+    ) -> typing.Optional[AccountSlot]:
         for slot in self.slots:
             if slot.spot_open_orders == spot_open_orders:
                 return slot
@@ -405,48 +525,73 @@ class Account(AddressableAccount):
         return None
 
     def slot_by_spot_open_orders(self, spot_open_orders: PublicKey) -> AccountSlot:
-        slot: typing.Optional[AccountSlot] = self.slot_by_spot_open_orders_or_none(spot_open_orders)
+        slot: typing.Optional[AccountSlot] = self.slot_by_spot_open_orders_or_none(
+            spot_open_orders
+        )
         if slot is not None:
             return slot
 
-        raise Exception(f"Could not find spot open orders {spot_open_orders} in account {self.address}")
+        raise Exception(
+            f"Could not find spot open orders {spot_open_orders} in account {self.address}"
+        )
 
-    def load_all_spot_open_orders(self, context: Context) -> typing.Dict[str, OpenOrders]:
-        spot_open_orders_account_infos = AccountInfo.load_multiple(context, self.spot_open_orders)
+    def load_all_spot_open_orders(
+        self, context: Context
+    ) -> typing.Dict[str, OpenOrders]:
+        spot_open_orders_account_infos = AccountInfo.load_multiple(
+            context, self.spot_open_orders
+        )
         spot_open_orders_account_infos_by_address = {
-            str(account_info.address): account_info for account_info in spot_open_orders_account_infos}
+            str(account_info.address): account_info
+            for account_info in spot_open_orders_account_infos
+        }
         spot_open_orders: typing.Dict[str, OpenOrders] = {}
         for slot in self.base_slots:
             if slot.spot_open_orders is not None:
-                account_info = spot_open_orders_account_infos_by_address[str(slot.spot_open_orders)]
-                oo = OpenOrders.parse(account_info, slot.base_instrument.decimals,
-                                      self.shared_quote.base_instrument.decimals)
+                account_info = spot_open_orders_account_infos_by_address[
+                    str(slot.spot_open_orders)
+                ]
+                oo = OpenOrders.parse(
+                    account_info,
+                    slot.base_instrument.decimals,
+                    self.shared_quote.base_instrument.decimals,
+                )
                 spot_open_orders[str(slot.spot_open_orders)] = oo
         return spot_open_orders
 
-    def update_spot_open_orders_for_market(self, spot_market_index: int, spot_open_orders: PublicKey) -> None:
+    def update_spot_open_orders_for_market(
+        self, spot_market_index: int, spot_open_orders: PublicKey
+    ) -> None:
         item_to_update = self.slots_by_index[spot_market_index]
         if item_to_update is None:
-            raise Exception(f"Could not find AccountBasketItem in Account {self.address} at index {spot_market_index}.")
+            raise Exception(
+                f"Could not find AccountBasketItem in Account {self.address} at index {spot_market_index}."
+            )
         item_to_update.spot_open_orders = spot_open_orders
 
     def derive_referrer_memory_address(self, context: Context) -> PublicKey:
-        referrer_memory_address_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
-            [
-                bytes(self.address),
-                b"ReferrerMemory"
-            ],
-            context.mango_program_address
+        referrer_memory_address_and_nonce: typing.Tuple[
+            PublicKey, int
+        ] = PublicKey.find_program_address(
+            [bytes(self.address), b"ReferrerMemory"], context.mango_program_address
         )
 
         return referrer_memory_address_and_nonce[0]
 
-    def to_dataframe(self, group: Group, all_spot_open_orders: typing.Dict[str, OpenOrders], cache: Cache) -> pandas.DataFrame:
+    def to_dataframe(
+        self,
+        group: Group,
+        all_spot_open_orders: typing.Dict[str, OpenOrders],
+        cache: Cache,
+    ) -> pandas.DataFrame:
         asset_data = []
         for slot in self.slots:
-            market_cache: typing.Optional[MarketCache] = group.market_cache_from_cache_or_none(
-                cache, slot.base_instrument)
-            price: InstrumentValue = group.token_price_from_cache(cache, slot.base_instrument)
+            market_cache: typing.Optional[
+                MarketCache
+            ] = group.market_cache_from_cache_or_none(cache, slot.base_instrument)
+            price: InstrumentValue = group.token_price_from_cache(
+                cache, slot.base_instrument
+            )
 
             spot_open_orders: typing.Optional[OpenOrders] = None
             spot_health_base: Decimal = Decimal(0)
@@ -456,7 +601,9 @@ class Account(AddressableAccount):
             if slot.spot_open_orders is not None:
                 spot_open_orders = all_spot_open_orders[str(slot.spot_open_orders)]
                 if spot_open_orders is None:
-                    raise Exception(f"OpenOrders address {slot.spot_open_orders} at index {slot.index} not loaded.")
+                    raise Exception(
+                        f"OpenOrders address {slot.spot_open_orders} at index {slot.index} not loaded."
+                    )
 
                 # Here's a comment from ckamm in https://github.com/blockworks-foundation/mango-v3/pull/78/files
                 # that describes some of the health calculations.
@@ -488,19 +635,25 @@ class Account(AddressableAccount):
                 # // That means scenario 1 leads to less health whenever |a + b| > |a|.
 
                 # base total if all bids were executed
-                spot_bids_base_net = slot.net_value.value + \
-                    (spot_open_orders.quote_token_locked / price.value) + spot_open_orders.base_token_total
+                spot_bids_base_net = (
+                    slot.net_value.value
+                    + (spot_open_orders.quote_token_locked / price.value)
+                    + spot_open_orders.base_token_total
+                )
 
                 # base total if all asks were executed
-                spot_asks_base_net = slot.net_value.value + spot_open_orders.base_token_free
+                spot_asks_base_net = (
+                    slot.net_value.value + spot_open_orders.base_token_free
+                )
 
                 if abs(spot_bids_base_net) > abs(spot_asks_base_net):
                     spot_health_base = spot_bids_base_net
                     spot_health_quote = spot_open_orders.quote_token_free
                 else:
                     spot_health_base = spot_asks_base_net
-                    spot_health_quote = (spot_open_orders.base_token_locked * price.value) + \
-                        spot_open_orders.quote_token_total
+                    spot_health_quote = (
+                        spot_open_orders.base_token_locked * price.value
+                    ) + spot_open_orders.quote_token_total
 
             # From Daffy in Discord 2021-11-23: https://discord.com/channels/791995070613159966/857699200279773204/912705017767677982
             # --
@@ -533,43 +686,83 @@ class Account(AddressableAccount):
             perp_asset: Decimal = Decimal(0)
             perp_liability: Decimal = Decimal(0)
             perp_current_value: Decimal = Decimal(0)
-            if slot.perp_account is not None and not slot.perp_account.empty and market_cache is not None:
-                perp_market: typing.Optional[GroupSlotPerpMarket] = group.perp_markets_by_index[slot.index]
+            if (
+                slot.perp_account is not None
+                and not slot.perp_account.empty
+                and market_cache is not None
+            ):
+                perp_market: typing.Optional[
+                    GroupSlotPerpMarket
+                ] = group.perp_markets_by_index[slot.index]
                 if perp_market is None:
-                    raise Exception(f"Could not find perp market in Group at index {slot.index}.")
+                    raise Exception(
+                        f"Could not find perp market in Group at index {slot.index}."
+                    )
 
-                perp_position = slot.perp_account.lot_size_converter.base_size_lots_to_number(
-                    slot.perp_account.base_position)
+                perp_position = (
+                    slot.perp_account.lot_size_converter.base_size_lots_to_number(
+                        slot.perp_account.base_position
+                    )
+                )
                 perp_notional_position = perp_position * price.value
                 perp_value = slot.perp_account.quote_position_raw
-                cached_perp_market: typing.Optional[PerpMarketCache] = market_cache.perp_market
+                cached_perp_market: typing.Optional[
+                    PerpMarketCache
+                ] = market_cache.perp_market
                 if cached_perp_market is None:
-                    raise Exception(f"Could not find perp market in Cache at index {slot.index}.")
+                    raise Exception(
+                        f"Could not find perp market in Cache at index {slot.index}."
+                    )
 
-                unsettled_funding = slot.perp_account.unsettled_funding(cached_perp_market)
-                bids_quantity = slot.perp_account.lot_size_converter.base_size_lots_to_number(
-                    slot.perp_account.bids_quantity)
-                asks_quantity = slot.perp_account.lot_size_converter.base_size_lots_to_number(
-                    slot.perp_account.asks_quantity)
-                taker_quote = slot.perp_account.lot_size_converter.quote_size_lots_to_number(
-                    slot.perp_account.taker_quote)
+                unsettled_funding = slot.perp_account.unsettled_funding(
+                    cached_perp_market
+                )
+                bids_quantity = (
+                    slot.perp_account.lot_size_converter.base_size_lots_to_number(
+                        slot.perp_account.bids_quantity
+                    )
+                )
+                asks_quantity = (
+                    slot.perp_account.lot_size_converter.base_size_lots_to_number(
+                        slot.perp_account.asks_quantity
+                    )
+                )
+                taker_quote = (
+                    slot.perp_account.lot_size_converter.quote_size_lots_to_number(
+                        slot.perp_account.taker_quote
+                    )
+                )
 
                 perp_bids_base_net: Decimal = perp_position + bids_quantity
                 perp_asks_base_net: Decimal = perp_position - asks_quantity
 
-                perp_asset = slot.perp_account.asset_value(cached_perp_market, price.value)
-                perp_liability = slot.perp_account.liability_value(cached_perp_market, price.value)
-                perp_current_value = slot.perp_account.current_value(cached_perp_market, price.value)
+                perp_asset = slot.perp_account.asset_value(
+                    cached_perp_market, price.value
+                )
+                perp_liability = slot.perp_account.liability_value(
+                    cached_perp_market, price.value
+                )
+                perp_current_value = slot.perp_account.current_value(
+                    cached_perp_market, price.value
+                )
 
-                quote_pos = slot.perp_account.quote_position / (10 ** self.shared_quote_token.decimals)
+                quote_pos = slot.perp_account.quote_position / (
+                    10**self.shared_quote_token.decimals
+                )
                 if abs(perp_bids_base_net) > abs(perp_asks_base_net):
                     perp_health_base = perp_bids_base_net
-                    perp_health_quote = (quote_pos + unsettled_funding) + \
-                        taker_quote - (bids_quantity * price.value)
+                    perp_health_quote = (
+                        (quote_pos + unsettled_funding)
+                        + taker_quote
+                        - (bids_quantity * price.value)
+                    )
                 else:
                     perp_health_base = perp_asks_base_net
-                    perp_health_quote = (quote_pos + unsettled_funding) + \
-                        taker_quote + (asks_quantity * price.value)
+                    perp_health_quote = (
+                        (quote_pos + unsettled_funding)
+                        + taker_quote
+                        + (asks_quantity * price.value)
+                    )
                 perp_health_base_value = perp_health_base * price.value
 
             group_slot: typing.Optional[GroupSlot] = None
@@ -615,10 +808,14 @@ class Account(AddressableAccount):
                 base_open_unsettled = spot_open_orders.base_token_free
                 base_open_locked = spot_open_orders.base_token_locked
                 base_open_total = spot_open_orders.base_token_total
-                quote_open_unsettled = (spot_open_orders.quote_token_free
-                                        + spot_open_orders.referrer_rebate_accrued)
+                quote_open_unsettled = (
+                    spot_open_orders.quote_token_free
+                    + spot_open_orders.referrer_rebate_accrued
+                )
                 quote_open_locked = spot_open_orders.quote_token_locked
-            base_total: Decimal = slot.deposit.value - slot.borrow.value + base_open_total
+            base_total: Decimal = (
+                slot.deposit.value - slot.borrow.value + base_open_total
+            )
             base_total_value: Decimal = base_total * price.value
             spot_init_value: Decimal
             spot_maint_value: Decimal
@@ -633,13 +830,21 @@ class Account(AddressableAccount):
             if perp_health_base >= 0:
                 perp_init_value = perp_notional_position * perp_init_asset_weight
                 perp_maint_value = perp_notional_position * perp_maint_asset_weight
-                perp_init_health_base_value = perp_health_base_value * perp_init_asset_weight
-                perp_maint_health_base_value = perp_health_base_value * perp_maint_asset_weight
+                perp_init_health_base_value = (
+                    perp_health_base_value * perp_init_asset_weight
+                )
+                perp_maint_health_base_value = (
+                    perp_health_base_value * perp_maint_asset_weight
+                )
             else:
                 perp_init_value = perp_notional_position * perp_init_liab_weight
                 perp_maint_value = perp_notional_position * perp_maint_liab_weight
-                perp_init_health_base_value = perp_health_base_value * perp_init_liab_weight
-                perp_maint_health_base_value = perp_health_base_value * perp_maint_liab_weight
+                perp_init_health_base_value = (
+                    perp_health_base_value * perp_init_liab_weight
+                )
+                perp_maint_health_base_value = (
+                    perp_health_base_value * perp_maint_liab_weight
+                )
             data = {
                 "Name": slot.base_instrument.name,
                 "Symbol": slot.base_instrument.symbol,
@@ -655,10 +860,22 @@ class Account(AddressableAccount):
                 "BaseLocked": base_open_locked,
                 "QuoteUnsettled": quote_open_unsettled,
                 "QuoteLocked": quote_open_locked,
-                "BaseUnsettledInMarginBasket": base_open_unsettled if slot.index < len(self.in_margin_basket) and self.in_margin_basket[slot.index] else Decimal(0),
-                "BaseLockedInMarginBasket": base_open_locked if slot.index < len(self.in_margin_basket) and self.in_margin_basket[slot.index] else Decimal(0),
-                "QuoteUnsettledInMarginBasket": quote_open_unsettled if slot.index < len(self.in_margin_basket) and self.in_margin_basket[slot.index] else Decimal(0),
-                "QuoteLockedInMarginBasket": quote_open_locked if slot.index < len(self.in_margin_basket) and self.in_margin_basket[slot.index] else Decimal(0),
+                "BaseUnsettledInMarginBasket": base_open_unsettled
+                if slot.index < len(self.in_margin_basket)
+                and self.in_margin_basket[slot.index]
+                else Decimal(0),
+                "BaseLockedInMarginBasket": base_open_locked
+                if slot.index < len(self.in_margin_basket)
+                and self.in_margin_basket[slot.index]
+                else Decimal(0),
+                "QuoteUnsettledInMarginBasket": quote_open_unsettled
+                if slot.index < len(self.in_margin_basket)
+                and self.in_margin_basket[slot.index]
+                else Decimal(0),
+                "QuoteLockedInMarginBasket": quote_open_locked
+                if slot.index < len(self.in_margin_basket)
+                and self.in_margin_basket[slot.index]
+                else Decimal(0),
                 "PerpPositionSize": perp_position,
                 "PerpNotionalPositionSize": perp_notional_position,
                 "PerpValue": perp_value,
@@ -686,9 +903,13 @@ class Account(AddressableAccount):
         frame: pandas.DataFrame = pandas.DataFrame(asset_data)
         return frame
 
-    def weighted_assets(self, frame: pandas.DataFrame, weighting_name: str = "") -> typing.Tuple[Decimal, Decimal]:
+    def weighted_assets(
+        self, frame: pandas.DataFrame, weighting_name: str = ""
+    ) -> typing.Tuple[Decimal, Decimal]:
         non_quote = frame.loc[frame["Symbol"] != self.shared_quote_token.symbol]
-        quote = frame.loc[frame["Symbol"] == self.shared_quote_token.symbol, "SpotValue"].sum()
+        quote = frame.loc[
+            frame["Symbol"] == self.shared_quote_token.symbol, "SpotValue"
+        ].sum()
         quote += frame["PerpHealthQuote"].sum()
         quote += frame["QuoteUnsettledInMarginBasket"].sum()
 
@@ -702,14 +923,22 @@ class Account(AddressableAccount):
         spot_value_key = f"Spot{weighting_name}Value"
         perp_value_key = f"Perp{weighting_name}HealthBaseValue"
 
-        liabilities += Account.__sum_neg(non_quote, spot_value_key) + Account.__sum_neg(non_quote, perp_value_key)
-        assets += Account.__sum_pos(non_quote, spot_value_key) + Account.__sum_pos(non_quote, perp_value_key)
+        liabilities += Account.__sum_neg(non_quote, spot_value_key) + Account.__sum_neg(
+            non_quote, perp_value_key
+        )
+        assets += Account.__sum_pos(non_quote, spot_value_key) + Account.__sum_pos(
+            non_quote, perp_value_key
+        )
 
         return assets, liabilities
 
-    def unweighted_assets(self, frame: pandas.DataFrame) -> typing.Tuple[Decimal, Decimal]:
+    def unweighted_assets(
+        self, frame: pandas.DataFrame
+    ) -> typing.Tuple[Decimal, Decimal]:
         non_quote = frame.loc[frame["Symbol"] != self.shared_quote_token.symbol]
-        quote = frame.loc[frame["Symbol"] == self.shared_quote_token.symbol, "SpotValue"].sum()
+        quote = frame.loc[
+            frame["Symbol"] == self.shared_quote_token.symbol, "SpotValue"
+        ].sum()
 
         assets = Decimal(0)
         liabilities = Decimal(0)
@@ -718,11 +947,15 @@ class Account(AddressableAccount):
         else:
             liabilities = quote
 
-        liabilities += Account.__sum_neg(non_quote, "SpotValue") + non_quote['PerpLiability'].sum()
+        liabilities += (
+            Account.__sum_neg(non_quote, "SpotValue") + non_quote["PerpLiability"].sum()
+        )
 
-        assets += Account.__sum_pos(non_quote, "SpotValue") + \
-            non_quote['PerpAsset'].sum() + \
-            Account.__sum_pos(non_quote, "QuoteUnsettled")
+        assets += (
+            Account.__sum_pos(non_quote, "SpotValue")
+            + non_quote["PerpAsset"].sum()
+            + Account.__sum_pos(non_quote, "QuoteUnsettled")
+        )
 
         return assets, liabilities
 
@@ -770,9 +1003,13 @@ class Account(AddressableAccount):
         info = f"'{self.info}'" if self.info else "(un-named)"
         shared_quote: str = f"{self.shared_quote}".replace("\n", "\n        ")
         slot_count = len(self.base_slots)
-        slots = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.base_slots])
+        slots = "\n        ".join(
+            [f"{item}".replace("\n", "\n        ") for item in self.base_slots]
+        )
 
-        symbols: typing.Sequence[str] = [slot.base_instrument.symbol for slot in self.base_slots]
+        symbols: typing.Sequence[str] = [
+            slot.base_instrument.symbol for slot in self.base_slots
+        ]
         in_margin_basket = ", ".join(symbols) or "None"
         return f"""« Account {info}, {self.version} [{self.address}]
     {self.meta_data}

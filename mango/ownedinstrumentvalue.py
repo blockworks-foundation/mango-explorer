@@ -28,6 +28,7 @@ from .instrumentvalue import InstrumentValue
 # token mints and values are given separate from the owner `PublicKey` - we can package them
 # together in this `OwnedInstrumentValue` class.
 
+
 class OwnedInstrumentValue:
     def __init__(self, owner: PublicKey, token_value: InstrumentValue) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -35,7 +36,9 @@ class OwnedInstrumentValue:
         self.token_value = token_value
 
     @staticmethod
-    def find_by_owner(values: typing.Sequence["OwnedInstrumentValue"], owner: PublicKey) -> "OwnedInstrumentValue":
+    def find_by_owner(
+        values: typing.Sequence["OwnedInstrumentValue"], owner: PublicKey
+    ) -> "OwnedInstrumentValue":
         found = [value for value in values if value.owner == owner]
         if len(found) == 0:
             raise Exception(f"Owner '{owner}' not found in: {values}")
@@ -46,12 +49,17 @@ class OwnedInstrumentValue:
         return found[0]
 
     @staticmethod
-    def changes(before: typing.Sequence["OwnedInstrumentValue"], after: typing.Sequence["OwnedInstrumentValue"]) -> typing.Sequence["OwnedInstrumentValue"]:
+    def changes(
+        before: typing.Sequence["OwnedInstrumentValue"],
+        after: typing.Sequence["OwnedInstrumentValue"],
+    ) -> typing.Sequence["OwnedInstrumentValue"]:
         changes: typing.List[OwnedInstrumentValue] = []
         for before_value in before:
             after_value = OwnedInstrumentValue.find_by_owner(after, before_value.owner)
-            token_value = InstrumentValue(before_value.token_value.token,
-                                          after_value.token_value.value - before_value.token_value.value)
+            token_value = InstrumentValue(
+                before_value.token_value.token,
+                after_value.token_value.value - before_value.token_value.value,
+            )
             result = OwnedInstrumentValue(before_value.owner, token_value)
             changes += [result]
 

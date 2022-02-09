@@ -7,38 +7,65 @@ import sys
 
 from solana.publickey import PublicKey
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Shows all orders on a market.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--market", type=str, required=True, help="market symbol to use (e.g. ETH/USDC)")
-parser.add_argument("--id", type=int,
-                    help="order ID of the order to cancel (either --client-id must be specified, or both --id and --side must be specified")
-parser.add_argument("--client-id", type=int,
-                    help="client ID of the order to cancel (either --client-id must be specified, or both --id and --side must be specified")
-parser.add_argument("--side", type=mango.Side, default=mango.Side.BUY, choices=list(mango.Side),
-                    help="whether the order to cancel is a BUY or a SELL (either --client-id must be specified, or both --id and --side must be specified")
-parser.add_argument("--account-address", type=PublicKey,
-                    help="address of the specific account to use, if more than one available")
-parser.add_argument("--ok-if-missing", action="store_true", default=False,
-                    help="if supported by market type (PERP-only for now) will not error if the ID does not exist")
-parser.add_argument("--dry-run", action="store_true", default=False,
-                    help="runs as read-only and does not perform any transactions")
+parser.add_argument(
+    "--market", type=str, required=True, help="market symbol to use (e.g. ETH/USDC)"
+)
+parser.add_argument(
+    "--id",
+    type=int,
+    help="order ID of the order to cancel (either --client-id must be specified, or both --id and --side must be specified",
+)
+parser.add_argument(
+    "--client-id",
+    type=int,
+    help="client ID of the order to cancel (either --client-id must be specified, or both --id and --side must be specified",
+)
+parser.add_argument(
+    "--side",
+    type=mango.Side,
+    default=mango.Side.BUY,
+    choices=list(mango.Side),
+    help="whether the order to cancel is a BUY or a SELL (either --client-id must be specified, or both --id and --side must be specified",
+)
+parser.add_argument(
+    "--account-address",
+    type=PublicKey,
+    help="address of the specific account to use, if more than one available",
+)
+parser.add_argument(
+    "--ok-if-missing",
+    action="store_true",
+    default=False,
+    help="if supported by market type (PERP-only for now) will not error if the ID does not exist",
+)
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    default=False,
+    help="runs as read-only and does not perform any transactions",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_address)
-account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
+account = mango.Account.load_for_owner_by_address(
+    context, wallet.address, group, args.account_address
+)
 
 market = context.market_lookup.find_by_symbol(args.market)
 if market is None:
     raise Exception(f"Could not find market {args.market}")
 
-market_operations = mango.create_market_operations(context, wallet, account, market, args.dry_run)
+market_operations = mango.create_market_operations(
+    context, wallet, account, market, args.dry_run
+)
 
 order = mango.Order.from_ids(id=args.id, client_id=args.client_id, side=args.side)
 cancellation = market_operations.cancel_order(order, ok_if_missing=args.ok_if_missing)

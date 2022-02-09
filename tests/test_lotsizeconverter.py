@@ -50,7 +50,9 @@ def test_round_base_sol() -> None:
     fake_quote = fake_token("USDC")
     # From SOL/USDC on Mango spot:
     #  « 𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 SOL/USDC [base lot size: 100000000 (9 decimals), quote lot size: 100 (6 decimals)] »
-    sut = mango.LotSizeConverter(fake_base, Decimal(100000000), fake_quote, Decimal(100))
+    sut = mango.LotSizeConverter(
+        fake_base, Decimal(100000000), fake_quote, Decimal(100)
+    )
     actual = sut.round_base(Decimal("1234567890.1234567890"))
     assert actual == Decimal("1234567890.1")
 
@@ -120,7 +122,9 @@ def test_round_quote_sol() -> None:
     fake_quote = fake_token("USDC")
     # From SOL/USDC on Mango spot:
     #  « 𝙻𝚘𝚝𝚂𝚒𝚣𝚎𝙲𝚘𝚗𝚟𝚎𝚛𝚝𝚎𝚛 SOL/USDC [base lot size: 100000000 (9 decimals), quote lot size: 100 (6 decimals)] »
-    sut = mango.LotSizeConverter(fake_base, Decimal(100000000), fake_quote, Decimal(100))
+    sut = mango.LotSizeConverter(
+        fake_base, Decimal(100000000), fake_quote, Decimal(100)
+    )
     actual = sut.round_quote(Decimal("1234567890.1234567890"))
     assert actual == Decimal("1234567890.123")
 

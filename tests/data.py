@@ -7,19 +7,35 @@ from decimal import Decimal
 
 def load_group(filename: str) -> mango.Group:
     account_info: mango.AccountInfo = mango.AccountInfo.load_json(filename)
-    mainnet_token_lookup: mango.InstrumentLookup = mango.IdsJsonTokenLookup("mainnet", "mainnet.1")
-    devnet_token_lookup: mango.InstrumentLookup = mango.IdsJsonTokenLookup("devnet", "devnet.2")
-    devnet_non_spl_instrument_lookup: mango.InstrumentLookup = mango.NonSPLInstrumentLookup.load(
-        mango.NonSPLInstrumentLookup.DefaultDevnetDataFilepath)
+    mainnet_token_lookup: mango.InstrumentLookup = mango.IdsJsonTokenLookup(
+        "mainnet", "mainnet.1"
+    )
+    devnet_token_lookup: mango.InstrumentLookup = mango.IdsJsonTokenLookup(
+        "devnet", "devnet.2"
+    )
+    devnet_non_spl_instrument_lookup: mango.InstrumentLookup = (
+        mango.NonSPLInstrumentLookup.load(
+            mango.NonSPLInstrumentLookup.DefaultDevnetDataFilepath
+        )
+    )
     instrument_lookup: mango.InstrumentLookup = mango.CompoundInstrumentLookup(
-        [mainnet_token_lookup, devnet_token_lookup, devnet_non_spl_instrument_lookup])
-    mainnet_market_lookup: mango.MarketLookup = mango.IdsJsonMarketLookup("mainnet", instrument_lookup)
-    devnet_market_lookup: mango.MarketLookup = mango.IdsJsonMarketLookup("devnet", instrument_lookup)
-    market_lookup: mango.MarketLookup = mango.CompoundMarketLookup([mainnet_market_lookup, devnet_market_lookup])
+        [mainnet_token_lookup, devnet_token_lookup, devnet_non_spl_instrument_lookup]
+    )
+    mainnet_market_lookup: mango.MarketLookup = mango.IdsJsonMarketLookup(
+        "mainnet", instrument_lookup
+    )
+    devnet_market_lookup: mango.MarketLookup = mango.IdsJsonMarketLookup(
+        "devnet", instrument_lookup
+    )
+    market_lookup: mango.MarketLookup = mango.CompoundMarketLookup(
+        [mainnet_market_lookup, devnet_market_lookup]
+    )
     return mango.Group.parse(account_info, "devnet.2", instrument_lookup, market_lookup)
 
 
-def load_account(filename: str, group: mango.Group, cache: mango.Cache) -> mango.Account:
+def load_account(
+    filename: str, group: mango.Group, cache: mango.Cache
+) -> mango.Account:
     account_info: mango.AccountInfo = mango.AccountInfo.load_json(filename)
     return mango.Account.parse(account_info, group, cache)
 
@@ -45,7 +61,11 @@ def load_node_bank(filename: str) -> mango.NodeBank:
     return mango.NodeBank.parse(account_info)
 
 
-def load_data_from_directory(directory_path: str) -> typing.Tuple[mango.Group, mango.Cache, mango.Account, typing.Dict[str, mango.OpenOrders]]:
+def load_data_from_directory(
+    directory_path: str,
+) -> typing.Tuple[
+    mango.Group, mango.Cache, mango.Account, typing.Dict[str, mango.OpenOrders]
+]:
     all_openorders = {}
     for filepath in glob.iglob(f"{directory_path}/openorders*.json"):
         openorders = load_openorders(filepath)

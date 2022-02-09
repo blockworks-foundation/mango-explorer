@@ -22,8 +22,10 @@ from .version import Version
 
 # # 🥭 Metadata class
 #
-class Metadata():
-    def __init__(self, data_type: typing.Any, version: Version, is_initialized: bool) -> None:
+class Metadata:
+    def __init__(
+        self, data_type: typing.Any, version: Version, is_initialized: bool
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.data_type: typing.Any = data_type
         self.version: Version = version

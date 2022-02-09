@@ -30,9 +30,15 @@ from .orders import Order
 # It's here on its own because putting it in orders.py caused a circular reference and I couldn't think
 # of a better place.
 #
-def parse_account_info_to_orders(account_info: AccountInfo, pyserum_market: PySerumMarket) -> typing.Sequence[Order]:
-    serum_orderbook_side = PySerumOrderBook.from_bytes(pyserum_market.state, account_info.data)
-    orders: typing.List[Order] = list(map(Order.from_serum_order, serum_orderbook_side.orders()))
+def parse_account_info_to_orders(
+    account_info: AccountInfo, pyserum_market: PySerumMarket
+) -> typing.Sequence[Order]:
+    serum_orderbook_side = PySerumOrderBook.from_bytes(
+        pyserum_market.state, account_info.data
+    )
+    orders: typing.List[Order] = list(
+        map(Order.from_serum_order, serum_orderbook_side.orders())
+    )
     if serum_orderbook_side._is_bids:
         orders.reverse()
 

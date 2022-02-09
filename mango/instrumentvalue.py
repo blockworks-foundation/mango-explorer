@@ -59,54 +59,83 @@ class InstrumentValue:
         return InstrumentValue(self.token, new_value)
 
     @staticmethod
-    def fetch_total_value_or_none(context: Context, account_public_key: PublicKey, token: Token) -> typing.Optional["InstrumentValue"]:
+    def fetch_total_value_or_none(
+        context: Context, account_public_key: PublicKey, token: Token
+    ) -> typing.Optional["InstrumentValue"]:
         opts = TokenAccountOpts(mint=token.mint)
 
-        token_accounts = context.client.get_token_accounts_by_owner(account_public_key, opts)
+        token_accounts = context.client.get_token_accounts_by_owner(
+            account_public_key, opts
+        )
         if len(token_accounts) == 0:
             return None
 
         total_value = Decimal(0)
         for token_account in token_accounts:
-            token_balance: Decimal = context.client.get_token_account_balance(token_account["pubkey"])
+            token_balance: Decimal = context.client.get_token_account_balance(
+                token_account["pubkey"]
+            )
             total_value += token_balance
 
         return InstrumentValue(token, total_value)
 
     @staticmethod
-    def fetch_total_value(context: Context, account_public_key: PublicKey, token: Token) -> "InstrumentValue":
-        value = InstrumentValue.fetch_total_value_or_none(context, account_public_key, token)
+    def fetch_total_value(
+        context: Context, account_public_key: PublicKey, token: Token
+    ) -> "InstrumentValue":
+        value = InstrumentValue.fetch_total_value_or_none(
+            context, account_public_key, token
+        )
         if value is None:
             return InstrumentValue(token, Decimal(0))
         return value
 
     @staticmethod
-    def report(values: typing.Sequence["InstrumentValue"], reporter: typing.Callable[[str], None] = output) -> None:
+    def report(
+        values: typing.Sequence["InstrumentValue"],
+        reporter: typing.Callable[[str], None] = output,
+    ) -> None:
         for value in values:
             reporter(f"{value.value:>18,.8f} {value.token.name}")
 
     @staticmethod
-    def find_by_symbol(values: typing.Sequence[typing.Optional["InstrumentValue"]], symbol: str) -> "InstrumentValue":
+    def find_by_symbol(
+        values: typing.Sequence[typing.Optional["InstrumentValue"]], symbol: str
+    ) -> "InstrumentValue":
         found = [
-            value for value in values if value is not None and value.token is not None and value.token.symbol_matches(symbol)]
+            value
+            for value in values
+            if value is not None
+            and value.token is not None
+            and value.token.symbol_matches(symbol)
+        ]
         if len(found) == 0:
             raise Exception(f"Token '{symbol}' not found in token values: {values}")
 
         if len(found) > 1:
-            raise Exception(f"Token '{symbol}' matched multiple tokens in values: {values}")
+            raise Exception(
+                f"Token '{symbol}' matched multiple tokens in values: {values}"
+            )
 
         return found[0]
 
     @staticmethod
-    def find_by_token(values: typing.Sequence[typing.Optional["InstrumentValue"]], token: Instrument) -> "InstrumentValue":
+    def find_by_token(
+        values: typing.Sequence[typing.Optional["InstrumentValue"]], token: Instrument
+    ) -> "InstrumentValue":
         return InstrumentValue.find_by_symbol(values, token.symbol)
 
     @staticmethod
-    def changes(before: typing.Sequence["InstrumentValue"], after: typing.Sequence["InstrumentValue"]) -> typing.Sequence["InstrumentValue"]:
+    def changes(
+        before: typing.Sequence["InstrumentValue"],
+        after: typing.Sequence["InstrumentValue"],
+    ) -> typing.Sequence["InstrumentValue"]:
         changes: typing.List[InstrumentValue] = []
         for before_balance in before:
             after_balance = InstrumentValue.find_by_token(after, before_balance.token)
-            result = InstrumentValue(before_balance.token, after_balance.value - before_balance.value)
+            result = InstrumentValue(
+                before_balance.token, after_balance.value - before_balance.value
+            )
             changes += [result]
 
         return changes
@@ -114,19 +143,23 @@ class InstrumentValue:
     def __add__(self, token_value_to_add: "InstrumentValue") -> "InstrumentValue":
         if self.token != token_value_to_add.token:
             raise Exception(
-                f"Cannot add InstrumentValues from different tokens ({self.token} and {token_value_to_add.token}).")
+                f"Cannot add InstrumentValues from different tokens ({self.token} and {token_value_to_add.token})."
+            )
         return InstrumentValue(self.token, self.value + token_value_to_add.value)
 
     def __sub__(self, token_value_to_subtract: "InstrumentValue") -> "InstrumentValue":
         if self.token != token_value_to_subtract.token:
             raise Exception(
-                f"Cannot subtract InstrumentValues from different tokens ({self.token} and {token_value_to_subtract.token}).")
+                f"Cannot subtract InstrumentValues from different tokens ({self.token} and {token_value_to_subtract.token})."
+            )
         return InstrumentValue(self.token, self.value - token_value_to_subtract.value)
 
     def __mul__(self, token_value_to_multiply: "InstrumentValue") -> "InstrumentValue":
         # Multiplying by another InstrumentValue is assumed to be a token value multiplied by a token price.
         # The result should be denominated in the currency of the price.
-        return InstrumentValue(token_value_to_multiply.token, self.value * token_value_to_multiply.value)
+        return InstrumentValue(
+            token_value_to_multiply.token, self.value * token_value_to_multiply.value
+        )
 
     def __lt__(self, other: typing.Any) -> bool:
         if isinstance(other, numbers.Number):
@@ -137,7 +170,8 @@ class InstrumentValue:
 
         if self.token != other.token:
             raise Exception(
-                f"Cannot compare token values when one token is {self.token.symbol} and the other is {other.token.symbol}.")
+                f"Cannot compare token values when one token is {self.token.symbol} and the other is {other.token.symbol}."
+            )
         return self.value < other.value
 
     def __gt__(self, other: typing.Any) -> bool:
@@ -149,11 +183,16 @@ class InstrumentValue:
 
         if self.token != other.token:
             raise Exception(
-                f"Cannot compare token values when one token is {self.token.symbol} and the other is {other.token.symbol}.")
+                f"Cannot compare token values when one token is {self.token.symbol} and the other is {other.token.symbol}."
+            )
         return self.value > other.value
 
     def __eq__(self, other: typing.Any) -> bool:
-        if isinstance(other, InstrumentValue) and self.token == other.token and self.value == other.value:
+        if (
+            isinstance(other, InstrumentValue)
+            and self.token == other.token
+            and self.value == other.value
+        ):
             return True
         return False
 

@@ -37,33 +37,56 @@ class MinimumQuantityElement(Element):
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--minimumquantity-size", type=Decimal, default=Decimal(1),
-                            help="the minimum permitted quantity")
-        parser.add_argument("--minimumquantity-remove", action="store_true", default=False,
-                            help="remove an order that has too small a quantity (default is to increase order quantity to minimum)")
+        parser.add_argument(
+            "--minimumquantity-size",
+            type=Decimal,
+            default=Decimal(1),
+            help="the minimum permitted quantity",
+        )
+        parser.add_argument(
+            "--minimumquantity-remove",
+            action="store_true",
+            default=False,
+            help="remove an order that has too small a quantity (default is to increase order quantity to minimum)",
+        )
 
     @staticmethod
-    def from_command_line_parameters(args: argparse.Namespace) -> "MinimumQuantityElement":
+    def from_command_line_parameters(
+        args: argparse.Namespace,
+    ) -> "MinimumQuantityElement":
         if args.minimumquantity_size is None:
-            raise Exception("No minimum size specified. Try the --minimumquantity-size parameter?")
+            raise Exception(
+                "No minimum size specified. Try the --minimumquantity-size parameter?"
+            )
 
-        return MinimumQuantityElement(args.minimumquantity_size, bool(args.minimumquantity_remove))
+        return MinimumQuantityElement(
+            args.minimumquantity_size, bool(args.minimumquantity_remove)
+        )
 
-    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
+    def process(
+        self,
+        context: mango.Context,
+        model_state: ModelState,
+        orders: typing.Sequence[mango.Order],
+    ) -> typing.Sequence[mango.Order]:
         new_orders: typing.List[mango.Order] = []
         for order in orders:
             if order.quantity > self.minimum_quantity:
                 new_orders += [order]
             else:
                 if self.remove:
-                    self._logger.debug(f"""Order change - order quantity is less than minimum of {self.minimum_quantity} so removing:
+                    self._logger.debug(
+                        f"""Order change - order quantity is less than minimum of {self.minimum_quantity} so removing:
     Old: {order}
-    New: None""")
+    New: None"""
+                    )
                 else:
                     new_order: mango.Order = order.with_quantity(self.minimum_quantity)
-                    self._logger.debug(f"""Order change - order quantity is less than minimum of {self.minimum_quantity} so changing order quantity to {self.minimum_quantity}:
+                    self._logger.debug(
+                        f"""Order change - order quantity is less than minimum of {self.minimum_quantity} so changing order quantity to {self.minimum_quantity}:
     Old: {order}
-    New: {new_order}""")
+    New: {new_order}"""
+                    )
                     new_orders += [new_order]
 
         return new_orders

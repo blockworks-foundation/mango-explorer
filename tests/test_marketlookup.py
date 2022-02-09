@@ -28,8 +28,8 @@ def test_serum_market_lookup() -> None:
                     "website": "https://solana.com/",
                     "serumV3Usdc": "9wFFyRfZBsuAha4YcuxcXLKwMxJR43S7fPfQLusDBzvT",
                     "serumV3Usdt": "HWHvQhFmJB3NUcu1aihKmrKegfVxBEHzwVX6yZCKEsi1",
-                    "coingeckoId": "solana"
-                }
+                    "coingeckoId": "solana",
+                },
             },
             {
                 "chainId": 101,
@@ -38,13 +38,11 @@ def test_serum_market_lookup() -> None:
                 "name": "USD Coin",
                 "decimals": 6,
                 "logoURI": "https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
-                "tags": [
-                    "stablecoin"
-                ],
+                "tags": ["stablecoin"],
                 "extensions": {
                     "website": "https://www.centre.io/",
-                    "coingeckoId": "usd-coin"
-                }
+                    "coingeckoId": "usd-coin",
+                },
             },
             {
                 "chainId": 101,
@@ -53,16 +51,13 @@ def test_serum_market_lookup() -> None:
                 "name": "Wrapped Bitcoin (Sollet)",
                 "decimals": 6,
                 "logoURI": "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/bitcoin/info/logo.png",
-                "tags": [
-                    "wrapped-sollet",
-                    "ethereum"
-                ],
+                "tags": ["wrapped-sollet", "ethereum"],
                 "extensions": {
                     "bridgeContract": "https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a",
                     "serumV3Usdc": "A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw",
                     "serumV3Usdt": "C1EuT9VokAKLiW7i2ASnZUvxDoKuKkCpDDeNxAptuNe4",
-                    "coingeckoId": "bitcoin"
-                }
+                    "coingeckoId": "bitcoin",
+                },
             },
             {
                 "chainId": 101,
@@ -71,16 +66,13 @@ def test_serum_market_lookup() -> None:
                 "name": "Wrapped Ethereum (Sollet)",
                 "decimals": 6,
                 "logoURI": "https://cdn.jsdelivr.net/gh/trustwallet/assets@master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
-                "tags": [
-                    "wrapped-sollet",
-                    "ethereum"
-                ],
+                "tags": ["wrapped-sollet", "ethereum"],
                 "extensions": {
                     "bridgeContract": "https://etherscan.io/address/0xeae57ce9cc1984f202e15e038b964bb8bdf7229a",
                     "serumV3Usdc": "4tSvZvnbyzHXLMTiFonMyxZoHmFqau1XArcRCVHLZ5gX",
                     "serumV3Usdt": "7dLVkUfBVfCGkFhSXDCq1ukM9usathSgS716t643iFGF",
-                    "coingeckoId": "ethereum"
-                }
+                    "coingeckoId": "ethereum",
+                },
             },
             {
                 "chainId": 101,
@@ -89,13 +81,11 @@ def test_serum_market_lookup() -> None:
                 "name": "USDT",
                 "decimals": 6,
                 "logoURI": "https://cdn.jsdelivr.net/gh/solana-labs/explorer/public/tokens/usdt.svg",
-                "tags": [
-                    "stablecoin"
-                ],
+                "tags": ["stablecoin"],
                 "extensions": {
                     "website": "https://tether.to/",
-                    "coingeckoId": "tether"
-                }
+                    "coingeckoId": "tether",
+                },
             },
             {
                 "chainId": 101,
@@ -104,14 +94,12 @@ def test_serum_market_lookup() -> None:
                 "name": "USD Coin",
                 "decimals": 6,
                 "logoURI": "https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png",
-                "tags": [
-                    "stablecoin"
-                ],
+                "tags": ["stablecoin"],
                 "extensions": {
                     "website": "https://www.centre.io/",
-                    "coingeckoId": "usd-coin"
-                }
-            }
+                    "coingeckoId": "usd-coin",
+                },
+            },
         ]
     }
     actual = mango.SerumMarketLookup(fake_seeded_public_key("program ID"), data)
@@ -125,8 +113,9 @@ def test_serum_market_lookup() -> None:
 
 
 def test_serum_market_lookups_with_full_data() -> None:
-    market_lookup = mango.SerumMarketLookup.load(fake_seeded_public_key(
-        "program ID"), mango.SPLTokenLookup.DefaultDataFilepath)
+    market_lookup = mango.SerumMarketLookup.load(
+        fake_seeded_public_key("program ID"), mango.SPLTokenLookup.DefaultDataFilepath
+    )
     srm_usdc = market_lookup.find_by_symbol("SRM/USDC")
     assert srm_usdc is not None
     assert srm_usdc.base.symbol == "SRM"
@@ -145,8 +134,9 @@ def test_serum_market_lookups_with_full_data() -> None:
 
 
 def test_serum_market_case_insensitive_lookups_with_full_data() -> None:
-    market_lookup = mango.SerumMarketLookup.load(fake_seeded_public_key(
-        "program ID"), mango.SPLTokenLookup.DefaultDataFilepath)
+    market_lookup = mango.SerumMarketLookup.load(
+        fake_seeded_public_key("program ID"), mango.SPLTokenLookup.DefaultDataFilepath
+    )
     srm_usdc = market_lookup.find_by_symbol("srm/usdc")
     assert srm_usdc is not None
     assert srm_usdc.base.symbol == "SRM"
@@ -155,8 +145,9 @@ def test_serum_market_case_insensitive_lookups_with_full_data() -> None:
 
 
 def test_overrides_with_full_data() -> None:
-    market_lookup = mango.SerumMarketLookup.load(fake_seeded_public_key(
-        "program ID"), "./data/overrides.tokenlist.json")
+    market_lookup = mango.SerumMarketLookup.load(
+        fake_seeded_public_key("program ID"), "./data/overrides.tokenlist.json"
+    )
     eth_usdt = market_lookup.find_by_symbol("ETH/USDT")
     assert eth_usdt is not None
     assert eth_usdt.base.symbol == "ETH"
@@ -175,10 +166,12 @@ def test_overrides_with_full_data() -> None:
 
 
 def test_compound_lookups_with_full_data() -> None:
-    overrides = mango.SerumMarketLookup.load(fake_seeded_public_key(
-        "program ID"), "./data/overrides.tokenlist.json")
-    spl = mango.SerumMarketLookup.load(fake_seeded_public_key(
-        "program ID"), mango.SPLTokenLookup.DefaultDataFilepath)
+    overrides = mango.SerumMarketLookup.load(
+        fake_seeded_public_key("program ID"), "./data/overrides.tokenlist.json"
+    )
+    spl = mango.SerumMarketLookup.load(
+        fake_seeded_public_key("program ID"), mango.SPLTokenLookup.DefaultDataFilepath
+    )
     actual = mango.CompoundMarketLookup([overrides, spl])
     # actual should now find instruments in either overrides or spl
     eth_usdt = actual.find_by_symbol("ETH/USDT")
@@ -198,13 +191,17 @@ def test_compound_lookups_with_full_data() -> None:
         assert srm_usdc is not None
         assert srm_usdc.base.symbol == "SRM"
         assert srm_usdc.quote.symbol == "USDC"
-        assert srm_usdc.address == PublicKey("ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA")
+        assert srm_usdc.address == PublicKey(
+            "ByRys5tuUWDgL73G8JBAEfkdFf8JWBzPBDHsBVQ5vbQA"
+        )
 
         btc_usdc = actual.find_by_symbol("BTC/USDC")
         assert btc_usdc is not None
         assert btc_usdc.base.symbol == "BTC"
         assert btc_usdc.quote.symbol == "USDC"
-        assert btc_usdc.address == PublicKey("A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw")
+        assert btc_usdc.address == PublicKey(
+            "A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw"
+        )
 
         non_existant_market = actual.find_by_symbol("ETH/BTC")
         assert non_existant_market is None  # No such market

@@ -126,7 +126,7 @@ def test_publickey_sorting() -> None:
         PublicKey("2jXpCvzJkDxUSxpP3U7VUGSDCDpWDZqZGg2LGsGrhUDp"),
         PublicKey("7wDMKabpaBC1kj41hmotn1qBQhKSqRpGvAb1x347m6zT"),
         PublicKey("DcRaC7n2ws825JGXqf4cRr8mbXWXf9k5e2xDbFYC1EH7"),
-        PublicKey("E127URgoUVjVmuvwLEbvtEdiSkrsMjBL8J6zrV1djN7a")
+        PublicKey("E127URgoUVjVmuvwLEbvtEdiSkrsMjBL8J6zrV1djN7a"),
     ]
 
     expected = [
@@ -229,13 +229,15 @@ def test_publickey_sorting() -> None:
         PublicKey("HNEq27KbPirQg2p4hxWGTqV5SVHZ6hgWFPztgiPsR6hn"),
         PublicKey("Hgbt3PYF3CPjJxwgurNPtU7PxKWZawxbVYAY3PHuqcRY"),
         PublicKey("J9DXnDPgxpvyGfXULryE8GXWe7DawwbcrJGrGqfEtLa1"),
-        PublicKey("JCxwtTLkh83ArtcnZtT4KAKB774MvnYTLpLj9sR751rb")
+        PublicKey("JCxwtTLkh83ArtcnZtT4KAKB774MvnYTLpLj9sR751rb"),
     ]
 
     test_keys.sort(key=mango.encode_public_key_for_sorting)
 
     for counter in range(len(test_keys)):
-        assert test_keys[counter] == expected[counter], f"Index {counter} - {test_keys[counter]} does not match expected {expected[counter]}"
+        assert (
+            test_keys[counter] == expected[counter]
+        ), f"Index {counter} - {test_keys[counter]} does not match expected {expected[counter]}"
 
 
 # This is the same test but with results from sorting in a BPF Solana runtime.
@@ -257,7 +259,7 @@ def test_publickey_bpf_sorting() -> None:
         PublicKey("789UPSUbj9TYSm12e66qo8PCE7RvDygqFKyy7qvCjtBD"),
         PublicKey("Hgbt3PYF3CPjJxwgurNPtU7PxKWZawxbVYAY3PHuqcRY"),
         PublicKey("jD2gcCANgvQM54brip9jT9L3PHfG3YmoBALQeWQ2QFt"),
-        PublicKey("8ZuYuQdGesgcKs6UaiHZNo44iijnsFJ4zUEF3KymUhjw")
+        PublicKey("8ZuYuQdGesgcKs6UaiHZNo44iijnsFJ4zUEF3KymUhjw"),
     ]
 
     expected = [
@@ -274,13 +276,15 @@ def test_publickey_bpf_sorting() -> None:
         PublicKey("FyjuBBN5fUHjtpB5LbSVW1mMocWCBebWJEecr1YN1TaQ"),
         PublicKey("GFQFVSEYN9ho4UwA4KJefTGrrnV8xKwyT2U5VoY4ABRw"),
         PublicKey("HMbNVVb6uqqhuTaQU4RmKDeG3VZ1pvRn3PgnhfevbjWJ"),
-        PublicKey("Hgbt3PYF3CPjJxwgurNPtU7PxKWZawxbVYAY3PHuqcRY")
+        PublicKey("Hgbt3PYF3CPjJxwgurNPtU7PxKWZawxbVYAY3PHuqcRY"),
     ]
 
     test_keys.sort(key=mango.encode_public_key_for_sorting)
 
     for counter in range(len(test_keys)):
-        assert test_keys[counter] == expected[counter], f"Index {counter} - {test_keys[counter]} does not match expected {expected[counter]}"
+        assert (
+            test_keys[counter] == expected[counter]
+        ), f"Index {counter} - {test_keys[counter]} does not match expected {expected[counter]}"
 
 
 # This is a short test to help with debugging, with results from the BPF Solana runtime.
@@ -299,10 +303,12 @@ def test_publickey_short_sorting() -> None:
         PublicKey("AuAYgwDerZryPif7Zw1ZqACYgJFRqmKwy3ZqASr2Wu7d"),
         PublicKey("CpFj2d5uYjeh34FKh6iYRTE2dL3N9NaSrZtyZVZ7eQwa"),
         PublicKey("FFzYWt9K2ZDeyxpDbvKbma6232baDHoCFGL1gZAKiox1"),
-        PublicKey("HMbNVVb6uqqhuTaQU4RmKDeG3VZ1pvRn3PgnhfevbjWJ")
+        PublicKey("HMbNVVb6uqqhuTaQU4RmKDeG3VZ1pvRn3PgnhfevbjWJ"),
     ]
 
     test_keys.sort(key=mango.encode_public_key_for_sorting)
 
     for counter in range(len(test_keys)):
-        assert test_keys[counter] == expected[counter], f"Index {counter} - {test_keys[counter]} does not match expected {expected[counter]}"
+        assert (
+            test_keys[counter] == expected[counter]
+        ), f"Index {counter} - {test_keys[counter]} does not match expected {expected[counter]}"

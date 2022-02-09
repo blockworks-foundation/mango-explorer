@@ -8,12 +8,18 @@ from decimal import Decimal
 from mango.marketmaking.orderchain.ratioselement import RatiosElement
 
 
-model_state = fake_model_state(price=fake_price(bid=Decimal(75), price=Decimal(80), ask=Decimal(85)))
+model_state = fake_model_state(
+    price=fake_price(bid=Decimal(75), price=Decimal(80), ask=Decimal(85))
+)
 
 
 def test_from_args() -> None:
-    args: argparse.Namespace = argparse.Namespace(ratios_spread=[Decimal("0.7")], ratios_position_size=[Decimal("0.27")],
-                                                  order_type=mango.OrderType.IOC, ratios_from_bid_ask=True)
+    args: argparse.Namespace = argparse.Namespace(
+        ratios_spread=[Decimal("0.7")],
+        ratios_position_size=[Decimal("0.27")],
+        order_type=mango.OrderType.IOC,
+        ratios_from_bid_ask=True,
+    )
     actual: RatiosElement = RatiosElement.from_command_line_parameters(args)
     assert actual.order_type == mango.OrderType.IOC
     assert actual.spread_ratios == [Decimal("0.7")]
@@ -24,7 +30,9 @@ def test_from_args() -> None:
 def test_uses_specified_spread_ratio() -> None:
     context = fake_context()
 
-    actual: RatiosElement = RatiosElement(mango.OrderType.POST_ONLY, [Decimal("0.1")], [Decimal("0.01")], False)
+    actual: RatiosElement = RatiosElement(
+        mango.OrderType.POST_ONLY, [Decimal("0.1")], [Decimal("0.01")], False
+    )
     result = actual.process(context, model_state, [])
 
     assert result[0].price == Decimal("72")
@@ -36,7 +44,9 @@ def test_uses_specified_spread_ratio() -> None:
 def test_uses_specified_position_size_ratio() -> None:
     context = fake_context()
 
-    actual: RatiosElement = RatiosElement(mango.OrderType.POST_ONLY, [Decimal("0.01")], [Decimal("0.1")], False)
+    actual: RatiosElement = RatiosElement(
+        mango.OrderType.POST_ONLY, [Decimal("0.01")], [Decimal("0.1")], False
+    )
     result = actual.process(context, model_state, [])
 
     assert result[0].price == Decimal("79.2")
@@ -48,7 +58,9 @@ def test_uses_specified_position_size_ratio() -> None:
 def test_uses_specified_spread_and_position_size_ratio() -> None:
     context = fake_context()
 
-    actual: RatiosElement = RatiosElement(mango.OrderType.POST_ONLY, [Decimal("0.1")], [Decimal("0.1")], False)
+    actual: RatiosElement = RatiosElement(
+        mango.OrderType.POST_ONLY, [Decimal("0.1")], [Decimal("0.1")], False
+    )
     result = actual.process(context, model_state, [])
 
     assert result[0].price == Decimal("72")
@@ -60,7 +72,9 @@ def test_uses_specified_spread_and_position_size_ratio() -> None:
 def test_uses_specified_spread_and_position_size_ratio_from_bid_ask() -> None:
     context = fake_context()
 
-    actual: RatiosElement = RatiosElement(mango.OrderType.POST_ONLY, [Decimal("0.1")], [Decimal("0.1")], True)
+    actual: RatiosElement = RatiosElement(
+        mango.OrderType.POST_ONLY, [Decimal("0.1")], [Decimal("0.1")], True
+    )
     result = actual.process(context, model_state, [])
 
     assert result[0].price == Decimal("67.5")

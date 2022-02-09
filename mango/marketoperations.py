@@ -62,29 +62,38 @@ class MarketInstructionBuilder(metaclass=abc.ABCMeta):
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
-    def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
+    def build_cancel_order_instructions(
+        self, order: Order, ok_if_missing: bool = False
+    ) -> CombinableInstructions:
         raise NotImplementedError(
-            "MarketInstructionBuilder.build_cancel_order_instructions() is not implemented on the base type.")
+            "MarketInstructionBuilder.build_cancel_order_instructions() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
         raise NotImplementedError(
-            "MarketInstructionBuilder.build_place_order_instructions() is not implemented on the base type.")
+            "MarketInstructionBuilder.build_place_order_instructions() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def build_settle_instructions(self) -> CombinableInstructions:
         raise NotImplementedError(
-            "MarketInstructionBuilder.build_settle_instructions() is not implemented on the base type.")
+            "MarketInstructionBuilder.build_settle_instructions() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
-    def build_crank_instructions(self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(
+        self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)
+    ) -> CombinableInstructions:
         raise NotImplementedError(
-            "MarketInstructionBuilder.build_crank_instructions() is not implemented on the base type.")
+            "MarketInstructionBuilder.build_crank_instructions() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def build_redeem_instructions(self) -> CombinableInstructions:
         raise NotImplementedError(
-            "MarketInstructionBuilder.build_redeem_instructions() is not implemented on the base type.")
+            "MarketInstructionBuilder.build_redeem_instructions() is not implemented on the base type."
+        )
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -110,36 +119,54 @@ class MarketOperations(metaclass=abc.ABCMeta):
         self.market: Market = market
 
     @abc.abstractmethod
-    def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
-        raise NotImplementedError("MarketOperations.cancel_order() is not implemented on the base type.")
+    def cancel_order(
+        self, order: Order, ok_if_missing: bool = False
+    ) -> typing.Sequence[str]:
+        raise NotImplementedError(
+            "MarketOperations.cancel_order() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
-        raise NotImplementedError("MarketOperations.place_order() is not implemented on the base type.")
+        raise NotImplementedError(
+            "MarketOperations.place_order() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def load_orderbook(self) -> OrderBook:
-        raise NotImplementedError("MarketOperations.load_orders() is not implemented on the base type.")
+        raise NotImplementedError(
+            "MarketOperations.load_orders() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def load_my_orders(self) -> typing.Sequence[Order]:
-        raise NotImplementedError("MarketOperations.load_my_orders() is not implemented on the base type.")
+        raise NotImplementedError(
+            "MarketOperations.load_my_orders() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def settle(self) -> typing.Sequence[str]:
-        raise NotImplementedError("MarketOperations.settle() is not implemented on the base type.")
+        raise NotImplementedError(
+            "MarketOperations.settle() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
-        raise NotImplementedError("MarketOperations.crank() is not implemented on the base type.")
+        raise NotImplementedError(
+            "MarketOperations.crank() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def create_openorders(self) -> PublicKey:
-        raise NotImplementedError("MarketOperations.create_openorders() is not implemented on the base type.")
+        raise NotImplementedError(
+            "MarketOperations.create_openorders() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def ensure_openorders(self) -> PublicKey:
-        raise NotImplementedError("MarketOperations.ensure_openorders() is not implemented on the base type.")
+        raise NotImplementedError(
+            "MarketOperations.ensure_openorders() is not implemented on the base type."
+        )
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -155,7 +182,9 @@ class NullMarketInstructionBuilder(MarketInstructionBuilder):
         super().__init__()
         self.symbol: str = symbol
 
-    def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
+    def build_cancel_order_instructions(
+        self, order: Order, ok_if_missing: bool = False
+    ) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
@@ -164,7 +193,9 @@ class NullMarketInstructionBuilder(MarketInstructionBuilder):
     def build_settle_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
-    def build_crank_instructions(self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(
+        self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)
+    ) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
     def build_redeem_instructions(self) -> CombinableInstructions:
@@ -184,7 +215,9 @@ class NullMarketOperations(MarketOperations):
         super().__init__(DryRunMarket(market_name))
         self.market_name: str = market_name
 
-    def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
+    def cancel_order(
+        self, order: Order, ok_if_missing: bool = False
+    ) -> typing.Sequence[str]:
         self._logger.info(f"[Dry Run] Not cancelling order {order}.")
         return [""]
 

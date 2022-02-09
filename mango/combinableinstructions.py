@@ -31,18 +31,27 @@ _PUBKEY_LENGTH = 32
 _SIGNATURE_LENGTH = 64
 
 
-def _split_instructions_into_chunks(context: Context, signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> typing.Sequence[typing.Sequence[TransactionInstruction]]:
+def _split_instructions_into_chunks(
+    context: Context,
+    signers: typing.Sequence[Keypair],
+    instructions: typing.Sequence[TransactionInstruction],
+) -> typing.Sequence[typing.Sequence[TransactionInstruction]]:
     vetted_chunks: typing.List[typing.List[TransactionInstruction]] = []
     current_chunk: typing.List[TransactionInstruction] = []
     for counter, instruction in enumerate(instructions):
-        instruction_size_on_its_own = CombinableInstructions.transaction_size(signers, [instruction])
+        instruction_size_on_its_own = CombinableInstructions.transaction_size(
+            signers, [instruction]
+        )
         if instruction_size_on_its_own >= _MAXIMUM_TRANSACTION_LENGTH:
             report = context.client.instruction_reporter.report(instruction)
             raise Exception(
-                f"Instruction exceeds maximum size - instruction {counter} has {len(instruction.keys)} keys and creates a transaction {instruction_size_on_its_own} bytes long:\n{report}")
+                f"Instruction exceeds maximum size - instruction {counter} has {len(instruction.keys)} keys and creates a transaction {instruction_size_on_its_own} bytes long:\n{report}"
+            )
 
         in_progress_chunk = current_chunk + [instruction]
-        transaction_size = CombinableInstructions.transaction_size(signers, in_progress_chunk)
+        transaction_size = CombinableInstructions.transaction_size(
+            signers, in_progress_chunk
+        )
         if transaction_size < _MAXIMUM_TRANSACTION_LENGTH:
             current_chunk = in_progress_chunk
         else:
@@ -54,7 +63,8 @@ def _split_instructions_into_chunks(context: Context, signers: typing.Sequence[K
     total_in_chunks = sum(map(lambda chunk: len(chunk), all_chunks))
     if total_in_chunks != len(instructions):
         raise Exception(
-            f"Failed to chunk instructions. Have {total_in_chunks} instuctions in chunks. Should have {len(instructions)}.")
+            f"Failed to chunk instructions. Have {total_in_chunks} instuctions in chunks. Should have {len(instructions)}."
+        )
 
     return all_chunks
 
@@ -69,11 +79,15 @@ def _split_instructions_into_chunks(context: Context, signers: typing.Sequence[K
 # (signers + place_orders + settle + crank).execute(context)
 # ```
 #
-class CombinableInstructions():
+class CombinableInstructions:
     # A toggle to run both checks to ensure our calculations are accurate.
     __check_transaction_size_with_pyserum = False
 
-    def __init__(self, signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> None:
+    def __init__(
+        self,
+        signers: typing.Sequence[Keypair],
+        instructions: typing.Sequence[TransactionInstruction],
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.signers: typing.Sequence[Keypair] = signers
         self.instructions: typing.Sequence[TransactionInstruction] = instructions
@@ -91,12 +105,17 @@ class CombinableInstructions():
         return CombinableInstructions(signers=[wallet.keypair], instructions=[])
 
     @staticmethod
-    def from_instruction(instruction: TransactionInstruction) -> "CombinableInstructions":
+    def from_instruction(
+        instruction: TransactionInstruction,
+    ) -> "CombinableInstructions":
         return CombinableInstructions(signers=[], instructions=[instruction])
 
     # This is the expensive - but always accurate - way of calculating the size of a transaction.
     @staticmethod
-    def _transaction_size_from_pyserum(signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> int:
+    def _transaction_size_from_pyserum(
+        signers: typing.Sequence[Keypair],
+        instructions: typing.Sequence[TransactionInstruction],
+    ) -> int:
         inspector = Transaction()
         inspector.recent_blockhash = Blockhash(str(PublicKey(3)))
         inspector.instructions.extend(instructions)
@@ -109,14 +128,17 @@ class CombinableInstructions():
         length += 1
 
         # Signatures
-        length += (len(inspector.signatures) * _SIGNATURE_LENGTH)
+        length += len(inspector.signatures) * _SIGNATURE_LENGTH
 
         return length
 
     # This is the quicker way - just add up the sizes ourselves. It's not trivial though.
 
     @staticmethod
-    def _calculate_transaction_size(signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> int:
+    def _calculate_transaction_size(
+        signers: typing.Sequence[Keypair],
+        instructions: typing.Sequence[TransactionInstruction],
+    ) -> int:
         # Solana transactions have a deterministic size, but calculating it is a bit tricky.
         #
         # The transaction consists of:
@@ -168,56 +190,94 @@ class CombinableInstructions():
         def shortvec_length(value: int) -> int:
             return len(shortvec.encode_length(value))
 
-        program_ids = {instruction.program_id.to_base58() for instruction in instructions}
-        meta_pubkeys = {meta.pubkey.to_base58() for instruction in instructions for meta in instruction.keys}
-        distinct_publickeys = set.union(program_ids, meta_pubkeys, {
-                                        signer.public_key.to_base58() for signer in signers})
+        program_ids = {
+            instruction.program_id.to_base58() for instruction in instructions
+        }
+        meta_pubkeys = {
+            meta.pubkey.to_base58()
+            for instruction in instructions
+            for meta in instruction.keys
+        }
+        distinct_publickeys = set.union(
+            program_ids,
+            meta_pubkeys,
+            {signer.public_key.to_base58() for signer in signers},
+        )
         num_distinct_publickeys = len(distinct_publickeys)
 
         # 35 + (shortvec-length of distinct public keys) + (32 * number of distinct public keys)
-        header_size = 35 + shortvec_length(num_distinct_publickeys) + (num_distinct_publickeys * _PUBKEY_LENGTH)
+        header_size = (
+            35
+            + shortvec_length(num_distinct_publickeys)
+            + (num_distinct_publickeys * _PUBKEY_LENGTH)
+        )
 
         instruction_count_length = shortvec_length(len(instructions))
 
         instructions_size = 0
         for inst in instructions:
             # 1 + (shortvec-length of number of keys) + (number of keys) + (shortvec-length of the data) + (length of the data)
-            instructions_size += 1 + shortvec_length(len(inst.keys)) + len(inst.keys) + \
-                shortvec_length(len(inst.data)) + len(inst.data)
+            instructions_size += (
+                1
+                + shortvec_length(len(inst.keys))
+                + len(inst.keys)
+                + shortvec_length(len(inst.data))
+                + len(inst.data)
+            )
 
         # Signatures
         signatures_size = 1 + (len(signers) * _SIGNATURE_LENGTH)
 
         # We can now calculate the total transaction size
-        calculated_transaction_size = header_size + instruction_count_length + instructions_size + signatures_size
+        calculated_transaction_size = (
+            header_size + instruction_count_length + instructions_size + signatures_size
+        )
         return calculated_transaction_size
 
     # Calculate the exact size of a transaction. There's an upper limit of 1232 so we need to keep
     # all transactions below this size.
     @staticmethod
-    def transaction_size(signers: typing.Sequence[Keypair], instructions: typing.Sequence[TransactionInstruction]) -> int:
-        calculated_transaction_size = CombinableInstructions._calculate_transaction_size(signers, instructions)
+    def transaction_size(
+        signers: typing.Sequence[Keypair],
+        instructions: typing.Sequence[TransactionInstruction],
+    ) -> int:
+        calculated_transaction_size = (
+            CombinableInstructions._calculate_transaction_size(signers, instructions)
+        )
         if CombinableInstructions.__check_transaction_size_with_pyserum:
-            pyserum_transaction_size = CombinableInstructions._transaction_size_from_pyserum(signers, instructions)
+            pyserum_transaction_size = (
+                CombinableInstructions._transaction_size_from_pyserum(
+                    signers, instructions
+                )
+            )
             discrepancy = pyserum_transaction_size - calculated_transaction_size
             if discrepancy == 0:
                 logging.debug(
-                    f"txszcalc Calculated: {calculated_transaction_size}, Should be: {pyserum_transaction_size}, No Discrepancy!")
+                    f"txszcalc Calculated: {calculated_transaction_size}, Should be: {pyserum_transaction_size}, No Discrepancy!"
+                )
             else:
                 logging.error(
-                    f"txszcalcerr Calculated: {calculated_transaction_size}, Should be: {pyserum_transaction_size}, Discrepancy: {discrepancy}")
+                    f"txszcalcerr Calculated: {calculated_transaction_size}, Should be: {pyserum_transaction_size}, Discrepancy: {discrepancy}"
+                )
                 return pyserum_transaction_size
 
         return calculated_transaction_size
 
-    def __add__(self, new_instruction_data: "CombinableInstructions") -> "CombinableInstructions":
+    def __add__(
+        self, new_instruction_data: "CombinableInstructions"
+    ) -> "CombinableInstructions":
         all_signers = [*self.signers, *new_instruction_data.signers]
         all_instructions = [*self.instructions, *new_instruction_data.instructions]
-        return CombinableInstructions(signers=all_signers, instructions=all_instructions)
+        return CombinableInstructions(
+            signers=all_signers, instructions=all_instructions
+        )
 
-    def execute(self, context: Context, on_exception_continue: bool = False) -> typing.Sequence[str]:
-        chunks: typing.Sequence[typing.Sequence[TransactionInstruction]
-                                ] = _split_instructions_into_chunks(context, self.signers, self.instructions)
+    def execute(
+        self, context: Context, on_exception_continue: bool = False
+    ) -> typing.Sequence[str]:
+        chunks: typing.Sequence[
+            typing.Sequence[TransactionInstruction]
+        ] = _split_instructions_into_chunks(context, self.signers, self.instructions)
 
         if len(chunks) == 1 and len(chunks[0]) == 0:
             self._logger.info("No instructions to run.")
@@ -236,14 +296,18 @@ class CombinableInstructions():
             except Exception as exception:
                 starts_at = sum(len(ch) for ch in chunks[0:index])
                 if on_exception_continue:
-                    self._logger.error(f"""[{context.name}] Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction.
-{exception}""")
+                    self._logger.error(
+                        f"""[{context.name}] Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction.
+{exception}"""
+                    )
                 else:
                     raise exception
 
         return results
 
-    async def execute_async(self, context: Context, on_exception_continue: bool = False) -> typing.Sequence[str]:
+    async def execute_async(
+        self, context: Context, on_exception_continue: bool = False
+    ) -> typing.Sequence[str]:
         return self.execute(context, on_exception_continue)
 
     def __str__(self) -> str:

@@ -95,8 +95,12 @@ class Wallet:
     #
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--id-file", type=str, default=_DEFAULT_WALLET_FILENAME,
-                            help="file containing the JSON-formatted wallet private key")
+        parser.add_argument(
+            "--id-file",
+            type=str,
+            default=_DEFAULT_WALLET_FILENAME,
+            help="file containing the JSON-formatted wallet private key",
+        )
 
     # This function is the converse of `add_command_line_parameters()` - it takes
     # an argument of parsed command-line parameters and expects to see the ones it added
@@ -105,10 +109,14 @@ class Wallet:
     # It then uses those parameters to create a properly-configured `Wallet` object.
     #
     @staticmethod
-    def from_command_line_parameters(args: argparse.Namespace) -> typing.Optional["Wallet"]:
+    def from_command_line_parameters(
+        args: argparse.Namespace,
+    ) -> typing.Optional["Wallet"]:
         # We always have an args.id_file (because we specify a default) so check for the environment
         # variable and give it priority.
-        environment_secret_key = os.environ.get("KEYPAIR") or os.environ.get("SECRET_KEY")
+        environment_secret_key = os.environ.get("KEYPAIR") or os.environ.get(
+            "SECRET_KEY"
+        )
         if environment_secret_key is not None:
             secret_key_bytes = json.loads(environment_secret_key)
             if len(secret_key_bytes) >= 32:

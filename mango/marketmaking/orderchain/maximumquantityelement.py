@@ -37,33 +37,55 @@ class MaximumQuantityElement(Element):
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--maximumquantity-size", type=Decimal,
-                            help="the maximum permitted order quantity")
-        parser.add_argument("--maximumquantity-remove", action="store_true", default=False,
-                            help="remove an order that has too big a quantity (default is to reduce order quantity to maximum)")
+        parser.add_argument(
+            "--maximumquantity-size",
+            type=Decimal,
+            help="the maximum permitted order quantity",
+        )
+        parser.add_argument(
+            "--maximumquantity-remove",
+            action="store_true",
+            default=False,
+            help="remove an order that has too big a quantity (default is to reduce order quantity to maximum)",
+        )
 
     @staticmethod
-    def from_command_line_parameters(args: argparse.Namespace) -> "MaximumQuantityElement":
+    def from_command_line_parameters(
+        args: argparse.Namespace,
+    ) -> "MaximumQuantityElement":
         if args.maximumquantity_size is None:
-            raise Exception("No maximum size specified. Try the --maximumquantity-size parameter?")
+            raise Exception(
+                "No maximum size specified. Try the --maximumquantity-size parameter?"
+            )
 
-        return MaximumQuantityElement(args.maximumquantity_size, bool(args.maximumquantity_remove))
+        return MaximumQuantityElement(
+            args.maximumquantity_size, bool(args.maximumquantity_remove)
+        )
 
-    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
+    def process(
+        self,
+        context: mango.Context,
+        model_state: ModelState,
+        orders: typing.Sequence[mango.Order],
+    ) -> typing.Sequence[mango.Order]:
         new_orders: typing.List[mango.Order] = []
         for order in orders:
             if order.quantity < self.maximum_quantity:
                 new_orders += [order]
             else:
                 if self.remove:
-                    self._logger.debug(f"""Order change - order quantity is greater than maximum of {self.maximum_quantity} so removing:
+                    self._logger.debug(
+                        f"""Order change - order quantity is greater than maximum of {self.maximum_quantity} so removing:
     Old: {order}
-    New: None""")
+    New: None"""
+                    )
                 else:
                     new_order: mango.Order = order.with_quantity(self.maximum_quantity)
-                    self._logger.debug(f"""Order change - order quantity is greater than maximum of {self.maximum_quantity} so changing order quantity to {self.maximum_quantity}:
+                    self._logger.debug(
+                        f"""Order change - order quantity is greater than maximum of {self.maximum_quantity} so changing order quantity to {self.maximum_quantity}:
     Old: {order}
-    New: {new_order}""")
+    New: {new_order}"""
+                    )
                     new_orders += [new_order]
 
         return new_orders

@@ -10,7 +10,7 @@ def test_no_messages_to_expand() -> None:
         "Program DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY consumed 8858 of 171625 compute units",
         "Program DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY failed: custom program error: 0x2a",
         "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA consumed 200000 of 200000 compute units",
-        "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA failed: custom program error: 0x2a"
+        "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA failed: custom program error: 0x2a",
     ]
     actual = mango.expand_log_messages(logs)
     assert len(actual) == 7
@@ -25,14 +25,16 @@ def test_expand_liquidate_perp_market() -> None:
         "Program log: mango-log",
         "Program log: xL0/TYaKkmo9V1sXbGlWtx7PorbATlnhud1k4TouaelSIuWjq6DS+naor4jdUZPAHrtSr/wNa5D+q2Ybbpli42dDOOeJCluKHCjgTI66neHYoNpbISs2BljP2rJh/YYyevMmtXuMZigBAAAAAAAAAAAAAAAAAJg6AAAAAAAAAAAKAAAAAAAAAMDGLQAAAPCPJv////////8A",
         "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA consumed 24022 of 200000 compute units",
-        "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA success"
+        "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA success",
     ]
 
     actual = mango.expand_log_messages(logs)
     assert len(actual) == 5
     assert actual[0] == logs[0]
     assert actual[1] == logs[1]
-    assert actual[2] == """Mango LiquidatePerpMarketLog Container: 
+    assert (
+        actual[2]
+        == """Mango LiquidatePerpMarketLog Container: 
     mangoGroup = 58T8PuaCBa6FqFqcoTB2Ay6snLp2gAUxU8hnDWcLFqyB
     liqee = 8zCJ6jdHExdnNb17cxFhFtavZ7uaRHXj1nbT3VJ8E2i5
     liqor = 2tvZs8riWYKDWsGMoNxVy1YDc7qtJb4EurcfpB2PBfKm
@@ -41,6 +43,7 @@ def test_expand_liquidate_perp_market() -> None:
     baseTransfer = 10
     quoteTransfer = -4011018418126845000000
     bankruptcy = False"""
+    )
     assert actual[3] == logs[4]
     assert actual[4] == logs[5]
 
@@ -57,26 +60,34 @@ def test_expand_liquidate_token_and_perp() -> None:
         "Program log: mango-log",
         "Program log: EmyboIQCGyA9V1sXbGlWtx7PorbATlnhud1k4TouaelSIuWjq6DS+naor4jdUZPAHrtSr/wNa5D+q2Ybbpli42dDOOeJCluKHCjgTI66neHYoNpbISs2BljP2rJh/YYyevMmtXuMZigPAAAAAAAAAAEAAAAAAAAAAAEAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAICWmAAAAAAAAAAAAAAAAACAlpgAAAAAAAAAAQ==",
         "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA consumed 34000 of 200000 compute units",
-        "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA success"
+        "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA success",
     ]
 
     actual = mango.expand_log_messages(logs)
     assert len(actual) == 7
     assert actual[0] == logs[0]
     assert actual[1] == logs[1]
-    assert actual[2] == """Mango TokenBalanceLog Container: 
+    assert (
+        actual[2]
+        == """Mango TokenBalanceLog Container: 
     mangoGroup = 58T8PuaCBa6FqFqcoTB2Ay6snLp2gAUxU8hnDWcLFqyB
     mangoAccount = 2tvZs8riWYKDWsGMoNxVy1YDc7qtJb4EurcfpB2PBfKm
     tokenIndex = 15
     deposit = 284289726477762560
     borrow = 0"""
-    assert actual[3] == """Mango TokenBalanceLog Container: 
+    )
+    assert (
+        actual[3]
+        == """Mango TokenBalanceLog Container: 
     mangoGroup = 58T8PuaCBa6FqFqcoTB2Ay6snLp2gAUxU8hnDWcLFqyB
     mangoAccount = 8zCJ6jdHExdnNb17cxFhFtavZ7uaRHXj1nbT3VJ8E2i5
     tokenIndex = 15
     deposit = 0
     borrow = 0"""
-    assert actual[4] == """Mango LiquidateTokenAndPerpLog Container: 
+    )
+    assert (
+        actual[4]
+        == """Mango LiquidateTokenAndPerpLog Container: 
     mangoGroup = 58T8PuaCBa6FqFqcoTB2Ay6snLp2gAUxU8hnDWcLFqyB
     liqee = 8zCJ6jdHExdnNb17cxFhFtavZ7uaRHXj1nbT3VJ8E2i5
     liqor = 2tvZs8riWYKDWsGMoNxVy1YDc7qtJb4EurcfpB2PBfKm
@@ -89,6 +100,7 @@ def test_expand_liquidate_token_and_perp() -> None:
     assetTransfer = 2814749767106560000000
     liabTransfer = 2814749767106560000000
     bankruptcy = True"""
+    )
     assert actual[5] == logs[8]
     assert actual[6] == logs[9]
 
@@ -101,14 +113,16 @@ def test_expand_resolve_perp_bankruptcy() -> None:
         "Program log: mango-log",
         "Program log: ZS+iIbP3D4M9V1sXbGlWtx7PorbATlnhud1k4TouaelSIuWjq6DS+naor4jdUZPAHrtSr/wNa5D+q2Ybbpli42dDOOeJCluKHCjgTI66neHYoNpbISs2BljP2rJh/YYyevMmtXuMZigBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANkZCAAAkOj////////////ZGQgAAJDo////////////",
         "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA consumed 11097 of 200000 compute units",
-        "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA success"
+        "Program 4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA success",
     ]
 
     actual = mango.expand_log_messages(logs)
     assert len(actual) == 5
     assert actual[0] == logs[0]
     assert actual[1] == logs[1]
-    assert actual[2] == """Mango PerpBankruptcyLog Container: 
+    assert (
+        actual[2]
+        == """Mango PerpBankruptcyLog Container: 
     mangoGroup = 58T8PuaCBa6FqFqcoTB2Ay6snLp2gAUxU8hnDWcLFqyB
     liqee = 8zCJ6jdHExdnNb17cxFhFtavZ7uaRHXj1nbT3VJ8E2i5
     liqor = 2tvZs8riWYKDWsGMoNxVy1YDc7qtJb4EurcfpB2PBfKm
@@ -117,6 +131,7 @@ def test_expand_resolve_perp_bankruptcy() -> None:
     socializedLoss = 0
     cacheLongFunding = -6597069766125095
     cacheShortFunding = -6597069766125095"""
+    )
     assert actual[3] == logs[4]
     assert actual[4] == logs[5]
 
@@ -141,14 +156,16 @@ def test_expand_caches() -> None:
         "Program log: mango-log",
         "Program log: 9lt9JxCzqw543ogDQe0xql0u2Ff66cc9XSGzkyyZdqoGDHUXDByC3QIAAAABAAAAAAAAAAMAAAAAAAAAAgAAAMqkWEieuOP5BAAAAAAAAAAMaEaZks1h/QAAAAAAAAAAAgAAAFDep7S5sr/zBAAAAAAAAAAMaEaZks1h/QAAAAAAAAAA",
         "Program mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68 consumed 5723 of 200000 compute units",
-        "Program mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68 success"
+        "Program mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68 success",
     ]
 
     actual = mango.expand_log_messages(logs)
     assert len(actual) == 15
     assert actual[0] == logs[0]
     assert actual[1] == logs[1]
-    assert actual[2] == """Mango CacheRootBanksLog Container: 
+    assert (
+        actual[2]
+        == """Mango CacheRootBanksLog Container: 
     mangoGroup = 98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue
     tokenIndexes_count = 8
     tokenIndexes = ListContainer: 
@@ -180,11 +197,14 @@ def test_expand_caches() -> None:
         285115763349990654498
         285473328472584674585
         281912611517885852855"""
+    )
     assert actual[3] == logs[4]
     assert actual[4] == logs[5]
     assert actual[5] == logs[6]
     assert actual[6] == logs[7]
-    assert actual[7] == """Mango CachePricesLog Container: 
+    assert (
+        actual[7]
+        == """Mango CachePricesLog Container: 
     mangoGroup = 98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue
     oracleIndexes_count = 8
     oracleIndexes = ListContainer: 
@@ -206,11 +226,14 @@ def test_expand_caches() -> None:
         2138151364498562
         2782752451736529
         380725026638420"""
+    )
     assert actual[8] == logs[10]
     assert actual[9] == logs[11]
     assert actual[10] == logs[12]
     assert actual[11] == logs[13]
-    assert actual[12] == """Mango CachePerpMarketsLog Container: 
+    assert (
+        actual[12]
+        == """Mango CachePerpMarketsLog Container: 
     mangoGroup = 98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue
     marketIndexes_count = 2
     marketIndexes = ListContainer: 
@@ -224,5 +247,6 @@ def test_expand_caches() -> None:
     shortFundings = ListContainer: 
         91350929877276024400
         18258100393857148940"""
+    )
     assert actual[13] == logs[16]
     assert actual[14] == logs[17]

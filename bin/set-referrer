@@ -7,30 +7,41 @@ import sys
 
 from solana.publickey import PublicKey
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Sets the referrer for a Mango Account.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--account-address", type=PublicKey,
-                    help="address of the specific account to use, if more than one available")
-parser.add_argument("--referrer-address", type=PublicKey, required=True,
-                    help="address of the referrer's Mango Account")
+parser.add_argument(
+    "--account-address",
+    type=PublicKey,
+    help="address of the specific account to use, if more than one available",
+)
+parser.add_argument(
+    "--referrer-address",
+    type=PublicKey,
+    required=True,
+    help="address of the referrer's Mango Account",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 group = mango.Group.load(context, context.group_address)
-account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
+account = mango.Account.load_for_owner_by_address(
+    context, wallet.address, group, args.account_address
+)
 referrer_account = mango.Account.load(context, args.referrer_address, group)
 
-all_instructions: mango.CombinableInstructions = mango.CombinableInstructions.from_signers([wallet.keypair])
+all_instructions: mango.CombinableInstructions = (
+    mango.CombinableInstructions.from_signers([wallet.keypair])
+)
 
 referrer_memory_address: PublicKey = account.derive_referrer_memory_address(context)
 set_delegate_instructions = mango.build_set_referrer_memory_instructions(
-    context, wallet, group, account, referrer_memory_address, referrer_account.address)
+    context, wallet, group, account, referrer_memory_address, referrer_account.address
+)
 all_instructions += set_delegate_instructions
 
 transaction_ids = all_instructions.execute(context)

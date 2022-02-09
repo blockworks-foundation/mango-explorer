@@ -29,7 +29,8 @@ def test_spl_token_lookup() -> None:
                 "symbol": "ETH",
                 "name": "Wrapped Ethereum (Sollet)",
                 "decimals": 6,
-            }]
+            },
+        ]
     }
     actual = mango.SPLTokenLookup("test-filename", data)
     assert actual is not None
@@ -52,7 +53,9 @@ def test_spl_token_lookups_with_full_data() -> None:
     srm = actual.find_by_mint(PublicKey("AKJHspCwDhABucCxNLXUSfEzb7Ny62RqFtC9uNjJi4fq"))
     assert srm is not None
     assert srm.symbol == "SRM-SOL"
-    usdt = actual.find_by_mint(PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"))
+    usdt = actual.find_by_mint(
+        PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB")
+    )
     assert usdt is not None
     assert usdt.symbol == "USDT"
 
@@ -62,7 +65,9 @@ def test_override_lookups_with_full_data() -> None:
     eth = actual.find_by_symbol("ETH")
     assert eth is not None
     assert eth.mint == PublicKey("2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk")
-    usdt = actual.find_by_mint(PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"))
+    usdt = actual.find_by_mint(
+        PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB")
+    )
     assert usdt is not None
     assert usdt.symbol == "USDT"
 
@@ -84,7 +89,9 @@ def test_compound_lookups_with_full_data() -> None:
     assert srm is not None
     assert isinstance(srm, mango.Token)
     assert srm.symbol == "SRM-SOL"
-    usdt = actual.find_by_mint(PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"))
+    usdt = actual.find_by_mint(
+        PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB")
+    )
     assert usdt is not None
     assert isinstance(usdt, mango.Token)
     assert usdt.symbol == "USDT"

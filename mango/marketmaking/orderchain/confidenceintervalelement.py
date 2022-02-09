@@ -29,38 +29,68 @@ from ...modelstate import ModelState
 # size ratio but with a spread based on the confidence in the oracle price.
 #
 class ConfidenceIntervalElement(Element):
-    def __init__(self, order_type: mango.OrderType, position_size_ratio: Decimal, confidence_interval_levels: typing.Sequence[Decimal]) -> None:
+    def __init__(
+        self,
+        order_type: mango.OrderType,
+        position_size_ratio: Decimal,
+        confidence_interval_levels: typing.Sequence[Decimal],
+    ) -> None:
         super().__init__()
         self.order_type: mango.OrderType = order_type
         self.position_size_ratio: Decimal = position_size_ratio
-        self.confidence_interval_levels: typing.Sequence[Decimal] = confidence_interval_levels
+        self.confidence_interval_levels: typing.Sequence[
+            Decimal
+        ] = confidence_interval_levels
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--confidenceinterval-level", type=Decimal, action="append",
-                            help="the levels of weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread (can be specified multiple times to give multiple levels)")
-        parser.add_argument("--confidenceinterval-position-size-ratio", type=Decimal,
-                            help="fraction of the token inventory to be bought or sold in each order")
+        parser.add_argument(
+            "--confidenceinterval-level",
+            type=Decimal,
+            action="append",
+            help="the levels of weighting to apply to the confidence interval from the oracle: e.g. 1 - use the oracle confidence interval as the spread, 2 (risk averse, default) - multiply the oracle confidence interval by 2 to get the spread, 0.5 (aggressive) halve the oracle confidence interval to get the spread (can be specified multiple times to give multiple levels)",
+        )
+        parser.add_argument(
+            "--confidenceinterval-position-size-ratio",
+            type=Decimal,
+            help="fraction of the token inventory to be bought or sold in each order",
+        )
 
     @staticmethod
-    def from_command_line_parameters(args: argparse.Namespace) -> "ConfidenceIntervalElement":
-        if args.confidenceinterval_position_size_ratio is None or args.confidenceinterval_position_size_ratio == 0:
+    def from_command_line_parameters(
+        args: argparse.Namespace,
+    ) -> "ConfidenceIntervalElement":
+        if (
+            args.confidenceinterval_position_size_ratio is None
+            or args.confidenceinterval_position_size_ratio == 0
+        ):
             raise Exception("No position-size ratio specified.")
 
         order_type: mango.OrderType = args.order_type
         position_size_ratio: Decimal = args.confidenceinterval_position_size_ratio
-        confidence_interval_levels: typing.Sequence[Decimal] = args.confidenceinterval_level
+        confidence_interval_levels: typing.Sequence[
+            Decimal
+        ] = args.confidenceinterval_level
         if len(confidence_interval_levels) == 0:
             confidence_interval_levels = [Decimal(2)]
 
-        return ConfidenceIntervalElement(order_type, position_size_ratio, confidence_interval_levels)
+        return ConfidenceIntervalElement(
+            order_type, position_size_ratio, confidence_interval_levels
+        )
 
-    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
+    def process(
+        self,
+        context: mango.Context,
+        model_state: ModelState,
+        orders: typing.Sequence[mango.Order],
+    ) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
         if price.source.supports.has_feature(mango.SupportedOracleFeature.CONFIDENCE):
             raise Exception(f"Price does not support confidence interval: {price}")
 
-        quote_value_to_risk = model_state.inventory.available_collateral.value * self.position_size_ratio
+        quote_value_to_risk = (
+            model_state.inventory.available_collateral.value * self.position_size_ratio
+        )
         position_size = quote_value_to_risk / price.mid_price
 
         new_orders: typing.List[mango.Order] = []
@@ -69,13 +99,23 @@ class ConfidenceIntervalElement(Element):
             bid: Decimal = price.mid_price - charge
             ask: Decimal = price.mid_price + charge
 
-            bid_order = mango.Order.from_basic_info(mango.Side.BUY, price=bid,
-                                                    quantity=position_size, order_type=self.order_type)
-            ask_order = mango.Order.from_basic_info(mango.Side.SELL, price=ask,
-                                                    quantity=position_size, order_type=self.order_type)
-            self._logger.debug(f"""Desired orders:
+            bid_order = mango.Order.from_basic_info(
+                mango.Side.BUY,
+                price=bid,
+                quantity=position_size,
+                order_type=self.order_type,
+            )
+            ask_order = mango.Order.from_basic_info(
+                mango.Side.SELL,
+                price=ask,
+                quantity=position_size,
+                order_type=self.order_type,
+            )
+            self._logger.debug(
+                f"""Desired orders:
     Bid: {bid_order}
-    Ask: {ask_order}""")
+    Ask: {ask_order}"""
+            )
             new_orders += [bid_order, ask_order]
 
         new_orders.sort(key=lambda ord: ord.price, reverse=True)
@@ -83,10 +123,14 @@ class ConfidenceIntervalElement(Element):
 
         top_bid = model_state.top_bid
         top_ask = model_state.top_ask
-        self._logger.debug(f"""Initial desired orders - spread {model_state.spread} ({top_bid.price if top_bid else None} / {top_ask.price if top_ask else None}):
-    {order_text}""")
+        self._logger.debug(
+            f"""Initial desired orders - spread {model_state.spread} ({top_bid.price if top_bid else None} / {top_ask.price if top_ask else None}):
+    {order_text}"""
+        )
         return new_orders
 
     def __str__(self) -> str:
-        confidence_interval_levels = ", ".join(map(str, self.confidence_interval_levels)) or "None"
+        confidence_interval_levels = (
+            ", ".join(map(str, self.confidence_interval_levels)) or "None"
+        )
         return f"« ConfidenceIntervalElement {self.order_type} - position size: {self.position_size_ratio}, confidence interval levels: {confidence_interval_levels} »"

@@ -38,7 +38,13 @@ from .wallet import Wallet
 # # 🥭 TokenAccount class
 #
 class TokenAccount(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version, owner: PublicKey, value: InstrumentValue) -> None:
+    def __init__(
+        self,
+        account_info: AccountInfo,
+        version: Version,
+        owner: PublicKey,
+        value: InstrumentValue,
+    ) -> None:
         super().__init__(account_info)
         self.version: Version = version
         self.owner: PublicKey = owner
@@ -46,47 +52,73 @@ class TokenAccount(AddressableAccount):
 
     @staticmethod
     def create(context: Context, account: Keypair, token: Token) -> "TokenAccount":
-        spl_token = SplToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, account)
+        spl_token = SplToken(
+            context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, account
+        )
         owner = account.public_key
         new_account_address = spl_token.create_account(owner)
-        created: typing.Optional[TokenAccount] = TokenAccount.load(context, new_account_address)
+        created: typing.Optional[TokenAccount] = TokenAccount.load(
+            context, new_account_address
+        )
         if created is None:
-            raise Exception(f"Newly-created SPL token account could not be found at address {new_account_address}")
+            raise Exception(
+                f"Newly-created SPL token account could not be found at address {new_account_address}"
+            )
         return created
 
     @staticmethod
-    def fetch_all_for_owner_and_token(context: Context, owner_public_key: PublicKey, token: Token) -> typing.Sequence["TokenAccount"]:
+    def fetch_all_for_owner_and_token(
+        context: Context, owner_public_key: PublicKey, token: Token
+    ) -> typing.Sequence["TokenAccount"]:
         opts = TokenAccountOpts(mint=token.mint)
 
-        token_accounts = context.client.get_token_accounts_by_owner(owner_public_key, opts)
+        token_accounts = context.client.get_token_accounts_by_owner(
+            owner_public_key, opts
+        )
 
         all_accounts: typing.List[TokenAccount] = []
         for token_account_response in token_accounts:
             account_info = AccountInfo._from_response_values(
-                token_account_response["account"], PublicKey(token_account_response["pubkey"]))
+                token_account_response["account"],
+                PublicKey(token_account_response["pubkey"]),
+            )
             token_account = TokenAccount.parse(account_info, token)
             all_accounts += [token_account]
 
         return all_accounts
 
     @staticmethod
-    def fetch_largest_for_owner_and_token(context: Context, owner_public_key: PublicKey, token: Token) -> typing.Optional["TokenAccount"]:
-        all_accounts = TokenAccount.fetch_all_for_owner_and_token(context, owner_public_key, token)
+    def fetch_largest_for_owner_and_token(
+        context: Context, owner_public_key: PublicKey, token: Token
+    ) -> typing.Optional["TokenAccount"]:
+        all_accounts = TokenAccount.fetch_all_for_owner_and_token(
+            context, owner_public_key, token
+        )
 
         largest_account: typing.Optional[TokenAccount] = None
         for token_account in all_accounts:
-            if largest_account is None or token_account.value.value > largest_account.value.value:
+            if (
+                largest_account is None
+                or token_account.value.value > largest_account.value.value
+            ):
                 largest_account = token_account
 
         return largest_account
 
     @staticmethod
-    def fetch_or_create_largest_for_owner_and_token(context: Context, account: Keypair, token: Token) -> "TokenAccount":
-        all_accounts = TokenAccount.fetch_all_for_owner_and_token(context, account.public_key, token)
+    def fetch_or_create_largest_for_owner_and_token(
+        context: Context, account: Keypair, token: Token
+    ) -> "TokenAccount":
+        all_accounts = TokenAccount.fetch_all_for_owner_and_token(
+            context, account.public_key, token
+        )
 
         largest_account: typing.Optional[TokenAccount] = None
         for token_account in all_accounts:
-            if largest_account is None or token_account.value.value > largest_account.value.value:
+            if (
+                largest_account is None
+                or token_account.value.value > largest_account.value.value
+            ):
                 largest_account = token_account
 
         if largest_account is None:
@@ -95,10 +127,16 @@ class TokenAccount(AddressableAccount):
         return largest_account
 
     @staticmethod
-    def find_or_create_token_address_to_use(context: Context, wallet: Wallet, owner: PublicKey, token: Token) -> PublicKey:
+    def find_or_create_token_address_to_use(
+        context: Context, wallet: Wallet, owner: PublicKey, token: Token
+    ) -> PublicKey:
         # This is a root wallet account - get the token account to use.
-        associated_token_address = spl_token.get_associated_token_address(owner, token.mint)
-        token_account: typing.Optional[TokenAccount] = TokenAccount.load(context, associated_token_address)
+        associated_token_address = spl_token.get_associated_token_address(
+            owner, token.mint
+        )
+        token_account: typing.Optional[TokenAccount] = TokenAccount.load(
+            context, associated_token_address
+        )
         if token_account is not None:
             # The associated token account exists so use it
             return associated_token_address
@@ -111,7 +149,9 @@ class TokenAccount(AddressableAccount):
 
         # There is no old-style token account either, so create the proper associated token account.
         signer = CombinableInstructions.from_wallet(wallet)
-        create_instruction = spl_token.create_associated_token_account(wallet.address, owner, token.mint)
+        create_instruction = spl_token.create_associated_token_account(
+            wallet.address, owner, token.mint
+        )
         create = CombinableInstructions.from_instruction(create_instruction)
 
         transaction_ids = (signer + create).execute(context)
@@ -120,24 +160,39 @@ class TokenAccount(AddressableAccount):
         return associated_token_address
 
     @staticmethod
-    def from_layout(layout: typing.Any, account_info: AccountInfo, token: Token) -> "TokenAccount":
+    def from_layout(
+        layout: typing.Any, account_info: AccountInfo, token: Token
+    ) -> "TokenAccount":
         token_value = InstrumentValue(token, token.shift_to_decimals(layout.amount))
-        return TokenAccount(account_info, Version.UNSPECIFIED, layout.owner, token_value)
+        return TokenAccount(
+            account_info, Version.UNSPECIFIED, layout.owner, token_value
+        )
 
     @staticmethod
-    def parse(account_info: AccountInfo, token: typing.Optional[Token] = None, instrument_lookup: typing.Optional[InstrumentLookup] = None) -> "TokenAccount":
+    def parse(
+        account_info: AccountInfo,
+        token: typing.Optional[Token] = None,
+        instrument_lookup: typing.Optional[InstrumentLookup] = None,
+    ) -> "TokenAccount":
         data = account_info.data
         if len(data) != layouts.TOKEN_ACCOUNT.sizeof():
             raise Exception(
-                f"Data length ({len(data)}) does not match expected size ({layouts.TOKEN_ACCOUNT.sizeof()})")
+                f"Data length ({len(data)}) does not match expected size ({layouts.TOKEN_ACCOUNT.sizeof()})"
+            )
 
         layout = layouts.TOKEN_ACCOUNT.parse(data)
         if token is None:
             if instrument_lookup is None:
-                raise Exception("Neither 'Token' or 'InstrumentLookup' specified for parsing token data.")
-            instrument: typing.Optional[Instrument] = instrument_lookup.find_by_mint(layout.mint)
+                raise Exception(
+                    "Neither 'Token' or 'InstrumentLookup' specified for parsing token data."
+                )
+            instrument: typing.Optional[Instrument] = instrument_lookup.find_by_mint(
+                layout.mint
+            )
             if instrument is None:
-                raise Exception(f"Could not find token data for token with mint '{layout.mint}'")
+                raise Exception(
+                    f"Could not find token data for token with mint '{layout.mint}'"
+                )
             token = Token.ensure(instrument)
 
         return TokenAccount.from_layout(layout, account_info, token)
@@ -145,9 +200,15 @@ class TokenAccount(AddressableAccount):
     @staticmethod
     def load(context: Context, address: PublicKey) -> typing.Optional["TokenAccount"]:
         account_info = AccountInfo.load(context, address)
-        if account_info is None or (len(account_info.data) != layouts.TOKEN_ACCOUNT.sizeof()):
+        if account_info is None or (
+            len(account_info.data) != layouts.TOKEN_ACCOUNT.sizeof()
+        ):
             return None
-        return TokenAccount.parse(account_info, instrument_lookup=context.instrument_lookup)
+        return TokenAccount.parse(
+            account_info, instrument_lookup=context.instrument_lookup
+        )
 
     def __str__(self) -> str:
-        return f"« TokenAccount {self.address}, Owner: {self.owner}, Value: {self.value} »"
+        return (
+            f"« TokenAccount {self.address}, Owner: {self.owner}, Value: {self.value} »"
+        )

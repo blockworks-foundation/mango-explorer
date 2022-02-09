@@ -56,56 +56,99 @@ from ...modelstate import ModelState
 # docs/BiasQuantityOnPosition.ods spreadsheet.
 #
 class BiasQuantityOnPositionElement(PairwiseElement):
-    def __init__(self, maximum_position: Decimal, target_position: Decimal = Decimal(0)) -> None:
+    def __init__(
+        self, maximum_position: Decimal, target_position: Decimal = Decimal(0)
+    ) -> None:
         super().__init__()
         self.maximum_position: Decimal = maximum_position
         self.target_position: Decimal = target_position
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--biasquantityonposition-maximum-position", type=Decimal,
-                            help="maximum inventory position to proportionally move away from")
-        parser.add_argument("--biasquantityonposition-target-position", type=Decimal,
-                            help="inventory position to target (default 0)")
+        parser.add_argument(
+            "--biasquantityonposition-maximum-position",
+            type=Decimal,
+            help="maximum inventory position to proportionally move away from",
+        )
+        parser.add_argument(
+            "--biasquantityonposition-target-position",
+            type=Decimal,
+            help="inventory position to target (default 0)",
+        )
 
     @staticmethod
-    def from_command_line_parameters(args: argparse.Namespace) -> "BiasQuantityOnPositionElement":
+    def from_command_line_parameters(
+        args: argparse.Namespace,
+    ) -> "BiasQuantityOnPositionElement":
         if args.biasquantityonposition_maximum_position is None:
             raise Exception(
-                "No maximum position value specified for biasing. Try the --biasquantityonposition-maximum-position parameter?")
+                "No maximum position value specified for biasing. Try the --biasquantityonposition-maximum-position parameter?"
+            )
         maximum_position: Decimal = args.biasquantityonposition_maximum_position
-        target_position: Decimal = args.biasquantityonposition_target_position or Decimal(0)
+        target_position: Decimal = (
+            args.biasquantityonposition_target_position or Decimal(0)
+        )
         return BiasQuantityOnPositionElement(maximum_position, target_position)
 
-    def process_order_pair(self, context: mango.Context, model_state: ModelState, index: int, buy: typing.Optional[mango.Order], sell: typing.Optional[mango.Order]) -> typing.Tuple[typing.Optional[mango.Order], typing.Optional[mango.Order]]:
+    def process_order_pair(
+        self,
+        context: mango.Context,
+        model_state: ModelState,
+        index: int,
+        buy: typing.Optional[mango.Order],
+        sell: typing.Optional[mango.Order],
+    ) -> typing.Tuple[typing.Optional[mango.Order], typing.Optional[mango.Order]]:
         if buy is not None and sell is not None:
             total_quantity = buy.quantity + sell.quantity
             current_position = model_state.inventory.base.value
 
             # BUY adjustment formula from the spreadsheet:
             #   =MIN((A2+B2), MAX(0, ((D2-(C2-E2))/D2)*A2))
-            biased_buy_quantity = ((self.maximum_position - (current_position - self.target_position)
-                                    ) / self.maximum_position) * buy.quantity
-            clamped_biased_buy_quantity = min(total_quantity, max(Decimal(0), biased_buy_quantity))
+            biased_buy_quantity = (
+                (self.maximum_position - (current_position - self.target_position))
+                / self.maximum_position
+            ) * buy.quantity
+            clamped_biased_buy_quantity = min(
+                total_quantity, max(Decimal(0), biased_buy_quantity)
+            )
             if buy.quantity != clamped_biased_buy_quantity:
                 new_buy = buy.with_quantity(clamped_biased_buy_quantity)
-                buy_bias_description = "BUY more" if clamped_biased_buy_quantity > buy.quantity else "BUY less"
-                self._logger.debug(f"""BUY order change - maximum position {self.maximum_position} with current position {current_position} and target position {self.target_position} creates a {buy_bias_description} bias:
+                buy_bias_description = (
+                    "BUY more"
+                    if clamped_biased_buy_quantity > buy.quantity
+                    else "BUY less"
+                )
+                self._logger.debug(
+                    f"""BUY order change - maximum position {self.maximum_position} with current position {current_position} and target position {self.target_position} creates a {buy_bias_description} bias:
     Old: {buy}
-    New: {new_buy}""")
+    New: {new_buy}"""
+                )
                 buy = new_buy
 
             # SELL adjustment formula from the spreadsheet:
             #   =MIN((A2+B2), MAX(0, (2-((D2-(C2-E2))/D2))*B2))
-            biased_sell_quantity = (2 - ((self.maximum_position - (current_position - self.target_position)
-                                          ) / self.maximum_position)) * sell.quantity
-            clamped_biased_sell_quantity = min(total_quantity, max(Decimal(0), biased_sell_quantity))
+            biased_sell_quantity = (
+                2
+                - (
+                    (self.maximum_position - (current_position - self.target_position))
+                    / self.maximum_position
+                )
+            ) * sell.quantity
+            clamped_biased_sell_quantity = min(
+                total_quantity, max(Decimal(0), biased_sell_quantity)
+            )
             if sell.quantity != clamped_biased_sell_quantity:
                 new_sell = sell.with_quantity(clamped_biased_sell_quantity)
-                sell_bias_description = "SELL more" if clamped_biased_sell_quantity > sell.quantity else "SELL less"
-                self._logger.debug(f"""SELL order change - maximum position {self.maximum_position} with current position {current_position} and target position {self.target_position} creates a {sell_bias_description} bias:
+                sell_bias_description = (
+                    "SELL more"
+                    if clamped_biased_sell_quantity > sell.quantity
+                    else "SELL less"
+                )
+                self._logger.debug(
+                    f"""SELL order change - maximum position {self.maximum_position} with current position {current_position} and target position {self.target_position} creates a {sell_bias_description} bias:
     Old: {sell}
-    New: {new_sell}""")
+    New: {new_sell}"""
+                )
                 sell = new_sell
 
         return buy, sell

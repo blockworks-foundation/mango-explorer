@@ -13,8 +13,7 @@ from solana.rpc.types import TxOpts
 from spl.token.client import Token as SolanaSPLToken
 from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
@@ -22,14 +21,29 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Sends SPL tokens to a different address.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--symbol", type=str, required=True, help="token symbol to send (e.g. ETH)")
-parser.add_argument("--address", type=PublicKey,
-                    help="Destination address for the SPL token - can be either the actual token address or the address of the owner of the token address")
-parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of token to send")
-parser.add_argument("--wait", action="store_true", default=False,
-                    help="wait until the transaction is confirmed")
-parser.add_argument("--dry-run", action="store_true", default=False,
-                    help="runs as read-only and does not perform any transactions")
+parser.add_argument(
+    "--symbol", type=str, required=True, help="token symbol to send (e.g. ETH)"
+)
+parser.add_argument(
+    "--address",
+    type=PublicKey,
+    help="Destination address for the SPL token - can be either the actual token address or the address of the owner of the token address",
+)
+parser.add_argument(
+    "--quantity", type=Decimal, required=True, help="quantity of token to send"
+)
+parser.add_argument(
+    "--wait",
+    action="store_true",
+    default=False,
+    help="wait until the transaction is confirmed",
+)
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    default=False,
+    help="runs as read-only and does not perform any transactions",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -42,31 +56,44 @@ if instrument is None:
     raise Exception(f"Could not find details of token with symbol {args.symbol}.")
 token: mango.Token = mango.Token.ensure(instrument)
 
-spl_token = SolanaSPLToken(context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair)
+spl_token = SolanaSPLToken(
+    context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair
+)
 source_accounts = spl_token.get_accounts(wallet.address)
 source_account = source_accounts["result"]["value"][0]
 source = PublicKey(source_account["pubkey"])
 
 # Is the address an actual token account? Or is it the SOL address of the owner?
-account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(context, args.address)
+account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(
+    context, args.address
+)
 if account_info is None:
     raise Exception(f"Could not find account at address {args.address}.")
 
 destination: PublicKey
 if account_info.owner == mango.SYSTEM_PROGRAM_ADDRESS:
     # This is a root wallet account - get the token account to use.
-    destination = mango.TokenAccount.find_or_create_token_address_to_use(context, wallet, args.address, token)
+    destination = mango.TokenAccount.find_or_create_token_address_to_use(
+        context, wallet, args.address, token
+    )
 elif account_info.owner == TOKEN_PROGRAM_ID and len(account_info.data) == ACCOUNT_LEN:
     # This is not a root wallet account, this is an SPL token account.
     destination = args.address
 else:
-    raise Exception(f"Account {args.address} is neither a root wallet account nor an SPL token account.")
+    raise Exception(
+        f"Account {args.address} is neither a root wallet account nor an SPL token account."
+    )
 
 owner = wallet.keypair
-amount = int(args.quantity * Decimal(10 ** token.decimals))
+amount = int(args.quantity * Decimal(10**token.decimals))
 
-mango.output("Balance:", source_account["account"]["data"]["parsed"]
-             ["info"]["tokenAmount"]["uiAmountString"], token.name)
+mango.output(
+    "Balance:",
+    source_account["account"]["data"]["parsed"]["info"]["tokenAmount"][
+        "uiAmountString"
+    ],
+    token.name,
+)
 text_amount = f"{amount} {token.name} (@ {token.decimals} decimal places)"
 mango.output(f"Sending {text_amount}")
 mango.output(f"    From: {source}")
@@ -75,8 +102,13 @@ mango.output(f"      To: {destination}")
 if args.dry_run:
     mango.output("Skipping actual transfer - dry run.")
 else:
-    transfer_response = spl_token.transfer(source, destination, owner, amount,
-                                           opts=TxOpts(preflight_commitment=context.client.commitment))
+    transfer_response = spl_token.transfer(
+        source,
+        destination,
+        owner,
+        amount,
+        opts=TxOpts(preflight_commitment=context.client.commitment),
+    )
     transaction_ids = [transfer_response["result"]]
     mango.output(f"Transaction IDs: {transaction_ids}")
     if args.wait:
@@ -84,6 +116,8 @@ else:
 
         updated_balance = spl_token.get_balance(source)
         updated_balance_text = updated_balance["result"]["value"]["uiAmountString"]
-        mango.output(f"{text_amount} sent. Balance now: {updated_balance_text} {token.name}")
+        mango.output(
+            f"{text_amount} sent. Balance now: {updated_balance_text} {token.name}"
+        )
     else:
         mango.output(f"{text_amount} sent.")

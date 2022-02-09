@@ -67,7 +67,9 @@ def test_single_factor_greater_than_one() -> None:
 def test_single_factor_less_than_one() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
-    actual: BiasQuoteElement = BiasQuoteElement([Decimal("0.999")])  # shift 10 bips down
+    actual: BiasQuoteElement = BiasQuoteElement(
+        [Decimal("0.999")]
+    )  # shift 10 bips down
     buy: mango.Order = fake_order(price=Decimal(90), side=mango.Side.BUY)
     sell: mango.Order = fake_order(price=Decimal(110), side=mango.Side.SELL)
 
@@ -80,7 +82,9 @@ def test_single_factor_less_than_one() -> None:
 def test_single_factor_two_order_pairs() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
-    actual: BiasQuoteElement = BiasQuoteElement([Decimal("0.999")])  # shift 10 bips down
+    actual: BiasQuoteElement = BiasQuoteElement(
+        [Decimal("0.999")]
+    )  # shift 10 bips down
     buy1: mango.Order = fake_order(price=Decimal(80), side=mango.Side.BUY)
     buy2: mango.Order = fake_order(price=Decimal(90), side=mango.Side.BUY)
     sell1: mango.Order = fake_order(price=Decimal(110), side=mango.Side.SELL)
@@ -98,7 +102,9 @@ def test_single_factor_two_order_pairs() -> None:
 def test_two_factors_two_order_pairs() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
-    actual: BiasQuoteElement = BiasQuoteElement([Decimal("0.999"), Decimal("0.9")])  # shift 10 bips down
+    actual: BiasQuoteElement = BiasQuoteElement(
+        [Decimal("0.999"), Decimal("0.9")]
+    )  # shift 10 bips down
     buy1: mango.Order = fake_order(price=Decimal(80), side=mango.Side.BUY)
     buy2: mango.Order = fake_order(price=Decimal(90), side=mango.Side.BUY)
     sell1: mango.Order = fake_order(price=Decimal(110), side=mango.Side.SELL)
@@ -116,7 +122,9 @@ def test_two_factors_two_order_pairs() -> None:
 def test_three_factors_three_order_pairs() -> None:
     context = fake_context()
     model_state = fake_model_state(price=fake_price(price=Decimal(100)))
-    actual: BiasQuoteElement = BiasQuoteElement([Decimal("0.9"), Decimal("0.8"), Decimal("0.7")])  # shift 10 bips down
+    actual: BiasQuoteElement = BiasQuoteElement(
+        [Decimal("0.9"), Decimal("0.8"), Decimal("0.7")]
+    )  # shift 10 bips down
     buy1: mango.Order = fake_order(price=Decimal(70), side=mango.Side.BUY)
     buy2: mango.Order = fake_order(price=Decimal(80), side=mango.Side.BUY)
     buy3: mango.Order = fake_order(price=Decimal(90), side=mango.Side.BUY)
@@ -124,7 +132,9 @@ def test_three_factors_three_order_pairs() -> None:
     sell2: mango.Order = fake_order(price=Decimal(120), side=mango.Side.SELL)
     sell3: mango.Order = fake_order(price=Decimal(130), side=mango.Side.SELL)
 
-    result = actual.process(context, model_state, [buy1, buy2, buy3, sell1, sell2, sell3])
+    result = actual.process(
+        context, model_state, [buy1, buy2, buy3, sell1, sell2, sell3]
+    )
 
     # Should be re-ordered as closest to top-of-book, so buy3-sell1 then buy2-sell2, then buy1-sell3
     assert result[0].price == Decimal("81")  # 90 * 0.9 = 81

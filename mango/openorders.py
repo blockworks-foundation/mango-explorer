@@ -35,11 +35,21 @@ from .version import Version
 # # 🥭 OpenOrders class
 #
 class OpenOrders(AddressableAccount):
-    def __init__(self, account_info: AccountInfo, version: Version, program_address: PublicKey,
-                 account_flags: AccountFlags, market: PublicKey, owner: PublicKey,
-                 base_token_free: Decimal, base_token_total: Decimal, quote_token_free: Decimal,
-                 quote_token_total: Decimal, placed_orders: typing.Sequence[PlacedOrder],
-                 referrer_rebate_accrued: Decimal) -> None:
+    def __init__(
+        self,
+        account_info: AccountInfo,
+        version: Version,
+        program_address: PublicKey,
+        account_flags: AccountFlags,
+        market: PublicKey,
+        owner: PublicKey,
+        base_token_free: Decimal,
+        base_token_total: Decimal,
+        quote_token_free: Decimal,
+        quote_token_total: Decimal,
+        placed_orders: typing.Sequence[PlacedOrder],
+        referrer_rebate_accrued: Decimal,
+    ) -> None:
         super().__init__(account_info)
         self.version: Version = version
         self.program_address: PublicKey = program_address
@@ -66,78 +76,142 @@ class OpenOrders(AddressableAccount):
         return PySerumOpenOrdersAccount.from_bytes(self.address, self.account_info.data)
 
     @staticmethod
-    def from_layout(layout: typing.Any, account_info: AccountInfo,
-                    base_decimals: Decimal, quote_decimals: Decimal) -> "OpenOrders":
+    def from_layout(
+        layout: typing.Any,
+        account_info: AccountInfo,
+        base_decimals: Decimal,
+        quote_decimals: Decimal,
+    ) -> "OpenOrders":
         account_flags = AccountFlags.from_layout(layout.account_flags)
         program_address = account_info.owner
 
-        base_divisor = 10 ** base_decimals
-        quote_divisor = 10 ** quote_decimals
+        base_divisor = 10**base_decimals
+        quote_divisor = 10**quote_decimals
         base_token_free: Decimal = layout.base_token_free / base_divisor
         base_token_total: Decimal = layout.base_token_total / base_divisor
         quote_token_free: Decimal = layout.quote_token_free / quote_divisor
         quote_token_total: Decimal = layout.quote_token_total / quote_divisor
-        referrer_rebate_accrued: Decimal = layout.referrer_rebate_accrued / quote_divisor
+        referrer_rebate_accrued: Decimal = (
+            layout.referrer_rebate_accrued / quote_divisor
+        )
 
         placed_orders: typing.Sequence[PlacedOrder] = []
         if account_flags.initialized:
             placed_orders = PlacedOrder.build_from_open_orders_data(
-                layout.free_slot_bits, layout.is_bid_bits, layout.orders, layout.client_ids)
-        return OpenOrders(account_info, Version.UNSPECIFIED, program_address, account_flags, layout.market,
-                          layout.owner, base_token_free, base_token_total, quote_token_free,
-                          quote_token_total, placed_orders, referrer_rebate_accrued)
+                layout.free_slot_bits,
+                layout.is_bid_bits,
+                layout.orders,
+                layout.client_ids,
+            )
+        return OpenOrders(
+            account_info,
+            Version.UNSPECIFIED,
+            program_address,
+            account_flags,
+            layout.market,
+            layout.owner,
+            base_token_free,
+            base_token_total,
+            quote_token_free,
+            quote_token_total,
+            placed_orders,
+            referrer_rebate_accrued,
+        )
 
     @staticmethod
-    def parse(account_info: AccountInfo, base_decimals: Decimal, quote_decimals: Decimal) -> "OpenOrders":
+    def parse(
+        account_info: AccountInfo, base_decimals: Decimal, quote_decimals: Decimal
+    ) -> "OpenOrders":
         data = account_info.data
         if len(data) != layouts.OPEN_ORDERS.sizeof():
-            raise Exception(f"Data length ({len(data)}) does not match expected size ({layouts.OPEN_ORDERS.sizeof()})")
+            raise Exception(
+                f"Data length ({len(data)}) does not match expected size ({layouts.OPEN_ORDERS.sizeof()})"
+            )
 
         layout = layouts.OPEN_ORDERS.parse(data)
-        return OpenOrders.from_layout(layout, account_info, base_decimals, quote_decimals)
+        return OpenOrders.from_layout(
+            layout, account_info, base_decimals, quote_decimals
+        )
 
     @staticmethod
-    def load_raw_open_orders_account_infos(context: Context, group: Group) -> typing.Dict[str, AccountInfo]:
+    def load_raw_open_orders_account_infos(
+        context: Context, group: Group
+    ) -> typing.Dict[str, AccountInfo]:
         filters = [
             MemcmpOpts(
                 offset=layouts.ACCOUNT_FLAGS.sizeof() + 37,
-                bytes=encode_key(group.signer_key)
+                bytes=encode_key(group.signer_key),
             )
         ]
 
         results = context.client.get_program_accounts(
-            group.serum_program_address, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters)
-        account_infos = list(map(lambda pair: AccountInfo._from_response_values(pair[0], pair[1]), [
-                             (result["account"], PublicKey(result["pubkey"])) for result in results]))
-        account_infos_by_address = {key: value for key, value in [
-            (str(account_info.address), account_info) for account_info in account_infos]}
+            group.serum_program_address,
+            data_size=layouts.OPEN_ORDERS.sizeof(),
+            memcmp_opts=filters,
+        )
+        account_infos = list(
+            map(
+                lambda pair: AccountInfo._from_response_values(pair[0], pair[1]),
+                [
+                    (result["account"], PublicKey(result["pubkey"]))
+                    for result in results
+                ],
+            )
+        )
+        account_infos_by_address = {
+            key: value
+            for key, value in [
+                (str(account_info.address), account_info)
+                for account_info in account_infos
+            ]
+        }
         return account_infos_by_address
 
     @staticmethod
-    def load(context: Context, address: PublicKey, base_decimals: Decimal, quote_decimals: Decimal) -> "OpenOrders":
+    def load(
+        context: Context,
+        address: PublicKey,
+        base_decimals: Decimal,
+        quote_decimals: Decimal,
+    ) -> "OpenOrders":
         open_orders_account = AccountInfo.load(context, address)
         if open_orders_account is None:
             raise Exception(f"OpenOrders account not found at address '{address}'")
         return OpenOrders.parse(open_orders_account, base_decimals, quote_decimals)
 
     @staticmethod
-    def load_for_market_and_owner(context: Context, market: PublicKey, owner: PublicKey, program_address: PublicKey, base_decimals: Decimal, quote_decimals: Decimal) -> typing.Sequence["OpenOrders"]:
+    def load_for_market_and_owner(
+        context: Context,
+        market: PublicKey,
+        owner: PublicKey,
+        program_address: PublicKey,
+        base_decimals: Decimal,
+        quote_decimals: Decimal,
+    ) -> typing.Sequence["OpenOrders"]:
         filters = [
             MemcmpOpts(
-                offset=layouts.ACCOUNT_FLAGS.sizeof() + 5,
-                bytes=encode_key(market)
+                offset=layouts.ACCOUNT_FLAGS.sizeof() + 5, bytes=encode_key(market)
             ),
             MemcmpOpts(
-                offset=layouts.ACCOUNT_FLAGS.sizeof() + 37,
-                bytes=encode_key(owner)
-            )
+                offset=layouts.ACCOUNT_FLAGS.sizeof() + 37, bytes=encode_key(owner)
+            ),
         ]
 
         results = context.client.get_program_accounts(
-            program_address, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters)
-        accounts = map(lambda result: AccountInfo._from_response_values(
-            result["account"], PublicKey(result["pubkey"])), results)
-        return list(map(lambda acc: OpenOrders.parse(acc, base_decimals, quote_decimals), accounts))
+            program_address, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters
+        )
+        accounts = map(
+            lambda result: AccountInfo._from_response_values(
+                result["account"], PublicKey(result["pubkey"])
+            ),
+            results,
+        )
+        return list(
+            map(
+                lambda acc: OpenOrders.parse(acc, base_decimals, quote_decimals),
+                accounts,
+            )
+        )
 
     def __str__(self) -> str:
         placed_orders = "\n        ".join(map(str, self.placed_orders)) or "None"

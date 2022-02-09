@@ -6,20 +6,31 @@ import os.path
 import sys
 import typing
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
-parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
+parser = argparse.ArgumentParser(
+    description="Shows the on-chain data of a particular account."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
-parser.add_argument("--filename", type=str, required=False,
-                    help="filename for loading the JSON-formatted AccountInfo data")
-parser.add_argument("--account-type", type=str, default="AccountInfo",
-                    help="Underlying object type of the data in the AccountInfo")
+parser.add_argument(
+    "--filename",
+    type=str,
+    required=False,
+    help="filename for loading the JSON-formatted AccountInfo data",
+)
+parser.add_argument(
+    "--account-type",
+    type=str,
+    default="AccountInfo",
+    help="Underlying object type of the data in the AccountInfo",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
-converter: typing.Callable[[mango.AccountInfo], typing.Any] = lambda account_info: account_info
+converter: typing.Callable[
+    [mango.AccountInfo], typing.Any
+] = lambda account_info: account_info
 if args.account_type.upper() != "ACCOUNTINFO":
     converter = mango.build_account_info_converter(context, args.account_type)
 

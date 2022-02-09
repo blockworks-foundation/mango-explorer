@@ -14,40 +14,79 @@ import typing
 
 from solana.publickey import PublicKey
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
-    description="Run the Transaction Scout to display information about a specific transaction.")
+    description="Run the Transaction Scout to display information about a specific transaction."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
-parser.add_argument("--since-state-filename", type=str, default="report.state",
-                    help="The name of the state file containing the signature of the last transaction looked up")
-parser.add_argument("--instruction-type", type=lambda ins: mango.InstructionType[ins], required=True,
-                    choices=list(mango.InstructionType),
-                    help="The signature of the transaction to look up")
-parser.add_argument("--sender", type=PublicKey,
-                    help="Only transactions sent by this PublicKey will be returned")
-parser.add_argument("--notify-transactions", type=mango.parse_notification_target, action="append", default=[],
-                    help="The notification target for transaction information")
-parser.add_argument("--notify-successful-transactions", type=mango.parse_notification_target,
-                    action="append", default=[], help="The notification target for successful transactions")
-parser.add_argument("--notify-failed-transactions", type=mango.parse_notification_target,
-                    action="append", default=[], help="The notification target for failed transactions")
-parser.add_argument("--notify-errors", type=mango.parse_notification_target, action="append", default=[],
-                    help="The notification target for errors")
-parser.add_argument("--summarise", action="store_true", default=False,
-                    help="create a short summary rather than the full TransactionScout details")
+parser.add_argument(
+    "--since-state-filename",
+    type=str,
+    default="report.state",
+    help="The name of the state file containing the signature of the last transaction looked up",
+)
+parser.add_argument(
+    "--instruction-type",
+    type=lambda ins: mango.InstructionType[ins],
+    required=True,
+    choices=list(mango.InstructionType),
+    help="The signature of the transaction to look up",
+)
+parser.add_argument(
+    "--sender",
+    type=PublicKey,
+    help="Only transactions sent by this PublicKey will be returned",
+)
+parser.add_argument(
+    "--notify-transactions",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for transaction information",
+)
+parser.add_argument(
+    "--notify-successful-transactions",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for successful transactions",
+)
+parser.add_argument(
+    "--notify-failed-transactions",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for failed transactions",
+)
+parser.add_argument(
+    "--notify-errors",
+    type=mango.parse_notification_target,
+    action="append",
+    default=[],
+    help="The notification target for errors",
+)
+parser.add_argument(
+    "--summarise",
+    action="store_true",
+    default=False,
+    help="create a short summary rather than the full TransactionScout details",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
-handler = mango.NotificationHandler(mango.CompoundNotificationTarget(args.notify_errors))
+handler = mango.NotificationHandler(
+    mango.CompoundNotificationTarget(args.notify_errors)
+)
 handler.setLevel(logging.ERROR)
 logging.getLogger().addHandler(handler)
 
 
-def summariser(context: mango.Context) -> typing.Callable[[mango.TransactionScout], str]:
+def summariser(
+    context: mango.Context,
+) -> typing.Callable[[mango.TransactionScout], str]:
     def summarise(transaction_scout: mango.TransactionScout) -> str:
         instruction_details: typing.List[str] = []
         instruction_targets: typing.List[str] = []
@@ -64,24 +103,41 @@ def summariser(context: mango.Context) -> typing.Callable[[mango.TransactionScou
         instructions = ", ".join(instruction_details)
         targets = ", ".join(instruction_targets) or "None"
         changes = mango.OwnedInstrumentValue.changes(
-            transaction_scout.pre_token_balances, transaction_scout.post_token_balances)
+            transaction_scout.pre_token_balances, transaction_scout.post_token_balances
+        )
 
         in_tokens = []
         for ins in transaction_scout.instructions:
             if ins.token_in_account is not None:
-                in_tokens += [mango.OwnedInstrumentValue.find_by_owner(changes, ins.token_in_account)]
+                in_tokens += [
+                    mango.OwnedInstrumentValue.find_by_owner(
+                        changes, ins.token_in_account
+                    )
+                ]
 
         out_tokens = []
         for ins in transaction_scout.instructions:
             if ins.token_out_account is not None:
-                out_tokens += [mango.OwnedInstrumentValue.find_by_owner(changes, ins.token_out_account)]
+                out_tokens += [
+                    mango.OwnedInstrumentValue.find_by_owner(
+                        changes, ins.token_out_account
+                    )
+                ]
 
         changed_tokens = in_tokens + out_tokens
-        changed_tokens_text = ", ".join(
-            [f"{tok.token_value.value:,.8f} {tok.token_value.token.name}" for tok in changed_tokens]) or "None"
+        changed_tokens_text = (
+            ", ".join(
+                [
+                    f"{tok.token_value.value:,.8f} {tok.token_value.token.name}"
+                    for tok in changed_tokens
+                ]
+            )
+            or "None"
+        )
 
         success_marker = "✅" if transaction_scout.succeeded else "❌"
         return f"« 🥭 {transaction_scout.timestamp} {success_marker} {transaction_scout.group_name} {instructions}\n    From: {transaction_scout.sender}\n    Target(s): {targets}\n    Token Changes: {changed_tokens_text}\n    {transaction_scout.signatures} »"
+
     return summarise
 
 
@@ -101,8 +157,12 @@ try:
 
     first_item_capturer = mango.CaptureFirstItem()
     signatures = mango.fetch_all_recent_transaction_signatures(context)
-    oldest_first = reversed(list(itertools.takewhile(lambda sig: sig != since_signature, signatures)))
-    pipeline: rx.core.typing.Observable[mango.TransactionScout] = rx.from_(oldest_first).pipe(
+    oldest_first = reversed(
+        list(itertools.takewhile(lambda sig: sig != since_signature, signatures))
+    )
+    pipeline: rx.core.typing.Observable[mango.TransactionScout] = rx.from_(
+        oldest_first
+    ).pipe(
         ops.map(first_item_capturer.capture_if_first),
         #  ops.map(debug_print_item("Signature:")),
         ops.map(lambda sig: mango.TransactionScout.load_if_available(context, sig)),
@@ -110,19 +170,17 @@ try:
     )
 
     if sender is not None:
-        pipeline = pipeline.pipe(
-            ops.filter(lambda item: bool(item.sender == sender))
-        )
+        pipeline = pipeline.pipe(ops.filter(lambda item: bool(item.sender == sender)))
 
     if instruction_type is not None:
         pipeline = pipeline.pipe(
-            ops.filter(lambda item: bool(item.has_any_instruction_of_type(instruction_type)))
+            ops.filter(
+                lambda item: bool(item.has_any_instruction_of_type(instruction_type))
+            )
         )
 
     if args.summarise:
-        pipeline = pipeline.pipe(
-            ops.map(summariser(context))
-        )
+        pipeline = pipeline.pipe(ops.map(summariser(context)))
 
     fan_out: rx.subject.subject.Subject = rx.subject.subject.Subject()
     fan_out.subscribe(mango.PrintingObserverSubscriber(False))
@@ -130,12 +188,14 @@ try:
 
     on_success = mango.FilteringNotificationTarget(
         mango.CompoundNotificationTarget(args.notify_successful_transactions),
-        lambda item: isinstance(item, mango.TransactionScout) and item.succeeded)
+        lambda item: isinstance(item, mango.TransactionScout) and item.succeeded,
+    )
     fan_out.subscribe(on_next=on_success.send)  # type: ignore[call-arg]
 
     on_failed = mango.FilteringNotificationTarget(
         mango.CompoundNotificationTarget(args.notify_failed_transactions),
-        lambda item: isinstance(item, mango.TransactionScout) and not item.succeeded)
+        lambda item: isinstance(item, mango.TransactionScout) and not item.succeeded,
+    )
     fan_out.subscribe(on_next=on_failed.send)  # type: ignore[call-arg]
 
     pipeline.subscribe(fan_out)
@@ -145,7 +205,9 @@ try:
             state_file.write(signatures[0])
 except Exception as exception:
     logging.critical(
-        f"report-transactions stopped because of exception: {exception} - {traceback.format_exc()}")
+        f"report-transactions stopped because of exception: {exception} - {traceback.format_exc()}"
+    )
 except:
     logging.critical(
-        f"report-transactions stopped because of uncatchable error: {traceback.format_exc()}")
+        f"report-transactions stopped because of uncatchable error: {traceback.format_exc()}"
+    )

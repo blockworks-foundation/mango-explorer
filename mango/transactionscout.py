@@ -65,11 +65,18 @@ from .ownedinstrumentvalue import OwnedInstrumentValue
 # # 🥭 TransactionScout class
 #
 class TransactionScout:
-    def __init__(self, timestamp: datetime.datetime, signatures: typing.Sequence[str],
-                 succeeded: bool, group_name: str, accounts: typing.Sequence[PublicKey],
-                 instructions: typing.Sequence[MangoInstruction], messages: typing.Sequence[str],
-                 pre_token_balances: typing.Sequence[OwnedInstrumentValue],
-                 post_token_balances: typing.Sequence[OwnedInstrumentValue]) -> None:
+    def __init__(
+        self,
+        timestamp: datetime.datetime,
+        signatures: typing.Sequence[str],
+        succeeded: bool,
+        group_name: str,
+        accounts: typing.Sequence[PublicKey],
+        instructions: typing.Sequence[MangoInstruction],
+        messages: typing.Sequence[str],
+        pre_token_balances: typing.Sequence[OwnedInstrumentValue],
+        post_token_balances: typing.Sequence[OwnedInstrumentValue],
+    ) -> None:
         self.timestamp: datetime.datetime = timestamp
         self.signatures: typing.Sequence[str] = signatures
         self.succeeded: bool = succeeded
@@ -77,28 +84,47 @@ class TransactionScout:
         self.accounts: typing.Sequence[PublicKey] = accounts
         self.instructions: typing.Sequence[MangoInstruction] = instructions
         self.messages: typing.Sequence[str] = messages
-        self.pre_token_balances: typing.Sequence[OwnedInstrumentValue] = pre_token_balances
-        self.post_token_balances: typing.Sequence[OwnedInstrumentValue] = post_token_balances
+        self.pre_token_balances: typing.Sequence[
+            OwnedInstrumentValue
+        ] = pre_token_balances
+        self.post_token_balances: typing.Sequence[
+            OwnedInstrumentValue
+        ] = post_token_balances
 
     @property
     def summary(self) -> str:
         result = "[Success]" if self.succeeded else "[Failed]"
-        instructions = ", ".join([ins.instruction_type.name for ins in self.instructions])
-        changes = OwnedInstrumentValue.changes(self.pre_token_balances, self.post_token_balances)
+        instructions = ", ".join(
+            [ins.instruction_type.name for ins in self.instructions]
+        )
+        changes = OwnedInstrumentValue.changes(
+            self.pre_token_balances, self.post_token_balances
+        )
 
         in_tokens = []
         for ins in self.instructions:
             if ins.token_in_account is not None:
-                in_tokens += [OwnedInstrumentValue.find_by_owner(changes, ins.token_in_account)]
+                in_tokens += [
+                    OwnedInstrumentValue.find_by_owner(changes, ins.token_in_account)
+                ]
 
         out_tokens = []
         for ins in self.instructions:
             if ins.token_out_account is not None:
-                out_tokens += [OwnedInstrumentValue.find_by_owner(changes, ins.token_out_account)]
+                out_tokens += [
+                    OwnedInstrumentValue.find_by_owner(changes, ins.token_out_account)
+                ]
 
         changed_tokens = in_tokens + out_tokens
-        changed_tokens_text = ", ".join(
-            [f"{tok.token_value.value:,.8f} {tok.token_value.token.name}" for tok in changed_tokens]) or "None"
+        changed_tokens_text = (
+            ", ".join(
+                [
+                    f"{tok.token_value.value:,.8f} {tok.token_value.token.name}"
+                    for tok in changed_tokens
+                ]
+            )
+            or "None"
+        )
 
         return f"« TransactionScout {result} {self.group_name} [{self.timestamp}] {instructions}: Token Changes: {changed_tokens_text}\n    {self.signatures} »"
 
@@ -111,10 +137,14 @@ class TransactionScout:
         return self.instructions[0].group
 
     def has_any_instruction_of_type(self, instruction_type: InstructionType) -> bool:
-        return any(map(lambda ins: ins.instruction_type == instruction_type, self.instructions))
+        return any(
+            map(lambda ins: ins.instruction_type == instruction_type, self.instructions)
+        )
 
     @staticmethod
-    def load_if_available(context: Context, signature: str) -> typing.Optional["TransactionScout"]:
+    def load_if_available(
+        context: Context, signature: str
+    ) -> typing.Optional["TransactionScout"]:
         transaction_details = context.client.get_confirmed_transaction(signature)
         if transaction_details is None:
             return None
@@ -128,8 +158,12 @@ class TransactionScout:
         return tx
 
     @staticmethod
-    def from_transaction_response(context: Context, response: typing.Dict[str, typing.Any]) -> "TransactionScout":
-        def balance_to_token_value(accounts: typing.Sequence[PublicKey], balance: typing.Dict[str, typing.Any]) -> OwnedInstrumentValue:
+    def from_transaction_response(
+        context: Context, response: typing.Dict[str, typing.Any]
+    ) -> "TransactionScout":
+        def balance_to_token_value(
+            accounts: typing.Sequence[PublicKey], balance: typing.Dict[str, typing.Any]
+        ) -> OwnedInstrumentValue:
             mint = PublicKey(balance["mint"])
             account = accounts[balance["accountIndex"]]
             amount = Decimal(balance["uiTokenAmount"]["amount"])
@@ -141,10 +175,14 @@ class TransactionScout:
 
         try:
             succeeded = True if response["meta"]["err"] is None else False
-            accounts = list(map(PublicKey, response["transaction"]["message"]["accountKeys"]))
+            accounts = list(
+                map(PublicKey, response["transaction"]["message"]["accountKeys"])
+            )
             instructions: typing.List[MangoInstruction] = []
             for instruction_data in response["transaction"]["message"]["instructions"]:
-                instruction = mango_instruction_from_response(context, accounts, instruction_data)
+                instruction = mango_instruction_from_response(
+                    context, accounts, instruction_data
+                )
                 if instruction is not None:
                     instructions += [instruction]
 
@@ -152,37 +190,61 @@ class TransactionScout:
             timestamp = datetime.datetime.fromtimestamp(response["blockTime"])
             signatures = response["transaction"]["signatures"]
             messages = response["meta"]["logMessages"]
-            pre_token_balances = list(map(lambda bal: balance_to_token_value(
-                accounts, bal), response["meta"]["preTokenBalances"]))
-            post_token_balances = list(map(lambda bal: balance_to_token_value(
-                accounts, bal), response["meta"]["postTokenBalances"]))
-            return TransactionScout(timestamp,
-                                    signatures,
-                                    succeeded,
-                                    group_name,
-                                    accounts,
-                                    instructions,
-                                    messages,
-                                    pre_token_balances,
-                                    post_token_balances)
+            pre_token_balances = list(
+                map(
+                    lambda bal: balance_to_token_value(accounts, bal),
+                    response["meta"]["preTokenBalances"],
+                )
+            )
+            post_token_balances = list(
+                map(
+                    lambda bal: balance_to_token_value(accounts, bal),
+                    response["meta"]["postTokenBalances"],
+                )
+            )
+            return TransactionScout(
+                timestamp,
+                signatures,
+                succeeded,
+                group_name,
+                accounts,
+                instructions,
+                messages,
+                pre_token_balances,
+                post_token_balances,
+            )
         except Exception as exception:
             signature = "Unknown"
-            if response and ("transaction" in response) and ("signatures" in response["transaction"]) and len(response["transaction"]["signatures"]) > 0:
+            if (
+                response
+                and ("transaction" in response)
+                and ("signatures" in response["transaction"])
+                and len(response["transaction"]["signatures"]) > 0
+            ):
                 signature = ", ".join(response["transaction"]["signatures"])
-            raise Exception(f"Exception fetching transaction '{signature}' - {traceback.format_exc()}", exception)
+            raise Exception(
+                f"Exception fetching transaction '{signature}' - {traceback.format_exc()}",
+                exception,
+            )
 
     def __str__(self) -> str:
-        def format_tokens(account_token_values: typing.Sequence[OwnedInstrumentValue]) -> str:
+        def format_tokens(
+            account_token_values: typing.Sequence[OwnedInstrumentValue],
+        ) -> str:
             if len(account_token_values) == 0:
                 return "None"
             return "\n        ".join([f"{atv}" for atv in account_token_values])
 
-        instruction_names = ", ".join([ins.instruction_type.name for ins in self.instructions])
+        instruction_names = ", ".join(
+            [ins.instruction_type.name for ins in self.instructions]
+        )
         signatures = "\n        ".join(self.signatures)
         accounts = "\n        ".join([f"{acc}" for acc in self.accounts])
         messages = "\n        ".join(self.messages)
         instructions = "\n        ".join([f"{ins}" for ins in self.instructions])
-        changes = OwnedInstrumentValue.changes(self.pre_token_balances, self.post_token_balances)
+        changes = OwnedInstrumentValue.changes(
+            self.pre_token_balances, self.post_token_balances
+        )
         tokens_in = format_tokens(self.pre_token_balances)
         tokens_out = format_tokens(self.post_token_balances)
         token_changes = format_tokens(changes)
@@ -220,9 +282,11 @@ def fetch_all_recent_transaction_signatures(context: Context) -> typing.Sequence
     before = None
     signature_results: typing.List[str] = []
     while not all_fetched:
-        signatures = context.client.get_confirmed_signatures_for_address2(context.group_address, before=before)
+        signatures = context.client.get_confirmed_signatures_for_address2(
+            context.group_address, before=before
+        )
         signature_results += signatures
-        if (len(signatures) == 0):
+        if len(signatures) == 0:
             all_fetched = True
         else:
             before = signature_results[-1]
@@ -230,7 +294,11 @@ def fetch_all_recent_transaction_signatures(context: Context) -> typing.Sequence
     return signature_results
 
 
-def mango_instruction_from_response(context: Context, all_accounts: typing.Sequence[PublicKey], instruction_data: typing.Dict[str, typing.Any]) -> typing.Optional["MangoInstruction"]:
+def mango_instruction_from_response(
+    context: Context,
+    all_accounts: typing.Sequence[PublicKey],
+    instruction_data: typing.Dict[str, typing.Any],
+) -> typing.Optional["MangoInstruction"]:
     program_account_index = instruction_data["programIdIndex"]
     if all_accounts[program_account_index] != context.mango_program_address:
         # It's an instruction, it's just not a Mango one.
@@ -244,7 +312,8 @@ def mango_instruction_from_response(context: Context, all_accounts: typing.Seque
     parser = layouts.InstructionParsersByVariant[initial.variant]
     if parser is None:
         logging.warning(
-            f"Could not find instruction parser for variant {initial.variant} / {InstructionType(initial.variant)}.")
+            f"Could not find instruction parser for variant {initial.variant} / {InstructionType(initial.variant)}."
+        )
         return None
 
     # A whole bunch of accounts are listed for a transaction. Some (or all) of them apply

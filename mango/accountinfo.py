@@ -31,7 +31,15 @@ from .encoding import decode_binary, encode_binary
 # # 🥭 AccountInfo class
 #
 class AccountInfo:
-    def __init__(self, address: PublicKey, executable: bool, lamports: Decimal, owner: PublicKey, rent_epoch: Decimal, data: bytes) -> None:
+    def __init__(
+        self,
+        address: PublicKey,
+        executable: bool,
+        lamports: Decimal,
+        owner: PublicKey,
+        rent_epoch: Decimal,
+        data: bytes,
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.address: PublicKey = address
         self.executable: bool = executable
@@ -54,7 +62,7 @@ class AccountInfo:
             "lamports": str(self.lamports),
             "owner": str(self.owner),
             "rent_epoch": str(self.rent_epoch),
-            "data": encode_binary(self.data)
+            "data": encode_binary(self.data),
         }
         with open(filename, "w") as json_file:
             json.dump(data, json_file, indent=4)
@@ -91,7 +99,9 @@ class AccountInfo:
             return AccountInfo(address, executable, lamports, owner, rent_epoch, data)
 
     @staticmethod
-    def load_multiple(context: Context, addresses: typing.Sequence[PublicKey]) -> typing.List["AccountInfo"]:
+    def load_multiple(
+        context: Context, addresses: typing.Sequence[PublicKey]
+    ) -> typing.List["AccountInfo"]:
         # This is a tricky one to get right.
         # Some errors this can generate:
         #  413 Client Error: Payload Too Large for url
@@ -99,18 +109,29 @@ class AccountInfo:
         chunk_size: int = int(context.gma_chunk_size)
         sleep_between_calls: float = float(context.gma_chunk_pause)
         multiple: typing.List[AccountInfo] = []
-        chunks: typing.Sequence[typing.Sequence[PublicKey]] = AccountInfo._split_list_into_chunks(addresses, chunk_size)
+        chunks: typing.Sequence[
+            typing.Sequence[PublicKey]
+        ] = AccountInfo._split_list_into_chunks(addresses, chunk_size)
         for counter, chunk in enumerate(chunks):
-            result: typing.Sequence[typing.Dict[str, typing.Any]] = context.client.get_multiple_accounts([*chunk])
+            result: typing.Sequence[
+                typing.Dict[str, typing.Any]
+            ] = context.client.get_multiple_accounts([*chunk])
             response_value_list = zip(result, chunk)
-            multiple += list(map(lambda pair: AccountInfo._from_response_values(pair[0], pair[1]), response_value_list))
+            multiple += list(
+                map(
+                    lambda pair: AccountInfo._from_response_values(pair[0], pair[1]),
+                    response_value_list,
+                )
+            )
             if (sleep_between_calls > 0.0) and (counter < (len(chunks) - 1)):
                 time.sleep(sleep_between_calls)
 
         return multiple
 
     @staticmethod
-    def _from_response_values(response_values: typing.Dict[str, typing.Any], address: PublicKey) -> "AccountInfo":
+    def _from_response_values(
+        response_values: typing.Dict[str, typing.Any], address: PublicKey
+    ) -> "AccountInfo":
         executable = bool(response_values["executable"])
         lamports = Decimal(response_values["lamports"])
         owner = PublicKey(response_values["owner"])
@@ -123,11 +144,13 @@ class AccountInfo:
         return AccountInfo._from_response_values(response["result"]["value"], address)
 
     @staticmethod
-    def _split_list_into_chunks(to_chunk: typing.Sequence[typing.Any], chunk_size: int = 100) -> typing.Sequence[typing.Sequence[typing.Any]]:
+    def _split_list_into_chunks(
+        to_chunk: typing.Sequence[typing.Any], chunk_size: int = 100
+    ) -> typing.Sequence[typing.Sequence[typing.Any]]:
         chunks = []
         start = 0
         while start < len(to_chunk):
-            chunk = to_chunk[start:start + chunk_size]
+            chunk = to_chunk[start : start + chunk_size]
             chunks += [chunk]
             start += chunk_size
         return chunks

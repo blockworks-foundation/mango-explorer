@@ -12,8 +12,7 @@ from solana.publickey import PublicKey
 from solana.system_program import TransferParams, transfer
 from solana.transaction import Transaction
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
@@ -21,11 +20,20 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(description="Sends SOL to a different address.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--address", type=PublicKey,
-                    help="Destination address for the SPL token - can be either the actual token address or the address of the owner of the token address")
-parser.add_argument("--quantity", type=Decimal, required=True, help="quantity of token to send")
-parser.add_argument("--dry-run", action="store_true", default=False,
-                    help="runs as read-only and does not perform any transactions")
+parser.add_argument(
+    "--address",
+    type=PublicKey,
+    help="Destination address for the SPL token - can be either the actual token address or the address of the owner of the token address",
+)
+parser.add_argument(
+    "--quantity", type=Decimal, required=True, help="quantity of token to send"
+)
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    default=False,
+    help="runs as read-only and does not perform any transactions",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 try:
@@ -51,7 +59,9 @@ try:
         mango.output("Skipping actual transfer - dry run.")
     else:
         transaction = Transaction()
-        params = TransferParams(from_pubkey=source, to_pubkey=destination, lamports=lamports)
+        params = TransferParams(
+            from_pubkey=source, to_pubkey=destination, lamports=lamports
+        )
         transaction.add(transfer(params))
 
         transaction_id = context.client.send_transaction(transaction, wallet.keypair)
@@ -61,6 +71,10 @@ try:
     updated_balance = context.client.get_balance(wallet.address)
     mango.output(f"{text_amount} sent. Balance now: {updated_balance} SOL")
 except Exception as exception:
-    logging.critical(f"send-sols stopped because of exception: {exception} - {traceback.format_exc()}")
+    logging.critical(
+        f"send-sols stopped because of exception: {exception} - {traceback.format_exc()}"
+    )
 except:
-    logging.critical(f"send-sols stopped because of uncatchable error: {traceback.format_exc()}")
+    logging.critical(
+        f"send-sols stopped because of uncatchable error: {traceback.format_exc()}"
+    )

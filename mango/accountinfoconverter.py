@@ -42,22 +42,30 @@ from .tokenbank import NodeBank, RootBank, TokenBank
 # Given a `Context` and an account type, returns a function that can take an `AccountInfo` and
 # return one of our objects.
 #
-def build_account_info_converter(context: Context, account_type: str) -> typing.Callable[[AccountInfo], AddressableAccount]:
+def build_account_info_converter(
+    context: Context, account_type: str
+) -> typing.Callable[[AccountInfo], AddressableAccount]:
     account_type_upper = account_type.upper()
     if account_type_upper == "GROUP":
         return lambda account_info: Group.parse_with_context(context, account_info)
     elif account_type_upper == "ACCOUNT":
+
         def account_loader(account_info: AccountInfo) -> Account:
             layout_account = layouts.MANGO_ACCOUNT.parse(account_info.data)
             group_address = layout_account.group
             group: Group = Group.load(context, group_address)
             cache: Cache = group.fetch_cache(context)
             return Account.parse(account_info, group, cache)
+
         return account_loader
     elif account_type_upper == "OPENORDERS":
-        return lambda account_info: OpenOrders.parse(account_info, Decimal(6), Decimal(6))
+        return lambda account_info: OpenOrders.parse(
+            account_info, Decimal(6), Decimal(6)
+        )
     elif account_type_upper == "PERPEVENTQUEUE":
-        return lambda account_info: PerpEventQueue.parse(account_info, NullLotSizeConverter())
+        return lambda account_info: PerpEventQueue.parse(
+            account_info, NullLotSizeConverter()
+        )
     elif account_type_upper == "SERUMEVENTQUEUE":
         return lambda account_info: SerumEventQueue.parse(account_info)
     elif account_type_upper == "CACHE":
@@ -67,21 +75,30 @@ def build_account_info_converter(context: Context, account_type: str) -> typing.
     elif account_type_upper == "NODEBANK":
         return lambda account_info: NodeBank.parse(account_info)
     elif account_type_upper == "PERPMARKETDETAILS":
+
         def perp_market_details_loader(account_info: AccountInfo) -> PerpMarketDetails:
             layout_perp_market_details = layouts.PERP_MARKET.parse(account_info.data)
             group_address = layout_perp_market_details.group
             group: Group = Group.load(context, group_address)
             return PerpMarketDetails.parse(account_info, group)
+
         return perp_market_details_loader
     elif account_type_upper == "PERPORDERBOOKSIDE":
+
         class __FakePerpMarketDetails(PerpMarketDetails):
             def __init__(self) -> None:
-                self.base_instrument = Instrument("UNKNOWNBASE", "Unknown Base", Decimal(0))
-                self.quote_token = TokenBank(Token("UNKNOWNQUOTE", "Unknown Quote",
-                                             Decimal(0), PublicKey(0)), PublicKey(0))
+                self.base_instrument = Instrument(
+                    "UNKNOWNBASE", "Unknown Base", Decimal(0)
+                )
+                self.quote_token = TokenBank(
+                    Token("UNKNOWNQUOTE", "Unknown Quote", Decimal(0), PublicKey(0)),
+                    PublicKey(0),
+                )
                 self.base_lot_size = Decimal(1)
                 self.quote_lot_size = Decimal(1)
 
-        return lambda account_info: PerpOrderBookSide.parse(account_info, __FakePerpMarketDetails())
+        return lambda account_info: PerpOrderBookSide.parse(
+            account_info, __FakePerpMarketDetails()
+        )
 
     raise Exception(f"Could not find AccountInfo converter for type {account_type}.")

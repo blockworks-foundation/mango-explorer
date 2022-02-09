@@ -8,7 +8,9 @@ from mango.marketmaking.orderchain.quotesinglesideelement import QuoteSingleSide
 
 def test_from_args() -> None:
     args: argparse.Namespace = argparse.Namespace(quotesingleside_side=mango.Side.BUY)
-    actual: QuoteSingleSideElement = QuoteSingleSideElement.from_command_line_parameters(args)
+    actual: QuoteSingleSideElement = (
+        QuoteSingleSideElement.from_command_line_parameters(args)
+    )
     assert actual is not None
     assert isinstance(actual, QuoteSingleSideElement)
 
@@ -44,7 +46,7 @@ def test_allow_all_buys_and_no_sells() -> None:
         fake_order(side=mango.Side.BUY),
         fake_order(side=mango.Side.SELL),
         fake_order(side=mango.Side.BUY),
-        fake_order(side=mango.Side.SELL)
+        fake_order(side=mango.Side.SELL),
     ]
 
     actual: QuoteSingleSideElement = QuoteSingleSideElement(mango.Side.BUY)
@@ -63,7 +65,7 @@ def test_allow_all_sells_and_no_buys() -> None:
         fake_order(side=mango.Side.BUY),
         fake_order(side=mango.Side.SELL),
         fake_order(side=mango.Side.BUY),
-        fake_order(side=mango.Side.SELL)
+        fake_order(side=mango.Side.SELL),
     ]
 
     actual: QuoteSingleSideElement = QuoteSingleSideElement(mango.Side.SELL)
@@ -83,7 +85,7 @@ def test_allow_all_buys_and_no_sells_different_pattern() -> None:
         fake_order(side=mango.Side.SELL),
         fake_order(side=mango.Side.SELL),
         fake_order(side=mango.Side.SELL),
-        fake_order(side=mango.Side.BUY)
+        fake_order(side=mango.Side.BUY),
     ]
 
     actual: QuoteSingleSideElement = QuoteSingleSideElement(mango.Side.BUY)

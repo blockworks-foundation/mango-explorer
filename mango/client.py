@@ -34,7 +34,14 @@ from solana.publickey import PublicKey
 from solana.rpc.api import Client
 from solana.rpc.commitment import Commitment, Processed, Finalized
 from solana.rpc.providers.http import HTTPProvider
-from solana.rpc.types import DataSliceOpts, MemcmpOpts, RPCMethod, RPCResponse, TokenAccountOpts, TxOpts
+from solana.rpc.types import (
+    DataSliceOpts,
+    MemcmpOpts,
+    RPCMethod,
+    RPCResponse,
+    TokenAccountOpts,
+    TxOpts,
+)
 from solana.transaction import Transaction
 
 from .constants import SOL_DECIMAL_DIVISOR
@@ -123,7 +130,12 @@ class TooManyRequestsRateLimitException(RateLimitException):
 # considers it 'recent') or when it's too new (and hasn't yet made it to the node that is responding).
 #
 class BlockhashNotFoundException(ClientException):
-    def __init__(self, name: str, cluster_rpc_url: str, blockhash: typing.Optional[Blockhash] = None) -> None:
+    def __init__(
+        self,
+        name: str,
+        cluster_rpc_url: str,
+        blockhash: typing.Optional[Blockhash] = None,
+    ) -> None:
         message: str = f"Blockhash '{blockhash}' not found on {cluster_rpc_url}."
         super().__init__(message, name, cluster_rpc_url)
         self.blockhash: typing.Optional[Blockhash] = blockhash
@@ -164,7 +176,13 @@ class TransactionAlreadyProcessedException(RateLimitException):
 # A `StaleSlotException` exception allows trapping and handling exceptions when data is received from
 #
 class StaleSlotException(ClientException):
-    def __init__(self, name: str, cluster_rpc_url: str, latest_seen_slot: int, just_returned_slot: int) -> None:
+    def __init__(
+        self,
+        name: str,
+        cluster_rpc_url: str,
+        latest_seen_slot: int,
+        just_returned_slot: int,
+    ) -> None:
         message: str = f"Stale slot received - received data from slot {just_returned_slot} having previously seen slot {latest_seen_slot}."
         super().__init__(message, name, cluster_rpc_url)
         self.latest_seen_slot: int = latest_seen_slot
@@ -180,7 +198,13 @@ class StaleSlotException(ClientException):
 # to fetch a recent or distinct blockhash.
 #
 class FailedToFetchBlockhashException(ClientException):
-    def __init__(self, message: str, name: str, cluster_rpc_url: str, pauses: typing.Sequence[float]) -> None:
+    def __init__(
+        self,
+        message: str,
+        name: str,
+        cluster_rpc_url: str,
+        pauses: typing.Sequence[float],
+    ) -> None:
         super().__init__(message, name, cluster_rpc_url)
         self.pauses: typing.Sequence[float] = pauses
 
@@ -198,7 +222,21 @@ class FailedToFetchBlockhashException(ClientException):
 # of problems at the right place.
 #
 class TransactionException(ClientException):
-    def __init__(self, transaction: typing.Optional[Transaction], message: str, code: int, name: str, cluster_rpc_url: str, rpc_method: str, request_text: str, response_text: str, accounts: typing.Union[str, typing.List[str], None], errors: typing.Union[str, typing.List[str], None], logs: typing.Union[str, typing.List[str], None], instruction_reporter: InstructionReporter = InstructionReporter()) -> None:
+    def __init__(
+        self,
+        transaction: typing.Optional[Transaction],
+        message: str,
+        code: int,
+        name: str,
+        cluster_rpc_url: str,
+        rpc_method: str,
+        request_text: str,
+        response_text: str,
+        accounts: typing.Union[str, typing.List[str], None],
+        errors: typing.Union[str, typing.List[str], None],
+        logs: typing.Union[str, typing.List[str], None],
+        instruction_reporter: InstructionReporter = InstructionReporter(),
+    ) -> None:
         super().__init__(message, name, cluster_rpc_url)
         self.transaction: typing.Optional[Transaction] = transaction
         self.code: int = code
@@ -206,7 +244,9 @@ class TransactionException(ClientException):
         self.request_text: str = request_text
         self.response_text: str = response_text
 
-        def _ensure_list(item: typing.Union[str, typing.List[str], None]) -> typing.List[str]:
+        def _ensure_list(
+            item: typing.Union[str, typing.List[str], None]
+        ) -> typing.List[str]:
             if item is None:
                 return []
             if isinstance(item, str):
@@ -214,6 +254,7 @@ class TransactionException(ClientException):
             if isinstance(item, list):
                 return item
             return [f"{item}"]
+
         self.accounts: typing.Sequence[str] = _ensure_list(accounts)
         self.errors: typing.Sequence[str] = _ensure_list(errors)
         self.logs: typing.Sequence[str] = expand_log_messages(_ensure_list(logs))
@@ -224,17 +265,32 @@ class TransactionException(ClientException):
             transaction_details = ""
             if self.transaction is not None:
                 instruction_details = "\n".join(
-                    list(map(self.instruction_reporter.report, self.transaction.instructions)))
-                transaction_details = "\n    Instructions:\n        " + instruction_details.replace("\n", "\n        ")
+                    list(
+                        map(
+                            self.instruction_reporter.report,
+                            self.transaction.instructions,
+                        )
+                    )
+                )
+                transaction_details = (
+                    "\n    Instructions:\n        "
+                    + instruction_details.replace("\n", "\n        ")
+                )
             accounts = "No Accounts"
             if len(self.accounts) > 0:
-                accounts = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.accounts])
+                accounts = "\n        ".join(
+                    [f"{item}".replace("\n", "\n        ") for item in self.accounts]
+                )
             errors = "No Errors"
             if len(self.errors) > 0:
-                errors = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.errors])
+                errors = "\n        ".join(
+                    [f"{item}".replace("\n", "\n        ") for item in self.errors]
+                )
             logs = "No Logs"
             if len(self.logs) > 0:
-                logs = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.logs])
+                logs = "\n        ".join(
+                    [f"{item}".replace("\n", "\n        ") for item in self.logs]
+                )
             return f"""« TransactionException in '{self.name}' [{self.rpc_method}]: {self.code}:: {self.message}{transaction_details}
     Accounts:
         {accounts}
@@ -267,11 +323,15 @@ class SlotHolder:
     def latest_slot(self) -> int:
         return self.__latest_slot
 
-    def require_data_from_fresh_slot(self, latest_slot: typing.Optional[int] = None) -> None:
+    def require_data_from_fresh_slot(
+        self, latest_slot: typing.Optional[int] = None
+    ) -> None:
         latest: int = latest_slot or self.latest_slot
         if latest >= self.latest_slot:
             self.__latest_slot = latest + 1
-            self._logger.debug(f"Requiring data from slot {self.latest_slot} onwards now.")
+            self._logger.debug(
+                f"Requiring data from slot {self.latest_slot} onwards now."
+            )
 
     def is_acceptable(self, slot_to_check: int) -> bool:
         if slot_to_check < self.__latest_slot:
@@ -279,7 +339,9 @@ class SlotHolder:
 
         if slot_to_check > self.__latest_slot:
             self.__latest_slot = slot_to_check
-            self._logger.debug(f"Only accepting data from slot {self.latest_slot} onwards now.")
+            self._logger.debug(
+                f"Only accepting data from slot {self.latest_slot} onwards now."
+            )
         return True
 
 
@@ -318,7 +380,13 @@ class NullTransactionStatusCollector(TransactionStatusCollector):
 
 
 class TransactionWatcher:
-    def __init__(self, client: Client, slot_holder: SlotHolder, signature: str, collector: TransactionStatusCollector):
+    def __init__(
+        self,
+        client: Client,
+        slot_holder: SlotHolder,
+        signature: str,
+        collector: TransactionStatusCollector,
+    ):
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.client: Client = client
         self.slot_holder: SlotHolder = slot_holder
@@ -327,9 +395,47 @@ class TransactionWatcher:
 
     def report_on_transaction(self) -> None:
         started_at: datetime = datetime.now()
-        for pause in [0.1, 0.2, 0.3, 0.4, 0.5, 0.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]:
+        for pause in [
+            0.1,
+            0.2,
+            0.3,
+            0.4,
+            0.5,
+            0.5,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+        ]:
             transaction_response = self.client.get_signature_statuses([self.signature])
-            if "result" in transaction_response and "value" in transaction_response["result"]:
+            if (
+                "result" in transaction_response
+                and "value" in transaction_response["result"]
+            ):
                 [status] = transaction_response["result"]["value"]
                 if status is not None:
                     delta: timedelta = datetime.now() - started_at
@@ -356,27 +462,47 @@ class TransactionWatcher:
                     err = status["err"]
                     if err is not None:
                         self._logger.warning(
-                            f"Transaction {self.signature} failed after {time_taken:.2f} seconds with error {err}")
-                        self.collector.add_transaction(TransactionStatus(
-                            self.signature, TransactionOutcome.FAIL, err, started_at, delta))
+                            f"Transaction {self.signature} failed after {time_taken:.2f} seconds with error {err}"
+                        )
+                        self.collector.add_transaction(
+                            TransactionStatus(
+                                self.signature,
+                                TransactionOutcome.FAIL,
+                                err,
+                                started_at,
+                                delta,
+                            )
+                        )
                         return
 
                     confirmation_status: str = status["confirmationStatus"]
                     slot: int = status["slot"]
                     self.slot_holder.require_data_from_fresh_slot(slot)
-                    self.collector.add_transaction(TransactionStatus(
-                        self.signature, TransactionOutcome.SUCCESS, None, started_at, delta))
+                    self.collector.add_transaction(
+                        TransactionStatus(
+                            self.signature,
+                            TransactionOutcome.SUCCESS,
+                            None,
+                            started_at,
+                            delta,
+                        )
+                    )
                     self._logger.info(
-                        f"Transaction {self.signature} reached confirmation status '{confirmation_status}' in slot {slot} after {time_taken:.2f} seconds")
+                        f"Transaction {self.signature} reached confirmation status '{confirmation_status}' in slot {slot} after {time_taken:.2f} seconds"
+                    )
                     return
             time.sleep(pause)
 
         delta = datetime.now() - started_at
         time_wasted_looking: float = delta.seconds + delta.microseconds / 1000000
-        self.collector.add_transaction(TransactionStatus(
-            self.signature, TransactionOutcome.TIMEOUT, None, started_at, delta))
+        self.collector.add_transaction(
+            TransactionStatus(
+                self.signature, TransactionOutcome.TIMEOUT, None, started_at, delta
+            )
+        )
         self._logger.warning(
-            f"Transaction {self.signature} disappeared despite spending {time_wasted_looking:.2f} seconds waiting for it")
+            f"Transaction {self.signature} disappeared despite spending {time_wasted_looking:.2f} seconds waiting for it"
+        )
 
 
 # # 🥭 RPCCaller class
@@ -384,18 +510,31 @@ class TransactionWatcher:
 # A `RPCCaller` extends the HTTPProvider with better error handling.
 #
 class RPCCaller(HTTPProvider):
-    def __init__(self, name: str, cluster_rpc_url: str, cluster_ws_url: str, http_request_timeout: float, stale_data_pauses_before_retry: typing.Sequence[float], slot_holder: SlotHolder, instruction_reporter: InstructionReporter):
+    def __init__(
+        self,
+        name: str,
+        cluster_rpc_url: str,
+        cluster_ws_url: str,
+        http_request_timeout: float,
+        stale_data_pauses_before_retry: typing.Sequence[float],
+        slot_holder: SlotHolder,
+        instruction_reporter: InstructionReporter,
+    ):
         super().__init__(cluster_rpc_url)
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         self.cluster_rpc_url: str = cluster_rpc_url
         self.cluster_ws_url: str = cluster_ws_url
         self.http_request_timeout: float = http_request_timeout
-        self.stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry
+        self.stale_data_pauses_before_retry: typing.Sequence[
+            float
+        ] = stale_data_pauses_before_retry
         self.slot_holder: SlotHolder = slot_holder
         self.instruction_reporter: InstructionReporter = instruction_reporter
 
-    def require_data_from_fresh_slot(self, latest_slot: typing.Optional[int] = None) -> None:
+    def require_data_from_fresh_slot(
+        self, latest_slot: typing.Optional[int] = None
+    ) -> None:
         self.slot_holder.require_data_from_fresh_slot(latest_slot)
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
@@ -425,7 +564,9 @@ class RPCCaller(HTTPProvider):
                 }
             except StaleSlotException as exception:
                 last_stale_slot_exception = exception
-                self._logger.debug(f"Will retry after pause of {pause} seconds after getting stale slot: {exception}")
+                self._logger.debug(
+                    f"Will retry after pause of {pause} seconds after getting stale slot: {exception}"
+                )
                 time.sleep(pause)
             at_least_one_submission = True
 
@@ -440,9 +581,12 @@ class RPCCaller(HTTPProvider):
         # raw_response = requests.post(**request_kwargs)
         # return self._after_request(raw_response=raw_response, method=method)
 
-        request_kwargs = self._before_request(method=method, params=params, is_async=False)
-        http_post_timeout: typing.Union[float,
-                                        None] = self.http_request_timeout if self.http_request_timeout >= 0 else None
+        request_kwargs = self._before_request(
+            method=method, params=params, is_async=False
+        )
+        http_post_timeout: typing.Union[float, None] = (
+            self.http_request_timeout if self.http_request_timeout >= 0 else None
+        )
         raw_response = requests.post(**request_kwargs, timeout=http_post_timeout)
 
         # Some custom exceptions specifically for rate-limiting. This allows calling code to handle this
@@ -451,10 +595,16 @@ class RPCCaller(HTTPProvider):
         # "You will see HTTP respose codes 429 for too many requests or 413 for too much bandwidth."
         if raw_response.status_code == 413:
             raise TooMuchBandwidthRateLimitException(
-                f"Rate limited (too much bandwidth) calling method '{method}' on {self.cluster_rpc_url}", self.name, self.cluster_rpc_url)
+                f"Rate limited (too much bandwidth) calling method '{method}' on {self.cluster_rpc_url}",
+                self.name,
+                self.cluster_rpc_url,
+            )
         elif raw_response.status_code == 429:
             raise TooManyRequestsRateLimitException(
-                f"Rate limited (too many requests) calling method '{method}' on {self.cluster_rpc_url}", self.name, self.cluster_rpc_url)
+                f"Rate limited (too many requests) calling method '{method}' on {self.cluster_rpc_url}",
+                self.name,
+                self.cluster_rpc_url,
+            )
 
         # Not a rate-limit problem, but maybe there was some other error?
         raw_response.raise_for_status()
@@ -468,27 +618,60 @@ class RPCCaller(HTTPProvider):
         # newer slot.
         #
         # Only do this check if we're using a commitment level of 'processed'.
-        if isinstance(params, Mapping) and len(params) > 1 and "commitment" in params[1] and params[1]["commitment"] == Processed:
-            if "result" in response and isinstance(response["result"], Mapping) and "context" in response["result"] and isinstance(response["result"]["context"], Mapping) and "slot" in response["result"]["context"]:
+        if (
+            isinstance(params, Mapping)
+            and len(params) > 1
+            and "commitment" in params[1]
+            and params[1]["commitment"] == Processed
+        ):
+            if (
+                "result" in response
+                and isinstance(response["result"], Mapping)
+                and "context" in response["result"]
+                and isinstance(response["result"]["context"], Mapping)
+                and "slot" in response["result"]["context"]
+            ):
                 slot: int = response["result"]["context"]["slot"]
                 if not self.slot_holder.is_acceptable(slot):
                     self._logger.warning(
-                        f"Result is from stale slot: {slot} - latest slot is: {self.slot_holder.latest_slot}")
-                    raise StaleSlotException(self.name, self.cluster_rpc_url, self.slot_holder.latest_slot, slot)
+                        f"Result is from stale slot: {slot} - latest slot is: {self.slot_holder.latest_slot}"
+                    )
+                    raise StaleSlotException(
+                        self.name,
+                        self.cluster_rpc_url,
+                        self.slot_holder.latest_slot,
+                        slot,
+                    )
 
         if "error" in response:
             if response["error"] is str:
                 message: str = typing.cast(str, response["error"])
-                raise ClientException(f"Transaction failed: '{message}'", self.name, self.cluster_rpc_url)
+                raise ClientException(
+                    f"Transaction failed: '{message}'", self.name, self.cluster_rpc_url
+                )
             else:
                 error = response["error"]
-                error_message: str = error["message"] if "message" in error else "No message"
-                error_data: typing.Dict[str, typing.Any] = error["data"] if "data" in error else {}
-                error_accounts = error_data["accounts"] if "accounts" in error_data else "No accounts"
+                error_message: str = (
+                    error["message"] if "message" in error else "No message"
+                )
+                error_data: typing.Dict[str, typing.Any] = (
+                    error["data"] if "data" in error else {}
+                )
+                error_accounts = (
+                    error_data["accounts"]
+                    if "accounts" in error_data
+                    else "No accounts"
+                )
                 error_code: int = error["code"] if "code" in error else -1
-                error_err = error_data["err"] if "err" in error_data else "No error text returned"
+                error_err = (
+                    error_data["err"]
+                    if "err" in error_data
+                    else "No error text returned"
+                )
                 error_logs = error_data["logs"] if "logs" in error_data else "No logs"
-                parameters = json.dumps({"jsonrpc": "2.0", "method": method, "params": params})
+                parameters = json.dumps(
+                    {"jsonrpc": "2.0", "method": method, "params": params}
+                )
 
                 transaction: typing.Optional[Transaction] = None
                 blockhash: typing.Optional[Blockhash] = None
@@ -497,25 +680,54 @@ class RPCCaller(HTTPProvider):
                     blockhash = transaction.recent_blockhash
 
                 if error_code == -32005:
-                    slots_behind: int = error["data"]["numSlotsBehind"] if "numSlotsBehind" in error["data"] else -1
-                    raise NodeIsBehindException(self.name, self.cluster_rpc_url, slots_behind)
+                    slots_behind: int = (
+                        error["data"]["numSlotsBehind"]
+                        if "numSlotsBehind" in error["data"]
+                        else -1
+                    )
+                    raise NodeIsBehindException(
+                        self.name, self.cluster_rpc_url, slots_behind
+                    )
 
                 if error_err == "BlockhashNotFound":
-                    raise BlockhashNotFoundException(self.name, self.cluster_rpc_url, blockhash)
+                    raise BlockhashNotFoundException(
+                        self.name, self.cluster_rpc_url, blockhash
+                    )
 
                 if error_err == "AlreadyProcessed":
-                    raise TransactionAlreadyProcessedException(error_message, self.name, self.cluster_rpc_url)
+                    raise TransactionAlreadyProcessedException(
+                        error_message, self.name, self.cluster_rpc_url
+                    )
 
                 exception_message: str = f"Transaction failed with: '{error_message}'"
-                raise TransactionException(transaction, exception_message, error_code, self.name,
-                                           self.cluster_rpc_url, method, parameters, response_text, error_accounts,
-                                           error_err, error_logs, self.instruction_reporter)
+                raise TransactionException(
+                    transaction,
+                    exception_message,
+                    error_code,
+                    self.name,
+                    self.cluster_rpc_url,
+                    method,
+                    parameters,
+                    response_text,
+                    error_accounts,
+                    error_err,
+                    error_logs,
+                    self.instruction_reporter,
+                )
 
         if method == "getRecentBlockhash":
-            if "result" in response and "value" in response["result"] and "blockhash" in response["result"]["value"] and "context" in response["result"] and "slot" in response["result"]["context"]:
+            if (
+                "result" in response
+                and "value" in response["result"]
+                and "blockhash" in response["result"]["value"]
+                and "context" in response["result"]
+                and "slot" in response["result"]["context"]
+            ):
                 fresh_blockhash = Blockhash(response["result"]["value"]["blockhash"])
                 fresh_blockhash_slot = Blockhash(response["result"]["context"]["slot"])
-                self._logger.debug(f"Recent blockhash [slot: {fresh_blockhash_slot}]: {fresh_blockhash}")
+                self._logger.debug(
+                    f"Recent blockhash [slot: {fresh_blockhash_slot}]: {fresh_blockhash}"
+                )
 
         # The call succeeded.
         return typing.cast(RPCResponse, response)
@@ -569,19 +781,28 @@ class CompoundRPCCaller(HTTPProvider):
                 successful_index: int = self.__providers.index(provider)
                 if successful_index != 0:
                     # Rebase the providers' list so we continue to use this successful one (until it fails)
-                    self.__providers = [*self.__providers[successful_index:], *self.__providers[:successful_index]]
+                    self.__providers = [
+                        *self.__providers[successful_index:],
+                        *self.__providers[:successful_index],
+                    ]
                     self.on_provider_change()
-                    self._logger.debug(f"Shifted provider - now using: {self.__providers[0]}")
+                    self._logger.debug(
+                        f"Shifted provider - now using: {self.__providers[0]}"
+                    )
                 return result
-            except (requests.exceptions.HTTPError,
-                    requests.exceptions.ConnectionError,
-                    requests.exceptions.Timeout,
-                    RateLimitException,
-                    NodeIsBehindException,
-                    StaleSlotException,
-                    FailedToFetchBlockhashException) as exception:
+            except (
+                requests.exceptions.HTTPError,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout,
+                RateLimitException,
+                NodeIsBehindException,
+                StaleSlotException,
+                FailedToFetchBlockhashException,
+            ) as exception:
                 all_exceptions += [exception]
-                self._logger.info(f"Moving to next provider - {provider} gave {exception}")
+                self._logger.info(
+                    f"Moving to next provider - {provider} gave {exception}"
+                )
 
         if len(all_exceptions) == 1:
             raise all_exceptions[0]
@@ -616,7 +837,18 @@ class ClusterUrlData:
 
 
 class BetterClient:
-    def __init__(self, client: Client, name: str, cluster_name: str, commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, rpc_caller: CompoundRPCCaller, transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector()) -> None:
+    def __init__(
+        self,
+        client: Client,
+        name: str,
+        cluster_name: str,
+        commitment: Commitment,
+        skip_preflight: bool,
+        encoding: str,
+        blockhash_cache_duration: int,
+        rpc_caller: CompoundRPCCaller,
+        transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector(),
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.compatible_client: Client = client
         self.name: str = name
@@ -627,23 +859,48 @@ class BetterClient:
         self.blockhash_cache_duration: int = blockhash_cache_duration
         self.rpc_caller: CompoundRPCCaller = rpc_caller
         self.executor: Executor = ThreadPoolExecutor()
-        self.transaction_status_collector: TransactionStatusCollector = transaction_status_collector
+        self.transaction_status_collector: TransactionStatusCollector = (
+            transaction_status_collector
+        )
 
     @staticmethod
-    def from_configuration(name: str, cluster_name: str, cluster_urls: typing.Sequence[ClusterUrlData], commitment: Commitment, skip_preflight: bool, encoding: str, blockhash_cache_duration: int, http_request_timeout: float, stale_data_pauses_before_retry: typing.Sequence[float], instruction_reporter: InstructionReporter, transaction_status_collector: TransactionStatusCollector) -> "BetterClient":
+    def from_configuration(
+        name: str,
+        cluster_name: str,
+        cluster_urls: typing.Sequence[ClusterUrlData],
+        commitment: Commitment,
+        skip_preflight: bool,
+        encoding: str,
+        blockhash_cache_duration: int,
+        http_request_timeout: float,
+        stale_data_pauses_before_retry: typing.Sequence[float],
+        instruction_reporter: InstructionReporter,
+        transaction_status_collector: TransactionStatusCollector,
+    ) -> "BetterClient":
         slot_holder: SlotHolder = SlotHolder()
         rpc_callers: typing.List[RPCCaller] = []
         cluster_url: ClusterUrlData
         for cluster_url in cluster_urls:
-            rpc_caller: RPCCaller = RPCCaller(name, cluster_url.rpc, cluster_url.ws, http_request_timeout, stale_data_pauses_before_retry,
-                                              slot_holder, instruction_reporter)
+            rpc_caller: RPCCaller = RPCCaller(
+                name,
+                cluster_url.rpc,
+                cluster_url.ws,
+                http_request_timeout,
+                stale_data_pauses_before_retry,
+                slot_holder,
+                instruction_reporter,
+            )
             rpc_callers += [rpc_caller]
 
         provider: CompoundRPCCaller = CompoundRPCCaller(name, rpc_callers)
         blockhash_cache: typing.Union[BlockhashCache, bool] = False
         if blockhash_cache_duration > 0:
             blockhash_cache = BlockhashCache(blockhash_cache_duration)
-        client: Client = Client(endpoint=cluster_url.rpc, commitment=commitment, blockhash_cache=blockhash_cache)
+        client: Client = Client(
+            endpoint=cluster_url.rpc,
+            commitment=commitment,
+            blockhash_cache=blockhash_cache,
+        )
         client._provider = provider
 
         def __on_provider_change() -> None:
@@ -656,7 +913,17 @@ class BetterClient:
 
         provider.on_provider_change = __on_provider_change
 
-        return BetterClient(client, name, cluster_name, commitment, skip_preflight, encoding, blockhash_cache_duration, provider, transaction_status_collector)
+        return BetterClient(
+            client,
+            name,
+            cluster_name,
+            commitment,
+            skip_preflight,
+            encoding,
+            blockhash_cache_duration,
+            provider,
+            transaction_status_collector,
+        )
 
     @property
     def cluster_rpc_url(self) -> str:
@@ -664,7 +931,9 @@ class BetterClient:
 
     @property
     def cluster_rpc_urls(self) -> typing.Sequence[str]:
-        return [rpc_caller.cluster_rpc_url for rpc_caller in self.rpc_caller.all_providers]
+        return [
+            rpc_caller.cluster_rpc_url for rpc_caller in self.rpc_caller.all_providers
+        ]
 
     @property
     def cluster_ws_url(self) -> str:
@@ -672,7 +941,9 @@ class BetterClient:
 
     @property
     def cluster_ws_urls(self) -> typing.Sequence[str]:
-        return [rpc_caller.cluster_ws_url for rpc_caller in self.rpc_caller.all_providers]
+        return [
+            rpc_caller.cluster_ws_url for rpc_caller in self.rpc_caller.all_providers
+        ]
 
     @property
     def cluster_urls(self) -> typing.Sequence[ClusterUrlData]:
@@ -692,69 +963,137 @@ class BetterClient:
     def require_data_from_fresh_slot(self) -> None:
         self.rpc_caller.current.require_data_from_fresh_slot()
 
-    def get_balance(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment) -> Decimal:
+    def get_balance(
+        self,
+        pubkey: typing.Union[PublicKey, str],
+        commitment: Commitment = UnspecifiedCommitment,
+    ) -> Decimal:
         resolved_commitment, _ = self.__resolve_defaults(commitment)
         response = self.compatible_client.get_balance(pubkey, resolved_commitment)
         value = Decimal(response["result"]["value"])
         return value / SOL_DECIMAL_DIVISOR
 
-    def get_account_info(self, pubkey: typing.Union[PublicKey, str], commitment: Commitment = UnspecifiedCommitment,
-                         encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> typing.Any:
-        resolved_commitment, resolved_encoding = self.__resolve_defaults(commitment, encoding)
-        response = self.compatible_client.get_account_info(pubkey, resolved_commitment, resolved_encoding, data_slice)
+    def get_account_info(
+        self,
+        pubkey: typing.Union[PublicKey, str],
+        commitment: Commitment = UnspecifiedCommitment,
+        encoding: str = UnspecifiedEncoding,
+        data_slice: typing.Optional[DataSliceOpts] = None,
+    ) -> typing.Any:
+        resolved_commitment, resolved_encoding = self.__resolve_defaults(
+            commitment, encoding
+        )
+        response = self.compatible_client.get_account_info(
+            pubkey, resolved_commitment, resolved_encoding, data_slice
+        )
         return response["result"]
 
-    def get_confirmed_signatures_for_address2(self, account: typing.Union[str, Keypair, PublicKey], before: typing.Optional[str] = None, until: typing.Optional[str] = None, limit: typing.Optional[int] = None) -> typing.Sequence[str]:
-        response = self.compatible_client.get_confirmed_signature_for_address2(account, before, until, limit)
+    def get_confirmed_signatures_for_address2(
+        self,
+        account: typing.Union[str, Keypair, PublicKey],
+        before: typing.Optional[str] = None,
+        until: typing.Optional[str] = None,
+        limit: typing.Optional[int] = None,
+    ) -> typing.Sequence[str]:
+        response = self.compatible_client.get_confirmed_signature_for_address2(
+            account, before, until, limit
+        )
         return [result["signature"] for result in response["result"]]
 
-    def get_confirmed_transaction(self, signature: str, encoding: str = "json") -> typing.Any:
+    def get_confirmed_transaction(
+        self, signature: str, encoding: str = "json"
+    ) -> typing.Any:
         _, resolved_encoding = self.__resolve_defaults(None, encoding)
-        response = self.compatible_client.get_confirmed_transaction(signature, resolved_encoding)
+        response = self.compatible_client.get_confirmed_transaction(
+            signature, resolved_encoding
+        )
         return response["result"]
 
-    def get_minimum_balance_for_rent_exemption(self, size: int, commitment: Commitment = UnspecifiedCommitment) -> int:
+    def get_minimum_balance_for_rent_exemption(
+        self, size: int, commitment: Commitment = UnspecifiedCommitment
+    ) -> int:
         resolved_commitment, _ = self.__resolve_defaults(commitment)
-        response = self.compatible_client.get_minimum_balance_for_rent_exemption(size, resolved_commitment)
+        response = self.compatible_client.get_minimum_balance_for_rent_exemption(
+            size, resolved_commitment
+        )
         return int(response["result"])
 
-    def get_program_accounts(self, pubkey: typing.Union[str, PublicKey],
-                             commitment: Commitment = UnspecifiedCommitment,
-                             encoding: typing.Optional[str] = UnspecifiedEncoding,
-                             data_slice: typing.Optional[DataSliceOpts] = None,
-                             data_size: typing.Optional[int] = None,
-                             memcmp_opts: typing.Optional[typing.List[MemcmpOpts]] = None) -> typing.Any:
-        resolved_commitment, resolved_encoding = self.__resolve_defaults(commitment, encoding)
+    def get_program_accounts(
+        self,
+        pubkey: typing.Union[str, PublicKey],
+        commitment: Commitment = UnspecifiedCommitment,
+        encoding: typing.Optional[str] = UnspecifiedEncoding,
+        data_slice: typing.Optional[DataSliceOpts] = None,
+        data_size: typing.Optional[int] = None,
+        memcmp_opts: typing.Optional[typing.List[MemcmpOpts]] = None,
+    ) -> typing.Any:
+        resolved_commitment, resolved_encoding = self.__resolve_defaults(
+            commitment, encoding
+        )
         response = self.compatible_client.get_program_accounts(
-            pubkey, resolved_commitment, resolved_encoding, data_slice, data_size, memcmp_opts)
+            pubkey,
+            resolved_commitment,
+            resolved_encoding,
+            data_slice,
+            data_size,
+            memcmp_opts,
+        )
         return response["result"]
 
-    def get_recent_blockhash(self, commitment: Commitment = UnspecifiedCommitment) -> Blockhash:
+    def get_recent_blockhash(
+        self, commitment: Commitment = UnspecifiedCommitment
+    ) -> Blockhash:
         resolved_commitment, _ = self.__resolve_defaults(commitment)
         response = self.compatible_client.get_recent_blockhash(resolved_commitment)
         return Blockhash(response["result"]["value"]["blockhash"])
 
-    def get_token_account_balance(self, pubkey: typing.Union[str, PublicKey], commitment: Commitment = UnspecifiedCommitment) -> Decimal:
+    def get_token_account_balance(
+        self,
+        pubkey: typing.Union[str, PublicKey],
+        commitment: Commitment = UnspecifiedCommitment,
+    ) -> Decimal:
         resolved_commitment, _ = self.__resolve_defaults(commitment)
-        response = self.compatible_client.get_token_account_balance(pubkey, resolved_commitment)
+        response = self.compatible_client.get_token_account_balance(
+            pubkey, resolved_commitment
+        )
         value = Decimal(response["result"]["value"]["amount"])
         decimal_places = response["result"]["value"]["decimals"]
-        divisor = Decimal(10 ** decimal_places)
+        divisor = Decimal(10**decimal_places)
         return value / divisor
 
-    def get_token_accounts_by_owner(self, owner: PublicKey, token_account_options: TokenAccountOpts, commitment: Commitment = UnspecifiedCommitment,) -> typing.Any:
+    def get_token_accounts_by_owner(
+        self,
+        owner: PublicKey,
+        token_account_options: TokenAccountOpts,
+        commitment: Commitment = UnspecifiedCommitment,
+    ) -> typing.Any:
         resolved_commitment, _ = self.__resolve_defaults(commitment)
-        response = self.compatible_client.get_token_accounts_by_owner(owner, token_account_options, resolved_commitment)
+        response = self.compatible_client.get_token_accounts_by_owner(
+            owner, token_account_options, resolved_commitment
+        )
         return response["result"]["value"]
 
-    def get_multiple_accounts(self, pubkeys: typing.List[typing.Union[PublicKey, str]], commitment: Commitment = UnspecifiedCommitment,
-                              encoding: str = UnspecifiedEncoding, data_slice: typing.Optional[DataSliceOpts] = None) -> typing.Any:
-        resolved_commitment, resolved_encoding = self.__resolve_defaults(commitment, encoding)
+    def get_multiple_accounts(
+        self,
+        pubkeys: typing.List[typing.Union[PublicKey, str]],
+        commitment: Commitment = UnspecifiedCommitment,
+        encoding: str = UnspecifiedEncoding,
+        data_slice: typing.Optional[DataSliceOpts] = None,
+    ) -> typing.Any:
+        resolved_commitment, resolved_encoding = self.__resolve_defaults(
+            commitment, encoding
+        )
         response = self.compatible_client.get_multiple_accounts(
-            pubkeys, resolved_commitment, resolved_encoding, data_slice)
+            pubkeys, resolved_commitment, resolved_encoding, data_slice
+        )
         return response["result"]["value"]
 
-    def send_transaction(self, transaction: Transaction, *signers: Keypair, opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment)) -> str:
+    def send_transaction(
+        self,
+        transaction: Transaction,
+        *signers: Keypair,
+        opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment),
+    ) -> str:
         # This method is an exception to the normal exception-handling to fail over to the next RPC provider.
         #
         # Normal RPC exceptions just move on to the next RPC provider and try again. That won't work with the
@@ -773,17 +1112,25 @@ class BetterClient:
                     proper_commitment = self.commitment
                     proper_skip_preflight = self.skip_preflight
 
-                proper_opts = TxOpts(preflight_commitment=proper_commitment,
-                                     skip_confirmation=opts.skip_confirmation,
-                                     skip_preflight=proper_skip_preflight)
+                proper_opts = TxOpts(
+                    preflight_commitment=proper_commitment,
+                    skip_confirmation=opts.skip_confirmation,
+                    skip_preflight=proper_skip_preflight,
+                )
 
-                response = self.compatible_client.send_transaction(transaction, *signers, opts=proper_opts)
+                response = self.compatible_client.send_transaction(
+                    transaction, *signers, opts=proper_opts
+                )
                 signature: str = str(response["result"])
                 self._logger.debug(f"Transaction signature: {signature}")
 
                 if signature != _STUB_TRANSACTION_SIGNATURE:
                     tx_reporter: TransactionWatcher = TransactionWatcher(
-                        self.compatible_client, self.rpc_caller.current.slot_holder, signature, self.transaction_status_collector)
+                        self.compatible_client,
+                        self.rpc_caller.current.slot_holder,
+                        signature,
+                        self.transaction_status_collector,
+                    )
                     self.executor.submit(tx_reporter.report_on_transaction)
                 else:
                     self._logger.error("Could not get status for stub signature")
@@ -791,15 +1138,20 @@ class BetterClient:
                 return signature
             except BlockhashNotFoundException as blockhash_not_found_exception:
                 self._logger.debug(
-                    f"Trying next provider after intercepting blockhash exception on provider {provider}: {blockhash_not_found_exception}")
+                    f"Trying next provider after intercepting blockhash exception on provider {provider}: {blockhash_not_found_exception}"
+                )
                 last_exception = blockhash_not_found_exception
                 transaction.recent_blockhash = None
                 self.rpc_caller.shift_to_next_provider()
 
         raise last_exception
 
-    def wait_for_confirmation(self, transaction_ids: typing.Sequence[str], max_wait_in_seconds: int = 60) -> typing.Sequence[str]:
-        self._logger.info(f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}.")
+    def wait_for_confirmation(
+        self, transaction_ids: typing.Sequence[str], max_wait_in_seconds: int = 60
+    ) -> typing.Sequence[str]:
+        self._logger.info(
+            f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}."
+        )
         all_confirmed: typing.List[str] = []
         start_time: datetime = datetime.now()
         cutoff: datetime = start_time + timedelta(seconds=max_wait_in_seconds)
@@ -809,15 +1161,22 @@ class BetterClient:
                 confirmed = self.get_confirmed_transaction(transaction_id)
                 if confirmed is not None:
                     self._logger.info(
-                        f"Confirmed {transaction_id} after {datetime.now() - start_time} seconds.")
+                        f"Confirmed {transaction_id} after {datetime.now() - start_time} seconds."
+                    )
                     all_confirmed += [transaction_id]
                     break
 
         if len(all_confirmed) != len(transaction_ids):
-            self._logger.info(f"Timed out after {max_wait_in_seconds} seconds waiting on transaction {transaction_id}.")
+            self._logger.info(
+                f"Timed out after {max_wait_in_seconds} seconds waiting on transaction {transaction_id}."
+            )
         return all_confirmed
 
-    def __resolve_defaults(self, commitment: typing.Optional[Commitment], encoding: typing.Optional[str] = None) -> typing.Tuple[Commitment, str]:
+    def __resolve_defaults(
+        self,
+        commitment: typing.Optional[Commitment],
+        encoding: typing.Optional[str] = None,
+    ) -> typing.Tuple[Commitment, str]:
         if commitment is None or commitment == UnspecifiedCommitment:
             commitment = self.commitment
 

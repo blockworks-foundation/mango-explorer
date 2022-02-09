@@ -42,7 +42,15 @@ class InventorySource(enum.Enum):
 # This class describes a crypto market. It *must* have an address, a base token and a quote token.
 #
 class Market(metaclass=abc.ABCMeta):
-    def __init__(self, program_address: PublicKey, address: PublicKey, inventory_source: InventorySource, base: Instrument, quote: Token, lot_size_converter: LotSizeConverter) -> None:
+    def __init__(
+        self,
+        program_address: PublicKey,
+        address: PublicKey,
+        inventory_source: InventorySource,
+        base: Instrument,
+        quote: Token,
+        lot_size_converter: LotSizeConverter,
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.program_address: PublicKey = program_address
         self.address: PublicKey = address
@@ -79,9 +87,13 @@ class DryRunMarket(Market):
         address: PublicKey = SYSTEM_PROGRAM_ADDRESS
         inventory_source: InventorySource = InventorySource.SPL_TOKENS
         base: Instrument = Instrument("DRYRUNBASE", "DryRunBase", Decimal(6))
-        quote: Token = Token("DRYRUNQUOTE", "DryRunQuote", Decimal(6), SYSTEM_PROGRAM_ADDRESS)
+        quote: Token = Token(
+            "DRYRUNQUOTE", "DryRunQuote", Decimal(6), SYSTEM_PROGRAM_ADDRESS
+        )
         lot_size_converter: LotSizeConverter = NullLotSizeConverter()
-        super().__init__(program_address, address, inventory_source, base, quote, lot_size_converter)
+        super().__init__(
+            program_address, address, inventory_source, base, quote, lot_size_converter
+        )
         self.market_name: str = market_name
 
     @property

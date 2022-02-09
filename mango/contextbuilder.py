@@ -22,11 +22,22 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-from .client import BetterClient, ClusterUrlData, TransactionStatusCollector, NullTransactionStatusCollector
+from .client import (
+    BetterClient,
+    ClusterUrlData,
+    TransactionStatusCollector,
+    NullTransactionStatusCollector,
+)
 from .constants import MangoConstants
 from .context import Context
 from .idsjsonmarketlookup import IdsJsonMarketLookup
-from .instrumentlookup import InstrumentLookup, CompoundInstrumentLookup, IdsJsonTokenLookup, NonSPLInstrumentLookup, SPLTokenLookup
+from .instrumentlookup import (
+    InstrumentLookup,
+    CompoundInstrumentLookup,
+    IdsJsonTokenLookup,
+    NonSPLInstrumentLookup,
+    SPLTokenLookup,
+)
 from .marketlookup import CompoundMarketLookup, MarketLookup
 from .serummarketlookup import SerumMarketLookup
 
@@ -60,16 +71,24 @@ class ContextBuilder:
     class ParseClusterUrls(argparse.Action):
         cluster_urls: typing.List[ClusterUrlData] = []
 
-        def __call__(self, parser: argparse.ArgumentParser, namespace: object, values: typing.Any, option_string: typing.Optional[str] = None) -> None:
+        def __call__(
+            self,
+            parser: argparse.ArgumentParser,
+            namespace: object,
+            values: typing.Any,
+            option_string: typing.Optional[str] = None,
+        ) -> None:
             if values:
                 if len(values) == 1:
                     self.cluster_urls.append(ClusterUrlData(rpc=values[0]))
                 elif len(values) == 2:
-                    self.cluster_urls.append(ClusterUrlData(rpc=values[0], ws=values[1]))
+                    self.cluster_urls.append(
+                        ClusterUrlData(rpc=values[0], ws=values[1])
+                    )
                 else:
                     raise parser.error(
-                        'Argument --cluster-url permits maximal two parameters. The first one configures HTTP connection url, the second one '
-                        'configures the WS connection url. Example: --cluster-url https://localhost:8181 wss://localhost:8282'
+                        "Argument --cluster-url permits maximal two parameters. The first one configures HTTP connection url, the second one "
+                        "configures the WS connection url. Example: --cluster-url https://localhost:8181 wss://localhost:8282"
                     )
                 setattr(namespace, self.dest, self.cluster_urls)
 
@@ -80,33 +99,95 @@ class ContextBuilder:
     #
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--name", type=str, default="Mango Explorer",
-                            help="Name of the program (used in reports and alerts)")
-        parser.add_argument("--cluster-name", type=str, default=None, help="Solana RPC cluster name")
-        parser.add_argument("--cluster-url", nargs='*', type=str, action=ContextBuilder.ParseClusterUrls, default=[],
-                            help="Solana RPC cluster URL (can be specified multiple times to provide failover when one errors; optional second parameter value defines websocket connection)")
-        parser.add_argument("--group-name", type=str, default=None, help="Mango group name")
-        parser.add_argument("--group-address", type=PublicKey, default=None, help="Mango group address")
-        parser.add_argument("--mango-program-address", type=PublicKey, default=None, help="Mango program address")
-        parser.add_argument("--serum-program-address", type=PublicKey, default=None, help="Serum program address")
-        parser.add_argument("--skip-preflight", default=False, action="store_true", help="Skip pre-flight checks")
-        parser.add_argument("--commitment", type=str, default=None,
-                            help="Commitment to use when sending transactions (can be 'finalized', 'confirmed' or 'processed')")
-        parser.add_argument("--encoding", type=str, default=None,
-                            help="Encoding to request when receiving data from Solana (options are 'base58' (slow), 'base64', 'base64+zstd', or 'jsonParsed')")
-        parser.add_argument("--blockhash-cache-duration", type=int,
-                            help="How long (in seconds) to cache 'recent' blockhashes")
-        parser.add_argument("--http-request-timeout", type=float, default=20,
-                            help="What is the timeout for HTTP requests to when calling to RPC nodes (in seconds), -1 means no timeout")
-        parser.add_argument("--stale-data-pause-before-retry", type=Decimal,
-                            help="How long (in seconds, e.g. 0.1) to pause after retrieving stale data before retrying")
-        parser.add_argument("--stale-data-maximum-retries", type=int,
-                            help="How many times to retry fetching data after being given stale data before giving up")
-        parser.add_argument("--gma-chunk-size", type=Decimal, default=None,
-                            help="Maximum number of addresses to send in a single call to getMultipleAccounts()")
-        parser.add_argument("--gma-chunk-pause", type=Decimal, default=None,
-                            help="number of seconds to pause between successive getMultipleAccounts() calls to avoid rate limiting")
-        parser.add_argument("--reflink", type=PublicKey, default=None, help="Referral public key")
+        parser.add_argument(
+            "--name",
+            type=str,
+            default="Mango Explorer",
+            help="Name of the program (used in reports and alerts)",
+        )
+        parser.add_argument(
+            "--cluster-name", type=str, default=None, help="Solana RPC cluster name"
+        )
+        parser.add_argument(
+            "--cluster-url",
+            nargs="*",
+            type=str,
+            action=ContextBuilder.ParseClusterUrls,
+            default=[],
+            help="Solana RPC cluster URL (can be specified multiple times to provide failover when one errors; optional second parameter value defines websocket connection)",
+        )
+        parser.add_argument(
+            "--group-name", type=str, default=None, help="Mango group name"
+        )
+        parser.add_argument(
+            "--group-address", type=PublicKey, default=None, help="Mango group address"
+        )
+        parser.add_argument(
+            "--mango-program-address",
+            type=PublicKey,
+            default=None,
+            help="Mango program address",
+        )
+        parser.add_argument(
+            "--serum-program-address",
+            type=PublicKey,
+            default=None,
+            help="Serum program address",
+        )
+        parser.add_argument(
+            "--skip-preflight",
+            default=False,
+            action="store_true",
+            help="Skip pre-flight checks",
+        )
+        parser.add_argument(
+            "--commitment",
+            type=str,
+            default=None,
+            help="Commitment to use when sending transactions (can be 'finalized', 'confirmed' or 'processed')",
+        )
+        parser.add_argument(
+            "--encoding",
+            type=str,
+            default=None,
+            help="Encoding to request when receiving data from Solana (options are 'base58' (slow), 'base64', 'base64+zstd', or 'jsonParsed')",
+        )
+        parser.add_argument(
+            "--blockhash-cache-duration",
+            type=int,
+            help="How long (in seconds) to cache 'recent' blockhashes",
+        )
+        parser.add_argument(
+            "--http-request-timeout",
+            type=float,
+            default=20,
+            help="What is the timeout for HTTP requests to when calling to RPC nodes (in seconds), -1 means no timeout",
+        )
+        parser.add_argument(
+            "--stale-data-pause-before-retry",
+            type=Decimal,
+            help="How long (in seconds, e.g. 0.1) to pause after retrieving stale data before retrying",
+        )
+        parser.add_argument(
+            "--stale-data-maximum-retries",
+            type=int,
+            help="How many times to retry fetching data after being given stale data before giving up",
+        )
+        parser.add_argument(
+            "--gma-chunk-size",
+            type=Decimal,
+            default=None,
+            help="Maximum number of addresses to send in a single call to getMultipleAccounts()",
+        )
+        parser.add_argument(
+            "--gma-chunk-pause",
+            type=Decimal,
+            default=None,
+            help="number of seconds to pause between successive getMultipleAccounts() calls to avoid rate limiting",
+        )
+        parser.add_argument(
+            "--reflink", type=PublicKey, default=None, help="Referral public key"
+        )
 
     # This function is the converse of `add_command_line_parameters()` - it takes
     # an argument of parsed command-line parameters and expects to see the ones it added
@@ -118,7 +199,9 @@ class ContextBuilder:
     def from_command_line_parameters(args: argparse.Namespace) -> Context:
         name: typing.Optional[str] = args.name
         cluster_name: typing.Optional[str] = args.cluster_name
-        cluster_urls: typing.Optional[typing.Sequence[ClusterUrlData]] = args.cluster_url
+        cluster_urls: typing.Optional[
+            typing.Sequence[ClusterUrlData]
+        ] = args.cluster_url
         group_name: typing.Optional[str] = args.group_name
         group_address: typing.Optional[PublicKey] = args.group_address
         mango_program_address: typing.Optional[PublicKey] = args.mango_program_address
@@ -128,8 +211,12 @@ class ContextBuilder:
         encoding: typing.Optional[str] = args.encoding
         blockhash_cache_duration: typing.Optional[int] = args.blockhash_cache_duration
         http_request_timeout: typing.Optional[float] = args.http_request_timeout
-        stale_data_pause_before_retry: typing.Optional[Decimal] = args.stale_data_pause_before_retry
-        stale_data_maximum_retries: typing.Optional[int] = args.stale_data_maximum_retries
+        stale_data_pause_before_retry: typing.Optional[
+            Decimal
+        ] = args.stale_data_pause_before_retry
+        stale_data_maximum_retries: typing.Optional[
+            int
+        ] = args.stale_data_maximum_retries
         gma_chunk_size: typing.Optional[Decimal] = args.gma_chunk_size
         gma_chunk_pause: typing.Optional[Decimal] = args.gma_chunk_pause
         reflink: typing.Optional[PublicKey] = args.reflink
@@ -145,12 +232,24 @@ class ContextBuilder:
             pause: Decimal = stale_data_pause_before_retry or Decimal("0.1")
             actual_stale_data_pauses_before_retry = [float(pause)] * retries
 
-        context: Context = ContextBuilder.build(name, cluster_name, cluster_urls, skip_preflight, commitment,
-                                                encoding, blockhash_cache_duration, http_request_timeout,
-                                                actual_stale_data_pauses_before_retry,
-                                                group_name, group_address, mango_program_address,
-                                                serum_program_address, gma_chunk_size, gma_chunk_pause,
-                                                reflink)
+        context: Context = ContextBuilder.build(
+            name,
+            cluster_name,
+            cluster_urls,
+            skip_preflight,
+            commitment,
+            encoding,
+            blockhash_cache_duration,
+            http_request_timeout,
+            actual_stale_data_pauses_before_retry,
+            group_name,
+            group_address,
+            mango_program_address,
+            serum_program_address,
+            gma_chunk_size,
+            gma_chunk_pause,
+            reflink,
+        )
         logging.debug(f"{context}")
 
         return context
@@ -161,73 +260,106 @@ class ContextBuilder:
 
     @staticmethod
     def from_group_name(context: Context, group_name: str) -> Context:
-        return ContextBuilder.build(context.name, context.client.cluster_name, context.client.cluster_urls,
-                                    context.client.skip_preflight, context.client.commitment,
-                                    context.client.encoding, context.client.blockhash_cache_duration, None,
-                                    context.client.stale_data_pauses_before_retry,
-                                    group_name, None, None, None,
-                                    context.gma_chunk_size, context.gma_chunk_pause,
-                                    context.reflink)
+        return ContextBuilder.build(
+            context.name,
+            context.client.cluster_name,
+            context.client.cluster_urls,
+            context.client.skip_preflight,
+            context.client.commitment,
+            context.client.encoding,
+            context.client.blockhash_cache_duration,
+            None,
+            context.client.stale_data_pauses_before_retry,
+            group_name,
+            None,
+            None,
+            None,
+            context.gma_chunk_size,
+            context.gma_chunk_pause,
+            context.reflink,
+        )
 
     @staticmethod
     def forced_to_devnet(context: Context) -> Context:
         cluster_name: str = "devnet"
-        cluster_url: ClusterUrlData = ClusterUrlData(rpc=MangoConstants["cluster_urls"][cluster_name])
+        cluster_url: ClusterUrlData = ClusterUrlData(
+            rpc=MangoConstants["cluster_urls"][cluster_name]
+        )
         fresh_context = copy.copy(context)
-        fresh_context.client = BetterClient.from_configuration(context.name,
-                                                               cluster_name,
-                                                               [cluster_url],
-                                                               context.client.commitment,
-                                                               context.client.skip_preflight,
-                                                               context.client.encoding,
-                                                               context.client.blockhash_cache_duration,
-                                                               -1,
-                                                               context.client.stale_data_pauses_before_retry,
-                                                               context.client.instruction_reporter,
-                                                               context.client.transaction_status_collector)
+        fresh_context.client = BetterClient.from_configuration(
+            context.name,
+            cluster_name,
+            [cluster_url],
+            context.client.commitment,
+            context.client.skip_preflight,
+            context.client.encoding,
+            context.client.blockhash_cache_duration,
+            -1,
+            context.client.stale_data_pauses_before_retry,
+            context.client.instruction_reporter,
+            context.client.transaction_status_collector,
+        )
 
         return fresh_context
 
     @staticmethod
     def forced_to_mainnet_beta(context: Context) -> Context:
         cluster_name: str = "mainnet"
-        cluster_url: ClusterUrlData = ClusterUrlData(rpc=MangoConstants["cluster_urls"][cluster_name])
+        cluster_url: ClusterUrlData = ClusterUrlData(
+            rpc=MangoConstants["cluster_urls"][cluster_name]
+        )
         fresh_context = copy.copy(context)
-        fresh_context.client = BetterClient.from_configuration(context.name,
-                                                               cluster_name,
-                                                               [cluster_url],
-                                                               context.client.commitment,
-                                                               context.client.skip_preflight,
-                                                               context.client.encoding,
-                                                               context.client.blockhash_cache_duration,
-                                                               -1,
-                                                               context.client.stale_data_pauses_before_retry,
-                                                               context.client.instruction_reporter,
-                                                               context.client.transaction_status_collector)
+        fresh_context.client = BetterClient.from_configuration(
+            context.name,
+            cluster_name,
+            [cluster_url],
+            context.client.commitment,
+            context.client.skip_preflight,
+            context.client.encoding,
+            context.client.blockhash_cache_duration,
+            -1,
+            context.client.stale_data_pauses_before_retry,
+            context.client.instruction_reporter,
+            context.client.transaction_status_collector,
+        )
 
         return fresh_context
 
     @staticmethod
-    def build(name: typing.Optional[str] = None, cluster_name: typing.Optional[str] = None,
-              cluster_urls: typing.Optional[typing.Sequence[ClusterUrlData]] = None,
-              skip_preflight: bool = False,
-              commitment: typing.Optional[str] = None, encoding: typing.Optional[str] = None,
-              blockhash_cache_duration: typing.Optional[int] = None,
-              http_request_timeout: typing.Optional[float] = None,
-              stale_data_pauses_before_retry: typing.Optional[typing.Sequence[float]] = None,
-              group_name: typing.Optional[str] = None, group_address: typing.Optional[PublicKey] = None,
-              program_address: typing.Optional[PublicKey] = None, serum_program_address: typing.Optional[PublicKey] = None,
-              gma_chunk_size: typing.Optional[Decimal] = None, gma_chunk_pause: typing.Optional[Decimal] = None,
-              reflink: typing.Optional[PublicKey] = None,
-              transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector()) -> "Context":
-        def __public_key_or_none(address: typing.Optional[str]) -> typing.Optional[PublicKey]:
+    def build(
+        name: typing.Optional[str] = None,
+        cluster_name: typing.Optional[str] = None,
+        cluster_urls: typing.Optional[typing.Sequence[ClusterUrlData]] = None,
+        skip_preflight: bool = False,
+        commitment: typing.Optional[str] = None,
+        encoding: typing.Optional[str] = None,
+        blockhash_cache_duration: typing.Optional[int] = None,
+        http_request_timeout: typing.Optional[float] = None,
+        stale_data_pauses_before_retry: typing.Optional[typing.Sequence[float]] = None,
+        group_name: typing.Optional[str] = None,
+        group_address: typing.Optional[PublicKey] = None,
+        program_address: typing.Optional[PublicKey] = None,
+        serum_program_address: typing.Optional[PublicKey] = None,
+        gma_chunk_size: typing.Optional[Decimal] = None,
+        gma_chunk_pause: typing.Optional[Decimal] = None,
+        reflink: typing.Optional[PublicKey] = None,
+        transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector(),
+    ) -> "Context":
+        def __public_key_or_none(
+            address: typing.Optional[str],
+        ) -> typing.Optional[PublicKey]:
             if address is not None and address != "":
                 return PublicKey(address)
             return None
+
         # The first group is only used to determine the default cluster if it is not otherwise specified.
         first_group_data = MangoConstants["groups"][0]
         actual_name: str = name or os.environ.get("NAME") or "Mango Explorer"
-        actual_cluster: str = cluster_name or os.environ.get("CLUSTER_NAME") or first_group_data["cluster"]
+        actual_cluster: str = (
+            cluster_name
+            or os.environ.get("CLUSTER_NAME")
+            or first_group_data["cluster"]
+        )
 
         # Now that we have the actual cluster name, taking environment variables and defaults into account,
         # we can decide what we want as the default group.
@@ -239,42 +371,72 @@ class ContextBuilder:
         actual_commitment: str = commitment or "processed"
         actual_encoding: str = encoding or "base64"
         actual_blockhash_cache_duration: int = blockhash_cache_duration or 0
-        actual_stale_data_pauses_before_retry: typing.Sequence[float] = stale_data_pauses_before_retry or []
+        actual_stale_data_pauses_before_retry: typing.Sequence[float] = (
+            stale_data_pauses_before_retry or []
+        )
         actual_http_request_timeout: float = http_request_timeout or -1
 
-        actual_cluster_urls: typing.Optional[typing.Sequence[ClusterUrlData]] = cluster_urls
+        actual_cluster_urls: typing.Optional[
+            typing.Sequence[ClusterUrlData]
+        ] = cluster_urls
         if actual_cluster_urls is None or len(actual_cluster_urls) == 0:
-            cluster_url_from_environment: typing.Optional[str] = os.environ.get("CLUSTER_URL")
-            if cluster_url_from_environment is not None and cluster_url_from_environment != "":
+            cluster_url_from_environment: typing.Optional[str] = os.environ.get(
+                "CLUSTER_URL"
+            )
+            if (
+                cluster_url_from_environment is not None
+                and cluster_url_from_environment != ""
+            ):
                 actual_cluster_urls = [ClusterUrlData(rpc=cluster_url_from_environment)]
             else:
-                actual_cluster_urls = [ClusterUrlData(rpc=MangoConstants["cluster_urls"][actual_cluster])]
+                actual_cluster_urls = [
+                    ClusterUrlData(rpc=MangoConstants["cluster_urls"][actual_cluster])
+                ]
 
         actual_skip_preflight: bool = skip_preflight
-        actual_group_name: str = group_name or os.environ.get("GROUP_NAME") or default_group_data["name"]
+        actual_group_name: str = (
+            group_name or os.environ.get("GROUP_NAME") or default_group_data["name"]
+        )
 
         found_group_data: typing.Any = None
         for group in MangoConstants["groups"]:
-            if group["cluster"] == actual_cluster and group["name"].upper() == actual_group_name.upper():
+            if (
+                group["cluster"] == actual_cluster
+                and group["name"].upper() == actual_group_name.upper()
+            ):
                 found_group_data = group
 
         if found_group_data is None:
-            raise Exception(f"Could not find group named '{actual_group_name}' in cluster '{actual_cluster}'.")
+            raise Exception(
+                f"Could not find group named '{actual_group_name}' in cluster '{actual_cluster}'."
+            )
 
-        actual_group_address: PublicKey = group_address or __public_key_or_none(os.environ.get(
-            "GROUP_ADDRESS")) or PublicKey(found_group_data["publicKey"])
-        actual_program_address: PublicKey = program_address or __public_key_or_none(os.environ.get(
-            "MANGO_PROGRAM_ADDRESS")) or PublicKey(found_group_data["mangoProgramId"])
-        actual_serum_program_address: PublicKey = serum_program_address or __public_key_or_none(os.environ.get(
-            "SERUM_PROGRAM_ADDRESS")) or PublicKey(found_group_data["serumProgramId"])
+        actual_group_address: PublicKey = (
+            group_address
+            or __public_key_or_none(os.environ.get("GROUP_ADDRESS"))
+            or PublicKey(found_group_data["publicKey"])
+        )
+        actual_program_address: PublicKey = (
+            program_address
+            or __public_key_or_none(os.environ.get("MANGO_PROGRAM_ADDRESS"))
+            or PublicKey(found_group_data["mangoProgramId"])
+        )
+        actual_serum_program_address: PublicKey = (
+            serum_program_address
+            or __public_key_or_none(os.environ.get("SERUM_PROGRAM_ADDRESS"))
+            or PublicKey(found_group_data["serumProgramId"])
+        )
 
         actual_gma_chunk_size: Decimal = gma_chunk_size or Decimal(100)
         actual_gma_chunk_pause: Decimal = gma_chunk_pause or Decimal(0)
 
         actual_reflink: typing.Optional[PublicKey] = reflink or __public_key_or_none(
-            os.environ.get("MANGO_REFLINK_ADDRESS"))
+            os.environ.get("MANGO_REFLINK_ADDRESS")
+        )
 
-        ids_json_token_lookup: InstrumentLookup = IdsJsonTokenLookup(actual_cluster, actual_group_name)
+        ids_json_token_lookup: InstrumentLookup = IdsJsonTokenLookup(
+            actual_cluster, actual_group_name
+        )
         instrument_lookup: InstrumentLookup = ids_json_token_lookup
         if actual_cluster == "mainnet":
             # 'Overrides' are for problematic situations.
@@ -293,47 +455,103 @@ class ContextBuilder:
             #
             # 'Overrides' allows us to put the details we expect for 'ETH' into our loader, ahead of the SPL
             # JSON, so that our code and users can continue to use, for example, ETH/USDT, as they expect.
-            mainnet_overrides_token_lookup: InstrumentLookup = SPLTokenLookup.load(SPLTokenLookup.OverridesDataFilepath)
-            mainnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(SPLTokenLookup.DefaultDataFilepath)
-            mainnet_non_spl_instrument_lookup: InstrumentLookup = NonSPLInstrumentLookup.load(
-                NonSPLInstrumentLookup.DefaultMainnetDataFilepath)
-            instrument_lookup = CompoundInstrumentLookup([
-                ids_json_token_lookup,
-                mainnet_overrides_token_lookup,
-                mainnet_non_spl_instrument_lookup,
-                mainnet_spl_token_lookup])
+            mainnet_overrides_token_lookup: InstrumentLookup = SPLTokenLookup.load(
+                SPLTokenLookup.OverridesDataFilepath
+            )
+            mainnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(
+                SPLTokenLookup.DefaultDataFilepath
+            )
+            mainnet_non_spl_instrument_lookup: InstrumentLookup = (
+                NonSPLInstrumentLookup.load(
+                    NonSPLInstrumentLookup.DefaultMainnetDataFilepath
+                )
+            )
+            instrument_lookup = CompoundInstrumentLookup(
+                [
+                    ids_json_token_lookup,
+                    mainnet_overrides_token_lookup,
+                    mainnet_non_spl_instrument_lookup,
+                    mainnet_spl_token_lookup,
+                ]
+            )
         elif actual_cluster == "devnet":
             devnet_overrides_token_lookup: InstrumentLookup = SPLTokenLookup.load(
-                SPLTokenLookup.DevnetOverridesDataFilepath)
-            devnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(SPLTokenLookup.DevnetDataFilepath)
-            devnet_non_spl_instrument_lookup: InstrumentLookup = NonSPLInstrumentLookup.load(
-                NonSPLInstrumentLookup.DefaultDevnetDataFilepath)
-            instrument_lookup = CompoundInstrumentLookup([
-                ids_json_token_lookup,
-                devnet_overrides_token_lookup,
-                devnet_non_spl_instrument_lookup,
-                devnet_spl_token_lookup])
+                SPLTokenLookup.DevnetOverridesDataFilepath
+            )
+            devnet_spl_token_lookup: InstrumentLookup = SPLTokenLookup.load(
+                SPLTokenLookup.DevnetDataFilepath
+            )
+            devnet_non_spl_instrument_lookup: InstrumentLookup = (
+                NonSPLInstrumentLookup.load(
+                    NonSPLInstrumentLookup.DefaultDevnetDataFilepath
+                )
+            )
+            instrument_lookup = CompoundInstrumentLookup(
+                [
+                    ids_json_token_lookup,
+                    devnet_overrides_token_lookup,
+                    devnet_non_spl_instrument_lookup,
+                    devnet_spl_token_lookup,
+                ]
+            )
 
-        ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(actual_cluster, instrument_lookup)
+        ids_json_market_lookup: MarketLookup = IdsJsonMarketLookup(
+            actual_cluster, instrument_lookup
+        )
         all_market_lookup = ids_json_market_lookup
         if actual_cluster == "mainnet":
-            mainnet_overrides_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
-                actual_serum_program_address, SPLTokenLookup.OverridesDataFilepath)
+            mainnet_overrides_serum_market_lookup: SerumMarketLookup = (
+                SerumMarketLookup.load(
+                    actual_serum_program_address, SPLTokenLookup.OverridesDataFilepath
+                )
+            )
             mainnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
-                actual_serum_program_address, SPLTokenLookup.DefaultDataFilepath)
-            all_market_lookup = CompoundMarketLookup([
-                ids_json_market_lookup,
-                mainnet_overrides_serum_market_lookup,
-                mainnet_serum_market_lookup])
+                actual_serum_program_address, SPLTokenLookup.DefaultDataFilepath
+            )
+            all_market_lookup = CompoundMarketLookup(
+                [
+                    ids_json_market_lookup,
+                    mainnet_overrides_serum_market_lookup,
+                    mainnet_serum_market_lookup,
+                ]
+            )
         elif actual_cluster == "devnet":
-            devnet_overrides_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
-                actual_serum_program_address, SPLTokenLookup.DevnetOverridesDataFilepath)
+            devnet_overrides_serum_market_lookup: SerumMarketLookup = (
+                SerumMarketLookup.load(
+                    actual_serum_program_address,
+                    SPLTokenLookup.DevnetOverridesDataFilepath,
+                )
+            )
             devnet_serum_market_lookup: SerumMarketLookup = SerumMarketLookup.load(
-                actual_serum_program_address, SPLTokenLookup.DevnetDataFilepath)
-            all_market_lookup = CompoundMarketLookup([
-                ids_json_market_lookup,
-                devnet_overrides_serum_market_lookup,
-                devnet_serum_market_lookup])
+                actual_serum_program_address, SPLTokenLookup.DevnetDataFilepath
+            )
+            all_market_lookup = CompoundMarketLookup(
+                [
+                    ids_json_market_lookup,
+                    devnet_overrides_serum_market_lookup,
+                    devnet_serum_market_lookup,
+                ]
+            )
         market_lookup: MarketLookup = all_market_lookup
 
-        return Context(actual_name, actual_cluster, actual_cluster_urls, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_http_request_timeout, actual_stale_data_pauses_before_retry, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, actual_reflink, instrument_lookup, market_lookup, transaction_status_collector)
+        return Context(
+            actual_name,
+            actual_cluster,
+            actual_cluster_urls,
+            actual_skip_preflight,
+            actual_commitment,
+            actual_encoding,
+            actual_blockhash_cache_duration,
+            actual_http_request_timeout,
+            actual_stale_data_pauses_before_retry,
+            actual_program_address,
+            actual_serum_program_address,
+            actual_group_name,
+            actual_group_address,
+            actual_gma_chunk_size,
+            actual_gma_chunk_pause,
+            actual_reflink,
+            instrument_lookup,
+            market_lookup,
+            transaction_status_collector,
+        )

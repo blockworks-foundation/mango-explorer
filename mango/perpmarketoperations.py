@@ -24,7 +24,13 @@ from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import Group
-from .instructions import build_cancel_perp_order_instructions, build_mango_consume_events_instructions, build_cancel_all_perp_orders_instructions, build_place_perp_order_instructions, build_redeem_accrued_mango_instructions
+from .instructions import (
+    build_cancel_perp_order_instructions,
+    build_mango_consume_events_instructions,
+    build_cancel_all_perp_orders_instructions,
+    build_place_perp_order_instructions,
+    build_redeem_accrued_mango_instructions,
+)
 from .marketoperations import MarketInstructionBuilder, MarketOperations
 from .orders import Order, OrderBook
 from .perpmarket import PerpMarket
@@ -42,8 +48,14 @@ from .wallet import Wallet
 # on initial setup in the `load()` method.
 #
 class PerpMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, perp_market: PerpMarket,
-                 group: Group, account: Account) -> None:
+    def __init__(
+        self,
+        context: Context,
+        wallet: Wallet,
+        perp_market: PerpMarket,
+        group: Group,
+        account: Account,
+    ) -> None:
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
@@ -53,27 +65,63 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         self.mngo_token_bank: TokenBank = self.group.liquidity_incentive_token_bank
 
     @staticmethod
-    def load(context: Context, wallet: Wallet, perp_market: PerpMarket, group: Group, account: Account) -> "PerpMarketInstructionBuilder":
-        return PerpMarketInstructionBuilder(context, wallet, perp_market, group, account)
+    def load(
+        context: Context,
+        wallet: Wallet,
+        perp_market: PerpMarket,
+        group: Group,
+        account: Account,
+    ) -> "PerpMarketInstructionBuilder":
+        return PerpMarketInstructionBuilder(
+            context, wallet, perp_market, group, account
+        )
 
-    def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
+    def build_cancel_order_instructions(
+        self, order: Order, ok_if_missing: bool = False
+    ) -> CombinableInstructions:
         if self.perp_market.underlying_perp_market is None:
-            raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
+            raise Exception(
+                f"PerpMarket {self.perp_market.symbol} has not been loaded."
+            )
         return build_cancel_perp_order_instructions(
-            self.context, self.wallet, self.account, self.perp_market.underlying_perp_market, order, ok_if_missing)
+            self.context,
+            self.wallet,
+            self.account,
+            self.perp_market.underlying_perp_market,
+            order,
+            ok_if_missing,
+        )
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
         if self.perp_market.underlying_perp_market is None:
-            raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
+            raise Exception(
+                f"PerpMarket {self.perp_market.symbol} has not been loaded."
+            )
         return build_place_perp_order_instructions(
-            self.context, self.wallet, self.perp_market.underlying_perp_market.group, self.account, self.perp_market.underlying_perp_market, order.price, order.quantity, order.client_id, order.side, order.order_type, order.reduce_only, self.context.reflink)
+            self.context,
+            self.wallet,
+            self.perp_market.underlying_perp_market.group,
+            self.account,
+            self.perp_market.underlying_perp_market,
+            order.price,
+            order.quantity,
+            order.client_id,
+            order.side,
+            order.order_type,
+            order.reduce_only,
+            self.context.reflink,
+        )
 
     def build_settle_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
-    def build_crank_instructions(self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(
+        self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)
+    ) -> CombinableInstructions:
         if self.perp_market.underlying_perp_market is None:
-            raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
+            raise Exception(
+                f"PerpMarket {self.perp_market.symbol} has not been loaded."
+            )
 
         distinct_addresses: typing.List[PublicKey] = [self.account.address]
         for address in addresses:
@@ -82,22 +130,49 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
 
         if len(distinct_addresses) > limit:
             self._logger.warn(
-                f"Cranking limited to {limit} of {len(distinct_addresses)} addresses waiting to be cranked.")
+                f"Cranking limited to {limit} of {len(distinct_addresses)} addresses waiting to be cranked."
+            )
 
-        limited_addresses = distinct_addresses[0:min(int(limit), len(distinct_addresses))]
+        limited_addresses = distinct_addresses[
+            0 : min(int(limit), len(distinct_addresses))
+        ]
         limited_addresses.sort(key=encode_public_key_for_sorting)
-        self._logger.debug(f"About to crank {len(limited_addresses)} addresses: {limited_addresses}")
+        self._logger.debug(
+            f"About to crank {len(limited_addresses)} addresses: {limited_addresses}"
+        )
 
-        return build_mango_consume_events_instructions(self.context, self.group, self.perp_market.underlying_perp_market, limited_addresses, limit)
+        return build_mango_consume_events_instructions(
+            self.context,
+            self.group,
+            self.perp_market.underlying_perp_market,
+            limited_addresses,
+            limit,
+        )
 
     def build_redeem_instructions(self) -> CombinableInstructions:
-        return build_redeem_accrued_mango_instructions(self.context, self.wallet, self.perp_market, self.group, self.account, self.mngo_token_bank)
+        return build_redeem_accrued_mango_instructions(
+            self.context,
+            self.wallet,
+            self.perp_market,
+            self.group,
+            self.account,
+            self.mngo_token_bank,
+        )
 
-    def build_cancel_all_orders_instructions(self, limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_cancel_all_orders_instructions(
+        self, limit: Decimal = Decimal(32)
+    ) -> CombinableInstructions:
         if self.perp_market.underlying_perp_market is None:
-            raise Exception(f"PerpMarket {self.perp_market.symbol} has not been loaded.")
+            raise Exception(
+                f"PerpMarket {self.perp_market.symbol} has not been loaded."
+            )
         return build_cancel_all_perp_orders_instructions(
-            self.context, self.wallet, self.account, self.perp_market.underlying_perp_market, limit)
+            self.context,
+            self.wallet,
+            self.account,
+            self.perp_market.underlying_perp_market,
+            limit,
+        )
 
     def __str__(self) -> str:
         return """« PerpMarketInstructionBuilder »"""
@@ -108,12 +183,19 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
 # This file deals with placing orders for Perps.
 #
 class PerpMarketOperations(MarketOperations):
-    def __init__(self, context: Context, wallet: Wallet, account: Account,
-                 market_instruction_builder: PerpMarketInstructionBuilder) -> None:
+    def __init__(
+        self,
+        context: Context,
+        wallet: Wallet,
+        account: Account,
+        market_instruction_builder: PerpMarketInstructionBuilder,
+    ) -> None:
         super().__init__(market_instruction_builder.perp_market)
         self.context: Context = context
         self.wallet: Wallet = wallet
-        self.market_instruction_builder: PerpMarketInstructionBuilder = market_instruction_builder
+        self.market_instruction_builder: PerpMarketInstructionBuilder = (
+            market_instruction_builder
+        )
         self.account: Account = account
 
     @property
@@ -124,34 +206,50 @@ class PerpMarketOperations(MarketOperations):
     def market_name(self) -> str:
         return self.perp_market.symbol
 
-    def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
+    def cancel_order(
+        self, order: Order, ok_if_missing: bool = False
+    ) -> typing.Sequence[str]:
         self._logger.info(f"Cancelling {self.market_name} order {order}.")
-        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(
-            order, ok_if_missing=ok_if_missing)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(
+            self.wallet
+        )
+        cancel: CombinableInstructions = (
+            self.market_instruction_builder.build_cancel_order_instructions(
+                order, ok_if_missing=ok_if_missing
+            )
+        )
         crank = self._build_crank(add_self=True)
         settle = self.market_instruction_builder.build_settle_instructions()
         return (signers + cancel + crank + settle).execute(self.context)
 
     def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
         client_id: int = self.context.generate_client_id()
-        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(
+            self.wallet
+        )
         order_with_client_id: Order = order.with_client_id(client_id)
         self._logger.info(f"Placing {self.market_name} order {order_with_client_id}.")
-        place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
-            order_with_client_id)
+        place: CombinableInstructions = (
+            self.market_instruction_builder.build_place_order_instructions(
+                order_with_client_id
+            )
+        )
         crank = self._build_crank(add_self=True, limit=crank_limit)
         settle = self.market_instruction_builder.build_settle_instructions()
         (signers + place + crank + settle).execute(self.context)
         return order_with_client_id
 
     def settle(self) -> typing.Sequence[str]:
-        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(
+            self.wallet
+        )
         settle = self.market_instruction_builder.build_settle_instructions()
         return (signers + settle).execute(self.context)
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
-        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(
+            self.wallet
+        )
         crank = self._build_crank(limit=limit)
         return (signers + crank).execute(self.context)
 
@@ -168,7 +266,9 @@ class PerpMarketOperations(MarketOperations):
         orderbook: OrderBook = self.load_orderbook()
         return orderbook.all_orders_for_owner(self.account.address)
 
-    def _build_crank(self, limit: Decimal = Decimal(32), add_self: bool = False) -> CombinableInstructions:
+    def _build_crank(
+        self, limit: Decimal = Decimal(32), add_self: bool = False
+    ) -> CombinableInstructions:
         accounts_to_crank: typing.List[PublicKey] = []
         for event_to_crank in self.perp_market.unprocessed_events(self.context):
             accounts_to_crank += event_to_crank.accounts_to_crank
@@ -180,8 +280,11 @@ class PerpMarketOperations(MarketOperations):
             return CombinableInstructions.empty()
 
         self._logger.debug(
-            f"Building crank instruction with {len(accounts_to_crank)} public keys, throttled to {limit}")
-        return self.market_instruction_builder.build_crank_instructions(accounts_to_crank, limit)
+            f"Building crank instruction with {len(accounts_to_crank)} public keys, throttled to {limit}"
+        )
+        return self.market_instruction_builder.build_crank_instructions(
+            accounts_to_crank, limit
+        )
 
     def __str__(self) -> str:
         return f"""« PerpMarketOperations [{self.market_name}] »"""

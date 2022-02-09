@@ -35,35 +35,60 @@ class FixedPositionSizeElement(PairwiseElement):
 
     @staticmethod
     def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument("--fixedpositionsize-value", type=Decimal, action="append",
-                            help="fixed value to use as the position size. Can be specified multiple times for multiple levels of BUYs and SELLs.")
+        parser.add_argument(
+            "--fixedpositionsize-value",
+            type=Decimal,
+            action="append",
+            help="fixed value to use as the position size. Can be specified multiple times for multiple levels of BUYs and SELLs.",
+        )
 
     @staticmethod
-    def from_command_line_parameters(args: argparse.Namespace) -> "FixedPositionSizeElement":
+    def from_command_line_parameters(
+        args: argparse.Namespace,
+    ) -> "FixedPositionSizeElement":
         if args.fixedpositionsize_value is None:
-            raise Exception("No position-size value specified. Try the --fixedpositionsize-value parameter?")
+            raise Exception(
+                "No position-size value specified. Try the --fixedpositionsize-value parameter?"
+            )
 
         position_sizes: typing.Sequence[Decimal] = args.fixedpositionsize_value
         return FixedPositionSizeElement(position_sizes)
 
-    def process_order_pair(self, context: mango.Context, model_state: ModelState, index: int, buy: typing.Optional[mango.Order], sell: typing.Optional[mango.Order]) -> typing.Tuple[typing.Optional[mango.Order], typing.Optional[mango.Order]]:
+    def process_order_pair(
+        self,
+        context: mango.Context,
+        model_state: ModelState,
+        index: int,
+        buy: typing.Optional[mango.Order],
+        sell: typing.Optional[mango.Order],
+    ) -> typing.Tuple[typing.Optional[mango.Order], typing.Optional[mango.Order]]:
         # If no position size is explicitly specified for this element, just use the last specified size.
-        size: Decimal = self.position_sizes[index] if index < len(self.position_sizes) else self.position_sizes[-1]
+        size: Decimal = (
+            self.position_sizes[index]
+            if index < len(self.position_sizes)
+            else self.position_sizes[-1]
+        )
         new_buy: typing.Optional[mango.Order] = None
         new_sell: typing.Optional[mango.Order] = None
         if buy is not None:
             new_buy = buy.with_quantity(size)
-            self._logger.debug(f"""Order change - using fixed position size of {size}:
+            self._logger.debug(
+                f"""Order change - using fixed position size of {size}:
     Old: {buy}
-    New: {new_buy}""")
+    New: {new_buy}"""
+            )
 
         if sell is not None:
             new_sell = sell.with_quantity(size)
-            self._logger.debug(f"""Order change - using fixed position size of {size}:
+            self._logger.debug(
+                f"""Order change - using fixed position size of {size}:
     Old: {sell}
-    New: {new_sell}""")
+    New: {new_sell}"""
+            )
 
         return new_buy, new_sell
 
     def __str__(self) -> str:
-        return f"« FixedPositionSizeElement using position sizes: {self.position_sizes} »"
+        return (
+            f"« FixedPositionSizeElement using position sizes: {self.position_sizes} »"
+        )

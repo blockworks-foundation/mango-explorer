@@ -8,36 +8,54 @@ import sys
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 parser = argparse.ArgumentParser(description="Withdraw funds from a Mango account")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--symbol", type=str, required=True, help="token symbol to withdraw (e.g. USDC)")
-parser.add_argument("--quantity", type=Decimal, required=True, help="quantity token to withdraw")
-parser.add_argument("--account-address", type=PublicKey,
-                    help="address of the specific account to use, if more than one available")
-parser.add_argument("--allow-borrow", action="store_true", default=False,
-                    help="allow borrowing to fund the withdrawal")
+parser.add_argument(
+    "--symbol", type=str, required=True, help="token symbol to withdraw (e.g. USDC)"
+)
+parser.add_argument(
+    "--quantity", type=Decimal, required=True, help="quantity token to withdraw"
+)
+parser.add_argument(
+    "--account-address",
+    type=PublicKey,
+    help="address of the specific account to use, if more than one available",
+)
+parser.add_argument(
+    "--allow-borrow",
+    action="store_true",
+    default=False,
+    help="allow borrowing to fund the withdrawal",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
 wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
 group = mango.Group.load(context, context.group_address)
-account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
+account = mango.Account.load_for_owner_by_address(
+    context, wallet.address, group, args.account_address
+)
 
 instrument = context.instrument_lookup.find_by_symbol(args.symbol)
 if instrument is None:
     raise Exception(f"Could not find instrument with symbol '{args.symbol}'.")
 
 token: mango.Token = mango.Token.ensure(instrument)
-token_account = mango.TokenAccount.fetch_or_create_largest_for_owner_and_token(context, wallet.keypair, token)
+token_account = mango.TokenAccount.fetch_or_create_largest_for_owner_and_token(
+    context, wallet.keypair, token
+)
 withdrawal_value = mango.InstrumentValue(token, args.quantity)
 withdrawal_token_account = mango.TokenAccount(
-    token_account.account_info, token_account.version, token_account.owner, withdrawal_value)
+    token_account.account_info,
+    token_account.version,
+    token_account.owner,
+    withdrawal_value,
+)
 
 token_bank = group.token_bank_by_instrument(token)
 root_bank = token_bank.ensure_root_bank(context)
@@ -45,7 +63,15 @@ node_bank = root_bank.pick_node_bank(context)
 
 signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
 withdraw = mango.build_withdraw_instructions(
-    context, wallet, group, account, root_bank, node_bank, withdrawal_token_account, args.allow_borrow)
+    context,
+    wallet,
+    group,
+    account,
+    root_bank,
+    node_bank,
+    withdrawal_token_account,
+    args.allow_borrow,
+)
 
 all_instructions = signers + withdraw
 transaction_ids = all_instructions.execute(context)

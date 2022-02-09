@@ -37,16 +37,34 @@ from .token import Token
 # This class encapsulates our knowledge of a Serum spot market.
 #
 class SpotMarket(LoadedMarket):
-    def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token,
-                 group: Group, underlying_serum_market: PySerumMarket) -> None:
-        super().__init__(serum_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
+    def __init__(
+        self,
+        serum_program_address: PublicKey,
+        address: PublicKey,
+        base: Token,
+        quote: Token,
+        group: Group,
+        underlying_serum_market: PySerumMarket,
+    ) -> None:
+        super().__init__(
+            serum_program_address,
+            address,
+            InventorySource.ACCOUNT,
+            base,
+            quote,
+            RaisingLotSizeConverter(),
+        )
         self.base: Token = base
         self.quote: Token = quote
         self.group: Group = group
         self.underlying_serum_market: PySerumMarket = underlying_serum_market
         base_lot_size: Decimal = Decimal(underlying_serum_market.state.base_lot_size())
-        quote_lot_size: Decimal = Decimal(underlying_serum_market.state.quote_lot_size())
-        self.lot_size_converter: LotSizeConverter = LotSizeConverter(base, base_lot_size, quote, quote_lot_size)
+        quote_lot_size: Decimal = Decimal(
+            underlying_serum_market.state.quote_lot_size()
+        )
+        self.lot_size_converter: LotSizeConverter = LotSizeConverter(
+            base, base_lot_size, quote, quote_lot_size
+        )
 
     @property
     def bids_address(self) -> PublicKey:
@@ -60,23 +78,33 @@ class SpotMarket(LoadedMarket):
     def event_queue_address(self) -> PublicKey:
         return self.underlying_serum_market.state.event_queue()
 
-    def parse_account_info_to_orders(self, account_info: AccountInfo) -> typing.Sequence[Order]:
-        orderbook: PySerumOrderBook = PySerumOrderBook.from_bytes(self.underlying_serum_market.state, account_info.data)
+    def parse_account_info_to_orders(
+        self, account_info: AccountInfo
+    ) -> typing.Sequence[Order]:
+        orderbook: PySerumOrderBook = PySerumOrderBook.from_bytes(
+            self.underlying_serum_market.state, account_info.data
+        )
         return list(map(Order.from_serum_order, orderbook.orders()))
 
     def unprocessed_events(self, context: Context) -> typing.Sequence[SerumEvent]:
-        event_queue: SerumEventQueue = SerumEventQueue.load(context, self.event_queue_address)
+        event_queue: SerumEventQueue = SerumEventQueue.load(
+            context, self.event_queue_address
+        )
         return event_queue.unprocessed_events
 
-    def derive_open_orders_address(self, context: Context, account: Account) -> PublicKey:
+    def derive_open_orders_address(
+        self, context: Context, account: Account
+    ) -> PublicKey:
         slot = account.slot_by_instrument(self.base)
-        open_orders_address_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
+        open_orders_address_and_nonce: typing.Tuple[
+            PublicKey, int
+        ] = PublicKey.find_program_address(
             [
                 bytes(account.address),
                 int(slot.index).to_bytes(8, "little"),
-                b"OpenOrders"
+                b"OpenOrders",
             ],
-            context.mango_program_address
+            context.mango_program_address,
         )
         open_orders_address: PublicKey = open_orders_address_and_nonce[0]
         return open_orders_address
@@ -97,9 +125,22 @@ class SpotMarket(LoadedMarket):
 # This class holds information to load a `SpotMarket` object but doesn't automatically load it.
 #
 class SpotMarketStub(Market):
-    def __init__(self, serum_program_address: PublicKey, address: PublicKey, base: Token, quote: Token,
-                 group_address: PublicKey) -> None:
-        super().__init__(serum_program_address, address, InventorySource.ACCOUNT, base, quote, RaisingLotSizeConverter())
+    def __init__(
+        self,
+        serum_program_address: PublicKey,
+        address: PublicKey,
+        base: Token,
+        quote: Token,
+        group_address: PublicKey,
+    ) -> None:
+        super().__init__(
+            serum_program_address,
+            address,
+            InventorySource.ACCOUNT,
+            base,
+            quote,
+            RaisingLotSizeConverter(),
+        )
         self.base: Token = base
         self.quote: Token = quote
         self.group_address: PublicKey = group_address
@@ -107,8 +148,20 @@ class SpotMarketStub(Market):
     def load(self, context: Context, group: typing.Optional[Group]) -> SpotMarket:
         actual_group: Group = group or Group.load(context, self.group_address)
         underlying_serum_market: PySerumMarket = PySerumMarket.load(
-            context.client.compatible_client, self.address, context.serum_program_address)
-        return SpotMarket(self.program_address, self.address, self.base, self.quote, actual_group, underlying_serum_market)
+            context.client.compatible_client,
+            self.address,
+            context.serum_program_address,
+        )
+        return SpotMarket(
+            self.program_address,
+            self.address,
+            self.base,
+            self.quote,
+            actual_group,
+            underlying_serum_market,
+        )
 
     def __str__(self) -> str:
-        return f"« SpotMarketStub {self.symbol} {self.address} [{self.program_address}] »"
+        return (
+            f"« SpotMarketStub {self.symbol} {self.address} [{self.program_address}] »"
+        )

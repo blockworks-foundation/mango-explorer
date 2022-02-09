@@ -37,12 +37,12 @@ class Instrument:
         return round(value, int(self.decimals))
 
     def shift_to_decimals(self, value: Decimal) -> Decimal:
-        divisor = Decimal(10 ** self.decimals)
+        divisor = Decimal(10**self.decimals)
         shifted = value / divisor
         return shifted
 
     def shift_to_native(self, value: Decimal) -> Decimal:
-        multiplier = Decimal(10 ** self.decimals)
+        multiplier = Decimal(10**self.decimals)
         shifted = value * multiplier
         return round(shifted, 0)
 
@@ -67,14 +67,18 @@ class Instrument:
 # `Token` defines aspects common to every token.
 #
 class Token(Instrument):
-    def __init__(self, symbol: str, name: str, decimals: Decimal, mint: PublicKey) -> None:
+    def __init__(
+        self, symbol: str, name: str, decimals: Decimal, mint: PublicKey
+    ) -> None:
         super().__init__(symbol, name, decimals)
         self.mint: PublicKey = mint
 
     def ensure(uncertain_token: Instrument) -> "Token":
         if isinstance(uncertain_token, Token):
             return uncertain_token
-        raise Exception(f"Instrument {uncertain_token} cannot be converted to SPL Token")
+        raise Exception(
+            f"Instrument {uncertain_token} cannot be converted to SPL Token"
+        )
 
     @staticmethod
     def find_by_symbol(values: typing.Sequence["Token"], symbol: str) -> "Token":
@@ -83,7 +87,9 @@ class Token(Instrument):
             raise Exception(f"Token '{symbol}' not found in token values: {values}")
 
         if len(found) > 1:
-            raise Exception(f"Token '{symbol}' matched multiple tokens in values: {values}")
+            raise Exception(
+                f"Token '{symbol}' matched multiple tokens in values: {values}"
+            )
 
         return found[0]
 
@@ -94,7 +100,9 @@ class Token(Instrument):
             raise Exception(f"Token '{mint}' not found in token values: {values}")
 
         if len(found) > 1:
-            raise Exception(f"Token '{mint}' matched multiple tokens in values: {values}")
+            raise Exception(
+                f"Token '{mint}' matched multiple tokens in values: {values}"
+            )
 
         return found[0]
 

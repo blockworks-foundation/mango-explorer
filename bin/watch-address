@@ -11,16 +11,26 @@ import threading
 
 from solana.publickey import PublicKey
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
-parser = argparse.ArgumentParser(description="Shows the on-chain data of a particular account.")
+parser = argparse.ArgumentParser(
+    description="Shows the on-chain data of a particular account."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--address", type=PublicKey, required=True, help="Address of the Solana account to watch")
-parser.add_argument("--account-type", type=str, required=True,
-                    help="Underlying object type of the data in the AccountInfo")
+parser.add_argument(
+    "--address",
+    type=PublicKey,
+    required=True,
+    help="Address of the Solana account to watch",
+)
+parser.add_argument(
+    "--account-type",
+    type=str,
+    required=True,
+    help="Underlying object type of the data in the AccountInfo",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -31,31 +41,51 @@ disposer.add_disposable(manager)
 
 if args.account_type.upper() == "ACCOUNTINFO":
     raw_subscription = mango.WebSocketAccountSubscription(
-        context, args.address, lambda account_info: account_info)
+        context, args.address, lambda account_info: account_info
+    )
     manager.add(raw_subscription)
     publisher: rx.core.typing.Observable[mango.AccountInfo] = raw_subscription.publisher
 elif args.account_type.upper() == "SERUMEVENTS":
-    initial_serum_event_queue: mango.SerumEventQueue = mango.SerumEventQueue.load(context, args.address)
-    serum_splitter: mango.UnseenSerumEventChangesTracker = mango.UnseenSerumEventChangesTracker(
-        initial_serum_event_queue)
+    initial_serum_event_queue: mango.SerumEventQueue = mango.SerumEventQueue.load(
+        context, args.address
+    )
+    serum_splitter: mango.UnseenSerumEventChangesTracker = (
+        mango.UnseenSerumEventChangesTracker(initial_serum_event_queue)
+    )
     serum_event_splitting_subscription = mango.WebSocketAccountSubscription(
-        context, args.address, lambda account_info: mango.SerumEventQueue.parse(account_info))
+        context,
+        args.address,
+        lambda account_info: mango.SerumEventQueue.parse(account_info),
+    )
     manager.add(serum_event_splitting_subscription)
-    publisher = serum_event_splitting_subscription.publisher.pipe(rx.operators.flat_map(serum_splitter.unseen))
+    publisher = serum_event_splitting_subscription.publisher.pipe(
+        rx.operators.flat_map(serum_splitter.unseen)
+    )
 elif args.account_type.upper() == "PERPEVENTS":
     # It'd be nice to get the market's lot size converter, but we don't have its address yet.
     lot_size_converter: mango.LotSizeConverter = mango.NullLotSizeConverter()
     initial_perp_event_queue: mango.PerpEventQueue = mango.PerpEventQueue.load(
-        context, args.address, lot_size_converter)
-    perp_splitter: mango.UnseenPerpEventChangesTracker = mango.UnseenPerpEventChangesTracker(initial_perp_event_queue)
+        context, args.address, lot_size_converter
+    )
+    perp_splitter: mango.UnseenPerpEventChangesTracker = (
+        mango.UnseenPerpEventChangesTracker(initial_perp_event_queue)
+    )
     perp_event_splitting_subscription = mango.WebSocketAccountSubscription(
-        context, args.address, lambda account_info: mango.PerpEventQueue.parse(account_info, lot_size_converter))
+        context,
+        args.address,
+        lambda account_info: mango.PerpEventQueue.parse(
+            account_info, lot_size_converter
+        ),
+    )
     manager.add(perp_event_splitting_subscription)
-    publisher = perp_event_splitting_subscription.publisher.pipe(rx.operators.flat_map(perp_splitter.unseen))
+    publisher = perp_event_splitting_subscription.publisher.pipe(
+        rx.operators.flat_map(perp_splitter.unseen)
+    )
 else:
     converter = mango.build_account_info_converter(context, args.account_type)
     converting_subscription = mango.WebSocketAccountSubscription(
-        context, args.address, converter)
+        context, args.address, converter
+    )
     manager.add(converting_subscription)
     publisher = converting_subscription.publisher
 

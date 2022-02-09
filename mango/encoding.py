@@ -72,4 +72,4 @@ def encode_key(key: PublicKey) -> str:
 #
 # Encodes an `int` in the proper way for RPC calls.
 def encode_int(value: int) -> str:
-    return base58.b58encode_int(value).decode('ascii')
+    return base58.b58encode_int(value).decode("ascii")

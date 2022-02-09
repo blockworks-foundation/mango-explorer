@@ -5,7 +5,9 @@ from ...fakes import fake_context, fake_model_state, fake_order, fake_price
 
 from decimal import Decimal
 
-from mango.marketmaking.orderchain.fixedpositionsizeelement import FixedPositionSizeElement
+from mango.marketmaking.orderchain.fixedpositionsizeelement import (
+    FixedPositionSizeElement,
+)
 
 
 model_state = fake_model_state(price=fake_price(price=Decimal(80)))
@@ -13,7 +15,9 @@ model_state = fake_model_state(price=fake_price(price=Decimal(80)))
 
 def test_from_args() -> None:
     args: argparse.Namespace = argparse.Namespace(fixedpositionsize_value=[Decimal(17)])
-    actual: FixedPositionSizeElement = FixedPositionSizeElement.from_command_line_parameters(args)
+    actual: FixedPositionSizeElement = (
+        FixedPositionSizeElement.from_command_line_parameters(args)
+    )
     assert actual.position_sizes == [17]  # type: ignore[comparison-overlap]
 
 
@@ -62,11 +66,15 @@ def test_three_quantities_six_paired_orders_different_order_updated() -> None:
     order5: mango.Order = fake_order(quantity=Decimal(12), side=mango.Side.SELL)
     order6: mango.Order = fake_order(quantity=Decimal(13), side=mango.Side.SELL)
 
-    actual: FixedPositionSizeElement = FixedPositionSizeElement([Decimal(22), Decimal(33), Decimal(44)])
+    actual: FixedPositionSizeElement = FixedPositionSizeElement(
+        [Decimal(22), Decimal(33), Decimal(44)]
+    )
 
     # This line is different from previous test - orders are in different order but should be
     # returned in the proper order
-    result = actual.process(context, model_state, [order4, order3, order1, order2, order6, order5])
+    result = actual.process(
+        context, model_state, [order4, order3, order1, order2, order6, order5]
+    )
 
     assert result[0].quantity == 22
     assert result[1].quantity == 22
@@ -85,8 +93,12 @@ def test_two_quantities_six_paired_orders_different_order_updated() -> None:
     order5: mango.Order = fake_order(quantity=Decimal(12), side=mango.Side.SELL)
     order6: mango.Order = fake_order(quantity=Decimal(13), side=mango.Side.SELL)
 
-    actual: FixedPositionSizeElement = FixedPositionSizeElement([Decimal(22), Decimal(33)])
-    result = actual.process(context, model_state, [order4, order3, order1, order2, order6, order5])
+    actual: FixedPositionSizeElement = FixedPositionSizeElement(
+        [Decimal(22), Decimal(33)]
+    )
+    result = actual.process(
+        context, model_state, [order4, order3, order1, order2, order6, order5]
+    )
 
     assert result[0].quantity == 22
     assert result[1].quantity == 22

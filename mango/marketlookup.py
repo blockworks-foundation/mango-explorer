@@ -28,27 +28,35 @@ from .market import Market
 # This base class allows specialised ways of looking up markets by symbol or by address.
 #
 
+
 class MarketLookup(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
 
     @abc.abstractmethod
     def find_by_symbol(self, symbol: str) -> typing.Optional[Market]:
-        raise NotImplementedError("MarketLookup.find_by_symbol() is not implemented on the base type.")
+        raise NotImplementedError(
+            "MarketLookup.find_by_symbol() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def find_by_address(self, address: PublicKey) -> typing.Optional[Market]:
-        raise NotImplementedError("MarketLookup.find_by_address() is not implemented on the base type.")
+        raise NotImplementedError(
+            "MarketLookup.find_by_address() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def all_markets(self) -> typing.Sequence[Market]:
-        raise NotImplementedError("MarketLookup.all_markets() is not implemented on the base type.")
+        raise NotImplementedError(
+            "MarketLookup.all_markets() is not implemented on the base type."
+        )
 
 
 # # 🥭 NullMarketLookup class
 #
 # This class is a simple stub `MarketLookup` that never returns a `Market`.
 #
+
 
 class NullMarketLookup(MarketLookup):
     def __init__(self) -> None:
@@ -70,6 +78,7 @@ class NullMarketLookup(MarketLookup):
 # found.
 #
 
+
 class CompoundMarketLookup(MarketLookup):
     def __init__(self, lookups: typing.Sequence[MarketLookup]) -> None:
         super().__init__()
@@ -90,4 +99,8 @@ class CompoundMarketLookup(MarketLookup):
         return None
 
     def all_markets(self) -> typing.Sequence[Market]:
-        return [market for sublist in map(lambda lookup: lookup.all_markets(), self.lookups) for market in sublist]
+        return [
+            market
+            for sublist in map(lambda lookup: lookup.all_markets(), self.lookups)
+            for market in sublist
+        ]

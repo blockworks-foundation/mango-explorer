@@ -25,7 +25,13 @@ from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import GroupSlot, Group
-from .instructions import build_serum_consume_events_instructions, build_spot_place_order_instructions, build_cancel_spot_order_instructions, build_spot_settle_instructions, build_spot_openorders_instructions
+from .instructions import (
+    build_serum_consume_events_instructions,
+    build_spot_place_order_instructions,
+    build_cancel_spot_order_instructions,
+    build_spot_settle_instructions,
+    build_spot_openorders_instructions,
+)
 from .marketoperations import MarketInstructionBuilder, MarketOperations
 from .orders import Order, OrderBook
 from .publickey import encode_public_key_for_sorting
@@ -42,9 +48,17 @@ from .wallet import Wallet
 # on initial setup in the `load()` method.
 #
 class SpotMarketInstructionBuilder(MarketInstructionBuilder):
-    def __init__(self, context: Context, wallet: Wallet, spot_market: SpotMarket,
-                 group: Group, account: Account, raw_market: PySerumMarket,
-                 market_index: int, fee_discount_token_address: PublicKey) -> None:
+    def __init__(
+        self,
+        context: Context,
+        wallet: Wallet,
+        spot_market: SpotMarket,
+        group: Group,
+        account: Account,
+        raw_market: PySerumMarket,
+        market_index: int,
+        fee_discount_token_address: PublicKey,
+    ) -> None:
         super().__init__()
         self.context: Context = context
         self.wallet: Wallet = wallet
@@ -55,41 +69,81 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         self.market_index: int = market_index
         self.fee_discount_token_address: PublicKey = fee_discount_token_address
 
-        self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders_by_index[self.market_index]
+        self.open_orders_address: typing.Optional[
+            PublicKey
+        ] = self.account.spot_open_orders_by_index[self.market_index]
 
     @staticmethod
-    def load(context: Context, wallet: Wallet, spot_market: SpotMarket, group: Group, account: Account) -> "SpotMarketInstructionBuilder":
+    def load(
+        context: Context,
+        wallet: Wallet,
+        spot_market: SpotMarket,
+        group: Group,
+        account: Account,
+    ) -> "SpotMarketInstructionBuilder":
         raw_market: PySerumMarket = PySerumMarket.load(
-            context.client.compatible_client, spot_market.address, context.serum_program_address)
+            context.client.compatible_client,
+            spot_market.address,
+            context.serum_program_address,
+        )
 
         msrm_balance = context.client.get_token_account_balance(group.msrm_vault)
         fee_discount_token_address: PublicKey
         if msrm_balance > 0:
             fee_discount_token_address = group.msrm_vault
             logging.debug(
-                f"MSRM balance is: {msrm_balance} - using MSRM fee discount address {fee_discount_token_address}")
+                f"MSRM balance is: {msrm_balance} - using MSRM fee discount address {fee_discount_token_address}"
+            )
         else:
             fee_discount_token_address = group.srm_vault
             logging.debug(
-                f"MSRM balance is: {msrm_balance} - using SRM fee discount address {fee_discount_token_address}")
+                f"MSRM balance is: {msrm_balance} - using SRM fee discount address {fee_discount_token_address}"
+            )
 
         slot = group.slot_by_spot_market_address(spot_market.address)
         market_index = slot.index
 
-        return SpotMarketInstructionBuilder(context, wallet, spot_market, group, account, raw_market, market_index, fee_discount_token_address)
+        return SpotMarketInstructionBuilder(
+            context,
+            wallet,
+            spot_market,
+            group,
+            account,
+            raw_market,
+            market_index,
+            fee_discount_token_address,
+        )
 
-    def build_cancel_order_instructions(self, order: Order, ok_if_missing: bool = False) -> CombinableInstructions:
+    def build_cancel_order_instructions(
+        self, order: Order, ok_if_missing: bool = False
+    ) -> CombinableInstructions:
         if self.open_orders_address is None:
             return CombinableInstructions.empty()
 
         return build_cancel_spot_order_instructions(
-            self.context, self.wallet, self.group, self.account, self.raw_market, order, self.open_orders_address)
+            self.context,
+            self.wallet,
+            self.group,
+            self.account,
+            self.raw_market,
+            order,
+            self.open_orders_address,
+        )
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
-        return build_spot_place_order_instructions(self.context, self.wallet, self.group, self.account,
-                                                   self.spot_market, order.order_type, order.side, order.price,
-                                                   order.quantity, order.client_id,
-                                                   self.fee_discount_token_address)
+        return build_spot_place_order_instructions(
+            self.context,
+            self.wallet,
+            self.group,
+            self.account,
+            self.spot_market,
+            order.order_type,
+            order.side,
+            order.price,
+            order.quantity,
+            order.client_id,
+            self.fee_discount_token_address,
+        )
 
     def build_settle_instructions(self) -> CombinableInstructions:
         if self.open_orders_address is None:
@@ -98,19 +152,33 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         base_slot: GroupSlot = self.group.slot_by_instrument(self.spot_market.base)
         if base_slot.base_token_bank is None:
             raise Exception(
-                f"No token info for base instrument {self.spot_market.base.symbol} in group {self.group.address}")
+                f"No token info for base instrument {self.spot_market.base.symbol} in group {self.group.address}"
+            )
         base_rootbank = base_slot.base_token_bank.ensure_root_bank(self.context)
         base_nodebank = base_rootbank.pick_node_bank(self.context)
 
         quote_rootbank = self.group.shared_quote.ensure_root_bank(self.context)
         quote_nodebank = quote_rootbank.pick_node_bank(self.context)
-        return build_spot_settle_instructions(self.context, self.wallet, self.account,
-                                              self.raw_market, self.group, self.open_orders_address,
-                                              base_rootbank, base_nodebank, quote_rootbank, quote_nodebank)
+        return build_spot_settle_instructions(
+            self.context,
+            self.wallet,
+            self.account,
+            self.raw_market,
+            self.group,
+            self.open_orders_address,
+            base_rootbank,
+            base_nodebank,
+            quote_rootbank,
+            quote_nodebank,
+        )
 
-    def build_crank_instructions(self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)) -> CombinableInstructions:
+    def build_crank_instructions(
+        self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)
+    ) -> CombinableInstructions:
         if self.open_orders_address is None:
-            self._logger.debug("Returning empty crank instructions - no spot OpenOrders address provided.")
+            self._logger.debug(
+                "Returning empty crank instructions - no spot OpenOrders address provided."
+            )
             return CombinableInstructions.empty()
 
         distinct_addresses: typing.List[PublicKey] = [self.open_orders_address]
@@ -120,19 +188,32 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
 
         if len(distinct_addresses) > limit:
             self._logger.warn(
-                f"Cranking limited to {limit} of {len(distinct_addresses)} addresses waiting to be cranked.")
+                f"Cranking limited to {limit} of {len(distinct_addresses)} addresses waiting to be cranked."
+            )
 
-        limited_addresses = distinct_addresses[0:min(int(limit), len(distinct_addresses))]
+        limited_addresses = distinct_addresses[
+            0 : min(int(limit), len(distinct_addresses))
+        ]
         limited_addresses.sort(key=encode_public_key_for_sorting)
 
-        self._logger.debug(f"About to crank {len(limited_addresses)} addresses: {limited_addresses}")
-        return build_serum_consume_events_instructions(self.context, self.spot_market.address, self.raw_market.state.event_queue(), limited_addresses, int(limit))
+        self._logger.debug(
+            f"About to crank {len(limited_addresses)} addresses: {limited_addresses}"
+        )
+        return build_serum_consume_events_instructions(
+            self.context,
+            self.spot_market.address,
+            self.raw_market.state.event_queue(),
+            limited_addresses,
+            int(limit),
+        )
 
     def build_redeem_instructions(self) -> CombinableInstructions:
         return CombinableInstructions.empty()
 
     def build_create_openorders_instructions(self) -> CombinableInstructions:
-        return build_spot_openorders_instructions(self.context, self.wallet, self.group, self.account, self.spot_market)
+        return build_spot_openorders_instructions(
+            self.context, self.wallet, self.group, self.account, self.spot_market
+        )
 
     def __str__(self) -> str:
         return f"« SpotMarketInstructionBuilder [{self.spot_market.symbol}] »"
@@ -143,16 +224,27 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
 # This class puts trades on the Serum orderbook. It doesn't do anything complicated.
 #
 class SpotMarketOperations(MarketOperations):
-    def __init__(self, context: Context, wallet: Wallet, account: Account,
-                 market_instruction_builder: SpotMarketInstructionBuilder) -> None:
+    def __init__(
+        self,
+        context: Context,
+        wallet: Wallet,
+        account: Account,
+        market_instruction_builder: SpotMarketInstructionBuilder,
+    ) -> None:
         super().__init__(market_instruction_builder.spot_market)
         self.context: Context = context
         self.wallet: Wallet = wallet
         self.account: Account = account
-        self.market_instruction_builder: SpotMarketInstructionBuilder = market_instruction_builder
+        self.market_instruction_builder: SpotMarketInstructionBuilder = (
+            market_instruction_builder
+        )
 
-        self.market_index: int = self.group.slot_by_spot_market_address(self.spot_market.address).index
-        self.open_orders_address: typing.Optional[PublicKey] = self.account.spot_open_orders_by_index[self.market_index]
+        self.market_index: int = self.group.slot_by_spot_market_address(
+            self.spot_market.address
+        ).index
+        self.open_orders_address: typing.Optional[
+            PublicKey
+        ] = self.account.spot_open_orders_by_index[self.market_index]
 
     @property
     def spot_market(self) -> SpotMarket:
@@ -162,28 +254,49 @@ class SpotMarketOperations(MarketOperations):
     def group(self) -> Group:
         return self.market_instruction_builder.group
 
-    def cancel_order(self, order: Order, ok_if_missing: bool = False) -> typing.Sequence[str]:
+    def cancel_order(
+        self, order: Order, ok_if_missing: bool = False
+    ) -> typing.Sequence[str]:
         self._logger.info(f"Cancelling {self.spot_market.symbol} order {order}.")
-        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        cancel: CombinableInstructions = self.market_instruction_builder.build_cancel_order_instructions(
-            order, ok_if_missing=ok_if_missing)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(
+            self.wallet
+        )
+        cancel: CombinableInstructions = (
+            self.market_instruction_builder.build_cancel_order_instructions(
+                order, ok_if_missing=ok_if_missing
+            )
+        )
         crank: CombinableInstructions = self._build_crank(add_self=True)
-        settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
+        settle: CombinableInstructions = (
+            self.market_instruction_builder.build_settle_instructions()
+        )
 
         return (signers + cancel + crank + settle).execute(self.context)
 
     def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
         client_id: int = self.context.generate_client_id()
-        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(
+            self.wallet
+        )
         if order.reduce_only:
-            self._logger.warning("Ignoring reduce_only flag on order because spot markets don't support it.")
+            self._logger.warning(
+                "Ignoring reduce_only flag on order because spot markets don't support it."
+            )
         order_with_client_id: Order = order.with_client_id(client_id).with_owner(
-            self.open_orders_address or SYSTEM_PROGRAM_ADDRESS)
+            self.open_orders_address or SYSTEM_PROGRAM_ADDRESS
+        )
         self._logger.info(f"Placing {self.spot_market.symbol} order {order}.")
-        place: CombinableInstructions = self.market_instruction_builder.build_place_order_instructions(
-            order_with_client_id)
-        crank: CombinableInstructions = self._build_crank(limit=crank_limit, add_self=True)
-        settle: CombinableInstructions = self.market_instruction_builder.build_settle_instructions()
+        place: CombinableInstructions = (
+            self.market_instruction_builder.build_place_order_instructions(
+                order_with_client_id
+            )
+        )
+        crank: CombinableInstructions = self._build_crank(
+            limit=crank_limit, add_self=True
+        )
+        settle: CombinableInstructions = (
+            self.market_instruction_builder.build_settle_instructions()
+        )
 
         transaction_ids = (signers + place + crank + settle).execute(self.context)
         self._logger.info(f"Transaction IDs: {transaction_ids}.")
@@ -191,30 +304,44 @@ class SpotMarketOperations(MarketOperations):
         return order_with_client_id
 
     def settle(self) -> typing.Sequence[str]:
-        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(
+            self.wallet
+        )
         settle = self.market_instruction_builder.build_settle_instructions()
         return (signers + settle).execute(self.context)
 
     def crank(self, limit: Decimal = Decimal(32)) -> typing.Sequence[str]:
-        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(
+            self.wallet
+        )
         crank = self._build_crank(limit, add_self=False)
         return (signers + crank).execute(self.context)
 
     def create_openorders(self) -> PublicKey:
-        signers: CombinableInstructions = CombinableInstructions.from_wallet(self.wallet)
-        create_open_orders: CombinableInstructions = self.market_instruction_builder.build_create_openorders_instructions()
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(
+            self.wallet
+        )
+        create_open_orders: CombinableInstructions = (
+            self.market_instruction_builder.build_create_openorders_instructions()
+        )
         (signers + create_open_orders).execute(self.context)
 
         # These lines are a little nasty. Now that we know we have an OpenOrders account at this address,
         # update the Account so that future uses (like later in this method) have access to it in the right
         # place.
-        open_orders_address: PublicKey = self.spot_market.derive_open_orders_address(self.context, self.account)
-        self.account.update_spot_open_orders_for_market(self.market_index, open_orders_address)
+        open_orders_address: PublicKey = self.spot_market.derive_open_orders_address(
+            self.context, self.account
+        )
+        self.account.update_spot_open_orders_for_market(
+            self.market_index, open_orders_address
+        )
 
         return open_orders_address
 
     def ensure_openorders(self) -> PublicKey:
-        existing: typing.Optional[PublicKey] = self.account.spot_open_orders_by_index[self.market_index]
+        existing: typing.Optional[PublicKey] = self.account.spot_open_orders_by_index[
+            self.market_index
+        ]
         if existing is not None:
             return existing
         return self.create_openorders()
@@ -229,7 +356,9 @@ class SpotMarketOperations(MarketOperations):
         orderbook: OrderBook = self.load_orderbook()
         return orderbook.all_orders_for_owner(self.open_orders_address)
 
-    def _build_crank(self, limit: Decimal = Decimal(32), add_self: bool = False) -> CombinableInstructions:
+    def _build_crank(
+        self, limit: Decimal = Decimal(32), add_self: bool = False
+    ) -> CombinableInstructions:
         open_orders_to_crank: typing.List[PublicKey] = []
         for event in self.spot_market.unprocessed_events(self.context):
             open_orders_to_crank += [event.public_key]
@@ -241,8 +370,11 @@ class SpotMarketOperations(MarketOperations):
             return CombinableInstructions.empty()
 
         self._logger.debug(
-            f"Building crank instruction with {len(open_orders_to_crank)} public keys, throttled to {limit}")
-        return self.market_instruction_builder.build_crank_instructions(open_orders_to_crank, limit)
+            f"Building crank instruction with {len(open_orders_to_crank)} public keys, throttled to {limit}"
+        )
+        return self.market_instruction_builder.build_crank_instructions(
+            open_orders_to_crank, limit
+        )
 
     def __str__(self) -> str:
         return f"« SpotMarketOperations [{self.spot_market.symbol}] »"

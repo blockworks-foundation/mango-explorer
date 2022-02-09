@@ -127,14 +127,16 @@ class CaptureFirstItem:
 #
 # The `TItem` type parameter is the type parameter for the generic `LatestItemObserverSubscriber`.
 #
-TItem = typing.TypeVar('TItem')
+TItem = typing.TypeVar("TItem")
 
 
 # # 🥭 LatestItemObserverSubscriber class
 #
 # This class can subscribe to an `Observable` and capture the latest item as it is observed.
 #
-class LatestItemObserverSubscriber(rx.core.observer.observer.Observer, typing.Generic[TItem]):
+class LatestItemObserverSubscriber(
+    rx.core.observer.observer.Observer, typing.Generic[TItem]
+):
     def __init__(self, initial: TItem) -> None:
         super().__init__()
         self.latest: TItem = initial
@@ -160,10 +162,12 @@ class LatestItemObserverSubscriber(rx.core.observer.observer.Observer, typing.Ge
 # component functions.
 #
 class FunctionObserver(rx.core.observer.observer.Observer):
-    def __init__(self,
-                 on_next: typing.Callable[[typing.Any], None],
-                 on_error: typing.Callable[[Exception], None] = lambda _: None,
-                 on_completed: typing.Callable[[], None] = lambda: None) -> None:
+    def __init__(
+        self,
+        on_next: typing.Callable[[typing.Any], None],
+        on_error: typing.Callable[[Exception], None] = lambda _: None,
+        on_completed: typing.Callable[[], None] = lambda: None,
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self._on_next = on_next
         self._on_error = on_error
@@ -215,9 +219,17 @@ class DisposingSubject(rx.subject.subject.Subject):
 # take multiple seconds to complete. In that case, the latest item will be immediately
 # emitted and the in-between items skipped.
 #
-def create_backpressure_skipping_observer(on_next: typing.Callable[[typing.Any], None], on_error: typing.Callable[[Exception], None] = lambda _: None, on_completed: typing.Callable[[], None] = lambda: None) -> rx.core.typing.Observer[typing.Any]:
-    observer = FunctionObserver(on_next=on_next, on_error=on_error, on_completed=on_completed)
-    return typing.cast(rx.core.typing.Observer[typing.Any], BackPressure.LATEST(observer))
+def create_backpressure_skipping_observer(
+    on_next: typing.Callable[[typing.Any], None],
+    on_error: typing.Callable[[Exception], None] = lambda _: None,
+    on_completed: typing.Callable[[], None] = lambda: None,
+) -> rx.core.typing.Observer[typing.Any]:
+    observer = FunctionObserver(
+        on_next=on_next, on_error=on_error, on_completed=on_completed
+    )
+    return typing.cast(
+        rx.core.typing.Observer[typing.Any], BackPressure.LATEST(observer)
+    )
 
 
 # # 🥭 debug_print_item function
@@ -237,6 +249,7 @@ def debug_print_item(title: str) -> typing.Callable[[typing.Any], typing.Any]:
     def _debug_print_item(item: typing.Any) -> typing.Any:
         output(title, item)
         return item
+
     return _debug_print_item
 
 
@@ -277,7 +290,9 @@ def log_subscription_error(error: Exception) -> None:
 # sub1.subscribe(lambda item: print(item), on_error = lambda error: print(f"Error : {error}"))
 # ```
 #
-def observable_pipeline_error_reporter(ex: Exception, _: rx.core.observable.observable.Observable) -> rx.core.observable.observable.Observable:
+def observable_pipeline_error_reporter(
+    ex: Exception, _: rx.core.observable.observable.Observable
+) -> rx.core.observable.observable.Observable:
     logging.error(f"Intercepted error in observable pipeline: {ex}")
     raise ex
 
@@ -286,7 +301,7 @@ def observable_pipeline_error_reporter(ex: Exception, _: rx.core.observable.obse
 #
 # The `TEventDatum` type parameter is the type parameter for the generic `LatestItemObserverSubscriber`.
 #
-TEventDatum = typing.TypeVar('TEventDatum')
+TEventDatum = typing.TypeVar("TEventDatum")
 
 
 # # 🥭 EventSource class

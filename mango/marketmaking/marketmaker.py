@@ -32,14 +32,21 @@ from .orderchain.chain import Chain
 # An event-driven market-maker.
 #
 class MarketMaker:
-    def __init__(self, wallet: mango.Wallet, market: mango.Market,
-                 market_instruction_builder: mango.MarketInstructionBuilder,
-                 desired_orders_chain: Chain, order_reconciler: OrderReconciler,
-                 redeem_threshold: typing.Optional[Decimal]) -> None:
+    def __init__(
+        self,
+        wallet: mango.Wallet,
+        market: mango.Market,
+        market_instruction_builder: mango.MarketInstructionBuilder,
+        desired_orders_chain: Chain,
+        order_reconciler: OrderReconciler,
+        redeem_threshold: typing.Optional[Decimal],
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.wallet: mango.Wallet = wallet
         self.market: mango.Market = market
-        self.market_instruction_builder: mango.MarketInstructionBuilder = market_instruction_builder
+        self.market_instruction_builder: mango.MarketInstructionBuilder = (
+            market_instruction_builder
+        )
         self.desired_orders_chain: Chain = desired_orders_chain
         self.order_reconciler: OrderReconciler = order_reconciler
         self.redeem_threshold: typing.Optional[Decimal] = redeem_threshold
@@ -52,7 +59,9 @@ class MarketMaker:
 
     def pulse(self, context: mango.Context, model_state: mango.ModelState) -> None:
         try:
-            self._logger.debug(f"[{context.name}] Pulse started with oracle price:\n    {model_state.price}")
+            self._logger.debug(
+                f"[{context.name}] Pulse started with oracle price:\n    {model_state.price}"
+            )
 
             payer = mango.CombinableInstructions.from_wallet(self.wallet)
 
@@ -65,14 +74,21 @@ class MarketMaker:
             # It also gives the opportunity to code outside the orderchain to set `not_quoting` if that
             # code has access to the `model_state`.
             if model_state.not_quoting:
-                self._logger.info(f"[{context.name}] Market-maker not quoting - model_state.not_quoting is set.")
+                self._logger.info(
+                    f"[{context.name}] Market-maker not quoting - model_state.not_quoting is set."
+                )
                 return
 
             existing_orders = model_state.current_orders()
-            self._logger.debug(f"""Before reconciliation: all owned orders on current orderbook [{model_state.market.symbol}]:
-    {mango.indent_collection_as_str(existing_orders)}""")
-            reconciled = self.order_reconciler.reconcile(model_state, existing_orders, desired_orders)
-            self._logger.debug(f"""After reconciliation
+            self._logger.debug(
+                f"""Before reconciliation: all owned orders on current orderbook [{model_state.market.symbol}]:
+    {mango.indent_collection_as_str(existing_orders)}"""
+            )
+            reconciled = self.order_reconciler.reconcile(
+                model_state, existing_orders, desired_orders
+            )
+            self._logger.debug(
+                f"""After reconciliation
 Keep:
     {mango.indent_collection_as_str(reconciled.to_keep)}
 Cancel:
@@ -80,19 +96,29 @@ Cancel:
 Place:
     {mango.indent_collection_as_str(reconciled.to_place)}
 Ignore:
-    {mango.indent_collection_as_str(reconciled.to_ignore)}""")
+    {mango.indent_collection_as_str(reconciled.to_ignore)}"""
+            )
 
             cancellations = mango.CombinableInstructions.empty()
             # Perp markets have a CANCEL_ALL instruction that Spot and Serum markets don't. Use it if we can.
-            if reconciled.cancelling_all and isinstance(self.market_instruction_builder, mango.PerpMarketInstructionBuilder):
+            if reconciled.cancelling_all and isinstance(
+                self.market_instruction_builder, mango.PerpMarketInstructionBuilder
+            ):
                 ids = [f"{ord.id} / {ord.client_id}" for ord in reconciled.to_cancel]
-                self._logger.info(f"Cancelling all orders on {self.market.symbol} - currently {len(ids)}: {ids}")
-                cancellations = self.market_instruction_builder.build_cancel_all_orders_instructions()
+                self._logger.info(
+                    f"Cancelling all orders on {self.market.symbol} - currently {len(ids)}: {ids}"
+                )
+                cancellations = (
+                    self.market_instruction_builder.build_cancel_all_orders_instructions()
+                )
             else:
                 for to_cancel in reconciled.to_cancel:
                     self._logger.info(f"Cancelling {self.market.symbol} {to_cancel}")
-                    cancel = self.market_instruction_builder.build_cancel_order_instructions(
-                        to_cancel, ok_if_missing=True)
+                    cancel = (
+                        self.market_instruction_builder.build_cancel_order_instructions(
+                            to_cancel, ok_if_missing=True
+                        )
+                    )
                     cancellations += cancel
 
             place_orders = mango.CombinableInstructions.empty()
@@ -100,28 +126,51 @@ Ignore:
                 desired_client_id: int = context.generate_client_id()
                 to_place_with_client_id = to_place.with_client_id(desired_client_id)
 
-                self._logger.info(f"Placing {self.market.symbol} {to_place_with_client_id}")
-                place_order = self.market_instruction_builder.build_place_order_instructions(to_place_with_client_id)
+                self._logger.info(
+                    f"Placing {self.market.symbol} {to_place_with_client_id}"
+                )
+                place_order = (
+                    self.market_instruction_builder.build_place_order_instructions(
+                        to_place_with_client_id
+                    )
+                )
                 place_orders += place_order
 
-            crank = self.market_instruction_builder.build_crank_instructions(model_state.accounts_to_crank)
+            crank = self.market_instruction_builder.build_crank_instructions(
+                model_state.accounts_to_crank
+            )
             settle = self.market_instruction_builder.build_settle_instructions()
 
             redeem = mango.CombinableInstructions.empty()
-            if self.redeem_threshold is not None and model_state.inventory.liquidity_incentives.value > self.redeem_threshold:
+            if (
+                self.redeem_threshold is not None
+                and model_state.inventory.liquidity_incentives.value
+                > self.redeem_threshold
+            ):
                 redeem = self.market_instruction_builder.build_redeem_instructions()
 
             # Don't bother if we have no orders to change
             if len(cancellations.instructions) + len(place_orders.instructions) > 0:
-                (payer + cancellations + place_orders + crank + settle + redeem).execute(context)
+                (
+                    payer + cancellations + place_orders + crank + settle + redeem
+                ).execute(context)
 
             self.pulse_complete.on_next(datetime.now())
-        except (mango.RateLimitException, mango.NodeIsBehindException, mango.BlockhashNotFoundException, mango.FailedToFetchBlockhashException) as common_exception:
+        except (
+            mango.RateLimitException,
+            mango.NodeIsBehindException,
+            mango.BlockhashNotFoundException,
+            mango.FailedToFetchBlockhashException,
+        ) as common_exception:
             # Don't bother with a long traceback for these common problems.
-            self._logger.error(f"[{context.name}] Market-maker problem on pulse: {common_exception}")
+            self._logger.error(
+                f"[{context.name}] Market-maker problem on pulse: {common_exception}"
+            )
             self.pulse_error.on_next(common_exception)
         except Exception as exception:
-            self._logger.error(f"[{context.name}] Market-maker error on pulse:\n{traceback.format_exc()}")
+            self._logger.error(
+                f"[{context.name}] Market-maker error on pulse:\n{traceback.format_exc()}"
+            )
             self.pulse_error.on_next(exception)
 
     def __str__(self) -> str:

@@ -50,8 +50,14 @@ class SupportedOracleFeature(enum.Flag):
 # This class describes an oracle and can be used to tell apart `Prices` from different `Oracle`s
 # apart.
 #
-class OracleSource():
-    def __init__(self, provider_name: str, source_name: str, supports: SupportedOracleFeature, market: Market) -> None:
+class OracleSource:
+    def __init__(
+        self,
+        provider_name: str,
+        source_name: str,
+        supports: SupportedOracleFeature,
+        market: Market,
+    ) -> None:
         self.provider_name = provider_name
         self.source_name = source_name
         self.supports: SupportedOracleFeature = supports
@@ -68,8 +74,17 @@ class OracleSource():
 #
 # This class contains all relevant info for a price.
 #
-class Price():
-    def __init__(self, source: OracleSource, timestamp: datetime, market: Market, top_bid: Decimal, mid_price: Decimal, top_ask: Decimal, confidence: Decimal) -> None:
+class Price:
+    def __init__(
+        self,
+        source: OracleSource,
+        timestamp: datetime,
+        market: Market,
+        top_bid: Decimal,
+        mid_price: Decimal,
+        top_ask: Decimal,
+        confidence: Decimal,
+    ) -> None:
         self.source: OracleSource = source
         self.timestamp: datetime = timestamp
         self.market: Market = market
@@ -108,11 +123,17 @@ class Oracle(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def fetch_price(self, context: Context) -> Price:
-        raise NotImplementedError("Oracle.fetch_price() is not implemented on the base type.")
+        raise NotImplementedError(
+            "Oracle.fetch_price() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
-    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable[Price]:
-        raise NotImplementedError("Oracle.fetch_price() is not implemented on the base type.")
+    def to_streaming_observable(
+        self, context: Context
+    ) -> rx.core.typing.Observable[Price]:
+        raise NotImplementedError(
+            "Oracle.fetch_price() is not implemented on the base type."
+        )
 
     def __str__(self) -> str:
         return f"« Oracle {self.name} [{self.market.symbol}] »"
@@ -130,12 +151,18 @@ class OracleProvider(metaclass=abc.ABCMeta):
         self.name = name
 
     @abc.abstractmethod
-    def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
-        raise NotImplementedError("OracleProvider.create_oracle_for_market() is not implemented on the base type.")
+    def oracle_for_market(
+        self, context: Context, market: Market
+    ) -> typing.Optional[Oracle]:
+        raise NotImplementedError(
+            "OracleProvider.create_oracle_for_market() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
     def all_available_symbols(self, context: Context) -> typing.Sequence[str]:
-        raise NotImplementedError("OracleProvider.all_available_symbols() is not implemented on the base type.")
+        raise NotImplementedError(
+            "OracleProvider.all_available_symbols() is not implemented on the base type."
+        )
 
     def __str__(self) -> str:
         return f"« OracleProvider {self.name} »"

@@ -9,25 +9,47 @@ import typing
 
 from decimal import Decimal
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
 # We explicitly want argument parsing to be outside the main try-except block because some arguments
 # (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
-    description="Balance the value of tokens in a Mango Markets group to specific values or percentages.")
+    description="Balance the value of tokens in a Mango Markets group to specific values or percentages."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
-parser.add_argument("--target", type=mango.parse_fixed_target_balance, action="append", required=True,
-                    help="token symbol plus target value, separated by a colon (e.g. 'ETH:2.5')")
-parser.add_argument("--action-threshold", type=Decimal, default=Decimal("0.01"),
-                    help="fraction of total wallet value a trade must be above to be carried out")
-parser.add_argument("--adjustment-factor", type=Decimal, default=Decimal("0.05"),
-                    help="factor by which to adjust the SELL price (akin to maximum slippage)")
-parser.add_argument("--quote-symbol", type=str, default="USDC", help="quote token symbol to use for markets")
-parser.add_argument("--dry-run", action="store_true", default=False,
-                    help="runs as read-only and does not perform any transactions")
+parser.add_argument(
+    "--target",
+    type=mango.parse_fixed_target_balance,
+    action="append",
+    required=True,
+    help="token symbol plus target value, separated by a colon (e.g. 'ETH:2.5')",
+)
+parser.add_argument(
+    "--action-threshold",
+    type=Decimal,
+    default=Decimal("0.01"),
+    help="fraction of total wallet value a trade must be above to be carried out",
+)
+parser.add_argument(
+    "--adjustment-factor",
+    type=Decimal,
+    default=Decimal("0.05"),
+    help="factor by which to adjust the SELL price (akin to maximum slippage)",
+)
+parser.add_argument(
+    "--quote-symbol",
+    type=str,
+    default="USDC",
+    help="quote token symbol to use for markets",
+)
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    default=False,
+    help="runs as read-only and does not perform any transactions",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 context: mango.Context = mango.ContextBuilder.from_command_line_parameters(args)
@@ -43,9 +65,13 @@ logging.info(f"Targets: {targets}")
 if args.dry_run:
     trade_executor: mango.TradeExecutor = mango.NullTradeExecutor()
 else:
-    trade_executor = mango.ImmediateTradeExecutor(context, wallet, None, adjustment_factor)
+    trade_executor = mango.ImmediateTradeExecutor(
+        context, wallet, None, adjustment_factor
+    )
 
-quote_instrument: typing.Optional[mango.Instrument] = context.instrument_lookup.find_by_symbol(args.quote_symbol)
+quote_instrument: typing.Optional[
+    mango.Instrument
+] = context.instrument_lookup.find_by_symbol(args.quote_symbol)
 if quote_instrument is None:
     raise Exception(f"Could not find quote token '{args.quote_symbol}.")
 quote_token: mango.Token = mango.Token.ensure(quote_instrument)
@@ -53,7 +79,9 @@ quote_token: mango.Token = mango.Token.ensure(quote_instrument)
 prices: typing.List[mango.InstrumentValue] = []
 oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, "market")
 for target in targets:
-    target_token: typing.Optional[mango.Instrument] = context.instrument_lookup.find_by_symbol(target.symbol)
+    target_token: typing.Optional[
+        mango.Instrument
+    ] = context.instrument_lookup.find_by_symbol(target.symbol)
     if target_token is None:
         raise Exception(f"Could not find target token '{target.symbol}.")
     market_symbol: str = f"serum:{target_token.symbol}/{quote_token.symbol}"
@@ -67,7 +95,9 @@ for target in targets:
     prices += [mango.InstrumentValue(target_token, price.mid_price)]
 prices += [mango.InstrumentValue(quote_token, Decimal(1))]
 
-wallet_balancer = mango.LiveWalletBalancer(wallet, quote_token, trade_executor, targets, action_threshold)
+wallet_balancer = mango.LiveWalletBalancer(
+    wallet, quote_token, trade_executor, targets, action_threshold
+)
 wallet_balancer.balance(context, prices)
 
 logging.info("Balancing completed.")

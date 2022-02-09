@@ -14,19 +14,33 @@ def test_group_layout() -> None:
     # Not an exhaustive check, just a few key areas
     assert group.num_oracles == 10
     assert len(group.tokens) == 16
-    assert group.tokens[0].mint == PublicKey("Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC")
-    assert group.tokens[1].mint == PublicKey("3UNBZ6o52WTWwjac2kPUb4FyodhU1vFkRJheu1Sh2TvU")
+    assert group.tokens[0].mint == PublicKey(
+        "Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC"
+    )
+    assert group.tokens[1].mint == PublicKey(
+        "3UNBZ6o52WTWwjac2kPUb4FyodhU1vFkRJheu1Sh2TvU"
+    )
     assert group.tokens[14].mint is None
-    assert group.tokens[15].mint == PublicKey("8FRFC6MoGGkMFQwngccyu69VnYbzykGeez7ignHVAFSN")
+    assert group.tokens[15].mint == PublicKey(
+        "8FRFC6MoGGkMFQwngccyu69VnYbzykGeez7ignHVAFSN"
+    )
 
     assert len(group.spot_markets) == 15
-    assert group.spot_markets[0].spot_market == PublicKey("BqAmk715myHomPTMtuSydqqntQ9PDnJ1WoXMc2oAUomj")
-    assert group.spot_markets[9].spot_market == PublicKey("Cyc11qk1FQTmQNFHMHEbwLsgdnHzFK2DrowiKwrGaHxC")
+    assert group.spot_markets[0].spot_market == PublicKey(
+        "BqAmk715myHomPTMtuSydqqntQ9PDnJ1WoXMc2oAUomj"
+    )
+    assert group.spot_markets[9].spot_market == PublicKey(
+        "Cyc11qk1FQTmQNFHMHEbwLsgdnHzFK2DrowiKwrGaHxC"
+    )
     assert group.spot_markets[14].spot_market is None
 
     assert len(group.perp_markets) == 15
-    assert group.perp_markets[0].perp_market == PublicKey("Gnd9WTaFjJwZU8XEpoB8EYfx5GryJ1dRDw9EzwLtX2b")
-    assert group.perp_markets[9].perp_market == PublicKey("6JZZbRjmqCke4Nm9XkzsrXFzM7LdmFHndDA5gcdiRvEx")
+    assert group.perp_markets[0].perp_market == PublicKey(
+        "Gnd9WTaFjJwZU8XEpoB8EYfx5GryJ1dRDw9EzwLtX2b"
+    )
+    assert group.perp_markets[9].perp_market == PublicKey(
+        "6JZZbRjmqCke4Nm9XkzsrXFzM7LdmFHndDA5gcdiRvEx"
+    )
     assert group.perp_markets[14].perp_market is None
 
     assert len(group.oracles) == 15
@@ -37,10 +51,14 @@ def test_group_layout() -> None:
     assert group.signer_nonce == 0
     assert group.signer_key == PublicKey("9GXvznfEep9yEsvH4CQzqNy5GH81FNk1HDeAR8UjefSf")
     assert group.admin == PublicKey("Cwg1f6m4m3DGwMEbmsbAfDtUToUf5jRdKrJSGD7GfZCB")
-    assert group.serum_program_address == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
+    assert group.serum_program_address == PublicKey(
+        "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY"
+    )
     assert group.cache == PublicKey("PJhM2enPpZH7E9wgw7Sqt8S2p4mr3Bc7SycawQwfY7b")
     assert group.valid_interval == 5
-    assert group.insurance_vault == PublicKey("14gfuPWjUQnYXpsxs4WgsjafUrJctKkR9AMFH7fjvTgR")
+    assert group.insurance_vault == PublicKey(
+        "14gfuPWjUQnYXpsxs4WgsjafUrJctKkR9AMFH7fjvTgR"
+    )
     assert group.srm_vault == PublicKey("23Z3FWjXdt18FiZUwfsnQkUDvF14MneS7uoMYytfNe3G")
     assert group.msrm_vault == PublicKey("Qjf6vWMKPwEMLMM6ci9tudUWZ2t8zVXHqHverDWFx9S")
     assert group.fees_vault is None

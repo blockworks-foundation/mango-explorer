@@ -26,7 +26,13 @@ from ...ensuremarketloaded import ensure_market_loaded
 from ...loadedmarket import LoadedMarket
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
-from ...oracle import Oracle, OracleProvider, OracleSource, Price, SupportedOracleFeature
+from ...oracle import (
+    Oracle,
+    OracleProvider,
+    OracleSource,
+    Price,
+    SupportedOracleFeature,
+)
 from ...orders import OrderBook
 
 
@@ -61,20 +67,36 @@ class MarketOracle(Oracle):
     def fetch_price(self, context: Context) -> Price:
         orderbook: OrderBook = self.loaded_market.fetch_orderbook(context)
         if orderbook.top_bid is None:
-            raise Exception(f"[{self.source}] Cannot determine complete price data - no top bid")
+            raise Exception(
+                f"[{self.source}] Cannot determine complete price data - no top bid"
+            )
         top_bid = orderbook.top_bid.price
 
         if orderbook.top_ask is None:
-            raise Exception(f"[{self.source}] Cannot determine complete price data - no top bid")
+            raise Exception(
+                f"[{self.source}] Cannot determine complete price data - no top bid"
+            )
         top_ask = orderbook.top_ask.price
 
         if orderbook.mid_price is None:
-            raise Exception(f"[{self.source}] Cannot determine complete price data - no mid price")
+            raise Exception(
+                f"[{self.source}] Cannot determine complete price data - no mid price"
+            )
         mid_price = orderbook.mid_price
 
-        return Price(self.source, datetime.now(), self.market, top_bid, mid_price, top_ask, MarketOracleConfidence)
+        return Price(
+            self.source,
+            datetime.now(),
+            self.market,
+            top_bid,
+            mid_price,
+            top_ask,
+            MarketOracleConfidence,
+        )
 
-    def to_streaming_observable(self, context: Context) -> rx.core.typing.Observable[Price]:
+    def to_streaming_observable(
+        self, context: Context
+    ) -> rx.core.typing.Observable[Price]:
         prices = rx.interval(1).pipe(
             ops.observe_on(context.create_thread_pool_scheduler()),
             ops.start_with(-1),
@@ -93,7 +115,9 @@ class MarketOracleProvider(OracleProvider):
     def __init__(self) -> None:
         super().__init__("Market Oracle Factory")
 
-    def oracle_for_market(self, context: Context, market: Market) -> typing.Optional[Oracle]:
+    def oracle_for_market(
+        self, context: Context, market: Market
+    ) -> typing.Optional[Oracle]:
         loaded_market: LoadedMarket = ensure_market_loaded(context, market)
         return MarketOracle(loaded_market)
 

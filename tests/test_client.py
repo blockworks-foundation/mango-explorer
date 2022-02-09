@@ -11,26 +11,40 @@ __FAKE_RPC_METHOD = RPCMethod("fake")
 
 class FakeRPCCaller(mango.RPCCaller):
     def __init__(self) -> None:
-        super().__init__("Fake", "https://localhost", "wss://localhost", -1, [0.1, 0.2], mango.SlotHolder(), mango.InstructionReporter())
+        super().__init__(
+            "Fake",
+            "https://localhost",
+            "wss://localhost",
+            -1,
+            [0.1, 0.2],
+            mango.SlotHolder(),
+            mango.InstructionReporter(),
+        )
         self.called = False
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
         self.called = True
-        return {
-            "jsonrpc": "2.0",
-            "id": 0,
-            "result": {}
-        }
+        return {"jsonrpc": "2.0", "id": 0, "result": {}}
 
 
 class RaisingRPCCaller(mango.RPCCaller):
     def __init__(self) -> None:
-        super().__init__("Fake", "https://localhost", "wss://localhost", -1, [0.1, 0.2], mango.SlotHolder(), mango.InstructionReporter())
+        super().__init__(
+            "Fake",
+            "https://localhost",
+            "wss://localhost",
+            -1,
+            [0.1, 0.2],
+            mango.SlotHolder(),
+            mango.InstructionReporter(),
+        )
         self.called = False
 
     def make_request(self, method: RPCMethod, *params: typing.Any) -> RPCResponse:
         self.called = True
-        raise mango.TooManyRequestsRateLimitException("Fake", "fake-name", "https://fake")
+        raise mango.TooManyRequestsRateLimitException(
+            "Fake", "fake-name", "https://fake"
+        )
 
 
 def test_constructor_sets_correct_values() -> None:

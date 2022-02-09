@@ -8,132 +8,200 @@ from ..fakes import fake_model_state
 
 def test_buy_does_not_match_sell() -> None:
     actual = ToleranceOrderReconciler(Decimal(1), Decimal(1))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.SELL, price=Decimal(1), quantity=Decimal(10))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.SELL, price=Decimal(1), quantity=Decimal(10)
+    )
 
     assert not actual.is_within_tolderance(existing, desired)
 
 
 def test_exact_match_with_small_tolerance_matches() -> None:
     actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal("0.001"))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
 
     assert actual.is_within_tolderance(existing, desired)
 
 
 def test_exact_match_with_zero_tolerance_matches() -> None:
     actual = ToleranceOrderReconciler(Decimal(0), Decimal(0))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
 
     assert actual.is_within_tolderance(existing, desired)
 
 
 def test_quantity_within_positive_tolerance_matches() -> None:
     actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal("10.009"))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal("10.009")
+    )
 
     assert actual.is_within_tolderance(existing, desired)
 
 
 def test_quantity_positive_tolerance_boundary_matches() -> None:
     actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal("10.01"))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal("10.01")
+    )
 
     assert actual.is_within_tolderance(existing, desired)
 
 
 def test_quantity_outside_positive_tolerance_no_match() -> None:
     actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal("10.011"))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal("10.011")
+    )
 
     assert not actual.is_within_tolderance(existing, desired)
 
 
 def test_quantity_within_negative_tolerance_matches() -> None:
     actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal("9.991"))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal("9.991")
+    )
 
     assert actual.is_within_tolderance(existing, desired)
 
 
 def test_quantity_negative_tolerance_boundary_matches() -> None:
     actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal("9.99"))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal("9.99")
+    )
 
     assert actual.is_within_tolderance(existing, desired)
 
 
 def test_quantity_outside_negative_tolerance_no_match() -> None:
     actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal("9.989"))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal("9.989")
+    )
 
     assert not actual.is_within_tolderance(existing, desired)
 
 
 def test_price_within_positive_tolerance_matches() -> None:
     actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal("1.0009"), quantity=Decimal(10))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal("1.0009"), quantity=Decimal(10)
+    )
 
     assert actual.is_within_tolderance(existing, desired)
 
 
 def test_price_positive_tolerance_boundary_matches() -> None:
     actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal("1.001"), quantity=Decimal(10))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal("1.001"), quantity=Decimal(10)
+    )
 
     assert actual.is_within_tolderance(existing, desired)
 
 
 def test_price_outside_positive_tolerance_no_match() -> None:
     actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal("1.0011"), quantity=Decimal(10))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal("1.0011"), quantity=Decimal(10)
+    )
 
     assert not actual.is_within_tolderance(existing, desired)
 
 
 def test_price_within_negative_tolerance_matches() -> None:
     actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal("0.9991"), quantity=Decimal(10))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal("0.9991"), quantity=Decimal(10)
+    )
 
     assert actual.is_within_tolderance(existing, desired)
 
 
 def test_price_negative_tolerance_boundary_matches() -> None:
     actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal("0.999"), quantity=Decimal(10))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal("0.999"), quantity=Decimal(10)
+    )
 
     assert actual.is_within_tolderance(existing, desired)
 
 
 def test_price_outside_negative_tolerance_no_match() -> None:
     actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
-    existing = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(1), quantity=Decimal(10))
-    desired = mango.Order.from_basic_info(mango.Side.BUY, price=Decimal("0.9989"), quantity=Decimal(10))
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal("0.9989"), quantity=Decimal(10)
+    )
 
     assert not actual.is_within_tolderance(existing, desired)
 
 
 def test_reconcile_no_acceptable_orders() -> None:
     existing = [
-        mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(99), quantity=Decimal(10)),
-        mango.Order.from_basic_info(mango.Side.SELL, price=Decimal(101), quantity=Decimal(10))
+        mango.Order.from_basic_info(
+            mango.Side.BUY, price=Decimal(99), quantity=Decimal(10)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.SELL, price=Decimal(101), quantity=Decimal(10)
+        ),
     ]
     desired = [
-        mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(100), quantity=Decimal(10)),
-        mango.Order.from_basic_info(mango.Side.SELL, price=Decimal(102), quantity=Decimal(10))
+        mango.Order.from_basic_info(
+            mango.Side.BUY, price=Decimal(100), quantity=Decimal(10)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.SELL, price=Decimal(102), quantity=Decimal(10)
+        ),
     ]
     model_state = fake_model_state()
     actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal("0.001"))
@@ -147,12 +215,20 @@ def test_reconcile_no_acceptable_orders() -> None:
 
 def test_reconcile_all_acceptable_orders() -> None:
     existing = [
-        mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(99), quantity=Decimal(10)),
-        mango.Order.from_basic_info(mango.Side.SELL, price=Decimal(101), quantity=Decimal(10))
+        mango.Order.from_basic_info(
+            mango.Side.BUY, price=Decimal(99), quantity=Decimal(10)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.SELL, price=Decimal(101), quantity=Decimal(10)
+        ),
     ]
     desired = [
-        mango.Order.from_basic_info(mango.Side.BUY, price=Decimal("99.01"), quantity=Decimal(10)),
-        mango.Order.from_basic_info(mango.Side.SELL, price=Decimal("101.01"), quantity=Decimal(10))
+        mango.Order.from_basic_info(
+            mango.Side.BUY, price=Decimal("99.01"), quantity=Decimal(10)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.SELL, price=Decimal("101.01"), quantity=Decimal(10)
+        ),
     ]
     model_state = fake_model_state()
     actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal("0.001"))
@@ -166,14 +242,26 @@ def test_reconcile_all_acceptable_orders() -> None:
 
 def test_reconcile_different_list_sizes_orders() -> None:
     existing = [
-        mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(98), quantity=Decimal(20)),
-        mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(99), quantity=Decimal(10)),
-        mango.Order.from_basic_info(mango.Side.SELL, price=Decimal(101), quantity=Decimal(10)),
-        mango.Order.from_basic_info(mango.Side.SELL, price=Decimal(102), quantity=Decimal(20))
+        mango.Order.from_basic_info(
+            mango.Side.BUY, price=Decimal(98), quantity=Decimal(20)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.BUY, price=Decimal(99), quantity=Decimal(10)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.SELL, price=Decimal(101), quantity=Decimal(10)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.SELL, price=Decimal(102), quantity=Decimal(20)
+        ),
     ]
     desired = [
-        mango.Order.from_basic_info(mango.Side.BUY, price=Decimal("99.01"), quantity=Decimal(10)),
-        mango.Order.from_basic_info(mango.Side.SELL, price=Decimal("101.01"), quantity=Decimal(10))
+        mango.Order.from_basic_info(
+            mango.Side.BUY, price=Decimal("99.01"), quantity=Decimal(10)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.SELL, price=Decimal("101.01"), quantity=Decimal(10)
+        ),
     ]
     model_state = fake_model_state()
     actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal("0.001"))
@@ -191,16 +279,32 @@ def test_reconcile_different_list_sizes_orders() -> None:
 
 def test_reconcile_two_acceptable_two_unacceptable_orders() -> None:
     existing = [
-        mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(98), quantity=Decimal(20)),
-        mango.Order.from_basic_info(mango.Side.BUY, price=Decimal(99), quantity=Decimal(10)),
-        mango.Order.from_basic_info(mango.Side.SELL, price=Decimal(101), quantity=Decimal(10)),
-        mango.Order.from_basic_info(mango.Side.SELL, price=Decimal(102), quantity=Decimal(20))
+        mango.Order.from_basic_info(
+            mango.Side.BUY, price=Decimal(98), quantity=Decimal(20)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.BUY, price=Decimal(99), quantity=Decimal(10)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.SELL, price=Decimal(101), quantity=Decimal(10)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.SELL, price=Decimal(102), quantity=Decimal(20)
+        ),
     ]
     desired = [
-        mango.Order.from_basic_info(mango.Side.BUY, price=Decimal("98.1"), quantity=Decimal(20)),
-        mango.Order.from_basic_info(mango.Side.BUY, price=Decimal("99.01"), quantity=Decimal(10)),
-        mango.Order.from_basic_info(mango.Side.SELL, price=Decimal("101.01"), quantity=Decimal(10)),
-        mango.Order.from_basic_info(mango.Side.SELL, price=Decimal("102.11"), quantity=Decimal(20))
+        mango.Order.from_basic_info(
+            mango.Side.BUY, price=Decimal("98.1"), quantity=Decimal(20)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.BUY, price=Decimal("99.01"), quantity=Decimal(10)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.SELL, price=Decimal("101.01"), quantity=Decimal(10)
+        ),
+        mango.Order.from_basic_info(
+            mango.Side.SELL, price=Decimal("102.11"), quantity=Decimal(20)
+        ),
     ]
     model_state = fake_model_state()
     actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal("0.001"))

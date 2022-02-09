@@ -40,7 +40,9 @@ from .watcher import Watcher
 class EventQueue(typing.Protocol):
     @property
     def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
-        raise NotImplementedError("EventQueue.accounts_to_crank is not implemented on the Protocol.")
+        raise NotImplementedError(
+            "EventQueue.accounts_to_crank is not implemented on the Protocol."
+        )
 
 
 class NullEventQueue:
@@ -54,17 +56,18 @@ class NullEventQueue:
 # Provides simple access to the latest state of market and account data.
 #
 class ModelState:
-    def __init__(self,
-                 order_owner: PublicKey,
-                 market: Market,
-                 group_watcher: Watcher[Group],
-                 account_watcher: Watcher[Account],
-                 price_watcher: Watcher[Price],
-                 placed_orders_container_watcher: Watcher[PlacedOrdersContainer],
-                 inventory_watcher: Watcher[Inventory],
-                 orderbook: Watcher[OrderBook],
-                 event_queue: Watcher[EventQueue]
-                 ) -> None:
+    def __init__(
+        self,
+        order_owner: PublicKey,
+        market: Market,
+        group_watcher: Watcher[Group],
+        account_watcher: Watcher[Account],
+        price_watcher: Watcher[Price],
+        placed_orders_container_watcher: Watcher[PlacedOrdersContainer],
+        inventory_watcher: Watcher[Inventory],
+        orderbook: Watcher[OrderBook],
+        event_queue: Watcher[EventQueue],
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.order_owner: PublicKey = order_owner
         self.market: Market = market
@@ -72,7 +75,8 @@ class ModelState:
         self.account_watcher: Watcher[Account] = account_watcher
         self.price_watcher: Watcher[Price] = price_watcher
         self.placed_orders_container_watcher: Watcher[
-            PlacedOrdersContainer] = placed_orders_container_watcher
+            PlacedOrdersContainer
+        ] = placed_orders_container_watcher
         self.inventory_watcher: Watcher[Inventory] = inventory_watcher
         self.orderbook_watcher: Watcher[OrderBook] = orderbook
         self.event_queue_watcher: Watcher[EventQueue] = event_queue

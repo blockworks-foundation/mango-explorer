@@ -24,7 +24,12 @@ from rx.scheduler.threadpoolscheduler import ThreadPoolScheduler
 from solana.publickey import PublicKey
 from solana.rpc.commitment import Commitment
 
-from .client import BetterClient, ClusterUrlData, TransactionStatusCollector, NullTransactionStatusCollector
+from .client import (
+    BetterClient,
+    ClusterUrlData,
+    TransactionStatusCollector,
+    NullTransactionStatusCollector,
+)
 from .constants import MangoConstants
 from .instructionreporter import InstructionReporter, CompoundInstructionReporter
 from .instrumentlookup import InstrumentLookup
@@ -37,19 +42,48 @@ from .text import indent_collection_as_str, indent_item_by
 # A `Context` object to manage Solana connection and Mango configuration.
 #
 class Context:
-    def __init__(self, name: str, cluster_name: str, cluster_urls: typing.Sequence[ClusterUrlData], skip_preflight: bool,
-                 commitment: str, encoding: str, blockhash_cache_duration: int, http_request_timeout: float,
-                 stale_data_pauses_before_retry: typing.Sequence[float], mango_program_address: PublicKey,
-                 serum_program_address: PublicKey, group_name: str, group_address: PublicKey,
-                 gma_chunk_size: Decimal, gma_chunk_pause: Decimal, reflink: typing.Optional[PublicKey],
-                 instrument_lookup: InstrumentLookup, market_lookup: MarketLookup,
-                 transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector()) -> None:
+    def __init__(
+        self,
+        name: str,
+        cluster_name: str,
+        cluster_urls: typing.Sequence[ClusterUrlData],
+        skip_preflight: bool,
+        commitment: str,
+        encoding: str,
+        blockhash_cache_duration: int,
+        http_request_timeout: float,
+        stale_data_pauses_before_retry: typing.Sequence[float],
+        mango_program_address: PublicKey,
+        serum_program_address: PublicKey,
+        group_name: str,
+        group_address: PublicKey,
+        gma_chunk_size: Decimal,
+        gma_chunk_pause: Decimal,
+        reflink: typing.Optional[PublicKey],
+        instrument_lookup: InstrumentLookup,
+        market_lookup: MarketLookup,
+        transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector(),
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
-        instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_addresses(
-            mango_program_address, serum_program_address)
-        self.client: BetterClient = BetterClient.from_configuration(name, cluster_name, cluster_urls, Commitment(
-            commitment), skip_preflight, encoding, blockhash_cache_duration, http_request_timeout, stale_data_pauses_before_retry, instruction_reporter, transaction_status_collector)
+        instruction_reporter: InstructionReporter = (
+            CompoundInstructionReporter.from_addresses(
+                mango_program_address, serum_program_address
+            )
+        )
+        self.client: BetterClient = BetterClient.from_configuration(
+            name,
+            cluster_name,
+            cluster_urls,
+            Commitment(commitment),
+            skip_preflight,
+            encoding,
+            blockhash_cache_duration,
+            http_request_timeout,
+            stale_data_pauses_before_retry,
+            instruction_reporter,
+            transaction_status_collector,
+        )
         self.mango_program_address: PublicKey = mango_program_address
         self.serum_program_address: PublicKey = serum_program_address
         self.group_name: str = group_name
@@ -66,8 +100,13 @@ class Context:
 
         # kangda said in Discord: https://discord.com/channels/791995070613159966/836239696467591186/847816026245693451
         # "I think you are better off doing 4,8,16,20,30"
-        self.retry_pauses: typing.Sequence[Decimal] = [Decimal(4), Decimal(
-            8), Decimal(16), Decimal(20), Decimal(30)]
+        self.retry_pauses: typing.Sequence[Decimal] = [
+            Decimal(4),
+            Decimal(8),
+            Decimal(16),
+            Decimal(20),
+            Decimal(30),
+        ]
 
     def create_thread_pool_scheduler(self) -> ThreadPoolScheduler:
         return ThreadPoolScheduler(multiprocessing.cpu_count())
@@ -100,7 +139,10 @@ class Context:
     def lookup_group_name(self, group_address: PublicKey) -> str:
         group_address_str = str(group_address)
         for group in MangoConstants["groups"]:
-            if group["cluster"] == self.client.cluster_name and group["publicKey"] == group_address_str:
+            if (
+                group["cluster"] == self.client.cluster_name
+                and group["publicKey"] == group_address_str
+            ):
                 return str(group["name"])
 
         return "« Unknown Group »"
@@ -111,7 +153,9 @@ class Context:
         return typing.cast(typing.Sequence[typing.Any], stats_response.json())
 
     def __str__(self) -> str:
-        cluster_urls: str = indent_item_by(indent_collection_as_str(self.client.cluster_urls))
+        cluster_urls: str = indent_item_by(
+            indent_collection_as_str(self.client.cluster_urls)
+        )
         return f"""« Context '{self.name}':
     Cluster Name: {self.client.cluster_name}
     Cluster URLs:

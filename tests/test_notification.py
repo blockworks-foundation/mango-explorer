@@ -62,6 +62,7 @@ def test_filtering_notification_target_constructor() -> None:
 
     def func(_: typing.Any) -> bool:
         return True
+
     actual = mango.FilteringNotificationTarget(mock, func)
     assert actual is not None
     assert actual.inner_notifier == mock
@@ -72,22 +73,25 @@ def test_filtering_notification_target() -> None:
     mock = MockNotificationTarget()
     filtering = mango.FilteringNotificationTarget(mock, lambda x: bool(x == "yes"))
     filtering.send("no")
-    assert(not mock.send_notification_called)
+    assert not mock.send_notification_called
     filtering.send("yes")
-    assert(mock.send_notification_called)
+    assert mock.send_notification_called
 
 
 def test_parse_notification_target() -> None:
     telegram_target = mango.parse_notification_target(
-        "telegram:012345678@9876543210:ABCDEFGHijklmnop-qrstuvwxyzABCDEFGH")
+        "telegram:012345678@9876543210:ABCDEFGHijklmnop-qrstuvwxyzABCDEFGH"
+    )
     assert telegram_target is not None
 
     discord_target = mango.parse_notification_target(
-        "discord:https://discord.com/api/webhooks/012345678901234567/ABCDE_fghij-KLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN")
+        "discord:https://discord.com/api/webhooks/012345678901234567/ABCDE_fghij-KLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN"
+    )
     assert discord_target is not None
 
     mailjet_target = mango.parse_notification_target(
-        "mailjet:user:secret:subject:from%20name:from@address:to%20name%20with%20colon%3A:to@address")
+        "mailjet:user:secret:subject:from%20name:from@address:to%20name%20with%20colon%3A:to@address"
+    )
     assert mailjet_target is not None
 
     csvfile_target = mango.parse_notification_target("csvfile:filename.csv")

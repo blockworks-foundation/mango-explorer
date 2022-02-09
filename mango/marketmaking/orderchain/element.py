@@ -40,11 +40,20 @@ class Element(metaclass=abc.ABCMeta):
 
     @staticmethod
     def from_command_line_parameters(args: argparse.Namespace) -> "Element":
-        raise NotImplementedError("Element.from_command_line_parameters() is not implemented on the base type.")
+        raise NotImplementedError(
+            "Element.from_command_line_parameters() is not implemented on the base type."
+        )
 
     @abc.abstractmethod
-    def process(self, context: mango.Context, model_state: ModelState, orders: typing.Sequence[mango.Order]) -> typing.Sequence[mango.Order]:
-        raise NotImplementedError("Element.process() is not implemented on the base type.")
+    def process(
+        self,
+        context: mango.Context,
+        model_state: ModelState,
+        orders: typing.Sequence[mango.Order],
+    ) -> typing.Sequence[mango.Order]:
+        raise NotImplementedError(
+            "Element.process() is not implemented on the base type."
+        )
 
     def __repr__(self) -> str:
         return f"{self}"
