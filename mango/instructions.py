@@ -598,7 +598,7 @@ def build_place_perp_order_instructions(
                     is_writable=False,
                     pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS,
                 )
-                for oo_address in account.spot_open_orders_by_index[:-1]
+                for oo_address in account.spot_open_orders_by_index
             ]
         ),
     ]
@@ -858,7 +858,7 @@ def build_withdraw_instructions(
                         is_writable=False,
                         pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS,
                     )
-                    for oo_address in account.spot_open_orders_by_index[:-1]
+                    for oo_address in account.spot_open_orders_by_index
                 ]
             ),
         ],

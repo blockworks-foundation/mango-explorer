@@ -159,7 +159,6 @@ def test_construction() -> None:
         None,
         fake_seeded_public_key("spot openorders 2"),
         fake_seeded_public_key("spot openorders 3"),
-        None,
     ]
     assert actual.perp_accounts_by_index == [None, perp1, None, perp2, perp3, None]
     assert actual.msrm_amount == msrm_amount
@@ -336,7 +335,7 @@ def test_slot_lookups() -> None:
     assert actual.spot_open_orders[1] == slots[1].spot_open_orders
 
     assert (
-        len(actual.spot_open_orders_by_index) == 8
+        len(actual.spot_open_orders_by_index) == 7
     )  # Shared Quote is included but should always be None
     assert actual.spot_open_orders_by_index[0] is None
     assert actual.spot_open_orders_by_index[1] == slots[0].spot_open_orders
@@ -345,7 +344,6 @@ def test_slot_lookups() -> None:
     assert actual.spot_open_orders_by_index[4] is None
     assert actual.spot_open_orders_by_index[5] is None
     assert actual.spot_open_orders_by_index[6] is None
-    assert actual.spot_open_orders_by_index[7] is None
 
     # Shared Quote should always have None for perp_account so is not included
     assert len(actual.perp_accounts) == 2

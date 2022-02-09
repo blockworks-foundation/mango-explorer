@@ -220,7 +220,7 @@ class Account(AddressableAccount):
         return [*[slot for slot in self.base_slots], self.shared_quote]
 
     @property
-    def slots_by_index(self) -> typing.Sequence[typing.Optional[AccountSlot]]:
+    def base_slots_by_index(self) -> typing.Sequence[typing.Optional[AccountSlot]]:
         mapped_items: typing.List[typing.Optional[AccountSlot]] = []
         slot_counter = 0
         for available in self.slot_indices:
@@ -229,9 +229,12 @@ class Account(AddressableAccount):
                 slot_counter += 1
             else:
                 mapped_items += [None]
-        mapped_items += [self.shared_quote]
 
         return mapped_items
+
+    @property
+    def slots_by_index(self) -> typing.Sequence[typing.Optional[AccountSlot]]:
+        return [*self.base_slots_by_index, self.shared_quote]
 
     @property
     def deposits(self) -> typing.Sequence[InstrumentValue]:
@@ -275,7 +278,7 @@ class Account(AddressableAccount):
     def spot_open_orders_by_index(self) -> typing.Sequence[typing.Optional[PublicKey]]:
         return [
             slot.spot_open_orders if slot is not None else None
-            for slot in self.slots_by_index
+            for slot in self.base_slots_by_index
         ]
 
     @property
