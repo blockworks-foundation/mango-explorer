@@ -444,6 +444,9 @@ DATA_TYPE = construct.Enum(
     Asks=6,
     Cache=7,
     EventQueue=8,
+    AdvancedOrders=9,
+    ReferrerMemory=10,
+    ReferrerIdRecord=11,
 )
 
 
@@ -1290,6 +1293,10 @@ CACHE = construct.Struct(
     "price_cache" / construct.Array(MAX_PAIRS, PRICE_CACHE),
     "root_bank_cache" / construct.Array(MAX_TOKENS, ROOT_BANK_CACHE),
     "perp_market_cache" / construct.Array(MAX_PAIRS, PERP_MARKET_CACHE),
+)
+
+REFERRER_MEMORY = construct.Struct(
+    "meta_data" / METADATA, "referrer_mango_account" / PublicKeyAdapter()
 )
 
 

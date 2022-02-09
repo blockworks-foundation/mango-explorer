@@ -73,6 +73,7 @@ class AccountInfo:
     Executable: {self.executable}
     Lamports: {self.lamports} / Sols: {self.sols}
     Rent Epoch: {self.rent_epoch}
+    Data Length: {len(self.data)}
 »"""
 
     def __repr__(self) -> str:

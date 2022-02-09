@@ -251,6 +251,3 @@ class Cache(AddressableAccount):
     Perp Markets:
         {perp_markets}
 »"""
-
-    def __repr__(self) -> str:
-        return f"{self}"

@@ -39,6 +39,69 @@ from .tokenbank import TokenBank
 from .version import Version
 
 
+# # 🥭 ReferrerMemory class
+#
+# `ReferrerMemory` stores the referrer's Mango Account address.
+#
+class ReferrerMemory(AddressableAccount):
+    def __init__(
+        self,
+        account_info: AccountInfo,
+        version: Version,
+        meta_data: Metadata,
+        referrer_mango_account: PublicKey,
+    ) -> None:
+        super().__init__(account_info)
+        self.version: Version = version
+
+        self.meta_data: Metadata = meta_data
+        self.referrer_mango_account: PublicKey = referrer_mango_account
+
+    @staticmethod
+    def from_layout(
+        layout: typing.Any, account_info: AccountInfo, version: Version
+    ) -> "ReferrerMemory":
+        meta_data: Metadata = Metadata.from_layout(layout.meta_data)
+        referrer_mango_account: PublicKey = layout.referrer_mango_account
+
+        return ReferrerMemory(account_info, version, meta_data, referrer_mango_account)
+
+    @staticmethod
+    def parse(account_info: AccountInfo) -> "ReferrerMemory":
+        data = account_info.data
+        if len(data) != layouts.REFERRER_MEMORY.sizeof():
+            raise Exception(
+                f"ReferrerMemory data length ({len(data)}) does not match expected size ({layouts.REFERRER_MEMORY.sizeof()})"
+            )
+
+        layout = layouts.REFERRER_MEMORY.parse(data)
+        return ReferrerMemory.from_layout(layout, account_info, Version.V1)
+
+    @staticmethod
+    def load_or_none(
+        context: Context, address: PublicKey
+    ) -> typing.Optional["ReferrerMemory"]:
+        account_info = AccountInfo.load(context, address)
+        if account_info is None:
+            return None
+        return ReferrerMemory.parse(account_info)
+
+    @staticmethod
+    def load(context: Context, address: PublicKey) -> "ReferrerMemory":
+        referrer_memory: typing.Optional[ReferrerMemory] = ReferrerMemory.load_or_none(
+            context, address
+        )
+        if referrer_memory is None:
+            raise Exception(f"ReferrerMemory account not found at address '{address}'")
+        return referrer_memory
+
+    def __str__(self) -> str:
+        return f"""« ReferrerMemory [{self.version}] {self.address}
+    {self.meta_data}
+    Referrer: {self.referrer_mango_account}
+»"""
+
+
 # # 🥭 AccountSlot class
 #
 # `AccountSlot` gathers slot items together instead of separate arrays.
@@ -577,6 +640,14 @@ class Account(AddressableAccount):
         )
 
         return referrer_memory_address_and_nonce[0]
+
+    def fetch_default_referrer(
+        self, context: Context
+    ) -> typing.Optional[ReferrerMemory]:
+        referrer_memory_address: PublicKey = self.derive_referrer_memory_address(
+            context
+        )
+        return ReferrerMemory.load_or_none(context, referrer_memory_address)
 
     def to_dataframe(
         self,
