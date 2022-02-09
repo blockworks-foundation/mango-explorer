@@ -10,7 +10,9 @@ from solana.publickey import PublicKey
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
-parser = argparse.ArgumentParser(description="Sets the referrer for a Mango Account.")
+parser = argparse.ArgumentParser(
+    description="Shows the discoverable referrer for a Mango Account."
+)
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument(
