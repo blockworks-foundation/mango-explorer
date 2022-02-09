@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import os.path
+import sys
+
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Register a referrer ID for a Mango Account.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument("--account-address", type=PublicKey,
+                    help="address of the specific account to use, if more than one available")
+parser.add_argument("--id", type=str, required=True,
+                    help="referrer ID to register - must be no longer than 32 characters")
+args: argparse.Namespace = mango.parse_args(parser)
+
+context = mango.ContextBuilder.from_command_line_parameters(args)
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+group = mango.Group.load(context, context.group_address)
+account = mango.Account.load_for_owner_by_address(context, wallet.address, group, args.account_address)
+
+all_instructions: mango.CombinableInstructions = mango.CombinableInstructions.from_signers([wallet.keypair])
+
+referrer_record_address: PublicKey = group.derive_referrer_record_address(context, args.id)
+set_delegate_instructions = mango.build_register_referrer_id_instructions(
+    context, wallet, group, account, referrer_record_address, args.id)
+all_instructions += set_delegate_instructions
+
+transaction_ids = all_instructions.execute(context)
+mango.output(f"Transaction IDs: {transaction_ids}")

@@ -182,7 +182,9 @@ class Group(AddressableAccount):
                  signer_nonce: Decimal, signer_key: PublicKey,
                  admin: PublicKey, serum_program_address: PublicKey, cache: PublicKey, valid_interval: Decimal,
                  insurance_vault: PublicKey, srm_vault: PublicKey, msrm_vault: PublicKey, fees_vault: PublicKey,
-                 max_mango_accounts: Decimal, num_mango_accounts: Decimal) -> None:
+                 max_mango_accounts: Decimal, num_mango_accounts: Decimal,
+                 referral_surcharge_centibps: Decimal, referral_share_centibps: Decimal,
+                 referral_mngo_required: Decimal) -> None:
         super().__init__(account_info)
         self.version: Version = version
         self.name: str = name
@@ -203,6 +205,9 @@ class Group(AddressableAccount):
         self.fees_vault: PublicKey = fees_vault
         self.max_mango_accounts: Decimal = max_mango_accounts
         self.num_mango_accounts: Decimal = num_mango_accounts
+        self.referral_surcharge_centibps: Decimal = referral_surcharge_centibps
+        self.referral_share_centibps: Decimal = referral_share_centibps
+        self.referral_mngo_required: Decimal = referral_mngo_required
 
     @property
     def shared_quote_token(self) -> Token:
@@ -334,7 +339,11 @@ class Group(AddressableAccount):
         max_mango_accounts: Decimal = layout.max_mango_accounts
         num_mango_accounts: Decimal = layout.num_mango_accounts
 
-        return Group(account_info, version, name, meta_data, quote_token_bank, in_slots, slots, signer_nonce, signer_key, admin, serum_program_address, cache_address, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault, max_mango_accounts, num_mango_accounts)
+        referral_surcharge_centibps: Decimal = layout.referral_surcharge_centibps
+        referral_share_centibps: Decimal = layout.referral_share_centibps
+        referral_mngo_required: Decimal = layout.referral_mngo_required
+
+        return Group(account_info, version, name, meta_data, quote_token_bank, in_slots, slots, signer_nonce, signer_key, admin, serum_program_address, cache_address, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault, max_mango_accounts, num_mango_accounts, referral_surcharge_centibps, referral_share_centibps, referral_mngo_required)
 
     @staticmethod
     def parse(account_info: AccountInfo, name: str, instrument_lookup: InstrumentLookup, market_lookup: MarketLookup) -> "Group":
@@ -424,6 +433,27 @@ class Group(AddressableAccount):
     def fetch_cache(self, context: Context) -> Cache:
         return Cache.load(context, self.cache)
 
+    def derive_referrer_record_address(self, context: Context, id: str) -> PublicKey:
+        if not isinstance(id, str):
+            raise Exception(f"Referrer ID '{id}' is not a string")
+
+        id_bytes = id.encode('utf-8')
+        if len(id_bytes) > 32:
+            raise Exception(f"Referrer ID '{id}' is too long - maximum is 32 bytes")
+
+        id_bytes_padded = id_bytes.ljust(32, b"\0")
+
+        referrer_record_address_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
+            [
+                bytes(self.address),
+                b"ReferrerIdRecord",
+                id_bytes_padded
+            ],
+            context.mango_program_address
+        )
+
+        return referrer_record_address_and_nonce[0]
+
     def __str__(self) -> str:
         slot_count = len(self.slots)
         slots = "\n        ".join([f"{item}".replace("\n", "\n        ") for item in self.slots])
@@ -440,6 +470,10 @@ class Group(AddressableAccount):
     Fees Vault: {self.fees_vault}
     Num Accounts: {self.num_mango_accounts:,} out of {self.max_mango_accounts:,}
     Valid Interval: {self.valid_interval}
+    Referral:
+        Surcharge: {self.referral_surcharge_centibps}
+        Share: {self.referral_share_centibps}
+        MNGO Required: {self.referral_mngo_required}
     Basket [{slot_count} markets]:
         {slots}
 »"""

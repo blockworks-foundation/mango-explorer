@@ -46,6 +46,7 @@ from .serummarketlookup import SerumMarketLookup
 # * GROUP_ADDRESS
 # * MANGO_PROGRAM_ADDRESS
 # * SERUM_PROGRAM_ADDRESS
+# * MANGO_REFLINK_ADDRESS
 
 
 # # 🥭 ContextBuilder class
@@ -105,6 +106,7 @@ class ContextBuilder:
                             help="Maximum number of addresses to send in a single call to getMultipleAccounts()")
         parser.add_argument("--gma-chunk-pause", type=Decimal, default=None,
                             help="number of seconds to pause between successive getMultipleAccounts() calls to avoid rate limiting")
+        parser.add_argument("--reflink", type=PublicKey, default=None, help="Referral public key")
 
     # This function is the converse of `add_command_line_parameters()` - it takes
     # an argument of parsed command-line parameters and expects to see the ones it added
@@ -130,6 +132,7 @@ class ContextBuilder:
         stale_data_maximum_retries: typing.Optional[int] = args.stale_data_maximum_retries
         gma_chunk_size: typing.Optional[Decimal] = args.gma_chunk_size
         gma_chunk_pause: typing.Optional[Decimal] = args.gma_chunk_pause
+        reflink: typing.Optional[PublicKey] = args.reflink
 
         # Do this here so build() only ever has to handle the sequence of retry times. (It gets messy
         # passing around the sequnce *plus* the data to reconstruct it for build().)
@@ -146,7 +149,8 @@ class ContextBuilder:
                                                 encoding, blockhash_cache_duration, http_request_timeout,
                                                 actual_stale_data_pauses_before_retry,
                                                 group_name, group_address, mango_program_address,
-                                                serum_program_address, gma_chunk_size, gma_chunk_pause)
+                                                serum_program_address, gma_chunk_size, gma_chunk_pause,
+                                                reflink)
         logging.debug(f"{context}")
 
         return context
@@ -162,7 +166,8 @@ class ContextBuilder:
                                     context.client.encoding, context.client.blockhash_cache_duration, None,
                                     context.client.stale_data_pauses_before_retry,
                                     group_name, None, None, None,
-                                    context.gma_chunk_size, context.gma_chunk_pause)
+                                    context.gma_chunk_size, context.gma_chunk_pause,
+                                    context.reflink)
 
     @staticmethod
     def forced_to_devnet(context: Context) -> Context:
@@ -213,6 +218,7 @@ class ContextBuilder:
               group_name: typing.Optional[str] = None, group_address: typing.Optional[PublicKey] = None,
               program_address: typing.Optional[PublicKey] = None, serum_program_address: typing.Optional[PublicKey] = None,
               gma_chunk_size: typing.Optional[Decimal] = None, gma_chunk_pause: typing.Optional[Decimal] = None,
+              reflink: typing.Optional[PublicKey] = None,
               transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector()) -> "Context":
         def __public_key_or_none(address: typing.Optional[str]) -> typing.Optional[PublicKey]:
             if address is not None and address != "":
@@ -264,6 +270,9 @@ class ContextBuilder:
 
         actual_gma_chunk_size: Decimal = gma_chunk_size or Decimal(100)
         actual_gma_chunk_pause: Decimal = gma_chunk_pause or Decimal(0)
+
+        actual_reflink: typing.Optional[PublicKey] = reflink or __public_key_or_none(
+            os.environ.get("MANGO_REFLINK_ADDRESS"))
 
         ids_json_token_lookup: InstrumentLookup = IdsJsonTokenLookup(actual_cluster, actual_group_name)
         instrument_lookup: InstrumentLookup = ids_json_token_lookup
@@ -327,4 +336,4 @@ class ContextBuilder:
                 devnet_serum_market_lookup])
         market_lookup: MarketLookup = all_market_lookup
 
-        return Context(actual_name, actual_cluster, actual_cluster_urls, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_http_request_timeout, actual_stale_data_pauses_before_retry, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, instrument_lookup, market_lookup, transaction_status_collector)
+        return Context(actual_name, actual_cluster, actual_cluster_urls, actual_skip_preflight, actual_commitment, actual_encoding, actual_blockhash_cache_duration, actual_http_request_timeout, actual_stale_data_pauses_before_retry, actual_program_address, actual_serum_program_address, actual_group_name, actual_group_address, actual_gma_chunk_size, actual_gma_chunk_pause, actual_reflink, instrument_lookup, market_lookup, transaction_status_collector)

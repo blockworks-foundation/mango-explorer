@@ -430,6 +430,17 @@ class Account(AddressableAccount):
             raise Exception(f"Could not find AccountBasketItem in Account {self.address} at index {spot_market_index}.")
         item_to_update.spot_open_orders = spot_open_orders
 
+    def derive_referrer_memory_address(self, context: Context) -> PublicKey:
+        referrer_memory_address_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
+            [
+                bytes(self.address),
+                b"ReferrerMemory"
+            ],
+            context.mango_program_address
+        )
+
+        return referrer_memory_address_and_nonce[0]
+
     def to_dataframe(self, group: Group, all_spot_open_orders: typing.Dict[str, OpenOrders], cache: Cache) -> pandas.DataFrame:
         asset_data = []
         for slot in self.slots:

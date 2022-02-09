@@ -345,7 +345,7 @@ def build_cancel_perp_order_instructions(context: Context, wallet: Wallet, accou
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
-def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market_details: PerpMarketDetails, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType, reduce_only: bool = False) -> CombinableInstructions:
+def build_place_perp_order_instructions(context: Context, wallet: Wallet, group: Group, account: Account, perp_market_details: PerpMarketDetails, price: Decimal, quantity: Decimal, client_order_id: int, side: Side, order_type: OrderType, reduce_only: bool = False, reflink: typing.Optional[PublicKey] = None) -> CombinableInstructions:
     # { buy: 0, sell: 1 }
     raw_side: int = 1 if side == Side.SELL else 0
     raw_order_type: int = order_type.to_perp()
@@ -369,20 +369,24 @@ def build_place_perp_order_instructions(context: Context, wallet: Wallet, group:
     # /// 5. `[writable]` bids_ai - TODO
     # /// 6. `[writable]` asks_ai - TODO
     # /// 7. `[writable]` event_queue_ai - TODO
+    keys = [
+        AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+        AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+        AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.address),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue),
+        *list([AccountMeta(is_signer=False, is_writable=False,
+                           pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders_by_index[:-1]])
+    ]
+    if reflink is not None:
+        keys += [AccountMeta(is_signer=False, is_writable=True, pubkey=reflink)]
+
     instructions = [
         TransactionInstruction(
-            keys=[
-                AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
-                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.address),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue),
-                *list([AccountMeta(is_signer=False, is_writable=False,
-                                   pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS) for oo_address in account.spot_open_orders_by_index[:-1]])
-            ],
+            keys=keys,
             program_id=context.mango_program_address,
             data=layouts.PLACE_PERP_ORDER.build(
                 {
@@ -923,3 +927,70 @@ def build_set_account_delegate_instructions(context: Context, wallet: Wallet, gr
 
 def build_unset_account_delegate_instructions(context: Context, wallet: Wallet, group: Group, account: Account) -> CombinableInstructions:
     return build_set_account_delegate_instructions(context, wallet, group, account, SYSTEM_PROGRAM_ADDRESS)
+
+
+# # 🥭 build_set_referrer_memory_instructions function
+#
+# Creates an instruction to store the referrer's MangoAccount pubkey on the Referrer account
+# and create the Referrer account as a PDA of user's MangoAccount if it doesn't exist
+#
+def build_set_referrer_memory_instructions(context: Context, wallet: Wallet, group: Group, account: Account, referrer_memory_address: PublicKey, referrer_account_address: PublicKey) -> CombinableInstructions:
+    # /// Store the referrer's MangoAccount pubkey on the Referrer account
+    # /// It will create the Referrer account as a PDA of user's MangoAccount if it doesn't exist
+    # /// This is primarily useful for the UI; the referrer address stored here is not necessarily
+    # /// who earns the ref fees.
+    # ///
+    # /// Accounts expected by this instruction (7):
+    # ///
+    # /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+    # /// 1. `[]` mango_account_ai - MangoAccount of the referred
+    # /// 2. `[signer]` owner_ai - MangoAccount owner or delegate
+    # /// 3. `[writable]` referrer_memory_ai - ReferrerMemory struct; will be initialized if required
+    # /// 4. `[]` referrer_mango_account_ai - referrer's MangoAccount
+    # /// 5. `[signer, writable]` payer_ai - payer for PDA; can be same as owner
+    # /// 6. `[]` system_prog_ai - System program
+    set_referrer_memory_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=referrer_memory_address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=referrer_account_address),
+            AccountMeta(is_signer=True, is_writable=True, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=SYSTEM_PROGRAM_ADDRESS)
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.SET_REFERRER_MEMORY.build({})
+    )
+    return CombinableInstructions(signers=[], instructions=[set_referrer_memory_instruction])
+
+
+# # 🥭 build_register_referrer_id_instructions function
+#
+# Creates an instruction to register a 'referrer ID' for a Mango Account
+#
+def build_register_referrer_id_instructions(context: Context, wallet: Wallet, group: Group, account: Account, referrer_record_address: PublicKey, referrer_id: str) -> CombinableInstructions:
+    # /// Associate the referrer's MangoAccount with a human readable `referrer_id` which can be used
+    # /// in a ref link. This is primarily useful for the UI.
+    # /// Create the `ReferrerIdRecord` PDA; if it already exists throw error
+    # ///
+    # /// Accounts expected by this instruction (5):
+    # /// 0. `[]` mango_group_ai - MangoGroup
+    # /// 1. `[]` referrer_mango_account_ai - MangoAccount
+    # /// 2. `[writable]` referrer_id_record_ai - The PDA to store the record on
+    # /// 3. `[signer, writable]` payer_ai - payer for PDA; can be same as owner
+    # /// 4. `[]` system_prog_ai - System program
+    register_referrer_id_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=account.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=referrer_record_address),
+            AccountMeta(is_signer=True, is_writable=True, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=SYSTEM_PROGRAM_ADDRESS)
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.REGISTER_REFERRER_ID.build({
+            "info": referrer_id
+        })
+    )
+    return CombinableInstructions(signers=[], instructions=[register_referrer_id_instruction])

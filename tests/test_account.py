@@ -2,10 +2,11 @@ import pytest
 
 from .context import mango
 from .data import load_data_from_directory
-from .fakes import fake_account_info, fake_seeded_public_key, fake_token_bank, fake_instrument, fake_instrument_value, fake_perp_account, fake_token
+from .fakes import fake_account, fake_account_info, fake_context, fake_seeded_public_key, fake_token_bank, fake_instrument, fake_instrument_value, fake_perp_account, fake_token
 
 from decimal import Decimal
 from mango.layouts import layouts
+from solana.publickey import PublicKey
 
 
 def test_construction() -> None:
@@ -285,3 +286,14 @@ def test_loaded_account_slot_lookups() -> None:
     assert account.slots_by_index[14] is None
     assert account.slots_by_index[15] is not None
     assert account.slots_by_index[15].base_instrument.symbol == "USDC"
+
+
+def test_derive_referrer_memory_address() -> None:
+    context = fake_context(mango_program_address=PublicKey("4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA"))
+    account = fake_account(address=PublicKey("FG99s25HS1UKcP1jMx72Gezg6KZCC7DuKXhNW51XC1qi"))
+    actual = account.derive_referrer_memory_address(context)
+
+    # Value derived using mango-client-v3: 3CMpC1UzdLrAnGz6HZVoBsDLAHpTABkUJr8iPyEHwehr
+    expected = PublicKey("3CMpC1UzdLrAnGz6HZVoBsDLAHpTABkUJr8iPyEHwehr")
+
+    assert actual == expected

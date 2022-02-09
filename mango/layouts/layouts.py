@@ -541,7 +541,10 @@ GROUP = construct.Struct(
     "fees_vault" / PublicKeyAdapter(),
     "max_mango_accounts" / DecimalAdapter(4),
     "num_mango_accounts" / DecimalAdapter(4),
-    construct.Padding(24)
+    "referral_surcharge_centibps" / DecimalAdapter(4),
+    "referral_share_centibps" / DecimalAdapter(4),
+    "referral_mngo_required" / DecimalAdapter(),
+    construct.Padding(8)
 )
 
 # # 🥭 ROOT_BANK
@@ -1594,6 +1597,40 @@ CREATE_SPOT_OPEN_ORDERS = construct.Struct(
     "variant" / construct.Const(60, construct.BytesInteger(4, swapped=True))
 )
 
+# /// Store the referrer's MangoAccount pubkey on the Referrer account
+# /// It will create the Referrer account as a PDA of user's MangoAccount if it doesn't exist
+# /// This is primarily useful for the UI; the referrer address stored here is not necessarily
+# /// who earns the ref fees.
+# ///
+# /// Accounts expected by this instruction (7):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[]` mango_account_ai - MangoAccount of the referred
+# /// 2. `[signer]` owner_ai - MangoAccount owner or delegate
+# /// 3. `[writable]` referrer_memory_ai - ReferrerMemory struct; will be initialized if required
+# /// 4. `[]` referrer_mango_account_ai - referrer's MangoAccount
+# /// 5. `[signer, writable]` payer_ai - payer for PDA; can be same as owner
+# /// 6. `[]` system_prog_ai - System program
+SET_REFERRER_MEMORY = construct.Struct(
+    "variant" / construct.Const(62, construct.BytesInteger(4, swapped=True)),
+)
+
+
+# /// Associate the referrer's MangoAccount with a human readable `referrer_id` which can be used
+# /// in a ref link. This is primarily useful for the UI.
+# /// Create the `ReferrerIdRecord` PDA; if it already exists throw error
+# ///
+# /// Accounts expected by this instruction (5):
+# /// 0. `[]` mango_group_ai - MangoGroup
+# /// 1. `[]` referrer_mango_account_ai - MangoAccount
+# /// 2. `[writable]` referrer_id_record_ai - The PDA to store the record on
+# /// 3. `[signer, writable]` payer_ai - payer for PDA; can be same as owner
+# /// 4. `[]` system_prog_ai - System program
+REGISTER_REFERRER_ID = construct.Struct(
+    "variant" / construct.Const(63, construct.BytesInteger(4, swapped=True)),
+    "info" / construct.PaddedString(32, "utf8"),
+)
+
 
 UNSPECIFIED = construct.Struct(
     "variant" / DecimalAdapter(4)
@@ -1662,4 +1699,7 @@ InstructionParsersByVariant = {
     58: SET_DELEGATE,  # SET_DELEGATE,
     59: UNSPECIFIED,  # CHANGE_SPOT_MARKET_PARAMS,
     60: CREATE_SPOT_OPEN_ORDERS,  # CREATE_SPOT_OPEN_ORDERS,
+    61: UNSPECIFIED,  # CHANGE_REFERRAL_FEE_PARAMS,
+    62: SET_REFERRER_MEMORY,  # SET_REFERRER_MEMORY,
+    63: REGISTER_REFERRER_ID,  # REGISTER_REFERRER_ID,
 }

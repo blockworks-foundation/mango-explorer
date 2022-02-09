@@ -3,10 +3,11 @@ import typing
 
 from .context import mango
 from .data import load_group
-from .fakes import fake_account_info, fake_seeded_public_key, fake_token_bank, fake_instrument
+from .fakes import fake_account_info, fake_context, fake_group, fake_seeded_public_key, fake_token_bank, fake_instrument
 
 from decimal import Decimal
 from mango.layouts import layouts
+from solana.publickey import PublicKey
 
 
 def test_construction() -> None:
@@ -28,11 +29,15 @@ def test_construction() -> None:
     fees_vault = fake_seeded_public_key("fees vault")
     max_mango_accounts = Decimal(50)
     num_mango_accounts = Decimal(49)
+    referral_surcharge_centibps = Decimal(7)
+    referral_share_centibps = Decimal(8)
+    referral_mngo_required = Decimal(9)
 
     actual = mango.Group(account_info, mango.Version.V1, name, meta_data, shared_quote_token, in_basket,
                          slots, signer_nonce, signer_key, admin_key, serum_program_address,
                          cache_key, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault,
-                         max_mango_accounts, num_mango_accounts)
+                         max_mango_accounts, num_mango_accounts, referral_surcharge_centibps,
+                         referral_share_centibps, referral_mngo_required)
 
     assert actual is not None
     assert actual.name == name
@@ -72,6 +77,9 @@ def test_slot_lookups() -> None:
     fees_vault = fake_seeded_public_key("fees vault")
     max_mango_accounts = Decimal(30)
     num_mango_accounts = Decimal(4)
+    referral_surcharge_centibps = Decimal(7)
+    referral_share_centibps = Decimal(8)
+    referral_mngo_required = Decimal(9)
 
     # This is the more relevant stuff here.
     shared_quote_token_bank = fake_token_bank("FAKEQUOTE")
@@ -99,7 +107,8 @@ def test_slot_lookups() -> None:
     actual = mango.Group(account_info, mango.Version.V1, name, meta_data, shared_quote_token_bank, in_basket,
                          slots, signer_nonce, signer_key, admin_key, serum_program_address,
                          cache_key, valid_interval, insurance_vault, srm_vault, msrm_vault, fees_vault,
-                         max_mango_accounts, num_mango_accounts)
+                         max_mango_accounts, num_mango_accounts, referral_surcharge_centibps,
+                         referral_share_centibps, referral_mngo_required)
 
     assert actual.shared_quote == shared_quote_token_bank
     assert actual.liquidity_incentive_token_bank == mngo_token_bank
@@ -263,3 +272,22 @@ def test_loaded_group_slot_lookups() -> None:
     assert group.slots_by_index[12].base_instrument.symbol == "MATIC"
     assert group.slots_by_index[13] is None
     assert group.slots_by_index[14] is None
+
+
+def test_derive_referrer_record_address() -> None:
+    context = fake_context(mango_program_address=PublicKey("4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA"))
+    group = fake_group(address=PublicKey("Ec2enZyoC4nGpEfu2sUNAa2nUGJHWxoUWYSEJ2hNTWTA"))
+    actual = group.derive_referrer_record_address(context, "Test")
+
+    # Value derived using mango-client-v3: 2rZyTeG2K45oLWiGHBZKdcsWig5PL5c3yUa9Fc35mY48
+    expected = PublicKey("7bPLkq9kmFACvpEps1sUjqY1a6ormFxa9LctD1RWnzDd")
+
+    assert actual == expected
+
+    # 'daffy' is the referrer ID used in example/registerRefId.ts in mango-client-v3
+    actual_daffy = group.derive_referrer_record_address(context, "daffy")
+
+    # Value derived using mango-client-v3: 6T3vGwbLcS87vuthXomRv5W1TYe82rttNC8kWoDC93JD
+    expected_daffy = PublicKey("6T3vGwbLcS87vuthXomRv5W1TYe82rttNC8kWoDC93JD")
+
+    assert actual_daffy == expected_daffy

@@ -41,8 +41,9 @@ class Context:
                  commitment: str, encoding: str, blockhash_cache_duration: int, http_request_timeout: float,
                  stale_data_pauses_before_retry: typing.Sequence[float], mango_program_address: PublicKey,
                  serum_program_address: PublicKey, group_name: str, group_address: PublicKey,
-                 gma_chunk_size: Decimal, gma_chunk_pause: Decimal, instrument_lookup: InstrumentLookup,
-                 market_lookup: MarketLookup, transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector()) -> None:
+                 gma_chunk_size: Decimal, gma_chunk_pause: Decimal, reflink: typing.Optional[PublicKey],
+                 instrument_lookup: InstrumentLookup, market_lookup: MarketLookup,
+                 transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector()) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
         instruction_reporter: InstructionReporter = CompoundInstructionReporter.from_addresses(
@@ -55,6 +56,7 @@ class Context:
         self.group_address: PublicKey = group_address
         self.gma_chunk_size: Decimal = gma_chunk_size
         self.gma_chunk_pause: Decimal = gma_chunk_pause
+        self.reflink: typing.Optional[PublicKey] = reflink
         self.instrument_lookup: InstrumentLookup = instrument_lookup
         self.market_lookup: MarketLookup = market_lookup
 
