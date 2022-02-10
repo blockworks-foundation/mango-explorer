@@ -100,7 +100,8 @@ def parse_args(
 
     setup_logging(args.log_level, args.log_suppress_timestamp)
 
-    logging.warning(WARNING_DISCLAIMER_TEXT)
+    if not os.environ.get("MANGO_SKIP_DISCLAIMER"):
+        logging.warning(WARNING_DISCLAIMER_TEXT)
 
     if logging.getLogger().isEnabledFor(logging.DEBUG):
         all_arguments: typing.List[str] = []
