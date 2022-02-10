@@ -61,7 +61,7 @@ class InstructionType(enum.IntEnum):
     AddMangoAccountInfo = 34
     DepositMsrm = 35
     WithdrawMsrm = 36
-    ChanePerpMarketParams = 37
+    ChangePerpMarketParams = 37
     SetGroupAdmin = 38
     CancelAllPerpOrders = 39
     ForceSettleQuotePositions = 40

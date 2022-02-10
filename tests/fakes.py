@@ -505,5 +505,9 @@ def fake_model_state(
 
 def fake_mango_instruction() -> mango.MangoInstruction:
     return mango.MangoInstruction(
-        mango.InstructionType.PlacePerpOrder, "", [fake_seeded_public_key("account")]
+        fake_seeded_public_key("program id"),
+        mango.InstructionType.PlacePerpOrder,
+        bytes(),
+        "",
+        [fake_seeded_public_key("account")],
     )

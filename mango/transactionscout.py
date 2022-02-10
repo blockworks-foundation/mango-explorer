@@ -26,9 +26,11 @@ from solana.publickey import PublicKey
 from .context import Context
 from .instructiontype import InstructionType
 from .instrumentvalue import InstrumentValue
+from .logmessages import expand_log_messages
 from .mangoinstruction import MangoInstruction
 from .layouts import layouts
 from .ownedinstrumentvalue import OwnedInstrumentValue
+from .text import indent_collection_as_str, indent_item_by
 
 
 # # 🥭 TransactionScout
@@ -189,7 +191,8 @@ class TransactionScout:
             group_name = context.lookup_group_name(instructions[0].group)
             timestamp = datetime.datetime.fromtimestamp(response["blockTime"])
             signatures = response["transaction"]["signatures"]
-            messages = response["meta"]["logMessages"]
+            raw_messages = response["meta"]["logMessages"]
+            messages = expand_log_messages(raw_messages)
             pre_token_balances = list(
                 map(
                     lambda bal: balance_to_token_value(accounts, bal),
@@ -238,10 +241,10 @@ class TransactionScout:
         instruction_names = ", ".join(
             [ins.instruction_type.name for ins in self.instructions]
         )
-        signatures = "\n        ".join(self.signatures)
-        accounts = "\n        ".join([f"{acc}" for acc in self.accounts])
-        messages = "\n        ".join(self.messages)
-        instructions = "\n        ".join([f"{ins}" for ins in self.instructions])
+        signatures = indent_item_by(indent_collection_as_str(self.signatures), 1)
+        accounts = indent_item_by(indent_collection_as_str(self.accounts), 1)
+        messages = indent_item_by(indent_collection_as_str(self.messages), 1)
+        instructions = indent_item_by(indent_collection_as_str(self.instructions), 1)
         changes = OwnedInstrumentValue.changes(
             self.pre_token_balances, self.post_token_balances
         )
@@ -300,7 +303,8 @@ def mango_instruction_from_response(
     instruction_data: typing.Dict[str, typing.Any],
 ) -> typing.Optional["MangoInstruction"]:
     program_account_index = instruction_data["programIdIndex"]
-    if all_accounts[program_account_index] != context.mango_program_address:
+    program_account: PublicKey = all_accounts[program_account_index]
+    if program_account != context.mango_program_address:
         # It's an instruction, it's just not a Mango one.
         return None
 
@@ -329,4 +333,6 @@ def mango_instruction_from_response(
     parsed = parser.parse(decoded)
     instruction_type = InstructionType(int(parsed.variant))
 
-    return MangoInstruction(instruction_type, parsed, accounts)
+    return MangoInstruction(
+        program_account, instruction_type, decoded, parsed, accounts
+    )

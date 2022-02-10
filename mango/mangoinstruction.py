@@ -62,7 +62,35 @@ _instruction_signer_indices: typing.Dict[InstructionType, int] = {
     InstructionType.AddMangoAccountInfo: -1,
     InstructionType.DepositMsrm: -1,
     InstructionType.WithdrawMsrm: -1,
+    InstructionType.ChangePerpMarketParams: -1,
+    InstructionType.SetGroupAdmin: -1,
+    InstructionType.CancelAllPerpOrders: -1,
+    InstructionType.ForceSettleQuotePositions: -1,
+    InstructionType.PlaceSpotOrder2: -1,
+    InstructionType.InitAdvancedOrders: -1,
+    InstructionType.AddPerpTriggerOrder: -1,
+    InstructionType.RemoveAdvancedOrder: -1,
+    InstructionType.ExecutePerpTriggerOrder: -1,
+    InstructionType.CreatePerpMarket: -1,
+    InstructionType.ChangePerpMarketParams2: -1,
+    InstructionType.UpdateMarginBasket: -1,
+    InstructionType.ChangeMaxMangoAccounts: -1,
+    InstructionType.CloseMangoAccount: -1,
+    InstructionType.CloseSpotOpenOrders: -1,
+    InstructionType.CloseAdvancedOrders: -1,
+    InstructionType.CreateDustAccount: -1,
+    InstructionType.ResolveDust: -1,
+    InstructionType.CreateMangoAccount: -1,
+    InstructionType.UpgradeMangoAccountV0V1: -1,
+    InstructionType.CancelPerpOrderSide: -1,
+    InstructionType.SetDelegate: -1,
+    InstructionType.ChangeSpotMarketParams: -1,
+    InstructionType.CreateSpotOpenOrders: -1,
+    InstructionType.ChangeReferralFeeParams: -1,
+    InstructionType.SetReferrerMemory: -1,
+    InstructionType.RegisterReferrerId: -1,
 }
+
 
 # The index of the token IN account depends on the instruction, and for some instructions
 # doesn't exist.
@@ -104,6 +132,33 @@ _token_in_indices: typing.Dict[InstructionType, int] = {
     InstructionType.AddMangoAccountInfo: -1,
     InstructionType.DepositMsrm: -1,
     InstructionType.WithdrawMsrm: -1,
+    InstructionType.ChangePerpMarketParams: -1,
+    InstructionType.SetGroupAdmin: -1,
+    InstructionType.CancelAllPerpOrders: -1,
+    InstructionType.ForceSettleQuotePositions: -1,
+    InstructionType.PlaceSpotOrder2: -1,
+    InstructionType.InitAdvancedOrders: -1,
+    InstructionType.AddPerpTriggerOrder: -1,
+    InstructionType.RemoveAdvancedOrder: -1,
+    InstructionType.ExecutePerpTriggerOrder: -1,
+    InstructionType.CreatePerpMarket: -1,
+    InstructionType.ChangePerpMarketParams2: -1,
+    InstructionType.UpdateMarginBasket: -1,
+    InstructionType.ChangeMaxMangoAccounts: -1,
+    InstructionType.CloseMangoAccount: -1,
+    InstructionType.CloseSpotOpenOrders: -1,
+    InstructionType.CloseAdvancedOrders: -1,
+    InstructionType.CreateDustAccount: -1,
+    InstructionType.ResolveDust: -1,
+    InstructionType.CreateMangoAccount: -1,
+    InstructionType.UpgradeMangoAccountV0V1: -1,
+    InstructionType.CancelPerpOrderSide: -1,
+    InstructionType.SetDelegate: -1,
+    InstructionType.ChangeSpotMarketParams: -1,
+    InstructionType.CreateSpotOpenOrders: -1,
+    InstructionType.ChangeReferralFeeParams: -1,
+    InstructionType.SetReferrerMemory: -1,
+    InstructionType.RegisterReferrerId: -1,
 }
 
 # The index of the token OUT account depends on the instruction, and for some instructions
@@ -146,6 +201,33 @@ _token_out_indices: typing.Dict[InstructionType, int] = {
     InstructionType.AddMangoAccountInfo: -1,
     InstructionType.DepositMsrm: -1,
     InstructionType.WithdrawMsrm: -1,
+    InstructionType.ChangePerpMarketParams: -1,
+    InstructionType.SetGroupAdmin: -1,
+    InstructionType.CancelAllPerpOrders: -1,
+    InstructionType.ForceSettleQuotePositions: -1,
+    InstructionType.PlaceSpotOrder2: -1,
+    InstructionType.InitAdvancedOrders: -1,
+    InstructionType.AddPerpTriggerOrder: -1,
+    InstructionType.RemoveAdvancedOrder: -1,
+    InstructionType.ExecutePerpTriggerOrder: -1,
+    InstructionType.CreatePerpMarket: -1,
+    InstructionType.ChangePerpMarketParams2: -1,
+    InstructionType.UpdateMarginBasket: -1,
+    InstructionType.ChangeMaxMangoAccounts: -1,
+    InstructionType.CloseMangoAccount: -1,
+    InstructionType.CloseSpotOpenOrders: -1,
+    InstructionType.CloseAdvancedOrders: -1,
+    InstructionType.CreateDustAccount: -1,
+    InstructionType.ResolveDust: -1,
+    InstructionType.CreateMangoAccount: -1,
+    InstructionType.UpgradeMangoAccountV0V1: -1,
+    InstructionType.CancelPerpOrderSide: -1,
+    InstructionType.SetDelegate: -1,
+    InstructionType.ChangeSpotMarketParams: -1,
+    InstructionType.CreateSpotOpenOrders: -1,
+    InstructionType.ChangeReferralFeeParams: -1,
+    InstructionType.SetReferrerMemory: -1,
+    InstructionType.RegisterReferrerId: -1,
 }
 
 
@@ -188,6 +270,33 @@ _target_indices: typing.Dict[InstructionType, int] = {
     InstructionType.AddMangoAccountInfo: -1,
     InstructionType.DepositMsrm: -1,
     InstructionType.WithdrawMsrm: -1,
+    InstructionType.ChangePerpMarketParams: -1,
+    InstructionType.SetGroupAdmin: -1,
+    InstructionType.CancelAllPerpOrders: -1,
+    InstructionType.ForceSettleQuotePositions: -1,
+    InstructionType.PlaceSpotOrder2: -1,
+    InstructionType.InitAdvancedOrders: -1,
+    InstructionType.AddPerpTriggerOrder: -1,
+    InstructionType.RemoveAdvancedOrder: -1,
+    InstructionType.ExecutePerpTriggerOrder: -1,
+    InstructionType.CreatePerpMarket: -1,
+    InstructionType.ChangePerpMarketParams2: -1,
+    InstructionType.UpdateMarginBasket: -1,
+    InstructionType.ChangeMaxMangoAccounts: -1,
+    InstructionType.CloseMangoAccount: -1,
+    InstructionType.CloseSpotOpenOrders: -1,
+    InstructionType.CloseAdvancedOrders: -1,
+    InstructionType.CreateDustAccount: -1,
+    InstructionType.ResolveDust: -1,
+    InstructionType.CreateMangoAccount: -1,
+    InstructionType.UpgradeMangoAccountV0V1: -1,
+    InstructionType.CancelPerpOrderSide: -1,
+    InstructionType.SetDelegate: -1,
+    InstructionType.ChangeSpotMarketParams: -1,
+    InstructionType.CreateSpotOpenOrders: -1,
+    InstructionType.ChangeReferralFeeParams: -1,
+    InstructionType.SetReferrerMemory: -1,
+    InstructionType.RegisterReferrerId: -1,
 }
 
 
@@ -199,13 +308,17 @@ _target_indices: typing.Dict[InstructionType, int] = {
 class MangoInstruction:
     def __init__(
         self,
+        program_id: PublicKey,
         instruction_type: InstructionType,
+        raw_data: bytes,
         instruction_data: typing.Any,
         accounts: typing.Sequence[PublicKey],
     ) -> None:
-        self.instruction_type = instruction_type
-        self.instruction_data = instruction_data
-        self.accounts = accounts
+        self.program_id: PublicKey = program_id
+        self.instruction_type: InstructionType = instruction_type
+        self.raw_data: bytes = raw_data
+        self.instruction_data: typing.Any = instruction_data
+        self.accounts: typing.Sequence[PublicKey] = accounts
 
     @property
     def group(self) -> PublicKey:
@@ -268,7 +381,7 @@ class MangoInstruction:
         elif instruction_type == InstructionType.AddPerpMarket:
             pass
         elif instruction_type == InstructionType.PlacePerpOrder:
-            additional_data = f"side: {Side.from_value(self.instruction_data.side)}, order_type: {OrderType.from_value(self.instruction_data.order_type)}, price: {self.instruction_data.price}, quantity: {self.instruction_data.quantity}, client_order_id: {self.instruction_data.client_order_id}"
+            additional_data = f"side: {Side.from_value(self.instruction_data.side)}, order_type: {OrderType.from_value(self.instruction_data.order_type)}, price: {self.instruction_data.price}, quantity: {self.instruction_data.quantity}, client_order_id: {self.instruction_data.client_order_id}, reduce_only: {self.instruction_data.reduce_only}"
         elif instruction_type == InstructionType.CancelPerpOrderByClientId:
             additional_data = f"client ID: {self.instruction_data.client_order_id}, missing OK: {self.instruction_data.invalid_id_ok}"
         elif instruction_type == InstructionType.CancelPerpOrder:
@@ -291,6 +404,86 @@ class MangoInstruction:
             pass
         elif instruction_type == InstructionType.SettleBorrow:
             pass
+        elif instruction_type == InstructionType.ForceCancelSpotOrders:
+            pass
+        elif instruction_type == InstructionType.ForceCancelPerpOrders:
+            pass
+        elif instruction_type == InstructionType.LiquidateTokenAndToken:
+            pass
+        elif instruction_type == InstructionType.LiquidateTokenAndPerp:
+            pass
+        elif instruction_type == InstructionType.LiquidatePerpMarket:
+            pass
+        elif instruction_type == InstructionType.SettleFees:
+            pass
+        elif instruction_type == InstructionType.ResolvePerpBankruptcy:
+            pass
+        elif instruction_type == InstructionType.ResolveTokenBankruptcy:
+            pass
+        elif instruction_type == InstructionType.InitSpotOpenOrders:
+            pass
+        elif instruction_type == InstructionType.RedeemMngo:
+            pass
+        elif instruction_type == InstructionType.AddMangoAccountInfo:
+            pass
+        elif instruction_type == InstructionType.DepositMsrm:
+            pass
+        elif instruction_type == InstructionType.WithdrawMsrm:
+            pass
+        elif instruction_type == InstructionType.ChangePerpMarketParams:
+            pass
+        elif instruction_type == InstructionType.SetGroupAdmin:
+            pass
+        elif instruction_type == InstructionType.CancelAllPerpOrders:
+            pass
+        elif instruction_type == InstructionType.ForceSettleQuotePositions:
+            pass
+        elif instruction_type == InstructionType.PlaceSpotOrder2:
+            pass
+        elif instruction_type == InstructionType.InitAdvancedOrders:
+            pass
+        elif instruction_type == InstructionType.AddPerpTriggerOrder:
+            pass
+        elif instruction_type == InstructionType.RemoveAdvancedOrder:
+            pass
+        elif instruction_type == InstructionType.ExecutePerpTriggerOrder:
+            pass
+        elif instruction_type == InstructionType.CreatePerpMarket:
+            pass
+        elif instruction_type == InstructionType.ChangePerpMarketParams2:
+            pass
+        elif instruction_type == InstructionType.UpdateMarginBasket:
+            pass
+        elif instruction_type == InstructionType.ChangeMaxMangoAccounts:
+            pass
+        elif instruction_type == InstructionType.CloseMangoAccount:
+            pass
+        elif instruction_type == InstructionType.CloseSpotOpenOrders:
+            pass
+        elif instruction_type == InstructionType.CloseAdvancedOrders:
+            pass
+        elif instruction_type == InstructionType.CreateDustAccount:
+            pass
+        elif instruction_type == InstructionType.ResolveDust:
+            pass
+        elif instruction_type == InstructionType.CreateMangoAccount:
+            pass
+        elif instruction_type == InstructionType.UpgradeMangoAccountV0V1:
+            pass
+        elif instruction_type == InstructionType.CancelPerpOrderSide:
+            pass
+        elif instruction_type == InstructionType.SetDelegate:
+            pass
+        elif instruction_type == InstructionType.ChangeSpotMarketParams:
+            pass
+        elif instruction_type == InstructionType.CreateSpotOpenOrders:
+            pass
+        elif instruction_type == InstructionType.ChangeReferralFeeParams:
+            pass
+        elif instruction_type == InstructionType.SetReferrerMemory:
+            pass
+        elif instruction_type == InstructionType.RegisterReferrerId:
+            pass
 
         return additional_data
 
@@ -299,9 +492,12 @@ class MangoInstruction:
         keys: typing.List[str] = []
         for index, key in enumerate(self.accounts):
             pubkey: str = str(key)
-            keys += [f"\tKey[{index: >2}]: {pubkey}"]
+            keys += [f"    Key[{index: >2}]: {pubkey}"]
         key_details: str = "\n".join(keys)
-        return f"""« {self.instruction_type.name}: {parameters}
+        raw_data = "".join("{:02x}".format(x) for x in self.raw_data)
+        return f"""« Mango Instruction {self.instruction_type.name}: {parameters}
+    Program ID: {self.program_id}
+    Data: {raw_data}
 {key_details}
 »"""
 

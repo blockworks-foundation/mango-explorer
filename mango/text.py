@@ -19,7 +19,7 @@ import typing
 def indent_collection_as_str(collection: typing.Sequence[typing.Any]) -> str:
     if len(collection) == 0:
         return "None"
-    return "\n    ".join(f"{item}" for item in collection)
+    return "\n".join(f"{item}" for item in collection).replace("\n", "\n    ")
 
 
 def indent_item_by(item: typing.Any, levels: int = 1) -> str:

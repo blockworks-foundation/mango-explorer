@@ -1431,7 +1431,7 @@ PLACE_PERP_ORDER = construct.Struct(
     "client_order_id" / DecimalAdapter(),
     "side" / DecimalAdapter(1),  # { buy: 0, sell: 1 }
     "order_type" / DecimalAdapter(1),  # { limit: 0, ioc: 1, postOnly: 2 }
-    "reduce_only" / construct.Flag,
+    "reduce_only" / construct.Optional(construct.Flag),
 )
 
 
@@ -1447,7 +1447,7 @@ PLACE_PERP_ORDER = construct.Struct(
 CANCEL_PERP_ORDER_BY_CLIENT_ID = construct.Struct(
     "variant" / construct.Const(13, construct.BytesInteger(4, swapped=True)),
     "client_order_id" / DecimalAdapter(),
-    "invalid_id_ok" / construct.Flag,
+    "invalid_id_ok" / construct.Optional(construct.Flag),
 )
 
 
@@ -1463,7 +1463,7 @@ CANCEL_PERP_ORDER_BY_CLIENT_ID = construct.Struct(
 CANCEL_PERP_ORDER = construct.Struct(
     "variant" / construct.Const(14, construct.BytesInteger(4, swapped=True)),
     "order_id" / DecimalAdapter(16),
-    "invalid_id_ok" / construct.Flag,
+    "invalid_id_ok" / construct.Optional(construct.Flag),
 )
 
 

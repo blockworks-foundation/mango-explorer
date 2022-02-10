@@ -1,3 +1,5 @@
+import typing
+
 from .context import mango
 from .fakes import fake_mango_instruction, fake_seeded_public_key, fake_token
 
@@ -5,17 +7,18 @@ from datetime import datetime
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-import typing
-
 
 def test_transaction_instruction_constructor() -> None:
     instruction_type: mango.InstructionType = mango.InstructionType.Deposit
     instruction_data: typing.Dict[str, str] = {"key": "test value"}
+    program_id = fake_seeded_public_key("program id")
     account1 = fake_seeded_public_key("account 1")
     account2 = fake_seeded_public_key("account 2")
     account3 = fake_seeded_public_key("account 3")
     accounts = [account1, account2, account3]
-    actual = mango.MangoInstruction(instruction_type, instruction_data, accounts)
+    actual = mango.MangoInstruction(
+        program_id, instruction_type, bytes(), instruction_data, accounts
+    )
     assert actual is not None
     assert actual.instruction_type == instruction_type
     assert actual.instruction_data == instruction_data
