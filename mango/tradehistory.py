@@ -159,7 +159,7 @@ class TradeHistory:
             if len(frame) == 0:
                 complete = True
             else:
-                trades = trades.append(frame)
+                trades = pandas.concat([trades, frame])
                 if (newer_than is not None) and (
                     frame.loc[frame.index[-1], "Timestamp"] < newer_than
                 ):
@@ -251,7 +251,7 @@ class TradeHistory:
             url = f"https://event-history-api.herokuapp.com/trades/open_orders/{spot_open_orders_address}?page=all"
             data = TradeHistory.__download_json(url)
             frame = TradeHistory.__spot_data_to_dataframe(context, account, data)
-            trades = trades.append(frame)
+            trades = pandas.concat([trades, frame])
 
         return trades
 
@@ -275,7 +275,7 @@ class TradeHistory:
                 if len(frame) == 0:
                     complete = True
                 else:
-                    trades = trades.append(frame)
+                    trades = pandas.concat([trades, frame])
                     earliest_in_frame = frame.loc[frame.index[-1], "Timestamp"]
                     if (newer_than is not None) and (earliest_in_frame < newer_than):
                         complete = True
@@ -425,7 +425,7 @@ class TradeHistory:
                 converters=TradeHistory.__column_converters,
             )
 
-            self.__trades = self.__trades.append(existing)
+            self.__trades = pandas.concat([self.__trades, existing])
 
     def save(self, filename: str) -> None:
         self.__trades.to_csv(filename, index=False, mode="w")
