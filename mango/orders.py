@@ -167,11 +167,11 @@ class Order:
     def with_id(self, id: int) -> "Order":
         return Order(
             id=id,
+            client_id=self.client_id,
+            owner=self.owner,
             side=self.side,
             price=self.price,
             quantity=self.quantity,
-            client_id=self.client_id,
-            owner=self.owner,
             order_type=self.order_type,
             reduce_only=self.reduce_only,
         )
@@ -180,37 +180,11 @@ class Order:
     def with_client_id(self, client_id: int) -> "Order":
         return Order(
             id=self.id,
-            side=self.side,
-            price=self.price,
-            quantity=self.quantity,
             client_id=client_id,
             owner=self.owner,
-            order_type=self.order_type,
-            reduce_only=self.reduce_only,
-        )
-
-    # Returns an identical order with the price changed.
-    def with_price(self, price: Decimal) -> "Order":
-        return Order(
-            id=self.id,
-            side=self.side,
-            price=price,
-            quantity=self.quantity,
-            client_id=self.client_id,
-            owner=self.owner,
-            order_type=self.order_type,
-            reduce_only=self.reduce_only,
-        )
-
-    # Returns an identical order with the quantity changed.
-    def with_quantity(self, quantity: Decimal) -> "Order":
-        return Order(
-            id=self.id,
             side=self.side,
             price=self.price,
-            quantity=quantity,
-            client_id=self.client_id,
-            owner=self.owner,
+            quantity=self.quantity,
             order_type=self.order_type,
             reduce_only=self.reduce_only,
         )
@@ -219,13 +193,78 @@ class Order:
     def with_owner(self, owner: PublicKey) -> "Order":
         return Order(
             id=self.id,
+            client_id=self.client_id,
+            owner=owner,
             side=self.side,
             price=self.price,
             quantity=self.quantity,
-            client_id=self.client_id,
-            owner=owner,
             order_type=self.order_type,
             reduce_only=self.reduce_only,
+        )
+
+    # Returns an identical order with the side changed.
+    def with_side(self, side: Side) -> "Order":
+        return Order(
+            id=self.id,
+            client_id=self.client_id,
+            owner=self.owner,
+            side=side,
+            price=self.price,
+            quantity=self.quantity,
+            order_type=self.order_type,
+            reduce_only=self.reduce_only,
+        )
+
+    # Returns an identical order with the price changed.
+    def with_price(self, price: Decimal) -> "Order":
+        return Order(
+            id=self.id,
+            client_id=self.client_id,
+            owner=self.owner,
+            side=self.side,
+            price=price,
+            quantity=self.quantity,
+            order_type=self.order_type,
+            reduce_only=self.reduce_only,
+        )
+
+    # Returns an identical order with the quantity changed.
+    def with_quantity(self, quantity: Decimal) -> "Order":
+        return Order(
+            id=self.id,
+            client_id=self.client_id,
+            owner=self.owner,
+            side=self.side,
+            price=self.price,
+            quantity=quantity,
+            order_type=self.order_type,
+            reduce_only=self.reduce_only,
+        )
+
+    # Returns an identical order with the order type changed.
+    def with_order_type(self, order_type: OrderType) -> "Order":
+        return Order(
+            id=self.id,
+            client_id=self.client_id,
+            owner=self.owner,
+            side=self.side,
+            price=self.price,
+            quantity=self.quantity,
+            order_type=order_type,
+            reduce_only=self.reduce_only,
+        )
+
+    # Returns an identical order with the reduce_only flag changed.
+    def with_reduce_only(self, reduce_only: bool) -> "Order":
+        return Order(
+            id=self.id,
+            client_id=self.client_id,
+            owner=self.owner,
+            side=self.side,
+            price=self.price,
+            quantity=self.quantity,
+            order_type=self.order_type,
+            reduce_only=reduce_only,
         )
 
     @staticmethod
