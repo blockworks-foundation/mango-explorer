@@ -5,6 +5,8 @@ import logging
 import os
 import os.path
 import sys
+import time
+import traceback
 
 from decimal import Decimal
 from solana.publickey import PublicKey
@@ -23,6 +25,11 @@ parser.add_argument(
     type=Decimal,
     default=Decimal(32),
     help="maximum number of events to be processed",
+)
+parser.add_argument(
+    "--pulse-interval",
+    type=float,
+    help="if specified, run in a loop pausing this number of seconds between each crank",
 )
 parser.add_argument(
     "--account-address",
@@ -53,7 +60,17 @@ if market is None:
 market_operations = mango.create_market_operations(
     context, wallet, account, market, args.dry_run
 )
-crank = market_operations.crank(args.limit)
-mango.output(crank)
+if args.pulse_interval is None:
+    crank = market_operations.crank(args.limit)
+    mango.output(crank)
+else:
+    while True:
+        try:
+            crank = market_operations.crank(args.limit)
+            mango.output(crank)
+            time.sleep(args.pulse_interval)
+        except Exception as exception:
+            logging.error(f"Pulse action failed: {traceback.format_exc()}")
+            mango.output(exception)
 
 logging.info("Crank completed.")
