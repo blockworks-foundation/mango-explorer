@@ -257,6 +257,7 @@ class ContextBuilder:
             gma_chunk_size,
             gma_chunk_pause,
             reflink,
+            NullTransactionStatusCollector()
         )
         logging.debug(f"{context}")
 
@@ -286,6 +287,7 @@ class ContextBuilder:
             context.gma_chunk_size,
             context.gma_chunk_pause,
             context.reflink,
+            context.client.transaction_status_collector,
         )
 
     @staticmethod
