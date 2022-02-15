@@ -1112,17 +1112,21 @@ class BetterClient:
             try:
                 proper_commitment: Commitment = opts.preflight_commitment
                 proper_skip_preflight = opts.skip_preflight
-                proper_tpu_retransmissions = opts.tpu_retransmissions
+                proper_tpu_retransmissions = opts.max_retries
                 if proper_commitment == UnspecifiedCommitment:
                     proper_commitment = self.commitment
                     proper_skip_preflight = self.skip_preflight
-                    proper_tpu_retransmissions = self.tpu_retransmissions if self.tpu_retransmissions >= 0 else None
+                    proper_tpu_retransmissions = (
+                        self.tpu_retransmissions
+                        if self.tpu_retransmissions >= 0
+                        else None
+                    )
 
                 proper_opts = TxOpts(
                     preflight_commitment=proper_commitment,
                     skip_confirmation=opts.skip_confirmation,
                     skip_preflight=proper_skip_preflight,
-                    tpu_retransmissions=proper_tpu_retransmissions
+                    max_retries=proper_tpu_retransmissions,
                 )
 
                 response = self.compatible_client.send_transaction(
