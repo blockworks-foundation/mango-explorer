@@ -26,7 +26,10 @@ mypy:
 flake8:
 	poetry run flake8 --extend-ignore E402,E501,E722,W291,W391 . bin/*
 
-lint: flake8 mypy
+black:
+	black --check mango tests bin/*
+
+lint: black flake8 mypy
 
 ci: test lint ## Run all the tests and code checks
 

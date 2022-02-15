@@ -144,7 +144,7 @@ class ContextBuilder:
             "--tpu-retransmissions",
             default=-1,
             type=int,
-            help="Number of attempts the RPC node runs to deliver a transaction to TPU (default -1 means redelivering until success or recent blockhash expires)"
+            help="Number of attempts the RPC node runs to deliver a transaction to TPU (default -1 means redelivering until success or recent blockhash expires)",
         )
         parser.add_argument(
             "--commitment",
@@ -257,7 +257,7 @@ class ContextBuilder:
             gma_chunk_size,
             gma_chunk_pause,
             reflink,
-            NullTransactionStatusCollector()
+            NullTransactionStatusCollector(),
         )
         logging.debug(f"{context}")
 
