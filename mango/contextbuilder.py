@@ -141,6 +141,12 @@ class ContextBuilder:
             help="Skip pre-flight checks",
         )
         parser.add_argument(
+            "--tpu-retransmissions",
+            default=-1,
+            type=int,
+            help="Number of attempts the RPC node runs to deliver a transaction to TPU (default -1 means redelivering until success or recent blockhash expires)"
+        )
+        parser.add_argument(
             "--commitment",
             type=str,
             default=None,
@@ -207,6 +213,7 @@ class ContextBuilder:
         mango_program_address: typing.Optional[PublicKey] = args.mango_program_address
         serum_program_address: typing.Optional[PublicKey] = args.serum_program_address
         skip_preflight: bool = bool(args.skip_preflight)
+        tpu_retransmissions: int = int(args.tpu_retransmissions)
         commitment: typing.Optional[str] = args.commitment
         encoding: typing.Optional[str] = args.encoding
         blockhash_cache_duration: typing.Optional[int] = args.blockhash_cache_duration
@@ -237,6 +244,7 @@ class ContextBuilder:
             cluster_name,
             cluster_urls,
             skip_preflight,
+            tpu_retransmissions,
             commitment,
             encoding,
             blockhash_cache_duration,
@@ -249,6 +257,7 @@ class ContextBuilder:
             gma_chunk_size,
             gma_chunk_pause,
             reflink,
+            NullTransactionStatusCollector()
         )
         logging.debug(f"{context}")
 
@@ -265,6 +274,7 @@ class ContextBuilder:
             context.client.cluster_name,
             context.client.cluster_urls,
             context.client.skip_preflight,
+            context.client.tpu_retransmissions,
             context.client.commitment,
             context.client.encoding,
             context.client.blockhash_cache_duration,
@@ -277,6 +287,7 @@ class ContextBuilder:
             context.gma_chunk_size,
             context.gma_chunk_pause,
             context.reflink,
+            context.client.transaction_status_collector,
         )
 
     @staticmethod
@@ -292,6 +303,7 @@ class ContextBuilder:
             [cluster_url],
             context.client.commitment,
             context.client.skip_preflight,
+            context.client.tpu_retransmissions,
             context.client.encoding,
             context.client.blockhash_cache_duration,
             -1,
@@ -315,6 +327,7 @@ class ContextBuilder:
             [cluster_url],
             context.client.commitment,
             context.client.skip_preflight,
+            context.client.tpu_retransmissions,
             context.client.encoding,
             context.client.blockhash_cache_duration,
             -1,
@@ -331,6 +344,7 @@ class ContextBuilder:
         cluster_name: typing.Optional[str] = None,
         cluster_urls: typing.Optional[typing.Sequence[ClusterUrlData]] = None,
         skip_preflight: bool = False,
+        tpu_retransmissions: int = -1,
         commitment: typing.Optional[str] = None,
         encoding: typing.Optional[str] = None,
         blockhash_cache_duration: typing.Optional[int] = None,
@@ -375,6 +389,7 @@ class ContextBuilder:
             stale_data_pauses_before_retry or []
         )
         actual_http_request_timeout: float = http_request_timeout or -1
+        actual_tpu_retransmissions: int = int(tpu_retransmissions)
 
         actual_cluster_urls: typing.Optional[
             typing.Sequence[ClusterUrlData]
@@ -539,6 +554,7 @@ class ContextBuilder:
             actual_cluster,
             actual_cluster_urls,
             actual_skip_preflight,
+            actual_tpu_retransmissions,
             actual_commitment,
             actual_encoding,
             actual_blockhash_cache_duration,

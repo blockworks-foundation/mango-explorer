@@ -844,6 +844,7 @@ class BetterClient:
         cluster_name: str,
         commitment: Commitment,
         skip_preflight: bool,
+        tpu_retransmissions: int,
         encoding: str,
         blockhash_cache_duration: int,
         rpc_caller: CompoundRPCCaller,
@@ -855,6 +856,7 @@ class BetterClient:
         self.cluster_name: str = cluster_name
         self.commitment: Commitment = commitment
         self.skip_preflight: bool = skip_preflight
+        self.tpu_retransmissions: int = tpu_retransmissions
         self.encoding: str = encoding
         self.blockhash_cache_duration: int = blockhash_cache_duration
         self.rpc_caller: CompoundRPCCaller = rpc_caller
@@ -870,6 +872,7 @@ class BetterClient:
         cluster_urls: typing.Sequence[ClusterUrlData],
         commitment: Commitment,
         skip_preflight: bool,
+        tpu_retransmissions: int,
         encoding: str,
         blockhash_cache_duration: int,
         http_request_timeout: float,
@@ -919,6 +922,7 @@ class BetterClient:
             cluster_name,
             commitment,
             skip_preflight,
+            tpu_retransmissions,
             encoding,
             blockhash_cache_duration,
             provider,
@@ -1108,14 +1112,17 @@ class BetterClient:
             try:
                 proper_commitment: Commitment = opts.preflight_commitment
                 proper_skip_preflight = opts.skip_preflight
+                proper_tpu_retransmissions = opts.tpu_retransmissions
                 if proper_commitment == UnspecifiedCommitment:
                     proper_commitment = self.commitment
                     proper_skip_preflight = self.skip_preflight
+                    proper_tpu_retransmissions = self.tpu_retransmissions if self.tpu_retransmissions >= 0 else None
 
                 proper_opts = TxOpts(
                     preflight_commitment=proper_commitment,
                     skip_confirmation=opts.skip_confirmation,
                     skip_preflight=proper_skip_preflight,
+                    tpu_retransmissions=proper_tpu_retransmissions
                 )
 
                 response = self.compatible_client.send_transaction(
