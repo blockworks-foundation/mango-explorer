@@ -490,7 +490,7 @@ Here are some parameters that are commonly passed to the `marketmaker`.
 
 - `--group` The name of the Mango Group you want to use. (Optional - will use the default group in the `ids.json` file in the container if none is specified.)
 
-- `--market` The name of the market you want to use. (Required. Much be an exact match for one of the markets in the configured group in the `ids.json` file in the container.)
+- `--market` The name of the market you want to use. (Required. Must be an exact match for one of the markets in the configured group in the `ids.json` file in the container.)
 
 - `--oracle-provider` **** You can pick the oracle to use for price information. Pyth is a common choice because the other options don’t provide a ‘confidence value’. Options are:
     - pyth
