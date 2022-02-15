@@ -220,6 +220,10 @@ if args.hedging_market is not None:
     hedging_market_operations: mango.MarketOperations = mango.create_market_operations(
         context, wallet, account, hedging_market, args.dry_run
     )
+    if not isinstance(hedging_market_operations, mango.SpotMarketOperations):
+        raise Exception(
+            f"MarketOperations for {hedging_market_symbol} is not a SpotMarketOperations."
+        )
 
     target_balance: typing.Optional[mango.TargetBalance] = args.hedging_target_balance
     if target_balance is None:
