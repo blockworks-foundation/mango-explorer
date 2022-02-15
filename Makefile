@@ -9,25 +9,30 @@ upgrade: ## Upgrade all the build and lint dependencies
 	poetry upgrade --no-interaction
 
 test: ## Run all the tests
-	SOLENV_NAME= SOLENV_ADDRESS= CLUSTER_NAME= CLUSTER_URL= KEYPAIR= poetry run pytest -rP tests
+	SOLENV_NAME= SOLENV_ADDRESS= CLUSTER_NAME= CLUSTER_URL= KEYPAIR= PYTEST_ADDOPTS="-p no:cacheprovider" poetry run pytest -rP tests
 
 #cover: test ## Run all the tests and opens the coverage report
 #	TODO: Coverage
 
+black:
+	poetry run black --check mango tests bin/*
+
+flake8:
+	poetry run flake8 --extend-ignore E402,E501,E722,W291,W391 . bin/*
+
 mypy:
+	bash -c "trap 'trap - SIGINT SIGTERM ERR; rm -rf .tmplintdir .mypy_cache; exit 1' SIGINT SIGTERM ERR; $(MAKE) mypy-internal"
+
+# This target is separated out as an internal so the above line can trap errors and perform
+# the cleanup while still returning an error code to the shell so callers know it failed.
+mypy-internal:
 	rm -rf .tmplintdir .mypy_cache
 	mkdir .tmplintdir
 	for file in bin/* ; do \
 		cp $${file} .tmplintdir/$${file##*/}.py ; \
 	done
-	-poetry run mypy --strict --install-types --non-interactive mango tests .tmplintdir
+	poetry run mypy --strict --install-types --non-interactive mango tests .tmplintdir
 	rm -rf .tmplintdir .mypy_cache
-
-flake8:
-	poetry run flake8 --extend-ignore E402,E501,E722,W291,W391 . bin/*
-
-black:
-	black --check mango tests bin/*
 
 lint: black flake8 mypy
 
