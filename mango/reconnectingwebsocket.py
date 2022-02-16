@@ -18,6 +18,7 @@ import json
 import logging
 import rx
 import rx.subject
+import threading
 import traceback
 import typing
 import websocket
@@ -58,6 +59,8 @@ class ReconnectingWebsocket:
         )
         self.item: rx.subject.subject.Subject = rx.subject.subject.Subject()
 
+        self.__open_event: threading.Event = threading.Event()
+
     def close(self) -> None:
         self._logger.info(f"Closing WebSocket for {self.url}")
         self.reconnect_required = False
@@ -69,6 +72,7 @@ class ReconnectingWebsocket:
 
     def _on_open(self, ws: websocket.WebSocketApp) -> None:
         self._logger.info(f"Opening WebSocket for {self.url}")
+        self.__open_event.set()
         if self.on_open_call:
             self.on_open_call(ws)
 
@@ -95,6 +99,9 @@ class ReconnectingWebsocket:
     def send(self, message: str) -> None:
         self._ws.send(message)
 
+    def wait_until_open(self, timeout: float) -> bool:
+        return self.__open_event.wait(timeout)
+
     def _run(self) -> None:
         while self.reconnect_required:
             self._logger.info(f"WebSocket connecting to: {self.url}")
@@ -109,4 +116,5 @@ class ReconnectingWebsocket:
             )
             self.connected.on_next(datetime.now())
             self._ws.run_forever(ping_interval=self.ping_interval)
+            self.__open_event.clear()
             self.disconnected.on_next(datetime.now())

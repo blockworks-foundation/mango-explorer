@@ -43,6 +43,12 @@ parser.add_argument(
     help="address of the specific account to use, if more than one available",
 )
 parser.add_argument(
+    "--wait",
+    action="store_true",
+    default=False,
+    help="wait until the transaction is confirmed",
+)
+parser.add_argument(
     "--dry-run",
     action="store_true",
     default=False,
@@ -50,22 +56,30 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-group = mango.Group.load(context, context.group_address)
-account = mango.Account.load_for_owner_by_address(
-    context, wallet.address, group, args.account_address
-)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    group = mango.Group.load(context, context.group_address)
+    account = mango.Account.load_for_owner_by_address(
+        context, wallet.address, group, args.account_address
+    )
 
-market = context.market_lookup.find_by_symbol(args.market)
-if market is None:
-    raise Exception(f"Could not find market {args.market}")
+    market = context.market_lookup.find_by_symbol(args.market)
+    if market is None:
+        raise Exception(f"Could not find market {args.market}")
 
-market_operations = mango.create_market_operations(
-    context, wallet, account, market, args.dry_run
-)
-order: mango.Order = mango.Order.from_basic_info(
-    args.side, args.price, args.quantity, args.order_type
-)
-placed = market_operations.place_order(order)
-mango.output(placed)
+    market_operations = mango.create_market_operations(
+        context, wallet, account, market, args.dry_run
+    )
+    order: mango.Order = mango.Order.from_basic_info(
+        args.side, args.price, args.quantity, args.order_type
+    )
+    signatures = market_operations.place_order(order)
+
+    if args.wait:
+        mango.output("Waiting on transaction signatures:", signatures)
+        results = mango.WebSocketTransactionMonitor.wait_for_all(
+            context.client.cluster_ws_url, signatures
+        )
+        mango.output(results)
+    else:
+        mango.output(signatures)

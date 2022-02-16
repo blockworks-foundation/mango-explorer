@@ -44,10 +44,25 @@ class TransactionOutcome(enum.Enum):
 @dataclass
 class TransactionStatus:
     signature: str
+    status: str
     outcome: TransactionOutcome
     err: typing.Optional[typing.Dict[str, typing.Any]]
     sent: datetime
     duration: timedelta
+
+    def __str__(self) -> str:
+        time_taken: float = self.duration.seconds + self.duration.microseconds / 1000000
+        description = (
+            f"reached commitment '{self.status}' after {time_taken:,.2f} seconds"
+        )
+        if self.outcome == TransactionOutcome.FAIL:
+            description = f"failed to reach commitment '{self.status}': {self.err}"
+        elif self.outcome == TransactionOutcome.TIMEOUT:
+            description = f"failed to reach commitment '{self.status}' after {time_taken:,.2f} seconds"
+        return f"« TransactionStatus {self.outcome}: signature {self.signature} {description} »"
+
+    def __repr__(self) -> str:
+        return f"{self}"
 
 
 class TransactionStatusCollector(metaclass=abc.ABCMeta):
@@ -72,11 +87,11 @@ class DequeTransactionStatusCollector(TransactionStatusCollector):
 
 class SignatureSubscription:
     def __init__(
-        self,
-        signature: str,
+        self, signature: str, on_outcome: typing.Callable[[TransactionStatus], None]
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.signature: str = signature
+        self.on_outcome: typing.Callable[[TransactionStatus], None] = on_outcome
 
         self.id: int = 0
         self.subscribe_request_id: int = 0
@@ -136,6 +151,7 @@ class SignatureSubscription:
     ) -> TransactionStatus:
         return TransactionStatus(
             self.signature,
+            self.final_status or "unset",
             outcome,
             err,
             self.started_at,
@@ -167,8 +183,59 @@ class WebSocketTransactionMonitor(TransactionMonitor):
         self.__ws.open()
         self.__ws.connected.subscribe(on_next=self.__on_reconnect)  # type: ignore[call-arg]
 
-    def monitor(self, signature: str) -> None:
-        subscription = SignatureSubscription(signature)
+    @staticmethod
+    def wait_for_all(
+        cluster_ws_url: str,
+        signatures: typing.Sequence[str],
+        commitment: Commitment = Finalized,
+        timeout: float = 90.0,
+    ) -> typing.Sequence[TransactionStatus]:
+        started_at: datetime = datetime.now()
+        collector = DequeTransactionStatusCollector()
+        monitor = WebSocketTransactionMonitor(
+            cluster_ws_url,
+            commitment=commitment,
+            transaction_timeout=timeout,
+            collector=collector,
+        )
+
+        if not monitor.wait_until_open():
+            raise Exception("Timed out waiting for websocket to open.")
+
+        waiters: typing.List[threading.Event] = []
+        for signature in signatures:
+            waiter = threading.Event()
+            monitor.monitor(signature, lambda _: waiter.set())
+            waiters += [waiter]
+
+        for active_waiter in waiters:
+            time_spent = datetime.now() - started_at
+            seconds_so_far: float = (
+                time_spent.seconds + time_spent.microseconds / 1000000
+            )
+
+            remaining = max(0, timeout - seconds_so_far)
+
+            # Add a little longer to this timeout so the websocket transaction timeout has
+            # the opportunity to fire first.
+            active_waiter.wait(0.1 + remaining)
+
+        monitor.dispose()
+
+        return list(collector.transactions)
+
+    def wait_until_open(self, timeout: float = 5.0) -> bool:
+        if self.__ws is None:
+            raise Exception("Underlying websocket instance has not been created.")
+
+        return self.__ws.wait_until_open(timeout)
+
+    def monitor(
+        self,
+        signature: str,
+        on_outcome: typing.Callable[[TransactionStatus], None] = lambda _: None,
+    ) -> None:
+        subscription = SignatureSubscription(signature, on_outcome)
         self.__subscriptions += [subscription]
 
         if self.__ws is None:
@@ -190,9 +257,9 @@ class WebSocketTransactionMonitor(TransactionMonitor):
         self._logger.warning(
             f"Timed out waiting for transaction with signature {subscription.signature} to reach '{self.commitment}' - gave up after {subscription.time_taken_seconds:.2f} seconds."
         )
-        self.collector.add_transaction(
-            subscription.build_status(TransactionOutcome.TIMEOUT)
-        )
+        status = subscription.build_status(TransactionOutcome.TIMEOUT)
+        subscription.on_outcome(status)
+        self.collector.add_transaction(status)
 
         if self.__ws is None:
             return
@@ -222,17 +289,17 @@ class WebSocketTransactionMonitor(TransactionMonitor):
             slot = params["result"]["context"]["slot"]
             err = params["result"]["value"]["err"]
             if err is not None:
-                self.collector.add_transaction(
-                    subscription.build_status(TransactionOutcome.FAIL, err)
-                )
+                status = subscription.build_status(TransactionOutcome.FAIL, err)
+                self.collector.add_transaction(status)
+                subscription.on_outcome(status)
                 self._logger.warning(
                     f"Transaction {subscription.signature} failed after {subscription.time_taken_seconds:.2f} seconds with error: {err}"
                 )
             else:
                 self.slot_holder.require_data_from_fresh_slot(slot)
-                self.collector.add_transaction(
-                    subscription.build_status(TransactionOutcome.SUCCESS)
-                )
+                status = subscription.build_status(TransactionOutcome.SUCCESS)
+                self.collector.add_transaction(status)
+                subscription.on_outcome(status)
                 self._logger.debug(
                     f"Transaction {subscription.signature} reached status '{self.commitment}' in slot {slot} after {subscription.time_taken_seconds:.2f} seconds."
                 )
@@ -273,9 +340,9 @@ class WebSocketTransactionMonitor(TransactionMonitor):
                 self._logger.warning(
                     f"Closing WebSocketTransactionMonitor while waiting for transaction with signature {subscription.signature} to reach '{self.commitment}'."
                 )
-                self.collector.add_transaction(
-                    subscription.build_status(TransactionOutcome.TIMEOUT)
-                )
+                status = subscription.build_status(TransactionOutcome.TIMEOUT)
+                self.collector.add_transaction(status)
+                subscription.on_outcome(status)
 
             self.__ws.close()
             self.__ws = None
