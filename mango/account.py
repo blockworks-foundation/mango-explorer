@@ -471,18 +471,15 @@ class Account(AddressableAccount):
         # owner is just after mango_group in the layout, and it's a PublicKey which is 32 bytes.
         filters = [MemcmpOpts(offset=group_offset, bytes=encode_key(group.address))]
 
-        results = context.client.get_program_accounts(
+        account_infos = AccountInfo.load_by_program(
+            context,
             context.mango_program_address,
             memcmp_opts=filters,
             data_size=layouts.MANGO_ACCOUNT.sizeof(),
         )
         cache: Cache = group.fetch_cache(context)
         accounts: typing.List[Account] = []
-        for account_data in results:
-            address = PublicKey(account_data["pubkey"])
-            account_info = AccountInfo._from_response_values(
-                account_data["account"], address
-            )
+        for account_info in account_infos:
             account = Account.parse(account_info, group, cache)
             accounts += [account]
         return accounts
@@ -500,18 +497,15 @@ class Account(AddressableAccount):
             MemcmpOpts(offset=owner_offset, bytes=encode_key(owner)),
         ]
 
-        results = context.client.get_program_accounts(
+        account_infos = AccountInfo.load_by_program(
+            context,
             context.mango_program_address,
             memcmp_opts=filters,
             data_size=layouts.MANGO_ACCOUNT.sizeof(),
         )
         cache: Cache = group.fetch_cache(context)
         accounts: typing.List[Account] = []
-        for account_data in results:
-            address = PublicKey(account_data["pubkey"])
-            account_info = AccountInfo._from_response_values(
-                account_data["account"], address
-            )
+        for account_info in account_infos:
             account = Account.parse(account_info, group, cache)
             accounts += [account]
         return accounts
@@ -529,18 +523,15 @@ class Account(AddressableAccount):
             MemcmpOpts(offset=delegate_offset, bytes=encode_key(delegate)),
         ]
 
-        results = context.client.get_program_accounts(
+        account_infos = AccountInfo.load_by_program(
+            context,
             context.mango_program_address,
             memcmp_opts=filters,
             data_size=layouts.MANGO_ACCOUNT.sizeof(),
         )
         cache: Cache = group.fetch_cache(context)
         accounts: typing.List[Account] = []
-        for account_data in results:
-            address = PublicKey(account_data["pubkey"])
-            account_info = AccountInfo._from_response_values(
-                account_data["account"], address
-            )
+        for account_info in account_infos:
             account = Account.parse(account_info, group, cache)
             accounts += [account]
         return accounts

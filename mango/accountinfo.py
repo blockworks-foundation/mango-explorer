@@ -21,7 +21,7 @@ import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
-from solana.rpc.types import RPCResponse
+from solana.rpc.types import MemcmpOpts, DataSliceOpts, RPCResponse
 
 from .constants import SOL_DECIMAL_DIVISOR
 from .context import Context
@@ -102,7 +102,7 @@ class AccountInfo:
     @staticmethod
     def load_multiple(
         context: Context, addresses: typing.Sequence[PublicKey]
-    ) -> typing.List["AccountInfo"]:
+    ) -> typing.Sequence["AccountInfo"]:
         # This is a tricky one to get right.
         # Some errors this can generate:
         #  413 Client Error: Payload Too Large for url
@@ -128,6 +128,27 @@ class AccountInfo:
                 time.sleep(sleep_between_calls)
 
         return multiple
+
+    @staticmethod
+    def load_by_program(
+        context: Context,
+        pubkey: typing.Union[str, PublicKey],
+        data_slice: typing.Optional[DataSliceOpts] = None,
+        data_size: typing.Optional[int] = None,
+        memcmp_opts: typing.Optional[typing.List[MemcmpOpts]] = None,
+    ) -> typing.Sequence["AccountInfo"]:
+        all_accounts = context.client.get_program_accounts(
+            pubkey, data_slice=data_slice, data_size=data_size, memcmp_opts=memcmp_opts
+        )
+
+        all_account_infos = map(
+            lambda result: AccountInfo._from_response_values(
+                result["account"], PublicKey(result["pubkey"])
+            ),
+            all_accounts,
+        )
+
+        return list(all_account_infos)
 
     @staticmethod
     def _from_response_values(

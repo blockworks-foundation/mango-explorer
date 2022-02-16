@@ -144,19 +144,11 @@ class OpenOrders(AddressableAccount):
             )
         ]
 
-        results = context.client.get_program_accounts(
+        account_infos = AccountInfo.load_by_program(
+            context,
             group.serum_program_address,
             data_size=layouts.OPEN_ORDERS.sizeof(),
             memcmp_opts=filters,
-        )
-        account_infos = list(
-            map(
-                lambda pair: AccountInfo._from_response_values(pair[0], pair[1]),
-                [
-                    (result["account"], PublicKey(result["pubkey"]))
-                    for result in results
-                ],
-            )
         )
         account_infos_by_address = {
             key: value
@@ -197,19 +189,16 @@ class OpenOrders(AddressableAccount):
             ),
         ]
 
-        results = context.client.get_program_accounts(
-            program_address, data_size=layouts.OPEN_ORDERS.sizeof(), memcmp_opts=filters
-        )
-        accounts = map(
-            lambda result: AccountInfo._from_response_values(
-                result["account"], PublicKey(result["pubkey"])
-            ),
-            results,
+        account_infos = AccountInfo.load_by_program(
+            context,
+            program_address,
+            data_size=layouts.OPEN_ORDERS.sizeof(),
+            memcmp_opts=filters,
         )
         return list(
             map(
                 lambda acc: OpenOrders.parse(acc, base_decimals, quote_decimals),
-                accounts,
+                account_infos,
             )
         )
 
