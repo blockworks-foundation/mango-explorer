@@ -706,6 +706,12 @@ class ClusterUrlData:
             self.ws = self.rpc.replace("https:", "wss:", 1)
             self.ws = self.ws.replace("http:", "ws:", 1)
 
+    def __str__(self) -> str:
+        return f"« ClusterUrlData RPC: {self.rpc} WS: {self.ws} »"
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
 
 class BetterClient:
     def __init__(
