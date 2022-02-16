@@ -24,8 +24,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from solana.rpc.commitment import Commitment, Finalized
 
-from .context import Context
 from .client import TransactionMonitor
+from .idgenerator import IdGenerator, MonotonicIdGenerator
 from .reconnectingwebsocket import ReconnectingWebsocket
 
 
@@ -146,23 +146,23 @@ class SignatureSubscription:
 class WebSocketTransactionMonitor(TransactionMonitor):
     def __init__(
         self,
-        context: Context,
+        cluster_ws_url: str,
         commitment: Commitment = Finalized,
-        timeout: float = 90.0,
+        ping_interval: int = 10,
+        transaction_timeout: float = 90.0,
         collector: TransactionStatusCollector = NullTransactionStatusCollector(),
     ) -> None:
-        super().__init__()
-        self.context: Context = context
-        self.commitment: Commitment = commitment
-        self.timeout: float = timeout
+        super().__init__(commitment=commitment, transaction_timeout=transaction_timeout)
         self.collector: TransactionStatusCollector = collector
+
+        self.__id_generator: IdGenerator = MonotonicIdGenerator()
 
         self.__subscriptions: typing.List[SignatureSubscription] = []
         self.__ws: typing.Optional[ReconnectingWebsocket] = ReconnectingWebsocket(
-            self.context.client.cluster_ws_url,
+            cluster_ws_url,
             lambda _: None,
         )
-        self.__ws.ping_interval = self.context.ping_interval
+        self.__ws.ping_interval = ping_interval
         self.__ws.item.subscribe(on_next=self.__on_response)  # type: ignore[call-arg]
         self.__ws.open()
         self.__ws.connected.subscribe(on_next=self.__on_reconnect)  # type: ignore[call-arg]
@@ -176,10 +176,12 @@ class WebSocketTransactionMonitor(TransactionMonitor):
 
         self.__ws.send(
             subscription.build_subscription(
-                self.context.generate_client_id(), self.commitment
+                self.__id_generator.generate_id(), self.commitment
             )
         )
-        timer = threading.Timer(self.timeout, lambda: self.__on_timeout(subscription))
+        timer = threading.Timer(
+            self.transaction_timeout, lambda: self.__on_timeout(subscription)
+        )
         timer.start()
         subscription.timeout_timer = timer
 
@@ -196,7 +198,7 @@ class WebSocketTransactionMonitor(TransactionMonitor):
             return
 
         self.__ws.send(
-            subscription.build_unsubscription(self.context.generate_client_id())
+            subscription.build_unsubscription(self.__id_generator.generate_id())
         )
 
     def __on_response(self, response: typing.Any) -> None:
@@ -235,7 +237,7 @@ class WebSocketTransactionMonitor(TransactionMonitor):
                     f"Transaction {subscription.signature} reached status '{self.commitment}' in slot {slot} after {subscription.time_taken_seconds:.2f} seconds."
                 )
         else:
-            self._logger.error(f"[{self.context.name}] Unknown response: {response}")
+            self._logger.error(f"Unknown response: {response}")
 
     def __on_reconnect(self, _: datetime) -> None:
         # Our previous websocket was disconnected, so we won't hear back from it about our
@@ -245,7 +247,7 @@ class WebSocketTransactionMonitor(TransactionMonitor):
             for subscription in self.__subscriptions:
                 self.__ws.send(
                     subscription.build_subscription(
-                        self.context.generate_client_id(), self.commitment
+                        self.__id_generator.generate_id(), self.commitment
                     )
                 )
 
@@ -254,17 +256,13 @@ class WebSocketTransactionMonitor(TransactionMonitor):
             if subscription.subscribe_request_id == subscribe_request_id:
                 subscription.id = id
                 return
-        self._logger.error(
-            f"[{self.context.name}] Subscription ID {subscribe_request_id} not found"
-        )
+        self._logger.error(f"Subscription ID {subscribe_request_id} not found")
 
     def __subscription_by_subscription_id(self, id: int) -> SignatureSubscription:
         for subscription in self.__subscriptions:
             if subscription.id == id:
                 return subscription
-        raise Exception(
-            f"[{self.context.name}] No subscription with subscription ID {id} could be found."
-        )
+        raise Exception(f"No subscription with subscription ID {id} could be found.")
 
     def dispose(self) -> None:
         if self.__ws is not None:

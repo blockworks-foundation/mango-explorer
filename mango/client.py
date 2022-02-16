@@ -344,8 +344,15 @@ class SlotHolder:
 
 
 class TransactionMonitor(metaclass=abc.ABCMeta):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        commitment: Commitment = Finalized,
+        transaction_timeout: float = 90.0,
+    ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.commitment: Commitment = commitment
+        self.transaction_timeout: float = transaction_timeout
+
         self.slot_holder: SlotHolder = SlotHolder()
 
     def monitor(self, signature: str) -> None:
@@ -358,8 +365,12 @@ class TransactionMonitor(metaclass=abc.ABCMeta):
 
 
 class NullTransactionMonitor(TransactionMonitor):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(
+        self,
+        commitment: Commitment = Finalized,
+        transaction_timeout: float = 90.0,
+    ) -> None:
+        super().__init__(commitment=commitment, transaction_timeout=transaction_timeout)
 
     def monitor(self, signature: str) -> None:
         pass

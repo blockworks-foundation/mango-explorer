@@ -251,10 +251,12 @@ class ContextBuilder:
         gma_chunk_pause: typing.Optional[Decimal] = args.gma_chunk_pause
         reflink: typing.Optional[PublicKey] = args.reflink
         monitor_transactions: bool = bool(args.monitor_transactions)
-        monitor_transactions_commitment: Commitment = (
-            args.monitor_transactions_commitment
-        )
-        monitor_transactions_timeout: float = args.monitor_transactions_timeout
+        monitor_transactions_commitment: typing.Optional[
+            Commitment
+        ] = args.monitor_transactions_commitment
+        monitor_transactions_timeout: typing.Optional[
+            float
+        ] = args.monitor_transactions_timeout
 
         # Do this here so build() only ever has to handle the sequence of retry times. (It gets messy
         # passing around the sequnce *plus* the data to reconstruct it for build().)
@@ -285,16 +287,10 @@ class ContextBuilder:
             gma_chunk_size,
             gma_chunk_pause,
             reflink,
-            NullTransactionMonitor(),
+            monitor_transactions,
+            monitor_transactions_commitment,
+            monitor_transactions_timeout,
         )
-
-        if monitor_transactions:
-            context.client.transaction_monitor = WebSocketTransactionMonitor(
-                context,
-                commitment=monitor_transactions_commitment,
-                timeout=monitor_transactions_timeout,
-                collector=DequeTransactionStatusCollector(),
-            )
 
         logging.debug(f"{context}")
 
@@ -324,7 +320,9 @@ class ContextBuilder:
             context.gma_chunk_size,
             context.gma_chunk_pause,
             context.reflink,
-            context.client.transaction_monitor,
+            not isinstance(context.client.transaction_monitor, NullTransactionMonitor),
+            context.client.transaction_monitor.commitment,
+            context.client.transaction_monitor.transaction_timeout,
         )
 
     @staticmethod
@@ -347,7 +345,7 @@ class ContextBuilder:
             context.gma_chunk_size,
             context.gma_chunk_pause,
             context.reflink,
-            NullTransactionMonitor(),  # Don't try to watch transactions on a switched Context
+            False,  # Don't try to watch transactions on a switched Context
         )
 
     @staticmethod
@@ -369,7 +367,9 @@ class ContextBuilder:
         gma_chunk_size: typing.Optional[Decimal] = None,
         gma_chunk_pause: typing.Optional[Decimal] = None,
         reflink: typing.Optional[PublicKey] = None,
-        transaction_monitor: typing.Optional[TransactionMonitor] = None,
+        monitor_transactions: typing.Optional[bool] = None,
+        monitor_transactions_commitment: typing.Optional[Commitment] = None,
+        monitor_transactions_timeout: typing.Optional[float] = None,
     ) -> "Context":
         def __public_key_or_none(
             address: typing.Optional[str],
@@ -459,10 +459,6 @@ class ContextBuilder:
 
         actual_reflink: typing.Optional[PublicKey] = reflink or __public_key_or_none(
             os.environ.get("MANGO_REFLINK_ADDRESS")
-        )
-
-        actual_transaction_monitor: TransactionMonitor = (
-            transaction_monitor or NullTransactionMonitor()
         )
 
         ids_json_token_lookup: InstrumentLookup = IdsJsonTokenLookup(
@@ -564,6 +560,19 @@ class ContextBuilder:
                 ]
             )
         market_lookup: MarketLookup = all_market_lookup
+
+        actual_monitor_transactions_commitment: Commitment = (
+            monitor_transactions_commitment or Finalized
+        )
+        actual_monitor_transactions_timeout = monitor_transactions_timeout or 90
+        actual_transaction_monitor: TransactionMonitor = NullTransactionMonitor()
+        if monitor_transactions:
+            actual_transaction_monitor = WebSocketTransactionMonitor(
+                actual_cluster_urls[0].ws,
+                commitment=actual_monitor_transactions_commitment,
+                transaction_timeout=actual_monitor_transactions_timeout,
+                collector=DequeTransactionStatusCollector(),
+            )
 
         context = Context(
             actual_name,
