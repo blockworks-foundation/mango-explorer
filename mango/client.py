@@ -900,7 +900,7 @@ class BetterClient:
         if blockhash_cache_duration > 0:
             blockhash_cache = BlockhashCache(blockhash_cache_duration)
         client: Client = Client(
-            endpoint=cluster_url.rpc,
+            endpoint=cluster_urls[0].rpc,
             commitment=commitment,
             blockhash_cache=blockhash_cache,
         )
