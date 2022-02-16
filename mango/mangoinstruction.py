@@ -483,12 +483,12 @@ class MangoInstruction:
         elif instruction_type == InstructionType.SetReferrerMemory:
             pass
         elif instruction_type == InstructionType.RegisterReferrerId:
-            pass
+            additional_data = f"ID: '{self.instruction_data.info}'"
 
         return additional_data
 
     def __str__(self) -> str:
-        parameters = self.describe_parameters() or "None"
+        parameters = self.describe_parameters() or ""
         keys: typing.List[str] = []
         for index, key in enumerate(self.accounts):
             pubkey: str = str(key)

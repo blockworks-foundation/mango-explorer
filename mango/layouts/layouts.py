@@ -1296,7 +1296,9 @@ CACHE = construct.Struct(
 )
 
 REFERRER_MEMORY = construct.Struct(
-    "meta_data" / METADATA, "referrer_mango_account" / PublicKeyAdapter()
+    "meta_data" / METADATA,
+    "referrer_mango_account" / PublicKeyAdapter(),
+    "info" / construct.PaddedString(32, "utf8"),
 )
 
 
