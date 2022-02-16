@@ -13,7 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-import enum
+import abc
 import json
 import logging
 import requests
@@ -25,8 +25,6 @@ from base64 import b64decode
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from collections.abc import Mapping
-from collections import deque
-from concurrent.futures import Executor, ThreadPoolExecutor
 from decimal import Decimal
 from solana.blockhash import Blockhash, BlockhashCache
 from solana.keypair import Keypair
@@ -345,164 +343,26 @@ class SlotHolder:
         return True
 
 
-class TransactionOutcome(enum.Enum):
-    SUCCESS = "SUCCESS"
-    FAIL = "FAIL"
-    TIMEOUT = "TIMEOUT"
+class TransactionMonitor(metaclass=abc.ABCMeta):
+    def __init__(self) -> None:
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.slot_holder: SlotHolder = SlotHolder()
 
-    def __str__(self) -> str:
-        return self.value
+    def monitor(self, signature: str) -> None:
+        raise NotImplementedError(
+            "TransactionMonitor.monitor() is not implemented on the base type."
+        )
 
-    def __repr__(self) -> str:
-        return f"{self}"
-
-
-@dataclass
-class TransactionStatus:
-    signature: str
-    outcome: TransactionOutcome
-    err: typing.Optional[typing.Dict[str, typing.Any]]
-    sent: datetime
-    duration: timedelta
-
-
-class TransactionStatusCollector:
-    def __init__(self, maxlength: int = 100) -> None:
-        self.transactions: typing.Deque[TransactionStatus] = deque(maxlen=maxlength)
-
-    def add_transaction(self, status: TransactionStatus) -> None:
-        self.transactions.append(status)
-
-
-class NullTransactionStatusCollector(TransactionStatusCollector):
-    def add_transaction(self, status: TransactionStatus) -> None:
+    def dispose(self) -> None:
         pass
 
 
-class TransactionWatcher:
-    def __init__(
-        self,
-        client: Client,
-        slot_holder: SlotHolder,
-        signature: str,
-        collector: TransactionStatusCollector,
-    ):
-        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.client: Client = client
-        self.slot_holder: SlotHolder = slot_holder
-        self.signature: str = signature
-        self.collector = collector
+class NullTransactionMonitor(TransactionMonitor):
+    def __init__(self) -> None:
+        super().__init__()
 
-    def report_on_transaction(self) -> None:
-        started_at: datetime = datetime.now()
-        for pause in [
-            0.1,
-            0.2,
-            0.3,
-            0.4,
-            0.5,
-            0.5,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-            1,
-        ]:
-            transaction_response = self.client.get_signature_statuses([self.signature])
-            if (
-                "result" in transaction_response
-                and "value" in transaction_response["result"]
-            ):
-                [status] = transaction_response["result"]["value"]
-                if status is not None:
-                    delta: timedelta = datetime.now() - started_at
-                    time_taken: float = delta.seconds + delta.microseconds / 1000000
-
-                    # value should be a dict that looks like:
-                    # {
-                    #   'confirmationStatus': 'processed',
-                    #   'confirmations': 0,
-                    #   'err': None,
-                    #   'slot': 116230143,
-                    #   'status': {'Ok': None}
-                    # }
-                    # If there's an error it should look like:
-                    # {
-                    #     'slot': 116235922,
-                    #     'confirmations': 0,
-                    #     'status': {'Err': {'InstructionError': [0, {'Custom': 24}]}},
-                    #     'err': {
-                    #         'InstructionError': [0, {'Custom': 24}]
-                    #     },
-                    #     'confirmationStatus': 'processed'
-                    # }
-                    err = status["err"]
-                    if err is not None:
-                        self._logger.warning(
-                            f"Transaction {self.signature} failed after {time_taken:.2f} seconds with error {err}"
-                        )
-                        self.collector.add_transaction(
-                            TransactionStatus(
-                                self.signature,
-                                TransactionOutcome.FAIL,
-                                err,
-                                started_at,
-                                delta,
-                            )
-                        )
-                        return
-
-                    confirmation_status: str = status["confirmationStatus"]
-                    slot: int = status["slot"]
-                    self.slot_holder.require_data_from_fresh_slot(slot)
-                    self.collector.add_transaction(
-                        TransactionStatus(
-                            self.signature,
-                            TransactionOutcome.SUCCESS,
-                            None,
-                            started_at,
-                            delta,
-                        )
-                    )
-                    self._logger.info(
-                        f"Transaction {self.signature} reached confirmation status '{confirmation_status}' in slot {slot} after {time_taken:.2f} seconds"
-                    )
-                    return
-            time.sleep(pause)
-
-        delta = datetime.now() - started_at
-        time_wasted_looking: float = delta.seconds + delta.microseconds / 1000000
-        self.collector.add_transaction(
-            TransactionStatus(
-                self.signature, TransactionOutcome.TIMEOUT, None, started_at, delta
-            )
-        )
-        self._logger.warning(
-            f"Transaction {self.signature} disappeared despite spending {time_wasted_looking:.2f} seconds waiting for it"
-        )
+    def monitor(self, signature: str) -> None:
+        pass
 
 
 # # 🥭 RPCCaller class
@@ -848,7 +708,7 @@ class BetterClient:
         encoding: str,
         blockhash_cache_duration: int,
         rpc_caller: CompoundRPCCaller,
-        transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector(),
+        transaction_monitor: TransactionMonitor = NullTransactionMonitor(),
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.compatible_client: Client = client
@@ -860,10 +720,7 @@ class BetterClient:
         self.encoding: str = encoding
         self.blockhash_cache_duration: int = blockhash_cache_duration
         self.rpc_caller: CompoundRPCCaller = rpc_caller
-        self.executor: Executor = ThreadPoolExecutor()
-        self.transaction_status_collector: TransactionStatusCollector = (
-            transaction_status_collector
-        )
+        self.transaction_monitor: TransactionMonitor = transaction_monitor
 
     @staticmethod
     def from_configuration(
@@ -878,9 +735,8 @@ class BetterClient:
         http_request_timeout: float,
         stale_data_pauses_before_retry: typing.Sequence[float],
         instruction_reporter: InstructionReporter,
-        transaction_status_collector: TransactionStatusCollector,
+        transaction_monitor: TransactionMonitor = NullTransactionMonitor(),
     ) -> "BetterClient":
-        slot_holder: SlotHolder = SlotHolder()
         rpc_callers: typing.List[RPCCaller] = []
         cluster_url: ClusterUrlData
         for cluster_url in cluster_urls:
@@ -890,7 +746,7 @@ class BetterClient:
                 cluster_url.ws,
                 http_request_timeout,
                 stale_data_pauses_before_retry,
-                slot_holder,
+                transaction_monitor.slot_holder,
                 instruction_reporter,
             )
             rpc_callers += [rpc_caller]
@@ -926,7 +782,7 @@ class BetterClient:
             encoding,
             blockhash_cache_duration,
             provider,
-            transaction_status_collector,
+            transaction_monitor,
         )
 
     @property
@@ -963,6 +819,9 @@ class BetterClient:
     @property
     def stale_data_pauses_before_retry(self) -> typing.Sequence[float]:
         return self.rpc_caller.current.stale_data_pauses_before_retry
+
+    def dispose(self) -> None:
+        self.transaction_monitor.dispose()
 
     def require_data_from_fresh_slot(self) -> None:
         self.rpc_caller.current.require_data_from_fresh_slot()
@@ -1042,6 +901,7 @@ class BetterClient:
             data_size,
             memcmp_opts,
         )
+
         return response["result"]
 
     def get_recent_blockhash(
@@ -1136,13 +996,7 @@ class BetterClient:
                 self._logger.debug(f"Transaction signature: {signature}")
 
                 if signature != _STUB_TRANSACTION_SIGNATURE:
-                    tx_reporter: TransactionWatcher = TransactionWatcher(
-                        self.compatible_client,
-                        self.rpc_caller.current.slot_holder,
-                        signature,
-                        self.transaction_status_collector,
-                    )
-                    self.executor.submit(tx_reporter.report_on_transaction)
+                    self.transaction_monitor.monitor(signature)
                 else:
                     self._logger.error("Could not get status for stub signature")
 

@@ -24,7 +24,9 @@ from mango.marketmaking.orderchain import chainbuilder  # nopep8
 parser = argparse.ArgumentParser(
     description="Runs a marketmaker against a particular market."
 )
-mango.ContextBuilder.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(
+    parser, monitor_transactions_default=True
+)
 mango.Wallet.add_command_line_parameters(parser)
 chainbuilder.ChainBuilder.add_command_line_parameters(parser)
 parser.add_argument(
@@ -395,4 +397,5 @@ except:
 logging.info("Shutting down...")
 disposer.dispose()
 cleanup(context, wallet, account, market, args.dry_run)
+context.dispose()
 logging.info("Shutdown complete.")

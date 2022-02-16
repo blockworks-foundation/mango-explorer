@@ -17,6 +17,7 @@ import logging
 import multiprocessing
 import requests
 import time
+import types
 import typing
 
 from decimal import Decimal
@@ -27,8 +28,8 @@ from solana.rpc.commitment import Commitment
 from .client import (
     BetterClient,
     ClusterUrlData,
-    TransactionStatusCollector,
-    NullTransactionStatusCollector,
+    TransactionMonitor,
+    NullTransactionMonitor,
 )
 from .constants import MangoConstants
 from .instructionreporter import InstructionReporter, CompoundInstructionReporter
@@ -63,7 +64,7 @@ class Context:
         reflink: typing.Optional[PublicKey],
         instrument_lookup: InstrumentLookup,
         market_lookup: MarketLookup,
-        transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector(),
+        transaction_monitor: TransactionMonitor = NullTransactionMonitor(),
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name: str = name
@@ -84,7 +85,7 @@ class Context:
             http_request_timeout,
             stale_data_pauses_before_retry,
             instruction_reporter,
-            transaction_status_collector,
+            transaction_monitor,
         )
         self.mango_program_address: PublicKey = mango_program_address
         self.serum_program_address: PublicKey = serum_program_address
@@ -109,6 +110,20 @@ class Context:
             Decimal(20),
             Decimal(30),
         ]
+
+    def __enter__(self) -> "Context":
+        return self
+
+    def __exit__(
+        self,
+        exc_type: typing.Optional[typing.Type[BaseException]],
+        exc_value: typing.Optional[BaseException],
+        traceback: typing.Optional[types.TracebackType],
+    ) -> None:
+        self.dispose()
+
+    def dispose(self) -> None:
+        self.client.dispose()
 
     def create_thread_pool_scheduler(self) -> ThreadPoolScheduler:
         return ThreadPoolScheduler(multiprocessing.cpu_count())

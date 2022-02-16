@@ -18,6 +18,7 @@ import json
 import logging
 import rx
 import rx.subject
+import traceback
 import typing
 import websocket
 
@@ -41,6 +42,9 @@ class ReconnectingWebsocket:
         self.reconnect_required: bool = True
         self.ping_interval: int = 0
         self.connecting: rx.subject.behaviorsubject.BehaviorSubject = (
+            rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
+        )
+        self.connected: rx.subject.behaviorsubject.BehaviorSubject = (
             rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
         )
         self.disconnected: rx.subject.behaviorsubject.BehaviorSubject = (
@@ -69,8 +73,11 @@ class ReconnectingWebsocket:
             self.on_open_call(ws)
 
     def _on_message(self, _: typing.Any, message: str) -> None:
-        data = json.loads(message)
-        self.item.on_next(data)
+        try:
+            data = json.loads(message)
+            self.item.on_next(data)
+        except Exception:
+            self._logger.error(f"Problem sending update: {traceback.format_exc()}")
 
     def _on_error(self, *args: typing.Any) -> None:
         self._logger.warning(f"WebSocket for {self.url} has error {args}")
@@ -100,5 +107,6 @@ class ReconnectingWebsocket:
                 on_ping=self._on_ping,
                 on_pong=self._on_pong,
             )
+            self.connected.on_next(datetime.now())
             self._ws.run_forever(ping_interval=self.ping_interval)
             self.disconnected.on_next(datetime.now())
