@@ -64,45 +64,47 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-action_threshold = args.action_threshold
-max_slippage = args.max_slippage
-group = mango.Group.load(context, context.group_address)
-account = mango.Account.load_for_owner_by_address(
-    context, wallet.address, group, args.account_address
-)
-
-targets: typing.Sequence[mango.TargetBalance] = args.target
-logging.info(f"Targets: {targets}")
-
-if args.dry_run:
-    trade_executor: mango.TradeExecutor = mango.NullTradeExecutor()
-else:
-    trade_executor = mango.ImmediateTradeExecutor(
-        context, wallet, account, max_slippage
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    action_threshold = args.action_threshold
+    max_slippage = args.max_slippage
+    group = mango.Group.load(context, context.group_address)
+    account = mango.Account.load_for_owner_by_address(
+        context, wallet.address, group, args.account_address
     )
 
-prices: typing.List[mango.InstrumentValue] = []
-oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, "market")
-for basket_token in account.slots:
-    if basket_token is not None:
-        market_symbol: str = (
-            f"{basket_token.base_instrument.symbol}/{group.shared_quote_token.symbol}"
-        )
-        market = context.market_lookup.find_by_symbol(market_symbol)
-        if market is None:
-            raise Exception(f"Could not find market {market_symbol}")
-        oracle = oracle_provider.oracle_for_market(context, market)
-        if oracle is None:
-            raise Exception(f"Could not find oracle for market {market_symbol}")
-        price = oracle.fetch_price(context)
-        prices += [mango.InstrumentValue(basket_token.base_instrument, price.mid_price)]
-prices += [mango.InstrumentValue(group.shared_quote_token, Decimal(1))]
+    targets: typing.Sequence[mango.TargetBalance] = args.target
+    logging.info(f"Targets: {targets}")
 
-account_balancer = mango.LiveAccountBalancer(
-    account, group, trade_executor, targets, action_threshold
-)
-account_balancer.balance(context, prices)
+    if args.dry_run:
+        trade_executor: mango.TradeExecutor = mango.NullTradeExecutor()
+    else:
+        trade_executor = mango.ImmediateTradeExecutor(
+            context, wallet, account, max_slippage
+        )
+
+    prices: typing.List[mango.InstrumentValue] = []
+    oracle_provider: mango.OracleProvider = mango.create_oracle_provider(
+        context, "market"
+    )
+    for basket_token in account.slots:
+        if basket_token is not None:
+            market_symbol: str = f"{basket_token.base_instrument.symbol}/{group.shared_quote_token.symbol}"
+            market = context.market_lookup.find_by_symbol(market_symbol)
+            if market is None:
+                raise Exception(f"Could not find market {market_symbol}")
+            oracle = oracle_provider.oracle_for_market(context, market)
+            if oracle is None:
+                raise Exception(f"Could not find oracle for market {market_symbol}")
+            price = oracle.fetch_price(context)
+            prices += [
+                mango.InstrumentValue(basket_token.base_instrument, price.mid_price)
+            ]
+    prices += [mango.InstrumentValue(group.shared_quote_token, Decimal(1))]
+
+    account_balancer = mango.LiveAccountBalancer(
+        account, group, trade_executor, targets, action_threshold
+    )
+    account_balancer.balance(context, prices)
 
 logging.info("Balancing completed.")

@@ -5,7 +5,6 @@ import logging
 import os
 import os.path
 import sys
-import traceback
 
 from solana.publickey import PublicKey
 
@@ -26,25 +25,15 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-try:
-    address = args.address
-    if address is None:
-        wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-        address = wallet.address
+address = args.address
+if address is None:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    address = wallet.address
 
-    context = mango.ContextBuilder.from_command_line_parameters(args)
-
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
     logging.info(f"Address: {address}")
 
     group = mango.Group.load(context)
     scout = mango.AccountScout()
     report = scout.verify_account_prepared_for_group(context, group, address)
     mango.output(report)
-except Exception as exception:
-    logging.critical(
-        f"account-scout stopped because of exception: {exception} - {traceback.format_exc()}"
-    )
-except:
-    logging.critical(
-        f"account-scout stopped because of uncatchable error: {traceback.format_exc()}"
-    )

@@ -5,7 +5,6 @@ import logging
 import os
 import os.path
 import sys
-import traceback
 
 from decimal import Decimal
 from solana.publickey import PublicKey
@@ -65,8 +64,7 @@ handler = mango.NotificationHandler(
 handler.setLevel(logging.ERROR)
 logging.getLogger().addHandler(handler)
 
-try:
-    context = mango.ContextBuilder.from_command_line_parameters(args)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     account_address = args.address
     liquidator_name = args.name
@@ -129,14 +127,3 @@ try:
         for transaction_id in transaction_ids:
             transaction_scout = mango.TransactionScout.load(context, transaction_id)
             mango.output(str(transaction_scout))
-
-except Exception as exception:
-    logging.critical(
-        f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}"
-    )
-except:
-    logging.critical(
-        f"Liquidator stopped because of uncatchable error: {traceback.format_exc()}"
-    )
-finally:
-    logging.info("Liquidation complete.")

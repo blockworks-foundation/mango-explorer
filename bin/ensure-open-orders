@@ -31,21 +31,21 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-group = mango.Group.load(context)
-account = mango.Account.load_for_owner_by_address(
-    context, wallet.address, group, args.account_address
-)
+    group = mango.Group.load(context)
+    account = mango.Account.load_for_owner_by_address(
+        context, wallet.address, group, args.account_address
+    )
 
-market = context.market_lookup.find_by_symbol(args.market)
-if market is None:
-    raise Exception(f"Could not find market {args.market}")
+    market = context.market_lookup.find_by_symbol(args.market)
+    if market is None:
+        raise Exception(f"Could not find market {args.market}")
 
-loaded_market: mango.Market = mango.ensure_market_loaded(context, market)
-market_operations = mango.create_market_operations(
-    context, wallet, account, market, args.dry_run
-)
-open_orders = market_operations.ensure_openorders()
-mango.output(f"OpenOrders account for {market.symbol} is {open_orders}")
+    loaded_market: mango.Market = mango.ensure_market_loaded(context, market)
+    market_operations = mango.create_market_operations(
+        context, wallet, account, market, args.dry_run
+    )
+    open_orders = market_operations.ensure_openorders()
+    mango.output(f"OpenOrders account for {market.symbol} is {open_orders}")

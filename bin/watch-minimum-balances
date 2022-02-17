@@ -115,33 +115,32 @@ def add_subscription_for_parameter(
     ).subscribe(notifier(name))
 
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    disposer = mango.DisposePropagator()
+    manager = mango.SharedWebSocketSubscriptionManager(context)
+    disposer.add_disposable(manager)
+    health_check = mango.HealthCheck()
+    disposer.add_disposable(health_check)
 
-disposer = mango.DisposePropagator()
-manager = mango.SharedWebSocketSubscriptionManager(context)
-disposer.add_disposable(manager)
-health_check = mango.HealthCheck()
-disposer.add_disposable(health_check)
+    # Need a nice way of ensuring pongs from all subscriptions
+    health_check.add("ws_pong", manager.pong)
 
-# Need a nice way of ensuring pongs from all subscriptions
-health_check.add("ws_pong", manager.pong)
+    for name_and_address in args.named_address:
+        add_subscription_for_parameter(
+            context, manager, health_check, args.timer_limit, name_and_address
+        )
 
-for name_and_address in args.named_address:
-    add_subscription_for_parameter(
-        context, manager, health_check, args.timer_limit, name_and_address
-    )
+    manager.open()
 
-manager.open()
+    notify_event.send(f"[{args.name}] Starting using context:\n{context}")
 
-notify_event.send(f"[{args.name}] Starting using context:\n{context}")
+    # Wait - don't exit. Exiting will be handled by signals/interrupts.
+    waiter = threading.Event()
+    try:
+        waiter.wait()
+    except:
+        pass
 
-# Wait - don't exit. Exiting will be handled by signals/interrupts.
-waiter = threading.Event()
-try:
-    waiter.wait()
-except:
-    pass
-
-logging.info("Shutting down...")
-disposer.dispose()
-logging.info("Shutdown complete.")
+    logging.info("Shutting down...")
+    disposer.dispose()
+    logging.info("Shutdown complete.")

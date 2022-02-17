@@ -15,10 +15,10 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-market = context.market_lookup.find_by_symbol(args.market)
-if market is None:
-    raise Exception(f"Could not find market {args.market}")
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    market = context.market_lookup.find_by_symbol(args.market)
+    if market is None:
+        raise Exception(f"Could not find market {args.market}")
 
-actual_market = mango.ensure_market_loaded(context, market)
-mango.output(actual_market)
+    actual_market = mango.ensure_market_loaded(context, market)
+    mango.output(actual_market)

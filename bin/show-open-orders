@@ -26,34 +26,34 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-address: typing.Optional[PublicKey] = args.address
-if address is None:
-    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-    address = wallet.address
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    address: typing.Optional[PublicKey] = args.address
+    if address is None:
+        wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+        address = wallet.address
 
-group = mango.Group.load(context)
-account = mango.Account.load_for_owner_by_address(
-    context, wallet.address, group, args.account_address
-)
+    group = mango.Group.load(context)
+    account = mango.Account.load_for_owner_by_address(
+        context, wallet.address, group, args.account_address
+    )
 
-at_least_one_open_orders_account = False
-quote_token_bank = group.shared_quote_token
-for slot in account.slots:
-    if slot.spot_open_orders is not None:
-        if slot.base_token_bank is None:
-            raise Exception(
-                f"No base token available for token {slot.base_instrument}."
+    at_least_one_open_orders_account = False
+    quote_token_bank = group.shared_quote_token
+    for slot in account.slots:
+        if slot.spot_open_orders is not None:
+            if slot.base_token_bank is None:
+                raise Exception(
+                    f"No base token available for token {slot.base_instrument}."
+                )
+            open_orders = mango.OpenOrders.load(
+                context,
+                slot.spot_open_orders,
+                slot.base_token_bank.token.decimals,
+                slot.quote_token_bank.token.decimals,
             )
-        open_orders = mango.OpenOrders.load(
-            context,
-            slot.spot_open_orders,
-            slot.base_token_bank.token.decimals,
-            slot.quote_token_bank.token.decimals,
-        )
-        mango.output(slot.base_instrument)
-        mango.output(open_orders)
-        at_least_one_open_orders_account = True
+            mango.output(slot.base_instrument)
+            mango.output(open_orders)
+            at_least_one_open_orders_account = True
 
-if not at_least_one_open_orders_account:
-    mango.output(f"No OpenOrders accounts for {address}[{args.account_index}]")
+    if not at_least_one_open_orders_account:
+        mango.output(f"No OpenOrders accounts for {address}[{args.account_index}]")

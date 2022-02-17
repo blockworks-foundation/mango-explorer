@@ -37,28 +37,28 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-
-
-accounts: typing.Sequence[mango.Account]
-group = mango.Group.load(context)
-if args.address is not None:
-    account = mango.Account.load(context, args.address, group)
-    accounts = [account]
-else:
-    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-    accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
-
-for account in accounts:
-    filename: str = args.filename
-    if filename is None:
-        filename = f"trade-history-{account.address}.csv"
-    history: mango.TradeHistory = mango.TradeHistory()
-    if args.most_recent_hours:
-        cutoff: datetime = datetime.utcnow() - timedelta(hours=args.most_recent_hours)
-        cutoff = cutoff.replace(tzinfo=timezone(offset=timedelta()))
-        history.download_latest(context, account, cutoff)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    accounts: typing.Sequence[mango.Account]
+    group = mango.Group.load(context)
+    if args.address is not None:
+        account = mango.Account.load(context, args.address, group)
+        accounts = [account]
     else:
-        history.load(filename, ok_if_missing=True)
-        history.update(context, account)
-    history.save(filename)
+        wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+        accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
+
+    for account in accounts:
+        filename: str = args.filename
+        if filename is None:
+            filename = f"trade-history-{account.address}.csv"
+        history: mango.TradeHistory = mango.TradeHistory()
+        if args.most_recent_hours:
+            cutoff: datetime = datetime.utcnow() - timedelta(
+                hours=args.most_recent_hours
+            )
+            cutoff = cutoff.replace(tzinfo=timezone(offset=timedelta()))
+            history.download_latest(context, account, cutoff)
+        else:
+            history.load(filename, ok_if_missing=True)
+            history.update(context, account)
+        history.save(filename)

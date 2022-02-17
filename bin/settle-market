@@ -35,25 +35,40 @@ parser.add_argument(
     default=False,
     help="runs as read-only and does not perform any transactions",
 )
+parser.add_argument(
+    "--wait",
+    action="store_true",
+    default=False,
+    help="wait until the transactions are confirmed",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-group = mango.Group.load(context, context.group_address)
-account = mango.Account.load_for_owner_by_address(
-    context, wallet.address, group, args.account_address
-)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    group = mango.Group.load(context, context.group_address)
+    account = mango.Account.load_for_owner_by_address(
+        context, wallet.address, group, args.account_address
+    )
 
-logging.info(f"Wallet address: {wallet.address}")
+    logging.info(f"Wallet address: {wallet.address}")
 
-market = context.market_lookup.find_by_symbol(args.market)
-if market is None:
-    raise Exception(f"Could not find market {args.market}")
+    market = context.market_lookup.find_by_symbol(args.market)
+    if market is None:
+        raise Exception(f"Could not find market {args.market}")
 
-market_operations = mango.create_market_operations(
-    context, wallet, account, market, args.dry_run
-)
-settle = market_operations.settle()
-mango.output(settle)
+    market_operations = mango.create_market_operations(
+        context, wallet, account, market, args.dry_run
+    )
+    signatures = market_operations.settle()
 
-logging.info("Settlement completed.")
+    if args.wait:
+        mango.output("Waiting on transaction signatures:")
+        mango.output(mango.indent_collection_as_str(signatures, 1))
+        results = mango.WebSocketTransactionMonitor.wait_for_all(
+            context.client.cluster_ws_url, signatures
+        )
+        mango.output("Transaction results:")
+        mango.output(mango.indent_collection_as_str(results, 1))
+    else:
+        mango.output("Transaction signatures:")
+        mango.output(mango.indent_collection_as_str(signatures, 1))

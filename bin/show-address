@@ -29,13 +29,13 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-converter = mango.build_account_info_converter(context, args.account_type)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    converter = mango.build_account_info_converter(context, args.account_type)
 
-account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(
-    context, args.address
-)
-if account_info is None:
-    raise Exception(f"No account found at address: {args.address}")
+    account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(
+        context, args.address
+    )
+    if account_info is None:
+        raise Exception(f"No account found at address: {args.address}")
 
-mango.output(converter(account_info))
+    mango.output(converter(account_info))

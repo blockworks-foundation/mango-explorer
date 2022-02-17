@@ -19,7 +19,7 @@ def airdrop_token(
     token: mango.Token,
     faucet: typing.Optional[PublicKey],
     quantity: Decimal,
-) -> None:
+) -> typing.Sequence[str]:
     if faucet is None:
         raise Exception(f"Faucet must be specified for airdropping {token.symbol}")
 
@@ -39,19 +39,18 @@ def airdrop_token(
     )
 
     all_instructions = signers + airdrop
-    transaction_ids = all_instructions.execute(context)
-    mango.output("Transaction IDs:", transaction_ids)
+    return all_instructions.execute(context)
 
 
 def airdrop_sol(
     context: mango.Context, wallet: mango.Wallet, token: mango.Token, quantity: Decimal
-) -> None:
+) -> typing.Sequence[str]:
     mango.output(f"Airdropping {quantity} {token.symbol} to {wallet.address}")
     lamports = token.shift_to_native(quantity)
     response = context.client.compatible_client.request_airdrop(
         wallet.address, int(lamports)
     )
-    mango.output("Transaction IDs:", [response["result"]])
+    return [response["result"]]
 
 
 parser = argparse.ArgumentParser(description="mint SPL tokens to your wallet")
@@ -66,19 +65,37 @@ parser.add_argument(
 parser.add_argument(
     "--quantity", type=Decimal, required=True, help="quantity token to airdrop"
 )
+parser.add_argument(
+    "--wait",
+    action="store_true",
+    default=False,
+    help="wait until the transactions are confirmed",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-instrument = context.instrument_lookup.find_by_symbol(args.symbol)
-if instrument is None:
-    raise Exception(f"Could not find instrument with symbol '{args.symbol}'.")
-token: mango.Token = mango.Token.ensure(instrument)
+    instrument = context.instrument_lookup.find_by_symbol(args.symbol)
+    if instrument is None:
+        raise Exception(f"Could not find instrument with symbol '{args.symbol}'.")
+    token: mango.Token = mango.Token.ensure(instrument)
 
-# The loaded `token` variable will be from the `context`, so if it's SOL it will be
-# 'wrapped SOL' with a 1112 mint address, not regular SOL with a 1111 mint address.
-if token.symbol == mango.SolToken.symbol:
-    airdrop_sol(context, wallet, token, args.quantity)
-else:
-    airdrop_token(context, wallet, token, args.faucet, args.quantity)
+    # The loaded `token` variable will be from the `context`, so if it's SOL it will be
+    # 'wrapped SOL' with a 1112 mint address, not regular SOL with a 1111 mint address.
+    if token.symbol == mango.SolToken.symbol:
+        signatures = airdrop_sol(context, wallet, token, args.quantity)
+    else:
+        signatures = airdrop_token(context, wallet, token, args.faucet, args.quantity)
+
+    if args.wait:
+        mango.output("Waiting on transaction signatures:")
+        mango.output(mango.indent_collection_as_str(signatures, 1))
+        results = mango.WebSocketTransactionMonitor.wait_for_all(
+            context.client.cluster_ws_url, signatures
+        )
+        mango.output("Transaction results:")
+        mango.output(mango.indent_collection_as_str(results, 1))
+    else:
+        mango.output("Transaction signatures:")
+        mango.output(mango.indent_collection_as_str(signatures, 1))

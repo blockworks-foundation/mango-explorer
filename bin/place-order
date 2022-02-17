@@ -46,7 +46,7 @@ parser.add_argument(
     "--wait",
     action="store_true",
     default=False,
-    help="wait until the transaction is confirmed",
+    help="wait until the transactions are confirmed",
 )
 parser.add_argument(
     "--dry-run",
@@ -76,10 +76,13 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     signatures = market_operations.place_order(order)
 
     if args.wait:
-        mango.output("Waiting on transaction signatures:", signatures)
+        mango.output("Waiting on transaction signatures:")
+        mango.output(mango.indent_collection_as_str(signatures, 1))
         results = mango.WebSocketTransactionMonitor.wait_for_all(
             context.client.cluster_ws_url, signatures
         )
-        mango.output(results)
+        mango.output("Transaction results:")
+        mango.output(mango.indent_collection_as_str(results, 1))
     else:
-        mango.output(signatures)
+        mango.output("Transaction signatures:")
+        mango.output(mango.indent_collection_as_str(signatures, 1))

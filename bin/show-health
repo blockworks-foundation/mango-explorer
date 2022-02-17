@@ -19,51 +19,52 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context: mango.Context = mango.ContextBuilder.from_command_line_parameters(args)
-group: mango.Group = mango.Group.load(context, context.group_address)
-cache: mango.Cache = mango.Cache.load(context, group.cache)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    group: mango.Group = mango.Group.load(context, context.group_address)
+    cache: mango.Cache = mango.Cache.load(context, group.cache)
 
-address: PublicKey = args.address
-mango_account: mango.Account
-if address is None:
-    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-    address = wallet.address
-    mango_accounts = mango.Account.load_all_for_owner(context, address, group)
-    mango_account = mango_accounts[0]
-else:
-    mango_account = mango.Account.load(context, address, group)
+    address: PublicKey = args.address
+    mango_account: mango.Account
+    if address is None:
+        wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+        address = wallet.address
+        mango_accounts = mango.Account.load_all_for_owner(context, address, group)
+        mango_account = mango_accounts[0]
+    else:
+        mango_account = mango.Account.load(context, address, group)
 
-health_calculator = mango.calculators.healthcalculator.HealthCalculator(
-    context, mango.calculators.healthcalculator.HealthType.INITIAL
-)
+    health_calculator = mango.calculators.healthcalculator.HealthCalculator(
+        context, mango.calculators.healthcalculator.HealthType.INITIAL
+    )
 
-spot_open_orders_addresses = list(
-    [
-        basket_token.spot_open_orders
-        for basket_token in mango_account.slots
-        if basket_token.spot_open_orders is not None
-    ]
-)
-spot_open_orders_account_infos = mango.AccountInfo.load_multiple(
-    context, spot_open_orders_addresses
-)
-spot_open_orders_account_infos_by_address = {
-    str(account_info.address): account_info
-    for account_info in spot_open_orders_account_infos
-}
-spot_open_orders = {}
-for basket_token in mango_account.slots:
-    if basket_token.spot_open_orders is not None:
-        account_info = spot_open_orders_account_infos_by_address[
-            str(basket_token.spot_open_orders)
+    spot_open_orders_addresses = list(
+        [
+            basket_token.spot_open_orders
+            for basket_token in mango_account.slots
+            if basket_token.spot_open_orders is not None
         ]
-        oo = mango.OpenOrders.parse(
-            account_info,
-            basket_token.base_instrument.decimals,
-            mango_account.shared_quote_token.decimals,
-        )
-        spot_open_orders[str(basket_token.spot_open_orders)] = oo
+    )
+    spot_open_orders_account_infos = mango.AccountInfo.load_multiple(
+        context, spot_open_orders_addresses
+    )
+    spot_open_orders_account_infos_by_address = {
+        str(account_info.address): account_info
+        for account_info in spot_open_orders_account_infos
+    }
+    spot_open_orders = {}
+    for basket_token in mango_account.slots:
+        if basket_token.spot_open_orders is not None:
+            account_info = spot_open_orders_account_infos_by_address[
+                str(basket_token.spot_open_orders)
+            ]
+            oo = mango.OpenOrders.parse(
+                account_info,
+                basket_token.base_instrument.decimals,
+                mango_account.shared_quote_token.decimals,
+            )
+            spot_open_orders[str(basket_token.spot_open_orders)] = oo
 
-mango.output(
-    "Health", health_calculator.calculate(mango_account, spot_open_orders, group, cache)
-)
+    mango.output(
+        "Health",
+        health_calculator.calculate(mango_account, spot_open_orders, group, cache),
+    )

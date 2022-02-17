@@ -52,52 +52,54 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context: mango.Context = mango.ContextBuilder.from_command_line_parameters(args)
-wallet: mango.Wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-action_threshold: Decimal = args.action_threshold
-adjustment_factor: Decimal = args.adjustment_factor
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    wallet: mango.Wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    action_threshold: Decimal = args.action_threshold
+    adjustment_factor: Decimal = args.adjustment_factor
 
-logging.info(f"Wallet address: {wallet.address}")
+    logging.info(f"Wallet address: {wallet.address}")
 
-targets: typing.Sequence[mango.FixedTargetBalance] = args.target
-logging.info(f"Targets: {targets}")
+    targets: typing.Sequence[mango.FixedTargetBalance] = args.target
+    logging.info(f"Targets: {targets}")
 
-if args.dry_run:
-    trade_executor: mango.TradeExecutor = mango.NullTradeExecutor()
-else:
-    trade_executor = mango.ImmediateTradeExecutor(
-        context, wallet, None, adjustment_factor
-    )
+    if args.dry_run:
+        trade_executor: mango.TradeExecutor = mango.NullTradeExecutor()
+    else:
+        trade_executor = mango.ImmediateTradeExecutor(
+            context, wallet, None, adjustment_factor
+        )
 
-quote_instrument: typing.Optional[
-    mango.Instrument
-] = context.instrument_lookup.find_by_symbol(args.quote_symbol)
-if quote_instrument is None:
-    raise Exception(f"Could not find quote token '{args.quote_symbol}.")
-quote_token: mango.Token = mango.Token.ensure(quote_instrument)
-
-prices: typing.List[mango.InstrumentValue] = []
-oracle_provider: mango.OracleProvider = mango.create_oracle_provider(context, "market")
-for target in targets:
-    target_token: typing.Optional[
+    quote_instrument: typing.Optional[
         mango.Instrument
-    ] = context.instrument_lookup.find_by_symbol(target.symbol)
-    if target_token is None:
-        raise Exception(f"Could not find target token '{target.symbol}.")
-    market_symbol: str = f"serum:{target_token.symbol}/{quote_token.symbol}"
-    market = context.market_lookup.find_by_symbol(market_symbol)
-    if market is None:
-        raise Exception(f"Could not find market {market_symbol}")
-    oracle = oracle_provider.oracle_for_market(context, market)
-    if oracle is None:
-        raise Exception(f"Could not find oracle for market {market_symbol}")
-    price = oracle.fetch_price(context)
-    prices += [mango.InstrumentValue(target_token, price.mid_price)]
-prices += [mango.InstrumentValue(quote_token, Decimal(1))]
+    ] = context.instrument_lookup.find_by_symbol(args.quote_symbol)
+    if quote_instrument is None:
+        raise Exception(f"Could not find quote token '{args.quote_symbol}.")
+    quote_token: mango.Token = mango.Token.ensure(quote_instrument)
 
-wallet_balancer = mango.LiveWalletBalancer(
-    wallet, quote_token, trade_executor, targets, action_threshold
-)
-wallet_balancer.balance(context, prices)
+    prices: typing.List[mango.InstrumentValue] = []
+    oracle_provider: mango.OracleProvider = mango.create_oracle_provider(
+        context, "market"
+    )
+    for target in targets:
+        target_token: typing.Optional[
+            mango.Instrument
+        ] = context.instrument_lookup.find_by_symbol(target.symbol)
+        if target_token is None:
+            raise Exception(f"Could not find target token '{target.symbol}.")
+        market_symbol: str = f"serum:{target_token.symbol}/{quote_token.symbol}"
+        market = context.market_lookup.find_by_symbol(market_symbol)
+        if market is None:
+            raise Exception(f"Could not find market {market_symbol}")
+        oracle = oracle_provider.oracle_for_market(context, market)
+        if oracle is None:
+            raise Exception(f"Could not find oracle for market {market_symbol}")
+        price = oracle.fetch_price(context)
+        prices += [mango.InstrumentValue(target_token, price.mid_price)]
+    prices += [mango.InstrumentValue(quote_token, Decimal(1))]
+
+    wallet_balancer = mango.LiveWalletBalancer(
+        wallet, quote_token, trade_executor, targets, action_threshold
+    )
+    wallet_balancer.balance(context, prices)
 
 logging.info("Balancing completed.")
