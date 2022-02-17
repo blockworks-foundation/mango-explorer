@@ -882,7 +882,6 @@ class BetterClient:
     ) -> "BetterClient":
         slot_holder: SlotHolder = SlotHolder()
         rpc_callers: typing.List[RPCCaller] = []
-        cluster_url: ClusterUrlData
         for cluster_url in cluster_urls:
             rpc_caller: RPCCaller = RPCCaller(
                 name,
