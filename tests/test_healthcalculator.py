@@ -312,3 +312,73 @@ def test_account7() -> None:
     assert account.leverage(frame) == Decimal("0.221690187114945806055453687883677967")
 
     assert not account.is_liquidatable(frame)
+
+
+def test_account8() -> None:
+    group, cache, account, open_orders = load_data_from_directory(
+        "tests/testdata/account8"
+    )
+    frame = account.to_dataframe(group, open_orders, cache)
+
+    # Typescript says: 337240882.73863372865950083224
+    assert account.init_health(frame) == Decimal(
+        "337.240882738638250140157452733466665"
+    )
+
+    # Typescript says: 496326340.62213476397751321656
+    assert account.maint_health(frame) == Decimal(
+        "496.326340622137024717841136284723945"
+    )
+
+    # Typescript says: 36.05147100711967311781
+    assert account.init_health_ratio(frame) == Decimal(
+        "36.0514710071205027252506258755278450"
+    )
+
+    # Typescript says: 53.05790488301020957351
+    assert account.maint_health_ratio(frame) == Decimal(
+        "53.0579048830105655659069541099688270"
+    )
+
+    # # Typescript says: 655.41179779906788382959
+    assert account.total_value(frame) == Decimal(
+        "655.411798505635799295524819835981215"
+    )
+
+    # Typescript says: 1.42725960097346415978
+    assert account.leverage(frame) == Decimal("1.42725959841155987038895685868685529")
+
+    assert not account.is_liquidatable(frame)
+
+
+def test_account9() -> None:
+    group, cache, account, open_orders = load_data_from_directory(
+        "tests/testdata/account9"
+    )
+    frame = account.to_dataframe(group, open_orders, cache)
+
+    # Typescript says: 96257596.93294236504926786324
+    assert account.init_health(frame) == Decimal("96.25759693294275991712014716369911")
+
+    # # Typescript says: 511619124.36291981710078502488
+    assert account.maint_health(frame) == Decimal(
+        "511.61912436291544183007238034887025"
+    )
+
+    # # Typescript says: 2.97693824341962454127
+    assert account.init_health_ratio(frame) == Decimal(
+        "2.97693824341971618997872883075634300"
+    )
+
+    # # Typescript says: 17.21126913561050741919
+    assert account.maint_health_ratio(frame) == Decimal(
+        "17.2112691356106767688292266736041770"
+    )
+
+    # # Typescript says: 926.98053240315212875089
+    assert account.total_value(frame) == Decimal("926.98065179288812374302461353404140")
+
+    # # Typescript says: 3.91944283828893702548
+    assert account.leverage(frame) == Decimal("3.91944232844987663175000830924077777")
+
+    assert not account.is_liquidatable(frame)

@@ -1,0 +1,15 @@
+#! /usr/bin/env bash
+
+export CLUSTER_NAME=mainnet
+show-account-info --address 98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue --filename group.json
+show-account-info --address EBDRoayCDDUvDgCimta45ajQeXbexv7aKqJubruqpyvu --filename cache.json
+show-account-info --address 2hhaGsQMFJyyFbAx1rF8ycCkBWaJ5brbzFq24knCGhfd --filename openorders1.json
+show-account-info --address F96fLv1zNDp86o5Jyx4BhdpRvQjHRipt1b3sAWYyy5xo --filename openorders5.json
+show-account-info --address EnueexRbL1BDcpcf7kjS2TVPWrcUYmMDjidQ9czoJU2X --filename openorders6.json
+show-account-info --address CdHBsEzQSpwnzGYUM1PAJ5TvR2eswFZ12jVev3vmMuon --filename openorders10.json
+show-account-info --address 2bYhy6hxnrh8d9i8xzoDx55LYkc4q5K3iYt8SacRoQtm --filename openorders11.json
+show-account-info --address 88xT7zt3BeecVHbwKC57XCVXNiNvHgc5yQ9jfiMVZMFu --filename openorders12.json
+show-account-info --address 9FzJLnxNVpC2YjD6ZZCTrLqL3UZEMRNPaJzF8YGY3FDY --filename openorders13.json
+
+# A copy-trading account that went screwy from bad calculations.
+show-account-info --address 6YgmwGFDaajSLSsXFUkBaYtA8e3FsVay4XDf7xUuLYeV --filename account.json

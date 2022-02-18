@@ -51,7 +51,7 @@ for account in mango_accounts:
     )
     pandas.set_option("display.max_columns", None)
     pandas.set_option("display.width", None)
-    pandas.set_option("precision", 6)
+    pandas.set_option("display.precision", 6)
 
     open_orders: typing.Dict[str, mango.OpenOrders] = account.load_all_spot_open_orders(
         context

@@ -867,6 +867,7 @@ class Account(AddressableAccount):
             base_open_unsettled: Decimal = Decimal(0)
             base_open_locked: Decimal = Decimal(0)
             base_open_total: Decimal = Decimal(0)
+            base_open_total_value: Decimal = Decimal(0)
             quote_open_unsettled: Decimal = Decimal(0)
             quote_open_locked: Decimal = Decimal(0)
             if spot_open_orders is not None:
@@ -878,9 +879,11 @@ class Account(AddressableAccount):
                     + spot_open_orders.referrer_rebate_accrued
                 )
                 quote_open_locked = spot_open_orders.quote_token_locked
+                base_open_total_value = base_open_total * price.value
             base_total: Decimal = (
                 slot.deposit.value - slot.borrow.value + base_open_total
             )
+
             base_total_value: Decimal = base_total * price.value
             spot_init_value: Decimal
             spot_maint_value: Decimal
@@ -913,10 +916,15 @@ class Account(AddressableAccount):
             data = {
                 "Name": slot.base_instrument.name,
                 "Symbol": slot.base_instrument.symbol,
+                "CurrentPrice": price.value,
                 "Spot": base_total,
                 "SpotDeposit": slot.deposit.value,
+                "SpotDepositValue": slot.deposit.value * price.value,
                 "SpotBorrow": slot.borrow.value,
+                "SpotBorrowValue": slot.borrow.value * price.value * Decimal(-1),
                 "SpotValue": base_total_value,
+                "SpotOpen": base_open_total,
+                "SpotOpenValue": base_open_total_value,
                 "SpotInitValue": spot_init_value,
                 "SpotMaintValue": spot_maint_value,
                 "PerpInitValue": perp_init_value,
@@ -957,6 +965,12 @@ class Account(AddressableAccount):
                 "SpotHealthQuote": spot_health_quote,
                 "PerpHealthBase": perp_health_base,
                 "PerpHealthBaseValue": perp_health_base_value,
+                "PerpHealthBaseAssetValue": perp_health_base_value
+                if perp_health_base_value > 0
+                else Decimal(0),
+                "PerpHealthBaseLiabilityValue": perp_health_base_value
+                if perp_health_base_value < 0
+                else Decimal(0),
                 "PerpInitHealthBaseValue": perp_init_health_base_value,
                 "PerpMaintHealthBaseValue": perp_maint_health_base_value,
                 "PerpHealthQuote": perp_health_quote,
@@ -985,15 +999,23 @@ class Account(AddressableAccount):
         else:
             liabilities = quote
 
-        spot_value_key = f"Spot{weighting_name}Value"
-        perp_value_key = f"Perp{weighting_name}HealthBaseValue"
+        spot_borrow_health = (
+            non_quote["SpotBorrowValue"]
+            * non_quote[f"Spot{weighting_name}LiabilityWeight"]
+        ).sum()
+        perp_health_base_liability = Account.__sum_neg(
+            non_quote, f"Perp{weighting_name}HealthBaseValue"
+        )
+        liabilities += spot_borrow_health + perp_health_base_liability
 
-        liabilities += Account.__sum_neg(non_quote, spot_value_key) + Account.__sum_neg(
-            non_quote, perp_value_key
+        spot_deposit_health = (
+            (non_quote["SpotDepositValue"] + non_quote["QuoteLocked"])
+            * non_quote[f"Spot{weighting_name}AssetWeight"]
+        ).sum()
+        perp_health_base_asset = Account.__sum_pos(
+            non_quote, f"Perp{weighting_name}HealthBaseValue"
         )
-        assets += Account.__sum_pos(non_quote, spot_value_key) + Account.__sum_pos(
-            non_quote, perp_value_key
-        )
+        assets += spot_deposit_health + perp_health_base_asset
 
         return assets, liabilities
 
@@ -1013,13 +1035,14 @@ class Account(AddressableAccount):
             liabilities = quote
 
         liabilities += (
-            Account.__sum_neg(non_quote, "SpotValue") + non_quote["PerpLiability"].sum()
+            non_quote["SpotBorrowValue"].sum() + non_quote["PerpLiability"].sum()
         )
 
         assets += (
-            Account.__sum_pos(non_quote, "SpotValue")
+            non_quote["SpotDepositValue"].sum()
             + non_quote["PerpAsset"].sum()
-            + Account.__sum_pos(non_quote, "QuoteUnsettled")
+            + non_quote["QuoteUnsettled"].sum()
+            + non_quote["QuoteLockedInMarginBasket"].sum()
         )
 
         return assets, liabilities
