@@ -11,6 +11,7 @@ import threading
 import traceback
 import typing
 
+from datetime import timedelta
 from decimal import Decimal
 from solana.publickey import PublicKey
 
@@ -73,6 +74,24 @@ parser.add_argument(
     type=Decimal,
     default=Decimal("0.001"),
     help="tolerance in price and quantity when matching existing orders or cancelling/replacing",
+)
+parser.add_argument(
+    "--existing-order-price-tolerance",
+    type=Decimal,
+    default=Decimal("0.001"),
+    help="tolerance in price when matching existing orders or cancelling/replacing (overrides --existing-order-tolerance)",
+)
+parser.add_argument(
+    "--existing-order-quantity-tolerance",
+    type=Decimal,
+    default=Decimal("0.001"),
+    help="tolerance in quantity when matching existing orders or cancelling/replacing (overrides --existing-order-tolerance)",
+)
+parser.add_argument(
+    "--existing-order-time-in-force-tolerance",
+    type=Decimal,
+    default=Decimal("0.001"),
+    help="tolerance in time-in-force when matching existing orders or cancelling/replacing",
 )
 parser.add_argument(
     "--redeem-threshold",
@@ -257,8 +276,17 @@ order_reconciler: mango.marketmaking.OrderReconciler
 if args.existing_order_tolerance < 0:
     order_reconciler = mango.marketmaking.AlwaysReplaceOrderReconciler()
 else:
+    price_tolerance = (
+        args.existing_order_price_tolerance or args.existing_order_tolerance
+    )
+    quantity_tolerance = (
+        args.existing_order_quantity_tolerance or args.existing_order_tolerance
+    )
+    time_in_force_tolerance = timedelta(
+        seconds=float(args.existing_order_time_in_force_tolerance)
+    )
     order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
-        args.existing_order_tolerance, args.existing_order_tolerance
+        price_tolerance, quantity_tolerance, time_in_force_tolerance
     )
 
 desired_orders_chain: chain.Chain = (

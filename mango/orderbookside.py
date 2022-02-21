@@ -146,9 +146,12 @@ class PerpOrderBookSide(AddressableAccount):
             index = int(stack.pop())
             node = self.nodes[index]
             if node.type_name == "leaf":
-                if (node.time_in_force == 0) or (
-                    node.timestamp + timedelta(seconds=float(node.time_in_force)) > now
-                ):
+                expiration = (
+                    node.timestamp + timedelta(seconds=float(node.time_in_force))
+                    if node.time_in_force == 0
+                    else Order.NoExpiration
+                )
+                if (node.time_in_force == 0) or (expiration > now):
                     price = node.key["price"]
                     quantity = node.quantity
 
@@ -179,6 +182,7 @@ class PerpOrderBookSide(AddressableAccount):
                             actual_price,
                             actual_quantity,
                             OrderType.UNKNOWN,
+                            expiration=expiration,
                         )
                     ]
             elif node.type_name == "inner":
