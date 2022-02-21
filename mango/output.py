@@ -31,6 +31,7 @@ class OutputFormat(enum.Enum):
     # We use strings here so that argparse can work with these as parameters.
     TEXT = "TEXT"
     JSON = "JSON"
+    CSV = "CSV"
 
     def __str__(self) -> str:
         return self.value
@@ -87,40 +88,60 @@ class OutputFormattter:
 
     def single_out(self, obj: typing.Any) -> None:
         if self.format == OutputFormat.JSON:
-            json_value: str = self.__to_json(obj)
+            json_value: str
+            if "to_json" in dir(obj):
+                json_value = obj.to_json()
+            else:
+                json_value = self.__to_json(obj)
             print(json_value)
+        elif self.format == OutputFormat.CSV:
+            if "to_csv" in dir(obj):
+                csv_value: str = obj.to_csv()
+                print(csv_value)
+            else:
+                raise Exception("CSV output is not supported for this item.")
         else:
             print(obj)
 
     def multi_out(self, *obj: typing.Any) -> None:
         if self.format == OutputFormat.JSON:
-            json_value: str = json.dumps(
-                jsons.dump(
-                    obj,
-                    strip_attr=(
-                        "data",
-                        "_logger",
-                        "lot_size_converter",
-                        "tokens",
-                        "tokens_by_index",
-                        "slots",
-                        "base_tokens",
-                        "base_tokens_by_index",
-                        "oracles",
-                        "oracles_by_index",
-                        "spot_markets",
-                        "spot_markets_by_index",
-                        "perp_markets",
-                        "perp_markets_by_index",
-                        "shared_quote_token",
-                        "liquidity_incentive_token",
+            json_value: str
+            if all("to_json" in dir(inner) for inner in obj):
+                json_value = "[" + ",".join(inner.to_json() for inner in obj) + "]"
+            else:
+                json_value = json.dumps(
+                    jsons.dump(
+                        obj,
+                        strip_attr=(
+                            "data",
+                            "_logger",
+                            "lot_size_converter",
+                            "tokens",
+                            "tokens_by_index",
+                            "slots",
+                            "base_tokens",
+                            "base_tokens_by_index",
+                            "oracles",
+                            "oracles_by_index",
+                            "spot_markets",
+                            "spot_markets_by_index",
+                            "perp_markets",
+                            "perp_markets_by_index",
+                            "shared_quote_token",
+                            "liquidity_incentive_token",
+                        ),
+                        key_transformer=jsons.KEY_TRANSFORMER_CAMELCASE,
                     ),
-                    key_transformer=jsons.KEY_TRANSFORMER_CAMELCASE,
-                ),
-                sort_keys=True,
-                indent=4,
-            )
+                    sort_keys=True,
+                    indent=4,
+                )
             print(json_value)
+        elif self.format == OutputFormat.CSV:
+            if all("to_csv" in dir(inner) for inner in obj):
+                csv_value = "\n\n".join(inner.to_csv() for inner in obj)
+                print(csv_value)
+            else:
+                raise Exception("CSV output is not supported for this item.")
         else:
             print(*obj)
 

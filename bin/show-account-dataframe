@@ -46,9 +46,6 @@ else:
     mango_accounts = mango.Account.load_all_for_owner(context, address, group)
 
 for account in mango_accounts:
-    mango.output(
-        "\n⚠ WARNING! ⚠ This is a work-in-progress and these figures may be wrong!\n"
-    )
     pandas.set_option("display.max_columns", None)
     pandas.set_option("display.width", None)
     pandas.set_option("display.precision", 6)
@@ -58,7 +55,7 @@ for account in mango_accounts:
     )
     frame: pandas.DataFrame = account.to_dataframe(group, open_orders, cache)
     mango.output(frame)
-
-    mango.output("Init Health:", account.init_health(frame))
-    mango.output("Maint Health:", account.maint_health(frame))
-    mango.output("Total Value:", account.total_value(frame))
+    if mango.output_formatter.format == mango.OutputFormat.TEXT:
+        mango.output("Init Health:", account.init_health(frame))
+        mango.output("Maint Health:", account.maint_health(frame))
+        mango.output("Total Value:", account.total_value(frame))

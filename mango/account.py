@@ -750,7 +750,6 @@ class Account(AddressableAccount):
             perp_health_base_value: Decimal = Decimal(0)
             perp_asset: Decimal = Decimal(0)
             perp_liability: Decimal = Decimal(0)
-            perp_current_value: Decimal = Decimal(0)
             if (
                 slot.perp_account is not None
                 and not slot.perp_account.empty
@@ -805,9 +804,6 @@ class Account(AddressableAccount):
                     cached_perp_market, price.value
                 )
                 perp_liability = slot.perp_account.liability_value(
-                    cached_perp_market, price.value
-                )
-                perp_current_value = slot.perp_account.current_value(
                     cached_perp_market, price.value
                 )
 
@@ -871,86 +867,55 @@ class Account(AddressableAccount):
             quote_open_unsettled: Decimal = Decimal(0)
             quote_open_locked: Decimal = Decimal(0)
             if spot_open_orders is not None:
-                base_open_unsettled = spot_open_orders.base_token_free
-                base_open_locked = spot_open_orders.base_token_locked
-                base_open_total = spot_open_orders.base_token_total
+                if (
+                    slot.index < len(self.in_margin_basket)
+                    and self.in_margin_basket[slot.index]
+                ):
+                    base_open_unsettled = spot_open_orders.base_token_free
+                    base_open_locked = spot_open_orders.base_token_locked
+                    base_open_total = spot_open_orders.base_token_total
+                    base_open_total_value = base_open_total * price.value
+
+                # Some calculations include quote unsettled whether it's in
+                # the margin basket or not.
                 quote_open_unsettled = (
                     spot_open_orders.quote_token_free
                     + spot_open_orders.referrer_rebate_accrued
                 )
                 quote_open_locked = spot_open_orders.quote_token_locked
-                base_open_total_value = base_open_total * price.value
             base_total: Decimal = (
                 slot.deposit.value - slot.borrow.value + base_open_total
             )
 
             base_total_value: Decimal = base_total * price.value
-            spot_init_value: Decimal
-            spot_maint_value: Decimal
-            if base_total_value >= 0:
-                spot_init_value = base_total_value * spot_init_asset_weight
-                spot_maint_value = base_total_value * spot_maint_asset_weight
-            else:
-                spot_init_value = base_total_value * spot_init_liab_weight
-                spot_maint_value = base_total_value * spot_maint_liab_weight
-            perp_init_value: Decimal
-            perp_maint_value: Decimal
-            if perp_health_base >= 0:
-                perp_init_value = perp_notional_position * perp_init_asset_weight
-                perp_maint_value = perp_notional_position * perp_maint_asset_weight
-                perp_init_health_base_value = (
-                    perp_health_base_value * perp_init_asset_weight
-                )
-                perp_maint_health_base_value = (
-                    perp_health_base_value * perp_maint_asset_weight
-                )
-            else:
-                perp_init_value = perp_notional_position * perp_init_liab_weight
-                perp_maint_value = perp_notional_position * perp_maint_liab_weight
-                perp_init_health_base_value = (
-                    perp_health_base_value * perp_init_liab_weight
-                )
-                perp_maint_health_base_value = (
-                    perp_health_base_value * perp_maint_liab_weight
-                )
             data = {
                 "Name": slot.base_instrument.name,
                 "Symbol": slot.base_instrument.symbol,
+                "InMarginBasket": slot.index < len(self.in_margin_basket)
+                and self.in_margin_basket[slot.index],
                 "CurrentPrice": price.value,
                 "Spot": base_total,
+                "SpotValue": base_total_value,
                 "SpotDeposit": slot.deposit.value,
                 "SpotDepositValue": slot.deposit.value * price.value,
                 "SpotBorrow": slot.borrow.value,
                 "SpotBorrowValue": slot.borrow.value * price.value * Decimal(-1),
-                "SpotValue": base_total_value,
                 "SpotOpen": base_open_total,
                 "SpotOpenValue": base_open_total_value,
-                "SpotInitValue": spot_init_value,
-                "SpotMaintValue": spot_maint_value,
-                "PerpInitValue": perp_init_value,
-                "PerpMaintValue": perp_maint_value,
                 "BaseUnsettled": base_open_unsettled,
                 "BaseLocked": base_open_locked,
                 "QuoteUnsettled": quote_open_unsettled,
                 "QuoteLocked": quote_open_locked,
-                "BaseUnsettledInMarginBasket": base_open_unsettled
-                if slot.index < len(self.in_margin_basket)
-                and self.in_margin_basket[slot.index]
-                else Decimal(0),
-                "BaseLockedInMarginBasket": base_open_locked
-                if slot.index < len(self.in_margin_basket)
-                and self.in_margin_basket[slot.index]
-                else Decimal(0),
-                "QuoteUnsettledInMarginBasket": quote_open_unsettled
-                if slot.index < len(self.in_margin_basket)
-                and self.in_margin_basket[slot.index]
-                else Decimal(0),
-                "QuoteLockedInMarginBasket": quote_open_locked
-                if slot.index < len(self.in_margin_basket)
-                and self.in_margin_basket[slot.index]
-                else Decimal(0),
                 "PerpPositionSize": perp_position,
-                "PerpNotionalPositionSize": perp_notional_position,
+                "PerpNotionalSize": perp_notional_position,
+                "SpotHealthBase": spot_health_base,
+                "SpotHealthBaseValue": spot_health_base * price.value,
+                "SpotHealthQuote": spot_health_quote,
+                "PerpHealthBase": perp_health_base,
+                "PerpHealthBaseValue": perp_health_base_value,
+                "PerpHealthQuote": perp_health_quote,
+                "PerpAsset": perp_asset,
+                "PerpLiability": perp_liability,
                 "PerpValue": perp_value,
                 "UnsettledFunding": unsettled_funding,
                 "SpotInitAssetWeight": spot_init_asset_weight,
@@ -961,22 +926,6 @@ class Account(AddressableAccount):
                 "PerpMaintAssetWeight": perp_maint_asset_weight,
                 "PerpInitLiabilityWeight": perp_init_liab_weight,
                 "PerpMaintLiabilityWeight": perp_maint_liab_weight,
-                "SpotHealthBase": spot_health_base,
-                "SpotHealthQuote": spot_health_quote,
-                "PerpHealthBase": perp_health_base,
-                "PerpHealthBaseValue": perp_health_base_value,
-                "PerpHealthBaseAssetValue": perp_health_base_value
-                if perp_health_base_value > 0
-                else Decimal(0),
-                "PerpHealthBaseLiabilityValue": perp_health_base_value
-                if perp_health_base_value < 0
-                else Decimal(0),
-                "PerpInitHealthBaseValue": perp_init_health_base_value,
-                "PerpMaintHealthBaseValue": perp_maint_health_base_value,
-                "PerpHealthQuote": perp_health_quote,
-                "PerpAsset": perp_asset,
-                "PerpLiability": perp_liability,
-                "PerpCurrentValue": perp_current_value,
             }
             asset_data += [data]
         frame: pandas.DataFrame = pandas.DataFrame(asset_data)
@@ -990,7 +939,11 @@ class Account(AddressableAccount):
             frame["Symbol"] == self.shared_quote_token.symbol, "SpotValue"
         ].sum()
         quote += frame["PerpHealthQuote"].sum()
-        quote += frame["QuoteUnsettledInMarginBasket"].sum()
+
+        # Sometimes there is QuoteUnsettled when the instrument is no longer in the margin
+        # basket. Those values are excluded here to match the behaviour of the TypeScript
+        # client so our answers match.
+        quote += frame.loc[frame["InMarginBasket"], "QuoteUnsettled"].sum()
 
         assets = Decimal(0)
         liabilities = Decimal(0)
@@ -1003,18 +956,24 @@ class Account(AddressableAccount):
             non_quote["SpotBorrowValue"]
             * non_quote[f"Spot{weighting_name}LiabilityWeight"]
         ).sum()
-        perp_health_base_liability = Account.__sum_neg(
-            non_quote, f"Perp{weighting_name}HealthBaseValue"
-        )
+
+        perp_health_base_liability = (
+            non_quote.loc[non_quote["PerpHealthBaseValue"] < 0, "PerpHealthBaseValue"]
+            * non_quote[f"Perp{weighting_name}LiabilityWeight"]
+        ).sum()
+
         liabilities += spot_borrow_health + perp_health_base_liability
 
         spot_deposit_health = (
             (non_quote["SpotDepositValue"] + non_quote["QuoteLocked"])
             * non_quote[f"Spot{weighting_name}AssetWeight"]
         ).sum()
-        perp_health_base_asset = Account.__sum_pos(
-            non_quote, f"Perp{weighting_name}HealthBaseValue"
-        )
+
+        perp_health_base_asset = (
+            non_quote.loc[non_quote["PerpHealthBaseValue"] > 0, "PerpHealthBaseValue"]
+            * non_quote[f"Perp{weighting_name}AssetWeight"]
+        ).sum()
+
         assets += spot_deposit_health + perp_health_base_asset
 
         return assets, liabilities
@@ -1042,7 +1001,7 @@ class Account(AddressableAccount):
             non_quote["SpotDepositValue"].sum()
             + non_quote["PerpAsset"].sum()
             + non_quote["QuoteUnsettled"].sum()
-            + non_quote["QuoteLockedInMarginBasket"].sum()
+            + non_quote["QuoteLocked"].sum()
         )
 
         return assets, liabilities
