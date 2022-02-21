@@ -147,7 +147,8 @@ class PerpOrderBookSide(AddressableAccount):
             node = self.nodes[index]
             if node.type_name == "leaf":
                 expiration = (
-                    node.timestamp + timedelta(seconds=float(node.time_in_force))
+                    node.timestamp.astimezone(timezone.utc)
+                    + timedelta(seconds=float(node.time_in_force))
                     if node.time_in_force == 0
                     else Order.NoExpiration
                 )
