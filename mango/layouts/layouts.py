@@ -940,13 +940,22 @@ if INNER_BOOK_NODE.sizeof() != _NODE_SIZE:
 #
 # Here's the [Rust structure](https://github.com/blockworks-foundation/mango-v3/blob/main/program/src/matching.rs):
 # ```
+# /// LeafNodes represent an order in the binary tree
 # #[derive(Debug, Copy, Clone, PartialEq, Eq, Pod)]
 # #[repr(C)]
 # pub struct LeafNode {
 #     pub tag: u32,
 #     pub owner_slot: u8,
-#     pub padding: [u8; 3],
+#     pub order_type: OrderType, // this was added for TradingView move order
+#     pub version: u8,
+#
+#     /// Time in seconds after `timestamp` at which the order expires.
+#     /// A value of 0 means no expiry.
+#     pub time_in_force: u8,
+#
+#     /// The binary tree key
 #     pub key: i128,
+#
 #     pub owner: Pubkey,
 #     pub quantity: i64,
 #     pub client_order_id: u64,
@@ -955,7 +964,7 @@ if INNER_BOOK_NODE.sizeof() != _NODE_SIZE:
 #     // Either the best bid or best ask at the time the order was placed
 #     pub best_initial: i64,
 #
-#     // The time the order was place
+#     // The time the order was placed
 #     pub timestamp: u64,
 # }
 # ```
@@ -964,7 +973,9 @@ LEAF_BOOK_NODE = construct.Struct(
     "tag" / construct.Const(Decimal(2), DecimalAdapter(4)),
     # Index into OPEN_ORDERS_LAYOUT.orders
     "owner_slot" / DecimalAdapter(1),
-    "padding" / construct.Padding(3),
+    "order_type" / DecimalAdapter(1),
+    "version" / DecimalAdapter(1),
+    "time_in_force" / DecimalAdapter(1),
     # (price, seqNum)
     "key" / BookPriceAdapter(),
     "owner" / PublicKeyAdapter(),
