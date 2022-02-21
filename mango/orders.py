@@ -20,6 +20,7 @@ import pyserum.enums
 import typing
 
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pyserum.market.types import Order as PySerumOrder
 from solana.publickey import PublicKey
@@ -142,6 +143,8 @@ class OrderType(enum.Enum):
 #
 @dataclass
 class Order:
+    DefaultMatchLimit: typing.ClassVar[int] = 20
+    NoExpiration: typing.ClassVar[datetime] = datetime.fromtimestamp(0)
     id: int
     client_id: int
     owner: PublicKey
@@ -150,6 +153,8 @@ class Order:
     quantity: Decimal
     order_type: OrderType
     reduce_only: bool = False
+    expiration: datetime = NoExpiration
+    match_limit: int = DefaultMatchLimit
 
     @staticmethod
     def read_sequence_number(id: int) -> Decimal:
@@ -174,6 +179,8 @@ class Order:
             quantity=self.quantity,
             order_type=self.order_type,
             reduce_only=self.reduce_only,
+            expiration=self.expiration,
+            match_limit=self.match_limit,
         )
 
     # Returns an identical order with the Client ID changed.
@@ -187,6 +194,8 @@ class Order:
             quantity=self.quantity,
             order_type=self.order_type,
             reduce_only=self.reduce_only,
+            expiration=self.expiration,
+            match_limit=self.match_limit,
         )
 
     # Returns an identical order with the owner changed.
@@ -200,6 +209,8 @@ class Order:
             quantity=self.quantity,
             order_type=self.order_type,
             reduce_only=self.reduce_only,
+            expiration=self.expiration,
+            match_limit=self.match_limit,
         )
 
     # Returns an identical order with the side changed.
@@ -213,6 +224,8 @@ class Order:
             quantity=self.quantity,
             order_type=self.order_type,
             reduce_only=self.reduce_only,
+            expiration=self.expiration,
+            match_limit=self.match_limit,
         )
 
     # Returns an identical order with the price changed.
@@ -226,6 +239,8 @@ class Order:
             quantity=self.quantity,
             order_type=self.order_type,
             reduce_only=self.reduce_only,
+            expiration=self.expiration,
+            match_limit=self.match_limit,
         )
 
     # Returns an identical order with the quantity changed.
@@ -239,6 +254,8 @@ class Order:
             quantity=quantity,
             order_type=self.order_type,
             reduce_only=self.reduce_only,
+            expiration=self.expiration,
+            match_limit=self.match_limit,
         )
 
     # Returns an identical order with the order type changed.
@@ -252,6 +269,8 @@ class Order:
             quantity=self.quantity,
             order_type=order_type,
             reduce_only=self.reduce_only,
+            expiration=self.expiration,
+            match_limit=self.match_limit,
         )
 
     # Returns an identical order with the reduce_only flag changed.
@@ -265,6 +284,38 @@ class Order:
             quantity=self.quantity,
             order_type=self.order_type,
             reduce_only=reduce_only,
+            expiration=self.expiration,
+            match_limit=self.match_limit,
+        )
+
+    # Returns an identical order with the expiration timestamp changed.
+    def with_expiration(self, expiration: datetime) -> "Order":
+        return Order(
+            id=self.id,
+            client_id=self.client_id,
+            owner=self.owner,
+            side=self.side,
+            price=self.price,
+            quantity=self.quantity,
+            order_type=self.order_type,
+            reduce_only=self.reduce_only,
+            expiration=expiration,
+            match_limit=self.match_limit,
+        )
+
+    # Returns an identical order with the reduce_only flag changed.
+    def with_match_limit(self, match_limit: int) -> "Order":
+        return Order(
+            id=self.id,
+            client_id=self.client_id,
+            owner=self.owner,
+            side=self.side,
+            price=self.price,
+            quantity=self.quantity,
+            order_type=self.order_type,
+            reduce_only=self.reduce_only,
+            expiration=self.expiration,
+            match_limit=match_limit,
         )
 
     @staticmethod
@@ -290,6 +341,8 @@ class Order:
         quantity: Decimal,
         order_type: OrderType = OrderType.UNKNOWN,
         reduce_only: bool = False,
+        expiration: datetime = NoExpiration,
+        match_limit: int = 20,
     ) -> "Order":
         order = Order(
             id=0,
@@ -300,6 +353,8 @@ class Order:
             owner=SYSTEM_PROGRAM_ADDRESS,
             order_type=order_type,
             reduce_only=reduce_only,
+            expiration=expiration,
+            match_limit=match_limit,
         )
         return order
 
@@ -320,7 +375,18 @@ class Order:
             quantity=quantity,
             order_type=OrderType.UNKNOWN,
             reduce_only=False,
+            expiration=Order.NoExpiration,
+            match_limit=20,
         )
+
+    @staticmethod
+    def build_absolute_expiration(
+        expire_seconds: typing.Optional[Decimal],
+    ) -> datetime:
+        if expire_seconds is None or expire_seconds <= Decimal(0):
+            return Order.NoExpiration
+
+        return datetime.now() + timedelta(seconds=float(expire_seconds))
 
     def __str__(self) -> str:
         owner: str = ""

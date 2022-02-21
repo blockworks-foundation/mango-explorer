@@ -109,7 +109,9 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
             order.side,
             order.order_type,
             order.reduce_only,
-            self.context.reflink,
+            expiration=order.expiration,
+            match_limit=order.match_limit,
+            reflink=self.context.reflink,
         )
 
     def build_settle_instructions(self) -> CombinableInstructions:

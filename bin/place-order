@@ -43,6 +43,16 @@ parser.add_argument(
     help="address of the specific account to use, if more than one available",
 )
 parser.add_argument(
+    "--match-limit",
+    type=int,
+    help="maximum number of orders this order can match with on the orderbook",
+)
+parser.add_argument(
+    "--expire-seconds",
+    type=Decimal,
+    help="maximum number of seconds from now for which the order will be valid on the orderbook",
+)
+parser.add_argument(
     "--dry-run",
     action="store_true",
     default=False,
@@ -67,5 +77,13 @@ market_operations = mango.create_market_operations(
 order: mango.Order = mango.Order.from_basic_info(
     args.side, args.price, args.quantity, args.order_type
 )
+
+if args.match_limit is not None:
+    order = order.with_match_limit(args.match_limit)
+
+if args.expire_seconds is not None:
+    expiration = mango.Order.build_absolute_expiration(args.expire_seconds)
+    order = order.with_expiration(expiration)
+
 placed = market_operations.place_order(order)
 mango.output(placed)

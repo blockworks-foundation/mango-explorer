@@ -36,12 +36,16 @@ class RatiosElement(Element):
     def __init__(
         self,
         order_type: mango.OrderType,
+        expire_seconds: typing.Optional[Decimal],
+        match_limit: int,
         spread_ratios: typing.Sequence[Decimal],
         position_size_ratios: typing.Sequence[Decimal],
         from_bid_ask: bool,
     ) -> None:
         super().__init__()
         self.order_type: mango.OrderType = order_type
+        self.expire_seconds: typing.Optional[Decimal] = expire_seconds
+        self.match_limit: int = match_limit
         self.spread_ratios: typing.Sequence[Decimal] = spread_ratios
         self.position_size_ratios: typing.Sequence[Decimal] = position_size_ratios
         self.from_bid_ask: bool = from_bid_ask
@@ -85,6 +89,8 @@ class RatiosElement(Element):
     @staticmethod
     def from_command_line_parameters(args: argparse.Namespace) -> "RatiosElement":
         order_type: mango.OrderType = args.order_type
+        expire_seconds: typing.Optional[Decimal] = args.expire_seconds
+        match_limit: int = args.match_limit or mango.Order.DefaultMatchLimit
         spread_ratios: typing.Sequence[Decimal] = args.ratios_spread or [
             DEFAULT_SPREAD_RATIO
         ]
@@ -93,7 +99,12 @@ class RatiosElement(Element):
         ]
         from_bid_ask: bool = args.ratios_from_bid_ask
         return RatiosElement(
-            order_type, spread_ratios, position_size_ratios, from_bid_ask
+            order_type,
+            expire_seconds,
+            match_limit,
+            spread_ratios,
+            position_size_ratios,
+            from_bid_ask,
         )
 
     def process(
@@ -103,6 +114,7 @@ class RatiosElement(Element):
         orders: typing.Sequence[mango.Order],
     ) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
+        expiration = mango.Order.build_absolute_expiration(self.expire_seconds)
         new_orders: typing.List[mango.Order] = []
         for counter in range(len(self.spread_ratios)):
             position_size_ratio = self.position_size_ratios[counter]
@@ -126,12 +138,16 @@ class RatiosElement(Element):
                 price=bid,
                 quantity=base_position_size,
                 order_type=self.order_type,
+                expiration=expiration,
+                match_limit=self.match_limit,
             )
             ask_order = mango.Order.from_basic_info(
                 mango.Side.SELL,
                 price=ask,
                 quantity=base_position_size,
                 order_type=self.order_type,
+                expiration=expiration,
+                match_limit=self.match_limit,
             )
             self._logger.debug(
                 f"""Desired orders:

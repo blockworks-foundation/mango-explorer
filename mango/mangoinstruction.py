@@ -89,6 +89,7 @@ _instruction_signer_indices: typing.Dict[InstructionType, int] = {
     InstructionType.ChangeReferralFeeParams: -1,
     InstructionType.SetReferrerMemory: -1,
     InstructionType.RegisterReferrerId: -1,
+    InstructionType.PlacePerpOrder2: 2,
 }
 
 
@@ -159,6 +160,7 @@ _token_in_indices: typing.Dict[InstructionType, int] = {
     InstructionType.ChangeReferralFeeParams: -1,
     InstructionType.SetReferrerMemory: -1,
     InstructionType.RegisterReferrerId: -1,
+    InstructionType.PlacePerpOrder2: -1,
 }
 
 # The index of the token OUT account depends on the instruction, and for some instructions
@@ -228,6 +230,7 @@ _token_out_indices: typing.Dict[InstructionType, int] = {
     InstructionType.ChangeReferralFeeParams: -1,
     InstructionType.SetReferrerMemory: -1,
     InstructionType.RegisterReferrerId: -1,
+    InstructionType.PlacePerpOrder2: -1,
 }
 
 
@@ -297,6 +300,7 @@ _target_indices: typing.Dict[InstructionType, int] = {
     InstructionType.ChangeReferralFeeParams: -1,
     InstructionType.SetReferrerMemory: -1,
     InstructionType.RegisterReferrerId: -1,
+    InstructionType.PlacePerpOrder2: -1,
 }
 
 
@@ -484,6 +488,8 @@ class MangoInstruction:
             pass
         elif instruction_type == InstructionType.RegisterReferrerId:
             additional_data = f"ID: '{self.instruction_data.info}'"
+        elif instruction_type == InstructionType.PlacePerpOrder2:
+            additional_data = f"side: {Side.from_value(self.instruction_data.side)}, order_type: {OrderType.from_value(self.instruction_data.order_type)}, price: {self.instruction_data.price}, max_base_quantity: {self.instruction_data.max_base_quantity}, max_quote_quantity: {self.instruction_data.max_quote_quantity}, client_order_id: {self.instruction_data.client_order_id}, reduce_only: {self.instruction_data.reduce_only}, expiry_timestamp: {self.instruction_data.expiry_timestamp}, limit: {self.instruction_data.limit}"
 
         return additional_data
 

@@ -1688,6 +1688,43 @@ REGISTER_REFERRER_ID = construct.Struct(
 )
 
 
+# /// Place an order on a perp market
+# ///
+# /// In case this order is matched, the corresponding order structs on both
+# /// PerpAccounts (taker & maker) will be adjusted, and the position size
+# /// will be adjusted w/o accounting for fees.
+# /// In addition a FillEvent will be placed on the event queue.
+# /// Through a subsequent invocation of ConsumeEvents the FillEvent can be
+# /// executed and the perp account balances (base/quote) and fees will be
+# /// paid from the quote position. Only at this point the position balance
+# /// is 100% reflecting the trade.
+# ///
+# /// Accounts expected by this instruction (9 + `NUM_IN_MARGIN_BASKET`):
+# /// 0. `[]` mango_group_ai - MangoGroup
+# /// 1. `[writable]` mango_account_ai - the MangoAccount of owner
+# /// 2. `[signer]` owner_ai - owner of MangoAccount
+# /// 3. `[]` mango_cache_ai - MangoCache for this MangoGroup
+# /// 4. `[writable]` perp_market_ai
+# /// 5. `[writable]` bids_ai - bids account for this PerpMarket
+# /// 6. `[writable]` asks_ai - asks account for this PerpMarket
+# /// 7. `[writable]` event_queue_ai - EventQueue for this PerpMarket
+# /// 8. `[writable]` referrer_mango_account_ai - referrer's mango account;
+# ///                 pass in mango_account_ai as duplicate if you don't have a referrer
+# /// 9..9 + NUM_IN_MARGIN_BASKET `[]` open_orders_ais - pass in open orders in margin basket
+PLACE_PERP_ORDER_2 = construct.Struct(
+    "variant" / construct.Const(64, construct.BytesInteger(4, swapped=True)),
+    "price" / SignedDecimalAdapter(),
+    "max_base_quantity" / SignedDecimalAdapter(),
+    "max_quote_quantity" / SignedDecimalAdapter(),
+    "client_order_id" / DecimalAdapter(),
+    "expiry_timestamp" / DatetimeAdapter(),
+    "side" / DecimalAdapter(1),  # { buy: 0, sell: 1 }
+    "order_type" / DecimalAdapter(1),  # { limit: 0, ioc: 1, postOnly: 2 }
+    "reduce_only" / construct.Flag,
+    "limit" / DecimalAdapter(1),
+)
+
+
 UNSPECIFIED = construct.Struct("variant" / DecimalAdapter(4))
 
 
@@ -1756,4 +1793,5 @@ InstructionParsersByVariant = {
     61: UNSPECIFIED,  # CHANGE_REFERRAL_FEE_PARAMS,
     62: SET_REFERRER_MEMORY,  # SET_REFERRER_MEMORY,
     63: REGISTER_REFERRER_ID,  # REGISTER_REFERRER_ID,
+    64: PLACE_PERP_ORDER_2,  # PLACE_PERP_ORDER_2,
 }

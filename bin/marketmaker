@@ -56,7 +56,17 @@ parser.add_argument(
     type=mango.OrderType,
     default=mango.OrderType.POST_ONLY,
     choices=list(mango.OrderType),
-    help="Order type: LIMIT, IOC or POST_ONLY",
+    help="Order type: LIMIT, IOC, POST_ONLY, or (perp-only) POST_ONLY_SLIDE",
+)
+parser.add_argument(
+    "--match-limit",
+    type=int,
+    help="maximum number of orders this order can match with on the orderbook",
+)
+parser.add_argument(
+    "--expire-seconds",
+    type=int,
+    help="maximum number of seconds from now for which the order will be valid on the orderbook",
 )
 parser.add_argument(
     "--existing-order-tolerance",

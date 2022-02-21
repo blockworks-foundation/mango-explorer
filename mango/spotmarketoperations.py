@@ -131,6 +131,15 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         )
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
+        if order.reduce_only:
+            self._logger.warning("Ignoring reduce_only - not supported on Spot markets")
+
+        if order.expiration != Order.NoExpiration:
+            self._logger.warning("Ignoring expiration - not supported on Spot markets")
+
+        if order.match_limit != Order.DefaultMatchLimit:
+            self._logger.warning("Ignoring match_limit - not supported on Spot markets")
+
         return build_spot_place_order_instructions(
             self.context,
             self.wallet,
@@ -278,10 +287,7 @@ class SpotMarketOperations(MarketOperations):
         signers: CombinableInstructions = CombinableInstructions.from_wallet(
             self.wallet
         )
-        if order.reduce_only:
-            self._logger.warning(
-                "Ignoring reduce_only flag on order because spot markets don't support it."
-            )
+
         order_with_client_id: Order = order.with_client_id(client_id).with_owner(
             self.open_orders_address or SYSTEM_PROGRAM_ADDRESS
         )

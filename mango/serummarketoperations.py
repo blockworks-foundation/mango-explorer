@@ -145,6 +145,19 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         return CombinableInstructions.from_instruction(raw_instruction)
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
+        if order.reduce_only:
+            self._logger.warning(
+                "Ignoring reduce_only - not supported on Serum markets"
+            )
+
+        if order.expiration != Order.NoExpiration:
+            self._logger.warning("Ignoring expiration - not supported on Serum markets")
+
+        if order.match_limit != Order.DefaultMatchLimit:
+            self._logger.warning(
+                "Ignoring match_limit - not supported on Serum markets"
+            )
+
         ensure_open_orders = CombinableInstructions.empty()
         if self.open_orders_address is None:
             ensure_open_orders = self.build_create_openorders_instructions()
@@ -279,10 +292,7 @@ class SerumMarketOperations(MarketOperations):
         signers: CombinableInstructions = CombinableInstructions.from_wallet(
             self.wallet
         )
-        if order.reduce_only:
-            self._logger.warning(
-                "Ignoring reduce_only flag on order because Serum doesn't support it."
-            )
+
         open_orders_address = (
             self.market_instruction_builder.open_orders_address
             or SYSTEM_PROGRAM_ADDRESS
