@@ -767,6 +767,86 @@
                     "index": false
                 }
             ]
+        },
+        {
+            "name": "PerpBalanceLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "mangoAccount",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "basePosition",
+                    "type": "i64",
+                    "index": false
+                },
+                {
+                    "name": "quotePosition",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "longSettledFunding",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "shortSettledFunding",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "longFunding",
+                    "type": "i128",
+                    "index": false
+                },
+                {
+                    "name": "shortFunding",
+                    "type": "i128",
+                    "index": false
+                }
+            ]
+        },
+        {
+            "name": "ReferralFeeAccrualLog",
+            "fields": [
+                {
+                    "name": "mangoGroup",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "referrerMangoAccount",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "referreeMangoAccount",
+                    "type": "publicKey",
+                    "index": false
+                },
+                {
+                    "name": "marketIndex",
+                    "type": "u64",
+                    "index": false
+                },
+                {
+                    "name": "referralFeeAccrual",
+                    "type": "i128",
+                    "index": false
+                }
+            ]
         }
     ]
 }
