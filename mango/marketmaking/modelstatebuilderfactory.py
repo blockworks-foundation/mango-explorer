@@ -176,9 +176,46 @@ def _polling_perp_model_state_builder_factory(
     market: mango.PerpMarket,
     oracle: mango.Oracle,
 ) -> ModelStateBuilder:
+    all_open_orders_addresses: typing.Sequence[PublicKey] = account.spot_open_orders
     return PerpPollingModelStateBuilder(
-        account.address, market, oracle, group.address, group.cache
+        account.address,
+        market,
+        oracle,
+        group.address,
+        group.cache,
+        all_open_orders_addresses,
     )
+
+
+def __load_all_openorders_watchers(
+    context: mango.Context,
+    wallet: mango.Wallet,
+    account: mango.Account,
+    group: mango.Group,
+    websocket_manager: mango.WebSocketSubscriptionManager,
+    health_check: mango.HealthCheck,
+) -> typing.Sequence[mango.Watcher[mango.OpenOrders]]:
+    all_open_orders_watchers: typing.List[mango.Watcher[mango.OpenOrders]] = []
+    for basket_token in account.base_slots:
+        if basket_token.spot_open_orders is not None:
+            spot_market_symbol: str = f"spot:{basket_token.base_instrument.symbol}/{account.shared_quote_token.symbol}"
+            spot_market = context.market_lookup.find_by_symbol(spot_market_symbol)
+            if spot_market is None:
+                raise Exception(f"Could not find spot market {spot_market_symbol}")
+            if not isinstance(spot_market, mango.SpotMarket):
+                raise Exception(f"Market {spot_market_symbol} is not a spot market")
+            oo_watcher = mango.build_spot_open_orders_watcher(
+                context,
+                websocket_manager,
+                health_check,
+                wallet,
+                account,
+                group,
+                spot_market,
+            )
+            all_open_orders_watchers += [oo_watcher]
+
+    return all_open_orders_watchers
 
 
 def _websocket_model_state_builder_factory(
@@ -251,32 +288,18 @@ def _websocket_model_state_builder_factory(
             account.spot_open_orders_by_index[market_index] or SYSTEM_PROGRAM_ADDRESS
         )
 
-        all_open_orders_watchers: typing.List[mango.Watcher[mango.OpenOrders]] = []
-        for basket_token in account.base_slots:
-            if basket_token.spot_open_orders is not None:
-                spot_market_symbol: str = f"spot:{basket_token.base_instrument.symbol}/{account.shared_quote_token.symbol}"
-                spot_market = context.market_lookup.find_by_symbol(spot_market_symbol)
-                if spot_market is None:
-                    raise Exception(f"Could not find spot market {spot_market_symbol}")
-                if not isinstance(spot_market, mango.SpotMarket):
-                    raise Exception(f"Market {spot_market_symbol} is not a spot market")
-                oo_watcher = mango.build_spot_open_orders_watcher(
-                    context,
-                    websocket_manager,
-                    health_check,
-                    wallet,
-                    account,
-                    group,
-                    spot_market,
-                )
-                all_open_orders_watchers += [oo_watcher]
-                if (
-                    market.base == spot_market.base
-                    and market.quote == spot_market.quote
-                ):
-                    latest_open_orders_observer = oo_watcher
+        all_open_orders_watchers = __load_all_openorders_watchers(
+            context, wallet, account, group, websocket_manager, health_check
+        )
+        latest_open_orders_observer = list(
+            [
+                oo_watcher
+                for oo_watcher in all_open_orders_watchers
+                if (market.base == market.base and market.quote == market.quote)
+            ]
+        )[0]
 
-        inventory_watcher = mango.SpotInventoryAccountWatcher(
+        inventory_watcher = mango.InventoryAccountWatcher(
             market,
             latest_account_observer,
             group_watcher,
@@ -291,9 +314,19 @@ def _websocket_model_state_builder_factory(
         )
     elif isinstance(market, mango.PerpMarket):
         order_owner = account.address
-        inventory_watcher = mango.PerpInventoryAccountWatcher(
-            market, latest_account_observer, group_watcher, cache_watcher, group
+
+        all_open_orders_watchers = __load_all_openorders_watchers(
+            context, wallet, account, group, websocket_manager, health_check
         )
+
+        inventory_watcher = mango.InventoryAccountWatcher(
+            market,
+            latest_account_observer,
+            group_watcher,
+            all_open_orders_watchers,
+            cache_watcher,
+        )
+
         latest_open_orders_observer = mango.build_perp_open_orders_watcher(
             context,
             websocket_manager,

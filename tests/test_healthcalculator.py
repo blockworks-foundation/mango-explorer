@@ -10,10 +10,10 @@ def test_empty() -> None:
     frame = account.to_dataframe(group, open_orders, cache)
 
     # Typescript says: 0
-    assert account.init_health(frame) == Decimal("0")
+    assert account.init_health(frame).value == Decimal("0")
 
     # Typescript says: 0
-    assert account.maint_health(frame) == Decimal("0")
+    assert account.maint_health(frame).value == Decimal("0")
 
     # Typescript says: 100
     assert account.init_health_ratio(frame) == Decimal("100")
@@ -22,7 +22,7 @@ def test_empty() -> None:
     assert account.maint_health_ratio(frame) == Decimal("100")
 
     # Typescript says: 0
-    assert account.total_value(frame) == Decimal("0")
+    assert account.total_value(frame).value == Decimal("0")
 
     # Typescript says: 0
     assert account.leverage(frame) == Decimal("0")
@@ -37,12 +37,12 @@ def test_1deposit() -> None:
     frame = account.to_dataframe(group, open_orders, cache)
 
     # Typescript says: 37904260000.05905822642118252475
-    assert account.init_health(frame) == Decimal(
+    assert account.init_health(frame).value == Decimal(
         "37904.2600000591928892771752953600134"
     )
 
     # Typescript says: 42642292500.06652466908819931746
-    assert account.maint_health(frame) == Decimal(
+    assert account.maint_health(frame).value == Decimal(
         "42642.2925000665920004368222072800150"
     )
 
@@ -53,7 +53,7 @@ def test_1deposit() -> None:
     assert account.maint_health_ratio(frame) == Decimal("100")
 
     # Typescript says: 47380.32499999999999928946
-    assert account.total_value(frame) == Decimal(
+    assert account.total_value(frame).value == Decimal(
         "47380.3250000739911115964691192000167"
     )
 
@@ -70,10 +70,12 @@ def test_account1() -> None:
     frame = account.to_dataframe(group, open_orders, cache)
 
     # Typescript says: 454884281.15520619643754685058
-    assert account.init_health(frame) == Decimal("454.88428115521887496581258174978975")
+    assert account.init_health(frame).value == Decimal(
+        "454.88428115521887496581258174978975"
+    )
 
     # Typescript says: 901472688.63722587052636470162
-    assert account.maint_health(frame) == Decimal(
+    assert account.maint_health(frame).value == Decimal(
         "901.47268863723220971375597908220329"
     )
 
@@ -88,7 +90,7 @@ def test_account1() -> None:
     )
 
     # Typescript says: 1348.25066158888197520582
-    assert account.total_value(frame) == Decimal(
+    assert account.total_value(frame).value == Decimal(
         "1348.25066711924554446169937641461683"
     )
 
@@ -105,10 +107,12 @@ def test_account2() -> None:
     frame = account.to_dataframe(group, open_orders, cache)
 
     # Typescript says: 7516159604.84918334545095675026
-    assert account.init_health(frame) == Decimal("7516.1596048492430563556697582309637")
+    assert account.init_health(frame).value == Decimal(
+        "7516.1596048492430563556697582309637"
+    )
 
     # Typescript says: 9618709877.45119083596852505025
-    assert account.maint_health(frame) == Decimal(
+    assert account.maint_health(frame).value == Decimal(
         "9618.7098774512206992595893853316522"
     )
 
@@ -123,7 +127,7 @@ def test_account2() -> None:
     )
 
     # Typescript says: 11721.35669142618275273549
-    assert account.total_value(frame) == Decimal(
+    assert account.total_value(frame).value == Decimal(
         "11721.3566920531983421635090124323407"
     )
 
@@ -140,10 +144,12 @@ def test_account3() -> None:
     frame = account.to_dataframe(group, open_orders, cache)
 
     # Typescript says: 341025333625.51856223547208912805
-    assert account.init_health(frame) == Decimal("341025.33362550396263557255539801613")
+    assert account.init_health(frame).value == Decimal(
+        "341025.33362550396263557255539801613"
+    )
 
     # Typescript says: 683477170424.20340250929429970483
-    assert account.maint_health(frame) == Decimal(
+    assert account.maint_health(frame).value == Decimal(
         "683477.17042418393637609525383421613"
     )
 
@@ -158,7 +164,7 @@ def test_account3() -> None:
     )
 
     # Typescript says: 1025929.00722205438034961844
-    assert account.total_value(frame) == Decimal(
+    assert account.total_value(frame).value == Decimal(
         "1025929.00722286391011661795227041613"
     )
 
@@ -175,12 +181,12 @@ def test_account4() -> None:
     frame = account.to_dataframe(group, open_orders, cache)
 
     # Typescript says: -848086876487.04950427436299875694
-    assert account.init_health(frame) == Decimal(
+    assert account.init_health(frame).value == Decimal(
         "-848086.87648706716344229365643382143"
     )
 
     # Typescript says: -433869053006.07361789143756070075
-    assert account.maint_health(frame) == Decimal(
+    assert account.maint_health(frame).value == Decimal(
         "-433869.05300609716344867811565222143"
     )
 
@@ -195,7 +201,9 @@ def test_account4() -> None:
     )
 
     # Typescript says: -19651.22952604663374742699
-    assert account.total_value(frame) == Decimal("-19651.22952512716345506257487062143")
+    assert account.total_value(frame).value == Decimal(
+        "-19651.22952512716345506257487062143"
+    )
 
     # Typescript says: -421.56937094643044972031
     assert account.leverage(frame) == Decimal("-421.569370966155451390856326152441566")
@@ -210,12 +218,12 @@ def test_account5() -> None:
     frame = account.to_dataframe(group, open_orders, cache)
 
     # Typescript says: 15144959918141.09175135195858530324
-    assert account.init_health(frame) == Decimal(
+    assert account.init_health(frame).value == Decimal(
         "15144959.9181410924496111317578727438"
     )
 
     # Typescript says: 15361719060997.68276021614036608298
-    assert account.maint_health(frame) == Decimal(
+    assert account.maint_health(frame).value == Decimal(
         "15361719.0609976820704356689151633723"
     )
 
@@ -230,7 +238,7 @@ def test_account5() -> None:
     )
 
     # Typescript says: 15578478.17337437202354522015
-    assert account.total_value(frame) == Decimal(
+    assert account.total_value(frame).value == Decimal(
         "15578478.2038542716912602060724540009"
     )
 
@@ -247,12 +255,12 @@ def test_account6() -> None:
     frame = account.to_dataframe(group, open_orders, cache)
 
     # Typescript says: 14480970069238.33686487450164648294
-    assert account.init_health(frame) == Decimal(
+    assert account.init_health(frame).value == Decimal(
         "14480970.0692383312566073701425189089"
     )
 
     # Typescript says: 15030566.251990.17026082618337312624
-    assert account.maint_health(frame) == Decimal(
+    assert account.maint_health(frame).value == Decimal(
         "15030566.2519901615291113644851708626"
     )
 
@@ -267,7 +275,7 @@ def test_account6() -> None:
     )
 
     # Typescript says: 15580162.40781940827396567784
-    assert account.total_value(frame) == Decimal(
+    assert account.total_value(frame).value == Decimal(
         "15580162.4347419918016153588278228163"
     )
 
@@ -284,12 +292,12 @@ def test_account7() -> None:
     frame = account.to_dataframe(group, open_orders, cache)
 
     # Typescript says: 16272272.28055547965738014682
-    assert account.init_health(frame) == Decimal(
+    assert account.init_health(frame).value == Decimal(
         "16.2722722805554769752688793558604253"
     )
 
     # Typescript says: 16649749.17384252860704663135
-    assert account.maint_health(frame) == Decimal(
+    assert account.maint_health(frame).value == Decimal(
         "16.6497491738425205606631394095387232"
     )
 
@@ -304,7 +312,7 @@ def test_account7() -> None:
     )
 
     # Typescript says: 17.02722595090433088671
-    assert account.total_value(frame) == Decimal(
+    assert account.total_value(frame).value == Decimal(
         "17.0272260671295641460573994632170211"
     )
 
@@ -321,12 +329,12 @@ def test_account8() -> None:
     frame = account.to_dataframe(group, open_orders, cache)
 
     # Typescript says: 337240882.73863372865950083224
-    assert account.init_health(frame) == Decimal(
+    assert account.init_health(frame).value == Decimal(
         "337.240882738638250140157452733466665"
     )
 
     # Typescript says: 496326340.62213476397751321656
-    assert account.maint_health(frame) == Decimal(
+    assert account.maint_health(frame).value == Decimal(
         "496.326340622137024717841136284723945"
     )
 
@@ -341,7 +349,7 @@ def test_account8() -> None:
     )
 
     # # Typescript says: 655.41179779906788382959
-    assert account.total_value(frame) == Decimal(
+    assert account.total_value(frame).value == Decimal(
         "655.411798505635799295524819835981215"
     )
 
@@ -358,10 +366,12 @@ def test_account9() -> None:
     frame = account.to_dataframe(group, open_orders, cache)
 
     # Typescript says: 96257596.93294236504926786324
-    assert account.init_health(frame) == Decimal("96.25759693294275991712014716369911")
+    assert account.init_health(frame).value == Decimal(
+        "96.25759693294275991712014716369911"
+    )
 
     # # Typescript says: 511619124.36291981710078502488
-    assert account.maint_health(frame) == Decimal(
+    assert account.maint_health(frame).value == Decimal(
         "511.61912436291544183007238034887025"
     )
 
@@ -376,7 +386,9 @@ def test_account9() -> None:
     )
 
     # # Typescript says: 926.98053240315212875089
-    assert account.total_value(frame) == Decimal("926.98065179288812374302461353404140")
+    assert account.total_value(frame).value == Decimal(
+        "926.98065179288812374302461353404140"
+    )
 
     # # Typescript says: 3.91944283828893702548
     assert account.leverage(frame) == Decimal("3.91944232844987663175000830924077777")

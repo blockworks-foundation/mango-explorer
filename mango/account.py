@@ -1006,13 +1006,15 @@ class Account(AddressableAccount):
 
         return assets, liabilities
 
-    def init_health(self, frame: pandas.DataFrame) -> Decimal:
+    def init_health(self, frame: pandas.DataFrame) -> InstrumentValue:
         assets, liabilities = self.weighted_assets(frame, "Init")
-        return assets + liabilities
+        value: Decimal = assets + liabilities
+        return InstrumentValue(self.shared_quote_token, value)
 
-    def maint_health(self, frame: pandas.DataFrame) -> Decimal:
+    def maint_health(self, frame: pandas.DataFrame) -> InstrumentValue:
         assets, liabilities = self.weighted_assets(frame, "Maint")
-        return assets + liabilities
+        value: Decimal = assets + liabilities
+        return InstrumentValue(self.shared_quote_token, value)
 
     def init_health_ratio(self, frame: pandas.DataFrame) -> Decimal:
         assets, liabilities = self.weighted_assets(frame, "Init")
@@ -1028,10 +1030,11 @@ class Account(AddressableAccount):
 
         return ((assets / -liabilities) - 1) * 100
 
-    def total_value(self, frame: pandas.DataFrame) -> Decimal:
+    def total_value(self, frame: pandas.DataFrame) -> InstrumentValue:
         assets, liabilities = self.unweighted_assets(frame)
 
-        return assets + liabilities
+        value: Decimal = assets + liabilities
+        return InstrumentValue(self.shared_quote_token, value)
 
     def is_liquidatable(self, frame: pandas.DataFrame) -> bool:
         if self.being_liquidated and self.init_health(frame) < 0:

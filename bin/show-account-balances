@@ -4,6 +4,7 @@ import argparse
 import logging
 import os
 import os.path
+import pandas
 import sys
 import typing
 
@@ -74,75 +75,35 @@ mango.output(f"Total Value:   {total_in_wallet}")
 
 
 mango_accounts = mango.Account.load_all_for_owner(context, address, group)
-account_value: mango.InstrumentValue = mango.InstrumentValue(
-    group.shared_quote_token, Decimal(0)
+grand_total: mango.InstrumentValue = mango.InstrumentValue(
+    group.shared_quote_token, total_in_wallet.value
 )
-quote_token_free_in_open_orders: mango.InstrumentValue = mango.InstrumentValue(
-    group.shared_quote_token, Decimal(0)
-)
-quote_token_total_in_open_orders: mango.InstrumentValue = mango.InstrumentValue(
-    group.shared_quote_token, Decimal(0)
-)
-grand_total: mango.InstrumentValue = total_in_wallet
 for account in mango_accounts:
-    mango.output(
-        "\n⚠ WARNING! ⚠ This is a work-in-progress and these figures may be wrong!\n"
-    )
-    mango.output(f"\nAccount Balances [{account.address}]:")
-    at_least_one_output: bool = False
+    pandas.set_option("display.max_columns", None)
+    pandas.set_option("display.width", None)
+    pandas.set_option("display.precision", 6)
+
     open_orders: typing.Dict[str, mango.OpenOrders] = account.load_all_spot_open_orders(
         context
     )
-    for asset in account.base_slots:
-        if (
-            (asset.deposit.value != 0)
-            or (asset.borrow.value != 0)
-            or (asset.net_value.value != 0)
-            or ((asset.perp_account is not None) and not asset.perp_account.empty)
-        ):
-            at_least_one_output = True
-            report: mango.AccountInstrumentValues = (
-                mango.AccountInstrumentValues.from_account_basket_base_token(
-                    asset, open_orders, group
-                )
-            )
-            # mango.output(report)
-            market_cache: mango.MarketCache = group.market_cache_from_cache(
-                cache, report.base_token
-            )
-            price_from_cache: mango.InstrumentValue = group.token_price_from_cache(
-                cache, report.base_token
-            )
-            priced_report: mango.AccountInstrumentValues = report.priced(market_cache)
-            account_value += priced_report.net_value
-            quote_token_free_in_open_orders += priced_report.quote_token_free
-            quote_token_total_in_open_orders += priced_report.quote_token_total
-            mango.output(priced_report)
-
-    quote_report = mango.AccountInstrumentValues(
-        account.shared_quote_token,
-        account.shared_quote_token,
-        account.shared_quote.raw_deposit,
-        account.shared_quote.deposit,
-        account.shared_quote.raw_borrow,
-        account.shared_quote.borrow,
-        mango.InstrumentValue(group.shared_quote_token, Decimal(0)),
-        mango.InstrumentValue(group.shared_quote_token, Decimal(0)),
-        quote_token_free_in_open_orders,
-        quote_token_total_in_open_orders,
-        mango.InstrumentValue(group.shared_quote_token, Decimal(0)),
-        Decimal(0),
-        Decimal(0),
-        mango.InstrumentValue(group.shared_quote_token, Decimal(0)),
-        mango.InstrumentValue(group.shared_quote_token, Decimal(0)),
-        Decimal(0),
-        Decimal(0),
-        mango.NullLotSizeConverter(),
-    )
-    account_value += quote_report.net_value + quote_token_total_in_open_orders
-    mango.output(quote_report)
-
-    mango.output(f"Account Total: {account_value}")
+    frame: pandas.DataFrame = account.to_dataframe(group, open_orders, cache)
+    account_value = account.total_value(frame)
     grand_total += account_value
+
+    numeric_columns = [
+        "CurrentPrice",
+        "SpotValue",
+        "SpotOpenValue",
+        "PerpNotionalSize",
+        "PerpAsset",
+        "PerpLiability",
+        "UnsettledFunding",
+    ]
+    for column_name in numeric_columns:
+        frame[column_name] = pandas.to_numeric(frame[column_name])
+    output_columns = ["Symbol", *numeric_columns]
+    mango.output(frame[output_columns])
+    if mango.output_formatter.format == mango.OutputFormat.TEXT:
+        mango.output("Account Value:", account_value)
 
 mango.output(f"\nGrand Total:   {grand_total}")

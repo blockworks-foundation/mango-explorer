@@ -26,16 +26,11 @@ from ..instrumentvalue import InstrumentValue
 from ..modelstate import ModelState
 from ..token import Token
 
-from ..calculators.collateralcalculator import CollateralCalculator
-from ..calculators.perpcollateralcalculator import PerpCollateralCalculator
-from ..calculators.spotcollateralcalculator import SpotCollateralCalculator
 
 # # 🥭 ModelStateBuilder class
 #
 # Base class for building a `ModelState` through polling or websockets.
 #
-
-
 class ModelStateBuilder(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
@@ -286,8 +281,6 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
             PublicKey
         ] = all_open_orders_addresses
 
-        self.collateral_calculator: CollateralCalculator = SpotCollateralCalculator()
-
     def poll(self, context: mango.Context) -> ModelState:
         addresses: typing.List[PublicKey] = [
             self.group_address,
@@ -348,9 +341,8 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
             account.net_values, self.market.quote.symbol
         )
 
-        available_collateral: InstrumentValue = self.collateral_calculator.calculate(
-            account, all_open_orders, group, cache
-        )
+        frame = account.to_dataframe(group, all_open_orders, cache)
+        available_collateral: InstrumentValue = account.init_health(frame)
         inventory: mango.Inventory = mango.Inventory(
             mango.InventorySource.ACCOUNT,
             mngo_accrued,
@@ -395,6 +387,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         oracle: mango.Oracle,
         group_address: PublicKey,
         cache_address: PublicKey,
+        all_open_orders_addresses: typing.Sequence[PublicKey],
     ) -> None:
         super().__init__()
         self.order_owner: PublicKey = order_owner
@@ -404,7 +397,9 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         self.group_address: PublicKey = group_address
         self.cache_address: PublicKey = cache_address
 
-        self.collateral_calculator: CollateralCalculator = PerpCollateralCalculator()
+        self.all_open_orders_addresses: typing.Sequence[
+            PublicKey
+        ] = all_open_orders_addresses
 
     def poll(self, context: mango.Context) -> ModelState:
         addresses: typing.List[PublicKey] = [
@@ -414,6 +409,7 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
             self.market.underlying_perp_market.bids,
             self.market.underlying_perp_market.asks,
             self.market.event_queue_address,
+            *self.all_open_orders_addresses,
         ]
         account_infos: typing.Sequence[
             mango.AccountInfo
@@ -421,6 +417,33 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         group: mango.Group = mango.Group.parse_with_context(context, account_infos[0])
         cache: mango.Cache = mango.Cache.parse(account_infos[1])
         account: mango.Account = mango.Account.parse(account_infos[2], group, cache)
+
+        # Update our stash of OpenOrders addresses for next time, in case new OpenOrders accounts were added
+        self.all_open_orders_addresses = account.spot_open_orders
+
+        spot_open_orders_account_infos_by_address = {
+            str(account_info.address): account_info
+            for account_info in account_infos[6:]
+        }
+
+        all_open_orders: typing.Dict[str, mango.OpenOrders] = {}
+        for basket_token in account.slots:
+            if (
+                basket_token.spot_open_orders is not None
+                and str(basket_token.spot_open_orders)
+                in spot_open_orders_account_infos_by_address
+            ):
+                account_info: mango.AccountInfo = (
+                    spot_open_orders_account_infos_by_address[
+                        str(basket_token.spot_open_orders)
+                    ]
+                )
+                open_orders: mango.OpenOrders = mango.OpenOrders.parse(
+                    account_info,
+                    basket_token.base_instrument.decimals,
+                    account.shared_quote_token.decimals,
+                )
+                all_open_orders[str(basket_token.spot_open_orders)] = open_orders
 
         slot = group.slot_by_perp_market_address(self.market.address)
         perp_account = account.perp_accounts_by_index[slot.index]
@@ -434,9 +457,8 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         base_value = self.market.lot_size_converter.base_size_lots_to_number(base_lots)
         base_token_value = mango.InstrumentValue(self.market.base, base_value)
         quote_token_value = account.shared_quote.net_value
-        available_collateral: InstrumentValue = self.collateral_calculator.calculate(
-            account, {}, group, cache
-        )
+        frame = account.to_dataframe(group, all_open_orders, cache)
+        available_collateral: InstrumentValue = account.init_health(frame)
         inventory: mango.Inventory = mango.Inventory(
             mango.InventorySource.ACCOUNT,
             perp_account.mngo_accrued,
