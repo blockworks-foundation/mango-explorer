@@ -30,7 +30,7 @@ class RandomIdGenerator(IdGenerator):
         # 9223372036854775807 is sys.maxsize for 64-bit systems, with a bit_length of 63.\n",
         # We explicitly want to use a max of 64-bits though, so we use the number instead of\n",
         # sys.maxsize, which could be lower on 32-bit systems or higher on 128-bit systems.\n",
-        return random.randrange(9223372036854775807)
+        return random.randrange(9223372036854775807)  # nosemgrep
 
 
 class MonotonicIdGenerator(IdGenerator):
@@ -38,12 +38,6 @@ class MonotonicIdGenerator(IdGenerator):
         self.__last_generated_id: int = 0
 
     def generate_id(self) -> int:
-        # Previously used a random client ID strategy, which may be appropriate for some people.
-        #   9223372036854775807 is sys.maxsize for 64-bit systems, with a bit_length of 63.
-        #   We explicitly want to use a max of 64-bits though, so we use the number instead of
-        #   sys.maxsize, which could be lower on 32-bit systems or higher on 128-bit systems.
-        # return random.randrange(9223372036854775807)
-        #
         # After this discussion with Max on Discord (https://discord.com/channels/791995070613159966/818978757648842782/884751007656054804):
         #   can you generate monotonic ids?
         #   in case not the result wouldn't be different from what we have rn, which is random display
