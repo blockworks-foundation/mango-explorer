@@ -77,7 +77,7 @@ def create_market_operations(
     dry_run: bool = False,
 ) -> MarketOperations:
     if dry_run:
-        return NullMarketOperations(market.symbol)
+        return NullMarketOperations(market)
 
     loaded_market: Market = ensure_market_loaded(context, market)
     if isinstance(loaded_market, SerumMarket):

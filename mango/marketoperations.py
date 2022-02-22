@@ -25,7 +25,7 @@ from mango.lotsizeconverter import NullLotSizeConverter
 
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
-from .market import Market, DryRunMarket
+from .market import Market
 from .orders import Order, OrderBook
 
 
@@ -213,9 +213,8 @@ class NullMarketInstructionBuilder(MarketInstructionBuilder):
 # is expected, but which will not actually trade.
 #
 class NullMarketOperations(MarketOperations):
-    def __init__(self, market_name: str) -> None:
-        super().__init__(DryRunMarket(market_name))
-        self.market_name: str = market_name
+    def __init__(self, market: Market) -> None:
+        super().__init__(market)
 
     def cancel_order(
         self, order: Order, ok_if_missing: bool = False
@@ -230,7 +229,7 @@ class NullMarketOperations(MarketOperations):
         return []
 
     def load_orderbook(self) -> OrderBook:
-        return OrderBook(self.market_name, NullLotSizeConverter(), [], [])
+        return OrderBook(self.market.symbol, NullLotSizeConverter(), [], [])
 
     def load_my_orders(self) -> typing.Sequence[Order]:
         return []
@@ -248,4 +247,4 @@ class NullMarketOperations(MarketOperations):
         return SYSTEM_PROGRAM_ADDRESS
 
     def __str__(self) -> str:
-        return f"""« NullMarketOperations [{self.market_name}] »"""
+        return f"""« NullMarketOperations [{self.market.symbol}] »"""

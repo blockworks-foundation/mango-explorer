@@ -172,7 +172,6 @@ from .logmessages import expand_log_messages as expand_log_messages
 from .lotsizeconverter import LotSizeConverter as LotSizeConverter
 from .mangoinstruction import MangoInstruction as MangoInstruction
 from .lotsizeconverter import NullLotSizeConverter as NullLotSizeConverter
-from .market import DryRunMarket as DryRunMarket
 from .market import InventorySource as InventorySource
 from .market import Market as Market
 from .marketlookup import CompoundMarketLookup as CompoundMarketLookup
