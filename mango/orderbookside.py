@@ -16,7 +16,7 @@
 import enum
 import typing
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 from decimal import Decimal
 from solana.publickey import PublicKey
 
@@ -141,51 +141,47 @@ class PerpOrderBookSide(AddressableAccount):
 
         stack = [self.root_node]
         orders: typing.List[Order] = []
-        now: datetime = datetime.utcnow().astimezone(timezone.utc)
         while len(stack) > 0:
             index = int(stack.pop())
             node = self.nodes[index]
             if node.type_name == "leaf":
-                expiration = (
-                    node.timestamp.astimezone(timezone.utc)
-                    + timedelta(seconds=float(node.time_in_force))
-                    if node.time_in_force == 0
-                    else Order.NoExpiration
+                expiration = Order.NoExpiration
+                if node.time_in_force != 0:
+                    expiration = node.timestamp.astimezone(timezone.utc) + timedelta(
+                        seconds=float(node.time_in_force)
+                    )
+
+                price = node.key["price"]
+                quantity = node.quantity
+
+                decimals_differential = (
+                    self.perp_market_details.base_instrument.decimals
+                    - self.perp_market_details.quote_token.token.decimals
                 )
-                if (node.time_in_force == 0) or (expiration > now):
-                    price = node.key["price"]
-                    quantity = node.quantity
+                native_to_ui = Decimal(10) ** decimals_differential
+                quote_lot_size = self.perp_market_details.quote_lot_size
+                base_lot_size = self.perp_market_details.base_lot_size
+                actual_price = price * (quote_lot_size / base_lot_size) * native_to_ui
 
-                    decimals_differential = (
-                        self.perp_market_details.base_instrument.decimals
-                        - self.perp_market_details.quote_token.token.decimals
-                    )
-                    native_to_ui = Decimal(10) ** decimals_differential
-                    quote_lot_size = self.perp_market_details.quote_lot_size
-                    base_lot_size = self.perp_market_details.base_lot_size
-                    actual_price = (
-                        price * (quote_lot_size / base_lot_size) * native_to_ui
-                    )
+                base_factor = (
+                    Decimal(10) ** self.perp_market_details.base_instrument.decimals
+                )
+                actual_quantity = (
+                    quantity * self.perp_market_details.base_lot_size
+                ) / base_factor
 
-                    base_factor = (
-                        Decimal(10) ** self.perp_market_details.base_instrument.decimals
+                orders += [
+                    Order(
+                        int(node.key["order_id"]),
+                        node.client_order_id,
+                        node.owner,
+                        order_side,
+                        actual_price,
+                        actual_quantity,
+                        OrderType.UNKNOWN,
+                        expiration=expiration,
                     )
-                    actual_quantity = (
-                        quantity * self.perp_market_details.base_lot_size
-                    ) / base_factor
-
-                    orders += [
-                        Order(
-                            int(node.key["order_id"]),
-                            node.client_order_id,
-                            node.owner,
-                            order_side,
-                            actual_price,
-                            actual_quantity,
-                            OrderType.UNKNOWN,
-                            expiration=expiration,
-                        )
-                    ]
+                ]
             elif node.type_name == "inner":
                 if order_side == Side.BUY:
                     stack = [*stack, node.children[0], node.children[1]]

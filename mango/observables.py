@@ -23,6 +23,7 @@ from datetime import datetime
 from rx.core.typing import Disposable
 from rxpy_backpressure import BackPressure
 
+from .datetimes import local_now
 from .output import output
 
 
@@ -83,7 +84,7 @@ class TimestampedPrintingObserverSubscriber(PrintingObserverSubscriber):
         super().__init__(report_no_output)
 
     def on_next(self, item: typing.Any) -> None:
-        super().on_next(f"{datetime.now()}: {item}")
+        super().on_next(f"{local_now()}: {item}")
 
 
 # # 🥭 CollectingObserverSubscriber class
@@ -140,11 +141,11 @@ class LatestItemObserverSubscriber(
     def __init__(self, initial: TItem) -> None:
         super().__init__()
         self.latest: TItem = initial
-        self.update_timestamp: datetime = datetime.now()
+        self.update_timestamp: datetime = local_now()
 
     def on_next(self, item: TItem) -> None:
         self.latest = item
-        self.update_timestamp = datetime.now()
+        self.update_timestamp = local_now()
 
     def on_error(self, ex: Exception) -> None:
         pass

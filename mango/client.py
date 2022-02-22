@@ -45,6 +45,7 @@ from solana.rpc.types import (
 from solana.transaction import Transaction
 
 from .constants import SOL_DECIMAL_DIVISOR
+from .datetimes import local_now
 from .instructionreporter import InstructionReporter
 from .logmessages import expand_log_messages
 from .text import indent_collection_as_str
@@ -394,7 +395,7 @@ class TransactionWatcher:
         self.collector = collector
 
     def report_on_transaction(self) -> None:
-        started_at: datetime = datetime.now()
+        started_at: datetime = local_now()
         for pause in [
             0.1,
             0.2,
@@ -438,7 +439,7 @@ class TransactionWatcher:
             ):
                 [status] = transaction_response["result"]["value"]
                 if status is not None:
-                    delta: timedelta = datetime.now() - started_at
+                    delta: timedelta = local_now() - started_at
                     time_taken: float = delta.seconds + delta.microseconds / 1000000
 
                     # value should be a dict that looks like:
@@ -493,7 +494,7 @@ class TransactionWatcher:
                     return
             time.sleep(pause)
 
-        delta = datetime.now() - started_at
+        delta = local_now() - started_at
         time_wasted_looking: float = delta.seconds + delta.microseconds / 1000000
         self.collector.add_transaction(
             TransactionStatus(
@@ -1163,15 +1164,15 @@ class BetterClient:
             f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}."
         )
         all_confirmed: typing.List[str] = []
-        start_time: datetime = datetime.now()
+        start_time: datetime = local_now()
         cutoff: datetime = start_time + timedelta(seconds=max_wait_in_seconds)
         for transaction_id in transaction_ids:
-            while datetime.now() < cutoff:
+            while local_now() < cutoff:
                 time.sleep(1)
                 confirmed = self.get_confirmed_transaction(transaction_id)
                 if confirmed is not None:
                     self._logger.info(
-                        f"Confirmed {transaction_id} after {datetime.now() - start_time} seconds."
+                        f"Confirmed {transaction_id} after {local_now() - start_time} seconds."
                     )
                     all_confirmed += [transaction_id]
                     break

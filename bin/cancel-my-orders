@@ -48,7 +48,7 @@ if market is None:
 market_operations = mango.create_market_operations(
     context, wallet, account, market, args.dry_run
 )
-orders = market_operations.load_my_orders()
+orders = market_operations.load_my_orders(include_expired=True)
 if len(orders) == 0:
     mango.output(f"No open orders on {market.symbol}")
 else:

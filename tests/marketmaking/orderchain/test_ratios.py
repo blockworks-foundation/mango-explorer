@@ -3,7 +3,7 @@ import argparse
 from ...context import mango
 from ...fakes import fake_context, fake_model_state, fake_price
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 from mango.marketmaking.orderchain.ratioselement import RatiosElement
@@ -45,8 +45,8 @@ def test_uses_specified_order_parameters() -> None:
     )
     result = actual.process(context, model_state, [])
 
-    assert result[0].expiration > datetime.now() - timedelta(seconds=1)
-    assert result[0].expiration < datetime.now() + timedelta(seconds=5)
+    assert result[0].expiration > mango.utc_now() - timedelta(seconds=1)
+    assert result[0].expiration < mango.utc_now() + timedelta(seconds=5)
     assert result[0].match_limit == 15
     assert result[0].order_type == mango.OrderType.POST_ONLY_SLIDE
 

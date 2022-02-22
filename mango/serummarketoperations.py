@@ -357,13 +357,15 @@ class SerumMarketOperations(MarketOperations):
     def load_orderbook(self) -> OrderBook:
         return self.serum_market.fetch_orderbook(self.context)
 
-    def load_my_orders(self) -> typing.Sequence[Order]:
+    def load_my_orders(self, include_expired: bool = False) -> typing.Sequence[Order]:
         open_orders_address = self.market_instruction_builder.open_orders_address
         if not open_orders_address:
             return []
 
         orderbook: OrderBook = self.load_orderbook()
-        return orderbook.all_orders_for_owner(open_orders_address)
+        return orderbook.all_orders_for_owner(
+            open_orders_address, include_expired=include_expired
+        )
 
     def _build_crank(
         self, limit: Decimal = Decimal(32), add_self: bool = False

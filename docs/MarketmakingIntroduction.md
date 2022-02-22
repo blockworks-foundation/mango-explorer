@@ -67,7 +67,7 @@ try:
     bid, ask = self.calculate_order_prices(price)
     buy_quantity, sell_quantity = self.calculate_order_quantities(price, inventory)
 
-    current_orders = self.market_operations.load_my_orders()
+    current_orders = self.market_operations.load_my_orders(include_expired=True)
     buy_orders = [order for order in current_orders if order.side == mango.Side.BUY]
     if self.orders_require_action(buy_orders, bid, buy_quantity):
         self._logger.info("Cancelling BUY orders.")

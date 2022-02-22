@@ -155,7 +155,7 @@ Ignore:
                     payer + cancellations + place_orders + crank + settle + redeem
                 ).execute(context)
 
-            self.pulse_complete.on_next(datetime.now())
+            self.pulse_complete.on_next(mango.local_now())
         except (
             mango.RateLimitException,
             mango.NodeIsBehindException,

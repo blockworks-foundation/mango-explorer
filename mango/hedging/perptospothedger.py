@@ -18,7 +18,6 @@ import mango
 import traceback
 import typing
 
-from datetime import datetime
 from decimal import Decimal
 
 from .hedger import Hedger
@@ -163,7 +162,7 @@ class PerpToSpotHedger(Hedger):
                     )
                     raise
 
-            self.pulse_complete.on_next(datetime.now())
+            self.pulse_complete.on_next(mango.local_now())
         except (
             mango.RateLimitException,
             mango.NodeIsBehindException,

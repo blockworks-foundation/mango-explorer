@@ -90,7 +90,7 @@ parser.add_argument(
 parser.add_argument(
     "--existing-order-time-in-force-tolerance",
     type=Decimal,
-    default=Decimal("0.001"),
+    default=Decimal(0),
     help="tolerance in time-in-force when matching existing orders or cancelling/replacing",
 )
 parser.add_argument(
@@ -187,7 +187,7 @@ def cleanup(
         )
     )
     cancels: mango.CombinableInstructions = mango.CombinableInstructions.empty()
-    orders = market_operations.load_my_orders()
+    orders = market_operations.load_my_orders(include_expired=True)
     for order in orders:
         cancels += market_instruction_builder.build_cancel_order_instructions(
             order, ok_if_missing=True

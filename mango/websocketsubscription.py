@@ -18,7 +18,6 @@ import logging
 import typing
 import websocket
 
-from datetime import datetime
 from rx.subject.behaviorsubject import BehaviorSubject
 from rx.core.typing import Disposable
 from solana.publickey import PublicKey
@@ -26,6 +25,7 @@ from solana.rpc.types import RPCResponse
 
 from .accountinfo import AccountInfo
 from .context import Context
+from .datetimes import local_now
 from .observables import EventSource
 from .reconnectingwebsocket import ReconnectingWebsocket
 
@@ -61,7 +61,7 @@ class WebSocketSubscription(
             TSubscriptionInstance
         ]()
         self.ws: typing.Optional[ReconnectingWebsocket] = None
-        self.pong: BehaviorSubject = BehaviorSubject(datetime.now())
+        self.pong: BehaviorSubject = BehaviorSubject(local_now())
         self._pong_subscription: typing.Optional[Disposable] = None
 
     @abc.abstractmethod
@@ -309,7 +309,7 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
     def __init__(self, context: Context, ping_interval: int = 10) -> None:
         super().__init__(context, ping_interval)
         self.ws: typing.Optional[ReconnectingWebsocket] = None
-        self.pong: BehaviorSubject = BehaviorSubject(datetime.now())
+        self.pong: BehaviorSubject = BehaviorSubject(local_now())
         self._pong_subscription: typing.Optional[Disposable] = None
 
     def open(self) -> None:

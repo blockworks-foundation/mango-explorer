@@ -64,6 +64,8 @@ from .createmarketoperations import (
     create_market_instruction_builder as create_market_instruction_builder,
 )
 from .createmarketoperations import create_market_operations as create_market_operations
+from .datetimes import local_now as local_now
+from .datetimes import utc_now as utc_now
 from .encoding import decode_binary as decode_binary
 from .encoding import encode_binary as encode_binary
 from .encoding import encode_key as encode_key

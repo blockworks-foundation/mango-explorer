@@ -1,11 +1,9 @@
 import construct
-import datetime
 import mango
 import mango.marketmaking
 import typing
 
 from decimal import Decimal
-from mango.lotsizeconverter import NullLotSizeConverter
 from pyserum.market.market import Market as PySerumMarket
 from pyserum.market.state import MarketState as PySerumMarketState
 from solana.keypair import Keypair
@@ -250,7 +248,7 @@ def fake_price(
         mango.OracleSource(
             "test", "test", mango.SupportedOracleFeature.TOP_BID_AND_OFFER, market
         ),
-        datetime.datetime.now(),
+        mango.utc_now(),
         market,
         bid,
         price,
@@ -337,7 +335,7 @@ def fake_root_bank() -> mango.RootBank:
         [],
         Decimal(0),
         Decimal(0),
-        datetime.datetime.now(),
+        mango.utc_now(),
     )
 
 
@@ -347,7 +345,11 @@ def fake_cache() -> mango.Cache:
 
 
 def fake_root_bank_cache() -> mango.RootBankCache:
-    return mango.RootBankCache(Decimal(1), Decimal(2), datetime.datetime.now())
+    return mango.RootBankCache(
+        Decimal(1),
+        Decimal(2),
+        mango.utc_now(),
+    )
 
 
 def fake_group(address: typing.Optional[PublicKey] = None) -> mango.Group:
@@ -467,7 +469,7 @@ def fake_model_state(
     placed_orders_container = placed_orders_container or fake_placed_orders_container()
     inventory = inventory or fake_inventory()
     orderbook = orderbook or mango.OrderBook(
-        "FAKE", NullLotSizeConverter(), fake_bids(), fake_asks()
+        "FAKE", mango.NullLotSizeConverter(), fake_bids(), fake_asks()
     )
     event_queue = event_queue or mango.NullEventQueue()
     group_watcher: mango.ManualUpdateWatcher[mango.Group] = mango.ManualUpdateWatcher(

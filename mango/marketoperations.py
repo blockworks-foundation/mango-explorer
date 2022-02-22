@@ -139,7 +139,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
         )
 
     @abc.abstractmethod
-    def load_my_orders(self) -> typing.Sequence[Order]:
+    def load_my_orders(self, include_expired: bool = False) -> typing.Sequence[Order]:
         raise NotImplementedError(
             "MarketOperations.load_my_orders() is not implemented on the base type."
         )
@@ -228,7 +228,7 @@ class NullMarketOperations(MarketOperations):
     def load_orderbook(self) -> OrderBook:
         return OrderBook(self.market_name, NullLotSizeConverter(), [], [])
 
-    def load_my_orders(self) -> typing.Sequence[Order]:
+    def load_my_orders(self, include_expired: bool = False) -> typing.Sequence[Order]:
         return []
 
     def settle(self) -> typing.Sequence[str]:

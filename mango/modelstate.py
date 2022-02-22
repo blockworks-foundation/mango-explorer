@@ -135,9 +135,9 @@ class ModelState:
         return self.event_queue_watcher.latest.accounts_to_crank
 
     def current_orders(self) -> typing.Sequence[Order]:
-        self.orderbook
-        all_orders = [*self.bids, *self.asks]
-        return list([o for o in all_orders if o.owner == self.order_owner])
+        return self.orderbook.all_orders_for_owner(
+            self.order_owner, include_expired=True
+        )
 
     def __str__(self) -> str:
         return f"""« ModelState for market '{self.market.symbol}'

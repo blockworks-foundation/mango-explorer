@@ -1,6 +1,6 @@
 import mango
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
 from mango.marketmaking.toleranceorderreconciler import ToleranceOrderReconciler
 
@@ -214,7 +214,7 @@ def test_price_outside_negative_tolerance_no_match() -> None:
 
 
 def test_time_in_force_early_match() -> None:
-    now = datetime.now()
+    now = mango.utc_now()
     actual = ToleranceOrderReconciler(
         Decimal("0.001"), Decimal(0), timedelta(seconds=5)
     )
@@ -232,7 +232,7 @@ def test_time_in_force_early_match() -> None:
 
 
 def test_time_in_force_too_early_no_match() -> None:
-    now = datetime.now()
+    now = mango.utc_now()
     actual = ToleranceOrderReconciler(
         Decimal("0.001"), Decimal(0), timedelta(seconds=5)
     )
@@ -250,7 +250,7 @@ def test_time_in_force_too_early_no_match() -> None:
 
 
 def test_time_in_force_late_match() -> None:
-    now = datetime.now()
+    now = mango.utc_now()
     actual = ToleranceOrderReconciler(
         Decimal("0.001"), Decimal(0), timedelta(seconds=5)
     )
@@ -268,7 +268,7 @@ def test_time_in_force_late_match() -> None:
 
 
 def test_time_in_force_too_late_no_match() -> None:
-    now = datetime.now()
+    now = mango.utc_now()
     actual = ToleranceOrderReconciler(
         Decimal("0.001"), Decimal(0), timedelta(seconds=5)
     )

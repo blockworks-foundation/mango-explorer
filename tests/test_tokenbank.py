@@ -39,7 +39,7 @@ def test_root_bank_constructor() -> None:
     node_bank = fake_seeded_public_key("node bank")
     deposit_index = Decimal(98765)
     borrow_index = Decimal(12345)
-    timestamp = datetime.now()
+    timestamp = mango.utc_now()
 
     actual = mango.RootBank(
         account_info,
