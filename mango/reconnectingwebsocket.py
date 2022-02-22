@@ -18,6 +18,8 @@ import json
 import logging
 import rx
 import rx.subject
+import threading
+import traceback
 import typing
 import websocket
 
@@ -43,6 +45,9 @@ class ReconnectingWebsocket:
         self.connecting: rx.subject.behaviorsubject.BehaviorSubject = (
             rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
         )
+        self.connected: rx.subject.behaviorsubject.BehaviorSubject = (
+            rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
+        )
         self.disconnected: rx.subject.behaviorsubject.BehaviorSubject = (
             rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
         )
@@ -53,6 +58,8 @@ class ReconnectingWebsocket:
             rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
         )
         self.item: rx.subject.subject.Subject = rx.subject.subject.Subject()
+
+        self.__open_event: threading.Event = threading.Event()
 
     def close(self) -> None:
         self._logger.info(f"Closing WebSocket for {self.url}")
@@ -65,12 +72,16 @@ class ReconnectingWebsocket:
 
     def _on_open(self, ws: websocket.WebSocketApp) -> None:
         self._logger.info(f"Opening WebSocket for {self.url}")
+        self.__open_event.set()
         if self.on_open_call:
             self.on_open_call(ws)
 
     def _on_message(self, _: typing.Any, message: str) -> None:
-        data = json.loads(message)
-        self.item.on_next(data)
+        try:
+            data = json.loads(message)
+            self.item.on_next(data)
+        except Exception:
+            self._logger.error(f"Problem sending update: {traceback.format_exc()}")
 
     def _on_error(self, *args: typing.Any) -> None:
         self._logger.warning(f"WebSocket for {self.url} has error {args}")
@@ -88,6 +99,9 @@ class ReconnectingWebsocket:
     def send(self, message: str) -> None:
         self._ws.send(message)
 
+    def wait_until_open(self, timeout: float) -> bool:
+        return self.__open_event.wait(timeout)
+
     def _run(self) -> None:
         while self.reconnect_required:
             self._logger.info(f"WebSocket connecting to: {self.url}")
@@ -100,5 +114,7 @@ class ReconnectingWebsocket:
                 on_ping=self._on_ping,
                 on_pong=self._on_pong,
             )
+            self.connected.on_next(datetime.now())
             self._ws.run_forever(ping_interval=self.ping_interval)
+            self.__open_event.clear()
             self.disconnected.on_next(datetime.now())

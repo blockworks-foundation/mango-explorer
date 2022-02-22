@@ -161,7 +161,8 @@ class ImmediateTradeExecutor(TradeExecutor):
         )
 
         order = Order.from_basic_info(Side.BUY, price, quantity, OrderType.IOC)
-        return market_operations.place_order(order)
+        market_operations.place_order(order)
+        return order
 
     def sell(self, symbol: str, quantity: Decimal) -> Order:
         market_operations: MarketOperations = self._build_market_operations(symbol)
@@ -178,7 +179,8 @@ class ImmediateTradeExecutor(TradeExecutor):
         )
 
         order = Order.from_basic_info(Side.SELL, price, quantity, OrderType.IOC)
-        return market_operations.place_order(order)
+        market_operations.place_order(order)
+        return order
 
     def _build_market_operations(self, symbol: str) -> MarketOperations:
         market = self.context.market_lookup.find_by_symbol(symbol)

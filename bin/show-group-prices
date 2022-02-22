@@ -14,16 +14,15 @@ parser = argparse.ArgumentParser(
 mango.ContextBuilder.add_command_line_parameters(parser)
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    group = mango.Group.load(context)
+    cache = group.fetch_cache(context)
 
-group = mango.Group.load(context)
-cache = group.fetch_cache(context)
-
-mango.output("Group cached oracle prices:")
-for slot in group.slots:
-    if slot.base_instrument is not None:
-        price = group.token_price_from_cache(cache, slot.base_instrument)
-        price_formatted = f"{price.value:,.8f}"
-        mango.output(
-            f"{slot.base_instrument.symbol:<6}: {price_formatted:>18} {group.shared_quote_token.symbol}"
-        )
+    mango.output("Group cached oracle prices:")
+    for slot in group.slots:
+        if slot.base_instrument is not None:
+            price = group.token_price_from_cache(cache, slot.base_instrument)
+            price_formatted = f"{price.value:,.8f}"
+            mango.output(
+                f"{slot.base_instrument.symbol:<6}: {price_formatted:>18} {group.shared_quote_token.symbol}"
+            )

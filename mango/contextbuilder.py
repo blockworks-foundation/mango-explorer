@@ -14,19 +14,18 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 import argparse
-import copy
 import logging
 import os
 import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
+from solana.rpc.commitment import Commitment, Finalized
 
 from .client import (
-    BetterClient,
     ClusterUrlData,
-    TransactionStatusCollector,
-    NullTransactionStatusCollector,
+    TransactionMonitor,
+    NullTransactionMonitor,
 )
 from .constants import MangoConstants
 from .context import Context
@@ -40,6 +39,10 @@ from .instrumentlookup import (
 )
 from .marketlookup import CompoundMarketLookup, MarketLookup
 from .serummarketlookup import SerumMarketLookup
+from .transactionmonitoring import (
+    DequeTransactionStatusCollector,
+    WebSocketTransactionMonitor,
+)
 
 
 # # 🥭 ContextBuilder
@@ -98,7 +101,9 @@ class ContextBuilder:
     # This function centralises some of it to ensure consistency and readability.
     #
     @staticmethod
-    def add_command_line_parameters(parser: argparse.ArgumentParser) -> None:
+    def add_command_line_parameters(
+        parser: argparse.ArgumentParser, monitor_transactions_default: bool = False
+    ) -> None:
         parser.add_argument(
             "--name",
             type=str,
@@ -180,6 +185,24 @@ class ContextBuilder:
             help="How many times to retry fetching data after being given stale data before giving up",
         )
         parser.add_argument(
+            "--monitor-transactions",
+            default=monitor_transactions_default,
+            action="store_true",
+            help="Watch transactions and log their results",
+        )
+        parser.add_argument(
+            "--monitor-transactions-commitment",
+            type=Commitment,
+            default=Finalized,
+            help="Monitor transactions until they reach this commitment level",
+        )
+        parser.add_argument(
+            "--monitor-transactions-timeout",
+            type=float,
+            default=90,
+            help="Time after which to assume a transaction will not reach the specified commitment level",
+        )
+        parser.add_argument(
             "--gma-chunk-size",
             type=Decimal,
             default=None,
@@ -189,7 +212,7 @@ class ContextBuilder:
             "--gma-chunk-pause",
             type=Decimal,
             default=None,
-            help="number of seconds to pause between successive getMultipleAccounts() calls to avoid rate limiting",
+            help="Number of seconds to pause between successive getMultipleAccounts() calls to avoid rate limiting",
         )
         parser.add_argument(
             "--reflink", type=PublicKey, default=None, help="Referral public key"
@@ -227,6 +250,13 @@ class ContextBuilder:
         gma_chunk_size: typing.Optional[Decimal] = args.gma_chunk_size
         gma_chunk_pause: typing.Optional[Decimal] = args.gma_chunk_pause
         reflink: typing.Optional[PublicKey] = args.reflink
+        monitor_transactions: bool = bool(args.monitor_transactions)
+        monitor_transactions_commitment: typing.Optional[
+            Commitment
+        ] = args.monitor_transactions_commitment
+        monitor_transactions_timeout: typing.Optional[
+            float
+        ] = args.monitor_transactions_timeout
 
         # Do this here so build() only ever has to handle the sequence of retry times. (It gets messy
         # passing around the sequnce *plus* the data to reconstruct it for build().)
@@ -257,8 +287,11 @@ class ContextBuilder:
             gma_chunk_size,
             gma_chunk_pause,
             reflink,
-            NullTransactionStatusCollector(),
+            monitor_transactions,
+            monitor_transactions_commitment,
+            monitor_transactions_timeout,
         )
+
         logging.debug(f"{context}")
 
         return context
@@ -287,56 +320,33 @@ class ContextBuilder:
             context.gma_chunk_size,
             context.gma_chunk_pause,
             context.reflink,
-            context.client.transaction_status_collector,
+            not isinstance(context.client.transaction_monitor, NullTransactionMonitor),
+            context.client.transaction_monitor.commitment,
+            context.client.transaction_monitor.transaction_timeout,
         )
 
     @staticmethod
-    def forced_to_devnet(context: Context) -> Context:
-        cluster_name: str = "devnet"
-        cluster_url: ClusterUrlData = ClusterUrlData(
-            rpc=MangoConstants["cluster_urls"][cluster_name]
-        )
-        fresh_context = copy.copy(context)
-        fresh_context.client = BetterClient.from_configuration(
+    def force_to_cluster(context: Context, cluster_name: str) -> Context:
+        return ContextBuilder.build(
             context.name,
             cluster_name,
-            [cluster_url],
-            context.client.commitment,
+            None,  # Can't use parameter cluster URLs if we're switching network
             context.client.skip_preflight,
             context.client.tpu_retransmissions,
-            context.client.encoding,
-            context.client.blockhash_cache_duration,
-            -1,
-            context.client.stale_data_pauses_before_retry,
-            context.client.instruction_reporter,
-            context.client.transaction_status_collector,
-        )
-
-        return fresh_context
-
-    @staticmethod
-    def forced_to_mainnet_beta(context: Context) -> Context:
-        cluster_name: str = "mainnet"
-        cluster_url: ClusterUrlData = ClusterUrlData(
-            rpc=MangoConstants["cluster_urls"][cluster_name]
-        )
-        fresh_context = copy.copy(context)
-        fresh_context.client = BetterClient.from_configuration(
-            context.name,
-            cluster_name,
-            [cluster_url],
             context.client.commitment,
-            context.client.skip_preflight,
-            context.client.tpu_retransmissions,
             context.client.encoding,
             context.client.blockhash_cache_duration,
-            -1,
+            context.client.rpc_caller.all_providers[0].http_request_timeout,
             context.client.stale_data_pauses_before_retry,
-            context.client.instruction_reporter,
-            context.client.transaction_status_collector,
+            None,  # Use new cluster's default Group name
+            None,  # Use new cluster's default Group address
+            None,  # Use new cluster's default Program address
+            None,  # Use new cluster's default Serum address
+            context.gma_chunk_size,
+            context.gma_chunk_pause,
+            context.reflink,
+            False,  # Don't try to watch transactions on a switched Context
         )
-
-        return fresh_context
 
     @staticmethod
     def build(
@@ -357,7 +367,9 @@ class ContextBuilder:
         gma_chunk_size: typing.Optional[Decimal] = None,
         gma_chunk_pause: typing.Optional[Decimal] = None,
         reflink: typing.Optional[PublicKey] = None,
-        transaction_status_collector: TransactionStatusCollector = NullTransactionStatusCollector(),
+        monitor_transactions: typing.Optional[bool] = None,
+        monitor_transactions_commitment: typing.Optional[Commitment] = None,
+        monitor_transactions_timeout: typing.Optional[float] = None,
     ) -> "Context":
         def __public_key_or_none(
             address: typing.Optional[str],
@@ -549,7 +561,20 @@ class ContextBuilder:
             )
         market_lookup: MarketLookup = all_market_lookup
 
-        return Context(
+        actual_monitor_transactions_commitment: Commitment = (
+            monitor_transactions_commitment or Finalized
+        )
+        actual_monitor_transactions_timeout = monitor_transactions_timeout or 90
+        actual_transaction_monitor: TransactionMonitor = NullTransactionMonitor()
+        if monitor_transactions:
+            actual_transaction_monitor = WebSocketTransactionMonitor(
+                actual_cluster_urls[0].ws,
+                commitment=actual_monitor_transactions_commitment,
+                transaction_timeout=actual_monitor_transactions_timeout,
+                collector=DequeTransactionStatusCollector(),
+            )
+
+        context = Context(
             actual_name,
             actual_cluster,
             actual_cluster_urls,
@@ -569,5 +594,7 @@ class ContextBuilder:
             actual_reflink,
             instrument_lookup,
             market_lookup,
-            transaction_status_collector,
+            actual_transaction_monitor,
         )
+
+        return context

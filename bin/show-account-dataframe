@@ -29,21 +29,21 @@ if address is None:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     address = wallet.address
 
-context: mango.Context = mango.ContextBuilder.from_command_line_parameters(args)
-group: mango.Group = mango.Group.load(context)
-cache: mango.Cache = mango.Cache.load(context, group.cache)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    group: mango.Group = mango.Group.load(context)
+    cache: mango.Cache = mango.Cache.load(context, group.cache)
 
-address_account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(
-    context, address
-)
-if address_account_info is None:
-    raise Exception(f"Could not load account data from address {address}")
+    address_account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(
+        context, address
+    )
+    if address_account_info is None:
+        raise Exception(f"Could not load account data from address {address}")
 
-mango_accounts: typing.Sequence[mango.Account]
-if len(address_account_info.data) == mango.layouts.MANGO_ACCOUNT.sizeof():
-    mango_accounts = [mango.Account.parse(address_account_info, group, cache)]
-else:
-    mango_accounts = mango.Account.load_all_for_owner(context, address, group)
+    mango_accounts: typing.Sequence[mango.Account]
+    if len(address_account_info.data) == mango.layouts.MANGO_ACCOUNT.sizeof():
+        mango_accounts = [mango.Account.parse(address_account_info, group, cache)]
+    else:
+        mango_accounts = mango.Account.load_all_for_owner(context, address, group)
 
 for account in mango_accounts:
     pandas.set_option("display.max_columns", None)

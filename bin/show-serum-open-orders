@@ -24,30 +24,30 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-address: typing.Optional[PublicKey] = args.address
-if address is None:
-    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-    address = wallet.address
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    address: typing.Optional[PublicKey] = args.address
+    if address is None:
+        wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+        address = wallet.address
 
-market = context.market_lookup.find_by_symbol(args.market)
-if market is None:
-    raise Exception(f"Could not find market {args.market}")
+    market = context.market_lookup.find_by_symbol(args.market)
+    if market is None:
+        raise Exception(f"Could not find market {args.market}")
 
-market = mango.ensure_market_loaded(context, market)
-if not isinstance(market, mango.SerumMarket):
-    raise Exception(f"Market {args.market} is not a Serum market: {market}")
+    market = mango.ensure_market_loaded(context, market)
+    if not isinstance(market, mango.SerumMarket):
+        raise Exception(f"Market {args.market} is not a Serum market: {market}")
 
-all_open_orders_for_market = mango.OpenOrders.load_for_market_and_owner(
-    context,
-    market.address,
-    address,
-    context.serum_program_address,
-    market.base.decimals,
-    market.quote.decimals,
-)
-mango.output(
-    f"Found {len(all_open_orders_for_market)} Serum OpenOrders account(s) for market {market.symbol}."
-)
-for open_orders in all_open_orders_for_market:
-    mango.output(open_orders)
+    all_open_orders_for_market = mango.OpenOrders.load_for_market_and_owner(
+        context,
+        market.address,
+        address,
+        context.serum_program_address,
+        market.base.decimals,
+        market.quote.decimals,
+    )
+    mango.output(
+        f"Found {len(all_open_orders_for_market)} Serum OpenOrders account(s) for market {market.symbol}."
+    )
+    for open_orders in all_open_orders_for_market:
+        mango.output(open_orders)

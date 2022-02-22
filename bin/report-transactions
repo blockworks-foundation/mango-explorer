@@ -9,7 +9,6 @@ import rx
 import rx.subject.subject
 import rx.operators as ops
 import sys
-import traceback
 import typing
 
 from solana.publickey import PublicKey
@@ -141,20 +140,18 @@ def summariser(
     return summarise
 
 
-try:
-    since_signature: str = ""
-    if os.path.isfile(args.since_state_filename):
-        with open(args.since_state_filename, "r") as state_file:
-            since_signature = state_file.read()
+since_signature: str = ""
+if os.path.isfile(args.since_state_filename):
+    with open(args.since_state_filename, "r") as state_file:
+        since_signature = state_file.read()
 
-    instruction_type = args.instruction_type
-    sender = args.sender
+instruction_type = args.instruction_type
+sender = args.sender
 
-    context = mango.ContextBuilder.from_command_line_parameters(args)
+logging.info(f"Since signature: {since_signature}")
+logging.info(f"Filter to instruction type: {instruction_type}")
 
-    logging.info(f"Since signature: {since_signature}")
-    logging.info(f"Filter to instruction type: {instruction_type}")
-
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
     first_item_capturer = mango.CaptureFirstItem()
     signatures = mango.fetch_all_recent_transaction_signatures(context)
     oldest_first = reversed(
@@ -203,11 +200,3 @@ try:
     if len(signatures) > 0:
         with open(args.since_state_filename, "w") as state_file:
             state_file.write(signatures[0])
-except Exception as exception:
-    logging.critical(
-        f"report-transactions stopped because of exception: {exception} - {traceback.format_exc()}"
-    )
-except:
-    logging.critical(
-        f"report-transactions stopped because of uncatchable error: {traceback.format_exc()}"
-    )

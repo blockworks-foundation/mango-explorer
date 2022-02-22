@@ -127,7 +127,9 @@ class MarketOperations(metaclass=abc.ABCMeta):
         )
 
     @abc.abstractmethod
-    def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
+    def place_order(
+        self, order: Order, crank_limit: Decimal = Decimal(5)
+    ) -> typing.Sequence[str]:
         raise NotImplementedError(
             "MarketOperations.place_order() is not implemented on the base type."
         )
@@ -221,9 +223,11 @@ class NullMarketOperations(MarketOperations):
         self._logger.info(f"[Dry Run] Not cancelling order {order}.")
         return [""]
 
-    def place_order(self, order: Order, crank_limit: Decimal = Decimal(5)) -> Order:
+    def place_order(
+        self, order: Order, crank_limit: Decimal = Decimal(5)
+    ) -> typing.Sequence[str]:
         self._logger.info(f"[Dry Run] Not placing order {order}.")
-        return order
+        return []
 
     def load_orderbook(self) -> OrderBook:
         return OrderBook(self.market_name, NullLotSizeConverter(), [], [])

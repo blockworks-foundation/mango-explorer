@@ -34,25 +34,25 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context: mango.Context = mango.ContextBuilder.from_command_line_parameters(args)
-wallet: mango.Wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-owner_address: PublicKey = args.owner or wallet.address
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    wallet: mango.Wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    owner_address: PublicKey = args.owner or wallet.address
 
-token: mango.Token
-if args.mint is not None:
-    token = mango.Token(args.symbol, args.symbol, args.decimals, args.mint)
-else:
-    instrument: mango.Instrument = context.instrument_lookup.find_by_symbol_or_raise(
-        args.symbol
-    )
-    token = mango.Token.ensure(instrument)
-token_accounts: typing.Sequence[
-    mango.TokenAccount
-] = mango.TokenAccount.fetch_all_for_owner_and_token(context, owner_address, token)
+    token: mango.Token
+    if args.mint is not None:
+        token = mango.Token(args.symbol, args.symbol, args.decimals, args.mint)
+    else:
+        instrument: mango.Instrument = (
+            context.instrument_lookup.find_by_symbol_or_raise(args.symbol)
+        )
+        token = mango.Token.ensure(instrument)
+    token_accounts: typing.Sequence[
+        mango.TokenAccount
+    ] = mango.TokenAccount.fetch_all_for_owner_and_token(context, owner_address, token)
 
-if len(token_accounts) == 0:
-    mango.output(f"No token accounts for {token}.")
-else:
-    mango.output(f"{token.name}:")
-    for account in token_accounts:
-        mango.output(f"    {account.address}: {account.value}")
+    if len(token_accounts) == 0:
+        mango.output(f"No token accounts for {token}.")
+    else:
+        mango.output(f"{token.name}:")
+        for account in token_accounts:
+            mango.output(f"    {account.address}: {account.value}")

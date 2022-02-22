@@ -21,14 +21,14 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-group = mango.Group.load(context)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    group = mango.Group.load(context)
 
-token = context.instrument_lookup.find_by_symbol(args.symbol)
-if token is None:
-    raise Exception(f"Could not find token {args.symbol} in group {group.address}")
+    token = context.instrument_lookup.find_by_symbol(args.symbol)
+    if token is None:
+        raise Exception(f"Could not find token {args.symbol} in group {group.address}")
 
-token_bank = group.token_bank_by_instrument(token)
+    token_bank = group.token_bank_by_instrument(token)
 
-interest_rates = token_bank.fetch_interest_rates(context)
-mango.output(interest_rates)
+    interest_rates = token_bank.fetch_interest_rates(context)
+    mango.output(interest_rates)

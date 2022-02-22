@@ -5,7 +5,6 @@ import logging
 import os
 import os.path
 import sys
-import traceback
 
 from decimal import Decimal
 
@@ -33,7 +32,7 @@ parser.add_argument(
     "--wait",
     action="store_true",
     default=False,
-    help="wait until the transaction is confirmed",
+    help="wait until the transactions are confirmed",
 )
 parser.add_argument(
     "--dry-run",
@@ -43,8 +42,7 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-try:
-    context = mango.ContextBuilder.from_command_line_parameters(args)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
     adjustment_factor = args.adjustment_factor
@@ -60,11 +58,3 @@ try:
 
     order = trade_executor.buy(args.symbol, args.quantity)
     logging.info(f"Buy completed for {order}")
-except Exception as exception:
-    logging.critical(
-        f"Buy stopped because of exception: {exception} - {traceback.format_exc()}"
-    )
-except:
-    logging.critical(
-        f"Buy stopped because of uncatchable error: {traceback.format_exc()}"
-    )

@@ -36,7 +36,7 @@ parser.add_argument(
     "--wait",
     action="store_true",
     default=False,
-    help="wait until the transaction is confirmed",
+    help="wait until the transactions are confirmed",
 )
 parser.add_argument(
     "--dry-run",
@@ -46,78 +46,88 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
-wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-logging.info(f"Wallet address: {wallet.address}")
+    logging.info(f"Wallet address: {wallet.address}")
 
-instrument = context.instrument_lookup.find_by_symbol(args.symbol)
-if instrument is None:
-    raise Exception(f"Could not find details of token with symbol {args.symbol}.")
-token: mango.Token = mango.Token.ensure(instrument)
+    instrument = context.instrument_lookup.find_by_symbol(args.symbol)
+    if instrument is None:
+        raise Exception(f"Could not find details of token with symbol {args.symbol}.")
+    token: mango.Token = mango.Token.ensure(instrument)
 
-spl_token = SolanaSPLToken(
-    context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair
-)
-source_accounts = spl_token.get_accounts(wallet.address)
-source_account = source_accounts["result"]["value"][0]
-source = PublicKey(source_account["pubkey"])
-
-# Is the address an actual token account? Or is it the SOL address of the owner?
-account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(
-    context, args.address
-)
-if account_info is None:
-    raise Exception(f"Could not find account at address {args.address}.")
-
-destination: PublicKey
-if account_info.owner == mango.SYSTEM_PROGRAM_ADDRESS:
-    # This is a root wallet account - get the token account to use.
-    destination = mango.TokenAccount.find_or_create_token_address_to_use(
-        context, wallet, args.address, token
+    spl_token = SolanaSPLToken(
+        context.client.compatible_client, token.mint, TOKEN_PROGRAM_ID, wallet.keypair
     )
-elif account_info.owner == TOKEN_PROGRAM_ID and len(account_info.data) == ACCOUNT_LEN:
-    # This is not a root wallet account, this is an SPL token account.
-    destination = args.address
-else:
-    raise Exception(
-        f"Account {args.address} is neither a root wallet account nor an SPL token account."
+    source_accounts = spl_token.get_accounts(wallet.address)
+    source_account = source_accounts["result"]["value"][0]
+    source = PublicKey(source_account["pubkey"])
+
+    # Is the address an actual token account? Or is it the SOL address of the owner?
+    account_info: typing.Optional[mango.AccountInfo] = mango.AccountInfo.load(
+        context, args.address
     )
+    if account_info is None:
+        raise Exception(f"Could not find account at address {args.address}.")
 
-owner = wallet.keypair
-amount = int(args.quantity * Decimal(10**token.decimals))
-
-mango.output(
-    "Balance:",
-    source_account["account"]["data"]["parsed"]["info"]["tokenAmount"][
-        "uiAmountString"
-    ],
-    token.name,
-)
-text_amount = f"{amount} {token.name} (@ {token.decimals} decimal places)"
-mango.output(f"Sending {text_amount}")
-mango.output(f"    From: {source}")
-mango.output(f"      To: {destination}")
-
-if args.dry_run:
-    mango.output("Skipping actual transfer - dry run.")
-else:
-    transfer_response = spl_token.transfer(
-        source,
-        destination,
-        owner,
-        amount,
-        opts=TxOpts(preflight_commitment=context.client.commitment),
-    )
-    transaction_ids = [transfer_response["result"]]
-    mango.output(f"Transaction IDs: {transaction_ids}")
-    if args.wait:
-        context.client.wait_for_confirmation(transaction_ids)
-
-        updated_balance = spl_token.get_balance(source)
-        updated_balance_text = updated_balance["result"]["value"]["uiAmountString"]
-        mango.output(
-            f"{text_amount} sent. Balance now: {updated_balance_text} {token.name}"
+    destination: PublicKey
+    if account_info.owner == mango.SYSTEM_PROGRAM_ADDRESS:
+        # This is a root wallet account - get the token account to use.
+        destination = mango.TokenAccount.find_or_create_token_address_to_use(
+            context, wallet, args.address, token
         )
+    elif (
+        account_info.owner == TOKEN_PROGRAM_ID and len(account_info.data) == ACCOUNT_LEN
+    ):
+        # This is not a root wallet account, this is an SPL token account.
+        destination = args.address
     else:
-        mango.output(f"{text_amount} sent.")
+        raise Exception(
+            f"Account {args.address} is neither a root wallet account nor an SPL token account."
+        )
+
+    owner = wallet.keypair
+    amount = int(args.quantity * Decimal(10**token.decimals))
+
+    mango.output(
+        "Balance:",
+        source_account["account"]["data"]["parsed"]["info"]["tokenAmount"][
+            "uiAmountString"
+        ],
+        token.name,
+    )
+    text_amount = f"{amount} {token.name} (@ {token.decimals} decimal places)"
+    mango.output(f"Sending {text_amount}")
+    mango.output(f"    From: {source}")
+    mango.output(f"      To: {destination}")
+
+    if args.dry_run:
+        mango.output("Skipping actual transfer - dry run.")
+    else:
+        transfer_response = spl_token.transfer(
+            source,
+            destination,
+            owner,
+            amount,
+            opts=TxOpts(preflight_commitment=context.client.commitment),
+        )
+        signatures = [transfer_response["result"]]
+
+        if args.wait:
+            mango.output("Waiting on transaction signatures:")
+            mango.output(mango.indent_collection_as_str(signatures, 1))
+            results = mango.WebSocketTransactionMonitor.wait_for_all(
+                context.client.cluster_ws_url, signatures
+            )
+            mango.output("Transaction results:")
+            mango.output(mango.indent_collection_as_str(results, 1))
+
+            updated_balance = spl_token.get_balance(source)
+            updated_balance_text = updated_balance["result"]["value"]["uiAmountString"]
+            mango.output(
+                f"{text_amount} sent. Balance now: {updated_balance_text} {token.name}"
+            )
+        else:
+            mango.output("Transaction signatures:")
+            mango.output(mango.indent_collection_as_str(signatures, 1))
+            mango.output(f"{text_amount} sent.")

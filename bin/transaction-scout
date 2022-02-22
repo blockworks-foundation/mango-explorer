@@ -5,7 +5,6 @@ import logging
 import os
 import os.path
 import sys
-import traceback
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
@@ -24,20 +23,9 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-try:
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
     signature = args.signature
-
-    context = mango.ContextBuilder.from_command_line_parameters(args)
-
     logging.info(f"Signature: {signature}")
 
     report = mango.TransactionScout.load(context, signature)
     mango.output(report)
-except Exception as exception:
-    logging.critical(
-        f"transaction-scout stopped because of exception: {exception} - {traceback.format_exc()}"
-    )
-except:
-    logging.critical(
-        f"transaction-scout stopped because of uncatchable error: {traceback.format_exc()}"
-    )

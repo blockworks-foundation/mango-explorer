@@ -35,12 +35,14 @@ def create_oracle_provider(context: Context, provider_name: str) -> OracleProvid
     elif proper_provider_name == "PYTH":
         return pythnetwork.PythOracleProvider(context)
     elif proper_provider_name == "PYTH-MAINNET":
-        mainnet_beta_pyth_context: Context = ContextBuilder.forced_to_mainnet_beta(
-            context
+        mainnet_beta_pyth_context: Context = ContextBuilder.force_to_cluster(
+            context, "mainnet"
         )
         return pythnetwork.PythOracleProvider(mainnet_beta_pyth_context)
     elif proper_provider_name == "PYTH-DEVNET":
-        devnet_pyth_context: Context = ContextBuilder.forced_to_devnet(context)
+        devnet_pyth_context: Context = ContextBuilder.force_to_cluster(
+            context, "devnet"
+        )
         return pythnetwork.PythOracleProvider(devnet_pyth_context)
     elif proper_provider_name == "STUB":
         return stub.StubOracleProvider()

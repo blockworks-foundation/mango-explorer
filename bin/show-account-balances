@@ -31,48 +31,47 @@ if address is None:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     address = wallet.address
 
-context: mango.Context = mango.ContextBuilder.from_command_line_parameters(args)
-group: mango.Group = mango.Group.load(context)
-cache: mango.Cache = mango.Cache.load(context, group.cache)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    group: mango.Group = mango.Group.load(context)
+    cache: mango.Cache = mango.Cache.load(context, group.cache)
 
-logging.info(f"Address: {address}")
+    logging.info(f"Address: {address}")
 
-balances: typing.List[mango.InstrumentValue] = []
-sol_balance = context.client.get_balance(address)
-balances += [mango.InstrumentValue(mango.SolToken, sol_balance)]
+    balances: typing.List[mango.InstrumentValue] = []
+    sol_balance = context.client.get_balance(address)
+    balances += [mango.InstrumentValue(mango.SolToken, sol_balance)]
 
-for slot_token_bank in group.tokens:
-    if isinstance(slot_token_bank.token, mango.Token):
-        balance = mango.InstrumentValue.fetch_total_value(
-            context, address, slot_token_bank.token
-        )
-        balances += [balance]
-
-mango.output(f"\nToken Balances [{address}]:")
-total_in_wallet: mango.InstrumentValue = mango.InstrumentValue(
-    group.shared_quote_token, Decimal(0)
-)
-for balance in balances:
-    if balance.value != 0:
-        balance_text: str = f"{balance} "
-        value_text: str = ""
-        if balance.token == group.shared_quote_token:
-            total_in_wallet = total_in_wallet + balance
-            value_text = f" worth {balance}"
-        else:
-            slot: typing.Optional[mango.GroupSlot] = group.slot_by_instrument_or_none(
-                balance.token
+    for slot_token_bank in group.tokens:
+        if isinstance(slot_token_bank.token, mango.Token):
+            balance = mango.InstrumentValue.fetch_total_value(
+                context, address, slot_token_bank.token
             )
-            if slot is not None:
-                cached_token_price: mango.InstrumentValue = (
-                    group.token_price_from_cache(cache, slot.base_instrument)
-                )
-                balance_value: mango.InstrumentValue = balance * cached_token_price
-                total_in_wallet += balance_value
-                value_text = f" worth {balance_value}"
-        mango.output(f"               {balance_text:<45}{value_text}")
-mango.output(f"Total Value:   {total_in_wallet}")
+            balances += [balance]
 
+    mango.output(f"\nToken Balances [{address}]:")
+    total_in_wallet: mango.InstrumentValue = mango.InstrumentValue(
+        group.shared_quote_token, Decimal(0)
+    )
+    for balance in balances:
+        if balance.value != 0:
+            balance_text: str = f"{balance} "
+            value_text: str = ""
+            if balance.token == group.shared_quote_token:
+                total_in_wallet = total_in_wallet + balance
+                value_text = f" worth {balance}"
+            else:
+                slot: typing.Optional[
+                    mango.GroupSlot
+                ] = group.slot_by_instrument_or_none(balance.token)
+                if slot is not None:
+                    cached_token_price: mango.InstrumentValue = (
+                        group.token_price_from_cache(cache, slot.base_instrument)
+                    )
+                    balance_value: mango.InstrumentValue = balance * cached_token_price
+                    total_in_wallet += balance_value
+                    value_text = f" worth {balance_value}"
+            mango.output(f"               {balance_text:<45}{value_text}")
+    mango.output(f"Total Value:   {total_in_wallet}")
 
 mango_accounts = mango.Account.load_all_for_owner(context, address, group)
 grand_total: mango.InstrumentValue = mango.InstrumentValue(

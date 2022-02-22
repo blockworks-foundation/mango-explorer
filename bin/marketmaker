@@ -24,7 +24,9 @@ from mango.marketmaking.orderchain import chainbuilder  # nopep8
 parser = argparse.ArgumentParser(
     description="Runs a marketmaker against a particular market."
 )
-mango.ContextBuilder.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(
+    parser, monitor_transactions_default=True
+)
 mango.Wallet.add_command_line_parameters(parser)
 chainbuilder.ChainBuilder.add_command_line_parameters(parser)
 parser.add_argument(
@@ -174,187 +176,206 @@ def cleanup(
         market_operations.settle()
 
 
-context = mango.ContextBuilder.from_command_line_parameters(args)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    disposer = mango.DisposePropagator()
+    manager = mango.IndividualWebSocketSubscriptionManager(context)
+    disposer.add_disposable(manager)
+    health_check = mango.HealthCheck()
+    disposer.add_disposable(health_check)
 
-disposer = mango.DisposePropagator()
-manager = mango.IndividualWebSocketSubscriptionManager(context)
-disposer.add_disposable(manager)
-health_check = mango.HealthCheck()
-disposer.add_disposable(health_check)
-
-wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-group = mango.Group.load(context, context.group_address)
-account = mango.Account.load_for_owner_by_address(
-    context, wallet.address, group, args.account_address
-)
-
-market = mango.load_market_by_symbol(context, args.market)
-
-# The market index is also the index of the base token in the group's token list.
-if market.quote != group.shared_quote_token:
-    raise Exception(
-        f"Group {group.name} uses shared quote token {group.shared_quote_token.symbol}/{group.shared_quote_token.mint}, but market {market.symbol} uses quote token {market.quote.symbol}/{market.quote.mint}."
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    group = mango.Group.load(context, context.group_address)
+    account = mango.Account.load_for_owner_by_address(
+        context, wallet.address, group, args.account_address
     )
 
-cleanup(context, wallet, account, market, args.dry_run)
+    market = mango.load_market_by_symbol(context, args.market)
 
-
-hedger: mango.hedging.Hedger = mango.hedging.NullHedger()
-if args.hedging_market is not None:
-    if not isinstance(market, mango.PerpMarket):
-        raise Exception(f"Cannot hedge - market {market.symbol} is not a perp market.")
-
-    underlying_market: mango.PerpMarket = market
-
-    hedging_market_symbol = args.hedging_market
-    hedging_market_stub = context.market_lookup.find_by_symbol(hedging_market_symbol)
-    if hedging_market_stub is None:
-        raise Exception(f"Could not find market {hedging_market_symbol}")
-
-    hedging_market = mango.ensure_market_loaded(context, hedging_market_stub)
-    if not isinstance(hedging_market, mango.SpotMarket):
-        raise Exception(f"Market {hedging_market_symbol} is not a spot market.")
-
-    logging.info(f"Hedging on {hedging_market.symbol}")
-
-    hedging_market_operations: mango.MarketOperations = mango.create_market_operations(
-        context, wallet, account, hedging_market, args.dry_run
-    )
-    if not isinstance(hedging_market_operations, mango.SpotMarketOperations):
+    # The market index is also the index of the base token in the group's token list.
+    if market.quote != group.shared_quote_token:
         raise Exception(
-            f"MarketOperations for {hedging_market_symbol} is not a SpotMarketOperations."
+            f"Group {group.name} uses shared quote token {group.shared_quote_token.symbol}/{group.shared_quote_token.mint}, but market {market.symbol} uses quote token {market.quote.symbol}/{market.quote.mint}."
         )
 
-    target_balance: typing.Optional[mango.TargetBalance] = args.hedging_target_balance
-    if target_balance is None:
-        target_balance = mango.FixedTargetBalance(
-            hedging_market.base.symbol, Decimal(0)
+    cleanup(context, wallet, account, market, args.dry_run)
+
+    hedger: mango.hedging.Hedger = mango.hedging.NullHedger()
+    if args.hedging_market is not None:
+        if not isinstance(market, mango.PerpMarket):
+            raise Exception(
+                f"Cannot hedge - market {market.symbol} is not a perp market."
+            )
+
+        underlying_market: mango.PerpMarket = market
+
+        hedging_market_symbol = args.hedging_market
+        hedging_market_stub = context.market_lookup.find_by_symbol(
+            hedging_market_symbol
         )
-    hedger = mango.hedging.PerpToSpotHedger(
-        group,
-        underlying_market,
-        hedging_market,
-        hedging_market_operations,
-        args.hedging_max_price_slippage_factor,
-        args.hedging_max_chunk_quantity,
-        target_balance,
-        args.hedging_action_threshold,
-        args.hedging_pulse_pause_count,
+        if hedging_market_stub is None:
+            raise Exception(f"Could not find market {hedging_market_symbol}")
+
+        hedging_market = mango.ensure_market_loaded(context, hedging_market_stub)
+        if not isinstance(hedging_market, mango.SpotMarket):
+            raise Exception(f"Market {hedging_market_symbol} is not a spot market.")
+
+        logging.info(f"Hedging on {hedging_market.symbol}")
+
+        hedging_market_operations: mango.MarketOperations = (
+            mango.create_market_operations(
+                context, wallet, account, hedging_market, args.dry_run
+            )
+        )
+        if not isinstance(hedging_market_operations, mango.SpotMarketOperations):
+            raise Exception(
+                f"MarketOperations for {hedging_market_symbol} is not a SpotMarketOperations."
+            )
+
+        target_balance: typing.Optional[
+            mango.TargetBalance
+        ] = args.hedging_target_balance
+        if target_balance is None:
+            target_balance = mango.FixedTargetBalance(
+                hedging_market.base.symbol, Decimal(0)
+            )
+        hedger = mango.hedging.PerpToSpotHedger(
+            group,
+            underlying_market,
+            hedging_market,
+            hedging_market_operations,
+            args.hedging_max_price_slippage_factor,
+            args.hedging_max_chunk_quantity,
+            target_balance,
+            args.hedging_action_threshold,
+            args.hedging_pulse_pause_count,
+        )
+
+    order_reconciler: mango.marketmaking.OrderReconciler
+    if args.existing_order_tolerance < 0:
+        order_reconciler = mango.marketmaking.AlwaysReplaceOrderReconciler()
+    else:
+        order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
+            args.existing_order_tolerance, args.existing_order_tolerance
+        )
+
+    desired_orders_chain: chain.Chain = (
+        chainbuilder.ChainBuilder.from_command_line_parameters(args)
     )
+    logging.info(f"Desired orders chain: {desired_orders_chain}")
 
-
-order_reconciler: mango.marketmaking.OrderReconciler
-if args.existing_order_tolerance < 0:
-    order_reconciler = mango.marketmaking.AlwaysReplaceOrderReconciler()
-else:
-    order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
-        args.existing_order_tolerance, args.existing_order_tolerance
+    market_instruction_builder: mango.MarketInstructionBuilder = (
+        mango.create_market_instruction_builder(
+            context, wallet, account, market, args.dry_run
+        )
     )
-
-desired_orders_chain: chain.Chain = (
-    chainbuilder.ChainBuilder.from_command_line_parameters(args)
-)
-logging.info(f"Desired orders chain: {desired_orders_chain}")
-
-market_instruction_builder: mango.MarketInstructionBuilder = (
-    mango.create_market_instruction_builder(
-        context, wallet, account, market, args.dry_run
-    )
-)
-market_maker = mango.marketmaking.MarketMaker(
-    wallet,
-    market,
-    market_instruction_builder,
-    desired_orders_chain,
-    order_reconciler,
-    args.redeem_threshold,
-)
-
-oracle_provider: mango.OracleProvider = mango.create_oracle_provider(
-    context, args.oracle_provider
-)
-oracle_market: mango.LoadedMarket = (
-    market
-    if args.oracle_market is None
-    else mango.load_market_by_symbol(context, args.oracle_market)
-)
-oracle = oracle_provider.oracle_for_market(context, oracle_market)
-if oracle is None:
-    raise Exception(
-        f"Could not find oracle for market {oracle_market.symbol} from provider {args.oracle_provider}."
-    )
-
-model_state_builder: mango.marketmaking.ModelStateBuilder = (
-    mango.marketmaking.model_state_builder_factory(
-        args.update_mode,
-        context,
-        disposer,
-        manager,
-        health_check,
+    market_maker = mango.marketmaking.MarketMaker(
         wallet,
-        group,
-        account,
         market,
-        oracle,
+        market_instruction_builder,
+        desired_orders_chain,
+        order_reconciler,
+        args.redeem_threshold,
     )
-)
 
-health_check.add("marketmaker_pulse", market_maker.pulse_complete)
+    oracle_provider: mango.OracleProvider = mango.create_oracle_provider(
+        context, args.oracle_provider
+    )
+    oracle_market: mango.LoadedMarket = (
+        market
+        if args.oracle_market is None
+        else mango.load_market_by_symbol(context, args.oracle_market)
+    )
+    oracle = oracle_provider.oracle_for_market(context, oracle_market)
+    if oracle is None:
+        raise Exception(
+            f"Could not find oracle for market {oracle_market.symbol} from provider {args.oracle_provider}."
+        )
 
-logging.info(f"Current assets in account {account.address} (owner: {account.owner}):")
-mango.InstrumentValue.report(
-    [asset for asset in account.net_values if asset is not None], logging.info
-)
+    model_state_builder: mango.marketmaking.ModelStateBuilder = (
+        mango.marketmaking.model_state_builder_factory(
+            args.update_mode,
+            context,
+            disposer,
+            manager,
+            health_check,
+            wallet,
+            group,
+            account,
+            market,
+            oracle,
+        )
+    )
 
-manager.open()
+    health_check.add("marketmaker_pulse", market_maker.pulse_complete)
 
-
-def combined_pulse_action(_: int) -> None:
-    try:
-        context.client.require_data_from_fresh_slot()
-        model_state: mango.ModelState = model_state_builder.build(context)
-        market_maker.pulse(context, model_state)
-        hedger.pulse(context, model_state)
-    except Exception:
-        logging.error(f"Pulse action failed: {traceback.format_exc()}")
-
-
-def marketmaking_pulse_action(_: int) -> None:
-    try:
-        context.client.require_data_from_fresh_slot()
-        model_state: mango.ModelState = model_state_builder.build(context)
-        market_maker.pulse(context, model_state)
-    except Exception:
-        logging.error(f"Pulse action failed: {traceback.format_exc()}")
-
-
-def hedging_pulse_action(_: int) -> None:
-    try:
-        model_state: mango.ModelState = model_state_builder.build(context)
-        hedger.pulse(context, model_state)
-    except Exception:
-        logging.error(f"Pulse action failed: {traceback.format_exc()}")
-
-
-hedging_pulse_interval: float = args.hedging_pulse_interval or args.pulse_interval
-separate_hedge_pulse = False
-if isinstance(hedger, mango.hedging.NullHedger):
     logging.info(
-        f"Using a pulse action with an interval of {args.pulse_interval} seconds."
+        f"Current assets in account {account.address} (owner: {account.owner}):"
     )
-    pulse_action = marketmaking_pulse_action
-elif hedging_pulse_interval == args.pulse_interval:
-    logging.info(
-        f"Using a combined pulse action with an interval of {args.pulse_interval} seconds."
+    mango.InstrumentValue.report(
+        [asset for asset in account.net_values if asset is not None], logging.info
     )
-    pulse_action = combined_pulse_action
-else:
-    logging.info(
-        f"Using separate pulse actions with a marketmaking interval of {args.pulse_interval} seconds and a hedging interval of {hedging_pulse_interval} seconds."
-    )
-    pulse_action = marketmaking_pulse_action
-    hedging_pulse_disposable = (
-        rx.interval(hedging_pulse_interval)
+
+    manager.open()
+
+    def combined_pulse_action(_: int) -> None:
+        try:
+            context.client.require_data_from_fresh_slot()
+            model_state: mango.ModelState = model_state_builder.build(context)
+            market_maker.pulse(context, model_state)
+            hedger.pulse(context, model_state)
+        except Exception:
+            logging.error(f"Pulse action failed: {traceback.format_exc()}")
+
+    def marketmaking_pulse_action(_: int) -> None:
+        try:
+            context.client.require_data_from_fresh_slot()
+            model_state: mango.ModelState = model_state_builder.build(context)
+            market_maker.pulse(context, model_state)
+        except Exception:
+            logging.error(f"Pulse action failed: {traceback.format_exc()}")
+
+    def hedging_pulse_action(_: int) -> None:
+        try:
+            model_state: mango.ModelState = model_state_builder.build(context)
+            hedger.pulse(context, model_state)
+        except Exception:
+            logging.error(f"Pulse action failed: {traceback.format_exc()}")
+
+    hedging_pulse_interval: float = args.hedging_pulse_interval or args.pulse_interval
+    separate_hedge_pulse = False
+    if isinstance(hedger, mango.hedging.NullHedger):
+        logging.info(
+            f"Using a pulse action with an interval of {args.pulse_interval} seconds."
+        )
+        pulse_action = marketmaking_pulse_action
+    elif hedging_pulse_interval == args.pulse_interval:
+        logging.info(
+            f"Using a combined pulse action with an interval of {args.pulse_interval} seconds."
+        )
+        pulse_action = combined_pulse_action
+    else:
+        logging.info(
+            f"Using separate pulse actions with a marketmaking interval of {args.pulse_interval} seconds and a hedging interval of {hedging_pulse_interval} seconds."
+        )
+        pulse_action = marketmaking_pulse_action
+        hedging_pulse_disposable = (
+            rx.interval(hedging_pulse_interval)
+            .pipe(
+                rx.operators.observe_on(context.create_thread_pool_scheduler()),
+                rx.operators.start_with(-1),
+                rx.operators.catch(mango.observable_pipeline_error_reporter),
+                rx.operators.retry(),
+            )
+            .subscribe(
+                mango.create_backpressure_skipping_observer(
+                    on_next=hedging_pulse_action, on_error=mango.log_subscription_error
+                )
+            )
+        )
+        disposer.add_disposable(hedging_pulse_disposable)
+
+    marketmaking_pulse_disposable = (
+        rx.interval(args.pulse_interval)
         .pipe(
             rx.operators.observe_on(context.create_thread_pool_scheduler()),
             rx.operators.start_with(-1),
@@ -363,36 +384,21 @@ else:
         )
         .subscribe(
             mango.create_backpressure_skipping_observer(
-                on_next=hedging_pulse_action, on_error=mango.log_subscription_error
+                on_next=pulse_action, on_error=mango.log_subscription_error
             )
         )
     )
-    disposer.add_disposable(hedging_pulse_disposable)
+    disposer.add_disposable(marketmaking_pulse_disposable)
 
-marketmaking_pulse_disposable = (
-    rx.interval(args.pulse_interval)
-    .pipe(
-        rx.operators.observe_on(context.create_thread_pool_scheduler()),
-        rx.operators.start_with(-1),
-        rx.operators.catch(mango.observable_pipeline_error_reporter),
-        rx.operators.retry(),
-    )
-    .subscribe(
-        mango.create_backpressure_skipping_observer(
-            on_next=pulse_action, on_error=mango.log_subscription_error
-        )
-    )
-)
-disposer.add_disposable(marketmaking_pulse_disposable)
+    # Wait - don't exit. Exiting will be handled by signals/interrupts.
+    waiter = threading.Event()
+    try:
+        waiter.wait()
+    except:
+        pass
 
-# Wait - don't exit. Exiting will be handled by signals/interrupts.
-waiter = threading.Event()
-try:
-    waiter.wait()
-except:
-    pass
+    logging.info("Shutting down...")
+    disposer.dispose()
+    cleanup(context, wallet, account, market, args.dry_run)
 
-logging.info("Shutting down...")
-disposer.dispose()
-cleanup(context, wallet, account, market, args.dry_run)
 logging.info("Shutdown complete.")

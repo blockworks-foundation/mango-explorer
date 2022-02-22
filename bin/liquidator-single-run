@@ -6,7 +6,6 @@ import os
 import os.path
 import sys
 import time
-import traceback
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
@@ -60,8 +59,7 @@ handler = mango.NotificationHandler(
 handler.setLevel(logging.ERROR)
 logging.getLogger().addHandler(handler)
 
-try:
-    context = mango.ContextBuilder.from_command_line_parameters(args)
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
     liquidator_name = args.name
@@ -121,14 +119,3 @@ try:
     logging.info(
         f"Check of all margin accounts complete. Time taken: {time_taken:.2f} seconds."
     )
-
-except Exception as exception:
-    logging.critical(
-        f"Liquidator stopped because of exception: {exception} - {traceback.format_exc()}"
-    )
-except:
-    logging.critical(
-        f"Liquidator stopped because of uncatchable error: {traceback.format_exc()}"
-    )
-finally:
-    logging.info("Liquidator completed.")
