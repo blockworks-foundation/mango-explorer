@@ -36,6 +36,7 @@ from .instructionreporter import InstructionReporter, CompoundInstructionReporte
 from .instrumentlookup import InstrumentLookup
 from .marketlookup import MarketLookup
 from .text import indent_collection_as_str, indent_item_by
+from .token import Instrument, Token
 
 
 # # 🥭 Context class
@@ -141,6 +142,18 @@ class Context:
                 return str(group["name"])
 
         return "« Unknown Group »"
+
+    def instrument(self, symbol: str) -> Instrument:
+        instrument = self.instrument_lookup.find_by_symbol(symbol)
+        if instrument is None:
+            raise Exception(f"Could not find instrument with symbol '{symbol}'.")
+        return instrument
+
+    def token(self, symbol: str) -> Token:
+        instrument = self.instrument_lookup.find_by_symbol(symbol)
+        if instrument is None:
+            raise Exception(f"Could not find token with symbol '{symbol}'.")
+        return Token.ensure(instrument)
 
     def fetch_stats(self, url_suffix: str) -> typing.Sequence[typing.Any]:
         stats_url = f"https://mango-stats-v3.herokuapp.com/{url_suffix}"

@@ -91,6 +91,7 @@ for account in mango_accounts:
 
     numeric_columns = [
         "CurrentPrice",
+        "Spot",
         "SpotValue",
         "SpotOpenValue",
         "PerpNotionalSize",
@@ -99,7 +100,7 @@ for account in mango_accounts:
         "UnsettledFunding",
     ]
     for column_name in numeric_columns:
-        frame[column_name] = pandas.to_numeric(frame[column_name])
+        frame[column_name] = pandas.to_numeric(frame[column_name]).round(6)
     output_columns = ["Symbol", *numeric_columns]
     mango.output(frame[output_columns])
     if mango.output_formatter.format == mango.OutputFormat.TEXT:

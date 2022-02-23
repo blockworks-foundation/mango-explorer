@@ -46,20 +46,125 @@ from spl.token.instructions import (
     transfer,
 )
 
-from .account import Account
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
+
 from .context import Context
-from .group import Group
 from .layouts import layouts
 from .orders import Order, OrderType, Side
-from .perpmarket import PerpMarket
+
 from .perpmarketdetails import PerpMarketDetails
-from .spotmarket import SpotMarket
+
+# from .spotmarket import SpotMarket
 from .token import Token
 from .tokenaccount import TokenAccount
 from .tokenbank import TokenBank, NodeBank, RootBank
 from .wallet import Wallet
+
+# 🥭 Interfaces
+#
+# To avoid circular dependencies, here we specify the bare interfaces we need for some
+# of the objects. For instance, where a function takes an IAccount, you can (and probably
+# should) safely pass in an IAccount.
+#
+
+
+class IAccount(typing.Protocol):
+    group_address: PublicKey
+
+    @property
+    def address(self) -> PublicKey:
+        raise NotImplementedError(
+            "IAccount.address is not implemented on the Protocol."
+        )
+
+    @property
+    def spot_open_orders_by_index(self) -> typing.Sequence[typing.Optional[PublicKey]]:
+        raise NotImplementedError(
+            "IAccount.spot_open_orders_by_index is not implemented on the Protocol."
+        )
+
+    @property
+    def spot_open_orders(self) -> typing.Sequence[PublicKey]:
+        raise NotImplementedError(
+            "IAccount.spot_open_orders is not implemented on the Protocol."
+        )
+
+    def update_spot_open_orders_for_market(
+        self, spot_market_index: int, spot_open_orders: PublicKey
+    ) -> None:
+        raise NotImplementedError(
+            "IAccount.update_spot_open_orders_for_market() is not implemented on the Protocol."
+        )
+
+
+class IGroupSlot(typing.Protocol):
+    index: int
+
+
+class IGroup(typing.Protocol):
+    cache: PublicKey
+    signer_key: PublicKey
+    shared_quote: TokenBank
+
+    @property
+    def address(self) -> PublicKey:
+        raise NotImplementedError("IGroup.address is not implemented on the Protocol.")
+
+    @property
+    def tokens_by_index(self) -> typing.Sequence[typing.Optional[TokenBank]]:
+        raise NotImplementedError(
+            "IGroup.tokens_by_index is not implemented on the Protocol."
+        )
+
+    @property
+    def base_tokens_by_index(self) -> typing.Sequence[typing.Optional[TokenBank]]:
+        raise NotImplementedError(
+            "IGroup.base_tokens_by_index is not implemented on the Protocol."
+        )
+
+    def slot_by_spot_market_address(self, spot_market_address: PublicKey) -> IGroupSlot:
+        raise NotImplementedError(
+            "IGroup.slot_by_spot_market_address() is not implemented on the Protocol."
+        )
+
+
+class IPerpMarket(typing.Protocol):
+    underlying_perp_market: PerpMarketDetails
+
+    @property
+    def address(self) -> PublicKey:
+        raise NotImplementedError(
+            "IPerpMarket.address is not implemented on the Protocol."
+        )
+
+
+class ISpotMarket(typing.Protocol):
+    underlying_serum_market: PySerumMarket
+
+    @property
+    def address(self) -> PublicKey:
+        raise NotImplementedError(
+            "ISpotMarket.address is not implemented on the Protocol."
+        )
+
+    @property
+    def bids_address(self) -> PublicKey:
+        raise NotImplementedError(
+            "ISpotMarket.bids_address is not implemented on the Protocol."
+        )
+
+    @property
+    def asks_address(self) -> PublicKey:
+        raise NotImplementedError(
+            "ISpotMarket.asks_address is not implemented on the Protocol."
+        )
+
+    @property
+    def event_queue_address(self) -> PublicKey:
+        raise NotImplementedError(
+            "ISpotMarket.event_queue_address is not implemented on the Protocol."
+        )
 
 
 # 🥭 Instructions
@@ -354,9 +459,9 @@ def build_serum_settle_instructions(
 def build_spot_settle_instructions(
     context: Context,
     wallet: Wallet,
-    account: Account,
+    account: IAccount,
     market: PySerumMarket,
-    group: Group,
+    group: IGroup,
     open_orders_address: PublicKey,
     base_rootbank: RootBank,
     base_nodebank: NodeBank,
@@ -490,7 +595,7 @@ def build_compound_serum_place_order_instructions(
 def build_cancel_perp_order_instructions(
     context: Context,
     wallet: Wallet,
-    account: Account,
+    account: IAccount,
     perp_market_details: PerpMarketDetails,
     order: Order,
     invalid_id_ok: bool,
@@ -543,8 +648,8 @@ def build_cancel_perp_order_instructions(
 def build_place_perp_order_instructions(
     context: Context,
     wallet: Wallet,
-    group: Group,
-    account: Account,
+    group: IGroup,
+    account: IAccount,
     perp_market_details: PerpMarketDetails,
     price: Decimal,
     quantity: Decimal,
@@ -631,7 +736,7 @@ def build_place_perp_order_instructions(
 def build_cancel_all_perp_orders_instructions(
     context: Context,
     wallet: Wallet,
-    account: Account,
+    account: IAccount,
     perp_market_details: PerpMarketDetails,
     limit: Decimal = Decimal(32),
 ) -> CombinableInstructions:
@@ -671,7 +776,7 @@ def build_cancel_all_perp_orders_instructions(
 
 def build_mango_consume_events_instructions(
     context: Context,
-    group: Group,
+    group: IGroup,
     perp_market_details: PerpMarketDetails,
     account_addresses: typing.Sequence[PublicKey],
     limit: Decimal = Decimal(32),
@@ -724,7 +829,7 @@ def build_mango_consume_events_instructions(
 
 # The old INIT_MANGO_ACCOUNT instruction is now superseded by CREATE_MANGO_ACCOUNT
 def build_create_account_instructions(
-    context: Context, wallet: Wallet, group: Group, account_num: Decimal = Decimal(1)
+    context: Context, wallet: Wallet, group: IGroup, account_num: Decimal = Decimal(1)
 ) -> CombinableInstructions:
     mango_account_address_and_nonce: typing.Tuple[
         PublicKey, int
@@ -778,8 +883,8 @@ def build_create_account_instructions(
 def build_deposit_instructions(
     context: Context,
     wallet: Wallet,
-    group: Group,
-    account: Account,
+    group: IGroup,
+    account: IAccount,
     root_bank: RootBank,
     node_bank: NodeBank,
     token_account: TokenAccount,
@@ -829,8 +934,8 @@ def build_deposit_instructions(
 def build_withdraw_instructions(
     context: Context,
     wallet: Wallet,
-    group: Group,
-    account: Account,
+    group: IGroup,
+    account: IAccount,
     root_bank: RootBank,
     node_bank: NodeBank,
     token_account: TokenAccount,
@@ -872,16 +977,12 @@ def build_withdraw_instructions(
 def build_spot_openorders_instructions(
     context: Context,
     wallet: Wallet,
-    group: Group,
-    account: Account,
-    spot_market: SpotMarket,
+    group: IGroup,
+    account: IAccount,
+    spot_market: ISpotMarket,
+    open_orders_address: PublicKey,
 ) -> CombinableInstructions:
     instructions: CombinableInstructions = CombinableInstructions.empty()
-
-    # Spot OpenOrders accounts use a PDA as of v3.3
-    open_orders_address: PublicKey = spot_market.derive_open_orders_address(
-        context, account
-    )
 
     # /// Accounts expected by this instruction (8):
     # ///
@@ -891,7 +992,7 @@ def build_spot_openorders_instructions(
     # /// 3. `[]` dex_prog_ai - program id of serum dex
     # /// 4. `[writable]` open_orders_ai - open orders PDA
     # /// 5. `[]` spot_market_ai - dex MarketState account
-    # /// 6. `[]` signer_ai - Group Signer Account
+    # /// 6. `[]` signer_ai - IGroup Signer IAccount
     # /// 7. `[]` system_prog_ai - System program
     create_open_orders_instruction = TransactionInstruction(
         keys=[
@@ -953,35 +1054,26 @@ def build_spot_openorders_instructions(
 def build_spot_place_order_instructions(
     context: Context,
     wallet: Wallet,
-    group: Group,
-    account: Account,
-    spot_market: SpotMarket,
+    group: IGroup,
+    account: IAccount,
+    spot_market: ISpotMarket,
+    open_orders_address: PublicKey,
     order_type: OrderType,
     side: Side,
     price: Decimal,
     quantity: Decimal,
     client_id: int,
     fee_discount_address: PublicKey,
+    create_open_orders: bool,
 ) -> CombinableInstructions:
     instructions: CombinableInstructions = CombinableInstructions.empty()
 
-    slot = group.slot_by_spot_market_address(spot_market.address)
-    market_index = slot.index
-    pyserum_market = spot_market.underlying_serum_market
-
-    open_orders_address = account.spot_open_orders_by_index[market_index]
-    if open_orders_address is None:
-        create_open_orders = build_spot_openorders_instructions(
-            context, wallet, group, account, spot_market
+    if create_open_orders:
+        instructions += build_spot_openorders_instructions(
+            context, wallet, group, account, spot_market, open_orders_address
         )
-        instructions += create_open_orders
 
-        open_orders_address = spot_market.derive_open_orders_address(context, account)
-
-        # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
-        # the Account so that future uses (like later in this method) have access to it in the right place.
-        account.update_spot_open_orders_for_market(market_index, open_orders_address)
-
+    pyserum_market: PySerumMarket = spot_market.underlying_serum_market
     serum_order_type: pyserum.enums.OrderType = order_type.to_serum()
     serum_side: pyserum.enums.Side = side.to_serum()
     intrinsic_price = pyserum_market.state.price_number_to_lots(float(price))
@@ -1114,8 +1206,8 @@ def build_spot_place_order_instructions(
 def build_cancel_spot_order_instructions(
     context: Context,
     wallet: Wallet,
-    group: Group,
-    account: Account,
+    group: IGroup,
+    account: IAccount,
     market: PySerumMarket,
     order: Order,
     open_orders_address: PublicKey,
@@ -1217,9 +1309,9 @@ def build_mango_settle_instructions(
 def build_redeem_accrued_mango_instructions(
     context: Context,
     wallet: Wallet,
-    perp_market: PerpMarket,
-    group: Group,
-    account: Account,
+    perp_market: IPerpMarket,
+    group: IGroup,
+    account: IAccount,
     mngo: TokenBank,
 ) -> CombinableInstructions:
     node_bank: NodeBank = mngo.pick_node_bank(context)
@@ -1230,12 +1322,12 @@ def build_redeem_accrued_mango_instructions(
     # /// 1. `[]` mango_cache_ai - MangoCache
     # /// 2. `[writable]` mango_account_ai - MangoAccount
     # /// 3. `[signer]` owner_ai - MangoAccount owner
-    # /// 4. `[]` perp_market_ai - PerpMarket
+    # /// 4. `[]` perp_market_ai - IPerpMarket
     # /// 5. `[writable]` mngo_perp_vault_ai
     # /// 6. `[]` mngo_root_bank_ai
     # /// 7. `[writable]` mngo_node_bank_ai
     # /// 8. `[writable]` mngo_bank_vault_ai
-    # /// 9. `[]` signer_ai - Group Signer Account
+    # /// 9. `[]` signer_ai - IGroup Signer IAccount
     # /// 10. `[]` token_prog_ai - SPL Token program id
     redeem_accrued_mango_instruction = TransactionInstruction(
         keys=[
@@ -1289,11 +1381,11 @@ def build_faucet_airdrop_instructions(
     # /// Mints Tokens
     # ///
     # /// 0. `[]` The mint authority - Program Derived Address
-    # /// 1. `[writable]` Token Mint Account
-    # /// 2. `[writable]` Destination Account
+    # /// 1. `[writable]` Token Mint IAccount
+    # /// 2. `[writable]` Destination IAccount
     # /// 3. `[]` The SPL Token Program
-    # /// 4. `[]` The Faucet Account
-    # /// 5. `[optional/signer]` Admin Account
+    # /// 4. `[]` The Faucet IAccount
+    # /// 5. `[optional/signer]` Admin IAccount
     faucet_airdrop_instruction = TransactionInstruction(
         keys=[
             AccountMeta(is_signer=False, is_writable=False, pubkey=authority),
@@ -1318,8 +1410,8 @@ def build_faucet_airdrop_instructions(
 def build_set_account_delegate_instructions(
     context: Context,
     wallet: Wallet,
-    group: Group,
-    account: Account,
+    group: IGroup,
+    account: IAccount,
     delegate: PublicKey,
 ) -> CombinableInstructions:
     # /// https://github.com/blockworks-foundation/mango-v3/pull/97/
@@ -1329,7 +1421,7 @@ def build_set_account_delegate_instructions(
     # /// Accounts expected: 4
     # /// 0. `[]` mango_group_ai - MangoGroup
     # /// 1. `[writable]` mango_account_ai - MangoAccount
-    # /// 2. `[signer]` owner_ai - Owner of Mango Account
+    # /// 2. `[signer]` owner_ai - Owner of Mango IAccount
     # /// 3. `[]` delegate_ai - delegate
     set_delegate_instruction = TransactionInstruction(
         keys=[
@@ -1345,7 +1437,7 @@ def build_set_account_delegate_instructions(
 
 
 def build_unset_account_delegate_instructions(
-    context: Context, wallet: Wallet, group: Group, account: Account
+    context: Context, wallet: Wallet, group: IGroup, account: IAccount
 ) -> CombinableInstructions:
     return build_set_account_delegate_instructions(
         context, wallet, group, account, SYSTEM_PROGRAM_ADDRESS
@@ -1360,8 +1452,8 @@ def build_unset_account_delegate_instructions(
 def build_set_referrer_memory_instructions(
     context: Context,
     wallet: Wallet,
-    group: Group,
-    account: Account,
+    group: IGroup,
+    account: IAccount,
     referrer_memory_address: PublicKey,
     referrer_account_address: PublicKey,
 ) -> CombinableInstructions:
@@ -1405,13 +1497,13 @@ def build_set_referrer_memory_instructions(
 
 # # 🥭 build_register_referrer_id_instructions function
 #
-# Creates an instruction to register a 'referrer ID' for a Mango Account
+# Creates an instruction to register a 'referrer ID' for a Mango IAccount
 #
 def build_register_referrer_id_instructions(
     context: Context,
     wallet: Wallet,
-    group: Group,
-    account: Account,
+    group: IGroup,
+    account: IAccount,
     referrer_record_address: PublicKey,
     referrer_id: str,
 ) -> CombinableInstructions:

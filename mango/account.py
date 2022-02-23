@@ -23,9 +23,11 @@ from solana.rpc.types import MemcmpOpts
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .cache import Cache, PerpMarketCache, RootBankCache, MarketCache
+from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .encoding import encode_key
 from .group import Group, GroupSlot, GroupSlotPerpMarket
+from .instructions import build_deposit_instructions, build_withdraw_instructions
 from .instrumentvalue import InstrumentValue
 from .layouts import layouts
 from .metadata import Metadata
@@ -35,8 +37,10 @@ from .perpaccount import PerpAccount
 from .perpopenorders import PerpOpenOrders
 from .placedorder import PlacedOrder
 from .token import Instrument, Token
+from .tokenaccount import TokenAccount
 from .tokenbank import TokenBank
 from .version import Version
+from .wallet import Wallet
 
 
 # # 🥭 ReferrerMemory class
@@ -555,6 +559,77 @@ class Account(AddressableAccount):
             )
 
         return accounts[0]
+
+    def deposit(
+        self, context: Context, wallet: Wallet, value: InstrumentValue
+    ) -> typing.Sequence[str]:
+        token: Token = Token.ensure(value.token)
+        token_account = TokenAccount.fetch_largest_for_owner_and_token(
+            context, wallet.keypair.public_key, token
+        )
+
+        if token_account is None:
+            raise Exception(
+                f"Could not find token account for token {value.token} with owner {wallet.keypair}."
+            )
+
+        deposit_token_account = TokenAccount(
+            token_account.account_info,
+            token_account.version,
+            token_account.owner,
+            value,
+        )
+
+        group = Group.load(context, self.group_address)
+        token_bank = group.token_bank_by_instrument(token)
+        root_bank = token_bank.ensure_root_bank(context)
+        node_bank = root_bank.pick_node_bank(context)
+
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(wallet)
+        deposit = build_deposit_instructions(
+            context, wallet, group, self, root_bank, node_bank, deposit_token_account
+        )
+
+        all_instructions = signers + deposit
+        return all_instructions.execute(context)
+
+    def withdraw(
+        self,
+        context: Context,
+        wallet: Wallet,
+        value: InstrumentValue,
+        allow_borrow: bool,
+    ) -> typing.Sequence[str]:
+        token: Token = Token.ensure(value.token)
+        token_account = TokenAccount.fetch_or_create_largest_for_owner_and_token(
+            context, wallet.keypair, token
+        )
+        withdrawal_token_account = TokenAccount(
+            token_account.account_info,
+            token_account.version,
+            token_account.owner,
+            value,
+        )
+
+        group = Group.load(context, self.group_address)
+        token_bank = group.token_bank_by_instrument(token)
+        root_bank = token_bank.ensure_root_bank(context)
+        node_bank = root_bank.pick_node_bank(context)
+
+        signers: CombinableInstructions = CombinableInstructions.from_wallet(wallet)
+        withdraw = build_withdraw_instructions(
+            context,
+            wallet,
+            group,
+            self,
+            root_bank,
+            node_bank,
+            withdrawal_token_account,
+            allow_borrow,
+        )
+
+        all_instructions = signers + withdraw
+        return all_instructions.execute(context)
 
     def slot_by_instrument_or_none(
         self, instrument: Instrument

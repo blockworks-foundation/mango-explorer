@@ -41,40 +41,8 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         context, wallet.address, group, args.account_address
     )
 
-    instrument = context.instrument_lookup.find_by_symbol(args.symbol)
-    if instrument is None:
-        raise Exception(f"Could not find instrument with symbol '{args.symbol}'.")
-    token: mango.Token = mango.Token.ensure(instrument)
-
-    token_account = mango.TokenAccount.fetch_largest_for_owner_and_token(
-        context, wallet.keypair.public_key, token
-    )
-    if token_account is None:
-        raise Exception(
-            f"Could not find token account for token {token} with owner {wallet.keypair}."
-        )
-
-    deposit_value = mango.InstrumentValue(token, args.quantity)
-    deposit_token_account = mango.TokenAccount(
-        token_account.account_info,
-        token_account.version,
-        token_account.owner,
-        deposit_value,
-    )
-
-    token_bank = group.token_bank_by_instrument(token)
-    root_bank = token_bank.ensure_root_bank(context)
-    node_bank = root_bank.pick_node_bank(context)
-
-    signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(
-        wallet
-    )
-    deposit = mango.build_deposit_instructions(
-        context, wallet, group, account, root_bank, node_bank, deposit_token_account
-    )
-
-    all_instructions = signers + deposit
-    signatures = all_instructions.execute(context)
+    deposit_value = mango.InstrumentValue(context.token(args.symbol), args.quantity)
+    signatures = account.deposit(context, wallet, deposit_value)
 
     if args.wait:
         mango.output("Waiting on transaction signatures:")
