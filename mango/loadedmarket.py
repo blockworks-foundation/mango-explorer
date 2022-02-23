@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import rx.operators
 import typing
 
 from solana.publickey import PublicKey
@@ -24,6 +25,10 @@ from .market import Market, InventorySource
 from .observables import Disposable
 from .orders import Order, OrderBook
 from .token import Instrument, Token
+from .websocketsubscription import (
+    SharedWebSocketSubscriptionManager,
+    WebSocketAccountSubscription,
+)
 
 
 class Event(typing.Protocol):
@@ -81,6 +86,55 @@ class LoadedMarket(Market):
         raise NotImplementedError(
             "LoadedMarket.on_event() is not implemented on the base type."
         )
+
+    def on_orderbook_change(
+        self, context: Context, handler: typing.Callable[[OrderBook], None]
+    ) -> Disposable:
+        disposer = Disposable()
+
+        [bids_info, asks_info] = AccountInfo.load_multiple(
+            context, [self.bids_address, self.asks_address]
+        )
+
+        stored: OrderBook = self.parse_account_infos_to_orderbook(bids_info, asks_info)
+
+        def _update_bids(account_info: AccountInfo) -> OrderBook:
+            new_bids = self.parse_account_info_to_orders(account_info)
+            stored.bids = new_bids
+            return OrderBook(
+                self.symbol, self.lot_size_converter, new_bids, stored.asks
+            )
+
+        def _update_asks(account_info: AccountInfo) -> OrderBook:
+            new_asks = self.parse_account_info_to_orders(account_info)
+            stored.asks = new_asks
+            return OrderBook(
+                self.symbol, self.lot_size_converter, stored.bids, new_asks
+            )
+
+        websocket = SharedWebSocketSubscriptionManager(context)
+        disposer.add_disposable(websocket)
+
+        bids_subscription = WebSocketAccountSubscription[OrderBook](
+            context, self.bids_address, _update_bids
+        )
+        websocket.add(bids_subscription)
+
+        asks_subscription = WebSocketAccountSubscription[OrderBook](
+            context, self.asks_address, _update_asks
+        )
+        websocket.add(asks_subscription)
+
+        orderbook_changes = bids_subscription.publisher.pipe(
+            rx.operators.merge(asks_subscription.publisher)
+        )
+
+        individual_event_subscription = orderbook_changes.subscribe(on_next=handler)
+        disposer.add_disposable(individual_event_subscription)
+
+        websocket.open()
+
+        return disposer
 
     def parse_account_info_to_orders(
         self, account_info: AccountInfo

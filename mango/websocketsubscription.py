@@ -80,7 +80,6 @@ class WebSocketSubscription(
 
     def dispose(self) -> None:
         self.publisher.on_completed()
-        self.publisher.dispose()
 
 
 class AddressWebSocketSubscription(WebSocketSubscription[TSubscriptionInstance]):
@@ -287,6 +286,11 @@ class ActiveWebSocket:
 
         return ActiveWebSocket(ws, subscription, pong_subscription)
 
+    def dispose(self) -> None:
+        self.pong_subscription.dispose()
+        self.websocket.close()
+        self.subscription.dispose()
+
 
 # # 🥭 IndividualWebSocketSubscriptionManager class
 #
@@ -309,9 +313,8 @@ class IndividualWebSocketSubscriptionManager(WebSocketSubscriptionManager):
         self.__subscriptions = individual_subscriptions
 
     def close(self) -> None:
-        for wspair in self.__subscriptions:
-            wspair.pong_subscription.dispose()
-            wspair.websocket.close()
+        for subscription in self.__subscriptions:
+            subscription.dispose()
         self.__subscriptions = []
 
     def dispose(self) -> None:
