@@ -132,11 +132,11 @@ class TransactionScout:
 
     @property
     def sender(self) -> typing.Optional[PublicKey]:
-        return self.instructions[0].sender
+        return self.instructions[0].sender if len(self.instructions) > 0 else None
 
     @property
-    def group(self) -> PublicKey:
-        return self.instructions[0].group
+    def group(self) -> typing.Optional[PublicKey]:
+        return self.instructions[0].group if len(self.instructions) > 0 else None
 
     def has_any_instruction_of_type(self, instruction_type: InstructionType) -> bool:
         return any(
@@ -188,7 +188,11 @@ class TransactionScout:
                 if instruction is not None:
                     instructions += [instruction]
 
-            group_name = context.lookup_group_name(instructions[0].group)
+            group_name = (
+                context.lookup_group_name(instructions[0].group)
+                if len(instructions) > 0
+                else "No Group"
+            )
             timestamp = datetime.datetime.fromtimestamp(response["blockTime"])
             signatures = response["transaction"]["signatures"]
             raw_messages = response["meta"]["logMessages"]
