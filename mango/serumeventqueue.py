@@ -93,6 +93,10 @@ class SerumEvent:
         self.client_order_id: Decimal = client_order_id
         self.original_index: Decimal = Decimal(0)
 
+    @property
+    def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
+        return [self.public_key]
+
     @staticmethod
     def from_layout(layout: typing.Any) -> "SerumEvent":
         event_flags: SerumEventFlags = SerumEventFlags.from_layout(layout.event_flags)

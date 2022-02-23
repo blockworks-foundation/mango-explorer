@@ -21,8 +21,21 @@ from .accountinfo import AccountInfo
 from .context import Context
 from .lotsizeconverter import LotSizeConverter
 from .market import Market, InventorySource
+from .observables import Disposable
 from .orders import Order, OrderBook
 from .token import Instrument, Token
+
+
+class Event(typing.Protocol):
+    @property
+    def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
+        raise NotImplementedError(
+            "Event.accounts_to_crank is not implemented on the Protocol."
+        )
+
+
+class FillEvent(Event, typing.Protocol):
+    pass
 
 
 # # 🥭 LoadedMarket class
@@ -53,6 +66,20 @@ class LoadedMarket(Market):
     def asks_address(self) -> PublicKey:
         raise NotImplementedError(
             "LoadedMarket.asks_address() is not implemented on the base type."
+        )
+
+    def on_fill(
+        self, context: Context, handler: typing.Callable[[FillEvent], None]
+    ) -> Disposable:
+        raise NotImplementedError(
+            "LoadedMarket.on_fill() is not implemented on the base type."
+        )
+
+    def on_event(
+        self, context: Context, handler: typing.Callable[[Event], None]
+    ) -> Disposable:
+        raise NotImplementedError(
+            "LoadedMarket.on_event() is not implemented on the base type."
         )
 
     def parse_account_info_to_orders(

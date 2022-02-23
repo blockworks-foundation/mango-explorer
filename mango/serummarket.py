@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import rx.operators
 import typing
 
 from decimal import Decimal
@@ -26,9 +27,14 @@ from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .market import Market, InventorySource
 from .openorders import OpenOrders
+from .observables import Disposable
 from .orders import Order
-from .serumeventqueue import SerumEvent, SerumEventQueue
+from .serumeventqueue import SerumEvent, SerumEventQueue, UnseenSerumEventChangesTracker
 from .token import Token
+from .websocketsubscription import (
+    IndividualWebSocketSubscriptionManager,
+    WebSocketAccountSubscription,
+)
 
 
 # # 🥭 SerumMarket class
@@ -103,6 +109,47 @@ class SerumMarket(LoadedMarket):
         if len(all_open_orders) == 0:
             return None
         return all_open_orders[0].address
+
+    def on_fill(
+        self, context: Context, handler: typing.Callable[[SerumEvent], None]
+    ) -> Disposable:
+        def _fill_filter(item: SerumEvent) -> None:
+            if item.event_flags.fill:
+                handler(item)
+
+        return self.on_event(context, _fill_filter)
+
+    def on_event(
+        self, context: Context, handler: typing.Callable[[SerumEvent], None]
+    ) -> Disposable:
+        disposer = Disposable()
+        event_queue_address = self.event_queue_address
+        initial: SerumEventQueue = SerumEventQueue.load(
+            context, self.event_queue_address
+        )
+
+        splitter: UnseenSerumEventChangesTracker = UnseenSerumEventChangesTracker(
+            initial
+        )
+        event_queue_subscription = WebSocketAccountSubscription(
+            context, event_queue_address, SerumEventQueue.parse
+        )
+        disposer.add_disposable(event_queue_subscription)
+
+        manager = IndividualWebSocketSubscriptionManager(context)
+        disposer.add_disposable(manager)
+        manager.add(event_queue_subscription)
+
+        publisher = event_queue_subscription.publisher.pipe(
+            rx.operators.flat_map(splitter.unseen)
+        )
+
+        individual_event_subscription = publisher.subscribe(on_next=handler)
+        disposer.add_disposable(individual_event_subscription)
+
+        manager.open()
+
+        return disposer
 
     def __str__(self) -> str:
         return f"""« SerumMarket {self.symbol} {self.address} [{self.program_address}]

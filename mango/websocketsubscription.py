@@ -21,7 +21,7 @@ import websocket
 from dataclasses import dataclass
 from datetime import datetime
 from rx.subject.behaviorsubject import BehaviorSubject
-from rx.core.typing import Disposable
+from rx.core.typing import Disposable as RxDisposable
 from solana.publickey import PublicKey
 from solana.rpc.types import RPCResponse
 
@@ -42,7 +42,7 @@ TSubscriptionInstance = typing.TypeVar("TSubscriptionInstance")
 
 
 class WebSocketSubscription(
-    Disposable, typing.Generic[TSubscriptionInstance], metaclass=abc.ABCMeta
+    RxDisposable, typing.Generic[TSubscriptionInstance], metaclass=abc.ABCMeta
 ):
     def __init__(
         self,
@@ -237,7 +237,7 @@ class WebSocketLogSubscription(AddressWebSocketSubscription[LogEvent]):
 #
 # The `WebSocketSubscriptionManager` is a base class for different websocket management approaches.
 #
-class WebSocketSubscriptionManager(Disposable, metaclass=abc.ABCMeta):
+class WebSocketSubscriptionManager(RxDisposable, metaclass=abc.ABCMeta):
     def __init__(self, context: Context, ping_interval: int = 10) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.context: Context = context
@@ -257,11 +257,6 @@ class WebSocketSubscriptionManager(Disposable, metaclass=abc.ABCMeta):
             "WebSocketSubscription.build_request() is not implemented on the base type."
         )
 
-    def on_disconnected(self, ws: websocket.WebSocketApp) -> None:
-        for subscription in self.subscriptions:
-            subscription.dispose()
-        self.subscriptions = []
-
     def dispose(self) -> None:
         for subscription in self.subscriptions:
             subscription.dispose()
@@ -271,7 +266,7 @@ class WebSocketSubscriptionManager(Disposable, metaclass=abc.ABCMeta):
 class ActiveWebSocket:
     websocket: ReconnectingWebsocket
     subscription: WebSocketSubscription[typing.Any]
-    pong_subscription: Disposable
+    pong_subscription: RxDisposable
 
     @staticmethod
     def create(
@@ -319,6 +314,10 @@ class IndividualWebSocketSubscriptionManager(WebSocketSubscriptionManager):
             wspair.websocket.close()
         self.__subscriptions = []
 
+    def dispose(self) -> None:
+        super().dispose()
+        self.close()
+
 
 # # 🥭 SharedWebSocketSubscriptionManager class
 #
@@ -330,7 +329,7 @@ class SharedWebSocketSubscriptionManager(WebSocketSubscriptionManager):
         super().__init__(context, ping_interval)
         self.ws: typing.Optional[ReconnectingWebsocket] = None
         self.pong: BehaviorSubject = BehaviorSubject(datetime.now())
-        self._pong_subscription: typing.Optional[Disposable] = None
+        self._pong_subscription: typing.Optional[RxDisposable] = None
 
     def add(self, subscription: WebSocketSubscription[typing.Any]) -> None:
         self.subscriptions += [subscription]

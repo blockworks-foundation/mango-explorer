@@ -7,7 +7,7 @@ import os
 import os.path
 import rx
 import rx.subject.subject
-import rx.operators as ops
+import rx.operators
 import sys
 import typing
 
@@ -160,24 +160,28 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     pipeline: rx.core.typing.Observable[mango.TransactionScout] = rx.from_(
         oldest_first
     ).pipe(
-        ops.map(first_item_capturer.capture_if_first),
-        #  ops.map(debug_print_item("Signature:")),
-        ops.map(lambda sig: mango.TransactionScout.load_if_available(context, sig)),
-        ops.filter(lambda item: item is not None),
+        rx.operators.map(first_item_capturer.capture_if_first),
+        #  rx.operators.map(debug_print_item("Signature:")),
+        rx.operators.map(
+            lambda sig: mango.TransactionScout.load_if_available(context, sig)
+        ),
+        rx.operators.filter(lambda item: item is not None),
     )
 
     if sender is not None:
-        pipeline = pipeline.pipe(ops.filter(lambda item: bool(item.sender == sender)))
+        pipeline = pipeline.pipe(
+            rx.operators.filter(lambda item: bool(item.sender == sender))
+        )
 
     if instruction_type is not None:
         pipeline = pipeline.pipe(
-            ops.filter(
+            rx.operators.filter(
                 lambda item: bool(item.has_any_instruction_of_type(instruction_type))
             )
         )
 
     if args.summarise:
-        pipeline = pipeline.pipe(ops.map(summariser(context)))
+        pipeline = pipeline.pipe(rx.operators.map(summariser(context)))
 
     fan_out: rx.subject.subject.Subject = rx.subject.subject.Subject()
     fan_out.subscribe(mango.PrintingObserverSubscriber(False))

@@ -177,7 +177,7 @@ def cleanup(
 
 
 with mango.ContextBuilder.from_command_line_parameters(args) as context:
-    disposer = mango.DisposePropagator()
+    disposer = mango.Disposable()
     manager = mango.IndividualWebSocketSubscriptionManager(context)
     disposer.add_disposable(manager)
     health_check = mango.HealthCheck()

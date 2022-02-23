@@ -26,7 +26,7 @@ from rx.subject.subject import Subject
 
 from ...context import Context
 from ...market import Market
-from ...observables import DisposePropagator, DisposeWrapper
+from ...observables import Disposable, DisposeWrapper
 from ...oracle import (
     Oracle,
     OracleProvider,
@@ -122,7 +122,7 @@ class FtxOracle(Oracle):
         ) -> rx.core.typing.Disposable:
             subject.subscribe(observer, scheduler=scheduler_)  # type: ignore
 
-            disposable = DisposePropagator()
+            disposable = Disposable()
             disposable.add_disposable(DisposeWrapper(lambda: ws.close()))
             disposable.add_disposable(DisposeWrapper(lambda: subject.dispose()))
 

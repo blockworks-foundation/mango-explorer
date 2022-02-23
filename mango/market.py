@@ -24,6 +24,18 @@ from .lotsizeconverter import LotSizeConverter
 from .token import Instrument, Token
 
 
+class MarketType(enum.Enum):
+    SERUM = enum.auto()
+    SPOT = enum.auto()
+    PERP = enum.auto()
+
+    def __str__(self) -> str:
+        return self.name
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
 class InventorySource(enum.Enum):
     SPL_TOKENS = enum.auto()
     ACCOUNT = enum.auto()

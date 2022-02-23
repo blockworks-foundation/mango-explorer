@@ -17,10 +17,11 @@
 import logging
 import rx
 import rx.subject
+import types
 import typing
 
 from datetime import datetime
-from rx.core.typing import Disposable
+from rx.core.typing import Disposable as RxDisposable
 from rxpy_backpressure import BackPressure
 
 from .output import output
@@ -194,15 +195,15 @@ class FunctionObserver(rx.core.observer.observer.Observer):
 
 # # 🥭 DisposingSubject
 #
-# This class is a regular Subject that can take additional `Disposable` objects to dispose of when the
+# This class is a regular Subject that can take additional `RxDisposable` objects to dispose of when the
 # `Subject` is being cleaned up.
 #
 class DisposingSubject(rx.subject.subject.Subject):
     def __init__(self) -> None:
         super().__init__()
-        self._to_dispose: typing.List[rx.core.typing.Disposable] = []
+        self._to_dispose: typing.List[RxDisposable] = []
 
-    def add_disposable(self, disposable: rx.core.typing.Disposable) -> None:
+    def add_disposable(self, disposable: RxDisposable) -> None:
         self._to_dispose += [disposable]
 
     def dispose(self) -> None:
@@ -332,28 +333,43 @@ class EventSource(rx.subject.subject.Subject, typing.Generic[TEventDatum]):
         super().dispose()
 
 
-# # 🥭 DisposePropagator class
+# # 🥭 Disposable class
 #
-# A `Disposable` class that can 'fan out' `dispose()` calls to perform additional
+# A `RxDisposable` class that can 'fan out' `dispose()` calls to perform additional
 # cleanup actions.
 #
-class DisposePropagator(Disposable):
+class Disposable(RxDisposable):
     def __init__(self) -> None:
-        self.disposables: typing.List[Disposable] = []
+        self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.disposables: typing.List[RxDisposable] = []
 
-    def add_disposable(self, disposable: Disposable) -> None:
+    def __enter__(self) -> "Disposable":
+        return self
+
+    def __exit__(
+        self,
+        exc_type: typing.Optional[typing.Type[BaseException]],
+        exc_value: typing.Optional[BaseException],
+        traceback: typing.Optional[types.TracebackType],
+    ) -> None:
+        self.dispose()
+
+    def add_disposable(self, disposable: RxDisposable) -> None:
         self.disposables += [disposable]
 
     def dispose(self) -> None:
-        for disposable in self.disposables:
-            disposable.dispose()
+        for index, disposable in enumerate(reversed(self.disposables)):
+            try:
+                disposable.dispose()
+            except Exception as ex:
+                self._logger.warning(f"Exception disposing at index {index} - {ex}")
 
 
 # # 🥭 DisposeWrapper class
 #
-# A `Disposable` class that wraps a lambda to perform some cleanup actions when it is disposed.
+# A `RxDisposable` class that wraps a lambda to perform some cleanup actions when it is disposed.
 #
-class DisposeWrapper(Disposable):
+class DisposeWrapper(RxDisposable):
     def __init__(self, callable: typing.Callable[[], None]) -> None:
         self.callable: typing.Callable[[], None] = callable
 

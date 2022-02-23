@@ -115,8 +115,9 @@ def add_subscription_for_parameter(
     ).subscribe(notifier(name))
 
 
-with mango.ContextBuilder.from_command_line_parameters(args) as context:
-    disposer = mango.DisposePropagator()
+with mango.ContextBuilder.from_command_line_parameters(
+    args
+) as context, mango.Disposable() as disposer:
     manager = mango.SharedWebSocketSubscriptionManager(context)
     disposer.add_disposable(manager)
     health_check = mango.HealthCheck()
@@ -142,5 +143,5 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         pass
 
     logging.info("Shutting down...")
-    disposer.dispose()
-    logging.info("Shutdown complete.")
+
+logging.info("Shutdown complete.")

@@ -18,6 +18,8 @@ import typing
 
 from pathlib import Path
 
+from .observables import Disposable
+
 
 # # 🥭 HealthCheck class
 #
@@ -28,13 +30,13 @@ from pathlib import Path
 class HealthCheck(rx.core.typing.Disposable):
     def __init__(self, healthcheck_files_location: str = "/var/tmp") -> None:
         self.healthcheck_files_location: str = healthcheck_files_location
-        self._to_dispose: typing.List[rx.core.typing.Disposable] = []
+        self._to_dispose: Disposable = Disposable()
 
     def add(self, name: str, observable: rx.core.typing.Observable[typing.Any]) -> None:
         healthcheck_file_touch_disposer = observable.subscribe(
             on_next=lambda _: self.ping(name)
         )  # type: ignore[call-arg]
-        self._to_dispose += [healthcheck_file_touch_disposer]
+        self._to_dispose.add_disposable(healthcheck_file_touch_disposer)
 
     def ping(self, name: str) -> None:
         Path(f"{self.healthcheck_files_location}/mango_healthcheck_{name}").touch(
@@ -42,5 +44,4 @@ class HealthCheck(rx.core.typing.Disposable):
         )
 
     def dispose(self) -> None:
-        for disposable in self._to_dispose:
-            disposable.dispose()
+        self._to_dispose.dispose()

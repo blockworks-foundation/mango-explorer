@@ -199,7 +199,7 @@ from .notification import TelegramNotificationTarget as TelegramNotificationTarg
 from .notification import parse_notification_target as parse_notification_target
 from .observables import CaptureFirstItem as CaptureFirstItem
 from .observables import CollectingObserverSubscriber as CollectingObserverSubscriber
-from .observables import DisposePropagator as DisposePropagator
+from .observables import Disposable as Disposable
 from .observables import DisposeWrapper as DisposeWrapper
 from .observables import EventSource as EventSource
 from .observables import FunctionObserver as FunctionObserver

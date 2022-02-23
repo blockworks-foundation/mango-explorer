@@ -25,8 +25,9 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-with mango.ContextBuilder.from_command_line_parameters(args) as context:
-    disposer = mango.DisposePropagator()
+with mango.ContextBuilder.from_command_line_parameters(
+    args
+) as context, mango.Disposable() as disposer:
     manager = mango.IndividualWebSocketSubscriptionManager(context)
     disposer.add_disposable(manager)
 
@@ -46,5 +47,4 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         pass
 
     logging.info("Shutting down...")
-    disposer.dispose()
-    logging.info("Shutdown complete.")
+logging.info("Shutdown complete.")

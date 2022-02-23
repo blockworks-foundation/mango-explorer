@@ -13,10 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-import rx
-import rx.disposable
-import rx.subject
-import rx.operators as ops
+import rx.operators
 import typing
 
 from dataclasses import dataclass
@@ -31,12 +28,21 @@ from .group import Group
 from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .market import Market, InventorySource
-from .observables import DisposingSubject, observable_pipeline_error_reporter
+from .observables import Disposable
 from .orderbookside import PerpOrderBookSide
 from .orders import Order
-from .perpeventqueue import PerpEvent, PerpEventQueue, UnseenPerpEventChangesTracker
+from .perpeventqueue import (
+    PerpEvent,
+    PerpEventQueue,
+    PerpFillEvent,
+    UnseenPerpEventChangesTracker,
+)
 from .perpmarketdetails import PerpMarketDetails
 from .token import Instrument, Token
+from .websocketsubscription import (
+    IndividualWebSocketSubscriptionManager,
+    WebSocketAccountSubscription,
+)
 
 
 # # 🥭 FundingRate class
@@ -176,35 +182,47 @@ class PerpMarket(LoadedMarket):
         )
         return event_queue.unprocessed_events
 
-    def observe_events(self, context: Context, interval: int = 30) -> DisposingSubject:
-        perp_event_queue: PerpEventQueue = PerpEventQueue.load(
-            context, self.underlying_perp_market.event_queue, self.lot_size_converter
-        )
-        perp_splitter: UnseenPerpEventChangesTracker = UnseenPerpEventChangesTracker(
-            perp_event_queue
+    def on_fill(
+        self, context: Context, handler: typing.Callable[[PerpFillEvent], None]
+    ) -> Disposable:
+        def _fill_filter(item: PerpEvent) -> None:
+            if isinstance(item, PerpFillEvent):
+                handler(item)
+
+        return self.on_event(context, _fill_filter)
+
+    def on_event(
+        self, context: Context, handler: typing.Callable[[PerpEvent], None]
+    ) -> Disposable:
+        disposer = Disposable()
+        initial: PerpEventQueue = PerpEventQueue.load(
+            context, self.event_queue_address, self.lot_size_converter
         )
 
-        fill_events = DisposingSubject()
-        disposable_subscription = (
-            rx.interval(interval)
-            .pipe(
-                ops.observe_on(context.create_thread_pool_scheduler()),
-                ops.start_with(-1),
-                ops.map(
-                    lambda _: PerpEventQueue.load(
-                        context,
-                        self.underlying_perp_market.event_queue,
-                        self.lot_size_converter,
-                    )
-                ),
-                ops.flat_map(perp_splitter.unseen),
-                ops.catch(observable_pipeline_error_reporter),
-                ops.retry(),
-            )
-            .subscribe(fill_events)
+        splitter: UnseenPerpEventChangesTracker = UnseenPerpEventChangesTracker(initial)
+        event_queue_subscription = WebSocketAccountSubscription(
+            context,
+            self.event_queue_address,
+            lambda account_info: PerpEventQueue.parse(
+                account_info, self.lot_size_converter
+            ),
         )
-        fill_events.add_disposable(disposable_subscription)
-        return fill_events
+        disposer.add_disposable(event_queue_subscription)
+
+        manager = IndividualWebSocketSubscriptionManager(context)
+        disposer.add_disposable(manager)
+        manager.add(event_queue_subscription)
+
+        publisher = event_queue_subscription.publisher.pipe(
+            rx.operators.flat_map(splitter.unseen)
+        )
+
+        individual_event_subscription = publisher.subscribe(on_next=handler)
+        disposer.add_disposable(individual_event_subscription)
+
+        manager.open()
+
+        return disposer
 
     def __str__(self) -> str:
         underlying: str = f"{self.underlying_perp_market}".replace("\n", "\n    ")

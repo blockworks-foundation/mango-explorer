@@ -5,7 +5,7 @@ import logging
 import os
 import os.path
 import rx
-import rx.operators as ops
+import rx.operators
 import sys
 import threading
 import traceback
@@ -116,11 +116,11 @@ def start_subscriptions(
     account_subscription = (
         rx.interval(float(throttle_reload_to_seconds))
         .pipe(
-            ops.observe_on(context.create_thread_pool_scheduler()),
-            ops.start_with(-1),
-            ops.map(fetch_accounts(context)),
-            ops.catch(mango.observable_pipeline_error_reporter),
-            ops.retry(),
+            rx.operators.observe_on(context.create_thread_pool_scheduler()),
+            rx.operators.start_with(-1),
+            rx.operators.map(fetch_accounts(context)),
+            rx.operators.catch(mango.observable_pipeline_error_reporter),
+            rx.operators.retry(),
         )
         .subscribe(
             mango.create_backpressure_skipping_observer(
@@ -134,10 +134,10 @@ def start_subscriptions(
     price_subscription = (
         rx.interval(float(throttle_ripe_update_to_seconds))
         .pipe(
-            ops.observe_on(context.create_thread_pool_scheduler()),
-            ops.map(fetch_prices(context)),
-            ops.catch(mango.observable_pipeline_error_reporter),
-            ops.retry(),
+            rx.operators.observe_on(context.create_thread_pool_scheduler()),
+            rx.operators.map(fetch_prices(context)),
+            rx.operators.catch(mango.observable_pipeline_error_reporter),
+            rx.operators.retry(),
         )
         .subscribe(
             mango.create_backpressure_skipping_observer(

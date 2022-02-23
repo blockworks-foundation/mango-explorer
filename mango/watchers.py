@@ -33,7 +33,7 @@ from .inventory import Inventory
 from .loadedmarket import LoadedMarket
 from .market import Market, InventorySource
 from .modelstate import EventQueue
-from .observables import DisposePropagator, LatestItemObserverSubscriber
+from .observables import Disposable, LatestItemObserverSubscriber
 from .openorders import OpenOrders
 from .oracle import Price
 from .oracle import OracleProvider
@@ -261,7 +261,7 @@ def build_price_watcher(
     context: Context,
     manager: WebSocketSubscriptionManager,
     health_check: HealthCheck,
-    disposer: DisposePropagator,
+    disposer: Disposable,
     provider_name: str,
     market: Market,
 ) -> LatestItemObserverSubscriber[Price]:
@@ -285,7 +285,7 @@ def build_serum_inventory_watcher(
     context: Context,
     manager: WebSocketSubscriptionManager,
     health_check: HealthCheck,
-    disposer: DisposePropagator,
+    disposer: Disposable,
     wallet: Wallet,
     market: SerumMarket,
     price_watcher: Watcher[Price],

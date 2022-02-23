@@ -16,7 +16,7 @@
 
 import re
 import rx
-import rx.operators as ops
+import rx.operators
 import typing
 
 from datetime import datetime
@@ -117,11 +117,11 @@ class PythOracle(Oracle):
         self, context: Context
     ) -> rx.core.typing.Observable[Price]:
         prices = rx.interval(1).pipe(
-            ops.observe_on(context.create_thread_pool_scheduler()),
-            ops.start_with(-1),
-            ops.map(lambda _: self.fetch_price(context)),
-            ops.catch(observable_pipeline_error_reporter),
-            ops.retry(),
+            rx.operators.observe_on(context.create_thread_pool_scheduler()),
+            rx.operators.start_with(-1),
+            rx.operators.map(lambda _: self.fetch_price(context)),
+            rx.operators.catch(observable_pipeline_error_reporter),
+            rx.operators.retry(),
         )
         return typing.cast(rx.core.typing.Observable[Price], prices)
 

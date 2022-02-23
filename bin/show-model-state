@@ -33,7 +33,9 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-with mango.ContextBuilder.from_command_line_parameters(args) as context:
+with mango.ContextBuilder.from_command_line_parameters(
+    args
+) as context, mango.Disposable() as disposer:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     group = mango.Group.load(context, context.group_address)
     account = mango.Account.load_for_owner_by_address(
@@ -55,7 +57,6 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
             f"Could not find oracle for market {market.symbol} from provider {args.oracle_provider}."
         )
 
-    disposer = mango.DisposePropagator()
     health_check = mango.HealthCheck()
     disposer.add_disposable(health_check)
     manager = mango.IndividualWebSocketSubscriptionManager(

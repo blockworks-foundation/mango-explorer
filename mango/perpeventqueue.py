@@ -100,7 +100,7 @@ class PerpFillEvent(PerpEvent):
         return [self.maker, self.taker]
 
     def __str__(self) -> str:
-        return f"""« PerpFillEvent [{self.original_index}] [{self.timestamp}] {self.taker_side} {self.quantity:,.8f} at {self.price:,.8f}
+        return f"""« PerpFillEvent [{self.original_index}] {self.taker_side} {self.quantity:,.8f} at {self.price:,.8f} [{self.timestamp}]
     Maker: {self.maker}, {self.maker_order_id} / {self.maker_client_order_id}
     Taker: {self.taker}, {self.taker_order_id} / {self.taker_client_order_id}
     Best Initial: {self.best_initial}

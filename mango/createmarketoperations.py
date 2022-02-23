@@ -18,6 +18,7 @@ import typing
 from .account import Account
 from .context import Context
 from .ensuremarketloaded import ensure_market_loaded
+from .loadedmarket import LoadedMarket
 from .market import Market
 from .marketoperations import (
     MarketInstructionBuilder,
@@ -76,10 +77,11 @@ def create_market_operations(
     market: Market,
     dry_run: bool = False,
 ) -> MarketOperations:
-    if dry_run:
-        return NullMarketOperations(market)
+    loaded_market: LoadedMarket = ensure_market_loaded(context, market)
 
-    loaded_market: Market = ensure_market_loaded(context, market)
+    if dry_run:
+        return NullMarketOperations(loaded_market)
+
     if isinstance(loaded_market, SerumMarket):
         serum_market_instruction_builder: SerumMarketInstructionBuilder = (
             SerumMarketInstructionBuilder.load(context, wallet, loaded_market)

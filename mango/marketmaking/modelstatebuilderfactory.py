@@ -49,7 +49,7 @@ class ModelUpdateMode(enum.Enum):
 def model_state_builder_factory(
     mode: ModelUpdateMode,
     context: mango.Context,
-    disposer: mango.DisposePropagator,
+    disposer: mango.Disposable,
     websocket_manager: mango.WebSocketSubscriptionManager,
     health_check: mango.HealthCheck,
     wallet: mango.Wallet,
@@ -220,7 +220,7 @@ def __load_all_openorders_watchers(
 
 def _websocket_model_state_builder_factory(
     context: mango.Context,
-    disposer: mango.DisposePropagator,
+    disposer: mango.Disposable,
     websocket_manager: mango.WebSocketSubscriptionManager,
     health_check: mango.HealthCheck,
     wallet: mango.Wallet,
