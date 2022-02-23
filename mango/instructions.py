@@ -17,6 +17,7 @@
 import pyserum.enums
 import typing
 
+from datetime import datetime
 from decimal import Decimal
 from pyserum._layouts.instructions import (
     INSTRUCTIONS_LAYOUT as PYSERUM_INSTRUCTIONS_LAYOUT,
@@ -47,8 +48,7 @@ from spl.token.instructions import (
 )
 
 from .combinableinstructions import CombinableInstructions
-from .constants import SYSTEM_PROGRAM_ADDRESS
-
+from .constants import I64_MAX, SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .layouts import layouts
 from .orders import Order, OrderType, Side
@@ -657,6 +657,9 @@ def build_place_perp_order_instructions(
     side: Side,
     order_type: OrderType,
     reduce_only: bool = False,
+    expiration: datetime = Order.NoExpiration,
+    match_limit: int = 20,
+    max_quote_quantity: Decimal = Decimal(0),
     reflink: typing.Optional[PublicKey] = None,
 ) -> CombinableInstructions:
     # { buy: 0, sell: 1 }
@@ -726,6 +729,127 @@ def build_place_perp_order_instructions(
             ),
         )
     ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+# /// Place an order on a perp market
+# ///
+# /// In case this order is matched, the corresponding order structs on both
+# /// PerpAccounts (taker & maker) will be adjusted, and the position size
+# /// will be adjusted w/o accounting for fees.
+# /// In addition a FillEvent will be placed on the event queue.
+# /// Through a subsequent invocation of ConsumeEvents the FillEvent can be
+# /// executed and the perp account balances (base/quote) and fees will be
+# /// paid from the quote position. Only at this point the position balance
+# /// is 100% reflecting the trade.
+# ///
+# /// Accounts expected by this instruction (9 + `NUM_IN_MARGIN_BASKET`):
+# /// 0. `[]` mango_group_ai - MangoGroup
+# /// 1. `[writable]` mango_account_ai - the MangoAccount of owner
+# /// 2. `[signer]` owner_ai - owner of MangoAccount
+# /// 3. `[]` mango_cache_ai - MangoCache for this MangoGroup
+# /// 4. `[writable]` perp_market_ai
+# /// 5. `[writable]` bids_ai - bids account for this PerpMarket
+# /// 6. `[writable]` asks_ai - asks account for this PerpMarket
+# /// 7. `[writable]` event_queue_ai - EventQueue for this PerpMarket
+# /// 8. `[writable]` referrer_mango_account_ai - referrer's mango account;
+# ///                 pass in mango_account_ai as duplicate if you don't have a referrer
+# /// 9..9 + NUM_IN_MARGIN_BASKET `[]` open_orders_ais - pass in open orders in margin basket
+def build_place_perp_order_instructions_2(
+    context: Context,
+    wallet: Wallet,
+    group: IGroup,
+    account: IAccount,
+    perp_market_details: PerpMarketDetails,
+    price: Decimal,
+    quantity: Decimal,
+    client_order_id: int,
+    side: Side,
+    order_type: OrderType,
+    reduce_only: bool = False,
+    expiration: datetime = Order.NoExpiration,
+    match_limit: int = 20,
+    max_quote_quantity: Decimal = Decimal(0),
+    reflink: typing.Optional[PublicKey] = None,
+) -> CombinableInstructions:
+    # { buy: 0, sell: 1 }
+    raw_side: int = 1 if side == Side.SELL else 0
+    raw_order_type: int = order_type.to_perp()
+
+    base_decimals = perp_market_details.base_instrument.decimals
+    quote_decimals = perp_market_details.quote_token.token.decimals
+
+    base_factor = Decimal(10) ** base_decimals
+    quote_factor = Decimal(10) ** quote_decimals
+
+    native_price = ((price * quote_factor) * perp_market_details.base_lot_size) / (
+        perp_market_details.quote_lot_size * base_factor
+    )
+    native_quantity = (quantity * base_factor) / perp_market_details.base_lot_size
+    native_max_quote_quantity = (
+        (max_quote_quantity * quote_factor) / perp_market_details.quote_lot_size
+    ) or I64_MAX
+
+    # /// Accounts expected by this instruction (9 + `NUM_IN_MARGIN_BASKET`):
+    # /// 0. `[]` mango_group_ai - MangoGroup
+    # /// 1. `[writable]` mango_account_ai - the MangoAccount of owner
+    # /// 2. `[signer]` owner_ai - owner of MangoAccount
+    # /// 3. `[]` mango_cache_ai - MangoCache for this MangoGroup
+    # /// 4. `[writable]` perp_market_ai
+    # /// 5. `[writable]` bids_ai - bids account for this PerpMarket
+    # /// 6. `[writable]` asks_ai - asks account for this PerpMarket
+    # /// 7. `[writable]` event_queue_ai - EventQueue for this PerpMarket
+    # /// 8. `[writable]` referrer_mango_account_ai - referrer's mango account;
+    # ///                 pass in mango_account_ai as duplicate if you don't have a referrer
+    # /// 9..9 + NUM_IN_MARGIN_BASKET `[]` open_orders_ais - pass in open orders in margin basket
+    keys = [
+        AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+        AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+        AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+        AccountMeta(
+            is_signer=False, is_writable=True, pubkey=perp_market_details.address
+        ),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks),
+        AccountMeta(
+            is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue
+        ),
+        AccountMeta(
+            is_signer=False, is_writable=True, pubkey=reflink or account.address
+        ),
+        *list(
+            [
+                AccountMeta(
+                    is_signer=False,
+                    is_writable=False,
+                    pubkey=oo_address,
+                )
+                for oo_address in account.spot_open_orders
+            ]
+        ),
+    ]
+
+    instructions = [
+        TransactionInstruction(
+            keys=keys,
+            program_id=context.mango_program_address,
+            data=layouts.PLACE_PERP_ORDER_2.build(
+                {
+                    "price": native_price,
+                    "max_base_quantity": native_quantity,
+                    "max_quote_quantity": native_max_quote_quantity,
+                    "client_order_id": client_order_id,
+                    "expiry_timestamp": expiration,
+                    "side": raw_side,
+                    "order_type": raw_order_type,
+                    "reduce_only": reduce_only,
+                    "limit": match_limit,
+                }
+            ),
+        )
+    ]
+
     return CombinableInstructions(signers=[], instructions=instructions)
 
 

@@ -16,6 +16,7 @@
 import enum
 import typing
 
+from datetime import timedelta, timezone
 from decimal import Decimal
 from solana.publickey import PublicKey
 
@@ -144,6 +145,12 @@ class PerpOrderBookSide(AddressableAccount):
             index = int(stack.pop())
             node = self.nodes[index]
             if node.type_name == "leaf":
+                expiration = Order.NoExpiration
+                if node.time_in_force != 0:
+                    expiration = node.timestamp.astimezone(timezone.utc) + timedelta(
+                        seconds=float(node.time_in_force)
+                    )
+
                 price = node.key["price"]
                 quantity = node.quantity
 
@@ -172,6 +179,7 @@ class PerpOrderBookSide(AddressableAccount):
                         actual_price,
                         actual_quantity,
                         OrderType.UNKNOWN,
+                        expiration=expiration,
                     )
                 ]
             elif node.type_name == "inner":

@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 from solana.rpc.commitment import Commitment, Finalized
 
 from .client import TransactionMonitor
+from .datetimes import local_now
 from .idgenerator import IdGenerator, MonotonicIdGenerator
 from .reconnectingwebsocket import ReconnectingWebsocket
 
@@ -96,7 +97,7 @@ class SignatureSubscription:
         self.id: int = 0
         self.subscribe_request_id: int = 0
         self.unsubscribe_request_id: int = 0
-        self.started_at: datetime = datetime.now()
+        self.started_at: datetime = local_now()
         self.completed_at: typing.Optional[datetime] = None
         self.timeout_timer: typing.Optional[threading.Timer] = None
         self.__final_status: typing.Optional[str] = None
@@ -107,7 +108,7 @@ class SignatureSubscription:
 
     @final_status.setter
     def final_status(self, status: typing.Optional[str]) -> None:
-        self.completed_at = datetime.now()
+        self.completed_at = local_now()
         self.__final_status = status
 
     @property
@@ -190,7 +191,7 @@ class WebSocketTransactionMonitor(TransactionMonitor):
         commitment: Commitment = Finalized,
         timeout: float = 90.0,
     ) -> typing.Sequence[TransactionStatus]:
-        started_at: datetime = datetime.now()
+        started_at: datetime = local_now()
         collector = DequeTransactionStatusCollector()
         monitor = WebSocketTransactionMonitor(
             cluster_ws_url,
@@ -209,7 +210,7 @@ class WebSocketTransactionMonitor(TransactionMonitor):
             waiters += [waiter]
 
         for active_waiter in waiters:
-            time_spent = datetime.now() - started_at
+            time_spent = local_now() - started_at
             seconds_so_far: float = (
                 time_spent.seconds + time_spent.microseconds / 1000000
             )

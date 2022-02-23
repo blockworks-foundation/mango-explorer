@@ -53,9 +53,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
             filename = f"trade-history-{account.address}.csv"
         history: mango.TradeHistory = mango.TradeHistory()
         if args.most_recent_hours:
-            cutoff: datetime = datetime.utcnow() - timedelta(
-                hours=args.most_recent_hours
-            )
+            cutoff: datetime = mango.utc_now() - timedelta(hours=args.most_recent_hours)
             cutoff = cutoff.replace(tzinfo=timezone(offset=timedelta()))
             history.download_latest(context, account, cutoff)
         else:

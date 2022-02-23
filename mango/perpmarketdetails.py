@@ -15,13 +15,14 @@
 
 import typing
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .context import Context
+from .datetimes import utc_now
 from .group import GroupSlot, Group
 from .instrumentvalue import InstrumentValue
 from .layouts import layouts
@@ -87,7 +88,7 @@ class LiquidityMiningInfo:
         #   portion_given = 1 - mngoLeft / mngoPerPeriod
         #   elapsed = (<current_time> - periodStart) / targetPeriodLength
         #   est_next = elapsed / portion_given - elapsed
-        now: datetime = datetime.now().replace(microsecond=0).astimezone(timezone.utc)
+        now: datetime = utc_now().replace(microsecond=0)
         mngo_distributed: InstrumentValue = self.mngo_per_period - self.mngo_left
         proportion_distributed: Decimal = Decimal(0)
         elapsed: timedelta = now - self.period_start

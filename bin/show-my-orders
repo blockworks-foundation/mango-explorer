@@ -29,6 +29,12 @@ parser.add_argument(
     default=False,
     help="runs as read-only and does not perform any transactions",
 )
+parser.add_argument(
+    "--include-expired",
+    action="store_true",
+    default=False,
+    help="show all owned transactions, even those that have expired",
+)
 args: argparse.Namespace = mango.parse_args(parser)
 
 with mango.ContextBuilder.from_command_line_parameters(args) as context:
@@ -45,7 +51,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     market_operations = mango.create_market_operations(
         context, wallet, account, market, args.dry_run
     )
-    orders = market_operations.load_my_orders()
+    orders = market_operations.load_my_orders(include_expired=args.include_expired)
     mango.output(f"{len(orders)} order(s) to show.")
     for order in orders:
         mango.output(order)

@@ -131,6 +131,15 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         )
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
+        if order.reduce_only:
+            self._logger.warning("Ignoring reduce_only - not supported on Spot markets")
+
+        if order.expiration != Order.NoExpiration:
+            self._logger.warning("Ignoring expiration - not supported on Spot markets")
+
+        if order.match_limit != Order.DefaultMatchLimit:
+            self._logger.warning("Ignoring match_limit - not supported on Spot markets")
+
         create_open_orders: bool = False
         slot = self.group.slot_by_spot_market_address(self.spot_market.address)
         market_index = slot.index
@@ -313,10 +322,7 @@ class SpotMarketOperations(MarketOperations):
         signers: CombinableInstructions = CombinableInstructions.from_wallet(
             self.wallet
         )
-        if order.reduce_only:
-            self._logger.warning(
-                "Ignoring reduce_only flag on order because spot markets don't support it."
-            )
+
         order_with_client_id: Order = order.with_client_id(client_id).with_owner(
             self.open_orders_address or SYSTEM_PROGRAM_ADDRESS
         )
@@ -381,12 +387,14 @@ class SpotMarketOperations(MarketOperations):
     def load_orderbook(self) -> OrderBook:
         return self.spot_market.fetch_orderbook(self.context)
 
-    def load_my_orders(self) -> typing.Sequence[Order]:
+    def load_my_orders(self, include_expired: bool = False) -> typing.Sequence[Order]:
         if not self.open_orders_address:
             return []
 
         orderbook: OrderBook = self.load_orderbook()
-        return orderbook.all_orders_for_owner(self.open_orders_address)
+        return orderbook.all_orders_for_owner(
+            self.open_orders_address, include_expired=include_expired
+        )
 
     def _build_crank(
         self, limit: Decimal = Decimal(32), add_self: bool = False

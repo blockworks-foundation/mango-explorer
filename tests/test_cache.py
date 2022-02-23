@@ -4,7 +4,6 @@ from .context import mango
 from .fakes import fake_account_info, fake_seeded_public_key
 from .data import load_cache
 
-from datetime import datetime
 from decimal import Decimal
 
 
@@ -13,7 +12,7 @@ def test_cache_constructor() -> None:
     meta_data = mango.Metadata(
         mango.layouts.DATA_TYPE.parse(bytearray(b"\x07")), mango.Version.V1, True
     )
-    timestamp = datetime.now()
+    timestamp = mango.utc_now()
     price_cache = [mango.PriceCache(Decimal(26), timestamp)]
     root_bank_cache = [
         mango.RootBankCache(Decimal("0.00001"), Decimal("0.00001"), timestamp)

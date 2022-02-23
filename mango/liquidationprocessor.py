@@ -24,6 +24,7 @@ from decimal import Decimal
 from .account import Account
 from .accountliquidator import AccountLiquidator
 from .context import Context
+from .datetimes import local_now
 from .group import Group
 from .instrumentvalue import InstrumentValue
 from .liquidatablereport import LiquidatableReport, LiquidatableState
@@ -79,8 +80,8 @@ class LiquidationProcessor:
             LiquidationEvent
         ]()
         self.ripe_accounts: typing.Optional[typing.Sequence[Account]] = None
-        self.ripe_accounts_updated_at: datetime = datetime.now()
-        self.prices_updated_at: datetime = datetime.now()
+        self.ripe_accounts_updated_at: datetime = local_now()
+        self.prices_updated_at: datetime = local_now()
         self.state: LiquidationProcessorState = LiquidationProcessorState.STARTING
         self.state_change: EventSource[LiquidationProcessor] = EventSource[
             LiquidationProcessor
@@ -92,7 +93,7 @@ class LiquidationProcessor:
         )
         self._check_update_recency("prices", self.prices_updated_at)
         self.ripe_accounts = ripe_accounts
-        self.ripe_accounts_updated_at = datetime.now()
+        self.ripe_accounts_updated_at = local_now()
         # If this is the first time through, mark ourselves as Healthy.
         if self.state == LiquidationProcessorState.STARTING:
             self.state = LiquidationProcessorState.HEALTHY
@@ -160,7 +161,7 @@ class LiquidationProcessor:
 
         self._liquidate_all(group, prices, worthwhile)
 
-        self.prices_updated_at = datetime.now()
+        self.prices_updated_at = local_now()
         time_taken = time.time() - started_at
         self._logger.info(
             f"Check of all ripe 🥭 accounts complete. Time taken: {time_taken:.2f} seconds."
@@ -215,7 +216,7 @@ class LiquidationProcessor:
                 )
 
     def _check_update_recency(self, name: str, last_updated_at: datetime) -> None:
-        how_long_ago_was_last_update = datetime.now() - last_updated_at
+        how_long_ago_was_last_update = local_now() - last_updated_at
         if how_long_ago_was_last_update > LiquidationProcessor._AGE_ERROR_THRESHOLD:
             self.state = LiquidationProcessorState.UNHEALTHY
             self.state_change.on_next(self)

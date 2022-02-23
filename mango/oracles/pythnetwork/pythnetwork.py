@@ -19,12 +19,12 @@ import rx
 import rx.operators
 import typing
 
-from datetime import datetime
 from decimal import Decimal
 from solana.publickey import PublicKey
 
 from ...accountinfo import AccountInfo
 from ...context import Context
+from ...datetimes import utc_now
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import (
@@ -110,7 +110,13 @@ class PythOracle(Oracle):
 
         # Pyth has no notion of bids, asks, or spreads so just provide the single price.
         return Price(
-            self.source, datetime.now(), self.market, price, price, price, confidence
+            self.source,
+            utc_now(),
+            self.market,
+            price,
+            price,
+            price,
+            confidence,
         )
 
     def to_streaming_observable(

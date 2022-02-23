@@ -32,11 +32,15 @@ class ConfidenceIntervalElement(Element):
     def __init__(
         self,
         order_type: mango.OrderType,
+        expire_seconds: typing.Optional[Decimal],
+        match_limit: int,
         position_size_ratio: Decimal,
         confidence_interval_levels: typing.Sequence[Decimal],
     ) -> None:
         super().__init__()
         self.order_type: mango.OrderType = order_type
+        self.expire_seconds: typing.Optional[Decimal] = expire_seconds
+        self.match_limit: int = match_limit
         self.position_size_ratio: Decimal = position_size_ratio
         self.confidence_interval_levels: typing.Sequence[
             Decimal
@@ -67,6 +71,8 @@ class ConfidenceIntervalElement(Element):
             raise Exception("No position-size ratio specified.")
 
         order_type: mango.OrderType = args.order_type
+        expire_seconds: typing.Optional[Decimal] = args.expire_seconds
+        match_limit: int = args.match_limit or mango.Order.DefaultMatchLimit
         position_size_ratio: Decimal = args.confidenceinterval_position_size_ratio
         confidence_interval_levels: typing.Sequence[
             Decimal
@@ -75,7 +81,11 @@ class ConfidenceIntervalElement(Element):
             confidence_interval_levels = [Decimal(2)]
 
         return ConfidenceIntervalElement(
-            order_type, position_size_ratio, confidence_interval_levels
+            order_type,
+            expire_seconds,
+            match_limit,
+            position_size_ratio,
+            confidence_interval_levels,
         )
 
     def process(
@@ -85,6 +95,7 @@ class ConfidenceIntervalElement(Element):
         orders: typing.Sequence[mango.Order],
     ) -> typing.Sequence[mango.Order]:
         price: mango.Price = model_state.price
+        expiration = mango.Order.build_absolute_expiration(self.expire_seconds)
         if price.source.supports.has_feature(mango.SupportedOracleFeature.CONFIDENCE):
             raise Exception(f"Price does not support confidence interval: {price}")
 
@@ -104,12 +115,16 @@ class ConfidenceIntervalElement(Element):
                 price=bid,
                 quantity=position_size,
                 order_type=self.order_type,
+                expiration=expiration,
+                match_limit=self.match_limit,
             )
             ask_order = mango.Order.from_basic_info(
                 mango.Side.SELL,
                 price=ask,
                 quantity=position_size,
                 order_type=self.order_type,
+                expiration=expiration,
+                match_limit=self.match_limit,
             )
             self._logger.debug(
                 f"""Desired orders:

@@ -4,6 +4,7 @@ import argparse
 import os
 import os.path
 import sys
+import typing
 
 from solana.publickey import PublicKey
 
@@ -54,7 +55,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     market_operations = mango.create_market_operations(
         context, wallet, account, market, args.dry_run
     )
-    orders = market_operations.load_my_orders()
+    orders = market_operations.load_my_orders(include_expired=True)
     if len(orders) == 0:
         mango.output(f"No open orders on {market.symbol}")
     else:
@@ -71,9 +72,10 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
             signers: mango.CombinableInstructions = (
                 mango.CombinableInstructions.from_wallet(wallet)
             )
-            signatures = (signers + cancel_all).execute(context)
+            cancel_all_signatures = (signers + cancel_all).execute(context)
+            mango.output(f"Cancelling all perp orders: {cancel_all_signatures}")
         else:
-            signatures = []
+            signatures: typing.List[str] = []
             for order in orders:
                 mango.output("Cancelling:", order)
                 signatures += market_operations.cancel_order(order)

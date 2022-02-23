@@ -57,18 +57,11 @@ SOL_DECIMALS = decimal.Decimal(9)
 SOL_DECIMAL_DIVISOR = decimal.Decimal(10**SOL_DECIMALS)
 
 
-# ## NUM_TOKENS
+# ## I64_MAX
 #
-# This is currently hard-coded to 3.
-#
-NUM_TOKENS = 3
-
-
-# ## NUM_MARKETS
-#
-# There is one fewer market than tokens.
-#
-NUM_MARKETS = NUM_TOKENS - 1
+# This is to match the mango-client-v3 behaviour:
+# export const I64_MAX_BN = new BN('9223372036854775807').toTwos(64);
+I64_MAX = decimal.Decimal("9223372036854775807")
 
 
 # # WARNING_DISCLAIMER_TEXT

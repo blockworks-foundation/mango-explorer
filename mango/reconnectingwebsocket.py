@@ -23,8 +23,9 @@ import traceback
 import typing
 import websocket
 
-from datetime import datetime
 from threading import Thread
+
+from .datetimes import local_now
 
 
 # # 🥭 ReconnectingWebsocket class
@@ -43,19 +44,19 @@ class ReconnectingWebsocket:
         self.reconnect_required: bool = True
         self.ping_interval: int = 0
         self.connecting: rx.subject.behaviorsubject.BehaviorSubject = (
-            rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
+            rx.subject.behaviorsubject.BehaviorSubject(local_now())
         )
         self.connected: rx.subject.behaviorsubject.BehaviorSubject = (
-            rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
+            rx.subject.behaviorsubject.BehaviorSubject(local_now())
         )
         self.disconnected: rx.subject.behaviorsubject.BehaviorSubject = (
-            rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
+            rx.subject.behaviorsubject.BehaviorSubject(local_now())
         )
         self.ping: rx.subject.behaviorsubject.BehaviorSubject = (
-            rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
+            rx.subject.behaviorsubject.BehaviorSubject(local_now())
         )
         self.pong: rx.subject.behaviorsubject.BehaviorSubject = (
-            rx.subject.behaviorsubject.BehaviorSubject(datetime.now())
+            rx.subject.behaviorsubject.BehaviorSubject(local_now())
         )
         self.item: rx.subject.subject.Subject = rx.subject.subject.Subject()
 
@@ -87,10 +88,10 @@ class ReconnectingWebsocket:
         self._logger.warning(f"WebSocket for {self.url} has error {args}")
 
     def _on_ping(self, *_: typing.Any) -> None:
-        self.ping.on_next(datetime.now())
+        self.ping.on_next(local_now())
 
     def _on_pong(self, *_: typing.Any) -> None:
-        self.pong.on_next(datetime.now())
+        self.pong.on_next(local_now())
 
     def open(self) -> None:
         thread = Thread(target=self._run)
@@ -105,7 +106,7 @@ class ReconnectingWebsocket:
     def _run(self) -> None:
         while self.reconnect_required:
             self._logger.info(f"WebSocket connecting to: {self.url}")
-            self.connecting.on_next(datetime.now())
+            self.connecting.on_next(local_now())
             self._ws = websocket.WebSocketApp(
                 self.url,
                 on_open=self._on_open,
@@ -114,7 +115,7 @@ class ReconnectingWebsocket:
                 on_ping=self._on_ping,
                 on_pong=self._on_pong,
             )
-            self.connected.on_next(datetime.now())
+            self.connected.on_next(local_now())
             self._ws.run_forever(ping_interval=self.ping_interval)
             self.__open_event.clear()
-            self.disconnected.on_next(datetime.now())
+            self.disconnected.on_next(local_now())

@@ -26,7 +26,7 @@ def test_transaction_instruction_constructor() -> None:
 
 
 def test_transaction_scout_constructor() -> None:
-    timestamp: datetime = datetime.now()
+    timestamp: datetime = mango.utc_now()
     signatures: typing.Sequence[str] = ["Signature1", "Signature2"]
     succeeded: bool = True
     group_name: str = "BTC_ETH_USDT"

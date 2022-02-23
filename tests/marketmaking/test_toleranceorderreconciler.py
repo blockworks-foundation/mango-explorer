@@ -1,5 +1,6 @@
 import mango
 
+from datetime import timedelta
 from decimal import Decimal
 from mango.marketmaking.toleranceorderreconciler import ToleranceOrderReconciler
 
@@ -7,7 +8,7 @@ from ..fakes import fake_model_state
 
 
 def test_buy_does_not_match_sell() -> None:
-    actual = ToleranceOrderReconciler(Decimal(1), Decimal(1))
+    actual = ToleranceOrderReconciler(Decimal(1), Decimal(1), timedelta(seconds=0))
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -19,7 +20,9 @@ def test_buy_does_not_match_sell() -> None:
 
 
 def test_exact_match_with_small_tolerance_matches() -> None:
-    actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal("0.001"))
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal("0.001"), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -31,7 +34,7 @@ def test_exact_match_with_small_tolerance_matches() -> None:
 
 
 def test_exact_match_with_zero_tolerance_matches() -> None:
-    actual = ToleranceOrderReconciler(Decimal(0), Decimal(0))
+    actual = ToleranceOrderReconciler(Decimal(0), Decimal(0), timedelta(seconds=0))
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -43,7 +46,9 @@ def test_exact_match_with_zero_tolerance_matches() -> None:
 
 
 def test_quantity_within_positive_tolerance_matches() -> None:
-    actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
+    actual = ToleranceOrderReconciler(
+        Decimal(0), Decimal("0.001"), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -55,7 +60,9 @@ def test_quantity_within_positive_tolerance_matches() -> None:
 
 
 def test_quantity_positive_tolerance_boundary_matches() -> None:
-    actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
+    actual = ToleranceOrderReconciler(
+        Decimal(0), Decimal("0.001"), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -67,7 +74,9 @@ def test_quantity_positive_tolerance_boundary_matches() -> None:
 
 
 def test_quantity_outside_positive_tolerance_no_match() -> None:
-    actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
+    actual = ToleranceOrderReconciler(
+        Decimal(0), Decimal("0.001"), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -79,7 +88,9 @@ def test_quantity_outside_positive_tolerance_no_match() -> None:
 
 
 def test_quantity_within_negative_tolerance_matches() -> None:
-    actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
+    actual = ToleranceOrderReconciler(
+        Decimal(0), Decimal("0.001"), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -91,7 +102,9 @@ def test_quantity_within_negative_tolerance_matches() -> None:
 
 
 def test_quantity_negative_tolerance_boundary_matches() -> None:
-    actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
+    actual = ToleranceOrderReconciler(
+        Decimal(0), Decimal("0.001"), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -103,7 +116,9 @@ def test_quantity_negative_tolerance_boundary_matches() -> None:
 
 
 def test_quantity_outside_negative_tolerance_no_match() -> None:
-    actual = ToleranceOrderReconciler(Decimal(0), Decimal("0.001"))
+    actual = ToleranceOrderReconciler(
+        Decimal(0), Decimal("0.001"), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -115,7 +130,9 @@ def test_quantity_outside_negative_tolerance_no_match() -> None:
 
 
 def test_price_within_positive_tolerance_matches() -> None:
-    actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal(0), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -127,7 +144,9 @@ def test_price_within_positive_tolerance_matches() -> None:
 
 
 def test_price_positive_tolerance_boundary_matches() -> None:
-    actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal(0), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -139,7 +158,9 @@ def test_price_positive_tolerance_boundary_matches() -> None:
 
 
 def test_price_outside_positive_tolerance_no_match() -> None:
-    actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal(0), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -151,7 +172,9 @@ def test_price_outside_positive_tolerance_no_match() -> None:
 
 
 def test_price_within_negative_tolerance_matches() -> None:
-    actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal(0), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -163,7 +186,9 @@ def test_price_within_negative_tolerance_matches() -> None:
 
 
 def test_price_negative_tolerance_boundary_matches() -> None:
-    actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal(0), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
@@ -175,12 +200,86 @@ def test_price_negative_tolerance_boundary_matches() -> None:
 
 
 def test_price_outside_negative_tolerance_no_match() -> None:
-    actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal(0))
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal(0), timedelta(seconds=0)
+    )
     existing = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
     desired = mango.Order.from_basic_info(
         mango.Side.BUY, price=Decimal("0.9989"), quantity=Decimal(10)
+    )
+
+    assert not actual.is_within_tolderance(existing, desired)
+
+
+def test_time_in_force_early_match() -> None:
+    now = mango.utc_now()
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal(0), timedelta(seconds=5)
+    )
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY,
+        price=Decimal(1),
+        quantity=Decimal(10),
+        expiration=now - timedelta(seconds=3),
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10), expiration=now
+    )
+
+    assert actual.is_within_tolderance(existing, desired)
+
+
+def test_time_in_force_too_early_no_match() -> None:
+    now = mango.utc_now()
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal(0), timedelta(seconds=5)
+    )
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY,
+        price=Decimal(1),
+        quantity=Decimal(10),
+        expiration=now - timedelta(seconds=6),
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10), expiration=now
+    )
+
+    assert not actual.is_within_tolderance(existing, desired)
+
+
+def test_time_in_force_late_match() -> None:
+    now = mango.utc_now()
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal(0), timedelta(seconds=5)
+    )
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY,
+        price=Decimal(1),
+        quantity=Decimal(10),
+        expiration=now + timedelta(seconds=3),
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10), expiration=now
+    )
+
+    assert actual.is_within_tolderance(existing, desired)
+
+
+def test_time_in_force_too_late_no_match() -> None:
+    now = mango.utc_now()
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal(0), timedelta(seconds=5)
+    )
+    existing = mango.Order.from_basic_info(
+        mango.Side.BUY,
+        price=Decimal(1),
+        quantity=Decimal(10),
+        expiration=now + timedelta(seconds=6),
+    )
+    desired = mango.Order.from_basic_info(
+        mango.Side.BUY, price=Decimal(1), quantity=Decimal(10), expiration=now
     )
 
     assert not actual.is_within_tolderance(existing, desired)
@@ -204,7 +303,9 @@ def test_reconcile_no_acceptable_orders() -> None:
         ),
     ]
     model_state = fake_model_state()
-    actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal("0.001"))
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal("0.001"), timedelta(seconds=0)
+    )
     result = actual.reconcile(model_state, existing, desired)
 
     assert result.to_place == desired
@@ -231,7 +332,9 @@ def test_reconcile_all_acceptable_orders() -> None:
         ),
     ]
     model_state = fake_model_state()
-    actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal("0.001"))
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal("0.001"), timedelta(seconds=0)
+    )
     result = actual.reconcile(model_state, existing, desired)
 
     assert result.to_place == []
@@ -264,7 +367,9 @@ def test_reconcile_different_list_sizes_orders() -> None:
         ),
     ]
     model_state = fake_model_state()
-    actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal("0.001"))
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal("0.001"), timedelta(seconds=0)
+    )
     result = actual.reconcile(model_state, existing, desired)
 
     assert result.to_place == []
@@ -307,7 +412,9 @@ def test_reconcile_two_acceptable_two_unacceptable_orders() -> None:
         ),
     ]
     model_state = fake_model_state()
-    actual = ToleranceOrderReconciler(Decimal("0.001"), Decimal("0.001"))
+    actual = ToleranceOrderReconciler(
+        Decimal("0.001"), Decimal("0.001"), timedelta(seconds=0)
+    )
     result = actual.reconcile(model_state, existing, desired)
 
     assert len(result.to_place) == 2

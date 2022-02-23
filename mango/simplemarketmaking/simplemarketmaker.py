@@ -99,7 +99,9 @@ class SimpleMarketMaker:
                     price, inventory
                 )
 
-                current_orders = self.market_operations.load_my_orders()
+                current_orders = self.market_operations.load_my_orders(
+                    include_expired=True
+                )
                 buy_orders = [
                     order for order in current_orders if order.side == mango.Side.BUY
                 ]
@@ -145,7 +147,7 @@ class SimpleMarketMaker:
 
     def cleanup(self) -> None:
         self._logger.info("Cleaning up.")
-        orders = self.market_operations.load_my_orders()
+        orders = self.market_operations.load_my_orders(include_expired=True)
         for order in orders:
             self.market_operations.cancel_order(order)
 
@@ -228,9 +230,14 @@ class SimpleMarketMaker:
 
         return len(orders) == 0 or not all(
             [
-                (within_tolerance(price, order.price, self.existing_order_tolerance))
-                and within_tolerance(
-                    quantity, order.quantity, self.existing_order_tolerance
+                (
+                    not order.expired
+                    and within_tolerance(
+                        price, order.price, self.existing_order_tolerance
+                    )
+                    and within_tolerance(
+                        quantity, order.quantity, self.existing_order_tolerance
+                    )
                 )
                 for order in orders
             ]

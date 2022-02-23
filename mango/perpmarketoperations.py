@@ -109,7 +109,9 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
             order.side,
             order.order_type,
             order.reduce_only,
-            self.context.reflink,
+            expiration=order.expiration,
+            match_limit=order.match_limit,
+            reflink=self.context.reflink,
         )
 
     def build_settle_instructions(self) -> CombinableInstructions:
@@ -263,9 +265,11 @@ class PerpMarketOperations(MarketOperations):
     def load_orderbook(self) -> OrderBook:
         return self.perp_market.fetch_orderbook(self.context)
 
-    def load_my_orders(self) -> typing.Sequence[Order]:
+    def load_my_orders(self, include_expired: bool = False) -> typing.Sequence[Order]:
         orderbook: OrderBook = self.load_orderbook()
-        return orderbook.all_orders_for_owner(self.account.address)
+        return orderbook.all_orders_for_owner(
+            self.account.address, include_expired=include_expired
+        )
 
     def _build_crank(
         self, limit: Decimal = Decimal(32), add_self: bool = False

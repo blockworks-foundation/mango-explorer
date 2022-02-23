@@ -18,12 +18,12 @@ import rx
 import rx.operators
 import typing
 
-from datetime import datetime
 from decimal import Decimal
 from solana.publickey import PublicKey
 
 from ...cache import Cache
 from ...context import Context
+from ...datetimes import utc_now
 from ...ensuremarketloaded import ensure_market_loaded
 from ...market import Market
 from ...observables import observable_pipeline_error_reporter
@@ -83,7 +83,7 @@ class StubOracle(Oracle):
         # will give you the consistent results, but you'll need to adjust your code"
         return Price(
             self.source,
-            datetime.now(),
+            utc_now(),
             self.market,
             raw_price.price,
             raw_price.price,

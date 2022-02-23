@@ -5,7 +5,6 @@ from solana.publickey import PublicKey
 from .context import mango
 from .fakes import fake_account_info, fake_seeded_public_key
 
-from datetime import datetime
 from decimal import Decimal
 
 
@@ -85,7 +84,7 @@ class TstFillPE(mango.PerpFillEvent):
         super().__init__(
             0,
             Decimal(0),
-            datetime.now(),
+            mango.utc_now(),
             mango.Side.BUY,
             Decimal(1),
             Decimal(1),

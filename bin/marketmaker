@@ -11,6 +11,7 @@ import threading
 import traceback
 import typing
 
+from datetime import timedelta
 from decimal import Decimal
 from solana.publickey import PublicKey
 
@@ -58,13 +59,41 @@ parser.add_argument(
     type=mango.OrderType,
     default=mango.OrderType.POST_ONLY,
     choices=list(mango.OrderType),
-    help="Order type: LIMIT, IOC or POST_ONLY",
+    help="Order type: LIMIT, IOC, POST_ONLY, or (perp-only) POST_ONLY_SLIDE",
+)
+parser.add_argument(
+    "--match-limit",
+    type=int,
+    help="maximum number of orders this order can match with on the orderbook",
+)
+parser.add_argument(
+    "--expire-seconds",
+    type=int,
+    help="maximum number of seconds from now for which the order will be valid on the orderbook",
 )
 parser.add_argument(
     "--existing-order-tolerance",
     type=Decimal,
     default=Decimal("0.001"),
     help="tolerance in price and quantity when matching existing orders or cancelling/replacing",
+)
+parser.add_argument(
+    "--existing-order-price-tolerance",
+    type=Decimal,
+    default=Decimal("0.001"),
+    help="tolerance in price when matching existing orders or cancelling/replacing (overrides --existing-order-tolerance)",
+)
+parser.add_argument(
+    "--existing-order-quantity-tolerance",
+    type=Decimal,
+    default=Decimal("0.001"),
+    help="tolerance in quantity when matching existing orders or cancelling/replacing (overrides --existing-order-tolerance)",
+)
+parser.add_argument(
+    "--existing-order-time-in-force-tolerance",
+    type=Decimal,
+    default=Decimal(0),
+    help="tolerance in time-in-force when matching existing orders or cancelling/replacing",
 )
 parser.add_argument(
     "--redeem-threshold",
@@ -160,7 +189,7 @@ def cleanup(
         )
     )
     cancels: mango.CombinableInstructions = mango.CombinableInstructions.empty()
-    orders = market_operations.load_my_orders()
+    orders = market_operations.load_my_orders(include_expired=True)
     for order in orders:
         cancels += market_instruction_builder.build_cancel_order_instructions(
             order, ok_if_missing=True
@@ -254,8 +283,17 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     if args.existing_order_tolerance < 0:
         order_reconciler = mango.marketmaking.AlwaysReplaceOrderReconciler()
     else:
+        price_tolerance = (
+            args.existing_order_price_tolerance or args.existing_order_tolerance
+        )
+        quantity_tolerance = (
+            args.existing_order_quantity_tolerance or args.existing_order_tolerance
+        )
+        time_in_force_tolerance = timedelta(
+            seconds=float(args.existing_order_time_in_force_tolerance)
+        )
         order_reconciler = mango.marketmaking.ToleranceOrderReconciler(
-            args.existing_order_tolerance, args.existing_order_tolerance
+            price_tolerance, quantity_tolerance, time_in_force_tolerance
         )
 
     desired_orders_chain: chain.Chain = (

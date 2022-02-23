@@ -25,6 +25,7 @@ from decimal import Decimal
 from rx.subject.subject import Subject
 
 from ...context import Context
+from ...datetimes import utc_now
 from ...market import Market
 from ...observables import Disposable, DisposeWrapper
 from ...oracle import (
@@ -79,7 +80,7 @@ class FtxOracle(Oracle):
 
         return Price(
             self.source,
-            datetime.now(),
+            utc_now(),
             self.market,
             bid,
             price,

@@ -43,6 +43,7 @@ from solana.rpc.types import (
 from solana.transaction import Transaction
 
 from .constants import SOL_DECIMAL_DIVISOR
+from .datetimes import local_now
 from .instructionreporter import InstructionReporter
 from .logmessages import expand_log_messages
 from .text import indent_collection_as_str
@@ -1034,15 +1035,15 @@ class BetterClient:
             f"Waiting up to {max_wait_in_seconds} seconds for {transaction_ids}."
         )
         all_confirmed: typing.List[str] = []
-        start_time: datetime = datetime.now()
+        start_time: datetime = local_now()
         cutoff: datetime = start_time + timedelta(seconds=max_wait_in_seconds)
         for transaction_id in transaction_ids:
-            while datetime.now() < cutoff:
+            while local_now() < cutoff:
                 time.sleep(1)
                 confirmed = self.get_confirmed_transaction(transaction_id)
                 if confirmed is not None:
                     self._logger.info(
-                        f"Confirmed {transaction_id} after {datetime.now() - start_time} seconds."
+                        f"Confirmed {transaction_id} after {local_now() - start_time} seconds."
                     )
                     all_confirmed += [transaction_id]
                     break

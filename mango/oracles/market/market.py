@@ -18,10 +18,10 @@ import rx
 import rx.operators
 import typing
 
-from datetime import datetime
 from decimal import Decimal
 
 from ...context import Context
+from ...datetimes import utc_now
 from ...ensuremarketloaded import ensure_market_loaded
 from ...loadedmarket import LoadedMarket
 from ...market import Market
@@ -86,7 +86,7 @@ class MarketOracle(Oracle):
 
         return Price(
             self.source,
-            datetime.now(),
+            utc_now(),
             self.market,
             top_bid,
             mid_price,

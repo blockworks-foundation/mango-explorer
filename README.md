@@ -60,7 +60,7 @@ market = mango.ensure_market_loaded(context, stub)
 market_operations = mango.create_market_operations(context, wallet, account, market, dry_run=False)
 
 print("Initial order book:\n\t", market_operations.load_orderbook())
-print("Your current orders:\n\t", market_operations.load_my_orders())
+print("Your current orders:\n\t", market_operations.load_my_orders(include_expired=True))
 
 # Go on - try to buy 1 SOL-PERP contract for $10.
 order = mango.Order.from_basic_info(side=mango.Side.BUY,
@@ -74,7 +74,7 @@ print("\n\nSleeping for 10 seconds...")
 time.sleep(10)
 
 print("\n\nOrder book (including our new order):\n", market_operations.load_orderbook())
-print("Your current orders:\n\t", market_operations.load_my_orders())
+print("Your current orders:\n\t", market_operations.load_my_orders(include_expired=True))
 
 cancellation_signatures = market_operations.cancel_order(placed_order)
 print("\n\nCancellation signature:\n\t", cancellation_signatures)
@@ -83,7 +83,7 @@ print("\n\nSleeping for 10 seconds...")
 time.sleep(10)
 
 print("\n\nOrder book (without our order):\n", market_operations.load_orderbook())
-print("Your current orders:\n\t", market_operations.load_my_orders())
+print("Your current orders:\n\t", market_operations.load_my_orders(include_expired=True))
 
 ```
 

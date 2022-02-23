@@ -88,6 +88,7 @@ class InstructionType(enum.IntEnum):
     ChangeReferralFeeParams = 61
     SetReferrerMemory = 62
     RegisterReferrerId = 63
+    PlacePerpOrder2 = 64
 
     def __str__(self) -> str:
         return self.name
