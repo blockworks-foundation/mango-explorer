@@ -58,9 +58,13 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     if len(orders) == 0:
         mango.output(f"No open orders on {market.symbol}")
     else:
-        if isinstance(market_operations.market, mango.PerpMarket):
+        if mango.PerpMarket.isa(market_operations.market):
             instruction_builder = mango.PerpMarketInstructionBuilder(
-                context, wallet, market_operations.market, group, account
+                context,
+                wallet,
+                mango.PerpMarket.ensure(market_operations.market),
+                group,
+                account,
             )
             cancel_all = instruction_builder.build_cancel_all_orders_instructions()
 

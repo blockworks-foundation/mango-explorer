@@ -27,7 +27,7 @@ from .context import Context
 from .group import Group
 from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
-from .market import Market, InventorySource
+from .market import InventorySource, MarketType, Market
 from .observables import Disposable
 from .orderbookside import PerpOrderBookSide
 from .orders import Order
@@ -122,6 +122,7 @@ class PerpMarket(LoadedMarket):
         underlying_perp_market: PerpMarketDetails,
     ) -> None:
         super().__init__(
+            MarketType.PERP,
             mango_program_address,
             address,
             InventorySource.ACCOUNT,
@@ -136,6 +137,16 @@ class PerpMarket(LoadedMarket):
             quote,
             underlying_perp_market.quote_lot_size,
         )
+
+    @staticmethod
+    def isa(market: Market) -> bool:
+        return market.type == MarketType.PERP
+
+    @staticmethod
+    def ensure(market: Market) -> "PerpMarket":
+        if not PerpMarket.isa(market):
+            raise Exception(f"Market for {market.symbol} is not a Perp market")
+        return typing.cast(PerpMarket, market)
 
     @property
     def symbol(self) -> str:
@@ -245,6 +256,7 @@ class PerpMarketStub(Market):
         group_address: PublicKey,
     ) -> None:
         super().__init__(
+            MarketType.STUB,
             mango_program_address,
             address,
             InventorySource.ACCOUNT,

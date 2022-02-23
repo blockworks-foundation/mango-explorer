@@ -201,12 +201,12 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
 
     hedger: mango.hedging.Hedger = mango.hedging.NullHedger()
     if args.hedging_market is not None:
-        if not isinstance(market, mango.PerpMarket):
+        if not mango.PerpMarket.isa(market):
             raise Exception(
                 f"Cannot hedge - market {market.symbol} is not a perp market."
             )
 
-        underlying_market: mango.PerpMarket = market
+        underlying_market = mango.PerpMarket.ensure(market)
 
         hedging_market_symbol = args.hedging_market
         hedging_market_stub = context.market_lookup.find_by_symbol(
@@ -215,9 +215,9 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         if hedging_market_stub is None:
             raise Exception(f"Could not find market {hedging_market_symbol}")
 
-        hedging_market = mango.ensure_market_loaded(context, hedging_market_stub)
-        if not isinstance(hedging_market, mango.SpotMarket):
-            raise Exception(f"Market {hedging_market_symbol} is not a spot market.")
+        hedging_market = mango.SpotMarket.ensure(
+            mango.ensure_market_loaded(context, hedging_market_stub)
+        )
 
         logging.info(f"Hedging on {hedging_market.symbol}")
 

@@ -25,8 +25,6 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     if market is None:
         raise Exception(f"Could not find market {args.market}")
 
-    actual_market = mango.ensure_market_loaded(context, market)
-    if not isinstance(actual_market, mango.PerpMarket):
-        raise Exception(f"Market {args.market} is not a perp market.")
+    actual_market = mango.PerpMarket.ensure(mango.ensure_market_loaded(context, market))
 
     mango.output(actual_market.underlying_perp_market.liquidity_mining_info)

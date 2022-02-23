@@ -26,8 +26,8 @@ from .marketoperations import (
     NullMarketInstructionBuilder,
     NullMarketOperations,
 )
-from .perpmarketoperations import PerpMarketInstructionBuilder, PerpMarketOperations
 from .perpmarket import PerpMarket
+from .perpmarketoperations import PerpMarketInstructionBuilder, PerpMarketOperations
 from .serummarket import SerumMarket
 from .serummarketoperations import SerumMarketInstructionBuilder, SerumMarketOperations
 from .spotmarket import SpotMarket
@@ -50,15 +50,27 @@ def create_market_instruction_builder(
         return NullMarketInstructionBuilder(market.symbol)
 
     loaded_market: Market = ensure_market_loaded(context, market)
-    if isinstance(loaded_market, SerumMarket):
-        return SerumMarketInstructionBuilder.load(context, wallet, loaded_market)
-    elif isinstance(loaded_market, SpotMarket):
-        return SpotMarketInstructionBuilder.load(
-            context, wallet, loaded_market, loaded_market.group, account
+    if SerumMarket.isa(loaded_market):
+        return SerumMarketInstructionBuilder.load(
+            context, wallet, SerumMarket.ensure(loaded_market)
         )
-    elif isinstance(loaded_market, PerpMarket):
+    elif SpotMarket.isa(loaded_market):
+        spot_market = SpotMarket.ensure(loaded_market)
+        return SpotMarketInstructionBuilder.load(
+            context,
+            wallet,
+            spot_market,
+            spot_market.group,
+            account,
+        )
+    elif PerpMarket.isa(loaded_market):
+        perp_market = PerpMarket.ensure(loaded_market)
         return PerpMarketInstructionBuilder.load(
-            context, wallet, loaded_market, loaded_market.group, account
+            context,
+            wallet,
+            perp_market,
+            perp_market.group,
+            account,
         )
     else:
         raise Exception(
@@ -82,31 +94,35 @@ def create_market_operations(
     if dry_run:
         return NullMarketOperations(loaded_market)
 
-    if isinstance(loaded_market, SerumMarket):
+    if SerumMarket.isa(loaded_market):
         serum_market_instruction_builder: SerumMarketInstructionBuilder = (
-            SerumMarketInstructionBuilder.load(context, wallet, loaded_market)
+            SerumMarketInstructionBuilder.load(
+                context, wallet, SerumMarket.ensure(loaded_market)
+            )
         )
         return SerumMarketOperations(context, wallet, serum_market_instruction_builder)
-    elif isinstance(loaded_market, SpotMarket):
+    elif SpotMarket.isa(loaded_market):
         if account is None:
             raise Exception("Account is required for SpotMarket operations.")
+        spot_market = SpotMarket.ensure(loaded_market)
         spot_market_instruction_builder: SpotMarketInstructionBuilder = (
             SpotMarketInstructionBuilder.load(
-                context, wallet, loaded_market, loaded_market.group, account
+                context, wallet, spot_market, spot_market.group, account
             )
         )
         return SpotMarketOperations(
             context, wallet, account, spot_market_instruction_builder
         )
-    elif isinstance(loaded_market, PerpMarket):
+    elif PerpMarket.isa(loaded_market):
         if account is None:
             raise Exception("Account is required for PerpMarket operations.")
+        perp_market = PerpMarket.ensure(loaded_market)
         perp_market_instruction_builder: PerpMarketInstructionBuilder = (
             PerpMarketInstructionBuilder.load(
                 context,
                 wallet,
-                loaded_market,
-                loaded_market.underlying_perp_market.group,
+                perp_market,
+                perp_market.underlying_perp_market.group,
                 account,
             )
         )

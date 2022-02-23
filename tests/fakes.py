@@ -186,6 +186,7 @@ def fake_loaded_market(
     base = fake_token("BASE")
     quote = fake_token("QUOTE")
     return mango.LoadedMarket(
+        mango.MarketType.PERP,
         fake_seeded_public_key("program ID"),
         fake_seeded_public_key("perp market"),
         mango.InventorySource.ACCOUNT,

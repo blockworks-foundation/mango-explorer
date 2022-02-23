@@ -173,6 +173,7 @@ from .lotsizeconverter import LotSizeConverter as LotSizeConverter
 from .mangoinstruction import MangoInstruction as MangoInstruction
 from .lotsizeconverter import NullLotSizeConverter as NullLotSizeConverter
 from .market import InventorySource as InventorySource
+from .market import MarketType as MarketType
 from .market import Market as Market
 from .marketlookup import CompoundMarketLookup as CompoundMarketLookup
 from .marketlookup import MarketLookup as MarketLookup

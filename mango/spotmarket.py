@@ -27,7 +27,7 @@ from .context import Context
 from .group import Group
 from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
-from .market import Market, InventorySource
+from .market import InventorySource, MarketType, Market
 from .observables import Disposable
 from .orders import Order
 from .serumeventqueue import SerumEvent, SerumEventQueue, UnseenSerumEventChangesTracker
@@ -53,6 +53,7 @@ class SpotMarket(LoadedMarket):
         underlying_serum_market: PySerumMarket,
     ) -> None:
         super().__init__(
+            MarketType.SPOT,
             serum_program_address,
             address,
             InventorySource.ACCOUNT,
@@ -71,6 +72,16 @@ class SpotMarket(LoadedMarket):
         self.lot_size_converter: LotSizeConverter = LotSizeConverter(
             base, base_lot_size, quote, quote_lot_size
         )
+
+    @staticmethod
+    def isa(market: Market) -> bool:
+        return market.type == MarketType.SPOT
+
+    @staticmethod
+    def ensure(market: Market) -> "SpotMarket":
+        if not SpotMarket.isa(market):
+            raise Exception(f"Market for {market.symbol} is not a Spot market")
+        return typing.cast(SpotMarket, market)
 
     @property
     def bids_address(self) -> PublicKey:
@@ -181,6 +192,7 @@ class SpotMarketStub(Market):
         group_address: PublicKey,
     ) -> None:
         super().__init__(
+            MarketType.STUB,
             serum_program_address,
             address,
             InventorySource.ACCOUNT,

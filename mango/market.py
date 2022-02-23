@@ -25,6 +25,7 @@ from .token import Instrument, Token
 
 
 class MarketType(enum.Enum):
+    STUB = enum.auto()
     SERUM = enum.auto()
     SPOT = enum.auto()
     PERP = enum.auto()
@@ -54,6 +55,7 @@ class InventorySource(enum.Enum):
 class Market(metaclass=abc.ABCMeta):
     def __init__(
         self,
+        type: MarketType,
         program_address: PublicKey,
         address: PublicKey,
         inventory_source: InventorySource,
@@ -62,6 +64,7 @@ class Market(metaclass=abc.ABCMeta):
         lot_size_converter: LotSizeConverter,
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.type: MarketType = type
         self.program_address: PublicKey = program_address
         self.address: PublicKey = address
         self.inventory_source: InventorySource = inventory_source

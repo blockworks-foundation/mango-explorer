@@ -144,10 +144,9 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         if market is None:
             raise Exception(f"Could not find market {args.market}")
 
-        loaded_market: mango.LoadedMarket = mango.ensure_market_loaded(context, market)
-        if not isinstance(loaded_market, mango.PerpMarket):
-            raise Exception(f"Market {args.market} is not a perp market")
-        perp_market = loaded_market
+        perp_market = mango.PerpMarket.ensure(
+            mango.ensure_market_loaded(context, market)
+        )
 
         basket_token = find_basket_token_in_account(account, perp_market.base)
         all_instructions += build_redeem_instruction_for_account(

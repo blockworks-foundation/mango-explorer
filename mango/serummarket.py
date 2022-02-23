@@ -25,7 +25,7 @@ from .accountinfo import AccountInfo
 from .context import Context
 from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
-from .market import Market, InventorySource
+from .market import InventorySource, Market, MarketType
 from .openorders import OpenOrders
 from .observables import Disposable
 from .orders import Order
@@ -51,6 +51,7 @@ class SerumMarket(LoadedMarket):
         underlying_serum_market: PySerumMarket,
     ) -> None:
         super().__init__(
+            MarketType.SERUM,
             serum_program_address,
             address,
             InventorySource.SPL_TOKENS,
@@ -68,6 +69,16 @@ class SerumMarket(LoadedMarket):
         self.lot_size_converter: LotSizeConverter = LotSizeConverter(
             base, base_lot_size, quote, quote_lot_size
         )
+
+    @staticmethod
+    def isa(market: Market) -> bool:
+        return market.type == MarketType.SERUM
+
+    @staticmethod
+    def ensure(market: Market) -> "SerumMarket":
+        if not SerumMarket.isa(market):
+            raise Exception(f"Market for {market.symbol} is not a Serum market")
+        return typing.cast(SerumMarket, market)
 
     @property
     def bids_address(self) -> PublicKey:
@@ -175,6 +186,7 @@ class SerumMarketStub(Market):
         quote: Token,
     ) -> None:
         super().__init__(
+            MarketType.STUB,
             serum_program_address,
             address,
             InventorySource.SPL_TOKENS,
