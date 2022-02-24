@@ -246,12 +246,10 @@ from .perpeventqueue import (
     UnseenPerpEventChangesTracker as UnseenPerpEventChangesTracker,
 )
 from .perpmarket import PerpMarket as PerpMarket
+from .perpmarket import PerpMarketInstructionBuilder as PerpMarketInstructionBuilder
+from .perpmarket import PerpMarketOperations as PerpMarketOperations
 from .perpmarket import PerpMarketStub as PerpMarketStub
 from .perpmarketdetails import PerpMarketDetails as PerpMarketDetails
-from .perpmarketoperations import (
-    PerpMarketInstructionBuilder as PerpMarketInstructionBuilder,
-)
-from .perpmarketoperations import PerpMarketOperations as PerpMarketOperations
 from .perpopenorders import PerpOpenOrders as PerpOpenOrders
 from .placedorder import PlacedOrder as PlacedOrder
 from .placedorder import PlacedOrdersContainer as PlacedOrdersContainer
@@ -267,18 +265,14 @@ from .serumeventqueue import (
     UnseenSerumEventChangesTracker as UnseenSerumEventChangesTracker,
 )
 from .serummarket import SerumMarket as SerumMarket
+from .serummarket import SerumMarketInstructionBuilder as SerumMarketInstructionBuilder
+from .serummarket import SerumMarketOperations as SerumMarketOperations
 from .serummarket import SerumMarketStub as SerumMarketStub
 from .serummarketlookup import SerumMarketLookup as SerumMarketLookup
-from .serummarketoperations import (
-    SerumMarketInstructionBuilder as SerumMarketInstructionBuilder,
-)
-from .serummarketoperations import SerumMarketOperations as SerumMarketOperations
 from .spotmarket import SpotMarket as SpotMarket
+from .spotmarket import SpotMarketInstructionBuilder as SpotMarketInstructionBuilder
+from .spotmarket import SpotMarketOperations as SpotMarketOperations
 from .spotmarket import SpotMarketStub as SpotMarketStub
-from .spotmarketoperations import (
-    SpotMarketInstructionBuilder as SpotMarketInstructionBuilder,
-)
-from .spotmarketoperations import SpotMarketOperations as SpotMarketOperations
 from .text import indent_collection_as_str as indent_collection_as_str
 from .text import indent_item_by as indent_item_by
 from .token import Instrument as Instrument

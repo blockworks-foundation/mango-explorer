@@ -44,8 +44,7 @@ from .perpmarket import PerpMarket
 from .placedorder import PlacedOrdersContainer
 from .serumeventqueue import SerumEventQueue
 from .serummarket import SerumMarket
-from .spotmarket import SpotMarket
-from .spotmarketoperations import SpotMarketInstructionBuilder, SpotMarketOperations
+from .spotmarket import SpotMarket, SpotMarketInstructionBuilder, SpotMarketOperations
 from .tokenaccount import TokenAccount
 from .token import Instrument, Token
 from .wallet import Wallet

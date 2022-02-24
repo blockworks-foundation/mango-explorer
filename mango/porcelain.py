@@ -23,12 +23,24 @@ from .marketoperations import (
     NullMarketInstructionBuilder,
     NullMarketOperations,
 )
-from .perpmarket import PerpMarketStub, PerpMarket
-from .perpmarketoperations import PerpMarketInstructionBuilder, PerpMarketOperations
-from .serummarket import SerumMarketStub, SerumMarket
-from .serummarketoperations import SerumMarketInstructionBuilder, SerumMarketOperations
-from .spotmarket import SpotMarketStub, SpotMarket
-from .spotmarketoperations import SpotMarketInstructionBuilder, SpotMarketOperations
+from .perpmarket import (
+    PerpMarketStub,
+    PerpMarket,
+    PerpMarketInstructionBuilder,
+    PerpMarketOperations,
+)
+from .serummarket import (
+    SerumMarketStub,
+    SerumMarket,
+    SerumMarketInstructionBuilder,
+    SerumMarketOperations,
+)
+from .spotmarket import (
+    SpotMarketStub,
+    SpotMarket,
+    SpotMarketInstructionBuilder,
+    SpotMarketOperations,
+)
 from .wallet import Wallet
 
 
