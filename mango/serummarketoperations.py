@@ -207,7 +207,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
             )
             return CombinableInstructions.empty()
 
-        distinct_addresses: typing.List[PublicKey] = [self.open_orders_address]
+        distinct_addresses: typing.List[PublicKey] = []
         for oo in addresses:
             if oo not in distinct_addresses:
                 distinct_addresses += [oo]
@@ -374,6 +374,7 @@ class SerumMarketOperations(MarketOperations):
         open_orders_to_crank: typing.List[PublicKey] = []
         for event in self.serum_market.unprocessed_events(self.context):
             open_orders_to_crank += [event.public_key]
+        self._logger.debug(f"open_orders_to_crank: {len(open_orders_to_crank)}")
 
         if add_self and self.market_instruction_builder.open_orders_address is not None:
             open_orders_to_crank += [

@@ -36,8 +36,8 @@ from solana.publickey import PublicKey
 def encode_public_key_for_sorting(address: PublicKey) -> typing.List[int]:
     raw = bytes(address)
     return [
-        int.from_bytes(raw[0:8], "big"),
-        int.from_bytes(raw[8:16], "big"),
-        int.from_bytes(raw[16:24], "big"),
-        int.from_bytes(raw[24:32], "big"),
+        int.from_bytes(raw[0:8], "little"),
+        int.from_bytes(raw[8:16], "little"),
+        int.from_bytes(raw[16:24], "little"),
+        int.from_bytes(raw[24:32], "little"),
     ]
