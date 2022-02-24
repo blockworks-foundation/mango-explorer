@@ -33,7 +33,7 @@ from .orderbookside import PerpOrderBookSide
 from .perpeventqueue import PerpEvent, PerpEventQueue, UnseenPerpEventChangesTracker
 from .perpmarketdetails import PerpMarketDetails
 from .serumeventqueue import SerumEvent, SerumEventQueue, UnseenSerumEventChangesTracker
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 from .tokenbank import NodeBank, RootBank, TokenBank
 
 

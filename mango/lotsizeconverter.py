@@ -17,7 +17,7 @@ import jsons
 
 from decimal import Decimal
 
-from .token import Instrument
+from .tokens import Instrument
 
 
 # # 🥭 LotSizeConverter class

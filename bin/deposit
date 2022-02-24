@@ -41,7 +41,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         context, wallet.address, group, args.account_address
     )
 
-    deposit_value = mango.InstrumentValue(context.token(args.symbol), args.quantity)
+    deposit_value = mango.instrument_value(context, args.symbol, args.quantity)
     signatures = account.deposit(context, wallet, deposit_value)
 
     if args.wait:

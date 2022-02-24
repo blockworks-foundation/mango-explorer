@@ -24,7 +24,7 @@ from solana.rpc.types import TokenAccountOpts
 
 from .context import Context
 from .output import output
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 
 
 def _decimal_from_number(value: numbers.Number) -> Decimal:

@@ -30,7 +30,7 @@ from .context import Context
 from .instrumentlookup import InstrumentLookup
 from .instrumentvalue import InstrumentValue
 from .layouts import layouts
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 from .version import Version
 from .wallet import Wallet
 

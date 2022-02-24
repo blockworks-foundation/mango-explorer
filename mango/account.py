@@ -36,7 +36,7 @@ from .orders import Side
 from .perpaccount import PerpAccount
 from .perpopenorders import PerpOpenOrders
 from .placedorder import PlacedOrder
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 from .tokenaccount import TokenAccount
 from .tokenbank import TokenBank
 from .version import Version

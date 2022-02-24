@@ -21,12 +21,6 @@ parser.add_argument(
     type=PublicKey,
     help="address of the specific account to use, if more than one available",
 )
-parser.add_argument(
-    "--dry-run",
-    action="store_true",
-    default=False,
-    help="runs as read-only and does not perform any transactions",
-)
 args: argparse.Namespace = mango.parse_args(parser)
 
 with mango.ContextBuilder.from_command_line_parameters(args) as context:
@@ -36,7 +30,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         context, wallet.address, group, args.account_address
     )
 
-    market = mango.load_market_by_symbol(context, args.market)
+    market = mango.market(context, args.market)
 
     orderbook = market.fetch_orderbook(context)
     mango.output(orderbook)

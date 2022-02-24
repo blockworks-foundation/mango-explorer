@@ -36,7 +36,7 @@ from .instructionreporter import InstructionReporter, CompoundInstructionReporte
 from .instrumentlookup import InstrumentLookup
 from .marketlookup import MarketLookup
 from .text import indent_collection_as_str, indent_item_by
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 
 
 # # 🥭 Context class

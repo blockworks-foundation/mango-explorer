@@ -20,7 +20,7 @@ import typing
 from decimal import Decimal
 
 from .output import output
-from .token import Token
+from .tokens import Token
 
 
 # # 🥭 BalanceSheet class

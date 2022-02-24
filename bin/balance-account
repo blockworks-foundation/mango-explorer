@@ -83,7 +83,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
             ops = mango.operations(
                 context, wallet, account, market_symbol, args.dry_run
             )
-            orderbook = ops.fetch_orderbook(context)
+            orderbook = ops.load_orderbook()
             price = orderbook.mid_price
             if price is None:
                 raise Exception(

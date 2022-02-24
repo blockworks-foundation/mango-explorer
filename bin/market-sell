@@ -54,9 +54,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         context, wallet.address, group, args.account_address
     )
 
-    ops: mango.MarketOperations = mango.operations(
-        context, wallet, account, args.symbol, args.dry_run
-    )
+    ops = mango.operations(context, wallet, account, args.symbol, args.dry_run)
     signatures = ops.market_buy(args.quantity, args.max_slippage)
 
     if args.wait:

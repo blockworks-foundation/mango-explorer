@@ -14,8 +14,6 @@ from solana.transaction import Transaction
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
-# We explicitly want argument parsing to be outside the main try-except block because some arguments
-# (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(description="Sends SOL to a different address.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)

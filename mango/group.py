@@ -30,7 +30,7 @@ from .layouts import layouts
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .marketlookup import MarketLookup
 from .metadata import Metadata
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 from .tokenbank import TokenBank
 from .version import Version
 

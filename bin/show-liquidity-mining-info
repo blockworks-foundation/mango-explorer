@@ -21,10 +21,5 @@ parser.add_argument(
 args: argparse.Namespace = mango.parse_args(parser)
 
 with mango.ContextBuilder.from_command_line_parameters(args) as context:
-    market = context.market_lookup.find_by_symbol(args.market)
-    if market is None:
-        raise Exception(f"Could not find market {args.market}")
-
-    actual_market = mango.PerpMarket.ensure(mango.ensure_market_loaded(context, market))
-
-    mango.output(actual_market.underlying_perp_market.liquidity_mining_info)
+    perp_market = mango.PerpMarket.ensure(mango.market(context, args.market))
+    mango.output(perp_market.underlying_perp_market.liquidity_mining_info)

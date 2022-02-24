@@ -23,7 +23,7 @@ from .accountinfo import AccountInfo
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import Group
-from .token import Token
+from .tokens import Token
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
 

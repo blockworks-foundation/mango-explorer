@@ -20,10 +20,10 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-from .market import Market
+from .markets import Market
 from .marketlookup import MarketLookup
 from .serummarket import SerumMarketStub
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 
 
 # # 🥭 SerumMarketLookup class

@@ -23,7 +23,7 @@ from .account import Account
 from .cache import Cache
 from .group import Group
 from .instrumentvalue import InstrumentValue
-from .market import InventorySource, Market
+from .markets import InventorySource, Market
 from .openorders import OpenOrders
 from .watcher import Watcher
 

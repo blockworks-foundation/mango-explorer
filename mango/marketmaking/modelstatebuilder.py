@@ -24,7 +24,7 @@ from solana.publickey import PublicKey
 
 from ..instrumentvalue import InstrumentValue
 from ..modelstate import ModelState
-from ..token import Token
+from ..tokens import Token
 
 
 # # 🥭 ModelStateBuilder class

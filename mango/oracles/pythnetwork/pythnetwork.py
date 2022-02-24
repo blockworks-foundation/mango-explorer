@@ -25,7 +25,7 @@ from solana.publickey import PublicKey
 from ...accountinfo import AccountInfo
 from ...context import Context
 from ...datetimes import utc_now
-from ...market import Market
+from ...markets import Market
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import (
     Oracle,

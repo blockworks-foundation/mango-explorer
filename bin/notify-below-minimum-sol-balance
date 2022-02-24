@@ -37,11 +37,9 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     account_info = mango.AccountInfo.load(context, args.address)
     if account_info is None:
         raise Exception(f"No account at '{args.address}'")
-    else:
-        if account_info.sols < args.minimum_sol_balance:
-            notify: mango.NotificationTarget = mango.CompoundNotificationTarget(
-                args.notify
-            )
-            report = f'Account "{args.name} [{args.address}]" on {context.client.cluster_name} has only {account_info.sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL.'
-            notify.send(report)
-            mango.output(f"Notification sent: {report}")
+
+    if account_info.sols < args.minimum_sol_balance:
+        notify: mango.NotificationTarget = mango.CompoundNotificationTarget(args.notify)
+        report = f'Account "{args.name} [{args.address}]" on {context.client.cluster_name} has only {account_info.sols} SOL, which is below the minimum required balance of {args.minimum_sol_balance} SOL.'
+        notify.send(report)
+        mango.output(f"Notification sent: {report}")

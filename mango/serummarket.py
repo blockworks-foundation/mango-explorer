@@ -33,14 +33,14 @@ from .instructions import (
 )
 from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
-from .market import InventorySource, Market, MarketType
+from .markets import InventorySource, Market, MarketType
 from .marketoperations import MarketInstructionBuilder, MarketOperations
 from .openorders import OpenOrders
 from .observables import Disposable
 from .orders import Order, OrderBook, Side
 from .publickey import encode_public_key_for_sorting
 from .serumeventqueue import SerumEvent, SerumEventQueue, UnseenSerumEventChangesTracker
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 from .tokenaccount import TokenAccount
 from .wallet import Wallet
 from .websocketsubscription import (
@@ -410,6 +410,14 @@ class SerumMarketOperations(MarketOperations):
         self.market_instruction_builder: SerumMarketInstructionBuilder = (
             market_instruction_builder
         )
+
+    @staticmethod
+    def ensure(market_ops: MarketOperations) -> "SerumMarketOperations":
+        if not isinstance(market_ops, SerumMarketOperations):
+            raise Exception(
+                f"MarketOperations for {market_ops.symbol} is not a SerumMarketOperations"
+            )
+        return market_ops
 
     @property
     def serum_market(self) -> SerumMarket:

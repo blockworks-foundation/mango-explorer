@@ -24,8 +24,8 @@ from solana.publickey import PublicKey
 from ...cache import Cache
 from ...context import Context
 from ...datetimes import utc_now
-from ...ensuremarketloaded import ensure_market_loaded
-from ...market import Market
+from ...loadedmarket import LoadedMarket
+from ...markets import Market
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import (
     Oracle,
@@ -35,6 +35,7 @@ from ...oracle import (
     SupportedOracleFeature,
 )
 from ...perpmarket import PerpMarket
+from ...porcelain import market as porcelain_market
 from ...spotmarket import SpotMarket
 
 
@@ -117,7 +118,7 @@ class StubOracleProvider(OracleProvider):
     def oracle_for_market(
         self, context: Context, market: Market
     ) -> typing.Optional[Oracle]:
-        loaded_market: Market = ensure_market_loaded(context, market)
+        loaded_market: LoadedMarket = porcelain_market(context, market.symbol)
         if SpotMarket.isa(loaded_market):
             spot_market = SpotMarket.ensure(loaded_market)
             spot_index: int = spot_market.group.slot_by_spot_market_address(

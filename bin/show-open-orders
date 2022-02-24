@@ -26,12 +26,12 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
-with mango.ContextBuilder.from_command_line_parameters(args) as context:
-    address: typing.Optional[PublicKey] = args.address
-    if address is None:
-        wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
-        address = wallet.address
+address: typing.Optional[PublicKey] = args.address
+if address is None:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+    address = wallet.address
 
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
     group = mango.Group.load(context)
     account = mango.Account.load_for_owner_by_address(
         context, wallet.address, group, args.account_address

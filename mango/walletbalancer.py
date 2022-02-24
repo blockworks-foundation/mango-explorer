@@ -25,7 +25,7 @@ from .context import Context
 from .group import Group
 from .marketoperations import MarketOperations
 from .porcelain import operations
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 from .instrumentvalue import InstrumentValue
 from .wallet import Wallet
 

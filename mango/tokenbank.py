@@ -28,7 +28,7 @@ from .context import Context
 from .instrumentlookup import InstrumentLookup
 from .layouts import layouts
 from .metadata import Metadata
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 from .version import Version
 
 

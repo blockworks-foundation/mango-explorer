@@ -23,7 +23,7 @@ from solana.publickey import PublicKey
 from .account import Account
 from .group import Group
 from .inventory import Inventory
-from .market import Market
+from .markets import Market
 from .oracle import Price
 from .orders import Order, OrderBook
 from .placedorder import PlacedOrdersContainer

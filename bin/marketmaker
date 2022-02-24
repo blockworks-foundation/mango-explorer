@@ -216,7 +216,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         context, wallet.address, group, args.account_address
     )
 
-    market = mango.load_market_by_symbol(context, args.market)
+    market = mango.market(context, args.market)
 
     # The market index is also the index of the base token in the group's token list.
     if market.quote != group.shared_quote_token:
@@ -235,28 +235,28 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
 
         underlying_market = mango.PerpMarket.ensure(market)
 
-        hedging_market_operations: mango.MarketOperations = mango.operations(
+        hedging_ops = mango.operations(
             context, wallet, account, args.hedging_market, args.dry_run
         )
-        if not isinstance(hedging_market_operations, mango.SpotMarketOperations):
+        if not isinstance(hedging_ops, mango.SpotMarketOperations):
             raise Exception(
                 f"MarketOperations for {args.hedging_market} is not a SpotMarketOperations."
             )
 
-        logging.info(f"Hedging on {hedging_market_operations.market.symbol}")
+        logging.info(f"Hedging on {hedging_ops.market.symbol}")
 
         target_balance: typing.Optional[
             mango.TargetBalance
         ] = args.hedging_target_balance
         if target_balance is None:
             target_balance = mango.FixedTargetBalance(
-                hedging_market_operations.market.base.symbol, Decimal(0)
+                hedging_ops.market.base.symbol, Decimal(0)
             )
         hedger = mango.hedging.PerpToSpotHedger(
             group,
             underlying_market,
-            mango.SpotMarket.ensure(hedging_market_operations.market),
-            hedging_market_operations,
+            mango.SpotMarket.ensure(hedging_ops.market),
+            hedging_ops,
             args.hedging_max_price_slippage_factor,
             args.hedging_max_chunk_quantity,
             target_balance,
@@ -305,7 +305,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     oracle_market: mango.LoadedMarket = (
         market
         if args.oracle_market is None
-        else mango.load_market_by_symbol(context, args.oracle_market)
+        else mango.market(context, args.oracle_market)
     )
     oracle = oracle_provider.oracle_for_market(context, oracle_market)
     if oracle is None:

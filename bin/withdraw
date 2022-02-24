@@ -47,7 +47,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         context, wallet.address, group, args.account_address
     )
 
-    withdrawal_value = mango.InstrumentValue(context.token(args.symbol), args.quantity)
+    withdrawal_value = mango.instrument_value(context, args.symbol, args.quantity)
     signatures = account.withdraw(context, wallet, withdrawal_value, args.allow_borrow)
 
     if args.wait:

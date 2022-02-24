@@ -28,10 +28,7 @@ args: argparse.Namespace = mango.parse_args(parser)
 with mango.ContextBuilder.from_command_line_parameters(args) as context:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
-    wrapped_sol: mango.Token = mango.Token.ensure(
-        context.instrument_lookup.find_by_symbol_or_raise("SOL")
-    )
-
+    wrapped_sol: mango.Token = mango.token(context, "SOL")
     token_account: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(
         context, args.address
     )

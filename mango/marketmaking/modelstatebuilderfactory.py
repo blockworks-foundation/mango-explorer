@@ -20,7 +20,6 @@ import typing
 from solana.publickey import PublicKey
 
 from ..constants import SYSTEM_PROGRAM_ADDRESS
-from ..ensuremarketloaded import ensure_market_loaded
 from ..modelstate import ModelState
 from .modelstatebuilder import (
     ModelStateBuilder,
@@ -56,7 +55,7 @@ def model_state_builder_factory(
     wallet: mango.Wallet,
     group: mango.Group,
     account: mango.Account,
-    market: mango.Market,
+    market: mango.LoadedMarket,
     oracle: mango.Oracle,
 ) -> ModelStateBuilder:
     if mode == ModelUpdateMode.WEBSOCKET:
@@ -204,10 +203,9 @@ def __load_all_openorders_watchers(
     for basket_token in account.base_slots:
         if basket_token.spot_open_orders is not None:
             spot_market_symbol: str = f"spot:{basket_token.base_instrument.symbol}/{account.shared_quote_token.symbol}"
-            stub = context.market_lookup.find_by_symbol(spot_market_symbol)
-            if stub is None:
-                raise Exception(f"Could not find spot market {spot_market_symbol}")
-            spot_market = mango.SpotMarket.ensure(ensure_market_loaded(context, stub))
+            spot_market = mango.SpotMarket.ensure(
+                mango.market(context, spot_market_symbol)
+            )
             oo_watcher = mango.build_spot_open_orders_watcher(
                 context,
                 websocket_manager,
@@ -230,7 +228,7 @@ def _websocket_model_state_builder_factory(
     wallet: mango.Wallet,
     group: mango.Group,
     account: mango.Account,
-    market: mango.Market,
+    market: mango.LoadedMarket,
     oracle: mango.Oracle,
 ) -> ModelStateBuilder:
     group_watcher = mango.build_group_watcher(
@@ -251,7 +249,6 @@ def _websocket_model_state_builder_factory(
     disposer.add_disposable(price_disposable)
     health_check.add("price_subscription", price_feed)
 
-    market = mango.ensure_market_loaded(context, market)
     if mango.SerumMarket.isa(market):
         serum_market = mango.SerumMarket.ensure(market)
         order_owner: PublicKey = (

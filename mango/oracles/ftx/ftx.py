@@ -26,7 +26,7 @@ from rx.subject.subject import Subject
 
 from ...context import Context
 from ...datetimes import utc_now
-from ...market import Market
+from ...markets import Market
 from ...observables import Disposable, DisposeWrapper
 from ...oracle import (
     Oracle,

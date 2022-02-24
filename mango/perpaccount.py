@@ -21,7 +21,7 @@ from .cache import PerpMarketCache
 from .instrumentvalue import InstrumentValue
 from .lotsizeconverter import LotSizeConverter
 from .perpopenorders import PerpOpenOrders
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 
 
 # # 🥭 PerpAccount class

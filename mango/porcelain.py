@@ -13,9 +13,12 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+from decimal import Decimal
+
 from .account import Account
 from .context import Context
 from .group import Group
+from .instrumentvalue import InstrumentValue
 from .loadedmarket import LoadedMarket
 from .marketoperations import (
     MarketInstructionBuilder,
@@ -41,10 +44,45 @@ from .spotmarket import (
     SpotMarketInstructionBuilder,
     SpotMarketOperations,
 )
+from .tokens import Instrument, Token
 from .wallet import Wallet
 
 
-# # 🥭 load_market
+# # 🥭 instrument
+#
+# This function takes a `Context` and an instrument symbol string (like "ETH") and returns a
+# properly loaded `Instrument` object. It throws if anything goes wrong rather than return None.
+#
+# An Instrument can represent a Perp or an SPL token.
+#
+def instrument(context: Context, symbol: str) -> Instrument:
+    return context.instrument(symbol)
+
+
+# # 🥭 token
+#
+# This function takes a `Context` and a token symbol string (like "ETH") and returns a
+# properly loaded `Token` object. It throws if anything goes wrong rather than return None.
+#
+# An Token can only represent an SPL token. It cannot represent a Perp.
+#
+def token(context: Context, symbol: str) -> Token:
+    return context.token(symbol)
+
+
+# # 🥭 instrument_value
+#
+# This function takes a `Context` and an instrument symbol string (like "ETH") and returns a
+# properly loaded `Instrument` object. It throws if anything goes wrong rather than return None.
+#
+# An Instrument can represent a Perp or an SPL token.
+#
+def instrument_value(context: Context, symbol: str, value: Decimal) -> InstrumentValue:
+    ins = context.instrument(symbol)
+    return InstrumentValue(ins, value)
+
+
+# # 🥭 market
 #
 # This function takes a `Context` and a market symbol string (like "ETH/USDC") and returns a
 # properly loaded market. It throws if anything goes wrong rather than return None.

@@ -21,10 +21,10 @@ from solana.publickey import PublicKey
 from .accountinfo import AccountInfo
 from .context import Context
 from .lotsizeconverter import LotSizeConverter
-from .market import InventorySource, MarketType, Market
+from .markets import InventorySource, MarketType, Market
 from .observables import Disposable
 from .orders import Order, OrderBook
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 from .websocketsubscription import (
     SharedWebSocketSubscriptionManager,
     WebSocketAccountSubscription,

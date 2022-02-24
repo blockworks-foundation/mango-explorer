@@ -13,8 +13,6 @@ from solana.publickey import PublicKey
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
-# We explicitly want argument parsing to be outside the main try-except block because some arguments
-# (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
     description="Balance the value of tokens in a Mango Markets group to specific values or percentages."
 )
@@ -74,27 +72,16 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     targets: typing.Sequence[mango.FixedTargetBalance] = args.target
     logging.info(f"Targets: {targets}")
 
-    quote_instrument: typing.Optional[
-        mango.Instrument
-    ] = context.instrument_lookup.find_by_symbol(args.quote_symbol)
-    if quote_instrument is None:
-        raise Exception(f"Could not find quote token '{args.quote_symbol}.")
-    quote_token: mango.Token = mango.Token.ensure(quote_instrument)
+    quote_token = mango.token(context, args.quote_symbol)
 
     prices: typing.List[mango.InstrumentValue] = []
     oracle_provider: mango.OracleProvider = mango.create_oracle_provider(
         context, "market"
     )
     for target in targets:
-        target_token: typing.Optional[
-            mango.Instrument
-        ] = context.instrument_lookup.find_by_symbol(target.symbol)
-        if target_token is None:
-            raise Exception(f"Could not find target token '{target.symbol}.")
+        target_token = mango.token(context, target.symbol)
         market_symbol: str = f"serum:{target_token.symbol}/{quote_token.symbol}"
-        market = context.market_lookup.find_by_symbol(market_symbol)
-        if market is None:
-            raise Exception(f"Could not find market {market_symbol}")
+        market = mango.market(context, market_symbol)
         oracle = oracle_provider.oracle_for_market(context, market)
         if oracle is None:
             raise Exception(f"Could not find oracle for market {market_symbol}")

@@ -43,6 +43,4 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         context, wallet, account, args.market, args.dry_run
     )
     open_orders = market_operations.ensure_openorders()
-    mango.output(
-        f"OpenOrders account for {market_operations.market.symbol} is {open_orders}"
-    )
+    mango.output(f"OpenOrders account for {market_operations.symbol} is {open_orders}")

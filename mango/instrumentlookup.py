@@ -23,7 +23,7 @@ from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .constants import DATA_PATH, MangoConstants
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 
 
 # # 🥭 InstrumentLookup class

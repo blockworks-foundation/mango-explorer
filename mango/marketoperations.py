@@ -21,16 +21,12 @@ import typing
 from decimal import Decimal
 from solana.publickey import PublicKey
 
-from .accountinfo import AccountInfo
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
-from .context import Context
-from .loadedmarket import Event, FillEvent, LoadedMarket
-from .lotsizeconverter import LotSizeConverter, NullLotSizeConverter
-from .market import InventorySource
-from .observables import Disposable
+from .loadedmarket import LoadedMarket
+from .lotsizeconverter import NullLotSizeConverter
+from .markets import InventorySource
 from .orders import Order, OrderBook, OrderType, Side
-from .token import Instrument, Token
 
 
 # # 🥭 MarketOperations
@@ -127,64 +123,8 @@ class MarketOperations(metaclass=abc.ABCMeta):
         return self.market.symbol
 
     @property
-    def program_address(self) -> PublicKey:
-        return self.market.program_address
-
-    @property
-    def address(self) -> PublicKey:
-        return self.market.address
-
-    @property
     def inventory_source(self) -> InventorySource:
         return self.market.inventory_source
-
-    @property
-    def base(self) -> Instrument:
-        return self.market.base
-
-    @property
-    def quote(self) -> Token:
-        return self.market.quote
-
-    @property
-    def lot_size_converter(self) -> LotSizeConverter:
-        return self.market.lot_size_converter
-
-    @property
-    def bids_address(self) -> PublicKey:
-        return self.market.bids_address
-
-    @property
-    def asks_address(self) -> PublicKey:
-        return self.market.asks_address
-
-    def parse_account_info_to_orders(
-        self, account_info: AccountInfo
-    ) -> typing.Sequence[Order]:
-        return self.market.parse_account_info_to_orders(account_info)
-
-    def parse_account_infos_to_orderbook(
-        self, bids_account_info: AccountInfo, asks_account_info: AccountInfo
-    ) -> OrderBook:
-        return self.market.parse_account_infos_to_orderbook(
-            bids_account_info, asks_account_info
-        )
-
-    def fetch_orderbook(self, context: Context) -> OrderBook:
-        [bids_info, asks_info] = AccountInfo.load_multiple(
-            context, [self.bids_address, self.asks_address]
-        )
-        return self.parse_account_infos_to_orderbook(bids_info, asks_info)
-
-    def on_fill(
-        self, context: Context, handler: typing.Callable[[FillEvent], None]
-    ) -> Disposable:
-        return self.market.on_fill(context, handler)
-
-    def on_event(
-        self, context: Context, handler: typing.Callable[[Event], None]
-    ) -> Disposable:
-        return self.market.on_event(context, handler)
 
     @abc.abstractmethod
     def cancel_order(

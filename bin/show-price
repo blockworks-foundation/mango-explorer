@@ -34,10 +34,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         context, args.provider
     )
 
-    market = context.market_lookup.find_by_symbol(args.market)
-    if market is None:
-        raise Exception(f"Could not find market {args.market}.")
-
+    market = mango.market(context, args.market)
     oracle = oracle_provider.oracle_for_market(context, market)
     if oracle is None:
         mango.output(

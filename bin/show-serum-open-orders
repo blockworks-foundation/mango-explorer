@@ -30,11 +30,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
         address = wallet.address
 
-    stub = context.market_lookup.find_by_symbol(args.market)
-    if stub is None:
-        raise Exception(f"Could not find market {args.market}")
-
-    market = mango.SerumMarket.ensure(mango.ensure_market_loaded(context, stub))
+    market = mango.SerumMarket.ensure(mango.market(context, args.market))
 
     all_open_orders_for_market = mango.OpenOrders.load_for_market_and_owner(
         context,

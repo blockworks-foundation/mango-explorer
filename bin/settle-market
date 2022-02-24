@@ -9,10 +9,8 @@ import sys
 from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-import mango  # nopep8
+import mango
 
-# We explicitly want argument parsing to be outside the main try-except block because some arguments
-# (like --help) will cause an exit, which our except: block traps.
 parser = argparse.ArgumentParser(
     description="Settles all openorders transactions in the Group."
 )

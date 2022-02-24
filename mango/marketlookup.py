@@ -20,7 +20,7 @@ import typing
 
 from solana.publickey import PublicKey
 
-from .market import Market
+from .markets import Market
 
 
 # # 🥭 MarketLookup class

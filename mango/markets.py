@@ -21,7 +21,7 @@ import logging
 from solana.publickey import PublicKey
 
 from .lotsizeconverter import LotSizeConverter
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 
 
 class MarketType(enum.Enum):

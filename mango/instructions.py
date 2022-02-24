@@ -56,7 +56,7 @@ from .orders import Order, OrderType, Side
 from .perpmarketdetails import PerpMarketDetails
 
 # from .spotmarket import SpotMarket
-from .token import Token
+from .tokens import Token
 from .tokenaccount import TokenAccount
 from .tokenbank import TokenBank, NodeBank, RootBank
 from .wallet import Wallet

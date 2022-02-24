@@ -38,7 +38,7 @@ from .instructions import (
 )
 from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
-from .market import InventorySource, MarketType, Market
+from .markets import InventorySource, MarketType, Market
 from .marketoperations import MarketInstructionBuilder, MarketOperations
 from .observables import Disposable
 from .orderbookside import PerpOrderBookSide
@@ -51,7 +51,7 @@ from .perpeventqueue import (
 )
 from .perpmarketdetails import PerpMarketDetails
 from .publickey import encode_public_key_for_sorting
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 from .tokenbank import TokenBank
 from .wallet import Wallet
 from .websocketsubscription import (
@@ -417,6 +417,14 @@ class PerpMarketOperations(MarketOperations):
             market_instruction_builder
         )
         self.account: Account = account
+
+    @staticmethod
+    def ensure(market_ops: MarketOperations) -> "PerpMarketOperations":
+        if not isinstance(market_ops, PerpMarketOperations):
+            raise Exception(
+                f"MarketOperations for {market_ops.symbol} is not a PerpMarketOperations"
+            )
+        return market_ops
 
     @property
     def perp_market(self) -> PerpMarket:

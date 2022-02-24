@@ -20,11 +20,11 @@ from solana.publickey import PublicKey
 
 from .constants import MangoConstants
 from .instrumentlookup import InstrumentLookup
-from .market import Market
+from .markets import Market
 from .marketlookup import MarketLookup
 from .perpmarket import PerpMarketStub
 from .spotmarket import SpotMarketStub
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 
 
 class IdsJsonMarketType(enum.Enum):

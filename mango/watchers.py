@@ -31,7 +31,7 @@ from .instructions import build_create_serum_open_orders_instructions
 from .instrumentvalue import InstrumentValue
 from .inventory import Inventory
 from .loadedmarket import LoadedMarket
-from .market import Market, InventorySource
+from .markets import Market, InventorySource
 from .modelstate import EventQueue
 from .observables import Disposable, LatestItemObserverSubscriber
 from .openorders import OpenOrders
@@ -46,7 +46,7 @@ from .serumeventqueue import SerumEventQueue
 from .serummarket import SerumMarket
 from .spotmarket import SpotMarket, SpotMarketInstructionBuilder, SpotMarketOperations
 from .tokenaccount import TokenAccount
-from .token import Instrument, Token
+from .tokens import Instrument, Token
 from .wallet import Wallet
 from .watcher import Watcher, LamdaUpdateWatcher
 from .websocketsubscription import (

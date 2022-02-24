@@ -42,10 +42,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     if args.mint is not None:
         token = mango.Token(args.symbol, args.symbol, args.decimals, args.mint)
     else:
-        instrument: mango.Instrument = (
-            context.instrument_lookup.find_by_symbol_or_raise(args.symbol)
-        )
-        token = mango.Token.ensure(instrument)
+        token = mango.token(context, args.symbol)
     token_accounts: typing.Sequence[
         mango.TokenAccount
     ] = mango.TokenAccount.fetch_all_for_owner_and_token(context, owner_address, token)
