@@ -29,7 +29,7 @@ from .loadedmarket import Event, FillEvent, LoadedMarket
 from .lotsizeconverter import LotSizeConverter, NullLotSizeConverter
 from .market import InventorySource
 from .observables import Disposable
-from .orders import Order, OrderBook
+from .orders import Order, OrderBook, OrderType, Side
 from .token import Instrument, Token
 
 
@@ -123,6 +123,10 @@ class MarketOperations(metaclass=abc.ABCMeta):
         self.market: LoadedMarket = market
 
     @property
+    def symbol(self) -> str:
+        return self.market.symbol
+
+    @property
     def program_address(self) -> PublicKey:
         return self.market.program_address
 
@@ -165,6 +169,12 @@ class MarketOperations(metaclass=abc.ABCMeta):
         return self.market.parse_account_infos_to_orderbook(
             bids_account_info, asks_account_info
         )
+
+    def fetch_orderbook(self, context: Context) -> OrderBook:
+        [bids_info, asks_info] = AccountInfo.load_multiple(
+            context, [self.bids_address, self.asks_address]
+        )
+        return self.parse_account_infos_to_orderbook(bids_info, asks_info)
 
     def on_fill(
         self, context: Context, handler: typing.Callable[[FillEvent], None]
@@ -227,6 +237,38 @@ class MarketOperations(metaclass=abc.ABCMeta):
         raise NotImplementedError(
             "MarketOperations.ensure_openorders() is not implemented on the base type."
         )
+
+    def market_buy(
+        self, quantity: Decimal, max_slippage: Decimal
+    ) -> typing.Sequence[str]:
+        orderbook = self.load_orderbook()
+        if orderbook.top_ask is None:
+            raise Exception(f"Could not determine top ask on {orderbook.symbol}")
+
+        top_ask = orderbook.top_ask.price
+
+        increase_factor = Decimal(1) + max_slippage
+        price = top_ask * increase_factor
+        self._logger.info(f"Price {price} - adjusted by {max_slippage} from {top_ask}")
+
+        order = Order.from_basic_info(Side.BUY, price, quantity, OrderType.IOC)
+        return self.place_order(order)
+
+    def market_sell(
+        self, quantity: Decimal, max_slippage: Decimal
+    ) -> typing.Sequence[str]:
+        orderbook = self.load_orderbook()
+        if orderbook.top_bid is None:
+            raise Exception(f"Could not determine top bid on {orderbook.symbol}")
+
+        top_bid = orderbook.top_bid.price
+
+        decrease_factor = Decimal(1) - max_slippage
+        price = top_bid * decrease_factor
+        self._logger.info(f"Price {price} - adjusted by {max_slippage} from {top_bid}")
+
+        order = Order.from_basic_info(Side.SELL, price, quantity, OrderType.IOC)
+        return self.place_order(order)
 
     def __repr__(self) -> str:
         return f"{self}"

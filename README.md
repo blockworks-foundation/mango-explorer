@@ -53,11 +53,8 @@ group = mango.Group.load(context)
 accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
 account = accounts[0]
 
-# Load the market
-stub = context.market_lookup.find_by_symbol("SOL-PERP")
-market = mango.ensure_market_loaded(context, stub)
-
-market_operations = mango.create_market_operations(context, wallet, account, market, dry_run=False)
+# Load the market operations
+market_operations = mango.operations(context, wallet, account, "SOL-PERP", dry_run=False)
 
 print("Initial order book:\n\t", market_operations.load_orderbook())
 print("Your current orders:\n\t", market_operations.load_my_orders(include_expired=True))

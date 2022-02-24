@@ -23,9 +23,10 @@ from decimal import Decimal
 from .account import Account
 from .context import Context
 from .group import Group
+from .marketoperations import MarketOperations
+from .porcelain import operations
 from .token import Instrument, Token
 from .instrumentvalue import InstrumentValue
-from .tradeexecutor import TradeExecutor
 from .wallet import Wallet
 
 
@@ -332,18 +333,24 @@ class NullWalletBalancer(WalletBalancer):
 class LiveWalletBalancer(WalletBalancer):
     def __init__(
         self,
+        context: Context,
         wallet: Wallet,
+        account: Account,
         quote_token: Token,
-        trade_executor: TradeExecutor,
         targets: typing.Sequence[TargetBalance],
         action_threshold: Decimal,
+        max_slippage: Decimal,
+        dry_run: bool,
     ) -> None:
         super().__init__()
+        self.context: Context = context
         self.wallet: Wallet = wallet
+        self.account: Account = account
         self.quote_token: Token = quote_token
-        self.trade_executor: TradeExecutor = trade_executor
         self.targets: typing.Sequence[TargetBalance] = targets
         self.action_threshold: Decimal = action_threshold
+        self.max_slippage: Decimal = max_slippage
+        self.dry_run: bool = dry_run
 
     def balance(
         self, context: Context, prices: typing.Sequence[InstrumentValue]
@@ -405,10 +412,13 @@ class LiveWalletBalancer(WalletBalancer):
         quote = self.quote_token.symbol
         for change in balance_changes:
             market_symbol = f"serum:{change.token.symbol}/{quote}"
+            ops: MarketOperations = operations(
+                self.context, self.wallet, self.account, market_symbol, self.dry_run
+            )
             if change.value < 0:
-                self.trade_executor.sell(market_symbol, change.value.copy_abs())
+                ops.market_sell(change.value.copy_abs(), self.max_slippage)
             else:
-                self.trade_executor.buy(market_symbol, change.value.copy_abs())
+                ops.market_buy(change.value.copy_abs(), self.max_slippage)
 
     def _fetch_balances(
         self, context: Context, tokens: typing.Sequence[Token]
@@ -430,18 +440,24 @@ class LiveWalletBalancer(WalletBalancer):
 class LiveAccountBalancer(WalletBalancer):
     def __init__(
         self,
+        context: Context,
+        wallet: Wallet,
         account: Account,
         group: Group,
-        trade_executor: TradeExecutor,
         targets: typing.Sequence[TargetBalance],
         action_threshold: Decimal,
+        max_slippage: Decimal,
+        dry_run: bool,
     ) -> None:
         super().__init__()
+        self.context: Context = context
+        self.wallet: Wallet = wallet
         self.account: Account = account
         self.group: Group = group
-        self.trade_executor: TradeExecutor = trade_executor
         self.targets: typing.Sequence[TargetBalance] = targets
         self.action_threshold: Decimal = action_threshold
+        self.max_slippage: Decimal = max_slippage
+        self.dry_run: bool = dry_run
 
     def balance(
         self, context: Context, prices: typing.Sequence[InstrumentValue]
@@ -496,8 +512,11 @@ class LiveAccountBalancer(WalletBalancer):
     def _make_changes(self, balance_changes: typing.Sequence[InstrumentValue]) -> None:
         quote = self.account.shared_quote_token.symbol
         for change in balance_changes:
-            market_symbol = f"{change.token.symbol}/{quote}"
+            market_symbol = f"spot:{change.token.symbol}/{quote}"
+            ops: MarketOperations = operations(
+                self.context, self.wallet, self.account, market_symbol, self.dry_run
+            )
             if change.value < 0:
-                self.trade_executor.sell(market_symbol, change.value.copy_abs())
+                ops.market_sell(change.value.copy_abs(), self.max_slippage)
             else:
-                self.trade_executor.buy(market_symbol, change.value.copy_abs())
+                ops.market_buy(change.value.copy_abs(), self.max_slippage)

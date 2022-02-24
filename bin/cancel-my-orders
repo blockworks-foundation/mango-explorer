@@ -48,16 +48,12 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         context, wallet.address, group, args.account_address
     )
 
-    market = context.market_lookup.find_by_symbol(args.market)
-    if market is None:
-        raise Exception(f"Could not find market {args.market}")
-
-    market_operations = mango.create_market_operations(
-        context, wallet, account, market, args.dry_run
+    market_operations = mango.operations(
+        context, wallet, account, args.market, args.dry_run
     )
     orders = market_operations.load_my_orders(include_expired=True)
     if len(orders) == 0:
-        mango.output(f"No open orders on {market.symbol}")
+        mango.output(f"No open orders on {market_operations.market.symbol}")
     else:
         if mango.PerpMarket.isa(market_operations.market):
             instruction_builder = mango.PerpMarketInstructionBuilder(

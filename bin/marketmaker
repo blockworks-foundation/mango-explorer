@@ -180,13 +180,11 @@ def cleanup(
     market: mango.Market,
     dry_run: bool,
 ) -> None:
-    market_operations: mango.MarketOperations = mango.create_market_operations(
-        context, wallet, account, market, dry_run
+    market_operations: mango.MarketOperations = mango.operations(
+        context, wallet, account, market.symbol, dry_run
     )
     market_instruction_builder: mango.MarketInstructionBuilder = (
-        mango.create_market_instruction_builder(
-            context, wallet, account, market, dry_run
-        )
+        mango.instruction_builder(context, wallet, account, market.symbol, dry_run)
     )
     cancels: mango.CombinableInstructions = mango.CombinableInstructions.empty()
     orders = market_operations.load_my_orders(include_expired=True)
@@ -237,40 +235,27 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
 
         underlying_market = mango.PerpMarket.ensure(market)
 
-        hedging_market_symbol = args.hedging_market
-        hedging_market_stub = context.market_lookup.find_by_symbol(
-            hedging_market_symbol
-        )
-        if hedging_market_stub is None:
-            raise Exception(f"Could not find market {hedging_market_symbol}")
-
-        hedging_market = mango.SpotMarket.ensure(
-            mango.ensure_market_loaded(context, hedging_market_stub)
-        )
-
-        logging.info(f"Hedging on {hedging_market.symbol}")
-
-        hedging_market_operations: mango.MarketOperations = (
-            mango.create_market_operations(
-                context, wallet, account, hedging_market, args.dry_run
-            )
+        hedging_market_operations: mango.MarketOperations = mango.operations(
+            context, wallet, account, args.hedging_market, args.dry_run
         )
         if not isinstance(hedging_market_operations, mango.SpotMarketOperations):
             raise Exception(
-                f"MarketOperations for {hedging_market_symbol} is not a SpotMarketOperations."
+                f"MarketOperations for {args.hedging_market} is not a SpotMarketOperations."
             )
+
+        logging.info(f"Hedging on {hedging_market_operations.market.symbol}")
 
         target_balance: typing.Optional[
             mango.TargetBalance
         ] = args.hedging_target_balance
         if target_balance is None:
             target_balance = mango.FixedTargetBalance(
-                hedging_market.base.symbol, Decimal(0)
+                hedging_market_operations.market.base.symbol, Decimal(0)
             )
         hedger = mango.hedging.PerpToSpotHedger(
             group,
             underlying_market,
-            hedging_market,
+            mango.SpotMarket.ensure(hedging_market_operations.market),
             hedging_market_operations,
             args.hedging_max_price_slippage_factor,
             args.hedging_max_chunk_quantity,
@@ -302,10 +287,9 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     logging.info(f"Desired orders chain: {desired_orders_chain}")
 
     market_instruction_builder: mango.MarketInstructionBuilder = (
-        mango.create_market_instruction_builder(
-            context, wallet, account, market, args.dry_run
-        )
+        mango.instruction_builder(context, wallet, account, market.symbol, args.dry_run)
     )
+
     market_maker = mango.marketmaking.MarketMaker(
         wallet,
         market,

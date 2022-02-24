@@ -13,43 +13,65 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-import typing
-
 from .account import Account
 from .context import Context
-from .ensuremarketloaded import ensure_market_loaded
+from .group import Group
 from .loadedmarket import LoadedMarket
-from .market import Market
 from .marketoperations import (
     MarketInstructionBuilder,
     MarketOperations,
     NullMarketInstructionBuilder,
     NullMarketOperations,
 )
-from .perpmarket import PerpMarket
+from .perpmarket import PerpMarketStub, PerpMarket
 from .perpmarketoperations import PerpMarketInstructionBuilder, PerpMarketOperations
-from .serummarket import SerumMarket
+from .serummarket import SerumMarketStub, SerumMarket
 from .serummarketoperations import SerumMarketInstructionBuilder, SerumMarketOperations
-from .spotmarket import SpotMarket
+from .spotmarket import SpotMarketStub, SpotMarket
 from .spotmarketoperations import SpotMarketInstructionBuilder, SpotMarketOperations
 from .wallet import Wallet
 
 
-# # 🥭 create_market_instruction_builder
+# # 🥭 load_market
 #
-# This function deals with the creation of a `MarketInstructionBuilder` object for a given `Market`.
+# This function takes a `Context` and a market symbol string (like "ETH/USDC") and returns a
+# properly loaded market. It throws if anything goes wrong rather than return None.
 #
-def create_market_instruction_builder(
+def market(context: Context, symbol: str) -> LoadedMarket:
+    market = context.market_lookup.find_by_symbol(symbol)
+    if market is None:
+        raise Exception(f"Could not find market {symbol}")
+
+    if isinstance(market, LoadedMarket):
+        return market
+    elif isinstance(market, SerumMarketStub):
+        return market.load(context)
+    elif isinstance(market, SpotMarketStub):
+        group: Group = Group.load(context, market.group_address)
+        return market.load(context, group)
+    elif isinstance(market, PerpMarketStub):
+        group = Group.load(context, market.group_address)
+        return market.load(context, group)
+
+    raise Exception(f"Market {market} could not be loaded.")
+
+
+# # 🥭 instruction_builder
+#
+# This function deals with the creation of a `MarketInstructionBuilder` object for a given
+# market.
+#
+def instruction_builder(
     context: Context,
     wallet: Wallet,
     account: Account,
-    market: Market,
+    symbol: str,
     dry_run: bool = False,
 ) -> MarketInstructionBuilder:
+    loaded_market: LoadedMarket = market(context, symbol)
     if dry_run:
-        return NullMarketInstructionBuilder(market.symbol)
+        return NullMarketInstructionBuilder(loaded_market.symbol)
 
-    loaded_market: Market = ensure_market_loaded(context, market)
     if SerumMarket.isa(loaded_market):
         return SerumMarketInstructionBuilder.load(
             context, wallet, SerumMarket.ensure(loaded_market)
@@ -72,25 +94,22 @@ def create_market_instruction_builder(
             perp_market.group,
             account,
         )
-    else:
-        raise Exception(
-            f"Could not find market instructions builder for market {market.symbol}"
-        )
+
+    raise Exception(f"Could not find instructions builder for market {symbol}")
 
 
-# # 🥭 create_market_operations
+# # 🥭 operations
 #
-# This function deals with the creation of a `MarketOperations` object for a given `Market`.
+# This function deals with the creation of a `MarketOperations` object for a given market.
 #
-def create_market_operations(
+def operations(
     context: Context,
     wallet: Wallet,
-    account: typing.Optional[Account],
-    market: Market,
+    account: Account,
+    symbol: str,
     dry_run: bool = False,
 ) -> MarketOperations:
-    loaded_market: LoadedMarket = ensure_market_loaded(context, market)
-
+    loaded_market: LoadedMarket = market(context, symbol)
     if dry_run:
         return NullMarketOperations(loaded_market)
 
@@ -102,8 +121,6 @@ def create_market_operations(
         )
         return SerumMarketOperations(context, wallet, serum_market_instruction_builder)
     elif SpotMarket.isa(loaded_market):
-        if account is None:
-            raise Exception("Account is required for SpotMarket operations.")
         spot_market = SpotMarket.ensure(loaded_market)
         spot_market_instruction_builder: SpotMarketInstructionBuilder = (
             SpotMarketInstructionBuilder.load(
@@ -114,8 +131,6 @@ def create_market_operations(
             context, wallet, account, spot_market_instruction_builder
         )
     elif PerpMarket.isa(loaded_market):
-        if account is None:
-            raise Exception("Account is required for PerpMarket operations.")
         perp_market = PerpMarket.ensure(loaded_market)
         perp_market_instruction_builder: PerpMarketInstructionBuilder = (
             PerpMarketInstructionBuilder.load(
@@ -129,7 +144,5 @@ def create_market_operations(
         return PerpMarketOperations(
             context, wallet, account, perp_market_instruction_builder
         )
-    else:
-        raise Exception(
-            f"Could not find market operations handler for market {market.symbol}"
-        )
+
+    raise Exception(f"Could not find operations for market {symbol}")

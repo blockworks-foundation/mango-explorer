@@ -10,7 +10,7 @@ from solana.publickey import PublicKey
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
 
-parser = argparse.ArgumentParser(description="Shows all orders on a market.")
+parser = argparse.ArgumentParser(description="Cancels a specific order on a market.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument(
@@ -65,12 +65,8 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         context, wallet.address, group, args.account_address
     )
 
-    market = context.market_lookup.find_by_symbol(args.market)
-    if market is None:
-        raise Exception(f"Could not find market {args.market}")
-
-    market_operations = mango.create_market_operations(
-        context, wallet, account, market, args.dry_run
+    market_operations = mango.operations(
+        context, wallet, account, args.market, args.dry_run
     )
 
     order = mango.Order.from_ids(id=args.id, client_id=args.client_id, side=args.side)

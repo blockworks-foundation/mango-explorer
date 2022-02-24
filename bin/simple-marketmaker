@@ -78,18 +78,14 @@ try:
         if market_stub is None:
             raise Exception(f"Could not find serum market {args.market}")
 
-        market = mango.SerumMarket.ensure(
-            mango.ensure_market_loaded(context, market_stub)
-        )
-
-        market_operations: mango.MarketOperations = mango.create_market_operations(
-            context, wallet, account, market, args.dry_run
+        market_operations = mango.operations(
+            context, wallet, account, args.market, args.dry_run
         )
 
         oracle_provider: mango.OracleProvider = mango.create_oracle_provider(
             context, args.oracle_provider
         )
-        oracle = oracle_provider.oracle_for_market(context, market)
+        oracle = oracle_provider.oracle_for_market(context, market_operations.market)
         if oracle is None:
             raise Exception(f"Could not find oracle for spot market {args.market}")
 
@@ -97,7 +93,7 @@ try:
         market_maker = mango.simplemarketmaking.simplemarketmaker.SimpleMarketMaker(
             context,
             wallet,
-            market,
+            mango.SerumMarket.ensure(market_operations.market),
             market_operations,
             oracle,
             args.spread_ratio,

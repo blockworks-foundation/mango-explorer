@@ -8,6 +8,7 @@ import sys
 import typing
 
 from decimal import Decimal
+from solana.publickey import PublicKey
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import mango  # nopep8
@@ -19,6 +20,11 @@ parser = argparse.ArgumentParser(
 )
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument(
+    "--account-address",
+    type=PublicKey,
+    help="address of the specific account to use, if more than one available",
+)
 parser.add_argument(
     "--target",
     type=mango.parse_fixed_target_balance,
@@ -33,10 +39,10 @@ parser.add_argument(
     help="fraction of total wallet value a trade must be above to be carried out",
 )
 parser.add_argument(
-    "--adjustment-factor",
+    "--max-slippage",
     type=Decimal,
     default=Decimal("0.05"),
-    help="factor by which to adjust the SELL price (akin to maximum slippage)",
+    help="maximum slippage allowed for the IOC order price",
 )
 parser.add_argument(
     "--quote-symbol",
@@ -56,18 +62,17 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     wallet: mango.Wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     action_threshold: Decimal = args.action_threshold
     adjustment_factor: Decimal = args.adjustment_factor
+    action_threshold = args.action_threshold
+    max_slippage = args.max_slippage
+    group = mango.Group.load(context, context.group_address)
+    account = mango.Account.load_for_owner_by_address(
+        context, wallet.address, group, args.account_address
+    )
 
     logging.info(f"Wallet address: {wallet.address}")
 
     targets: typing.Sequence[mango.FixedTargetBalance] = args.target
     logging.info(f"Targets: {targets}")
-
-    if args.dry_run:
-        trade_executor: mango.TradeExecutor = mango.NullTradeExecutor()
-    else:
-        trade_executor = mango.ImmediateTradeExecutor(
-            context, wallet, None, adjustment_factor
-        )
 
     quote_instrument: typing.Optional[
         mango.Instrument
@@ -98,7 +103,14 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     prices += [mango.InstrumentValue(quote_token, Decimal(1))]
 
     wallet_balancer = mango.LiveWalletBalancer(
-        wallet, quote_token, trade_executor, targets, action_threshold
+        context,
+        wallet,
+        account,
+        quote_token,
+        targets,
+        action_threshold,
+        max_slippage,
+        args.dry_run,
     )
     wallet_balancer.balance(context, prices)
 
