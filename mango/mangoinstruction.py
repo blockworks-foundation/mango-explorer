@@ -399,6 +399,7 @@ class MangoInstruction:
         elif instruction_type == InstructionType.SetOracle:
             pass
         elif instruction_type == InstructionType.SettleFunds:
+            additional_data = f"order ID: {self.instruction_data.order_id}, side: {Side.from_value(self.instruction_data.side)}"
             pass
         elif instruction_type == InstructionType.CancelSpotOrder:
             additional_data = f"order ID: {self.instruction_data.order_id}, side: {Side.from_value(self.instruction_data.side)}"
@@ -443,7 +444,7 @@ class MangoInstruction:
         elif instruction_type == InstructionType.ForceSettleQuotePositions:
             pass
         elif instruction_type == InstructionType.PlaceSpotOrder2:
-            pass
+            additional_data = f"side: {Side.from_value(self.instruction_data.side)}, order_type: {OrderType.from_value(self.instruction_data.order_type)}, limit_price: {self.instruction_data.limit_price}, max_base_quantity: {self.instruction_data.max_base_quantity}, max_quote_quantity: {self.instruction_data.max_quote_quantity}, client_id: {self.instruction_data.client_id},  self_trade_behavior: {pyserum.enums.SelfTradeBehavior(self.instruction_data.self_trade_behavior).name}, limit: {self.instruction_data.limit}"
         elif instruction_type == InstructionType.InitAdvancedOrders:
             pass
         elif instruction_type == InstructionType.AddPerpTriggerOrder:
@@ -501,7 +502,7 @@ class MangoInstruction:
             keys += [f"    Key[{index: >2}]: {pubkey}"]
         key_details: str = "\n".join(keys)
         raw_data = "".join("{:02x}".format(x) for x in self.raw_data)
-        return f"""« Mango Instruction {self.instruction_type.name}: {parameters}
+        return f"""« Mango Instruction: {self.instruction_type.name}: {parameters}
     Program ID: {self.program_id}
     Data: {raw_data}
 {key_details}

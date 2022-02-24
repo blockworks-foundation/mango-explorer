@@ -107,21 +107,11 @@ class MangoInstructionReporter(InstructionReporter):
         parsed = parser.parse(instruction.data)
         instruction_type = InstructionType(int(parsed.variant))
 
-        instruction_data = "".join("{:02x}".format(x) for x in instruction.data)
         mango_instruction = MangoInstruction(
             instruction.program_id, instruction_type, instruction.data, parsed, accounts
         )
-        parameters = mango_instruction.describe_parameters() or "None"
-        keys: typing.List[str] = []
-        for index, key in enumerate(mango_instruction.accounts):
-            pubkey: str = str(key)
-            keys += [f"    Key[{index: >2}]: {pubkey}"]
-        key_details: str = "\n".join(keys) if len(keys) > 0 else "    None"
-        return f"""« Mango Instruction {mango_instruction.instruction_type.name}: {parameters}
-    Program ID: {instruction.program_id}
-    Data: {instruction_data}
-{key_details}
-»"""
+
+        return f"{mango_instruction}"
 
 
 # # 🥭 CompoundInstructionReporter class
