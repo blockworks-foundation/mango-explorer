@@ -483,9 +483,9 @@ class SpotMarketOperations(MarketOperations):
             self.wallet
         )
 
-        order_with_client_id: Order = order.with_client_id(client_id).with_owner(
-            self.open_orders_address or SYSTEM_PROGRAM_ADDRESS
-        )
+        order_with_client_id: Order = order.with_update(
+            client_id=client_id
+        ).with_update(owner=self.open_orders_address or SYSTEM_PROGRAM_ADDRESS)
         self._logger.info(f"Placing {self.spot_market.symbol} order {order}.")
         place: CombinableInstructions = (
             self.market_instruction_builder.build_place_order_instructions(

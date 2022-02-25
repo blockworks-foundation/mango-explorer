@@ -75,7 +75,7 @@ def test_accumulation_ignores_own_orders_updated() -> None:
         fake_order(price=Decimal(76), quantity=Decimal(1), side=mango.Side.BUY),
         fake_order(
             price=Decimal(75), quantity=Decimal(5), side=mango.Side.BUY
-        ).with_owner(order_owner),
+        ).with_update(owner=order_owner),
         fake_order(price=Decimal(74), quantity=Decimal(3), side=mango.Side.BUY),
         fake_order(price=Decimal(73), quantity=Decimal(7), side=mango.Side.BUY),
     ]
@@ -85,7 +85,7 @@ def test_accumulation_ignores_own_orders_updated() -> None:
         fake_order(price=Decimal(84), quantity=Decimal(1), side=mango.Side.SELL),
         fake_order(
             price=Decimal(85), quantity=Decimal(3), side=mango.Side.SELL
-        ).with_owner(order_owner),
+        ).with_update(owner=order_owner),
         fake_order(price=Decimal(86), quantity=Decimal(3), side=mango.Side.SELL),
         fake_order(price=Decimal(87), quantity=Decimal(7), side=mango.Side.SELL),
     ]

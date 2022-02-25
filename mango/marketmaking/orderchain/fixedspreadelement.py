@@ -70,7 +70,7 @@ class FixedSpreadElement(PairwiseElement):
         new_sell: typing.Optional[mango.Order] = None
         if buy is not None:
             new_buy_price: Decimal = price.mid_price - half_spread
-            new_buy = buy.with_price(new_buy_price)
+            new_buy = buy.with_update(price=new_buy_price)
             self._logger.debug(
                 f"""Order change - using fixed spread of {spread:,.8f} - new BUY price {new_buy_price:,.8f} is {half_spread:,.8f} from mid price {price.mid_price:,.8f}:
     Old: {buy}
@@ -79,7 +79,7 @@ class FixedSpreadElement(PairwiseElement):
 
         if sell is not None:
             new_sell_price: Decimal = price.mid_price + half_spread
-            new_sell = sell.with_price(new_sell_price)
+            new_sell = sell.with_update(price=new_sell_price)
             self._logger.debug(
                 f"""Order change - using fixed spread of {spread:,.8f} - new SELL price {new_sell_price:,.8f} is {half_spread:,.8f} from mid price {price.mid_price:,.8f}:
     Old: {sell}

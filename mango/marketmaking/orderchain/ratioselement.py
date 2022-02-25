@@ -133,7 +133,7 @@ class RatiosElement(Element):
             bid: Decimal = bid_price_base - (bid_price_base * spread_ratio)
             ask: Decimal = ask_price_base + (ask_price_base * spread_ratio)
 
-            bid_order = mango.Order.from_basic_info(
+            bid_order = mango.Order.from_values(
                 mango.Side.BUY,
                 price=bid,
                 quantity=base_position_size,
@@ -141,7 +141,7 @@ class RatiosElement(Element):
                 expiration=expiration,
                 match_limit=self.match_limit,
             )
-            ask_order = mango.Order.from_basic_info(
+            ask_order = mango.Order.from_values(
                 mango.Side.SELL,
                 price=ask,
                 quantity=base_position_size,

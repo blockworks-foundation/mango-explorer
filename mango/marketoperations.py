@@ -191,7 +191,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
         price = top_ask * increase_factor
         self._logger.info(f"Price {price} - adjusted by {max_slippage} from {top_ask}")
 
-        order = Order.from_basic_info(Side.BUY, price, quantity, OrderType.IOC)
+        order = Order.from_values(Side.BUY, price, quantity, OrderType.IOC)
         return self.place_order(order)
 
     def market_sell(
@@ -207,7 +207,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
         price = top_bid * decrease_factor
         self._logger.info(f"Price {price} - adjusted by {max_slippage} from {top_bid}")
 
-        order = Order.from_basic_info(Side.SELL, price, quantity, OrderType.IOC)
+        order = Order.from_values(Side.SELL, price, quantity, OrderType.IOC)
         return self.place_order(order)
 
     def __repr__(self) -> str:

@@ -80,7 +80,9 @@ class MaximumQuantityElement(Element):
     New: None"""
                     )
                 else:
-                    new_order: mango.Order = order.with_quantity(self.maximum_quantity)
+                    new_order: mango.Order = order.with_update(
+                        quantity=self.maximum_quantity
+                    )
                     self._logger.debug(
                         f"""Order change - order quantity is greater than maximum of {self.maximum_quantity} so changing order quantity to {self.maximum_quantity}:
     Old: {order}

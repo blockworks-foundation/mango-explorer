@@ -142,7 +142,7 @@ class OrderType(enum.Enum):
 #
 # A package that encapsulates common information about an order.
 #
-@dataclass
+@dataclass(frozen=True)
 class Order:
     DefaultMatchLimit: typing.ClassVar[int] = 20
     NoExpiration: typing.ClassVar[datetime] = datetime.fromtimestamp(0).astimezone(
@@ -177,154 +177,31 @@ class Order:
             return False
         return True
 
-    # Returns an identical order with the ID changed.
-    def with_id(self, id: int) -> "Order":
+    # Returns an identical order with the provided values changed.
+    def with_update(
+        self,
+        id: typing.Optional[int] = None,
+        client_id: typing.Optional[int] = None,
+        owner: typing.Optional[PublicKey] = None,
+        side: typing.Optional[Side] = None,
+        price: typing.Optional[Decimal] = None,
+        quantity: typing.Optional[Decimal] = None,
+        order_type: typing.Optional[OrderType] = None,
+        reduce_only: typing.Optional[bool] = None,
+        expiration: typing.Optional[datetime] = None,
+        match_limit: typing.Optional[int] = None,
+    ) -> "Order":
         return Order(
-            id=id,
-            client_id=self.client_id,
-            owner=self.owner,
-            side=self.side,
-            price=self.price,
-            quantity=self.quantity,
-            order_type=self.order_type,
-            reduce_only=self.reduce_only,
-            expiration=self.expiration,
-            match_limit=self.match_limit,
-        )
-
-    # Returns an identical order with the Client ID changed.
-    def with_client_id(self, client_id: int) -> "Order":
-        return Order(
-            id=self.id,
-            client_id=client_id,
-            owner=self.owner,
-            side=self.side,
-            price=self.price,
-            quantity=self.quantity,
-            order_type=self.order_type,
-            reduce_only=self.reduce_only,
-            expiration=self.expiration,
-            match_limit=self.match_limit,
-        )
-
-    # Returns an identical order with the owner changed.
-    def with_owner(self, owner: PublicKey) -> "Order":
-        return Order(
-            id=self.id,
-            client_id=self.client_id,
-            owner=owner,
-            side=self.side,
-            price=self.price,
-            quantity=self.quantity,
-            order_type=self.order_type,
-            reduce_only=self.reduce_only,
-            expiration=self.expiration,
-            match_limit=self.match_limit,
-        )
-
-    # Returns an identical order with the side changed.
-    def with_side(self, side: Side) -> "Order":
-        return Order(
-            id=self.id,
-            client_id=self.client_id,
-            owner=self.owner,
-            side=side,
-            price=self.price,
-            quantity=self.quantity,
-            order_type=self.order_type,
-            reduce_only=self.reduce_only,
-            expiration=self.expiration,
-            match_limit=self.match_limit,
-        )
-
-    # Returns an identical order with the price changed.
-    def with_price(self, price: Decimal) -> "Order":
-        return Order(
-            id=self.id,
-            client_id=self.client_id,
-            owner=self.owner,
-            side=self.side,
-            price=price,
-            quantity=self.quantity,
-            order_type=self.order_type,
-            reduce_only=self.reduce_only,
-            expiration=self.expiration,
-            match_limit=self.match_limit,
-        )
-
-    # Returns an identical order with the quantity changed.
-    def with_quantity(self, quantity: Decimal) -> "Order":
-        return Order(
-            id=self.id,
-            client_id=self.client_id,
-            owner=self.owner,
-            side=self.side,
-            price=self.price,
-            quantity=quantity,
-            order_type=self.order_type,
-            reduce_only=self.reduce_only,
-            expiration=self.expiration,
-            match_limit=self.match_limit,
-        )
-
-    # Returns an identical order with the order type changed.
-    def with_order_type(self, order_type: OrderType) -> "Order":
-        return Order(
-            id=self.id,
-            client_id=self.client_id,
-            owner=self.owner,
-            side=self.side,
-            price=self.price,
-            quantity=self.quantity,
-            order_type=order_type,
-            reduce_only=self.reduce_only,
-            expiration=self.expiration,
-            match_limit=self.match_limit,
-        )
-
-    # Returns an identical order with the reduce_only flag changed.
-    def with_reduce_only(self, reduce_only: bool) -> "Order":
-        return Order(
-            id=self.id,
-            client_id=self.client_id,
-            owner=self.owner,
-            side=self.side,
-            price=self.price,
-            quantity=self.quantity,
-            order_type=self.order_type,
-            reduce_only=reduce_only,
-            expiration=self.expiration,
-            match_limit=self.match_limit,
-        )
-
-    # Returns an identical order with the expiration timestamp changed.
-    def with_expiration(self, expiration: datetime) -> "Order":
-        return Order(
-            id=self.id,
-            client_id=self.client_id,
-            owner=self.owner,
-            side=self.side,
-            price=self.price,
-            quantity=self.quantity,
-            order_type=self.order_type,
-            reduce_only=self.reduce_only,
-            expiration=expiration,
-            match_limit=self.match_limit,
-        )
-
-    # Returns an identical order with the reduce_only flag changed.
-    def with_match_limit(self, match_limit: int) -> "Order":
-        return Order(
-            id=self.id,
-            client_id=self.client_id,
-            owner=self.owner,
-            side=self.side,
-            price=self.price,
-            quantity=self.quantity,
-            order_type=self.order_type,
-            reduce_only=self.reduce_only,
-            expiration=self.expiration,
-            match_limit=match_limit,
+            id=id if id is not None else self.id,
+            client_id=client_id if client_id is not None else self.client_id,
+            owner=owner if owner is not None else self.owner,
+            side=side if side is not None else self.side,
+            price=price if price is not None else self.price,
+            quantity=quantity if quantity is not None else self.quantity,
+            order_type=order_type if order_type is not None else self.order_type,
+            reduce_only=reduce_only if reduce_only is not None else self.reduce_only,
+            expiration=expiration if expiration is not None else self.expiration,
+            match_limit=match_limit if match_limit is not None else self.match_limit,
         )
 
     @staticmethod
@@ -344,22 +221,25 @@ class Order:
         return order
 
     @staticmethod
-    def from_basic_info(
+    def from_values(
         side: Side,
         price: Decimal,
         quantity: Decimal,
         order_type: OrderType = OrderType.UNKNOWN,
+        id: int = 0,
+        client_id: int = 0,
+        owner: PublicKey = SYSTEM_PROGRAM_ADDRESS,
         reduce_only: bool = False,
         expiration: datetime = NoExpiration,
         match_limit: int = 20,
     ) -> "Order":
         order = Order(
-            id=0,
+            id=id,
             side=side,
             price=price,
             quantity=quantity,
-            client_id=0,
-            owner=SYSTEM_PROGRAM_ADDRESS,
+            client_id=client_id,
+            owner=owner,
             order_type=order_type,
             reduce_only=reduce_only,
             expiration=expiration,

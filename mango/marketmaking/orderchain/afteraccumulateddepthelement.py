@@ -114,7 +114,7 @@ class AfterAccumulatedDepthElement(Element):
     New: None"""
                 )
             else:
-                new_order: mango.Order = order.with_price(new_price)
+                new_order: mango.Order = order.with_update(price=new_price)
                 self._logger.debug(
                     f"""Order change - accumulated depth of {depth} is {self.adjustment_ticks} tick from {new_price}:
     Old: {order}

@@ -222,7 +222,7 @@ def fake_order(
     side: mango.Side = mango.Side.BUY,
     order_type: mango.OrderType = mango.OrderType.LIMIT,
 ) -> mango.Order:
-    return mango.Order.from_basic_info(
+    return mango.Order.from_values(
         side=side, price=price, quantity=quantity, order_type=order_type
     )
 

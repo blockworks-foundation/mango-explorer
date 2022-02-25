@@ -109,7 +109,7 @@ class SimpleMarketMaker:
                     self._logger.info("Cancelling BUY orders.")
                     for order in buy_orders:
                         self.market_operations.cancel_order(order)
-                    buy_order: mango.Order = mango.Order.from_basic_info(
+                    buy_order: mango.Order = mango.Order.from_values(
                         mango.Side.BUY, bid, buy_quantity, mango.OrderType.POST_ONLY
                     )
                     self.market_operations.place_order(buy_order)
@@ -121,7 +121,7 @@ class SimpleMarketMaker:
                     self._logger.info("Cancelling SELL orders.")
                     for order in sell_orders:
                         self.market_operations.cancel_order(order)
-                    sell_order: mango.Order = mango.Order.from_basic_info(
+                    sell_order: mango.Order = mango.Order.from_values(
                         mango.Side.SELL, ask, sell_quantity, mango.OrderType.POST_ONLY
                     )
                     self.market_operations.place_order(sell_order)

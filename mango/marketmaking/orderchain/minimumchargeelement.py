@@ -97,7 +97,7 @@ class MinimumChargeElement(PairwiseElement):
             current_charge = measurement_price - buy.price
             if current_charge < minimum_charge:
                 new_price = measurement_price - minimum_charge
-                new_buy = buy.with_price(new_price)
+                new_buy = buy.with_update(price=new_price)
                 self._logger.debug(
                     f"""Order change - old BUY price {buy.price:,.8f} distance from {measurement_price:,.8f} would return {current_charge:,.8f} which is less than minimum charge {minimum_charge:,.8f}:
     Old: {buy}
@@ -114,7 +114,7 @@ class MinimumChargeElement(PairwiseElement):
             current_charge = sell.price - measurement_price
             if current_charge < minimum_charge:
                 new_price = measurement_price + minimum_charge
-                new_sell = sell.with_price(new_price)
+                new_sell = sell.with_update(price=new_price)
                 self._logger.debug(
                     f"""Order change - old SELL price {sell.price:,.8f} distance from {measurement_price:,.8f} would return {current_charge:,.8f} which is less than minimum charge {minimum_charge:,.8f}:
     Old: {sell}

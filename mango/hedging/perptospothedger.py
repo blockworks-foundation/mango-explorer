@@ -147,7 +147,7 @@ class PerpToSpotHedger(Hedger):
                         f"Quantity to hedge ({quantity:,.8f}) is bigger than maximum quantity to hedge in one chunk {self.max_hedge_chunk_quantity:,.8f} - reducing quantity to {self.max_hedge_chunk_quantity:,.8f}."
                     )
                     quantity = self.max_hedge_chunk_quantity
-                order: mango.Order = mango.Order.from_basic_info(
+                order: mango.Order = mango.Order.from_values(
                     side, adjusted_price, quantity, mango.OrderType.IOC
                 )
                 self._logger.info(

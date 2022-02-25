@@ -110,7 +110,7 @@ class ConfidenceIntervalElement(Element):
             bid: Decimal = price.mid_price - charge
             ask: Decimal = price.mid_price + charge
 
-            bid_order = mango.Order.from_basic_info(
+            bid_order = mango.Order.from_values(
                 mango.Side.BUY,
                 price=bid,
                 quantity=position_size,
@@ -118,7 +118,7 @@ class ConfidenceIntervalElement(Element):
                 expiration=expiration,
                 match_limit=self.match_limit,
             )
-            ask_order = mango.Order.from_basic_info(
+            ask_order = mango.Order.from_values(
                 mango.Side.SELL,
                 price=ask,
                 quantity=position_size,

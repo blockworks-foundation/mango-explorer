@@ -69,7 +69,7 @@ class PreventPostOnlyCrossingBookElement(Element):
                     new_buy_price: Decimal = (
                         top_ask - model_state.market.lot_size_converter.tick_size
                     )
-                    new_buy: mango.Order = order.with_price(new_buy_price)
+                    new_buy: mango.Order = order.with_update(price=new_buy_price)
                     self._logger.debug(
                         f"""Order change - would cross the orderbook {top_bid} / {top_ask}:
     Old: {order}
@@ -84,7 +84,7 @@ class PreventPostOnlyCrossingBookElement(Element):
                     new_sell_price: Decimal = (
                         top_bid + model_state.market.lot_size_converter.tick_size
                     )
-                    new_sell: mango.Order = order.with_price(new_sell_price)
+                    new_sell: mango.Order = order.with_update(price=new_sell_price)
                     self._logger.debug(
                         f"""Order change - would cross the orderbook {top_bid} / {top_ask}:
     Old: {order}

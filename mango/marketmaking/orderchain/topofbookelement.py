@@ -98,7 +98,7 @@ class TopOfBookElement(Element):
                 )
                 new_orders += [order]
             else:
-                new_order: mango.Order = order.with_price(new_price)
+                new_order: mango.Order = order.with_update(price=new_price)
                 self._logger.debug(
                     f"""Order change - top of book from others is {self.adjustment_ticks} tick from {new_price}:
     Old: {order}

@@ -92,7 +92,7 @@ class BiasQuoteOnPositionElement(PairwiseElement):
         bias_factor = inventory_bias * -1
         bias = 1 + ((base_inventory_value / order.quantity) * bias_factor)
         new_price: Decimal = order.price * bias
-        new_order: mango.Order = order.with_price(new_price)
+        new_order: mango.Order = order.with_update(price=new_price)
         bias_description = "BUY more" if bias > 1 else "SELL more"
         self._logger.debug(
             f"""Order change - bias {inventory_bias} on inventory {base_inventory_value} / {order.quantity} creates a ({bias_description}) bias factor of {bias}:

@@ -112,7 +112,7 @@ class BiasQuantityOnPositionElement(PairwiseElement):
                 total_quantity, max(Decimal(0), biased_buy_quantity)
             )
             if buy.quantity != clamped_biased_buy_quantity:
-                new_buy = buy.with_quantity(clamped_biased_buy_quantity)
+                new_buy = buy.with_update(quantity=clamped_biased_buy_quantity)
                 buy_bias_description = (
                     "BUY more"
                     if clamped_biased_buy_quantity > buy.quantity
@@ -138,7 +138,7 @@ class BiasQuantityOnPositionElement(PairwiseElement):
                 total_quantity, max(Decimal(0), biased_sell_quantity)
             )
             if sell.quantity != clamped_biased_sell_quantity:
-                new_sell = sell.with_quantity(clamped_biased_sell_quantity)
+                new_sell = sell.with_update(quantity=clamped_biased_sell_quantity)
                 sell_bias_description = (
                     "SELL more"
                     if clamped_biased_sell_quantity > sell.quantity

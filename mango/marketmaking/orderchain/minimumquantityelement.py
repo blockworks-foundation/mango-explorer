@@ -81,7 +81,9 @@ class MinimumQuantityElement(Element):
     New: None"""
                     )
                 else:
-                    new_order: mango.Order = order.with_quantity(self.minimum_quantity)
+                    new_order: mango.Order = order.with_update(
+                        quantity=self.minimum_quantity
+                    )
                     self._logger.debug(
                         f"""Order change - order quantity is less than minimum of {self.minimum_quantity} so changing order quantity to {self.minimum_quantity}:
     Old: {order}

@@ -457,7 +457,7 @@ class PerpMarketOperations(MarketOperations):
         signers: CombinableInstructions = CombinableInstructions.from_wallet(
             self.wallet
         )
-        order_with_client_id: Order = order.with_client_id(client_id)
+        order_with_client_id: Order = order.with_update(client_id=client_id)
         self._logger.info(f"Placing {self.market_name} order {order_with_client_id}.")
         place: CombinableInstructions = (
             self.market_instruction_builder.build_place_order_instructions(

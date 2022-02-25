@@ -71,7 +71,7 @@ class FixedPositionSizeElement(PairwiseElement):
         new_buy: typing.Optional[mango.Order] = None
         new_sell: typing.Optional[mango.Order] = None
         if buy is not None:
-            new_buy = buy.with_quantity(size)
+            new_buy = buy.with_update(quantity=size)
             self._logger.debug(
                 f"""Order change - using fixed position size of {size}:
     Old: {buy}
@@ -79,7 +79,7 @@ class FixedPositionSizeElement(PairwiseElement):
             )
 
         if sell is not None:
-            new_sell = sell.with_quantity(size)
+            new_sell = sell.with_update(quantity=size)
             self._logger.debug(
                 f"""Order change - using fixed position size of {size}:
     Old: {sell}

@@ -28,7 +28,7 @@ def test_from_args() -> None:
 
 def test_no_bias_results_in_no_change() -> None:
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement([])
-    order: mango.Order = mango.Order.from_basic_info(
+    order: mango.Order = mango.Order.from_values(
         mango.Side.BUY, price=Decimal(1), quantity=Decimal(10)
     )
 
@@ -41,7 +41,7 @@ def test_bias_with_positive_inventory() -> None:
     quantity: Decimal = Decimal(10)
     inventory: Decimal = Decimal(100)
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement([])
-    order: mango.Order = mango.Order.from_basic_info(
+    order: mango.Order = mango.Order.from_values(
         mango.Side.BUY, price=Decimal(1000), quantity=quantity
     )
     bias: Decimal = Decimal("0.001")
@@ -59,7 +59,7 @@ def test_bias_with_negative_inventory() -> None:
     quantity: Decimal = Decimal(10)
     inventory: Decimal = Decimal(-100)
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement([])
-    order: mango.Order = mango.Order.from_basic_info(
+    order: mango.Order = mango.Order.from_values(
         mango.Side.BUY, price=Decimal(1000), quantity=quantity
     )
     bias: Decimal = Decimal("0.001")
@@ -86,7 +86,7 @@ def test_from_daffys_original_note() -> None:
     quantity: Decimal = Decimal("0.0002")
     inventory: Decimal = Decimal("0.0010")
     actual: BiasQuoteOnPositionElement = BiasQuoteOnPositionElement([])
-    order: mango.Order = mango.Order.from_basic_info(
+    order: mango.Order = mango.Order.from_values(
         mango.Side.BUY, price=Decimal(50000), quantity=quantity
     )
     bias: Decimal = Decimal("0.0001")

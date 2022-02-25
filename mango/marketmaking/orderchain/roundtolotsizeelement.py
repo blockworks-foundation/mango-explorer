@@ -55,8 +55,8 @@ class RoundToLotSizeElement(Element):
             new_quantity: Decimal = model_state.market.lot_size_converter.round_base(
                 order.quantity
             )
-            new_order: mango.Order = order.with_price(new_price).with_quantity(
-                new_quantity
+            new_order: mango.Order = order.with_update(price=new_price).with_update(
+                quantity=new_quantity
             )
             if new_order.price == 0 or new_order.quantity == 0:
                 self._logger.debug(
