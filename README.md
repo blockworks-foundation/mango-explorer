@@ -60,10 +60,10 @@ print("Initial order book:\n\t", market_operations.load_orderbook())
 print("Your current orders:\n\t", market_operations.load_my_orders(include_expired=True))
 
 # Go on - try to buy 1 SOL-PERP contract for $10.
-order = mango.Order.from_basic_info(side=mango.Side.BUY,
-                                    price=decimal.Decimal(10),
-                                    quantity=decimal.Decimal(1),
-                                    order_type=mango.OrderType.POST_ONLY)
+order = mango.Order.from_values(side=mango.Side.BUY,
+                                price=decimal.Decimal(10),
+                                quantity=decimal.Decimal(1),
+                                order_type=mango.OrderType.POST_ONLY)
 placed_order = market_operations.place_order(order)
 print("\n\nPlaced order:\n\t", placed_order)
 
