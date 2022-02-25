@@ -437,6 +437,10 @@ class OrderBook:
         self.__bids = bids_list
 
     @property
+    def bids_including_expired(self) -> typing.Sequence[Order]:
+        return self.__bids
+
+    @property
     def asks(self) -> typing.Sequence[Order]:
         return list([o for o in self.__asks if not o.expired])
 
@@ -446,6 +450,10 @@ class OrderBook:
         asks_list: typing.List[Order] = list(asks)
         asks_list.sort(key=lambda order: order.id)
         self.__asks = asks_list
+
+    @property
+    def asks_including_expired(self) -> typing.Sequence[Order]:
+        return self.__asks
 
     # The top bid is the highest price someone is willing to pay to BUY
     @property
