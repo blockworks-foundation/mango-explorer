@@ -4,15 +4,13 @@ commands := $(wildcard bin/*)
 setup: ## Install all the build and lint dependencies
 	pip --no-cache-dir install poetry
 	poetry install --no-interaction
+	poetry add pytest-cov
 
 upgrade: ## Upgrade all the build and lint dependencies
 	poetry upgrade --no-interaction
 
-test: ## Run all the tests
-	SOLENV_NAME= SOLENV_ADDRESS= CLUSTER_NAME= CLUSTER_URL= KEYPAIR= PYTEST_ADDOPTS="-p no:cacheprovider" poetry run pytest -rP tests
-
-#cover: test ## Run all the tests and opens the coverage report
-#	TODO: Coverage
+test: ## Run all the tests and calculate code coverage
+	SOLENV_NAME= SOLENV_ADDRESS= CLUSTER_NAME= CLUSTER_URL= KEYPAIR= PYTEST_ADDOPTS="-p no:cacheprovider" poetry run pytest -rP tests/ --cov=mango
 
 black:
 	poetry run black --check mango tests bin/*
