@@ -177,6 +177,14 @@ class Order:
             return False
         return True
 
+    @property
+    def _emoji_marker(self) -> str:
+        if self.expired:
+            return "⛔"
+        elif self.expiration != Order.NoExpiration:
+            return "⏰"
+        return "📌"
+
     # Returns an identical order with the provided values changed.
     def with_update(
         self,
@@ -284,7 +292,8 @@ class Order:
         order_type: str = ""
         if self.order_type != OrderType.UNKNOWN:
             order_type = f" {self.order_type}"
-        return f"« Order {owner}{self.side} for {self.quantity:,.8f} at {self.price:.8f} [ID: {self.id} / {self.client_id}]{order_type}{' reduceOnly' if self.reduce_only else ''}{' EXPIRED' if self.expired else ''} »"
+        marker = self._emoji_marker
+        return f"« Order {marker} {owner}{self.side} for {self.quantity:,.8f} at {self.price:.8f} [ID: {self.id} / {self.client_id}]{order_type}{' reduceOnly' if self.reduce_only else ''} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -435,9 +444,10 @@ class OrderBook:
 
     def __str__(self) -> str:
         def _order_to_str(order: Order) -> str:
+            marker = order._emoji_marker
             quantity = f"{order.quantity:,.8f}"
             price = f"{order.price:,.8f}"
-            return f"{order.side} {quantity:>20} at {price:>20}"
+            return f"{marker} {order.side} {quantity:>20} at {price:>20}"
 
         orders_to_show = 5
         lines = []
