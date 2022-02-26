@@ -33,5 +33,10 @@ def local_now() -> datetime:
     return datetime.now()
 
 
+# Getting a comparable UTC time using this line:
+#   return datetime.utcnow().astimezone(timezone.utc)
+# seems to cause `OSError: [Errno 22] Invalid argument` on Windows (but is fine on Mac and
+# Linux). Best to avoid it and use the following instead, which seems to work consistently
+# on Windows as well as Mac and Linux.
 def utc_now() -> datetime:
-    return datetime.utcnow().astimezone(timezone.utc)
+    return datetime.utcnow().replace(tzinfo=timezone.utc)
