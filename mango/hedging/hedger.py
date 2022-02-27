@@ -32,6 +32,7 @@ class Hedger(metaclass=abc.ABCMeta):
         self.pulse_complete: EventSource[datetime] = EventSource[datetime]()
         self.pulse_error: EventSource[Exception] = EventSource[Exception]()
 
+    @abc.abstractmethod
     def pulse(self, context: mango.Context, model_state: mango.ModelState) -> None:
         raise NotImplementedError("Hedger.pulse() is not implemented on the base type.")
 

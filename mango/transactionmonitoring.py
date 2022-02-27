@@ -67,6 +67,7 @@ class TransactionStatus:
 
 
 class TransactionStatusCollector(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
     def add_transaction(self, status: TransactionStatus) -> None:
         raise NotImplementedError(
             "TransactionStatusCollector.add_transaction() is not implemented on the base type."

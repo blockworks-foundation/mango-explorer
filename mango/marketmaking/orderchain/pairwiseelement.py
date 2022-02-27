@@ -43,6 +43,7 @@ class PairwiseElement(Element, metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         super().__init__()
 
+    @abc.abstractmethod
     def process_order_pair(
         self,
         context: mango.Context,

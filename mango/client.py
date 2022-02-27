@@ -356,6 +356,7 @@ class TransactionMonitor(metaclass=abc.ABCMeta):
 
         self.slot_holder: SlotHolder = SlotHolder()
 
+    @abc.abstractmethod
     def monitor(self, signature: str) -> None:
         raise NotImplementedError(
             "TransactionMonitor.monitor() is not implemented on the base type."

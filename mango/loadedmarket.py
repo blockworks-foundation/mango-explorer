@@ -13,6 +13,7 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import abc
 import rx.operators
 import typing
 
@@ -69,17 +70,27 @@ class LoadedMarket(Market):
         )
 
     @property
+    @abc.abstractproperty
     def bids_address(self) -> PublicKey:
         raise NotImplementedError(
             "LoadedMarket.bids_address() is not implemented on the base type."
         )
 
     @property
+    @abc.abstractproperty
     def asks_address(self) -> PublicKey:
         raise NotImplementedError(
             "LoadedMarket.asks_address() is not implemented on the base type."
         )
 
+    @property
+    @abc.abstractproperty
+    def event_queue_address(self) -> PublicKey:
+        raise NotImplementedError(
+            "LoadedMarket.event_queue_address() is not implemented on the base type."
+        )
+
+    @abc.abstractmethod
     def on_fill(
         self, context: Context, handler: typing.Callable[[FillEvent], None]
     ) -> Disposable:
@@ -87,6 +98,7 @@ class LoadedMarket(Market):
             "LoadedMarket.on_fill() is not implemented on the base type."
         )
 
+    @abc.abstractmethod
     def on_event(
         self, context: Context, handler: typing.Callable[[Event], None]
     ) -> Disposable:
@@ -143,6 +155,7 @@ class LoadedMarket(Market):
 
         return disposer
 
+    @abc.abstractmethod
     def parse_account_info_to_orders(
         self, account_info: AccountInfo
     ) -> typing.Sequence[Order]:

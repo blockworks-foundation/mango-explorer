@@ -181,9 +181,39 @@ def fake_spot_market_stub() -> mango.SpotMarketStub:
 def fake_loaded_market(
     base_lot_size: Decimal = Decimal(1), quote_lot_size: Decimal = Decimal(1)
 ) -> mango.LoadedMarket:
+    class FakeLoadedMarket(mango.LoadedMarket):
+        @property
+        def bids_address(self) -> PublicKey:
+            return fake_seeded_public_key("bids_address")
+
+        @property
+        def asks_address(self) -> PublicKey:
+            return fake_seeded_public_key("asks_address")
+
+        @property
+        def event_queue_address(self) -> PublicKey:
+            return fake_seeded_public_key("event_queue_address")
+
+        def on_fill(
+            self,
+            context: mango.Context,
+            handler: typing.Callable[[mango.FillEvent], None],
+        ) -> mango.Disposable:
+            return mango.Disposable()
+
+        def on_event(
+            self, context: mango.Context, handler: typing.Callable[[mango.Event], None]
+        ) -> mango.Disposable:
+            return mango.Disposable()
+
+        def parse_account_info_to_orders(
+            self, account_info: mango.AccountInfo
+        ) -> typing.Sequence[mango.Order]:
+            return []
+
     base = fake_token("BASE")
     quote = fake_token("QUOTE")
-    return mango.LoadedMarket(
+    return FakeLoadedMarket(
         mango.MarketType.PERP,
         fake_seeded_public_key("program ID"),
         fake_seeded_public_key("perp market"),

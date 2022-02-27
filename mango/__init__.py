@@ -163,6 +163,8 @@ from .liquidatablereport import LiquidatableReport as LiquidatableReport
 from .liquidationevent import LiquidationEvent as LiquidationEvent
 from .liquidationprocessor import LiquidationProcessor as LiquidationProcessor
 from .liquidationprocessor import LiquidationProcessorState as LiquidationProcessorState
+from .loadedmarket import Event as Event
+from .loadedmarket import FillEvent as FillEvent
 from .loadedmarket import LoadedMarket as LoadedMarket
 from .logmessages import expand_log_messages as expand_log_messages
 from .lotsizeconverter import LotSizeConverter as LotSizeConverter

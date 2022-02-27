@@ -73,6 +73,7 @@ class WebSocketSubscription(
             built = self.build_subscribed_instance(response["params"])
             self.publisher.publish(built)
 
+    @abc.abstractmethod
     def build_subscribed_instance(self, response: RPCResponse) -> TSubscriptionInstance:
         raise NotImplementedError(
             "WebSocketSubscription.build_subscribed_instance() is not implemented on the base type."
@@ -246,11 +247,13 @@ class WebSocketSubscriptionManager(RxDisposable, metaclass=abc.ABCMeta):
     def add(self, subscription: WebSocketSubscription[typing.Any]) -> None:
         self.subscriptions += [subscription]
 
+    @abc.abstractmethod
     def open(self) -> None:
         raise NotImplementedError(
             "WebSocketSubscription.build_request() is not implemented on the base type."
         )
 
+    @abc.abstractmethod
     def close(self) -> None:
         raise NotImplementedError(
             "WebSocketSubscription.build_request() is not implemented on the base type."

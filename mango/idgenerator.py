@@ -19,6 +19,7 @@ import time
 
 
 class IdGenerator(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
     def generate_id(self) -> int:
         raise NotImplementedError(
             "IdGenerator.generate_id() is not implemented on the base type."
