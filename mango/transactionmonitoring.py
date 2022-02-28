@@ -278,8 +278,10 @@ class WebSocketTransactionMonitor(TransactionMonitor):
             ]
             if len(to_remove) > 0:
                 self.__subscriptions.remove(to_remove[0])
-            else:
+            elif "result" in response:
                 self.__add_subscription_id(id, int(response["result"]))
+            else:
+                self._logger.warning(f"Unexpected response from websocket: {response}")
         elif response["method"] == "signatureNotification":
             params = response["params"]
             id = params["subscription"]
