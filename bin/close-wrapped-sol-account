@@ -40,7 +40,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         wallet
     )
 
-    close_instruction = mango.build_close_spl_account_instructions(
+    close_instruction = mango.build_spl_close_account_instructions(
         context, wallet, args.address
     )
 

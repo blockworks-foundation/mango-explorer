@@ -30,10 +30,10 @@ from .context import Context
 from .group import GroupSlot, Group
 from .instructions import (
     build_serum_consume_events_instructions,
+    build_spot_cancel_order_instructions,
     build_spot_place_order_instructions,
-    build_cancel_spot_order_instructions,
     build_spot_settle_instructions,
-    build_spot_openorders_instructions,
+    build_spot_create_openorders_instructions,
 )
 from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
@@ -272,7 +272,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         if self.open_orders_address is None:
             return CombinableInstructions.empty()
 
-        return build_cancel_spot_order_instructions(
+        return build_spot_cancel_order_instructions(
             self.context,
             self.wallet,
             self.group,
@@ -400,7 +400,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         open_orders_address: PublicKey = self.spot_market.derive_open_orders_address(
             self.context, self.account
         )
-        return build_spot_openorders_instructions(
+        return build_spot_create_openorders_instructions(
             self.context,
             self.wallet,
             self.group,

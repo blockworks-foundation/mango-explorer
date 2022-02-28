@@ -30,11 +30,11 @@ from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import Group
 from .instructions import (
-    build_cancel_perp_order_instructions,
-    build_mango_consume_events_instructions,
-    build_cancel_all_perp_orders_instructions,
-    build_place_perp_order_instructions,
-    build_redeem_accrued_mango_instructions,
+    build_mango_redeem_accrued_instructions,
+    build_perp_cancel_all_orders_instructions,
+    build_perp_cancel_order_instructions,
+    build_perp_consume_events_instructions,
+    build_perp_place_order_instructions,
 )
 from .loadedmarket import LoadedMarket
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
@@ -301,7 +301,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
             raise Exception(
                 f"PerpMarket {self.perp_market.symbol} has not been loaded."
             )
-        return build_cancel_perp_order_instructions(
+        return build_perp_cancel_order_instructions(
             self.context,
             self.wallet,
             self.account,
@@ -315,7 +315,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
             raise Exception(
                 f"PerpMarket {self.perp_market.symbol} has not been loaded."
             )
-        return build_place_perp_order_instructions(
+        return build_perp_place_order_instructions(
             self.context,
             self.wallet,
             self.perp_market.underlying_perp_market.group,
@@ -361,7 +361,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
             f"About to crank {len(limited_addresses)} addresses: {limited_addresses}"
         )
 
-        return build_mango_consume_events_instructions(
+        return build_perp_consume_events_instructions(
             self.context,
             self.group,
             self.perp_market.underlying_perp_market,
@@ -370,7 +370,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         )
 
     def build_redeem_instructions(self) -> CombinableInstructions:
-        return build_redeem_accrued_mango_instructions(
+        return build_mango_redeem_accrued_instructions(
             self.context,
             self.wallet,
             self.perp_market,
@@ -386,7 +386,7 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
             raise Exception(
                 f"PerpMarket {self.perp_market.symbol} has not been loaded."
             )
-        return build_cancel_all_perp_orders_instructions(
+        return build_perp_cancel_all_orders_instructions(
             self.context,
             self.wallet,
             self.account,

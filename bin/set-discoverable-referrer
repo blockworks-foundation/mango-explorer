@@ -47,7 +47,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     )
 
     referrer_memory_address: PublicKey = account.derive_referrer_memory_address(context)
-    set_delegate_instructions = mango.build_set_referrer_memory_instructions(
+    set_delegate_instructions = mango.build_mango_set_referrer_memory_instructions(
         context,
         wallet,
         group,

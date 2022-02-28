@@ -39,12 +39,12 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     signers: mango.CombinableInstructions = mango.CombinableInstructions.from_signers(
         [wallet.keypair]
     )
-    create_instructions = mango.build_create_spl_account_instructions(
+    create_instructions = mango.build_spl_create_account_instructions(
         context, wallet, wrapped_sol
     )
     wrapped_sol_address = create_instructions.signers[0].public_key
 
-    unwrap_instructions = mango.build_transfer_spl_tokens_instructions(
+    unwrap_instructions = mango.build_spl_transfer_tokens_instructions(
         context,
         wallet,
         wrapped_sol,
@@ -52,7 +52,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         wrapped_sol_address,
         args.quantity,
     )
-    close_instructions = mango.build_close_spl_account_instructions(
+    close_instructions = mango.build_spl_close_account_instructions(
         context, wallet, wrapped_sol_address
     )
 

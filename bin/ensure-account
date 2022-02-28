@@ -35,7 +35,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         signers: mango.CombinableInstructions = (
             mango.CombinableInstructions.from_wallet(wallet)
         )
-        init = mango.build_create_account_instructions(context, wallet, group)
+        init = mango.build_mango_create_account_instructions(context, wallet, group)
         all_instructions = signers + init
         signatures = all_instructions.execute(context)
 

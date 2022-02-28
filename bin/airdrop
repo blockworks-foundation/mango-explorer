@@ -34,7 +34,7 @@ def airdrop_token(
 
     mango.output(f"Airdropping {quantity} {token.symbol} to {destination}")
     native_quantity = token.shift_to_native(quantity)
-    airdrop = mango.build_faucet_airdrop_instructions(
+    airdrop = mango.build_spl_faucet_airdrop_instructions(
         token.mint, destination, faucet, native_quantity
     )
 

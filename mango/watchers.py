@@ -27,7 +27,7 @@ from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .group import GroupSlot, Group
 from .healthcheck import HealthCheck
-from .instructions import build_create_serum_open_orders_instructions
+from .instructions import build_serum_create_openorders_instructions
 from .instrumentvalue import InstrumentValue
 from .inventory import Inventory
 from .loadedmarket import LoadedMarket
@@ -186,7 +186,7 @@ def build_serum_open_orders_watcher(
         raw_market = PySerumMarket.load(
             context.client.compatible_client, serum_market.address
         )
-        create_open_orders = build_create_serum_open_orders_instructions(
+        create_open_orders = build_serum_create_openorders_instructions(
             context, wallet, raw_market
         )
 

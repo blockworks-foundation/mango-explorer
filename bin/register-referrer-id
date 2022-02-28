@@ -48,7 +48,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     referrer_record_address: PublicKey = group.derive_referrer_record_address(
         context, args.id
     )
-    set_delegate_instructions = mango.build_register_referrer_id_instructions(
+    set_delegate_instructions = mango.build_mango_register_referrer_id_instructions(
         context, wallet, group, account, referrer_record_address, args.id
     )
     all_instructions += set_delegate_instructions

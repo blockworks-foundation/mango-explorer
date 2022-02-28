@@ -55,15 +55,17 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         mango.CombinableInstructions.from_signers([wallet.keypair])
     )
     if args.revoke:
-        unset_delegate_instructions = mango.build_unset_account_delegate_instructions(
-            context, wallet, group, account
+        unset_delegate_instructions = (
+            mango.build_mango_unset_account_delegate_instructions(
+                context, wallet, group, account
+            )
         )
         all_instructions += unset_delegate_instructions
     else:
         if args.delegate_address is None:
             raise Exception("No delegate address specified")
 
-        set_delegate_instructions = mango.build_set_account_delegate_instructions(
+        set_delegate_instructions = mango.build_mango_set_account_delegate_instructions(
             context, wallet, group, account, args.delegate_address
         )
         all_instructions += set_delegate_instructions

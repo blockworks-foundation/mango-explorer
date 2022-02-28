@@ -180,12 +180,16 @@ class ISpotMarket(typing.Protocol):
 # the function signature in future.
 #
 
-# # 🥭 build_create_solana_account_instructions function
+# #
+# # 🥭 SOLANA instruction builders
+# #
+
+# # 🥭 build_solana_create_account_instructions function
 #
 # Creates and initializes an SPL token account. Can add additional lamports too but that's usually not
 # necesary.
 #
-def build_create_solana_account_instructions(
+def build_solana_create_account_instructions(
     context: Context,
     wallet: Wallet,
     mango_program_address: PublicKey,
@@ -206,18 +210,23 @@ def build_create_solana_account_instructions(
     return CombinableInstructions(signers=[account], instructions=[create_instruction])
 
 
-# # 🥭 build_create_spl_account_instructions function
+# #
+# # 🥭 SPL instruction builders
+# #
+
+
+# # 🥭 build_spl_create_account_instructions function
 #
 # Creates and initializes an SPL token account. Can add additional lamports too but that's usually not
 # necesary.
 #
-# Prefer `build_create_spl_account_instructions()` over this function. This function should be
+# Prefer `build_spl_create_account_instructions()` over this function. This function should be
 # reserved for cases where you specifically don't want the associated token account.
 #
-def build_create_spl_account_instructions(
+def build_spl_create_account_instructions(
     context: Context, wallet: Wallet, token: Token, lamports: int = 0
 ) -> CombinableInstructions:
-    create_account_instructions = build_create_solana_account_instructions(
+    create_account_instructions = build_solana_create_account_instructions(
         context, wallet, TOKEN_PROGRAM_ID, ACCOUNT_LEN, lamports
     )
     initialize_instruction = initialize_account(
@@ -233,13 +242,13 @@ def build_create_spl_account_instructions(
     )
 
 
-# # 🥭 build_create_associated_spl_account_instructions function
+# # 🥭 build_spl_create_associated_account_instructions function
 #
 # Creates and initializes an 'associated' SPL token account. This is the usual way of creating a
-# token account now. `build_create_spl_account_instructions()` should be reserved for cases where
+# token account now. `build_spl_create_account_instructions()` should be reserved for cases where
 # you specifically don't want the associated token account.
 #
-def build_create_associated_spl_account_instructions(
+def build_spl_create_associated_account_instructions(
     context: Context, wallet: Wallet, token: Token
 ) -> CombinableInstructions:
     create_account_instructions = create_associated_token_account(
@@ -250,11 +259,11 @@ def build_create_associated_spl_account_instructions(
     )
 
 
-# # 🥭 build_transfer_spl_tokens_instructions function
+# # 🥭 build_spl_transfer_tokens_instructions function
 #
 # Creates an instruction to transfer SPL tokens from one account to another.
 #
-def build_transfer_spl_tokens_instructions(
+def build_spl_transfer_tokens_instructions(
     context: Context,
     wallet: Wallet,
     token: Token,
@@ -273,11 +282,11 @@ def build_transfer_spl_tokens_instructions(
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
-# # 🥭 build_close_spl_account_instructions function
+# # 🥭 build_spl_close_account_instructions function
 #
 # Creates an instructio to close an SPL token account and transfers any remaining lamports to the wallet.
 #
-def build_close_spl_account_instructions(
+def build_spl_close_account_instructions(
     context: Context, wallet: Wallet, address: PublicKey
 ) -> CombinableInstructions:
     return CombinableInstructions(
@@ -292,11 +301,59 @@ def build_close_spl_account_instructions(
     )
 
 
-# # 🥭 build_create_serum_open_orders_instructions function
+# # 🥭 build_spl_faucet_airdrop_instructions function
+#
+# Creates an airdrop instruction for compatible faucets (those based on https://github.com/paul-schaaf/spl-token-faucet)
+#
+def build_spl_faucet_airdrop_instructions(
+    token_mint: PublicKey, destination: PublicKey, faucet: PublicKey, quantity: Decimal
+) -> CombinableInstructions:
+    faucet_program_address: PublicKey = PublicKey(
+        "4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt"
+    )
+    authority_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
+        [b"faucet"], faucet_program_address
+    )
+    authority: PublicKey = authority_and_nonce[0]
+
+    # Mints and airdrops tokens from a faucet.
+    #
+    # SPL instruction is at:
+    #   https://github.com/paul-schaaf/spl-token-faucet/blob/main/src/program/src/instruction.rs
+    #
+    # ///
+    # /// Mints Tokens
+    # ///
+    # /// 0. `[]` The mint authority - Program Derived Address
+    # /// 1. `[writable]` Token Mint IAccount
+    # /// 2. `[writable]` Destination IAccount
+    # /// 3. `[]` The SPL Token Program
+    # /// 4. `[]` The Faucet IAccount
+    # /// 5. `[optional/signer]` Admin IAccount
+    faucet_airdrop_instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=authority),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=token_mint),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=destination),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=faucet),
+        ],
+        program_id=faucet_program_address,
+        data=layouts.FAUCET_AIRDROP.build({"quantity": quantity}),
+    )
+    return CombinableInstructions(signers=[], instructions=[faucet_airdrop_instruction])
+
+
+# #
+# # 🥭 Serum instruction builders
+# #
+
+
+# # 🥭 build_serum_create_openorders_instructions function
 #
 # Creates a Serum openorders-creating instruction.
 #
-def build_create_serum_open_orders_instructions(
+def build_serum_create_openorders_instructions(
     context: Context, wallet: Wallet, market: PySerumMarket
 ) -> CombinableInstructions:
     new_open_orders_account = Keypair()
@@ -429,6 +486,11 @@ def build_serum_settle_instructions(
     return CombinableInstructions(signers=[], instructions=[instruction])
 
 
+# #
+# # 🥭 Spot instruction builders
+# #
+
+
 # # 🥭 build_spot_settle_instructions function
 #
 # Creates a 'settle' instruction for spot markets.
@@ -520,585 +582,7 @@ def build_spot_settle_instructions(
     return CombinableInstructions(signers=[], instructions=[settle_instruction])
 
 
-# # 🥭 build_compound_serum_place_order_instructions function
-#
-# This function puts a trade on the Serum orderbook and then cranks and settles.
-# It follows the pattern described here:
-#   https://solanadev.blogspot.com/2021/05/order-techniques-with-project-serum.html
-#
-# Here's an example (Raydium?) transaction that does this:
-#   https://solanabeach.io/transaction/3Hb2h7QMM3BbJCK42BUDuVEYwwaiqfp2oQUZMDJvUuoyCRJD5oBmA3B8oAGkB9McdCFtwdT2VrSKM2GCKhJ92FpY
-#
-# Basically, it tries to send to a 'buy/sell' and settle all in one transaction.
-#
-# It does this by:
-# * Sending a Place Order (V3) instruction
-# * Sending a Consume Events (crank) instruction
-# * Sending a Settle Funds instruction
-# all in the same transaction. With V3 Serum, this should consistently settle funds to the wallet
-# immediately if the order is filled (either because it's IOC or because it matches an order on the
-# orderbook).
-#
-def build_compound_serum_place_order_instructions(
-    context: Context,
-    wallet: Wallet,
-    market: PySerumMarket,
-    source: PublicKey,
-    open_orders_address: PublicKey,
-    all_open_orders_addresses: typing.Sequence[PublicKey],
-    order_type: OrderType,
-    side: Side,
-    price: Decimal,
-    quantity: Decimal,
-    client_id: int,
-    base_token_account_address: PublicKey,
-    quote_token_account_address: PublicKey,
-    fee_discount_address: PublicKey,
-    consume_limit: int = 32,
-) -> CombinableInstructions:
-    place_order = build_serum_place_order_instructions(
-        context,
-        wallet,
-        market,
-        source,
-        open_orders_address,
-        order_type,
-        side,
-        price,
-        quantity,
-        client_id,
-        fee_discount_address,
-    )
-    consume_events = build_serum_consume_events_instructions(
-        context,
-        market.state.public_key(),
-        market.state.event_queue(),
-        all_open_orders_addresses,
-        consume_limit,
-    )
-    settle = build_serum_settle_instructions(
-        context,
-        wallet,
-        market,
-        open_orders_address,
-        base_token_account_address,
-        quote_token_account_address,
-    )
-
-    return place_order + consume_events + settle
-
-
-# # 🥭 build_cancel_perp_order_instructions function
-#
-# Builds the instructions necessary for cancelling a perp order.
-#
-def build_cancel_perp_order_instructions(
-    context: Context,
-    wallet: Wallet,
-    account: IAccount,
-    perp_market_details: PerpMarketDetails,
-    order: Order,
-    invalid_id_ok: bool,
-) -> CombinableInstructions:
-    # Prefer cancelling by client ID so we don't have to keep track of the order side.
-    if order.client_id is not None and order.client_id != 0:
-        data: bytes = layouts.CANCEL_PERP_ORDER_BY_CLIENT_ID.build(
-            {"client_order_id": order.client_id, "invalid_id_ok": invalid_id_ok}
-        )
-    else:
-        data = layouts.CANCEL_PERP_ORDER.build(
-            {"order_id": order.id, "invalid_id_ok": invalid_id_ok}
-        )
-
-    # Accounts expected by this instruction (both CANCEL_PERP_ORDER and CANCEL_PERP_ORDER_BY_CLIENT_ID are the same):
-    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
-    # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
-    # { isSigner: true, isWritable: false, pubkey: ownerPk },
-    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
-    # { isSigner: false, isWritable: true, pubkey: bidsPk },
-    # { isSigner: false, isWritable: true, pubkey: asksPk },
-
-    instructions = [
-        TransactionInstruction(
-            keys=[
-                AccountMeta(
-                    is_signer=False, is_writable=False, pubkey=account.group_address
-                ),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
-                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-                AccountMeta(
-                    is_signer=False,
-                    is_writable=True,
-                    pubkey=perp_market_details.address,
-                ),
-                AccountMeta(
-                    is_signer=False, is_writable=True, pubkey=perp_market_details.bids
-                ),
-                AccountMeta(
-                    is_signer=False, is_writable=True, pubkey=perp_market_details.asks
-                ),
-            ],
-            program_id=context.mango_program_address,
-            data=data,
-        )
-    ]
-    return CombinableInstructions(signers=[], instructions=instructions)
-
-
-def build_place_perp_order_instructions(
-    context: Context,
-    wallet: Wallet,
-    group: IGroup,
-    account: IAccount,
-    perp_market_details: PerpMarketDetails,
-    price: Decimal,
-    quantity: Decimal,
-    client_order_id: int,
-    side: Side,
-    order_type: OrderType,
-    reduce_only: bool = False,
-    expiration: datetime = Order.NoExpiration,
-    match_limit: int = 20,
-    max_quote_quantity: Decimal = Decimal(0),
-    reflink: typing.Optional[PublicKey] = None,
-) -> CombinableInstructions:
-    # { buy: 0, sell: 1 }
-    raw_side: int = 1 if side == Side.SELL else 0
-    raw_order_type: int = order_type.to_perp()
-
-    base_decimals = perp_market_details.base_instrument.decimals
-    quote_decimals = perp_market_details.quote_token.token.decimals
-
-    base_factor = Decimal(10) ** base_decimals
-    quote_factor = Decimal(10) ** quote_decimals
-
-    native_price = ((price * quote_factor) * perp_market_details.base_lot_size) / (
-        perp_market_details.quote_lot_size * base_factor
-    )
-    native_quantity = (quantity * base_factor) / perp_market_details.base_lot_size
-
-    # /// Accounts expected by this instruction (6):
-    # /// 0. `[]` mango_group_ai - TODO
-    # /// 1. `[writable]` mango_account_ai - TODO
-    # /// 2. `[signer]` owner_ai - TODO
-    # /// 3. `[]` mango_cache_ai - TODO
-    # /// 4. `[writable]` perp_market_ai - TODO
-    # /// 5. `[writable]` bids_ai - TODO
-    # /// 6. `[writable]` asks_ai - TODO
-    # /// 7. `[writable]` event_queue_ai - TODO
-    keys = [
-        AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
-        AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
-        AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-        AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
-        AccountMeta(
-            is_signer=False, is_writable=True, pubkey=perp_market_details.address
-        ),
-        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
-        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks),
-        AccountMeta(
-            is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue
-        ),
-        *list(
-            [
-                AccountMeta(
-                    is_signer=False,
-                    is_writable=False,
-                    pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS,
-                )
-                for oo_address in account.spot_open_orders_by_index
-            ]
-        ),
-    ]
-    if reflink is not None:
-        keys += [AccountMeta(is_signer=False, is_writable=True, pubkey=reflink)]
-
-    instructions = [
-        TransactionInstruction(
-            keys=keys,
-            program_id=context.mango_program_address,
-            data=layouts.PLACE_PERP_ORDER.build(
-                {
-                    "price": native_price,
-                    "quantity": native_quantity,
-                    "client_order_id": client_order_id,
-                    "side": raw_side,
-                    "order_type": raw_order_type,
-                    "reduce_only": reduce_only,
-                }
-            ),
-        )
-    ]
-    return CombinableInstructions(signers=[], instructions=instructions)
-
-
-# /// Place an order on a perp market
-# ///
-# /// In case this order is matched, the corresponding order structs on both
-# /// PerpAccounts (taker & maker) will be adjusted, and the position size
-# /// will be adjusted w/o accounting for fees.
-# /// In addition a FillEvent will be placed on the event queue.
-# /// Through a subsequent invocation of ConsumeEvents the FillEvent can be
-# /// executed and the perp account balances (base/quote) and fees will be
-# /// paid from the quote position. Only at this point the position balance
-# /// is 100% reflecting the trade.
-# ///
-# /// Accounts expected by this instruction (9 + `NUM_IN_MARGIN_BASKET`):
-# /// 0. `[]` mango_group_ai - MangoGroup
-# /// 1. `[writable]` mango_account_ai - the MangoAccount of owner
-# /// 2. `[signer]` owner_ai - owner of MangoAccount
-# /// 3. `[]` mango_cache_ai - MangoCache for this MangoGroup
-# /// 4. `[writable]` perp_market_ai
-# /// 5. `[writable]` bids_ai - bids account for this PerpMarket
-# /// 6. `[writable]` asks_ai - asks account for this PerpMarket
-# /// 7. `[writable]` event_queue_ai - EventQueue for this PerpMarket
-# /// 8. `[writable]` referrer_mango_account_ai - referrer's mango account;
-# ///                 pass in mango_account_ai as duplicate if you don't have a referrer
-# /// 9..9 + NUM_IN_MARGIN_BASKET `[]` open_orders_ais - pass in open orders in margin basket
-def build_place_perp_order_instructions_2(
-    context: Context,
-    wallet: Wallet,
-    group: IGroup,
-    account: IAccount,
-    perp_market_details: PerpMarketDetails,
-    price: Decimal,
-    quantity: Decimal,
-    client_order_id: int,
-    side: Side,
-    order_type: OrderType,
-    reduce_only: bool = False,
-    expiration: datetime = Order.NoExpiration,
-    match_limit: int = 20,
-    max_quote_quantity: Decimal = Decimal(0),
-    reflink: typing.Optional[PublicKey] = None,
-) -> CombinableInstructions:
-    # { buy: 0, sell: 1 }
-    raw_side: int = 1 if side == Side.SELL else 0
-    raw_order_type: int = order_type.to_perp()
-
-    base_decimals = perp_market_details.base_instrument.decimals
-    quote_decimals = perp_market_details.quote_token.token.decimals
-
-    base_factor = Decimal(10) ** base_decimals
-    quote_factor = Decimal(10) ** quote_decimals
-
-    native_price = ((price * quote_factor) * perp_market_details.base_lot_size) / (
-        perp_market_details.quote_lot_size * base_factor
-    )
-    native_quantity = (quantity * base_factor) / perp_market_details.base_lot_size
-    native_max_quote_quantity = (
-        (max_quote_quantity * quote_factor) / perp_market_details.quote_lot_size
-    ) or I64_MAX
-
-    # /// Accounts expected by this instruction (9 + `NUM_IN_MARGIN_BASKET`):
-    # /// 0. `[]` mango_group_ai - MangoGroup
-    # /// 1. `[writable]` mango_account_ai - the MangoAccount of owner
-    # /// 2. `[signer]` owner_ai - owner of MangoAccount
-    # /// 3. `[]` mango_cache_ai - MangoCache for this MangoGroup
-    # /// 4. `[writable]` perp_market_ai
-    # /// 5. `[writable]` bids_ai - bids account for this PerpMarket
-    # /// 6. `[writable]` asks_ai - asks account for this PerpMarket
-    # /// 7. `[writable]` event_queue_ai - EventQueue for this PerpMarket
-    # /// 8. `[writable]` referrer_mango_account_ai - referrer's mango account;
-    # ///                 pass in mango_account_ai as duplicate if you don't have a referrer
-    # /// 9..9 + NUM_IN_MARGIN_BASKET `[]` open_orders_ais - pass in open orders in margin basket
-    keys = [
-        AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
-        AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
-        AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-        AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
-        AccountMeta(
-            is_signer=False, is_writable=True, pubkey=perp_market_details.address
-        ),
-        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
-        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks),
-        AccountMeta(
-            is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue
-        ),
-        AccountMeta(
-            is_signer=False, is_writable=True, pubkey=reflink or account.address
-        ),
-        *list(
-            [
-                AccountMeta(
-                    is_signer=False,
-                    is_writable=False,
-                    pubkey=oo_address,
-                )
-                for oo_address in account.spot_open_orders
-            ]
-        ),
-    ]
-
-    instructions = [
-        TransactionInstruction(
-            keys=keys,
-            program_id=context.mango_program_address,
-            data=layouts.PLACE_PERP_ORDER_2.build(
-                {
-                    "price": native_price,
-                    "max_base_quantity": native_quantity,
-                    "max_quote_quantity": native_max_quote_quantity,
-                    "client_order_id": client_order_id,
-                    "expiry_timestamp": expiration,
-                    "side": raw_side,
-                    "order_type": raw_order_type,
-                    "reduce_only": reduce_only,
-                    "limit": match_limit,
-                }
-            ),
-        )
-    ]
-
-    return CombinableInstructions(signers=[], instructions=instructions)
-
-
-# # 🥭 build_cancel_all_perp_orders_instructions function
-#
-# Builds the instructions necessary for cancelling all perp orders.
-#
-def build_cancel_all_perp_orders_instructions(
-    context: Context,
-    wallet: Wallet,
-    account: IAccount,
-    perp_market_details: PerpMarketDetails,
-    limit: Decimal = Decimal(32),
-) -> CombinableInstructions:
-    # Accounts expected by this instruction (seems to be the same as CANCEL_PERP_ORDER and CANCEL_PERP_ORDER_BY_CLIENT_ID):
-    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
-    # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
-    # { isSigner: true, isWritable: false, pubkey: ownerPk },
-    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
-    # { isSigner: false, isWritable: true, pubkey: bidsPk },
-    # { isSigner: false, isWritable: true, pubkey: asksPk },
-    instructions = [
-        TransactionInstruction(
-            keys=[
-                AccountMeta(
-                    is_signer=False, is_writable=False, pubkey=account.group_address
-                ),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
-                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-                AccountMeta(
-                    is_signer=False,
-                    is_writable=True,
-                    pubkey=perp_market_details.address,
-                ),
-                AccountMeta(
-                    is_signer=False, is_writable=True, pubkey=perp_market_details.bids
-                ),
-                AccountMeta(
-                    is_signer=False, is_writable=True, pubkey=perp_market_details.asks
-                ),
-            ],
-            program_id=context.mango_program_address,
-            data=layouts.CANCEL_ALL_PERP_ORDERS.build({"limit": limit}),
-        )
-    ]
-    return CombinableInstructions(signers=[], instructions=instructions)
-
-
-def build_mango_consume_events_instructions(
-    context: Context,
-    group: IGroup,
-    perp_market_details: PerpMarketDetails,
-    account_addresses: typing.Sequence[PublicKey],
-    limit: Decimal = Decimal(32),
-) -> CombinableInstructions:
-    # Accounts expected by this instruction:
-    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
-    # { isSigner: false, isWritable: false, pubkey: mangoCachePk },
-    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
-    # { isSigner: false, isWritable: true, pubkey: eventQueuePk },
-    # ...mangoAccountPks.sort().map((pubkey) => ({
-    #     isSigner: false,
-    #     isWritable: true,
-    #     pubkey,
-    # })),
-
-    instructions = [
-        TransactionInstruction(
-            keys=[
-                AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
-                AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
-                AccountMeta(
-                    is_signer=False,
-                    is_writable=True,
-                    pubkey=perp_market_details.address,
-                ),
-                AccountMeta(
-                    is_signer=False,
-                    is_writable=True,
-                    pubkey=perp_market_details.event_queue,
-                ),
-                *list(
-                    [
-                        AccountMeta(
-                            is_signer=False, is_writable=True, pubkey=account_address
-                        )
-                        for account_address in account_addresses
-                    ]
-                ),
-            ],
-            program_id=context.mango_program_address,
-            data=layouts.CONSUME_EVENTS.build(
-                {
-                    "limit": limit,
-                }
-            ),
-        )
-    ]
-    return CombinableInstructions(signers=[], instructions=instructions)
-
-
-# The old INIT_MANGO_ACCOUNT instruction is now superseded by CREATE_MANGO_ACCOUNT
-def build_create_account_instructions(
-    context: Context, wallet: Wallet, group: IGroup, account_num: Decimal = Decimal(1)
-) -> CombinableInstructions:
-    mango_account_address_and_nonce: typing.Tuple[
-        PublicKey, int
-    ] = PublicKey.find_program_address(
-        [
-            bytes(group.address),
-            bytes(wallet.address),
-            int(account_num).to_bytes(8, "little"),
-        ],
-        context.mango_program_address,
-    )
-    mango_account_address: PublicKey = mango_account_address_and_nonce[0]
-
-    # /// 0. `[writable]` mango_group_ai - MangoGroup that this mango account is for
-    # /// 1. `[writable]` mango_account_ai - the mango account data
-    # /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
-    # /// 3. `[]` system_prog_ai - System program
-    create = TransactionInstruction(
-        keys=[
-            AccountMeta(is_signer=False, is_writable=True, pubkey=group.address),
-            AccountMeta(
-                is_signer=False, is_writable=True, pubkey=mango_account_address
-            ),
-            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-            AccountMeta(
-                is_signer=False, is_writable=False, pubkey=SYSTEM_PROGRAM_ADDRESS
-            ),
-        ],
-        program_id=context.mango_program_address,
-        data=layouts.CREATE_MANGO_ACCOUNT.build({"account_num": account_num}),
-    )
-    return CombinableInstructions(signers=[], instructions=[create])
-
-
-# /// Deposit funds into mango account
-# ///
-# /// Accounts expected by this instruction (8):
-# ///
-# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
-# /// 1. `[writable]` mango_account_ai - the mango account for this user
-# /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
-# /// 3. `[]` mango_cache_ai - MangoCache
-# /// 4. `[]` root_bank_ai - RootBank owned by MangoGroup
-# /// 5. `[writable]` node_bank_ai - NodeBank owned by RootBank
-# /// 6. `[writable]` vault_ai - TokenAccount owned by MangoGroup
-# /// 7. `[]` token_prog_ai - acc pointed to by SPL token program id
-# /// 8. `[writable]` owner_token_account_ai - TokenAccount owned by user which will be sending the funds
-# Deposit {
-#     quantity: u64,
-# },
-def build_deposit_instructions(
-    context: Context,
-    wallet: Wallet,
-    group: IGroup,
-    account: IAccount,
-    root_bank: RootBank,
-    node_bank: NodeBank,
-    token_account: TokenAccount,
-) -> CombinableInstructions:
-    value = token_account.value.shift_to_native().value
-    deposit = TransactionInstruction(
-        keys=[
-            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
-            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
-            AccountMeta(
-                is_signer=False, is_writable=True, pubkey=token_account.address
-            ),
-        ],
-        program_id=context.mango_program_address,
-        data=layouts.DEPOSIT.build({"quantity": value}),
-    )
-
-    return CombinableInstructions(signers=[], instructions=[deposit])
-
-
-# /// Withdraw funds that were deposited earlier.
-# ///
-# /// Accounts expected by this instruction (10):
-# ///
-# /// 0. `[read]` mango_group_ai,   -
-# /// 1. `[write]` mango_account_ai, -
-# /// 2. `[read]` owner_ai,         -
-# /// 3. `[read]` mango_cache_ai,   -
-# /// 4. `[read]` root_bank_ai,     -
-# /// 5. `[write]` node_bank_ai,     -
-# /// 6. `[write]` vault_ai,         -
-# /// 7. `[write]` token_account_ai, -
-# /// 8. `[read]` signer_ai,        -
-# /// 9. `[read]` token_prog_ai,    -
-# /// 10. `[read]` clock_ai,         -
-# /// 11..+ `[]` open_orders_accs - open orders for each of the spot market
-# Withdraw {
-#     quantity: u64,
-#     allow_borrow: bool,
-# },
-def build_withdraw_instructions(
-    context: Context,
-    wallet: Wallet,
-    group: IGroup,
-    account: IAccount,
-    root_bank: RootBank,
-    node_bank: NodeBank,
-    token_account: TokenAccount,
-    allow_borrow: bool,
-) -> CombinableInstructions:
-    value = token_account.value.shift_to_native().value
-    withdraw = TransactionInstruction(
-        keys=[
-            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
-            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
-            AccountMeta(
-                is_signer=False, is_writable=True, pubkey=token_account.address
-            ),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
-            *list(
-                [
-                    AccountMeta(
-                        is_signer=False,
-                        is_writable=False,
-                        pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS,
-                    )
-                    for oo_address in account.spot_open_orders_by_index
-                ]
-            ),
-        ],
-        program_id=context.mango_program_address,
-        data=layouts.WITHDRAW.build({"quantity": value, "allow_borrow": allow_borrow}),
-    )
-
-    return CombinableInstructions(signers=[], instructions=[withdraw])
-
-
-def build_spot_openorders_instructions(
+def build_spot_create_openorders_instructions(
     context: Context,
     wallet: Wallet,
     group: IGroup,
@@ -1193,7 +677,7 @@ def build_spot_place_order_instructions(
     instructions: CombinableInstructions = CombinableInstructions.empty()
 
     if create_open_orders:
-        instructions += build_spot_openorders_instructions(
+        instructions += build_spot_create_openorders_instructions(
             context, wallet, group, account, spot_market, open_orders_address
         )
 
@@ -1323,11 +807,11 @@ def build_spot_place_order_instructions(
     )
 
 
-# # 🥭 build_cancel_spot_order_instruction function
+# # 🥭 build_spot_cancel_order_instructions function
 #
 # Builds the instructions necessary for cancelling a spot order.
 #
-def build_cancel_spot_order_instructions(
+def build_spot_cancel_order_instructions(
     context: Context,
     wallet: Wallet,
     group: IGroup,
@@ -1390,47 +874,531 @@ def build_cancel_spot_order_instructions(
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
-# # 🥭 build_mango_settle_instructions function
+# #
+# # 🥭 Perp instruction builders
+# #
+
+
+# # 🥭 build_perp_cancel_order_instructions function
 #
-# Creates a 'settle' instruction for Mango accounts.
+# Builds the instructions necessary for cancelling a perp order.
 #
-def build_mango_settle_instructions(
+def build_perp_cancel_order_instructions(
     context: Context,
     wallet: Wallet,
-    market: PySerumMarket,
-    open_orders_address: PublicKey,
-    base_token_account_address: PublicKey,
-    quote_token_account_address: PublicKey,
+    account: IAccount,
+    perp_market_details: PerpMarketDetails,
+    order: Order,
+    invalid_id_ok: bool,
 ) -> CombinableInstructions:
-    vault_signer = PublicKey.create_program_address(
-        [
-            bytes(market.state.public_key()),
-            market.state.vault_signer_nonce().to_bytes(8, byteorder="little"),
-        ],
-        market.state.program_id(),
-    )
-    instruction = pyserum_settle_funds(
-        PySerumSettleFundsParams(
-            market=market.state.public_key(),
-            open_orders=open_orders_address,
-            owner=wallet.address,
-            base_vault=market.state.base_vault(),
-            quote_vault=market.state.quote_vault(),
-            base_wallet=base_token_account_address,
-            quote_wallet=quote_token_account_address,
-            vault_signer=vault_signer,
-            program_id=market.state.program_id(),
+    # Prefer cancelling by client ID so we don't have to keep track of the order side.
+    if order.client_id is not None and order.client_id != 0:
+        data: bytes = layouts.CANCEL_PERP_ORDER_BY_CLIENT_ID.build(
+            {"client_order_id": order.client_id, "invalid_id_ok": invalid_id_ok}
         )
+    else:
+        data = layouts.CANCEL_PERP_ORDER.build(
+            {"order_id": order.id, "invalid_id_ok": invalid_id_ok}
+        )
+
+    # Accounts expected by this instruction (both CANCEL_PERP_ORDER and CANCEL_PERP_ORDER_BY_CLIENT_ID are the same):
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
+    # { isSigner: true, isWritable: false, pubkey: ownerPk },
+    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: bidsPk },
+    # { isSigner: false, isWritable: true, pubkey: asksPk },
+
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(
+                    is_signer=False, is_writable=False, pubkey=account.group_address
+                ),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+                AccountMeta(
+                    is_signer=False,
+                    is_writable=True,
+                    pubkey=perp_market_details.address,
+                ),
+                AccountMeta(
+                    is_signer=False, is_writable=True, pubkey=perp_market_details.bids
+                ),
+                AccountMeta(
+                    is_signer=False, is_writable=True, pubkey=perp_market_details.asks
+                ),
+            ],
+            program_id=context.mango_program_address,
+            data=data,
+        )
+    ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+def build_perp_place_order_instructions(
+    context: Context,
+    wallet: Wallet,
+    group: IGroup,
+    account: IAccount,
+    perp_market_details: PerpMarketDetails,
+    price: Decimal,
+    quantity: Decimal,
+    client_order_id: int,
+    side: Side,
+    order_type: OrderType,
+    reduce_only: bool = False,
+    expiration: datetime = Order.NoExpiration,
+    match_limit: int = 20,
+    max_quote_quantity: Decimal = Decimal(0),
+    reflink: typing.Optional[PublicKey] = None,
+) -> CombinableInstructions:
+    # { buy: 0, sell: 1 }
+    raw_side: int = 1 if side == Side.SELL else 0
+    raw_order_type: int = order_type.to_perp()
+
+    base_decimals = perp_market_details.base_instrument.decimals
+    quote_decimals = perp_market_details.quote_token.token.decimals
+
+    base_factor = Decimal(10) ** base_decimals
+    quote_factor = Decimal(10) ** quote_decimals
+
+    native_price = ((price * quote_factor) * perp_market_details.base_lot_size) / (
+        perp_market_details.quote_lot_size * base_factor
+    )
+    native_quantity = (quantity * base_factor) / perp_market_details.base_lot_size
+
+    # /// Accounts expected by this instruction (6):
+    # /// 0. `[]` mango_group_ai - TODO
+    # /// 1. `[writable]` mango_account_ai - TODO
+    # /// 2. `[signer]` owner_ai - TODO
+    # /// 3. `[]` mango_cache_ai - TODO
+    # /// 4. `[writable]` perp_market_ai - TODO
+    # /// 5. `[writable]` bids_ai - TODO
+    # /// 6. `[writable]` asks_ai - TODO
+    # /// 7. `[writable]` event_queue_ai - TODO
+    keys = [
+        AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+        AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+        AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+        AccountMeta(
+            is_signer=False, is_writable=True, pubkey=perp_market_details.address
+        ),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks),
+        AccountMeta(
+            is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue
+        ),
+        *list(
+            [
+                AccountMeta(
+                    is_signer=False,
+                    is_writable=False,
+                    pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS,
+                )
+                for oo_address in account.spot_open_orders_by_index
+            ]
+        ),
+    ]
+    if reflink is not None:
+        keys += [AccountMeta(is_signer=False, is_writable=True, pubkey=reflink)]
+
+    instructions = [
+        TransactionInstruction(
+            keys=keys,
+            program_id=context.mango_program_address,
+            data=layouts.PLACE_PERP_ORDER.build(
+                {
+                    "price": native_price,
+                    "quantity": native_quantity,
+                    "client_order_id": client_order_id,
+                    "side": raw_side,
+                    "order_type": raw_order_type,
+                    "reduce_only": reduce_only,
+                }
+            ),
+        )
+    ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+# /// Place an order on a perp market
+# ///
+# /// In case this order is matched, the corresponding order structs on both
+# /// PerpAccounts (taker & maker) will be adjusted, and the position size
+# /// will be adjusted w/o accounting for fees.
+# /// In addition a FillEvent will be placed on the event queue.
+# /// Through a subsequent invocation of ConsumeEvents the FillEvent can be
+# /// executed and the perp account balances (base/quote) and fees will be
+# /// paid from the quote position. Only at this point the position balance
+# /// is 100% reflecting the trade.
+# ///
+# /// Accounts expected by this instruction (9 + `NUM_IN_MARGIN_BASKET`):
+# /// 0. `[]` mango_group_ai - MangoGroup
+# /// 1. `[writable]` mango_account_ai - the MangoAccount of owner
+# /// 2. `[signer]` owner_ai - owner of MangoAccount
+# /// 3. `[]` mango_cache_ai - MangoCache for this MangoGroup
+# /// 4. `[writable]` perp_market_ai
+# /// 5. `[writable]` bids_ai - bids account for this PerpMarket
+# /// 6. `[writable]` asks_ai - asks account for this PerpMarket
+# /// 7. `[writable]` event_queue_ai - EventQueue for this PerpMarket
+# /// 8. `[writable]` referrer_mango_account_ai - referrer's mango account;
+# ///                 pass in mango_account_ai as duplicate if you don't have a referrer
+# /// 9..9 + NUM_IN_MARGIN_BASKET `[]` open_orders_ais - pass in open orders in margin basket
+def build_perp_place_order_instructions_2(
+    context: Context,
+    wallet: Wallet,
+    group: IGroup,
+    account: IAccount,
+    perp_market_details: PerpMarketDetails,
+    price: Decimal,
+    quantity: Decimal,
+    client_order_id: int,
+    side: Side,
+    order_type: OrderType,
+    reduce_only: bool = False,
+    expiration: datetime = Order.NoExpiration,
+    match_limit: int = 20,
+    max_quote_quantity: Decimal = Decimal(0),
+    reflink: typing.Optional[PublicKey] = None,
+) -> CombinableInstructions:
+    # { buy: 0, sell: 1 }
+    raw_side: int = 1 if side == Side.SELL else 0
+    raw_order_type: int = order_type.to_perp()
+
+    base_decimals = perp_market_details.base_instrument.decimals
+    quote_decimals = perp_market_details.quote_token.token.decimals
+
+    base_factor = Decimal(10) ** base_decimals
+    quote_factor = Decimal(10) ** quote_decimals
+
+    native_price = ((price * quote_factor) * perp_market_details.base_lot_size) / (
+        perp_market_details.quote_lot_size * base_factor
+    )
+    native_quantity = (quantity * base_factor) / perp_market_details.base_lot_size
+    native_max_quote_quantity = (
+        (max_quote_quantity * quote_factor) / perp_market_details.quote_lot_size
+    ) or I64_MAX
+
+    # /// Accounts expected by this instruction (9 + `NUM_IN_MARGIN_BASKET`):
+    # /// 0. `[]` mango_group_ai - MangoGroup
+    # /// 1. `[writable]` mango_account_ai - the MangoAccount of owner
+    # /// 2. `[signer]` owner_ai - owner of MangoAccount
+    # /// 3. `[]` mango_cache_ai - MangoCache for this MangoGroup
+    # /// 4. `[writable]` perp_market_ai
+    # /// 5. `[writable]` bids_ai - bids account for this PerpMarket
+    # /// 6. `[writable]` asks_ai - asks account for this PerpMarket
+    # /// 7. `[writable]` event_queue_ai - EventQueue for this PerpMarket
+    # /// 8. `[writable]` referrer_mango_account_ai - referrer's mango account;
+    # ///                 pass in mango_account_ai as duplicate if you don't have a referrer
+    # /// 9..9 + NUM_IN_MARGIN_BASKET `[]` open_orders_ais - pass in open orders in margin basket
+    keys = [
+        AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+        AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+        AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+        AccountMeta(
+            is_signer=False, is_writable=True, pubkey=perp_market_details.address
+        ),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
+        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks),
+        AccountMeta(
+            is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue
+        ),
+        AccountMeta(
+            is_signer=False, is_writable=True, pubkey=reflink or account.address
+        ),
+        *list(
+            [
+                AccountMeta(
+                    is_signer=False,
+                    is_writable=False,
+                    pubkey=oo_address,
+                )
+                for oo_address in account.spot_open_orders
+            ]
+        ),
+    ]
+
+    instructions = [
+        TransactionInstruction(
+            keys=keys,
+            program_id=context.mango_program_address,
+            data=layouts.PLACE_PERP_ORDER_2.build(
+                {
+                    "price": native_price,
+                    "max_base_quantity": native_quantity,
+                    "max_quote_quantity": native_max_quote_quantity,
+                    "client_order_id": client_order_id,
+                    "expiry_timestamp": expiration,
+                    "side": raw_side,
+                    "order_type": raw_order_type,
+                    "reduce_only": reduce_only,
+                    "limit": match_limit,
+                }
+            ),
+        )
+    ]
+
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+# # 🥭 build_perp_cancel_all_orders_instructions function
+#
+# Builds the instructions necessary for cancelling all perp orders.
+#
+def build_perp_cancel_all_orders_instructions(
+    context: Context,
+    wallet: Wallet,
+    account: IAccount,
+    perp_market_details: PerpMarketDetails,
+    limit: Decimal = Decimal(32),
+) -> CombinableInstructions:
+    # Accounts expected by this instruction (seems to be the same as CANCEL_PERP_ORDER and CANCEL_PERP_ORDER_BY_CLIENT_ID):
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
+    # { isSigner: true, isWritable: false, pubkey: ownerPk },
+    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: bidsPk },
+    # { isSigner: false, isWritable: true, pubkey: asksPk },
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(
+                    is_signer=False, is_writable=False, pubkey=account.group_address
+                ),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+                AccountMeta(
+                    is_signer=False,
+                    is_writable=True,
+                    pubkey=perp_market_details.address,
+                ),
+                AccountMeta(
+                    is_signer=False, is_writable=True, pubkey=perp_market_details.bids
+                ),
+                AccountMeta(
+                    is_signer=False, is_writable=True, pubkey=perp_market_details.asks
+                ),
+            ],
+            program_id=context.mango_program_address,
+            data=layouts.CANCEL_ALL_PERP_ORDERS.build({"limit": limit}),
+        )
+    ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+def build_perp_consume_events_instructions(
+    context: Context,
+    group: IGroup,
+    perp_market_details: PerpMarketDetails,
+    account_addresses: typing.Sequence[PublicKey],
+    limit: Decimal = Decimal(32),
+) -> CombinableInstructions:
+    # Accounts expected by this instruction:
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: false, isWritable: false, pubkey: mangoCachePk },
+    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: eventQueuePk },
+    # ...mangoAccountPks.sort().map((pubkey) => ({
+    #     isSigner: false,
+    #     isWritable: true,
+    #     pubkey,
+    # })),
+
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+                AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+                AccountMeta(
+                    is_signer=False,
+                    is_writable=True,
+                    pubkey=perp_market_details.address,
+                ),
+                AccountMeta(
+                    is_signer=False,
+                    is_writable=True,
+                    pubkey=perp_market_details.event_queue,
+                ),
+                *list(
+                    [
+                        AccountMeta(
+                            is_signer=False, is_writable=True, pubkey=account_address
+                        )
+                        for account_address in account_addresses
+                    ]
+                ),
+            ],
+            program_id=context.mango_program_address,
+            data=layouts.CONSUME_EVENTS.build(
+                {
+                    "limit": limit,
+                }
+            ),
+        )
+    ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+# #
+# # 🥭 Mango instruction builders
+# #
+
+
+# The old INIT_MANGO_ACCOUNT instruction is now superseded by CREATE_MANGO_ACCOUNT
+def build_mango_create_account_instructions(
+    context: Context, wallet: Wallet, group: IGroup, account_num: Decimal = Decimal(1)
+) -> CombinableInstructions:
+    mango_account_address_and_nonce: typing.Tuple[
+        PublicKey, int
+    ] = PublicKey.find_program_address(
+        [
+            bytes(group.address),
+            bytes(wallet.address),
+            int(account_num).to_bytes(8, "little"),
+        ],
+        context.mango_program_address,
+    )
+    mango_account_address: PublicKey = mango_account_address_and_nonce[0]
+
+    # /// 0. `[writable]` mango_group_ai - MangoGroup that this mango account is for
+    # /// 1. `[writable]` mango_account_ai - the mango account data
+    # /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
+    # /// 3. `[]` system_prog_ai - System program
+    create = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=True, pubkey=group.address),
+            AccountMeta(
+                is_signer=False, is_writable=True, pubkey=mango_account_address
+            ),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(
+                is_signer=False, is_writable=False, pubkey=SYSTEM_PROGRAM_ADDRESS
+            ),
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.CREATE_MANGO_ACCOUNT.build({"account_num": account_num}),
+    )
+    return CombinableInstructions(signers=[], instructions=[create])
+
+
+# /// Deposit funds into mango account
+# ///
+# /// Accounts expected by this instruction (8):
+# ///
+# /// 0. `[]` mango_group_ai - MangoGroup that this mango account is for
+# /// 1. `[writable]` mango_account_ai - the mango account for this user
+# /// 2. `[signer]` owner_ai - Solana account of owner of the mango account
+# /// 3. `[]` mango_cache_ai - MangoCache
+# /// 4. `[]` root_bank_ai - RootBank owned by MangoGroup
+# /// 5. `[writable]` node_bank_ai - NodeBank owned by RootBank
+# /// 6. `[writable]` vault_ai - TokenAccount owned by MangoGroup
+# /// 7. `[]` token_prog_ai - acc pointed to by SPL token program id
+# /// 8. `[writable]` owner_token_account_ai - TokenAccount owned by user which will be sending the funds
+# Deposit {
+#     quantity: u64,
+# },
+def build_mango_deposit_instructions(
+    context: Context,
+    wallet: Wallet,
+    group: IGroup,
+    account: IAccount,
+    root_bank: RootBank,
+    node_bank: NodeBank,
+    token_account: TokenAccount,
+) -> CombinableInstructions:
+    value = token_account.value.shift_to_native().value
+    deposit = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
+            AccountMeta(
+                is_signer=False, is_writable=True, pubkey=token_account.address
+            ),
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.DEPOSIT.build({"quantity": value}),
     )
 
-    return CombinableInstructions(signers=[], instructions=[instruction])
+    return CombinableInstructions(signers=[], instructions=[deposit])
 
 
-# # 🥭 build_redeem_accrued_mango_instructions function
+# /// Withdraw funds that were deposited earlier.
+# ///
+# /// Accounts expected by this instruction (10):
+# ///
+# /// 0. `[read]` mango_group_ai,   -
+# /// 1. `[write]` mango_account_ai, -
+# /// 2. `[read]` owner_ai,         -
+# /// 3. `[read]` mango_cache_ai,   -
+# /// 4. `[read]` root_bank_ai,     -
+# /// 5. `[write]` node_bank_ai,     -
+# /// 6. `[write]` vault_ai,         -
+# /// 7. `[write]` token_account_ai, -
+# /// 8. `[read]` signer_ai,        -
+# /// 9. `[read]` token_prog_ai,    -
+# /// 10. `[read]` clock_ai,         -
+# /// 11..+ `[]` open_orders_accs - open orders for each of the spot market
+# Withdraw {
+#     quantity: u64,
+#     allow_borrow: bool,
+# },
+def build_mango_withdraw_instructions(
+    context: Context,
+    wallet: Wallet,
+    group: IGroup,
+    account: IAccount,
+    root_bank: RootBank,
+    node_bank: NodeBank,
+    token_account: TokenAccount,
+    allow_borrow: bool,
+) -> CombinableInstructions:
+    value = token_account.value.shift_to_native().value
+    withdraw = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
+            AccountMeta(
+                is_signer=False, is_writable=True, pubkey=token_account.address
+            ),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
+            *list(
+                [
+                    AccountMeta(
+                        is_signer=False,
+                        is_writable=False,
+                        pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS,
+                    )
+                    for oo_address in account.spot_open_orders_by_index
+                ]
+            ),
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.WITHDRAW.build({"quantity": value, "allow_borrow": allow_borrow}),
+    )
+
+    return CombinableInstructions(signers=[], instructions=[withdraw])
+
+
+# # 🥭 build_mango_redeem_accrued_instructions function
 #
 # Creates a 'RedeemMngo' instruction for Mango accounts.
 #
-def build_redeem_accrued_mango_instructions(
+def build_mango_redeem_accrued_instructions(
     context: Context,
     wallet: Wallet,
     perp_market: IPerpMarket,
@@ -1481,57 +1449,14 @@ def build_redeem_accrued_mango_instructions(
     )
 
 
-# # 🥭 build_faucet_airdrop_instructions function
-#
-# Creates an airdrop instruction for compatible faucets (those based on https://github.com/paul-schaaf/spl-token-faucet)
-#
-def build_faucet_airdrop_instructions(
-    token_mint: PublicKey, destination: PublicKey, faucet: PublicKey, quantity: Decimal
-) -> CombinableInstructions:
-    faucet_program_address: PublicKey = PublicKey(
-        "4bXpkKSV8swHSnwqtzuboGPaPDeEgAn4Vt8GfarV5rZt"
-    )
-    authority_and_nonce: typing.Tuple[PublicKey, int] = PublicKey.find_program_address(
-        [b"faucet"], faucet_program_address
-    )
-    authority: PublicKey = authority_and_nonce[0]
-
-    # Mints and airdrops tokens from a faucet.
-    #
-    # SPL instruction is at:
-    #   https://github.com/paul-schaaf/spl-token-faucet/blob/main/src/program/src/instruction.rs
-    #
-    # ///
-    # /// Mints Tokens
-    # ///
-    # /// 0. `[]` The mint authority - Program Derived Address
-    # /// 1. `[writable]` Token Mint IAccount
-    # /// 2. `[writable]` Destination IAccount
-    # /// 3. `[]` The SPL Token Program
-    # /// 4. `[]` The Faucet IAccount
-    # /// 5. `[optional/signer]` Admin IAccount
-    faucet_airdrop_instruction = TransactionInstruction(
-        keys=[
-            AccountMeta(is_signer=False, is_writable=False, pubkey=authority),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=token_mint),
-            AccountMeta(is_signer=False, is_writable=True, pubkey=destination),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
-            AccountMeta(is_signer=False, is_writable=False, pubkey=faucet),
-        ],
-        program_id=faucet_program_address,
-        data=layouts.FAUCET_AIRDROP.build({"quantity": quantity}),
-    )
-    return CombinableInstructions(signers=[], instructions=[faucet_airdrop_instruction])
-
-
-# # 🥭 build_set_account_delegate_instructions function
+# # 🥭 build_mango_set_account_delegate_instructions function
 #
 # Creates an instruction to delegate account operations (except Withdraw and CloseAccount) to a
 # different account.
 #
 # Set to SYSTEM_PROGRAM_ADDRESS to revoke delegate.
 #
-def build_set_account_delegate_instructions(
+def build_mango_set_account_delegate_instructions(
     context: Context,
     wallet: Wallet,
     group: IGroup,
@@ -1560,20 +1485,20 @@ def build_set_account_delegate_instructions(
     return CombinableInstructions(signers=[], instructions=[set_delegate_instruction])
 
 
-def build_unset_account_delegate_instructions(
+def build_mango_unset_account_delegate_instructions(
     context: Context, wallet: Wallet, group: IGroup, account: IAccount
 ) -> CombinableInstructions:
-    return build_set_account_delegate_instructions(
+    return build_mango_set_account_delegate_instructions(
         context, wallet, group, account, SYSTEM_PROGRAM_ADDRESS
     )
 
 
-# # 🥭 build_set_referrer_memory_instructions function
+# # 🥭 build_mango_set_referrer_memory_instructions function
 #
 # Creates an instruction to store the referrer's MangoAccount pubkey on the Referrer account
 # and create the Referrer account as a PDA of user's MangoAccount if it doesn't exist
 #
-def build_set_referrer_memory_instructions(
+def build_mango_set_referrer_memory_instructions(
     context: Context,
     wallet: Wallet,
     group: IGroup,
@@ -1619,11 +1544,11 @@ def build_set_referrer_memory_instructions(
     )
 
 
-# # 🥭 build_register_referrer_id_instructions function
+# # 🥭 build_mango_register_referrer_id_instructions function
 #
 # Creates an instruction to register a 'referrer ID' for a Mango IAccount
 #
-def build_register_referrer_id_instructions(
+def build_mango_register_referrer_id_instructions(
     context: Context,
     wallet: Wallet,
     group: IGroup,

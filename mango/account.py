@@ -27,7 +27,10 @@ from .combinableinstructions import CombinableInstructions
 from .context import Context
 from .encoding import encode_key
 from .group import Group, GroupSlot, GroupSlotPerpMarket
-from .instructions import build_deposit_instructions, build_withdraw_instructions
+from .instructions import (
+    build_mango_deposit_instructions,
+    build_mango_withdraw_instructions,
+)
 from .instrumentvalue import InstrumentValue
 from .layouts import layouts
 from .metadata import Metadata
@@ -586,7 +589,7 @@ class Account(AddressableAccount):
         node_bank = root_bank.pick_node_bank(context)
 
         signers: CombinableInstructions = CombinableInstructions.from_wallet(wallet)
-        deposit = build_deposit_instructions(
+        deposit = build_mango_deposit_instructions(
             context, wallet, group, self, root_bank, node_bank, deposit_token_account
         )
 
@@ -617,7 +620,7 @@ class Account(AddressableAccount):
         node_bank = root_bank.pick_node_bank(context)
 
         signers: CombinableInstructions = CombinableInstructions.from_wallet(wallet)
-        withdraw = build_withdraw_instructions(
+        withdraw = build_mango_withdraw_instructions(
             context,
             wallet,
             group,

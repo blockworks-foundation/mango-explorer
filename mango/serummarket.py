@@ -26,8 +26,8 @@ from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .instructions import (
-    build_create_serum_open_orders_instructions,
     build_serum_consume_events_instructions,
+    build_serum_create_openorders_instructions,
     build_serum_settle_instructions,
     build_serum_place_order_instructions,
 )
@@ -380,7 +380,7 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
         )
 
     def build_create_openorders_instructions(self) -> CombinableInstructions:
-        create_open_orders = build_create_serum_open_orders_instructions(
+        create_open_orders = build_serum_create_openorders_instructions(
             self.context, self.wallet, self.raw_market
         )
         self.open_orders_address = create_open_orders.signers[0].public_key

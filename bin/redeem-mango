@@ -76,7 +76,7 @@ def build_redeem_instruction_for_account(
         return mango.CombinableInstructions.empty()
 
     report_accrued(basket_token)
-    redeem = mango.build_redeem_accrued_mango_instructions(
+    redeem = mango.build_mango_redeem_accrued_instructions(
         context, wallet, perp_market, group, account, mngo
     )
 
