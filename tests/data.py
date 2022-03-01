@@ -4,6 +4,8 @@ import typing
 
 from decimal import Decimal
 
+from .fakes import fake_seeded_public_key
+
 
 def load_group(filename: str) -> mango.Group:
     account_info: mango.AccountInfo = mango.AccountInfo.load_json(filename)
@@ -42,8 +44,21 @@ def load_account(
 
 def load_openorders(filename: str) -> mango.OpenOrders:
     account_info: mango.AccountInfo = mango.AccountInfo.load_json(filename)
-    # Just hard-code the decimals for now.
-    return mango.OpenOrders.parse(account_info, Decimal(6), Decimal(6))
+    # Just hard-code the tokens for now.
+    base = mango.Token(
+        "FAKEBASE",
+        "Fake Base Token",
+        Decimal(6),
+        fake_seeded_public_key("fake base token"),
+    )
+    quote = mango.Token(
+        "FAKEQUOTE",
+        "Fake Quote Token",
+        Decimal(6),
+        fake_seeded_public_key("fake quote token"),
+    )
+
+    return mango.OpenOrders.parse(account_info, base, quote)
 
 
 def load_cache(filename: str) -> mango.Cache:

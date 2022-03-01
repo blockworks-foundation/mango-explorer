@@ -27,9 +27,14 @@ from .group import GroupSlot, Group
 from .instrumentvalue import InstrumentValue
 from .layouts import layouts
 from .metadata import Metadata
+from .observables import Disposable
 from .tokens import Instrument, Token
 from .tokenbank import TokenBank
 from .version import Version
+from .websocketsubscription import (
+    WebSocketAccountSubscription,
+    WebSocketSubscriptionManager,
+)
 
 
 class LiquidityMiningInfo:
@@ -246,6 +251,21 @@ class PerpMarketDetails(AddressableAccount):
                 f"PerpMarketDetails account not found at address '{address}'"
             )
         return PerpMarketDetails.parse(account_info, group)
+
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["PerpMarketDetails"], None],
+    ) -> Disposable:
+        def __parser(account_info: AccountInfo) -> PerpMarketDetails:
+            return PerpMarketDetails.parse(account_info, self.group)
+
+        subscription = WebSocketAccountSubscription(context, self.address, __parser)
+        websocketmanager.add(subscription)
+        subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]
+
+        return subscription
 
     def __str__(self) -> str:
         liquidity_mining_info: str = f"{self.liquidity_mining_info}".replace(

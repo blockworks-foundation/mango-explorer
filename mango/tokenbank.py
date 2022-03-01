@@ -28,8 +28,13 @@ from .context import Context
 from .instrumentlookup import InstrumentLookup
 from .layouts import layouts
 from .metadata import Metadata
+from .observables import Disposable
 from .tokens import Instrument, Token
 from .version import Version
+from .websocketsubscription import (
+    WebSocketAccountSubscription,
+    WebSocketSubscriptionManager,
+)
 
 
 # # 🥭 InterestRates class
@@ -114,6 +119,20 @@ class NodeBank(AddressableAccount):
         if account_info is None:
             raise Exception(f"NodeBank account not found at address '{address}'")
         return NodeBank.parse(account_info)
+
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["NodeBank"], None],
+    ) -> Disposable:
+        subscription = WebSocketAccountSubscription(
+            context, self.address, NodeBank.parse
+        )
+        websocketmanager.add(subscription)
+        subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]
+
+        return subscription
 
     def __str__(self) -> str:
         return f"""« NodeBank [{self.version}] {self.address}
@@ -260,6 +279,20 @@ class RootBank(AddressableAccount):
             )
 
         return found[0]
+
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["RootBank"], None],
+    ) -> Disposable:
+        subscription = WebSocketAccountSubscription(
+            context, self.address, RootBank.parse
+        )
+        websocketmanager.add(subscription)
+        subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]
+
+        return subscription
 
     def __str__(self) -> str:
         return f"""« RootBank [{self.version}] {self.address}

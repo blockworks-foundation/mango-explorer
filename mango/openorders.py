@@ -28,8 +28,14 @@ from .context import Context
 from .encoding import encode_key
 from .group import Group
 from .layouts import layouts
+from .observables import Disposable
 from .placedorder import PlacedOrder
+from .tokens import Token
 from .version import Version
+from .websocketsubscription import (
+    WebSocketAccountSubscription,
+    WebSocketSubscriptionManager,
+)
 
 
 # # 🥭 OpenOrders class
@@ -43,6 +49,8 @@ class OpenOrders(AddressableAccount):
         account_flags: AccountFlags,
         market: PublicKey,
         owner: PublicKey,
+        base: Token,
+        quote: Token,
         base_token_free: Decimal,
         base_token_total: Decimal,
         quote_token_free: Decimal,
@@ -56,6 +64,8 @@ class OpenOrders(AddressableAccount):
         self.account_flags: AccountFlags = account_flags
         self.market: PublicKey = market
         self.owner: PublicKey = owner
+        self.base: Token = base
+        self.quote: Token = quote
         self.base_token_free: Decimal = base_token_free
         self.base_token_total: Decimal = base_token_total
         self.quote_token_free: Decimal = quote_token_free
@@ -79,14 +89,14 @@ class OpenOrders(AddressableAccount):
     def from_layout(
         layout: typing.Any,
         account_info: AccountInfo,
-        base_decimals: Decimal,
-        quote_decimals: Decimal,
+        base: Token,
+        quote: Token,
     ) -> "OpenOrders":
         account_flags = AccountFlags.from_layout(layout.account_flags)
         program_address = account_info.owner
 
-        base_divisor = 10**base_decimals
-        quote_divisor = 10**quote_decimals
+        base_divisor = 10**base.decimals
+        quote_divisor = 10**quote.decimals
         base_token_free: Decimal = layout.base_token_free / base_divisor
         base_token_total: Decimal = layout.base_token_total / base_divisor
         quote_token_free: Decimal = layout.quote_token_free / quote_divisor
@@ -110,6 +120,8 @@ class OpenOrders(AddressableAccount):
             account_flags,
             layout.market,
             layout.owner,
+            base,
+            quote,
             base_token_free,
             base_token_total,
             quote_token_free,
@@ -119,9 +131,7 @@ class OpenOrders(AddressableAccount):
         )
 
     @staticmethod
-    def parse(
-        account_info: AccountInfo, base_decimals: Decimal, quote_decimals: Decimal
-    ) -> "OpenOrders":
+    def parse(account_info: AccountInfo, base: Token, quote: Token) -> "OpenOrders":
         data = account_info.data
         if len(data) != layouts.OPEN_ORDERS.sizeof():
             raise Exception(
@@ -129,9 +139,7 @@ class OpenOrders(AddressableAccount):
             )
 
         layout = layouts.OPEN_ORDERS.parse(data)
-        return OpenOrders.from_layout(
-            layout, account_info, base_decimals, quote_decimals
-        )
+        return OpenOrders.from_layout(layout, account_info, base, quote)
 
     @staticmethod
     def load_raw_open_orders_account_infos(
@@ -163,13 +171,13 @@ class OpenOrders(AddressableAccount):
     def load(
         context: Context,
         address: PublicKey,
-        base_decimals: Decimal,
-        quote_decimals: Decimal,
+        base: Token,
+        quote: Token,
     ) -> "OpenOrders":
         open_orders_account = AccountInfo.load(context, address)
         if open_orders_account is None:
             raise Exception(f"OpenOrders account not found at address '{address}'")
-        return OpenOrders.parse(open_orders_account, base_decimals, quote_decimals)
+        return OpenOrders.parse(open_orders_account, base, quote)
 
     @staticmethod
     def load_for_market_and_owner(
@@ -177,8 +185,8 @@ class OpenOrders(AddressableAccount):
         market: PublicKey,
         owner: PublicKey,
         program_address: PublicKey,
-        base_decimals: Decimal,
-        quote_decimals: Decimal,
+        base: Token,
+        quote: Token,
     ) -> typing.Sequence["OpenOrders"]:
         filters = [
             MemcmpOpts(
@@ -197,10 +205,29 @@ class OpenOrders(AddressableAccount):
         )
         return list(
             map(
-                lambda acc: OpenOrders.parse(acc, base_decimals, quote_decimals),
+                lambda acc: OpenOrders.parse(acc, base, quote),
                 account_infos,
             )
         )
+
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["OpenOrders"], None],
+    ) -> Disposable:
+        def __parser(account_info: AccountInfo) -> OpenOrders:
+            return OpenOrders.parse(
+                account_info,
+                self.base,
+                self.quote,
+            )
+
+        subscription = WebSocketAccountSubscription(context, self.address, __parser)
+        websocketmanager.add(subscription)
+        subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]
+
+        return subscription
 
     def __str__(self) -> str:
         placed_orders = "\n        ".join(map(str, self.placed_orders)) or "None"

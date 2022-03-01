@@ -30,9 +30,14 @@ from .layouts import layouts
 from .lotsizeconverter import LotSizeConverter, RaisingLotSizeConverter
 from .marketlookup import MarketLookup
 from .metadata import Metadata
+from .observables import Disposable
 from .tokens import Instrument, Token
 from .tokenbank import TokenBank
 from .version import Version
+from .websocketsubscription import (
+    WebSocketAccountSubscription,
+    WebSocketSubscriptionManager,
+)
 
 
 # # 🥭 GroupSlotSpotMarket class
@@ -516,6 +521,26 @@ class Group(AddressableAccount):
         return Group.parse(
             account_info, name, context.instrument_lookup, context.market_lookup
         )
+
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["Group"], None],
+    ) -> Disposable:
+        def __parser(account_info: AccountInfo) -> Group:
+            return Group.parse(
+                account_info,
+                self.name,
+                context.instrument_lookup,
+                context.market_lookup,
+            )
+
+        subscription = WebSocketAccountSubscription(context, self.address, __parser)
+        websocketmanager.add(subscription)
+        subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]
+
+        return subscription
 
     def slot_by_spot_market_address(self, spot_market_address: PublicKey) -> GroupSlot:
         for slot in self.slots:

@@ -127,8 +127,8 @@ def _polling_serum_model_state_builder_factory(
         market.address,
         wallet.address,
         context.serum_program_address,
-        market.base.decimals,
-        market.quote.decimals,
+        market.base,
+        market.quote,
     )
     if len(all_open_orders) == 0:
         raise Exception(

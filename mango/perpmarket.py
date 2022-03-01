@@ -225,26 +225,17 @@ class PerpMarket(LoadedMarket):
             context, self.event_queue_address, self.lot_size_converter
         )
 
-        splitter: UnseenPerpEventChangesTracker = UnseenPerpEventChangesTracker(initial)
-        event_queue_subscription = WebSocketAccountSubscription(
-            context,
-            self.event_queue_address,
-            lambda account_info: PerpEventQueue.parse(
-                account_info, self.lot_size_converter
-            ),
-        )
-        disposer.add_disposable(event_queue_subscription)
-
         manager = IndividualWebSocketSubscriptionManager(context)
         disposer.add_disposable(manager)
-        manager.add(event_queue_subscription)
 
-        publisher = event_queue_subscription.publisher.pipe(
-            rx.operators.flat_map(splitter.unseen)
-        )
+        splitter: UnseenPerpEventChangesTracker = UnseenPerpEventChangesTracker(initial)
 
-        individual_event_subscription = publisher.subscribe(on_next=handler)
-        disposer.add_disposable(individual_event_subscription)
+        def __split_handler(pev: PerpEventQueue) -> None:
+            for event in splitter.unseen(pev):
+                handler(event)
+
+        subscription = initial.subscribe(context, manager, __split_handler)
+        disposer.add_disposable(subscription)
 
         manager.open()
 

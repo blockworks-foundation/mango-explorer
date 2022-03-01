@@ -26,8 +26,13 @@ from .context import Context
 from .layouts import layouts
 from .lotsizeconverter import LotSizeConverter
 from .metadata import Metadata
+from .observables import Disposable
 from .orders import Side
 from .version import Version
+from .websocketsubscription import (
+    WebSocketAccountSubscription,
+    WebSocketSubscriptionManager,
+)
 
 
 # # 🥭 PerpEvent class
@@ -263,6 +268,7 @@ class PerpEventQueue(AddressableAccount):
         account_info: AccountInfo,
         version: Version,
         meta_data: Metadata,
+        lot_size_converter: LotSizeConverter,
         head: Decimal,
         count: Decimal,
         sequence_number: Decimal,
@@ -273,6 +279,7 @@ class PerpEventQueue(AddressableAccount):
         self.version: Version = version
 
         self.meta_data: Metadata = meta_data
+        self.lot_size_converter: LotSizeConverter = lot_size_converter
         self.head: Decimal = head
         self.count: Decimal = count
         self.sequence_number: Decimal = sequence_number
@@ -311,6 +318,7 @@ class PerpEventQueue(AddressableAccount):
             account_info,
             version,
             meta_data,
+            lot_size_converter,
             head,
             count,
             seq_num,
@@ -352,6 +360,21 @@ class PerpEventQueue(AddressableAccount):
                 seen += [account_str]
 
         return distinct
+
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["PerpEventQueue"], None],
+    ) -> Disposable:
+        def __parser(account_info: AccountInfo) -> PerpEventQueue:
+            return PerpEventQueue.parse(account_info, self.lot_size_converter)
+
+        subscription = WebSocketAccountSubscription(context, self.address, __parser)
+        websocketmanager.add(subscription)
+        subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]
+
+        return subscription
 
     def events_for_account(
         self, mango_account_address: PublicKey

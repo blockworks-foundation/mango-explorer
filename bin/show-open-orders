@@ -48,8 +48,8 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
             open_orders = mango.OpenOrders.load(
                 context,
                 slot.spot_open_orders,
-                slot.base_token_bank.token.decimals,
-                slot.quote_token_bank.token.decimals,
+                slot.base_token_bank.token,
+                slot.quote_token_bank.token,
             )
             mango.output(slot.base_instrument)
             mango.output(open_orders)

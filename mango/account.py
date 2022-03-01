@@ -34,6 +34,7 @@ from .instructions import (
 from .instrumentvalue import InstrumentValue
 from .layouts import layouts
 from .metadata import Metadata
+from .observables import Disposable
 from .openorders import OpenOrders
 from .orders import Side
 from .perpaccount import PerpAccount
@@ -44,6 +45,10 @@ from .tokenaccount import TokenAccount
 from .tokenbank import TokenBank
 from .version import Version
 from .wallet import Wallet
+from .websocketsubscription import (
+    WebSocketAccountSubscription,
+    WebSocketSubscriptionManager,
+)
 
 
 # # 🥭 ReferrerMemory class
@@ -101,6 +106,20 @@ class ReferrerMemory(AddressableAccount):
         if referrer_memory is None:
             raise Exception(f"ReferrerMemory account not found at address '{address}'")
         return referrer_memory
+
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["ReferrerMemory"], None],
+    ) -> Disposable:
+        subscription = WebSocketAccountSubscription(
+            context, self.address, ReferrerMemory.parse
+        )
+        websocketmanager.add(subscription)
+        subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]
+
+        return subscription
 
     def __str__(self) -> str:
         return f"""« ReferrerMemory [{self.version}] {self.address}
@@ -563,6 +582,24 @@ class Account(AddressableAccount):
 
         return accounts[0]
 
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["Account"], None],
+    ) -> Disposable:
+        group: Group = Group.load(context, self.group_address)
+        cache: Cache = group.fetch_cache(context)
+
+        def __parser(account_info: AccountInfo) -> Account:
+            return Account.parse(account_info, group, cache)
+
+        subscription = WebSocketAccountSubscription(context, self.address, __parser)
+        websocketmanager.add(subscription)
+        subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]
+
+        return subscription
+
     def deposit(
         self, context: Context, wallet: Wallet, value: InstrumentValue
     ) -> typing.Sequence[str]:
@@ -688,8 +725,8 @@ class Account(AddressableAccount):
                 ]
                 oo = OpenOrders.parse(
                     account_info,
-                    slot.base_instrument.decimals,
-                    self.shared_quote.base_instrument.decimals,
+                    Token.ensure(slot.base_instrument),
+                    Token.ensure(self.shared_quote.base_instrument),
                 )
                 spot_open_orders[str(slot.spot_open_orders)] = oo
         return spot_open_orders

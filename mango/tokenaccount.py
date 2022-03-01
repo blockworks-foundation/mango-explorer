@@ -30,9 +30,14 @@ from .context import Context
 from .instrumentlookup import InstrumentLookup
 from .instrumentvalue import InstrumentValue
 from .layouts import layouts
+from .observables import Disposable
 from .tokens import Instrument, Token
 from .version import Version
 from .wallet import Wallet
+from .websocketsubscription import (
+    WebSocketAccountSubscription,
+    WebSocketSubscriptionManager,
+)
 
 
 # # 🥭 TokenAccount class
@@ -207,6 +212,23 @@ class TokenAccount(AddressableAccount):
         return TokenAccount.parse(
             account_info, instrument_lookup=context.instrument_lookup
         )
+
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["TokenAccount"], None],
+    ) -> Disposable:
+        token = Token.ensure(self.value.token)
+
+        def __parser(account_info: AccountInfo) -> TokenAccount:
+            return TokenAccount.parse(account_info, token=token)
+
+        subscription = WebSocketAccountSubscription(context, self.address, __parser)
+        websocketmanager.add(subscription)
+        subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]
+
+        return subscription
 
     def __str__(self) -> str:
         return (

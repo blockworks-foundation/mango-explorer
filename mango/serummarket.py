@@ -126,8 +126,8 @@ class SerumMarket(LoadedMarket):
             self.address,
             owner,
             context.serum_program_address,
-            self.base.decimals,
-            self.quote.decimals,
+            self.base,
+            self.quote,
         )
         if len(all_open_orders) == 0:
             return None
@@ -243,8 +243,8 @@ class SerumMarketInstructionBuilder(MarketInstructionBuilder):
             serum_market.address,
             wallet.address,
             context.serum_program_address,
-            serum_market.base.decimals,
-            serum_market.quote.decimals,
+            serum_market.base,
+            serum_market.quote,
         )
         if len(all_open_orders) > 0:
             open_orders_address = all_open_orders[0].address

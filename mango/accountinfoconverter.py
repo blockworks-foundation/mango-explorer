@@ -24,6 +24,7 @@ from .account import Account
 from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .cache import Cache
+from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .group import Group
 from .layouts import layouts
@@ -64,9 +65,19 @@ def build_account_info_converter(
 
         return account_loader
     elif account_type_upper == "OPENORDERS":
-        return lambda account_info: OpenOrders.parse(
-            account_info, Decimal(6), Decimal(6)
+        base = Token(
+            "FAKEBASE",
+            "Fake Base Token",
+            Decimal(6),
+            SYSTEM_PROGRAM_ADDRESS,
         )
+        quote = Token(
+            "FAKEQUOTE",
+            "Fake Quote Token",
+            Decimal(6),
+            SYSTEM_PROGRAM_ADDRESS,
+        )
+        return lambda account_info: OpenOrders.parse(account_info, base, quote)
     elif account_type_upper == "CACHE":
         return lambda account_info: Cache.parse(account_info)
     elif account_type_upper == "ROOTBANK":

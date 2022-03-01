@@ -16,10 +16,14 @@
 
 import abc
 import logging
+import typing
 
 from solana.publickey import PublicKey
 
 from .accountinfo import AccountInfo
+from .context import Context
+from .observables import Disposable
+from .websocketsubscription import WebSocketSubscriptionManager
 
 
 # # 🥭 AddressableAccount class
@@ -39,6 +43,17 @@ class AddressableAccount(metaclass=abc.ABCMeta):
     @property
     def address(self) -> PublicKey:
         return self.account_info.address
+
+    @abc.abstractmethod
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["AddressableAccount"], None],
+    ) -> Disposable:
+        raise NotImplementedError(
+            "AddressableAccount.subscribe is not implemented on the base class."
+        )
 
     def __repr__(self) -> str:
         return f"{self}"

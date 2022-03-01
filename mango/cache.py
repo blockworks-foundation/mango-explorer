@@ -25,8 +25,13 @@ from .context import Context
 from .instrumentvalue import InstrumentValue
 from .layouts import layouts
 from .metadata import Metadata
+from .observables import Disposable
 from .tokens import Instrument, Token
 from .version import Version
+from .websocketsubscription import (
+    WebSocketAccountSubscription,
+    WebSocketSubscriptionManager,
+)
 
 
 # # 🥭 PriceCache class
@@ -216,6 +221,18 @@ class Cache(AddressableAccount):
         if account_info is None:
             raise Exception(f"Cache account not found at address '{address}'")
         return Cache.parse(account_info)
+
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["Cache"], None],
+    ) -> Disposable:
+        subscription = WebSocketAccountSubscription(context, self.address, Cache.parse)
+        websocketmanager.add(subscription)
+        subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]
+
+        return subscription
 
     def market_cache_for_index(self, index: int) -> MarketCache:
         return MarketCache(

@@ -462,6 +462,8 @@ def fake_open_orders(
     market = fake_seeded_public_key("market")
     owner = fake_seeded_public_key("owner")
 
+    base = fake_token("FAKEBASE")
+    quote = fake_token("FAKEQUOTE")
     flags = mango.AccountFlags(
         mango.Version.V1, True, False, True, False, False, False, False, False
     )
@@ -472,6 +474,8 @@ def fake_open_orders(
         flags,
         market,
         owner,
+        base,
+        quote,
         base_token_free,
         base_token_total,
         quote_token_free,

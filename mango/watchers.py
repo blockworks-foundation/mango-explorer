@@ -144,15 +144,15 @@ def build_spot_open_orders_watcher(
         context,
         open_orders_address,
         lambda account_info: OpenOrders.parse(
-            account_info, spot_market.base.decimals, spot_market.quote.decimals
+            account_info, spot_market.base, spot_market.quote
         ),
     )
     manager.add(spot_open_orders_subscription)
     initial_spot_open_orders = OpenOrders.load(
         context,
         open_orders_address,
-        spot_market.base.decimals,
-        spot_market.quote.decimals,
+        spot_market.base,
+        spot_market.quote,
     )
     latest_open_orders_observer = LatestItemObserverSubscriber[OpenOrders](
         initial_spot_open_orders
@@ -176,8 +176,8 @@ def build_serum_open_orders_watcher(
         serum_market.address,
         wallet.address,
         context.serum_program_address,
-        serum_market.base.decimals,
-        serum_market.quote.decimals,
+        serum_market.base,
+        serum_market.quote,
     )
     if len(all_open_orders) > 0:
         initial_serum_open_orders: OpenOrders = all_open_orders[0]
@@ -201,15 +201,15 @@ def build_serum_open_orders_watcher(
         initial_serum_open_orders = OpenOrders.load(
             context,
             open_orders_address,
-            serum_market.base.decimals,
-            serum_market.quote.decimals,
+            serum_market.base,
+            serum_market.quote,
         )
 
     serum_open_orders_subscription = WebSocketAccountSubscription[OpenOrders](
         context,
         open_orders_address,
         lambda account_info: OpenOrders.parse(
-            account_info, serum_market.base.decimals, serum_market.quote.decimals
+            account_info, serum_market.base, serum_market.quote
         ),
     )
 

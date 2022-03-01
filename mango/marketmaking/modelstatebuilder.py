@@ -197,7 +197,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
         cache: mango.Cache = mango.Cache.parse(account_infos[1])
         account: mango.Account = mango.Account.parse(account_infos[2], group, cache)
         placed_orders_container: mango.PlacedOrdersContainer = mango.OpenOrders.parse(
-            account_infos[3], self.market.base.decimals, self.market.quote.decimals
+            account_infos[3], self.market.base, self.market.quote
         )
 
         # Serum markets don't accrue MNGO liquidity incentives
@@ -320,8 +320,8 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
                 )
                 open_orders: mango.OpenOrders = mango.OpenOrders.parse(
                     account_info,
-                    basket_token.base_instrument.decimals,
-                    account.shared_quote_token.decimals,
+                    Token.ensure(basket_token.base_instrument),
+                    account.shared_quote_token,
                 )
                 all_open_orders[str(basket_token.spot_open_orders)] = open_orders
 
@@ -440,8 +440,8 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
                 )
                 open_orders: mango.OpenOrders = mango.OpenOrders.parse(
                     account_info,
-                    basket_token.base_instrument.decimals,
-                    account.shared_quote_token.decimals,
+                    Token.ensure(basket_token.base_instrument),
+                    account.shared_quote_token,
                 )
                 all_open_orders[str(basket_token.spot_open_orders)] = open_orders
 

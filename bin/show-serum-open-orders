@@ -37,8 +37,8 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         market.address,
         address,
         context.serum_program_address,
-        market.base.decimals,
-        market.quote.decimals,
+        market.base,
+        market.quote,
     )
     mango.output(
         f"Found {len(all_open_orders_for_market)} Serum OpenOrders account(s) for market {market.symbol}."

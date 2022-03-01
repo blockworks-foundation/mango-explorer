@@ -25,9 +25,14 @@ from .addressableaccount import AddressableAccount
 from .context import Context
 from .layouts import layouts
 from .metadata import Metadata
+from .observables import Disposable
 from .orders import Order, OrderType, Side
 from .perpmarketdetails import PerpMarketDetails
 from .version import Version
+from .websocketsubscription import (
+    WebSocketAccountSubscription,
+    WebSocketSubscriptionManager,
+)
 
 
 # # 🥭 OrderBookSideType enum
@@ -129,6 +134,21 @@ class PerpOrderBookSide(AddressableAccount):
                 f"PerpOrderBookSide account not found at address '{address}'"
             )
         return PerpOrderBookSide.parse(account_info, perp_market_details)
+
+    def subscribe(
+        self,
+        context: Context,
+        websocketmanager: WebSocketSubscriptionManager,
+        callback: typing.Callable[["PerpOrderBookSide"], None],
+    ) -> Disposable:
+        def __parser(account_info: AccountInfo) -> PerpOrderBookSide:
+            return PerpOrderBookSide.parse(account_info, self.perp_market_details)
+
+        subscription = WebSocketAccountSubscription(context, self.address, __parser)
+        websocketmanager.add(subscription)
+        subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]
+
+        return subscription
 
     def orders(self) -> typing.Sequence[Order]:
         if self.leaf_count == 0:
