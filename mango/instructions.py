@@ -936,93 +936,6 @@ def build_perp_cancel_order_instructions(
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
-def build_perp_place_order_instructions(
-    context: Context,
-    wallet: Wallet,
-    group: IGroup,
-    account: IAccount,
-    perp_market_details: PerpMarketDetails,
-    price: Decimal,
-    quantity: Decimal,
-    client_order_id: int,
-    side: Side,
-    order_type: OrderType,
-    reduce_only: bool = False,
-    expiration: datetime = Order.NoExpiration,
-    match_limit: int = 20,
-    max_quote_quantity: Decimal = Decimal(0),
-    reflink: typing.Optional[PublicKey] = None,
-) -> CombinableInstructions:
-    # { buy: 0, sell: 1 }
-    raw_side: int = 1 if side == Side.SELL else 0
-    raw_order_type: int = order_type.to_perp()
-
-    base_decimals = perp_market_details.base_instrument.decimals
-    quote_decimals = perp_market_details.quote_token.token.decimals
-
-    base_factor = Decimal(10) ** base_decimals
-    quote_factor = Decimal(10) ** quote_decimals
-
-    native_price = ((price * quote_factor) * perp_market_details.base_lot_size) / (
-        perp_market_details.quote_lot_size * base_factor
-    )
-    native_quantity = (quantity * base_factor) / perp_market_details.base_lot_size
-
-    # /// Accounts expected by this instruction (6):
-    # /// 0. `[]` mango_group_ai - TODO
-    # /// 1. `[writable]` mango_account_ai - TODO
-    # /// 2. `[signer]` owner_ai - TODO
-    # /// 3. `[]` mango_cache_ai - TODO
-    # /// 4. `[writable]` perp_market_ai - TODO
-    # /// 5. `[writable]` bids_ai - TODO
-    # /// 6. `[writable]` asks_ai - TODO
-    # /// 7. `[writable]` event_queue_ai - TODO
-    keys = [
-        AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
-        AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
-        AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-        AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
-        AccountMeta(
-            is_signer=False, is_writable=True, pubkey=perp_market_details.address
-        ),
-        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.bids),
-        AccountMeta(is_signer=False, is_writable=True, pubkey=perp_market_details.asks),
-        AccountMeta(
-            is_signer=False, is_writable=True, pubkey=perp_market_details.event_queue
-        ),
-        *list(
-            [
-                AccountMeta(
-                    is_signer=False,
-                    is_writable=False,
-                    pubkey=oo_address or SYSTEM_PROGRAM_ADDRESS,
-                )
-                for oo_address in account.spot_open_orders_by_index
-            ]
-        ),
-    ]
-    if reflink is not None:
-        keys += [AccountMeta(is_signer=False, is_writable=True, pubkey=reflink)]
-
-    instructions = [
-        TransactionInstruction(
-            keys=keys,
-            program_id=context.mango_program_address,
-            data=layouts.PLACE_PERP_ORDER.build(
-                {
-                    "price": native_price,
-                    "quantity": native_quantity,
-                    "client_order_id": client_order_id,
-                    "side": raw_side,
-                    "order_type": raw_order_type,
-                    "reduce_only": reduce_only,
-                }
-            ),
-        )
-    ]
-    return CombinableInstructions(signers=[], instructions=instructions)
-
-
 # /// Place an order on a perp market
 # ///
 # /// In case this order is matched, the corresponding order structs on both
@@ -1046,7 +959,7 @@ def build_perp_place_order_instructions(
 # /// 8. `[writable]` referrer_mango_account_ai - referrer's mango account;
 # ///                 pass in mango_account_ai as duplicate if you don't have a referrer
 # /// 9..9 + NUM_IN_MARGIN_BASKET `[]` open_orders_ais - pass in open orders in margin basket
-def build_perp_place_order_instructions_2(
+def build_perp_place_order_instructions(
     context: Context,
     wallet: Wallet,
     group: IGroup,
