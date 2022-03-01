@@ -14,7 +14,6 @@
 #   [Email](mailto:hello@blockworks.foundation)
 
 
-import rx.operators
 import typing
 
 from dataclasses import dataclass
@@ -56,7 +55,6 @@ from .tokenbank import TokenBank
 from .wallet import Wallet
 from .websocketsubscription import (
     IndividualWebSocketSubscriptionManager,
-    WebSocketAccountSubscription,
 )
 
 
