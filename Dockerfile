@@ -16,5 +16,6 @@ RUN poetry install --no-dev --no-root
 
 # Have these as the last steps since the code here is the most-frequently changing
 COPY . /app/
+RUN python3 -m compileall /app
 ARG LAST_COMMIT=""
 RUN echo ${LAST_COMMIT} > /app/data/.version

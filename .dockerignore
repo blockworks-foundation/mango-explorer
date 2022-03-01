@@ -6,3 +6,4 @@
 wallet.json
 id.json
 private.py
+__pycache__
