@@ -624,6 +624,11 @@ class CompoundRPCCaller(HTTPProvider):
         self.name: str = name
         self.on_provider_change: typing.Callable[[], None] = lambda: None
 
+        # Some libraries (like the SPL Token Library) depend on `endpoint_uri` existing on
+        # a `Provider`, and static typing complains if we use a property instead of a
+        # variable. We add it here and keep it up to date when we switch inner providers.
+        self.endpoint_uri = providers[0].endpoint_uri
+
     @property
     def current(self) -> RPCCaller:
         return self.__providers[0]
@@ -643,6 +648,7 @@ class CompoundRPCCaller(HTTPProvider):
         # resubmit the transaction.
         if len(self.__providers) > 1:
             self.__providers = [*self.__providers[1:], *self.__providers[:1]]
+            self.endpoint_uri = self.__providers[0].endpoint_uri
             self.on_provider_change()
         self._logger.debug(f"Told to shift provider - now using: {self.__providers[0]}")
 
@@ -658,6 +664,7 @@ class CompoundRPCCaller(HTTPProvider):
                         *self.__providers[successful_index:],
                         *self.__providers[:successful_index],
                     ]
+                    self.endpoint_uri = self.__providers[0].endpoint_uri
                     self.on_provider_change()
                     self._logger.debug(
                         f"Shifted provider - now using: {self.__providers[0]}"
