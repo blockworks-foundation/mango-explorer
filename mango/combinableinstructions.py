@@ -272,6 +272,10 @@ class CombinableInstructions:
             signers=all_signers, instructions=all_instructions
         )
 
+    @property
+    def is_empty(self) -> bool:
+        return len(self.signers) == 0 and len(self.instructions) == 0
+
     def execute(
         self, context: Context, on_exception_continue: bool = False
     ) -> typing.Sequence[str]:
