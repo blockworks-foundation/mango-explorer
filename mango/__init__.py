@@ -60,6 +60,8 @@ from .constants import WARNING_DISCLAIMER_TEXT as WARNING_DISCLAIMER_TEXT
 from .constants import version as version
 from .context import Context as Context
 from .contextbuilder import ContextBuilder as ContextBuilder
+from .datetimes import datetime_from_chain as datetime_from_chain
+from .datetimes import datetime_from_timestamp as datetime_from_timestamp
 from .datetimes import local_now as local_now
 from .datetimes import utc_now as utc_now
 from .encoding import decode_binary as decode_binary

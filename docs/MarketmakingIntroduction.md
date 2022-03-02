@@ -170,7 +170,7 @@ def pulse(self, context: mango.Context, model_state: ModelState):
         settle = self.market_instruction_builder.build_settle_instructions()
         (payer + cancellations + place_orders + crank + settle).execute(context, on_exception_continue=True)
 
-        self.pulse_complete.on_next(datetime.now())
+        self.pulse_complete.on_next(mango.local_now())
     except Exception as exception:
         self._logger.error(f"[{context.name}] Market-maker error on pulse: {exception} - {traceback.format_exc()}")
         self.pulse_error.on_next(exception)

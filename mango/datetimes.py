@@ -17,20 +17,25 @@ from datetime import datetime, timezone
 
 # # 🥭 Datetimes
 #
-# This file contains a few useful datetime functions.
+# Comparing datetime values in Python can lead to the following error:
+#   TypeError: can't compare offset-naive and offset-aware datetimes
 #
-# They exist solely to make clear what is being used when called. There are 2 general cases:
-# 1. Logging/time tracking/user output - local time is what should be used.
-# 2. Comparison with dates stored on-chain - UTC should be used.
+# To avoid that, we use these functions to consistently create the datetime in a way
+# that has the correct value and that can be compared with other datetimes generated
+# by these methods.
 #
-# Getting a UTC time that is comparable with on-chain datetimes isn't intuitive, so putting
-# it in one place and using that consistently should make it clearer in the calling code
-# what is going on, without the unnecessary complications.
+# However, getting a comparable UTC time using this mechanism:
+#   return datetime.utcnow().astimezone(timezone.utc)
+#
+# works fine on Linux and Mac but fails on Windows. So we need to avoid that method and
+# be careful of different platform issues.
+#
+# If you use these methods to generate the datetime values, you _should_ be safe.
 #
 
 
 def local_now() -> datetime:
-    return datetime.now()
+    return datetime.now().astimezone()
 
 
 # Getting a comparable UTC time using this line:
@@ -40,3 +45,15 @@ def local_now() -> datetime:
 # on Windows as well as Mac and Linux.
 def utc_now() -> datetime:
     return datetime.utcnow().replace(tzinfo=timezone.utc)
+
+
+# All timestamp values _should be_ in UTC. All we need to do is load the value as a UTC
+# datetime that's comparable on all platforms, so we do this the same way as `utc_now()`.
+def datetime_from_timestamp(timestamp: float) -> datetime:
+    return datetime.utcfromtimestamp(timestamp).replace(tzinfo=timezone.utc)
+
+
+# All on-chain datetime values are in UTC. All we need to do is load the value as a UTC
+# datetime that's comparable on all platforms, so we do this the same way as `utc_now()`.
+def datetime_from_chain(onchain_value: float) -> datetime:
+    return datetime.utcfromtimestamp(onchain_value).replace(tzinfo=timezone.utc)

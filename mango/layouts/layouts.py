@@ -33,12 +33,13 @@
 
 
 import construct
-import datetime
 import typing
 
+from datetime import datetime
 from decimal import Decimal, Context as DecimalContext
 from solana.publickey import PublicKey
 
+from ..datetimes import datetime_from_chain
 
 # # Adapters
 #
@@ -176,9 +177,7 @@ else:
 #
 if typing.TYPE_CHECKING:
 
-    class DatetimeAdapter(
-        construct.Adapter[datetime.datetime, int, typing.Any, typing.Any]
-    ):
+    class DatetimeAdapter(construct.Adapter[datetime, int, typing.Any, typing.Any]):
         def __init__(self) -> None:
             pass
 
@@ -188,14 +187,10 @@ else:
         def __init__(self) -> None:
             super().__init__(construct.BytesInteger(8, swapped=True))
 
-        def _decode(
-            self, obj: int, context: typing.Any, path: typing.Any
-        ) -> datetime.datetime:
-            return datetime.datetime.fromtimestamp(obj, tz=datetime.timezone.utc)
+        def _decode(self, obj: int, context: typing.Any, path: typing.Any) -> datetime:
+            return datetime_from_chain(obj)
 
-        def _encode(
-            self, obj: datetime.datetime, context: typing.Any, path: typing.Any
-        ) -> int:
+        def _encode(self, obj: datetime, context: typing.Any, path: typing.Any) -> int:
             return int(obj.timestamp())
 
 

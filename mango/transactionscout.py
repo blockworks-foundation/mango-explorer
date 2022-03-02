@@ -15,15 +15,16 @@
 
 
 import base58
-import datetime
 import logging
 import traceback
 import typing
 
+from datetime import datetime
 from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .context import Context
+from .datetimes import datetime_from_timestamp
 from .instructiontype import InstructionType
 from .instrumentvalue import InstrumentValue
 from .logmessages import expand_log_messages
@@ -69,7 +70,7 @@ from .text import indent_collection_as_str, indent_item_by
 class TransactionScout:
     def __init__(
         self,
-        timestamp: datetime.datetime,
+        timestamp: datetime,
         signatures: typing.Sequence[str],
         succeeded: bool,
         group_name: str,
@@ -79,7 +80,7 @@ class TransactionScout:
         pre_token_balances: typing.Sequence[OwnedInstrumentValue],
         post_token_balances: typing.Sequence[OwnedInstrumentValue],
     ) -> None:
-        self.timestamp: datetime.datetime = timestamp
+        self.timestamp: datetime = timestamp
         self.signatures: typing.Sequence[str] = signatures
         self.succeeded: bool = succeeded
         self.group_name: str = group_name
@@ -193,7 +194,7 @@ class TransactionScout:
                 if len(instructions) > 0
                 else "No Group"
             )
-            timestamp = datetime.datetime.fromtimestamp(response["blockTime"])
+            timestamp = datetime_from_timestamp(response["blockTime"])
             signatures = response["transaction"]["signatures"]
             raw_messages = response["meta"]["logMessages"]
             messages = expand_log_messages(raw_messages)

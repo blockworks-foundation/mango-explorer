@@ -20,13 +20,13 @@ import pyserum.enums
 import typing
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from decimal import Decimal
 from pyserum.market.types import Order as PySerumOrder
 from solana.publickey import PublicKey
 
 from .constants import SYSTEM_PROGRAM_ADDRESS
-from .datetimes import utc_now
+from .datetimes import utc_now, datetime_from_timestamp
 from .lotsizeconverter import LotSizeConverter
 
 
@@ -145,9 +145,7 @@ class OrderType(enum.Enum):
 @dataclass(frozen=True)
 class Order:
     DefaultMatchLimit: typing.ClassVar[int] = 20
-    NoExpiration: typing.ClassVar[datetime] = datetime.fromtimestamp(0).astimezone(
-        timezone.utc
-    )
+    NoExpiration: typing.ClassVar[datetime] = datetime_from_timestamp(0)
     id: int
     client_id: int
     owner: PublicKey

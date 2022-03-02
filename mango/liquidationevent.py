@@ -13,9 +13,9 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
-import datetime
 import typing
 
+from datetime import datetime
 from solana.publickey import PublicKey
 
 from .instrumentvalue import InstrumentValue
@@ -26,7 +26,7 @@ from .instrumentvalue import InstrumentValue
 class LiquidationEvent:
     def __init__(
         self,
-        timestamp: datetime.datetime,
+        timestamp: datetime,
         liquidator_name: str,
         group_name: str,
         succeeded: bool,
@@ -36,7 +36,7 @@ class LiquidationEvent:
         balances_before: typing.Sequence[InstrumentValue],
         balances_after: typing.Sequence[InstrumentValue],
     ) -> None:
-        self.timestamp: datetime.datetime = timestamp
+        self.timestamp: datetime = timestamp
         self.liquidator_name: str = liquidator_name
         self.group_name: str = group_name
         self.succeeded: bool = succeeded

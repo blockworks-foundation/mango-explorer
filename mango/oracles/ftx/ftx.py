@@ -20,12 +20,11 @@ import rx
 import typing
 import websocket
 
-from datetime import datetime
 from decimal import Decimal
 from rx.subject.subject import Subject
 
 from ...context import Context
-from ...datetimes import utc_now
+from ...datetimes import utc_now, datetime_from_timestamp
 from ...markets import Market
 from ...observables import Disposable, DisposeWrapper
 from ...oracle import (
@@ -97,7 +96,7 @@ class FtxOracle(Oracle):
                 ask = Decimal(data["data"]["ask"])
                 mid = (bid + ask) / Decimal(2)
                 time = data["data"]["time"]
-                timestamp = datetime.fromtimestamp(time)
+                timestamp = datetime_from_timestamp(time)
                 price = Price(
                     self.source,
                     timestamp,
