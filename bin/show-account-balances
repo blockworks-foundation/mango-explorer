@@ -101,6 +101,7 @@ for account in mango_accounts:
     for column_name in numeric_columns:
         frame[column_name] = pandas.to_numeric(frame[column_name]).round(6)
     output_columns = ["Symbol", *numeric_columns]
+    mango.output(f"\nMango Account: {account.address}")
     mango.output(frame[output_columns])
     if mango.output_formatter.format == mango.OutputFormat.TEXT:
         mango.output("Account Value:", account_value)
