@@ -119,7 +119,8 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
             mango.output(mango.indent_collection_as_str(results, 1))
 
             updated = mango.TokenAccount.load(context, source.address)
-            mango.output(f"{text_amount} sent. Balance now: {updated.value}")
+            updated_value = updated.value if updated is not None else "Unknown"
+            mango.output(f"{text_amount} sent. Balance now: {updated_value}")
         else:
             mango.output("Transaction signatures:")
             mango.output(mango.indent_collection_as_str(signatures, 1))
