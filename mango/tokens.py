@@ -13,13 +13,31 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import enum
 import logging
 import typing
 
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN, ROUND_UP
 from solana.publickey import PublicKey
 
 from .constants import SOL_DECIMALS, SOL_MINT_ADDRESS
+
+
+class RoundDirection(enum.Enum):
+    DOWN = enum.auto()
+    UP = enum.auto()
+
+    def to_decimal_direction(self) -> str:
+        if self == RoundDirection.UP:
+            return ROUND_UP
+        else:
+            return ROUND_DOWN
+
+    def __str__(self) -> str:
+        return self.name
+
+    def __repr__(self) -> str:
+        return f"{self}"
 
 
 class Instrument:
@@ -33,8 +51,12 @@ class Instrument:
     def symbols_match(symbol1: str, symbol2: str) -> bool:
         return symbol1.upper() == symbol2.upper()
 
-    def round(self, value: Decimal) -> Decimal:
-        return round(value, int(self.decimals))
+    def round(
+        self, value: Decimal, direction: RoundDirection = RoundDirection.DOWN
+    ) -> Decimal:
+        # places should be a number like 0.000001
+        places = Decimal(1) / (Decimal(10) ** self.decimals)
+        return value.quantize(places, rounding=direction.to_decimal_direction())
 
     def shift_to_decimals(self, value: Decimal) -> Decimal:
         divisor = Decimal(10**self.decimals)

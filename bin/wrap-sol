@@ -43,7 +43,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     mango.output("Wrapping SOL:")
     if len(token_accounts) == 0:
         create_instructions = mango.build_spl_create_associated_account_instructions(
-            context, wallet, wrapped_sol
+            context, wallet, wallet.address, wrapped_sol
         )
         destination_wrapped_sol_address: PublicKey = (
             create_instructions.instructions[0].keys[1].pubkey

@@ -4,6 +4,7 @@ import argparse
 import os
 import os.path
 import sys
+import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
@@ -18,7 +19,19 @@ parser.add_argument(
     "--symbol", type=str, required=True, help="token symbol to deposit (e.g. USDC)"
 )
 parser.add_argument(
-    "--quantity", type=Decimal, required=True, help="quantity token to deposit"
+    "--quantity", type=Decimal, required=False, help="quantity token to deposit"
+)
+parser.add_argument(
+    "--wallet-target",
+    type=Decimal,
+    required=False,
+    help="wallet balance of token to target with deposit",
+)
+parser.add_argument(
+    "--account-target",
+    type=Decimal,
+    required=False,
+    help="Mango account balance of token to target with deposit",
 )
 parser.add_argument(
     "--account-address",
@@ -31,7 +44,68 @@ parser.add_argument(
     default=False,
     help="wait until the transactions are confirmed",
 )
+parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    default=False,
+    help="runs as read-only and does not perform any transactions",
+)
 args: argparse.Namespace = mango.parse_args(parser)
+
+if args.quantity is None and args.wallet_target is None and args.account_target is None:
+    raise Exception(
+        "One (and only one) of --quantity, --wallet-target or --account-target must be specified"
+    )
+
+
+def __quantity_from_account_target(
+    account: mango.Account,
+    token: mango.Token,
+    quantity: typing.Optional[Decimal],
+) -> typing.Optional[Decimal]:
+    if quantity is None:
+        return None
+
+    slot = account.slot_by_instrument(token)
+    to_deposit = quantity - slot.net_value.value
+    if to_deposit < 0:
+        raise Exception(
+            f"Cannot achieve Mango Account target of {quantity:,.8f} {token.symbol} by depositing - Mango Account already has balance of {slot.net_value}"
+        )
+    rounded = token.round(to_deposit, mango.RoundDirection.UP)
+    mango.output(
+        f"Depositing {rounded:,.8f} {token.symbol} to Mango Account balance of {slot.net_value}"
+    )
+    return rounded
+
+
+def __quantity_from_wallet_target(
+    context: mango.Context,
+    wallet: mango.Wallet,
+    account: mango.Account,
+    token: mango.Token,
+    quantity: typing.Optional[Decimal],
+) -> typing.Optional[Decimal]:
+    if quantity is None:
+        return None
+
+    token_accounts: typing.Sequence[
+        mango.TokenAccount
+    ] = mango.TokenAccount.fetch_all_for_owner_and_token(context, wallet.address, token)
+    total = sum(acc.value.value for acc in token_accounts)
+    to_deposit = total - quantity
+    if to_deposit < 0:
+        raise Exception(
+            f"Cannot achieve Mango Account target of {quantity:,.8f} {token.symbol} by depositing - wallet only has balance of {total:,.8f} {token.symbol}"
+        )
+
+    slot = account.slot_by_instrument(token)
+    rounded = token.round(to_deposit, mango.RoundDirection.DOWN)
+    mango.output(
+        f"Depositing {rounded:,.8f} {token.symbol} to add to Mango Account balance of {slot.net_value}"
+    )
+    return rounded
+
 
 with mango.ContextBuilder.from_command_line_parameters(args) as context:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
@@ -41,17 +115,41 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         context, wallet.address, group, args.account_address
     )
 
-    deposit_value = mango.instrument_value(context, args.symbol, args.quantity)
-    signatures = account.deposit(context, wallet, deposit_value)
-
-    if args.wait:
-        mango.output("Waiting on transaction signatures:")
-        mango.output(mango.indent_collection_as_str(signatures, 1))
-        results = mango.WebSocketTransactionMonitor.wait_for_all(
-            context.client.cluster_ws_url, signatures
+    token = mango.token(context, args.symbol)
+    quantity: typing.Optional[Decimal] = (
+        args.quantity
+        or __quantity_from_account_target(account, token, args.account_target)
+        or __quantity_from_wallet_target(
+            context, wallet, account, token, args.wallet_target
         )
-        mango.output("Transaction results:")
-        mango.output(mango.indent_collection_as_str(results, 1))
+    )
+    if quantity is None:
+        raise Exception(
+            "None of --quantity, --wallet-target or --account-target were specified - must specify one (and only one) of those parameters"
+        )
+
+    if quantity < 0:
+        raise Exception(
+            f"Cannot deposit negative quantity {quantity:,.8f} {token.symbol}"
+        )
+
+    if quantity == 0:
+        mango.output("Quantity to deposit is 0 - nothing to do")
     else:
-        mango.output("Transaction signatures:")
-        mango.output(mango.indent_collection_as_str(signatures, 1))
+        deposit_value = mango.InstrumentValue(token, quantity)
+        if args.dry_run:
+            mango.output("Dry run - not sending transaction")
+        else:
+            signatures = account.deposit(context, wallet, deposit_value)
+
+            if args.wait:
+                mango.output("Waiting on transaction signatures:")
+                mango.output(mango.indent_collection_as_str(signatures, 1))
+                results = mango.WebSocketTransactionMonitor.wait_for_all(
+                    context.client.cluster_ws_url, signatures
+                )
+                mango.output("Transaction results:")
+                mango.output(mango.indent_collection_as_str(results, 1))
+            else:
+                mango.output("Transaction signatures:")
+                mango.output(mango.indent_collection_as_str(signatures, 1))

@@ -36,7 +36,10 @@ from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.system_program import CreateAccountParams, create_account
 from solana.transaction import AccountMeta, TransactionInstruction
-from spl.token.constants import ACCOUNT_LEN, TOKEN_PROGRAM_ID
+from spl.token.constants import (
+    ACCOUNT_LEN,
+    TOKEN_PROGRAM_ID,
+)
 from spl.token.instructions import (
     CloseAccountParams,
     InitializeAccountParams,
@@ -249,10 +252,10 @@ def build_spl_create_account_instructions(
 # you specifically don't want the associated token account.
 #
 def build_spl_create_associated_account_instructions(
-    context: Context, wallet: Wallet, token: Token
+    context: Context, wallet: Wallet, owner: PublicKey, token: Token
 ) -> CombinableInstructions:
     create_account_instructions = create_associated_token_account(
-        wallet.address, wallet.address, token.mint
+        wallet.address, owner, token.mint
     )
     return CombinableInstructions(
         signers=[], instructions=[create_account_instructions]
@@ -271,7 +274,7 @@ def build_spl_transfer_tokens_instructions(
     destination: PublicKey,
     quantity: Decimal,
 ) -> CombinableInstructions:
-    amount = int(quantity * (10**token.decimals))
+    amount = int(token.shift_to_native(quantity))
     instructions = [
         transfer(
             TransferParams(

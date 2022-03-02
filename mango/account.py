@@ -43,6 +43,7 @@ from .placedorder import PlacedOrder
 from .tokens import Instrument, Token
 from .tokenaccount import TokenAccount
 from .tokenbank import TokenBank
+from .tokenoperations import build_create_associated_instructions_and_account
 from .version import Version
 from .wallet import Wallet
 from .websocketsubscription import (
@@ -641,9 +642,20 @@ class Account(AddressableAccount):
         allow_borrow: bool,
     ) -> typing.Sequence[str]:
         token: Token = Token.ensure(value.token)
-        token_account = TokenAccount.fetch_or_create_largest_for_owner_and_token(
-            context, wallet.keypair, token
+        token_account = TokenAccount.fetch_largest_for_owner_and_token(
+            context, wallet.address, token
         )
+
+        withdrawal_token_account: TokenAccount
+        create_ata = CombinableInstructions.empty()
+        if token_account is None:
+            (
+                create_ata,
+                token_account,
+            ) = build_create_associated_instructions_and_account(
+                context, wallet, wallet.address, token
+            )
+
         withdrawal_token_account = TokenAccount(
             token_account.account_info,
             token_account.version,
@@ -668,7 +680,7 @@ class Account(AddressableAccount):
             allow_borrow,
         )
 
-        all_instructions = signers + withdraw
+        all_instructions = signers + create_ata + withdraw
         return all_instructions.execute(context)
 
     def slot_by_instrument_or_none(

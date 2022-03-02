@@ -34,7 +34,7 @@ def test_build_spl_create_associated_account_instructions() -> None:
     wallet: mango.Wallet = fake_wallet()
     token: mango.Token = fake_token()
     actual = mango.build_spl_create_associated_account_instructions(
-        context, wallet, token
+        context, wallet, wallet.address, token
     )
     assert actual is not None
     assert len(actual.signers) == 0

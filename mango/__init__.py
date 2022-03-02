@@ -291,6 +291,7 @@ from .spotmarket import SpotMarketStub as SpotMarketStub
 from .text import indent_collection_as_str as indent_collection_as_str
 from .text import indent_item_by as indent_item_by
 from .tokens import Instrument as Instrument
+from .tokens import RoundDirection as RoundDirection
 from .tokens import SolToken as SolToken
 from .tokens import Token as Token
 from .tokenaccount import TokenAccount as TokenAccount
@@ -299,6 +300,9 @@ from .tokenbank import InterestRates as InterestRates
 from .tokenbank import NodeBank as NodeBank
 from .tokenbank import RootBank as RootBank
 from .tokenbank import TokenBank as TokenBank
+from .tokenoperations import (
+    build_create_associated_instructions_and_account as build_create_associated_instructions_and_account,
+)
 from .tradehistory import TradeHistory as TradeHistory
 from .transactionmonitoring import (
     SignatureSubscription as SignatureSubscription,
