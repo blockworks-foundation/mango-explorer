@@ -16,11 +16,14 @@
 import logging
 import typing
 
+from decimal import Decimal
 from solana.blockhash import Blockhash
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.transaction import Transaction, TransactionInstruction
 from solana.utils import shortvec_encoding as shortvec
+
+from mango.constants import SOL_DECIMAL_DIVISOR
 
 from .context import Context
 from .instructionreporter import InstructionReporter
@@ -313,6 +316,38 @@ class CombinableInstructions:
         self, context: Context, on_exception_continue: bool = False
     ) -> typing.Sequence[str]:
         return self.execute(context, on_exception_continue)
+
+    def cost_to_execute(self, context: Context) -> Decimal:
+        # getFees() is depracated and will be replaced by getFeeForMessage() at some point.
+        # getFeeForMessage() is not fully available yet though.
+        fee_response = context.client.compatible_client.get_fees()
+        # fee_response should look like:
+        # {
+        #   "jsonrpc": "2.0",
+        #   "result": {
+        #     "context": {
+        #       "slot": 1
+        #     },
+        #     "value": {
+        #       "blockhash": "CSymwgTNX1j3E4qhKfJAUE41nBWEwXufoYryPbkde5RR",
+        #       "feeCalculator": {
+        #         "lamportsPerSignature": 5000
+        #       },
+        #       "lastValidSlot": 297,
+        #       "lastValidBlockHeight": 296
+        #     }
+        #   },
+        #   "id": 1
+        # }
+        number_of_signatures = len(self.signers)
+        lamports_per_signature = fee_response["result"]["value"]["feeCalculator"][
+            "lamportsPerSignature"
+        ]
+
+        fee_in_lamports = Decimal(number_of_signatures) * Decimal(
+            lamports_per_signature
+        )
+        return fee_in_lamports / SOL_DECIMAL_DIVISOR
 
     def __str__(self) -> str:
         report: typing.List[str] = []

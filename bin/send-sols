@@ -5,6 +5,7 @@ import logging
 import os
 import os.path
 import sys
+import typing
 
 from decimal import Decimal
 from solana.publickey import PublicKey
@@ -23,7 +24,13 @@ parser.add_argument(
     help="Destination address for the SPL token - can be either the actual token address or the address of the owner of the token address",
 )
 parser.add_argument(
-    "--quantity", type=Decimal, required=True, help="quantity of token to send"
+    "--quantity", type=Decimal, required=False, help="quantity of token to send"
+)
+parser.add_argument(
+    "--wallet-target",
+    type=Decimal,
+    required=False,
+    help="wallet balance of token to target by sending remainder",
 )
 parser.add_argument(
     "--dry-run",
@@ -39,16 +46,69 @@ parser.add_argument(
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
+
+def __quantity_from_wallet_target(
+    context: mango.Context,
+    signers: mango.CombinableInstructions,
+    token: mango.Token,
+    balance: Decimal,
+    to_keep: typing.Optional[Decimal],
+) -> typing.Optional[Decimal]:
+    if to_keep is None:
+        return None
+
+    # To accurately calculate the cost we need to build the transaction we're going to send.
+    #
+    # But we don't know the quantity we're sending until we know the cost.
+    #
+    # So here we but together a fake transaction for sending zero SOL from
+    # SYSTEM_PROGRAM_ADDRESS to SYSTEM_PROGRAM_ADDRESS, and use that to calculate the cost so
+    # we can take the cost into account when figuring out how much to send.
+    #
+    # (Using SYSTEM_PROGRAM_ADDRESS and zero shouldn't affect the calculations but that may
+    # change when getFeeForMessage() is used.)
+    params = TransferParams(
+        from_pubkey=mango.SYSTEM_PROGRAM_ADDRESS,
+        to_pubkey=mango.SYSTEM_PROGRAM_ADDRESS,
+        lamports=0,
+    )
+    fake_instruction = mango.CombinableInstructions.from_instruction(transfer(params))
+    cost = (signers + fake_instruction).cost_to_execute(context)
+
+    to_send = balance - to_keep - cost
+    if to_send < 0:
+        raise Exception(
+            f"Cannot achieve wallet balance target of {to_keep:,.8f} {token.symbol} by depositing - wallet only has balance of {balance:,.8f} {token.symbol}"
+        )
+
+    return token.round(to_send, mango.RoundDirection.DOWN)
+
+
 with mango.ContextBuilder.from_command_line_parameters(args) as context:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
 
     logging.info(f"Wallet address: {wallet.address}")
 
+    token = mango.SolToken
     sol_balance = context.client.get_balance(wallet.address)
     mango.output(f"Balance: {sol_balance} SOL")
 
+    signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(
+        wallet
+    )
+    quantity: typing.Optional[Decimal] = args.quantity or __quantity_from_wallet_target(
+        context, signers, token, sol_balance, args.wallet_target
+    )
+    if quantity is None:
+        raise Exception(
+            "Neither --quantity nor --wallet-target were specified - must specify one (and only one) of those parameters"
+        )
+
+    if quantity < 0:
+        raise Exception(f"Cannot send negative quantity {quantity:,.8f} {token.symbol}")
+
     # "A lamport has a value of 0.000000001 SOL." from https://docs.solana.com/introduction
-    lamports = int(args.quantity * mango.SOL_DECIMAL_DIVISOR)
+    lamports = int(quantity * mango.SOL_DECIMAL_DIVISOR)
     source = wallet.address
     destination = args.address
 

@@ -25,7 +25,13 @@ parser.add_argument(
     help="Destination address for the SPL token - can be either the actual token address or the address of the owner of the token address",
 )
 parser.add_argument(
-    "--quantity", type=Decimal, required=True, help="quantity of token to send"
+    "--quantity", type=Decimal, required=False, help="quantity of token to send"
+)
+parser.add_argument(
+    "--wallet-target",
+    type=Decimal,
+    required=False,
+    help="wallet balance of token to target by sending remainder",
 )
 parser.add_argument(
     "--wait",
@@ -40,6 +46,29 @@ parser.add_argument(
     help="runs as read-only and does not perform any transactions",
 )
 args: argparse.Namespace = mango.parse_args(parser)
+
+
+def __quantity_from_wallet_target(
+    context: mango.Context,
+    wallet: mango.Wallet,
+    token: mango.Token,
+    to_keep: typing.Optional[Decimal],
+) -> typing.Optional[Decimal]:
+    if to_keep is None:
+        return None
+
+    token_accounts: typing.Sequence[
+        mango.TokenAccount
+    ] = mango.TokenAccount.fetch_all_for_owner_and_token(context, wallet.address, token)
+    total = sum(acc.value.value for acc in token_accounts)
+    to_deposit = total - to_keep
+    if to_deposit < 0:
+        raise Exception(
+            f"Cannot achieve wallet balance target of {to_keep:,.8f} {token.symbol} by sending - wallet only has balance of {total:,.8f} {token.symbol}"
+        )
+
+    return token.round(to_deposit, mango.RoundDirection.DOWN)
+
 
 with mango.ContextBuilder.from_command_line_parameters(args) as context:
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
@@ -86,18 +115,27 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
             f"Account {args.address} is neither a root wallet account nor an SPL token account."
         )
 
+    mango.output("Balance:", source.value)
+
+    quantity: typing.Optional[Decimal] = args.quantity or __quantity_from_wallet_target(
+        context, wallet, token, args.wallet_target
+    )
+    if quantity is None:
+        raise Exception(
+            "Neither --quantity nor --wallet-target were specified - must specify one (and only one) of those parameters"
+        )
+
+    if quantity < 0:
+        raise Exception(f"Cannot send negative quantity {quantity:,.8f} {token.symbol}")
+
     signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(
         wallet
     )
     transfer = mango.build_spl_transfer_tokens_instructions(
-        context, wallet, token, source.address, destination, args.quantity
+        context, wallet, token, source.address, destination, quantity
     )
 
-    mango.output(
-        "Balance:",
-        source,
-    )
-    amount = token.shift_to_native(args.quantity)
+    amount = token.shift_to_native(quantity)
     text_amount = f"{amount} {token.name} (@ {token.decimals} decimal places)"
     creating_marker = "" if create_ata.is_empty else " *CREATING*"
     mango.output(f"Sending {text_amount}")
