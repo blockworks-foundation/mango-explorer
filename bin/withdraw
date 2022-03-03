@@ -39,6 +39,11 @@ parser.add_argument(
     help="address of the specific account to use, if more than one available",
 )
 parser.add_argument(
+    "--destination-wallet",
+    type=PublicKey,
+    help="if specified, the wallet to which the withdrawal should be sent. (Defaults to the current wallet.)",
+)
+parser.add_argument(
     "--allow-borrow",
     action="store_true",
     default=False,
@@ -160,8 +165,9 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         if args.dry_run:
             mango.output("Dry run - not sending transaction")
         else:
+            destination = args.destination_wallet or wallet.address
             signatures = account.withdraw(
-                context, wallet, withdrawal_value, args.allow_borrow
+                context, wallet, destination, withdrawal_value, args.allow_borrow
             )
 
             if args.wait:

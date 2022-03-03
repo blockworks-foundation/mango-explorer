@@ -24,6 +24,7 @@ from .accountinfo import AccountInfo
 from .addressableaccount import AddressableAccount
 from .cache import Cache, PerpMarketCache, RootBankCache, MarketCache
 from .combinableinstructions import CombinableInstructions
+from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
 from .encoding import encode_key
 from .group import Group, GroupSlot, GroupSlotPerpMarket
@@ -638,12 +639,25 @@ class Account(AddressableAccount):
         self,
         context: Context,
         wallet: Wallet,
+        destination: PublicKey,
         value: InstrumentValue,
         allow_borrow: bool,
     ) -> typing.Sequence[str]:
+        destination_info: typing.Optional[AccountInfo] = AccountInfo.load(
+            context, destination
+        )
+        if destination_info is None:
+            raise Exception(f"Could not find wallet at address {destination}.")
+
+        if destination_info.owner != SYSTEM_PROGRAM_ADDRESS:
+            # This is not a root wallet account
+            raise Exception(
+                f"Can't withdraw to address {destination} - not a wallet address."
+            )
+
         token: Token = Token.ensure(value.token)
         token_account = TokenAccount.fetch_largest_for_owner_and_token(
-            context, wallet.address, token
+            context, destination, token
         )
 
         withdrawal_token_account: TokenAccount
@@ -653,7 +667,7 @@ class Account(AddressableAccount):
                 create_ata,
                 token_account,
             ) = build_create_associated_instructions_and_account(
-                context, wallet, wallet.address, token
+                context, wallet, destination, token
             )
 
         withdrawal_token_account = TokenAccount(
