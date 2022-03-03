@@ -140,7 +140,7 @@ class ModelState:
         )
 
     def __str__(self) -> str:
-        return f"""« ModelState for market '{self.market.symbol}'
+        return f"""« ModelState for market '{self.market.fully_qualified_symbol}'
     Group: {self.group_watcher.latest.address}
     Account: {self.account_watcher.latest.address}
     Price: {self.price_watcher.latest}

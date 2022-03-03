@@ -50,7 +50,7 @@ with mango.ContextBuilder.from_command_line_parameters(
     oracle = oracle_provider.oracle_for_market(context, market)
     if oracle is None:
         raise Exception(
-            f"Could not find oracle for market {market.symbol} from provider {args.oracle_provider}."
+            f"Could not find oracle for market {market.fully_qualified_symbol} from provider {args.oracle_provider}."
         )
 
     health_check = mango.HealthCheck()

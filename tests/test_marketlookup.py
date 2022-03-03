@@ -10,7 +10,9 @@ def test_market_symbol_matching() -> None:
     assert mango.Market.symbols_match("eth/usdc", "eth/usdc")
     assert mango.Market.symbols_match("btc/usdc", "BTC/USDC")
     assert mango.Market.symbols_match("ETH/USDC", "eth/usdc")
+    assert mango.Market.symbols_match("serum:ETH/USDC", "serum:eth/usdc")
     assert not mango.Market.symbols_match("ETH/USDC", "BTC/USDC")
+    assert not mango.Market.symbols_match("serum:ETH/USDC", "spot:eth/usdc")
 
 
 def test_serum_market_lookup() -> None:

@@ -25,7 +25,6 @@ from ...cache import Cache
 from ...context import Context
 from ...datetimes import utc_now
 from ...loadedmarket import LoadedMarket
-from ...markets import Market
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import (
     Oracle,
@@ -35,7 +34,6 @@ from ...oracle import (
     SupportedOracleFeature,
 )
 from ...perpmarket import PerpMarket
-from ...porcelain import market as porcelain_market
 from ...spotmarket import SpotMarket
 
 
@@ -60,8 +58,10 @@ StubOracleConfidence: Decimal = Decimal(0)
 
 
 class StubOracle(Oracle):
-    def __init__(self, market: Market, index: int, cache_address: PublicKey) -> None:
-        name = f"Stub Oracle for {market.symbol}"
+    def __init__(
+        self, market: LoadedMarket, index: int, cache_address: PublicKey
+    ) -> None:
+        name = f"Stub Oracle for {market.fully_qualified_symbol}"
         super().__init__(name, market)
         self.index: int = index
         self.cache_address: PublicKey = cache_address
@@ -116,19 +116,18 @@ class StubOracleProvider(OracleProvider):
         super().__init__("Stub Oracle Factory")
 
     def oracle_for_market(
-        self, context: Context, market: Market
+        self, context: Context, market: LoadedMarket
     ) -> typing.Optional[Oracle]:
-        loaded_market: LoadedMarket = porcelain_market(context, market.symbol)
-        if SpotMarket.isa(loaded_market):
-            spot_market = SpotMarket.ensure(loaded_market)
+        if SpotMarket.isa(market):
+            spot_market = SpotMarket.ensure(market)
             spot_index: int = spot_market.group.slot_by_spot_market_address(
-                loaded_market.address
+                market.address
             ).index
             return StubOracle(spot_market, spot_index, spot_market.group.cache)
-        elif PerpMarket.isa(loaded_market):
-            perp_market = PerpMarket.ensure(loaded_market)
+        elif PerpMarket.isa(market):
+            perp_market = PerpMarket.ensure(market)
             perp_index: int = perp_market.group.slot_by_perp_market_address(
-                loaded_market.address
+                market.address
             ).index
             return StubOracle(perp_market, perp_index, perp_market.group.cache)
 

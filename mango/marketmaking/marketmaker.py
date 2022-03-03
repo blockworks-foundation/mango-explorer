@@ -81,7 +81,7 @@ class MarketMaker:
 
             existing_orders = model_state.current_orders()
             self._logger.debug(
-                f"""Before reconciliation: all owned orders on current orderbook [{model_state.market.symbol}]:
+                f"""Before reconciliation: all owned orders on current orderbook [{model_state.market.fully_qualified_symbol}]:
     {mango.indent_collection_as_str(existing_orders)}"""
             )
             reconciled = self.order_reconciler.reconcile(
@@ -106,14 +106,16 @@ Ignore:
             ):
                 ids = [f"{ord.id} / {ord.client_id}" for ord in reconciled.to_cancel]
                 self._logger.info(
-                    f"Cancelling all orders on {self.market.symbol} - currently {len(ids)}: {ids}"
+                    f"Cancelling all orders on {self.market.fully_qualified_symbol} - currently {len(ids)}: {ids}"
                 )
                 cancellations = (
                     self.market_instruction_builder.build_cancel_all_orders_instructions()
                 )
             else:
                 for to_cancel in reconciled.to_cancel:
-                    self._logger.info(f"Cancelling {self.market.symbol} {to_cancel}")
+                    self._logger.info(
+                        f"Cancelling {self.market.fully_qualified_symbol} {to_cancel}"
+                    )
                     cancel = (
                         self.market_instruction_builder.build_cancel_order_instructions(
                             to_cancel, ok_if_missing=True
@@ -129,7 +131,7 @@ Ignore:
                 )
 
                 self._logger.info(
-                    f"Placing {self.market.symbol} {to_place_with_client_id}"
+                    f"Placing {self.market.fully_qualified_symbol} {to_place_with_client_id}"
                 )
                 place_order = (
                     self.market_instruction_builder.build_place_order_instructions(
@@ -138,8 +140,14 @@ Ignore:
                 )
                 place_orders += place_order
 
+            accounts_to_crank = list(model_state.accounts_to_crank)
+            if self.market_instruction_builder.open_orders_address is not None:
+                accounts_to_crank += [
+                    self.market_instruction_builder.open_orders_address
+                ]
+
             crank = self.market_instruction_builder.build_crank_instructions(
-                model_state.accounts_to_crank
+                accounts_to_crank
             )
             settle = self.market_instruction_builder.build_settle_instructions()
 
@@ -176,7 +184,7 @@ Ignore:
             self.pulse_error.on_next(exception)
 
     def __str__(self) -> str:
-        return f"""« MarketMaker for market '{self.market.symbol}' »"""
+        return f"""« MarketMaker for market '{self.market.fully_qualified_symbol}' »"""
 
     def __repr__(self) -> str:
         return f"{self}"

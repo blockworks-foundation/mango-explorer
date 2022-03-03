@@ -120,7 +120,7 @@ def instruction_builder(
 ) -> MarketInstructionBuilder:
     loaded_market: LoadedMarket = market(context, symbol)
     if dry_run:
-        return NullMarketInstructionBuilder(loaded_market.symbol)
+        return NullMarketInstructionBuilder(loaded_market.fully_qualified_symbol)
 
     if SerumMarket.isa(loaded_market):
         return SerumMarketInstructionBuilder.load(

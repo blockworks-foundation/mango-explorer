@@ -183,6 +183,10 @@ def fake_loaded_market(
 ) -> mango.LoadedMarket:
     class FakeLoadedMarket(mango.LoadedMarket):
         @property
+        def fully_qualified_symbol(self) -> str:
+            return "full:MARKET/SYMBOL"
+
+        @property
         def bids_address(self) -> PublicKey:
             return fake_seeded_public_key("bids_address")
 
@@ -270,7 +274,7 @@ def fake_order_id(index: int, price: int) -> int:
 
 
 def fake_price(
-    market: mango.Market = fake_loaded_market(),
+    market: mango.LoadedMarket = fake_loaded_market(),
     price: Decimal = Decimal(100),
     bid: Decimal = Decimal(99),
     ask: Decimal = Decimal(101),

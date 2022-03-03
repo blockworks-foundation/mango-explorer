@@ -31,7 +31,7 @@ from .instructions import build_serum_create_openorders_instructions
 from .instrumentvalue import InstrumentValue
 from .inventory import Inventory
 from .loadedmarket import LoadedMarket
-from .markets import Market, InventorySource
+from .markets import InventorySource
 from .modelstate import EventQueue
 from .observables import Disposable, LatestItemObserverSubscriber
 from .openorders import OpenOrders
@@ -137,7 +137,7 @@ def build_spot_open_orders_watcher(
         )
         open_orders_address = market_operations.create_openorders()
         logging.info(
-            f"Created {spot_market.symbol} OpenOrders at: {open_orders_address}"
+            f"Created {spot_market.fully_qualified_symbol} OpenOrders at: {open_orders_address}"
         )
 
     spot_open_orders_subscription = WebSocketAccountSubscription[OpenOrders](
@@ -193,7 +193,7 @@ def build_serum_open_orders_watcher(
         open_orders_address = create_open_orders.signers[0].public_key
 
         logging.info(
-            f"Creating OpenOrders account for market {serum_market.symbol} at {open_orders_address}."
+            f"Creating OpenOrders account for market {serum_market.fully_qualified_symbol} at {open_orders_address}."
         )
         signers: CombinableInstructions = CombinableInstructions.from_wallet(wallet)
         transaction_ids = (signers + create_open_orders).execute(context)
@@ -262,13 +262,13 @@ def build_price_watcher(
     health_check: HealthCheck,
     disposer: Disposable,
     provider_name: str,
-    market: Market,
+    market: LoadedMarket,
 ) -> LatestItemObserverSubscriber[Price]:
     oracle_provider: OracleProvider = create_oracle_provider(context, provider_name)
     oracle = oracle_provider.oracle_for_market(context, market)
     if oracle is None:
         raise Exception(
-            f"Could not find oracle for market {market.symbol} from provider {provider_name}."
+            f"Could not find oracle for market {market.fully_qualified_symbol} from provider {provider_name}."
         )
 
     initial_price = oracle.fetch_price(context)
@@ -373,7 +373,7 @@ def build_orderbook_watcher(
         or orderbook_infos[1] is None
     ):
         raise Exception(
-            f"Could not find {market.symbol} order book at addresses {orderbook_addresses}."
+            f"Could not find {market.fully_qualified_symbol} order book at addresses {orderbook_addresses}."
         )
 
     initial_orderbook: OrderBook = market.parse_account_infos_to_orderbook(

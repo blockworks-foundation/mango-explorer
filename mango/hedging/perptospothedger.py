@@ -45,14 +45,14 @@ class PerpToSpotHedger(Hedger):
             underlying_market.quote != hedging_market.quote
         ):
             raise Exception(
-                f"Market {hedging_market.symbol} cannot be used to hedge market {underlying_market.symbol}."
+                f"Market {hedging_market.fully_qualified_symbol} cannot be used to hedge market {underlying_market.fully_qualified_symbol}."
             )
 
         if not mango.Instrument.symbols_match(
             target_balance.symbol, hedging_market.base.symbol
         ):
             raise Exception(
-                f"Cannot target {target_balance.symbol} when hedging on {hedging_market.symbol}"
+                f"Cannot target {target_balance.symbol} when hedging on {hedging_market.fully_qualified_symbol}"
             )
 
         self.underlying_market: mango.PerpMarket = underlying_market
@@ -124,7 +124,7 @@ class PerpToSpotHedger(Hedger):
                 perp_position_rounded + token_balance_rounded - self.target_balance
             )
             self._logger.debug(
-                f"Delta from {self.underlying_market.symbol} to {self.hedging_market.symbol} is {delta:,.8f} {basket_token.base_instrument.symbol}, action threshold is: {self.action_threshold}"
+                f"Delta from {self.underlying_market.fully_qualified_symbol} to {self.hedging_market.fully_qualified_symbol} is {delta:,.8f} {basket_token.base_instrument.symbol}, action threshold is: {self.action_threshold}"
             )
 
             if abs(delta) > self.action_threshold:
@@ -151,14 +151,14 @@ class PerpToSpotHedger(Hedger):
                     side, adjusted_price, quantity, mango.OrderType.IOC
                 )
                 self._logger.info(
-                    f"Hedging perp position {perp_position} and token balance {token_balance} with {side} of {quantity:,.8f} at {up_or_down} ({model_state.price}) {adjusted_price:,.8f} on {self.hedging_market.symbol}\n\t{order}"
+                    f"Hedging perp position {perp_position} and token balance {token_balance} with {side} of {quantity:,.8f} at {up_or_down} ({model_state.price}) {adjusted_price:,.8f} on {self.hedging_market.fully_qualified_symbol}\n\t{order}"
                 )
                 try:
                     self.market_operations.place_order(order)
                     self.pause_counter = 0
                 except Exception:
                     self._logger.error(
-                        f"[{context.name}] Failed to hedge on {self.hedging_market.symbol} using order {order} - {traceback.format_exc()}"
+                        f"[{context.name}] Failed to hedge on {self.hedging_market.fully_qualified_symbol} using order {order} - {traceback.format_exc()}"
                     )
                     raise
 
@@ -181,4 +181,4 @@ class PerpToSpotHedger(Hedger):
             self.pulse_error.on_next(exception)
 
     def __str__(self) -> str:
-        return f"« PerpToSpotHedger for underlying '{self.underlying_market.symbol}', hedging on '{self.hedging_market.symbol}' »"
+        return f"« PerpToSpotHedger for underlying '{self.underlying_market.fully_qualified_symbol}', hedging on '{self.hedging_market.fully_qualified_symbol}' »"

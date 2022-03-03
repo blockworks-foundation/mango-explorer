@@ -60,6 +60,7 @@ from .orders import Order, OrderBook, OrderType, Side
 class MarketInstructionBuilder(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.open_orders_address: typing.Optional[PublicKey] = None
 
     @abc.abstractmethod
     def build_cancel_order_instructions(
@@ -120,7 +121,7 @@ class MarketOperations(metaclass=abc.ABCMeta):
 
     @property
     def symbol(self) -> str:
-        return self.market.symbol
+        return self.market.fully_qualified_symbol
 
     @property
     def inventory_source(self) -> InventorySource:
@@ -269,7 +270,9 @@ class NullMarketOperations(MarketOperations):
         return []
 
     def load_orderbook(self) -> OrderBook:
-        return OrderBook(self.market.symbol, NullLotSizeConverter(), [], [])
+        return OrderBook(
+            self.market.fully_qualified_symbol, NullLotSizeConverter(), [], []
+        )
 
     def load_my_orders(self, include_expired: bool = False) -> typing.Sequence[Order]:
         return []
@@ -287,4 +290,4 @@ class NullMarketOperations(MarketOperations):
         return SYSTEM_PROGRAM_ADDRESS
 
     def __str__(self) -> str:
-        return f"""« NullMarketOperations [{self.market.symbol}] »"""
+        return f"""« NullMarketOperations [{self.market.fully_qualified_symbol}] »"""

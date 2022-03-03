@@ -89,8 +89,14 @@ class SerumMarket(LoadedMarket):
     @staticmethod
     def ensure(market: Market) -> "SerumMarket":
         if not SerumMarket.isa(market):
-            raise Exception(f"Market for {market.symbol} is not a Serum market")
+            raise Exception(
+                f"Market for {market.fully_qualified_symbol} is not a Serum market"
+            )
         return typing.cast(SerumMarket, market)
+
+    @property
+    def fully_qualified_symbol(self) -> str:
+        return f"serum:{self.symbol}"
 
     @property
     def bids_address(self) -> PublicKey:
@@ -426,7 +432,9 @@ class SerumMarketOperations(MarketOperations):
     def cancel_order(
         self, order: Order, ok_if_missing: bool = False
     ) -> typing.Sequence[str]:
-        self._logger.info(f"Cancelling {self.serum_market.symbol} order {order}.")
+        self._logger.info(
+            f"Cancelling {self.serum_market.fully_qualified_symbol} order {order}."
+        )
         signers: CombinableInstructions = CombinableInstructions.from_wallet(
             self.wallet
         )
@@ -463,7 +471,7 @@ class SerumMarketOperations(MarketOperations):
             order_type=order.order_type,
         )
         self._logger.info(
-            f"Placing {self.serum_market.symbol} order {order_with_client_id}."
+            f"Placing {self.serum_market.fully_qualified_symbol} order {order_with_client_id}."
         )
         place: CombinableInstructions = (
             self.market_instruction_builder.build_place_order_instructions(
@@ -546,7 +554,7 @@ class SerumMarketOperations(MarketOperations):
         )
 
     def __str__(self) -> str:
-        return f"""« SerumMarketOperations [{self.serum_market.symbol}] »"""
+        return f"""« SerumMarketOperations [{self.serum_market.fully_qualified_symbol}] »"""
 
 
 # # 🥭 SerumMarketStub class
@@ -572,6 +580,10 @@ class SerumMarketStub(Market):
         )
         self.base: Token = base
         self.quote: Token = quote
+
+    @property
+    def fully_qualified_symbol(self) -> str:
+        return f"serum:{self.symbol}"
 
     def load(self, context: Context) -> SerumMarket:
         underlying_serum_market: PySerumMarket = PySerumMarket.load(

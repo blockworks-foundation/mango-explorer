@@ -23,7 +23,6 @@ from decimal import Decimal
 from ...context import Context
 from ...datetimes import utc_now
 from ...loadedmarket import LoadedMarket
-from ...markets import Market
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import (
     Oracle,
@@ -33,7 +32,6 @@ from ...oracle import (
     SupportedOracleFeature,
 )
 from ...orders import OrderBook
-from ...porcelain import market as porcelain_market
 
 
 # # 🥭 Market
@@ -58,7 +56,7 @@ MarketOracleConfidence: Decimal = Decimal(0)
 #
 class MarketOracle(Oracle):
     def __init__(self, market: LoadedMarket):
-        name = f"Market Oracle for {market.symbol}"
+        name = f"Market Oracle for {market.fully_qualified_symbol}"
         super().__init__(name, market)
         self.loaded_market: LoadedMarket = market
         features: SupportedOracleFeature = SupportedOracleFeature.TOP_BID_AND_OFFER
@@ -116,10 +114,9 @@ class MarketOracleProvider(OracleProvider):
         super().__init__("Market Oracle Factory")
 
     def oracle_for_market(
-        self, context: Context, market: Market
+        self, context: Context, market: LoadedMarket
     ) -> typing.Optional[Oracle]:
-        loaded_market: LoadedMarket = porcelain_market(context, market.symbol)
-        return MarketOracle(loaded_market)
+        return MarketOracle(market)
 
     def all_available_symbols(self, context: Context) -> typing.Sequence[str]:
         all_markets = context.market_lookup.all_markets()

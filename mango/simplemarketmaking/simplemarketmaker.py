@@ -252,7 +252,7 @@ class SimpleMarketMaker:
             )
 
     def __str__(self) -> str:
-        return f"""« SimpleMarketMaker for market '{self.market.symbol}' »"""
+        return f"""« SimpleMarketMaker for market '{self.market.fully_qualified_symbol}' »"""
 
     def __repr__(self) -> str:
         return f"{self}"

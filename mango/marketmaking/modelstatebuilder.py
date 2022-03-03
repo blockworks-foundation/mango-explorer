@@ -61,7 +61,7 @@ class WebsocketModelStateBuilder(ModelStateBuilder):
         return self.model_state
 
     def __str__(self) -> str:
-        return f"« WebsocketModelStateBuilder for market '{self.model_state.market.symbol}' »"
+        return f"« WebsocketModelStateBuilder for market '{self.model_state.market.fully_qualified_symbol}' »"
 
 
 # # 🥭 PollingModelStateBuilder class
@@ -247,9 +247,7 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
         )
 
     def __str__(self) -> str:
-        return (
-            f"""« SerumPollingModelStateBuilder for market '{self.market.symbol}' »"""
-        )
+        return f"""« SerumPollingModelStateBuilder for market '{self.market.fully_qualified_symbol}' »"""
 
 
 # # 🥭 SpotPollingModelStateBuilder class
@@ -372,7 +370,7 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
         )
 
     def __str__(self) -> str:
-        return f"""« SpotPollingModelStateBuilder for market '{self.market.symbol}' »"""
+        return f"""« SpotPollingModelStateBuilder for market '{self.market.fully_qualified_symbol}' »"""
 
 
 # # 🥭 PerpPollingModelStateBuilder class
@@ -490,4 +488,4 @@ class PerpPollingModelStateBuilder(PollingModelStateBuilder):
         )
 
     def __str__(self) -> str:
-        return f"""« PerpPollingModelStateBuilder for market '{self.market.symbol}' »"""
+        return f"""« PerpPollingModelStateBuilder for market '{self.market.fully_qualified_symbol}' »"""

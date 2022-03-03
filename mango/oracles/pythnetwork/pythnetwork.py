@@ -25,7 +25,7 @@ from solana.publickey import PublicKey
 from ...accountinfo import AccountInfo
 from ...context import Context
 from ...datetimes import utc_now
-from ...markets import Market
+from ...loadedmarket import LoadedMarket
 from ...observables import observable_pipeline_error_reporter
 from ...oracle import (
     Oracle,
@@ -74,11 +74,13 @@ from .layouts import (
 
 
 class PythOracle(Oracle):
-    def __init__(self, context: Context, market: Market, product_data: typing.Any):
-        name = f"Pyth Oracle for {market.symbol}"
+    def __init__(
+        self, context: Context, market: LoadedMarket, product_data: typing.Any
+    ):
+        name = f"Pyth Oracle for {market.fully_qualified_symbol}"
         super().__init__(name, market)
         self.context: Context = context
-        self.market: Market = market
+        self.market: LoadedMarket = market
         self.product_data: typing.Any = product_data
         self.address: PublicKey = product_data.address
         features: SupportedOracleFeature = (
@@ -153,7 +155,9 @@ class PythOracleProvider(OracleProvider):
         super().__init__(f"Pyth Oracle Factory [{self.address}]")
         self.context: Context = context
 
-    def oracle_for_market(self, _: Context, market: Market) -> typing.Optional[Oracle]:
+    def oracle_for_market(
+        self, _: Context, market: LoadedMarket
+    ) -> typing.Optional[Oracle]:
         pyth_symbol = self._market_symbol_to_pyth_symbol(market.symbol)
         products = self._fetch_all_pyth_products(self.context, self.address)
         for product in products:

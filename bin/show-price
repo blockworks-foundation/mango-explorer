@@ -38,7 +38,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     oracle = oracle_provider.oracle_for_market(context, market)
     if oracle is None:
         mango.output(
-            f"Could not find oracle for market {market.symbol} from provider {args.provider}."
+            f"Could not find oracle for market {market.fully_qualified_symbol} from provider {args.provider}."
         )
     else:
         if not args.stream:

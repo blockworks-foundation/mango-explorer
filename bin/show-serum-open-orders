@@ -41,7 +41,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
         market.quote,
     )
     mango.output(
-        f"Found {len(all_open_orders_for_market)} Serum OpenOrders account(s) for market {market.symbol}."
+        f"Found {len(all_open_orders_for_market)} Serum OpenOrders account(s) for market {market.fully_qualified_symbol}."
     )
     for open_orders in all_open_orders_for_market:
         mango.output(open_orders)

@@ -97,7 +97,9 @@ def _polling_model_state_builder_factory(
             group, account, mango.PerpMarket.ensure(market), oracle
         )
     else:
-        raise Exception(f"Could not determine type of market {market.symbol}")
+        raise Exception(
+            f"Could not determine type of market {market.fully_qualified_symbol}: {market}"
+        )
 
 
 def _polling_serum_model_state_builder_factory(
@@ -132,7 +134,7 @@ def _polling_serum_model_state_builder_factory(
     )
     if len(all_open_orders) == 0:
         raise Exception(
-            f"Could not find serum openorders account owned by {wallet.address} for market {market.symbol}."
+            f"Could not find serum openorders account owned by {wallet.address} for market {market.fully_qualified_symbol}."
         )
     return SerumPollingModelStateBuilder(
         all_open_orders[0].address,
@@ -160,7 +162,7 @@ def _polling_spot_model_state_builder_factory(
     all_open_orders_addresses: typing.Sequence[PublicKey] = account.spot_open_orders
     if open_orders_address is None:
         raise Exception(
-            f"Could not find spot openorders in account {account.address} for market {market.symbol}."
+            f"Could not find spot openorders in account {account.address} for market {market.fully_qualified_symbol}."
         )
     return SpotPollingModelStateBuilder(
         open_orders_address,
@@ -350,7 +352,9 @@ def _websocket_model_state_builder_factory(
             context, websocket_manager, health_check, perp_market
         )
     else:
-        raise Exception(f"Could not determine type of market {market.symbol}")
+        raise Exception(
+            f"Could not determine type of market {market.fully_qualified_symbol} - {market}"
+        )
 
     model_state = ModelState(
         order_owner,

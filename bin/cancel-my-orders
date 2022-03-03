@@ -53,7 +53,9 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     )
     orders = market_operations.load_my_orders(include_expired=True)
     if len(orders) == 0:
-        mango.output(f"No open orders on {market_operations.market.symbol}")
+        mango.output(
+            f"No open orders on {market_operations.market.fully_qualified_symbol}"
+        )
     else:
         if mango.PerpMarket.isa(market_operations.market):
             cancel_all = mango.PerpMarketOperations.ensure(

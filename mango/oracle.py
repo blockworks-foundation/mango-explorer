@@ -23,7 +23,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from .context import Context
-from .markets import Market
+from .loadedmarket import LoadedMarket
 
 
 # # 🥭 Oracles
@@ -56,7 +56,7 @@ class OracleSource:
         provider_name: str,
         source_name: str,
         supports: SupportedOracleFeature,
-        market: Market,
+        market: LoadedMarket,
     ) -> None:
         self.provider_name = provider_name
         self.source_name = source_name
@@ -64,7 +64,7 @@ class OracleSource:
         self.market = market
 
     def __str__(self) -> str:
-        return f"« OracleSource '{self.source_name}' from '{self.provider_name}' for market '{self.market.symbol}' [{self.supports}] »"
+        return f"« OracleSource '{self.source_name}' from '{self.provider_name}' for market '{self.market.fully_qualified_symbol}' [{self.supports}] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -79,7 +79,7 @@ class Price:
         self,
         source: OracleSource,
         timestamp: datetime,
-        market: Market,
+        market: LoadedMarket,
         top_bid: Decimal,
         mid_price: Decimal,
         top_ask: Decimal,
@@ -87,7 +87,7 @@ class Price:
     ) -> None:
         self.source: OracleSource = source
         self.timestamp: datetime = timestamp
-        self.market: Market = market
+        self.market: LoadedMarket = market
         self.top_bid: Decimal = top_bid
         self.mid_price: Decimal = mid_price
         self.top_ask: Decimal = top_ask
@@ -101,7 +101,7 @@ class Price:
         confidence = ""
         if self.source.supports & SupportedOracleFeature.CONFIDENCE:
             confidence = f" +/- {self.confidence:,.8f}"
-        return f"« Price [{self.source.provider_name}] {self.market.symbol} at {self.timestamp}: {self.mid_price:,.8f}{confidence} »"
+        return f"« Price [{self.source.provider_name}] {self.market.fully_qualified_symbol} at {self.timestamp}: {self.mid_price:,.8f}{confidence} »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -112,7 +112,7 @@ class Price:
 # Derived versions of this class can fetch prices for a specific market.
 #
 class Oracle(metaclass=abc.ABCMeta):
-    def __init__(self, name: str, market: Market) -> None:
+    def __init__(self, name: str, market: LoadedMarket) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.name = name
         self.market = market
@@ -136,7 +136,7 @@ class Oracle(metaclass=abc.ABCMeta):
         )
 
     def __str__(self) -> str:
-        return f"« Oracle {self.name} [{self.market.symbol}] »"
+        return f"« Oracle {self.name} [{self.market.fully_qualified_symbol}] »"
 
     def __repr__(self) -> str:
         return f"{self}"
@@ -152,7 +152,7 @@ class OracleProvider(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def oracle_for_market(
-        self, context: Context, market: Market
+        self, context: Context, market: LoadedMarket
     ) -> typing.Optional[Oracle]:
         raise NotImplementedError(
             "OracleProvider.create_oracle_for_market() is not implemented on the base type."

@@ -181,10 +181,12 @@ def cleanup(
     dry_run: bool,
 ) -> None:
     market_operations: mango.MarketOperations = mango.operations(
-        context, wallet, account, market.symbol, dry_run
+        context, wallet, account, market.fully_qualified_symbol, dry_run
     )
     market_instruction_builder: mango.MarketInstructionBuilder = (
-        mango.instruction_builder(context, wallet, account, market.symbol, dry_run)
+        mango.instruction_builder(
+            context, wallet, account, market.fully_qualified_symbol, dry_run
+        )
     )
     cancels: mango.CombinableInstructions = mango.CombinableInstructions.empty()
     orders = market_operations.load_my_orders(include_expired=True)
@@ -221,7 +223,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     # The market index is also the index of the base token in the group's token list.
     if market.quote != group.shared_quote_token:
         raise Exception(
-            f"Group {group.name} uses shared quote token {group.shared_quote_token.symbol}/{group.shared_quote_token.mint}, but market {market.symbol} uses quote token {market.quote.symbol}/{market.quote.mint}."
+            f"Group {group.name} uses shared quote token {group.shared_quote_token.symbol}/{group.shared_quote_token.mint}, but market {market.fully_qualified_symbol} uses quote token {market.quote.symbol}/{market.quote.mint}."
         )
 
     cleanup(context, wallet, account, market, args.dry_run)
@@ -230,7 +232,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     if args.hedging_market is not None:
         if not mango.PerpMarket.isa(market):
             raise Exception(
-                f"Cannot hedge - market {market.symbol} is not a perp market."
+                f"Cannot hedge - market {market.fully_qualified_symbol} is not a perp market."
             )
 
         underlying_market = mango.PerpMarket.ensure(market)
@@ -243,7 +245,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
                 f"MarketOperations for {args.hedging_market} is not a SpotMarketOperations."
             )
 
-        logging.info(f"Hedging on {hedging_ops.market.symbol}")
+        logging.info(f"Hedging on {hedging_ops.market.fully_qualified_symbol}")
 
         target_balance: typing.Optional[
             mango.TargetBalance
@@ -287,7 +289,9 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     logging.info(f"Desired orders chain: {desired_orders_chain}")
 
     market_instruction_builder: mango.MarketInstructionBuilder = (
-        mango.instruction_builder(context, wallet, account, market.symbol, args.dry_run)
+        mango.instruction_builder(
+            context, wallet, account, market.fully_qualified_symbol, args.dry_run
+        )
     )
 
     market_maker = mango.marketmaking.MarketMaker(
@@ -310,7 +314,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     oracle = oracle_provider.oracle_for_market(context, oracle_market)
     if oracle is None:
         raise Exception(
-            f"Could not find oracle for market {oracle_market.symbol} from provider {args.oracle_provider}."
+            f"Could not find oracle for market {oracle_market.fully_qualified_symbol} from provider {args.oracle_provider}."
         )
 
     model_state_builder: mango.marketmaking.ModelStateBuilder = (

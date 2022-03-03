@@ -93,8 +93,14 @@ class SpotMarket(LoadedMarket):
     @staticmethod
     def ensure(market: Market) -> "SpotMarket":
         if not SpotMarket.isa(market):
-            raise Exception(f"Market for {market.symbol} is not a Spot market")
+            raise Exception(
+                f"Market for {market.fully_qualified_symbol} is not a Spot market"
+            )
         return typing.cast(SpotMarket, market)
+
+    @property
+    def fully_qualified_symbol(self) -> str:
+        return f"spot:{self.symbol}"
 
     @property
     def bids_address(self) -> PublicKey:
@@ -410,7 +416,7 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         )
 
     def __str__(self) -> str:
-        return f"« SpotMarketInstructionBuilder [{self.spot_market.symbol}] »"
+        return f"« SpotMarketInstructionBuilder [{self.spot_market.fully_qualified_symbol}] »"
 
 
 # # 🥭 SpotMarketOperations class
@@ -459,7 +465,9 @@ class SpotMarketOperations(MarketOperations):
     def cancel_order(
         self, order: Order, ok_if_missing: bool = False
     ) -> typing.Sequence[str]:
-        self._logger.info(f"Cancelling {self.spot_market.symbol} order {order}.")
+        self._logger.info(
+            f"Cancelling {self.spot_market.fully_qualified_symbol} order {order}."
+        )
         signers: CombinableInstructions = CombinableInstructions.from_wallet(
             self.wallet
         )
@@ -486,7 +494,9 @@ class SpotMarketOperations(MarketOperations):
         order_with_client_id: Order = order.with_update(
             client_id=client_id
         ).with_update(owner=self.open_orders_address or SYSTEM_PROGRAM_ADDRESS)
-        self._logger.info(f"Placing {self.spot_market.symbol} order {order}.")
+        self._logger.info(
+            f"Placing {self.spot_market.fully_qualified_symbol} order {order}."
+        )
         place: CombinableInstructions = (
             self.market_instruction_builder.build_place_order_instructions(
                 order_with_client_id
@@ -577,7 +587,7 @@ class SpotMarketOperations(MarketOperations):
         )
 
     def __str__(self) -> str:
-        return f"« SpotMarketOperations [{self.spot_market.symbol}] »"
+        return f"« SpotMarketOperations [{self.spot_market.fully_qualified_symbol}] »"
 
 
 # # 🥭 SpotMarketStub class
@@ -605,6 +615,10 @@ class SpotMarketStub(Market):
         self.base: Token = base
         self.quote: Token = quote
         self.group_address: PublicKey = group_address
+
+    @property
+    def fully_qualified_symbol(self) -> str:
+        return f"spot:{self.symbol}"
 
     def load(self, context: Context, group: typing.Optional[Group]) -> SpotMarket:
         actual_group: Group = group or Group.load(context, self.group_address)

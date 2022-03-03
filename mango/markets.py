@@ -83,6 +83,13 @@ class Market(metaclass=abc.ABCMeta):
     def symbol(self) -> str:
         return f"{self.base.symbol}/{self.quote.symbol}"
 
+    @property
+    @abc.abstractproperty
+    def fully_qualified_symbol(self) -> str:
+        raise NotImplementedError(
+            "Market.fully_qualified_symbol is not implemented on the base type."
+        )
+
     def __str__(self) -> str:
         return f"« Market {self.symbol} »"
 

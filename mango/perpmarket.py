@@ -158,12 +158,18 @@ class PerpMarket(LoadedMarket):
     @staticmethod
     def ensure(market: Market) -> "PerpMarket":
         if not PerpMarket.isa(market):
-            raise Exception(f"Market for {market.symbol} is not a Perp market")
+            raise Exception(
+                f"Market for {market.fully_qualified_symbol} is not a Perp market"
+            )
         return typing.cast(PerpMarket, market)
 
     @property
     def symbol(self) -> str:
         return f"{self.base.symbol}-PERP"
+
+    @property
+    def fully_qualified_symbol(self) -> str:
+        return f"perp:{self.symbol}"
 
     @property
     def group(self) -> Group:
@@ -286,10 +292,6 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
     def build_cancel_order_instructions(
         self, order: Order, ok_if_missing: bool = False
     ) -> CombinableInstructions:
-        if self.perp_market.underlying_perp_market is None:
-            raise Exception(
-                f"PerpMarket {self.perp_market.symbol} has not been loaded."
-            )
         return build_perp_cancel_order_instructions(
             self.context,
             self.wallet,
@@ -300,10 +302,6 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
         )
 
     def build_place_order_instructions(self, order: Order) -> CombinableInstructions:
-        if self.perp_market.underlying_perp_market is None:
-            raise Exception(
-                f"PerpMarket {self.perp_market.symbol} has not been loaded."
-            )
         return build_perp_place_order_instructions(
             self.context,
             self.wallet,
@@ -327,11 +325,6 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
     def build_crank_instructions(
         self, addresses: typing.Sequence[PublicKey], limit: Decimal = Decimal(32)
     ) -> CombinableInstructions:
-        if self.perp_market.underlying_perp_market is None:
-            raise Exception(
-                f"PerpMarket {self.perp_market.symbol} has not been loaded."
-            )
-
         distinct_addresses: typing.List[PublicKey] = [self.account.address]
         for address in addresses:
             if address not in distinct_addresses:
@@ -371,10 +364,6 @@ class PerpMarketInstructionBuilder(MarketInstructionBuilder):
     def build_cancel_all_orders_instructions(
         self, limit: Decimal = Decimal(32)
     ) -> CombinableInstructions:
-        if self.perp_market.underlying_perp_market is None:
-            raise Exception(
-                f"PerpMarket {self.perp_market.symbol} has not been loaded."
-            )
         return build_perp_cancel_all_orders_instructions(
             self.context,
             self.wallet,
@@ -419,14 +408,10 @@ class PerpMarketOperations(MarketOperations):
     def perp_market(self) -> PerpMarket:
         return self.market_instruction_builder.perp_market
 
-    @property
-    def market_name(self) -> str:
-        return self.perp_market.symbol
-
     def cancel_order(
         self, order: Order, ok_if_missing: bool = False
     ) -> typing.Sequence[str]:
-        self._logger.info(f"Cancelling {self.market_name} order {order}.")
+        self._logger.info(f"Cancelling {self.symbol} order {order}.")
         signers: CombinableInstructions = CombinableInstructions.from_wallet(
             self.wallet
         )
@@ -447,7 +432,7 @@ class PerpMarketOperations(MarketOperations):
             self.wallet
         )
         order_with_client_id: Order = order.with_update(client_id=client_id)
-        self._logger.info(f"Placing {self.market_name} order {order_with_client_id}.")
+        self._logger.info(f"Placing {self.symbol} order {order_with_client_id}.")
         place: CombinableInstructions = (
             self.market_instruction_builder.build_place_order_instructions(
                 order_with_client_id
@@ -507,7 +492,7 @@ class PerpMarketOperations(MarketOperations):
         )
 
     def __str__(self) -> str:
-        return f"""« PerpMarketOperations [{self.market_name}] »"""
+        return f"""« PerpMarketOperations [{self.symbol}] »"""
 
 
 # # 🥭 PerpMarketStub class
@@ -533,6 +518,10 @@ class PerpMarketStub(Market):
             RaisingLotSizeConverter(),
         )
         self.group_address: PublicKey = group_address
+
+    @property
+    def fully_qualified_symbol(self) -> str:
+        return f"perp:{self.symbol}"
 
     def load(
         self, context: Context, group: typing.Optional[Group] = None
