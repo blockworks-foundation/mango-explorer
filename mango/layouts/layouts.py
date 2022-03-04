@@ -1629,6 +1629,22 @@ CREATE_MANGO_ACCOUNT = construct.Struct(
 )
 
 
+# /// Cancel all perp open orders for one side of the book
+# ///
+# /// Accounts expected: 6
+# /// 0. `[]` mango_group_ai - MangoGroup
+# /// 1. `[writable]` mango_account_ai - MangoAccount
+# /// 2. `[signer]` owner_ai - Owner of Mango Account
+# /// 3. `[writable]` perp_market_ai - PerpMarket
+# /// 4. `[writable]` bids_ai - Bids acc
+# /// 5. `[writable]` asks_ai - Asks acc
+CANCEL_PERP_ORDER_SIDE = construct.Struct(
+    "variant" / construct.Const(57, construct.BytesInteger(4, swapped=True)),
+    "side" / DecimalAdapter(1),  # { buy: 0, sell: 1 }
+    "limit" / DecimalAdapter(1),
+)
+
+
 # /// https://github.com/blockworks-foundation/mango-v3/pull/97/
 # /// Set delegate authority to mango account which can do everything regular account can do
 # /// except Withdraw and CloseMangoAccount. Set to Pubkey::default() to revoke delegate
@@ -1792,7 +1808,7 @@ InstructionParsersByVariant = {
     54: UNSPECIFIED,  # RESOLVE_DUST,
     55: CREATE_MANGO_ACCOUNT,  # CREATE_MANGO_ACCOUNT,
     56: UNSPECIFIED,  # UPGRADE_MANGO_ACCOUNT_V0_V1,
-    57: UNSPECIFIED,  # CANCEL_PERP_ORDER_SIDE,
+    57: CANCEL_PERP_ORDER_SIDE,  # CANCEL_PERP_ORDER_SIDE,
     58: SET_DELEGATE,  # SET_DELEGATE,
     59: UNSPECIFIED,  # CHANGE_SPOT_MARKET_PARAMS,
     60: CREATE_SPOT_OPEN_ORDERS,  # CREATE_SPOT_OPEN_ORDERS,

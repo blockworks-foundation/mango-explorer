@@ -933,6 +933,104 @@ def build_perp_cancel_order_instructions(
     return CombinableInstructions(signers=[], instructions=instructions)
 
 
+# # 🥭 build_perp_cancel_all_orders_instructions function
+#
+# Builds the instructions necessary for cancelling all perp orders.
+#
+def build_perp_cancel_all_orders_instructions(
+    context: Context,
+    wallet: Wallet,
+    account: IAccount,
+    perp_market_details: PerpMarketDetails,
+    limit: Decimal = Decimal(32),
+) -> CombinableInstructions:
+    # Accounts expected by this instruction (seems to be the same as CANCEL_PERP_ORDER and CANCEL_PERP_ORDER_BY_CLIENT_ID):
+    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
+    # { isSigner: true, isWritable: false, pubkey: ownerPk },
+    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
+    # { isSigner: false, isWritable: true, pubkey: bidsPk },
+    # { isSigner: false, isWritable: true, pubkey: asksPk },
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(
+                    is_signer=False, is_writable=False, pubkey=account.group_address
+                ),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+                AccountMeta(
+                    is_signer=False,
+                    is_writable=True,
+                    pubkey=perp_market_details.address,
+                ),
+                AccountMeta(
+                    is_signer=False, is_writable=True, pubkey=perp_market_details.bids
+                ),
+                AccountMeta(
+                    is_signer=False, is_writable=True, pubkey=perp_market_details.asks
+                ),
+            ],
+            program_id=context.mango_program_address,
+            data=layouts.CANCEL_ALL_PERP_ORDERS.build({"limit": limit}),
+        )
+    ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
+# # 🥭 build_perp_cancel_all_side_instructions function
+#
+# Builds the instructions necessary for cancelling all perp orders on a given side.
+#
+def build_perp_cancel_all_side_instructions(
+    context: Context,
+    wallet: Wallet,
+    account: IAccount,
+    perp_market_details: PerpMarketDetails,
+    side: Side,
+    limit: Decimal = Decimal(32),
+) -> CombinableInstructions:
+    # { buy: 0, sell: 1 }
+    raw_side: int = 1 if side == Side.SELL else 0
+
+    # /// Cancel all perp open orders for one side of the book
+    # ///
+    # /// Accounts expected: 6
+    # /// 0. `[]` mango_group_ai - MangoGroup
+    # /// 1. `[writable]` mango_account_ai - MangoAccount
+    # /// 2. `[signer]` owner_ai - Owner of Mango Account
+    # /// 3. `[writable]` perp_market_ai - PerpMarket
+    # /// 4. `[writable]` bids_ai - Bids acc
+    # /// 5. `[writable]` asks_ai - Asks acc
+    instructions = [
+        TransactionInstruction(
+            keys=[
+                AccountMeta(
+                    is_signer=False, is_writable=False, pubkey=account.group_address
+                ),
+                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
+                AccountMeta(
+                    is_signer=False,
+                    is_writable=True,
+                    pubkey=perp_market_details.address,
+                ),
+                AccountMeta(
+                    is_signer=False, is_writable=True, pubkey=perp_market_details.bids
+                ),
+                AccountMeta(
+                    is_signer=False, is_writable=True, pubkey=perp_market_details.asks
+                ),
+            ],
+            program_id=context.mango_program_address,
+            data=layouts.CANCEL_PERP_ORDER_SIDE.build(
+                {"side": raw_side, "limit": limit}
+            ),
+        )
+    ]
+    return CombinableInstructions(signers=[], instructions=instructions)
+
+
 # /// Place an order on a perp market
 # ///
 # /// In case this order is matched, the corresponding order structs on both
@@ -1051,51 +1149,6 @@ def build_perp_place_order_instructions(
         )
     ]
 
-    return CombinableInstructions(signers=[], instructions=instructions)
-
-
-# # 🥭 build_perp_cancel_all_orders_instructions function
-#
-# Builds the instructions necessary for cancelling all perp orders.
-#
-def build_perp_cancel_all_orders_instructions(
-    context: Context,
-    wallet: Wallet,
-    account: IAccount,
-    perp_market_details: PerpMarketDetails,
-    limit: Decimal = Decimal(32),
-) -> CombinableInstructions:
-    # Accounts expected by this instruction (seems to be the same as CANCEL_PERP_ORDER and CANCEL_PERP_ORDER_BY_CLIENT_ID):
-    # { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
-    # { isSigner: false, isWritable: true, pubkey: mangoAccountPk },
-    # { isSigner: true, isWritable: false, pubkey: ownerPk },
-    # { isSigner: false, isWritable: true, pubkey: perpMarketPk },
-    # { isSigner: false, isWritable: true, pubkey: bidsPk },
-    # { isSigner: false, isWritable: true, pubkey: asksPk },
-    instructions = [
-        TransactionInstruction(
-            keys=[
-                AccountMeta(
-                    is_signer=False, is_writable=False, pubkey=account.group_address
-                ),
-                AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
-                AccountMeta(is_signer=True, is_writable=False, pubkey=wallet.address),
-                AccountMeta(
-                    is_signer=False,
-                    is_writable=True,
-                    pubkey=perp_market_details.address,
-                ),
-                AccountMeta(
-                    is_signer=False, is_writable=True, pubkey=perp_market_details.bids
-                ),
-                AccountMeta(
-                    is_signer=False, is_writable=True, pubkey=perp_market_details.asks
-                ),
-            ],
-            program_id=context.mango_program_address,
-            data=layouts.CANCEL_ALL_PERP_ORDERS.build({"limit": limit}),
-        )
-    ]
     return CombinableInstructions(signers=[], instructions=instructions)
 
 

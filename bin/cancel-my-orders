@@ -57,6 +57,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
             f"No open orders on {market_operations.market.fully_qualified_symbol}"
         )
     else:
+        signatures: typing.Sequence[str]
         if mango.PerpMarket.isa(market_operations.market):
             cancel_all = mango.PerpMarketOperations.ensure(
                 market_operations
@@ -65,13 +66,14 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
             signers: mango.CombinableInstructions = (
                 mango.CombinableInstructions.from_wallet(wallet)
             )
-            cancel_all_signatures = (signers + cancel_all).execute(context)
-            mango.output(f"Cancelling all perp orders: {cancel_all_signatures}")
+            signatures = (signers + cancel_all).execute(context)
+            mango.output(f"Cancelling all perp orders: {signatures}")
         else:
-            signatures: typing.List[str] = []
+            individual_signatures: typing.List[str] = []
             for order in orders:
                 mango.output("Cancelling:", order)
-                signatures += market_operations.cancel_order(order)
+                individual_signatures += market_operations.cancel_order(order)
+            signatures = individual_signatures
 
         if args.wait:
             mango.output("Waiting on transaction signatures:")

@@ -476,7 +476,7 @@ class MangoInstruction:
         elif instruction_type == InstructionType.UpgradeMangoAccountV0V1:
             pass
         elif instruction_type == InstructionType.CancelPerpOrderSide:
-            pass
+            additional_data = f"side: {Side.from_value(self.instruction_data.side)}, limit: {self.instruction_data.limit}"
         elif instruction_type == InstructionType.SetDelegate:
             pass
         elif instruction_type == InstructionType.ChangeSpotMarketParams:
