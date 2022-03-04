@@ -399,7 +399,6 @@ class MangoInstruction:
         elif instruction_type == InstructionType.SetOracle:
             pass
         elif instruction_type == InstructionType.SettleFunds:
-            additional_data = f"order ID: {self.instruction_data.order_id}, side: {Side.from_value(self.instruction_data.side)}"
             pass
         elif instruction_type == InstructionType.CancelSpotOrder:
             additional_data = f"order ID: {self.instruction_data.order_id}, side: {Side.from_value(self.instruction_data.side)}"
