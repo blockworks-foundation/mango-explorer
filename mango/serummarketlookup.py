@@ -100,7 +100,6 @@ class SerumMarketLookup(MarketLookup):
         base_symbol, quote_symbol = symbol.split("/")
         base_data = SerumMarketLookup._find_data_by_symbol(base_symbol, self.token_data)
         if base_data is None:
-            self._logger.warning(f"Could not find data for base token '{base_symbol}'")
             return None
         base = Token(
             base_data["symbol"],
