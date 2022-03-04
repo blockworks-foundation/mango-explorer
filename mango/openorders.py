@@ -232,13 +232,13 @@ class OpenOrders(AddressableAccount):
     def __str__(self) -> str:
         placed_orders = "\n        ".join(map(str, self.placed_orders)) or "None"
 
-        return f"""« OpenOrders [{self.address}]:
+        return f"""« OpenOrders {self.base.symbol}/{self.quote.symbol} [{self.address}]:
     Flags: {self.account_flags}
     Program ID: {self.program_address}
     Market: {self.market}
     Owner: {self.owner}
-    Base Token: {self.base_token_free:,.8f} of {self.base_token_total:,.8f}
-    Quote Token: {self.quote_token_free:,.8f} of {self.quote_token_total:,.8f}
+    Base Token [{self.base.decimals} decimals]: {self.base_token_free:,.8f} of {self.base_token_total:,.8f}
+    Quote Token [{self.quote.decimals} decimals]: {self.quote_token_free:,.8f} of {self.quote_token_total:,.8f}
     Referrer Rebate Accrued: {self.referrer_rebate_accrued:,.8f}
     Orders:
         {placed_orders}

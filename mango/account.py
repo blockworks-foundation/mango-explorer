@@ -800,7 +800,7 @@ class Account(AddressableAccount):
             )
 
             spot_open_orders: typing.Optional[OpenOrders] = None
-            spot_health_base: Decimal = Decimal(0)
+            spot_health_base: Decimal = slot.net_value.value
             spot_health_quote: Decimal = Decimal(0)
             spot_bids_base_net: Decimal = Decimal(0)
             spot_asks_base_net: Decimal = Decimal(0)
@@ -1045,6 +1045,7 @@ class Account(AddressableAccount):
                 "SpotOpenValue": base_open_total_value,
                 "BaseUnsettled": base_open_unsettled,
                 "BaseLocked": base_open_locked,
+                "BaseLockedValue": base_open_locked * price.value,
                 "QuoteUnsettled": quote_open_unsettled,
                 "QuoteLocked": quote_open_locked,
                 "PerpPositionSize": perp_position,
@@ -1094,7 +1095,7 @@ class Account(AddressableAccount):
             liabilities = quote
 
         spot_borrow_health = (
-            non_quote["SpotBorrowValue"]
+            non_quote.loc[non_quote["SpotHealthBaseValue"] < 0, "SpotHealthBaseValue"]
             * non_quote[f"Spot{weighting_name}LiabilityWeight"]
         ).sum()
 
@@ -1106,7 +1107,7 @@ class Account(AddressableAccount):
         liabilities += spot_borrow_health + perp_health_base_liability
 
         spot_deposit_health = (
-            (non_quote["SpotDepositValue"] + non_quote["QuoteLocked"])
+            (non_quote.loc[non_quote["SpotHealthBaseValue"] > 0, "SpotHealthBaseValue"])
             * non_quote[f"Spot{weighting_name}AssetWeight"]
         ).sum()
 
@@ -1140,6 +1141,7 @@ class Account(AddressableAccount):
 
         assets += (
             non_quote["SpotDepositValue"].sum()
+            + non_quote["BaseLockedValue"].sum()
             + non_quote["PerpAsset"].sum()
             + non_quote["QuoteUnsettled"].sum()
             + non_quote["QuoteLocked"].sum()

@@ -1,0 +1,17 @@
+#! /usr/bin/env bash
+
+export CLUSTER_NAME=mainnet
+show-account-info --address 98pjRuQjK3qA6gXts96PqZT4Ze5QmnCmt3QYjhbUSPue --filename group.json
+show-account-info --address EBDRoayCDDUvDgCimta45ajQeXbexv7aKqJubruqpyvu --filename cache.json
+show-account-info --address 6jyVEZe4xsZFgAjvkjrvBzjkcMPFnSrA3VKbse7ZYU8Y --filename openorders0.json
+show-account-info --address 5nGhxbggg9j48TmckwbK1KjPJBSejb3cAdfGUfbSDowq --filename openorders1.json
+show-account-info --address Bds3ekdYv9D3GPR7Gve1rTGBpA1zdqcaFdE2f1XBDAqx --filename openorders3.json
+show-account-info --address 5moUDvrARjdW93xX4wpmScidTwxh4s6jj1mGqK8EY1zS --filename openorders5.json
+show-account-info --address 4RmBQyKRGKov16FnDnpJRzKwvcY7hHP3uZPtFUwcLpk1 --filename openorders6.json
+show-account-info --address 6Dw9yBDBMQVsSvxh6XU5qWtT6W3Z2HjCpP9DsDzF33xQ --filename openorders8.json
+show-account-info --address 5DDwuvRvBR475fDcvH5hryFcf17AGhiUWDP1JEKjCfCA --filename openorders10.json
+show-account-info --address 7s9xAvFtSPQCcfuaoJVtJwGMXAjCnGpoucLq3j8hvKrx --filename openorders11.json
+show-account-info --address 4iJAGP8i5HfaukZrbLWpZKYiAihEwjde3pjNnYPknriD --filename openorders12.json
+show-account-info --address 9tTRACa6BjNFbgxD8YZ7WZhoqyMWUBqnysb39xzVpB8n --filename openorders13.json
+
+show-account-info --address F3TTrgxjrkAHdS9zEidtwU5VXyvMgr5poii4HYatZheH --filename account.json
