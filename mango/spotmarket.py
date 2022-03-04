@@ -298,21 +298,38 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
         if order.match_limit != Order.DefaultMatchLimit:
             self._logger.warning("Ignoring match_limit - not supported on Spot markets")
 
-        create_open_orders: bool = False
         slot = self.group.slot_by_spot_market_address(self.spot_market.address)
         market_index = slot.index
         open_orders_address: typing.Optional[
             PublicKey
         ] = self.account.spot_open_orders_by_index[market_index]
 
+        instructions = CombinableInstructions.empty()
         if open_orders_address is None:
             # Spot OpenOrders accounts use a PDA as of v3.3
             open_orders_address = self.spot_market.derive_open_orders_address(
                 self.context, self.account
             )
-            create_open_orders = True
+            instructions += build_spot_create_openorders_instructions(
+                self.context,
+                self.wallet,
+                self.group,
+                self.account,
+                self.spot_market,
+                open_orders_address,
+            )
 
-        instructions = build_spot_place_order_instructions(
+            # This line is a little nasty. Now that we know we have an OpenOrders account at
+            # this address, update the IAccount so that future uses (like later in this
+            # method) have access to it in the right place.
+            #
+            # This might cause problems if this instruction is never sent or the transaction
+            # fails though.
+            self.account.update_spot_open_orders_for_market(
+                market_index, open_orders_address
+            )
+
+        instructions += build_spot_place_order_instructions(
             self.context,
             self.wallet,
             self.group,
@@ -325,13 +342,6 @@ class SpotMarketInstructionBuilder(MarketInstructionBuilder):
             order.quantity,
             order.client_id,
             self.fee_discount_token_address,
-            create_open_orders,
-        )
-
-        # This line is a little nasty. Now that we know we have an OpenOrders account at this address, update
-        # the IAccount so that future uses (like later in this method) have access to it in the right place.
-        self.account.update_spot_open_orders_for_market(
-            market_index, open_orders_address
         )
 
         return instructions

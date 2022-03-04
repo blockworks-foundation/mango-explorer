@@ -675,14 +675,8 @@ def build_spot_place_order_instructions(
     quantity: Decimal,
     client_id: int,
     fee_discount_address: PublicKey,
-    create_open_orders: bool,
 ) -> CombinableInstructions:
     instructions: CombinableInstructions = CombinableInstructions.empty()
-
-    if create_open_orders:
-        instructions += build_spot_create_openorders_instructions(
-            context, wallet, group, account, spot_market, open_orders_address
-        )
 
     pyserum_market: PySerumMarket = spot_market.underlying_serum_market
     serum_order_type: pyserum.enums.OrderType = order_type.to_serum()
