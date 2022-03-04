@@ -289,5 +289,21 @@ class NullMarketOperations(MarketOperations):
     def ensure_openorders(self) -> PublicKey:
         return SYSTEM_PROGRAM_ADDRESS
 
+    def market_buy(
+        self, quantity: Decimal, max_slippage: Decimal
+    ) -> typing.Sequence[str]:
+        self._logger.info(
+            f"[Dry Run] Not market buying {quantity} with max slippage {max_slippage}."
+        )
+        return []
+
+    def market_sell(
+        self, quantity: Decimal, max_slippage: Decimal
+    ) -> typing.Sequence[str]:
+        self._logger.info(
+            f"[Dry Run] Not market selling {quantity} with max slippage {max_slippage}."
+        )
+        return []
+
     def __str__(self) -> str:
         return f"""« NullMarketOperations [{self.market.fully_qualified_symbol}] »"""
