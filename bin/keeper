@@ -156,6 +156,7 @@ def build_consume_events_instructions(
 
 
 with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    health = mango.HealthCheck()
     wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
     signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(
         wallet
@@ -279,6 +280,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
                 else:
                     mango.output("Dry run - not running instructions:")
                     mango.output(combined.report(context.client.instruction_reporter))
+                health.ping("keeper")
         except KeyboardInterrupt:
             logging.info("Keeper stopping...")
             run = False
