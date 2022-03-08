@@ -1547,3 +1547,168 @@ def build_mango_register_referrer_id_instructions(
     return CombinableInstructions(
         signers=[], instructions=[register_referrer_id_instruction]
     )
+
+
+def build_mango_cache_root_banks_instructions(
+    context: Context,
+    group: IGroup,
+    root_banks: typing.Sequence[PublicKey],
+) -> CombinableInstructions:
+    # /// DEPRECATED - caching of root banks now happens in update index
+    # /// Cache root banks
+    # ///
+    # /// Accounts expected: 2 + Root Banks
+    # /// 0. `[]` mango_group_ai
+    # /// 1. `[writable]` mango_cache_ai
+    instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=group.cache),
+            *list(
+                [
+                    AccountMeta(
+                        is_signer=False,
+                        is_writable=False,
+                        pubkey=root_bank,
+                    )
+                    for root_bank in root_banks
+                ]
+            ),
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.CACHE_ROOT_BANKS.build({}),
+    )
+    return CombinableInstructions(signers=[], instructions=[instruction])
+
+
+def build_mango_cache_prices_instructions(
+    context: Context,
+    group: IGroup,
+    oracle_addresses: typing.Sequence[PublicKey],
+) -> CombinableInstructions:
+    # /// Cache prices
+    # ///
+    # /// Accounts expected: 3 + Oracles
+    # /// 0. `[]` mango_group_ai -
+    # /// 1. `[writable]` mango_cache_ai -
+    # /// 2+... `[]` oracle_ais - flux aggregator feed accounts
+    instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=group.cache),
+            *list(
+                [
+                    AccountMeta(
+                        is_signer=False,
+                        is_writable=False,
+                        pubkey=oracle,
+                    )
+                    for oracle in oracle_addresses
+                ]
+            ),
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.CACHE_PRICES.build({}),
+    )
+    return CombinableInstructions(signers=[], instructions=[instruction])
+
+
+def build_mango_cache_perp_markets_instructions(
+    context: Context,
+    group: IGroup,
+    perp_market_addresses: typing.Sequence[PublicKey],
+) -> CombinableInstructions:
+    # /// Cache perp markets
+    # ///
+    # /// Accounts expected: 2 + Perp Markets
+    # /// 0. `[]` mango_group_ai
+    # /// 1. `[writable]` mango_cache_ai
+    instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=group.cache),
+            *map(
+                lambda address: AccountMeta(
+                    is_signer=False,
+                    is_writable=False,
+                    pubkey=address,
+                ),
+                perp_market_addresses,
+            ),
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.CACHE_PERP_MARKETS.build({}),
+    )
+    return CombinableInstructions(signers=[], instructions=[instruction])
+
+
+def build_mango_update_root_bank_instructions(
+    context: Context,
+    group: IGroup,
+    root_bank: PublicKey,
+    node_banks: typing.Sequence[PublicKey],
+) -> CombinableInstructions:
+    # /// Update a root bank's indexes by providing all it's node banks
+    # ///
+    # /// Accounts expected: 2 + Node Banks
+    # /// 0. `[]` mango_group_ai - MangoGroup
+    # /// 1. `[]` root_bank_ai - RootBank
+    # /// 2+... `[]` node_bank_ais - NodeBanks
+    #
+    # Note: The above doesn't seem quite right. It seems to need the Cache as [1], and
+    # cache+banks all seem to need to be writable.
+    instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=group.cache),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=root_bank),
+            *list(
+                [
+                    AccountMeta(
+                        is_signer=False,
+                        is_writable=True,
+                        pubkey=node_bank,
+                    )
+                    for node_bank in node_banks
+                ]
+            ),
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.UPDATE_ROOT_BANK.build({}),
+    )
+    return CombinableInstructions(signers=[], instructions=[instruction])
+
+
+def build_mango_update_funding_instructions(
+    context: Context,
+    group: IGroup,
+    perp_market_details: PerpMarketDetails,
+) -> CombinableInstructions:
+    # /// Update funding related variables
+    #
+    # Seems to take:
+    #   const keys = [
+    #     { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    #     { isSigner: false, isWritable: true, pubkey: mangoCachePk },
+    #     { isSigner: false, isWritable: true, pubkey: perpMarketPk },
+    #     { isSigner: false, isWritable: false, pubkey: bidsPk },
+    #     { isSigner: false, isWritable: false, pubkey: asksPk },
+    #   ];
+    instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=group.cache),
+            AccountMeta(
+                is_signer=False, is_writable=True, pubkey=perp_market_details.address
+            ),
+            AccountMeta(
+                is_signer=False, is_writable=False, pubkey=perp_market_details.bids
+            ),
+            AccountMeta(
+                is_signer=False, is_writable=False, pubkey=perp_market_details.asks
+            ),
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.UPDATE_FUNDING.build({}),
+    )
+    return CombinableInstructions(signers=[], instructions=[instruction])

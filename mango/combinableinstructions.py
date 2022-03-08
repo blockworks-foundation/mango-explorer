@@ -349,16 +349,18 @@ class CombinableInstructions:
         )
         return fee_in_lamports / SOL_DECIMAL_DIVISOR
 
-    def __str__(self) -> str:
+    def report(self, instruction_reporter: InstructionReporter) -> str:
         report: typing.List[str] = []
         for index, signer in enumerate(self.signers):
             report += [f"Signer[{index}]: {signer.public_key}"]
 
-        instruction_reporter: InstructionReporter = InstructionReporter()
         for instruction in self.instructions:
             report += [instruction_reporter.report(instruction)]
 
         return "\n".join(report)
+
+    def __str__(self) -> str:
+        return self.report(InstructionReporter())
 
     def __repr__(self) -> str:
         return f"{self}"

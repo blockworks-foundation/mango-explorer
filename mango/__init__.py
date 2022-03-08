@@ -79,6 +79,15 @@ from .idsjsonmarketlookup import IdsJsonMarketLookup as IdsJsonMarketLookup
 from .inventory import Inventory as Inventory
 from .inventory import InventoryAccountWatcher as InventoryAccountWatcher
 from .instructions import (
+    build_mango_cache_perp_markets_instructions as build_mango_cache_perp_markets_instructions,
+)
+from .instructions import (
+    build_mango_cache_prices_instructions as build_mango_cache_prices_instructions,
+)
+from .instructions import (
+    build_mango_cache_root_banks_instructions as build_mango_cache_root_banks_instructions,
+)
+from .instructions import (
     build_mango_create_account_instructions as build_mango_create_account_instructions,
 )
 from .instructions import (
@@ -95,6 +104,12 @@ from .instructions import (
 )
 from .instructions import (
     build_mango_set_referrer_memory_instructions as build_mango_set_referrer_memory_instructions,
+)
+from .instructions import (
+    build_mango_update_funding_instructions as build_mango_update_funding_instructions,
+)
+from .instructions import (
+    build_mango_update_root_bank_instructions as build_mango_update_root_bank_instructions,
 )
 from .instructions import (
     build_mango_unset_account_delegate_instructions as build_mango_unset_account_delegate_instructions,
