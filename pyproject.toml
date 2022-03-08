@@ -1,5 +1,5 @@
 [tool.poetry]
-version = "3.4.3"
+version = "3.4.4"
 name = "mango-explorer"
 homepage = "https://mango.markets"
 repository = "https://github.com/blockworks-foundation/mango-explorer"
