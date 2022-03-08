@@ -361,6 +361,26 @@ class PerpEventQueue(AddressableAccount):
 
         return distinct
 
+    @property
+    def events(self) -> typing.Sequence[PerpEvent]:
+        return [*self.processed_events, *self.unprocessed_events]
+
+    @property
+    def fills(self) -> typing.Sequence[PerpFillEvent]:
+        fills: typing.List[PerpFillEvent] = []
+        for event in self.events:
+            if isinstance(event, PerpFillEvent):
+                fills += [event]
+        return fills
+
+    @property
+    def liquidations(self) -> typing.Sequence[PerpLiquidateEvent]:
+        liquidations: typing.List[PerpLiquidateEvent] = []
+        for event in self.events:
+            if isinstance(event, PerpLiquidateEvent):
+                liquidations += [event]
+        return liquidations
+
     def subscribe(
         self,
         context: Context,
@@ -380,7 +400,7 @@ class PerpEventQueue(AddressableAccount):
         self, mango_account_address: PublicKey
     ) -> typing.Sequence[PerpEvent]:
         events: typing.List[PerpEvent] = []
-        for event in [*self.processed_events, *self.unprocessed_events]:
+        for event in self.events:
             if mango_account_address in event.accounts_to_crank:
                 events += [event]
         return events
