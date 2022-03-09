@@ -50,7 +50,9 @@ import mango  # nopep8
 parser = argparse.ArgumentParser(
     description="Runs 'Keeper'/crank functionality for a Mango Group."
 )
-mango.ContextBuilder.add_command_line_parameters(parser)
+mango.ContextBuilder.add_command_line_parameters(
+    parser, monitor_transactions_default=True
+)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument(
     "--pulse-interval",
