@@ -311,3 +311,33 @@ def test_order_not_expired() -> None:
     )
 
     assert not actual.expired
+
+
+def test_client_id_set_properly() -> None:
+    # This function should just create an updated Order the way the MarketOperations do.
+    def __update_like_market_operations(
+        order: mango.Order, generated_client_id: int
+    ) -> mango.Order:
+        client_id: int = order.client_id or generated_client_id
+        return order.with_update(client_id=client_id)
+
+    no_client_id = mango.Order.from_values(
+        side=mango.Side.BUY,
+        price=Decimal(10),
+        quantity=Decimal(20),
+        order_type=mango.OrderType.LIMIT,
+    )
+
+    # Should set the client ID to 48
+    assert __update_like_market_operations(no_client_id, 48).client_id == 48
+
+    explicit_client_id = mango.Order.from_values(
+        side=mango.Side.BUY,
+        price=Decimal(10),
+        quantity=Decimal(20),
+        order_type=mango.OrderType.LIMIT,
+        client_id=27,
+    )
+
+    # Should NOT override the explicit client ID of 27
+    assert __update_like_market_operations(explicit_client_id, 48).client_id == 27

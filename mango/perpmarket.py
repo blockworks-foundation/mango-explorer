@@ -427,7 +427,7 @@ class PerpMarketOperations(MarketOperations):
     def place_order(
         self, order: Order, crank_limit: Decimal = Decimal(5)
     ) -> typing.Sequence[str]:
-        client_id: int = self.context.generate_client_id()
+        client_id: int = order.client_id or self.context.generate_client_id()
         signers: CombinableInstructions = CombinableInstructions.from_wallet(
             self.wallet
         )
