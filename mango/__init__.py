@@ -260,6 +260,8 @@ from .oraclefactory import create_oracle_provider as create_oracle_provider
 from .output import output as output
 from .output import output_formatter as output_formatter
 from .output import OutputFormat as OutputFormat
+from .output import OutputFormatter as OutputFormatter
+from .output import to_json as to_json
 from .perpaccount import PerpAccount as PerpAccount
 from .perpeventqueue import PerpEvent as PerpEvent
 from .perpeventqueue import PerpEventQueue as PerpEventQueue
