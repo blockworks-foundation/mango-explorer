@@ -48,7 +48,9 @@ class TradeHistory:
         "SequenceNumber",
         "FeeTier",
         "MarketType",
+        "Counterparty",
         "OrderId",
+        "ClientId",
     ]
 
     __perp_column_name_mapper = {
@@ -67,6 +69,7 @@ class TradeHistory:
         "feeCost": "Fee",
         "feeTier": "FeeTier",
         "orderId": "OrderId",
+        "clientOrderId": "ClientId",
     }
 
     __decimal_spot_columns = [
@@ -94,6 +97,8 @@ class TradeHistory:
         "takerOrderId",
         "price",
         "quantity",
+        "makerClientOrderId",
+        "takerClientOrderId",
     ]
 
     __column_converters = {
@@ -186,7 +191,9 @@ class TradeHistory:
         #     "taker": <PUBLIC-KEY-STRING>,
         #     "takerOrderId": <BIG-INT>,
         #     "price": "50131.9",
-        #     "quantity": "0.019"
+        #     "quantity": "0.019",
+        #     "makerClientOrderId": "1646845270119",
+        #     "takerClientOrderId": "1646845251729"
         # },
         def __side_lookup(row: pandas.Series) -> str:
             if row["MakerOrTaker"] == "taker":
@@ -240,6 +247,16 @@ class TradeHistory:
             frame["MakerOrTaker"] == "maker",
             frame["makerOrderId"],
             frame["takerOrderId"],
+        )
+        frame["ClientId"] = numpy.where(
+            frame["MakerOrTaker"] == "maker",
+            frame["makerClientOrderId"],
+            frame["takerClientOrderId"],
+        )
+        frame["Counterparty"] = numpy.where(
+            frame["MakerOrTaker"] == "maker",
+            frame["taker"],
+            frame["maker"],
         )
 
         return frame[TradeHistory.COLUMNS]
@@ -340,6 +357,7 @@ class TradeHistory:
                 + frame["Fee"]
             )
             frame["MarketType"] = "spot"
+            frame["Counterparty"] = None
 
             return frame[TradeHistory.COLUMNS]
 
