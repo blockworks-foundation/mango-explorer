@@ -5,12 +5,12 @@
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-## Introduction
+## 🥭 Introduction
 
 `mango-explorer` provides Python code to interface with [Mango Markets](https://mango.markets), along with a functional [marketmaker](docs/MarketmakingQuickstart.md).
 
 
-## Installation
+## 📦 Installation
 
 ![PyPI](https://img.shields.io/pypi/v/mango-explorer)
 
@@ -25,22 +25,22 @@ A simple [installation walkthrough](docs/Installation.md) is available, and of c
 `mango-explorer` is also available as a docker container with the name [opinionatedgeek/mango-explorer-v3](https://hub.docker.com/repository/docker/opinionatedgeek/mango-explorer-v3/).
 
 
-## Branches
+## 🌳 Branches
 
 The latest version of the code is in the [main branch on Github](https://github.com/blockworks-foundation/mango-explorer).
 
 Code to integrate with Version 2 of Mango is in the [v2 branch](https://github.com/blockworks-foundation/mango-explorer/tree/v2).
 
 
-## Examples
+## 📓 Examples
 
 Here are some example snippets to get you started.
 
 Many more examples are provided in a separate [Github repo](https://github.com/blockworks-foundation/mango-explorer-examples) and can be [run in your browser (no installation required!) at Binder](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD).
 
 
-### Show OrderBook
-> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=ShowOrderBook.ipynb) [Full example code](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/ShowOrderBook.ipynb)
+### 🏃 Show OrderBook
+> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=ShowOrderBook.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/ShowOrderBook.ipynb)
 
 This code will connect to the _devnet_ cluster, fetch the orderbook for BTC-PERP, and print out a summary of it:
 ```
@@ -52,8 +52,8 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
 ```
 
 
-### Subscribe to OrderBook
-> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=SubscribeOrderBook.ipynb) [Full example code](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/SubscribeOrderBook.ipynb)
+### 🏃 Subscribe to OrderBook
+> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=SubscribeOrderBook.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/SubscribeOrderBook.ipynb)
 
 This code will connect to the _devnet_ cluster and will print out the latest orderbook every time the orderbook changes, and will exit after 60 seconds.
 ```
@@ -68,13 +68,11 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
     time.sleep(60)
 
     subscription.dispose()
-
-print("Example complete.")
 ```
 
 
-### Show Perp Fills
-> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=ShowPerpFills.ipynb) [Full example code](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/ShowPerpFills.ipynb)
+### 🏃 Show Perp Fills
+> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=ShowPerpFills.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/ShowPerpFills.ipynb)
 
 A 'fill' is when a maker order from the orderbook is matched with an incoming taker order. It can be useful to see these.
 
@@ -86,13 +84,11 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
     market = mango.market(context, "BTC-PERP")
     event_queue = mango.PerpEventQueue.load(context, market.event_queue_address, market.lot_size_converter)
     print(event_queue.fills)
-
-print("Example complete.")
 ```
 
 
-### Subscribe to Fills
-> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=SubscribeFills.ipynb) [Full example code](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/SubscribeFills.ipynb)
+### 🏃 Subscribe to Fills
+> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=SubscribeFills.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/SubscribeFills.ipynb)
 
 This code will connect to the _devnet_ cluster and print out every fill that happens. It will exit after 60 seconds.
 ```
@@ -107,12 +103,10 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
     time.sleep(60)
 
     subscription.dispose()
-
-print("Example complete.")
 ```
 
-### Place Order
-> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=PlaceOrder.ipynb) [Full example code](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/PlaceOrder.ipynb)
+### 🏃 Place Order
+> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=PlaceOrder.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/PlaceOrder.ipynb)
 
 This code will load the 'example' wallet, connect to the _devnet_ cluster, place an order and wait for the order's transaction signature to be confirmed.
 
@@ -152,12 +146,10 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
     mango.WebSocketTransactionMonitor.wait_for_all(
             context.client.cluster_ws_url, placed_order_signatures, commitment="processed"
         )
-
-print("Example complete.")
 ```
 
-### Place and Cancel Order
-> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=PlaceAndCancelOrders.ipynb) [Full example code](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/PlaceAndCancelOrders.ipynb)
+### 🏃 Place and Cancel Order
+> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=PlaceAndCancelOrders.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/PlaceAndCancelOrders.ipynb)
 
 This code will load the 'example' wallet, connect to the _devnet_ cluster, place an order and then cancel it.
 
@@ -211,13 +203,11 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
 
     print("\n\nOrders (without our order):")
     print(market_operations.load_orderbook())
-
-print("Example complete.")
 ```
 
 
-### Show Account Data
-> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=ShowAccountDataFrame.ipynb) [Full example code](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/ShowAccountDataFrame.ipynb)
+### 🏃 Show Account Data
+> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=ShowAccountDataFrame.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/ShowAccountDataFrame.ipynb)
 
 This code will connect to the _devnet_ cluster and show important data from a Mango Account.
 
@@ -239,12 +229,10 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
     print(f"Maint Health: {account.maint_health(frame)}")
     print(f"Total Value: {account.total_value(frame)}")
     print(f"Leverage: {account.leverage(frame):,.2f}x")
-
-print("Example complete.")
 ```
 
-### Subscribe to Account changes
-> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=SubscribeAccount.ipynb) [Full example code](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/SubscribeAccount.ipynb)
+### 🏃 Subscribe to Account changes
+> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=SubscribeAccount.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/SubscribeAccount.ipynb)
 
 This code will connect to the _devnet_ cluster and print out the Mango `Account` every time it changes. It will exit after 60 seconds.
 
@@ -274,13 +262,11 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
     time.sleep(60)
 
     manager.dispose()
-
-print("Example complete.")
 ```
 
 
-### Deposit
-> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=Deposit.ipynb) [Full example code](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/Deposit.ipynb)
+### 🏃 Deposit
+> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=Deposit.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/Deposit.ipynb)
 
 This code will connect to the _devnet_ cluster and deposit 0.1 SOL into a Mango `Account`.
 ```
@@ -311,13 +297,11 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
 
     account = mango.Account.load(context, account.address, group)
     print("Wrapped SOL after deposit", account.slot_by_instrument(sol_token).net_value)
-
-print("Example complete.")
 ```
 
 
-### Withdraw
-> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=Withdraw.ipynb) [Full example code](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/Withdraw.ipynb)
+### 🏃 Withdraw
+> [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=Withdraw.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/Withdraw.ipynb)
 
 This code will connect to the _devnet_ cluster and withdraw 0.1 SOL from a Mango `Account`.
 
@@ -350,12 +334,10 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
 
     account = mango.Account.load(context, account.address, group)
     print("Wrapped SOL after withdrawal", account.slot_by_instrument(sol_token).net_value)
-
-print("Example complete.")
 ```
 
 
-## Running the marketmaker
+## 🏛️ Running the marketmaker
 
 There is a [Marketmaking Quickstart](docs/MarketmakingQuickstart.md) - a walkthrough of setting up and running the marketmaker on devnet, from setting up the account, depositing tokens, to running the marketmaker itself.
 
@@ -366,7 +348,7 @@ Requirements:
 
 **Note** This walkthrough is devnet-only so no actual funds are used or at-risk.
 
-## References
+## 🔖 References
 
 * [SolanaPy](https://github.com/michaelhly/solana-py/)
 * [PySerum](https://github.com/serum-community/pyserum/)
@@ -376,6 +358,6 @@ Requirements:
 * [RxPy Backpressure](https://github.com/daliclass/rxpy-backpressure)
 
 
-# Support
+## 🥭 Support
 
 [🥭 Mango Markets](https://mango.markets/) support is available at: [Docs](https://docs.mango.markets/) | [Discord](https://discord.gg/67jySBhxrg) | [Twitter](https://twitter.com/mangomarkets) | [Github](https://github.com/blockworks-foundation) | [Email](mailto:hello@blockworks.foundation)

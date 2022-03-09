@@ -1,6 +1,6 @@
 # 🥭 Mango Explorer
 
-# 🏛️  Marketmaking
+# 🏛️ Marketmaking
 
 Traders buy and sell, but it helps when there are reliable entities for them to trade against. And while an individual trader may buy or sell, they typically aren’t doing both at the same time on the same symbol. In contrast, a marketmaker places both buy and sell orders for the same symbol, producing a valuation of the symbol and saying how much they’d be willing to pay for some quantity, and how much they’d ask to part with some quantity. They _literally make a market_ by always providing a price at which someone can buy and a price at which someone can sell, and profit by the difference between the buy and sell prices - the ‘spread’.
 
