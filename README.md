@@ -9,7 +9,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 `mango-explorer` provides Python code to integrate with [Mango Markets](https://mango.markets).
 
-It also includes some useful command-line programs, such as:
+It includes some useful command-line programs, such as:
 * `deposit`
 * `withdraw`
 * `place-order`
@@ -17,7 +17,7 @@ It also includes some useful command-line programs, such as:
 * `market-sell`
 * `send-tokens`
 
-It also includes a runnable [marketmaker](docs/MarketmakingQuickstart.md) for Serum, Spot and Perp markets.
+There are also more complex programs such as a runnable [marketmaker](docs/MarketmakingQuickstart.md) for Serum, Spot and Perp markets.
 
 
 ## 📦 Installation
