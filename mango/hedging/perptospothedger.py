@@ -127,7 +127,7 @@ class PerpToSpotHedger(Hedger):
                 f"Delta from {self.underlying_market.fully_qualified_symbol} to {self.hedging_market.fully_qualified_symbol} is {delta:,.8f} {basket_token.base_instrument.symbol}, action threshold is: {self.action_threshold}"
             )
 
-            if abs(delta) > self.action_threshold:
+            if delta.copy_abs() > self.action_threshold:
                 side: mango.Side = mango.Side.BUY if delta < 0 else mango.Side.SELL
                 up_or_down: str = "up to" if side == mango.Side.BUY else "down to"
                 price_adjustment_factor: Decimal = (
@@ -139,7 +139,7 @@ class PerpToSpotHedger(Hedger):
                 adjusted_price: Decimal = (
                     model_state.price.mid_price * price_adjustment_factor
                 )
-                quantity: Decimal = abs(delta)
+                quantity: Decimal = delta.copy_abs()
                 if (self.max_hedge_chunk_quantity > 0) and (
                     quantity > self.max_hedge_chunk_quantity
                 ):

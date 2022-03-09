@@ -852,7 +852,7 @@ class Account(AddressableAccount):
                     slot.net_value.value + spot_open_orders.base_token_free
                 )
 
-                if abs(spot_bids_base_net) > abs(spot_asks_base_net):
+                if spot_bids_base_net.copy_abs() > spot_asks_base_net.copy_abs():
                     spot_health_base = spot_bids_base_net
                     spot_health_quote = spot_open_orders.quote_token_free
                 else:
@@ -951,7 +951,7 @@ class Account(AddressableAccount):
                 quote_pos = slot.perp_account.quote_position / (
                     10**self.shared_quote_token.decimals
                 )
-                if abs(perp_bids_base_net) > abs(perp_asks_base_net):
+                if perp_bids_base_net.copy_abs() > perp_asks_base_net.copy_abs():
                     perp_health_base = perp_bids_base_net
                     perp_health_quote = (
                         (quote_pos + unsettled_funding)
