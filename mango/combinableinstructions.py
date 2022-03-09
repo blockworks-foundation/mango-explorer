@@ -13,11 +13,14 @@
 #   [Github](https://github.com/blockworks-foundation)
 #   [Email](mailto:hello@blockworks.foundation)
 
+import asyncio
 import logging
+import traceback
 import typing
 
 from decimal import Decimal
 from solana.blockhash import Blockhash
+from solana.rpc.commitment import Finalized
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.transaction import Transaction, TransactionInstruction
@@ -305,20 +308,54 @@ class CombinableInstructions:
                 if on_exception_continue:
                     self._logger.error(
                         f"""[{context.name}] Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction.
-{exception}"""
+{traceback.format_exc()}"""
                     )
                 else:
                     raise exception
 
         return results
 
-    async def execute_async(
-        self, context: Context, on_exception_continue: bool = False
-    ) -> typing.Sequence[str]:
-        return self.execute(context, on_exception_continue)
+    async def execute_async(self, context: Context) -> typing.Sequence[str]:
+        async def __execute_chunk(
+            chunk_index: int,
+            offset_start: int,
+            blockhash: Blockhash,
+            instructions: typing.Sequence[TransactionInstruction],
+        ) -> str:
+            transaction = Transaction()
+            transaction.instructions.extend(instructions)
+            try:
+                return context.client.send_transaction(
+                    transaction, *self.signers, recent_blockhash=blockhash
+                )
+            except Exception as exception:
+                self._logger.error(
+                    f"""[{context.name}] Error executing chunk {chunk_index} (instructions {offset_start} to {offset_start + len(chunk)}) of CombinableInstruction.
+{traceback.format_exc()}"""
+                )
+                raise exception
+
+        chunks: typing.Sequence[
+            typing.Sequence[TransactionInstruction]
+        ] = _split_instructions_into_chunks(context, self.signers, self.instructions)
+
+        if len(chunks) == 1 and len(chunks[0]) == 0:
+            self._logger.info("No instructions to run.")
+            return []
+
+        if len(chunks) > 1:
+            self._logger.info(f"Running instructions in {len(chunks)} transactions.")
+
+        blockhash = context.client.get_recent_blockhash(commitment=Finalized)
+        coroutines: typing.List[typing.Coroutine[None, None, str]] = []
+        for index, chunk in enumerate(chunks):
+            starts_at = sum(len(ch) for ch in chunks[0:index])
+            coroutines += [__execute_chunk(index, starts_at, blockhash, chunk)]
+
+        return await asyncio.gather(*coroutines)
 
     def cost_to_execute(self, context: Context) -> Decimal:
-        # getFees() is depracated and will be replaced by getFeeForMessage() at some point.
+        # getFees() is deprecated and will be replaced by getFeeForMessage() at some point.
         # getFeeForMessage() is not fully available yet though.
         fee_response = context.client.compatible_client.get_fees()
         # fee_response should look like:

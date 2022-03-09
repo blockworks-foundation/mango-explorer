@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import asyncio
 import logging
 import os
 import os.path
@@ -277,7 +278,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
                 )
 
                 if not args.dry_run:
-                    signatures = combined.execute(context)
+                    signatures = asyncio.run(combined.execute_async(context))
                     mango.output(signatures)
                 else:
                     mango.output("Dry run - not running instructions:")

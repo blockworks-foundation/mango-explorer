@@ -982,6 +982,7 @@ class BetterClient:
         transaction: Transaction,
         *signers: Keypair,
         opts: TxOpts = TxOpts(preflight_commitment=UnspecifiedCommitment),
+        recent_blockhash: typing.Optional[Blockhash] = None,
     ) -> str:
         # This method is an exception to the normal exception-handling to fail over to the next RPC provider.
         #
@@ -1015,7 +1016,10 @@ class BetterClient:
                 )
 
                 response = self.compatible_client.send_transaction(
-                    transaction, *signers, opts=proper_opts
+                    transaction,
+                    *signers,
+                    opts=proper_opts,
+                    recent_blockhash=recent_blockhash,
                 )
                 signature: str = str(response["result"])
                 self._logger.debug(f"Transaction signature: {signature}")
