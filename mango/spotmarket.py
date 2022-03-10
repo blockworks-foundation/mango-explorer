@@ -17,6 +17,7 @@ import logging
 import rx.operators
 import typing
 
+from datetime import datetime
 from decimal import Decimal
 from pyserum.market.market import Market as PySerumMarket
 from pyserum.market.orderbook import OrderBook as PySerumOrderBook
@@ -27,6 +28,7 @@ from .accountinfo import AccountInfo
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
 from .context import Context
+from .datetimes import utc_now
 from .group import GroupSlot, Group
 from .instructions import (
     build_serum_consume_events_instructions,
@@ -567,14 +569,14 @@ class SpotMarketOperations(MarketOperations):
     def load_orderbook(self) -> OrderBook:
         return self.spot_market.fetch_orderbook(self.context)
 
-    def load_my_orders(self, include_expired: bool = False) -> typing.Sequence[Order]:
+    def load_my_orders(
+        self, cutoff: typing.Optional[datetime] = utc_now()
+    ) -> typing.Sequence[Order]:
         if not self.open_orders_address:
             return []
 
         orderbook: OrderBook = self.load_orderbook()
-        return orderbook.all_orders_for_owner(
-            self.open_orders_address, include_expired=include_expired
-        )
+        return orderbook.all_orders_for_owner(self.open_orders_address, cutoff=cutoff)
 
     def _build_crank(
         self, limit: Decimal = Decimal(32), add_self: bool = False

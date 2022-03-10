@@ -51,7 +51,7 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     market_operations = mango.operations(
         context, wallet, account, args.market, args.dry_run
     )
-    orders = market_operations.load_my_orders(include_expired=True)
+    orders = market_operations.load_my_orders(cutoff=None)
     if len(orders) == 0:
         mango.output(
             f"No open orders on {market_operations.market.fully_qualified_symbol}"

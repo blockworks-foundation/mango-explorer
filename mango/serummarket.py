@@ -16,10 +16,13 @@
 import rx.operators
 import typing
 
+from datetime import datetime
 from decimal import Decimal
 from pyserum.market.market import Market as PySerumMarket
 from pyserum.market.orderbook import OrderBook as PySerumOrderBook
 from solana.publickey import PublicKey
+
+from mango.datetimes import utc_now
 
 from .accountinfo import AccountInfo
 from .combinableinstructions import CombinableInstructions
@@ -520,15 +523,15 @@ class SerumMarketOperations(MarketOperations):
     def load_orderbook(self) -> OrderBook:
         return self.serum_market.fetch_orderbook(self.context)
 
-    def load_my_orders(self, include_expired: bool = False) -> typing.Sequence[Order]:
+    def load_my_orders(
+        self, cutoff: typing.Optional[datetime] = utc_now()
+    ) -> typing.Sequence[Order]:
         open_orders_address = self.market_instruction_builder.open_orders_address
         if not open_orders_address:
             return []
 
         orderbook: OrderBook = self.load_orderbook()
-        return orderbook.all_orders_for_owner(
-            open_orders_address, include_expired=include_expired
-        )
+        return orderbook.all_orders_for_owner(open_orders_address, cutoff=cutoff)
 
     def _build_crank(
         self, limit: Decimal = Decimal(32), add_self: bool = False

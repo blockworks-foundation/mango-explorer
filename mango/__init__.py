@@ -249,8 +249,6 @@ from .oracle import OracleProvider as OracleProvider
 from .oracle import OracleSource as OracleSource
 from .oracle import Price as Price
 from .oracle import SupportedOracleFeature as SupportedOracleFeature
-from .orderbookside import OrderBookSideType as OrderBookSideType
-from .orderbookside import PerpOrderBookSide as PerpOrderBookSide
 from .orders import Order as Order
 from .orders import OrderType as OrderType
 from .orders import OrderBook as OrderBook
@@ -278,6 +276,7 @@ from .perpmarket import PerpMarket as PerpMarket
 from .perpmarket import PerpMarketInstructionBuilder as PerpMarketInstructionBuilder
 from .perpmarket import PerpMarketOperations as PerpMarketOperations
 from .perpmarket import PerpMarketStub as PerpMarketStub
+from .perpmarket import PerpOrderBookSide as PerpOrderBookSide
 from .perpmarketdetails import PerpMarketDetails as PerpMarketDetails
 from .perpopenorders import PerpOpenOrders as PerpOpenOrders
 from .placedorder import PlacedOrder as PlacedOrder

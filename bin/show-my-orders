@@ -47,7 +47,9 @@ with mango.ContextBuilder.from_command_line_parameters(args) as context:
     market_operations = mango.operations(
         context, wallet, account, args.market, args.dry_run
     )
-    orders = market_operations.load_my_orders(include_expired=args.include_expired)
+    orders = market_operations.load_my_orders(
+        cutoff=None if args.include_expired else mango.utc_now()
+    )
     mango.output(f"{len(orders)} order(s) to show.")
     for order in orders:
         mango.output(order)

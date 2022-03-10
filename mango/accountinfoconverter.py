@@ -30,8 +30,8 @@ from .group import Group
 from .layouts import layouts
 from .lotsizeconverter import LotSizeConverter, NullLotSizeConverter
 from .openorders import OpenOrders
-from .orderbookside import PerpOrderBookSide
 from .perpeventqueue import PerpEvent, PerpEventQueue, UnseenPerpEventChangesTracker
+from .perpmarket import PerpOrderBookSide
 from .perpmarketdetails import PerpMarketDetails
 from .serumeventqueue import SerumEvent, SerumEventQueue, UnseenSerumEventChangesTracker
 from .tokens import Instrument, Token

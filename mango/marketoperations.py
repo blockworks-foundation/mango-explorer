@@ -18,11 +18,13 @@ import abc
 import logging
 import typing
 
+from datetime import datetime
 from decimal import Decimal
 from solana.publickey import PublicKey
 
 from .combinableinstructions import CombinableInstructions
 from .constants import SYSTEM_PROGRAM_ADDRESS
+from .datetimes import utc_now
 from .loadedmarket import LoadedMarket
 from .lotsizeconverter import NullLotSizeConverter
 from .markets import InventorySource
@@ -150,7 +152,9 @@ class MarketOperations(metaclass=abc.ABCMeta):
         )
 
     @abc.abstractmethod
-    def load_my_orders(self, include_expired: bool = False) -> typing.Sequence[Order]:
+    def load_my_orders(
+        self, cutoff: typing.Optional[datetime] = utc_now()
+    ) -> typing.Sequence[Order]:
         raise NotImplementedError(
             "MarketOperations.load_my_orders() is not implemented on the base type."
         )
@@ -274,7 +278,9 @@ class NullMarketOperations(MarketOperations):
             self.market.fully_qualified_symbol, NullLotSizeConverter(), [], []
         )
 
-    def load_my_orders(self, include_expired: bool = False) -> typing.Sequence[Order]:
+    def load_my_orders(
+        self, cutoff: typing.Optional[datetime] = utc_now()
+    ) -> typing.Sequence[Order]:
         return []
 
     def settle(self) -> typing.Sequence[str]:

@@ -9,6 +9,7 @@ from .fakes import fake_seeded_public_key
 def __build_initial_order() -> mango.Order:
     owner = fake_seeded_public_key("owner")
     now = mango.local_now()
+    timestamp = now - timedelta(seconds=20)
     initial = mango.Order.from_values(
         id=5,
         client_id=8,
@@ -18,6 +19,7 @@ def __build_initial_order() -> mango.Order:
         quantity=Decimal(15),
         order_type=mango.OrderType.POST_ONLY_SLIDE,
         reduce_only=True,
+        timestamp=timestamp,
         expiration=now,
         match_limit=6,
     )
@@ -30,6 +32,7 @@ def __build_initial_order() -> mango.Order:
     assert initial.quantity == 15
     assert initial.order_type == mango.OrderType.POST_ONLY_SLIDE
     assert initial.reduce_only
+    assert initial.timestamp == timestamp
     assert initial.expiration == now
     assert initial.match_limit == 6
 
@@ -49,13 +52,15 @@ def test_from_values_defaults() -> None:
     assert actual.quantity == 20
     assert actual.order_type == mango.OrderType.UNKNOWN
     assert not actual.reduce_only
+    assert actual.timestamp is None
     assert actual.expiration == mango.Order.NoExpiration
     assert actual.match_limit == mango.Order.DefaultMatchLimit
 
 
 def test_from_values_all() -> None:
     owner = fake_seeded_public_key("owner")
-    now = mango.local_now()
+    expiration = mango.local_now()
+    timestamp = expiration - timedelta(seconds=16)
     actual = mango.Order.from_values(
         id=5,
         client_id=8,
@@ -65,7 +70,8 @@ def test_from_values_all() -> None:
         quantity=Decimal(15),
         order_type=mango.OrderType.POST_ONLY_SLIDE,
         reduce_only=True,
-        expiration=now,
+        timestamp=timestamp,
+        expiration=expiration,
         match_limit=6,
     )
 
@@ -77,13 +83,15 @@ def test_from_values_all() -> None:
     assert actual.quantity == 15
     assert actual.order_type == mango.OrderType.POST_ONLY_SLIDE
     assert actual.reduce_only
-    assert actual.expiration == now
+    assert actual.timestamp == timestamp
+    assert actual.expiration == expiration
     assert actual.match_limit == 6
 
 
 def test_with_update_id() -> None:
     initial = __build_initial_order()
     initial_owner = initial.owner
+    initial_timestamp = initial.timestamp
     initial_expiration = initial.expiration
 
     actual = initial.with_update(id=7)
@@ -95,6 +103,7 @@ def test_with_update_id() -> None:
     assert actual.quantity == 15
     assert actual.order_type == mango.OrderType.POST_ONLY_SLIDE
     assert actual.reduce_only
+    assert actual.timestamp == initial_timestamp
     assert actual.expiration == initial_expiration
     assert actual.match_limit == 6
 
@@ -102,6 +111,7 @@ def test_with_update_id() -> None:
 def test_with_update_client_id() -> None:
     initial = __build_initial_order()
     initial_owner = initial.owner
+    initial_timestamp = initial.timestamp
     initial_expiration = initial.expiration
 
     actual = initial.with_update(client_id=7)
@@ -113,12 +123,14 @@ def test_with_update_client_id() -> None:
     assert actual.quantity == 15
     assert actual.order_type == mango.OrderType.POST_ONLY_SLIDE
     assert actual.reduce_only
+    assert actual.timestamp == initial_timestamp
     assert actual.expiration == initial_expiration
     assert actual.match_limit == 6
 
 
 def test_with_update_owner() -> None:
     initial = __build_initial_order()
+    initial_timestamp = initial.timestamp
     initial_expiration = initial.expiration
 
     updated_owner = fake_seeded_public_key("new owner")
@@ -131,6 +143,7 @@ def test_with_update_owner() -> None:
     assert actual.quantity == 15
     assert actual.order_type == mango.OrderType.POST_ONLY_SLIDE
     assert actual.reduce_only
+    assert actual.timestamp == initial_timestamp
     assert actual.expiration == initial_expiration
     assert actual.match_limit == 6
 
@@ -138,6 +151,7 @@ def test_with_update_owner() -> None:
 def test_with_update_side() -> None:
     initial = __build_initial_order()
     initial_owner = initial.owner
+    initial_timestamp = initial.timestamp
     initial_expiration = initial.expiration
 
     actual = initial.with_update(side=mango.Side.BUY)
@@ -149,6 +163,7 @@ def test_with_update_side() -> None:
     assert actual.quantity == 15
     assert actual.order_type == mango.OrderType.POST_ONLY_SLIDE
     assert actual.reduce_only
+    assert actual.timestamp == initial_timestamp
     assert actual.expiration == initial_expiration
     assert actual.match_limit == 6
 
@@ -156,6 +171,7 @@ def test_with_update_side() -> None:
 def test_with_update_price() -> None:
     initial = __build_initial_order()
     initial_owner = initial.owner
+    initial_timestamp = initial.timestamp
     initial_expiration = initial.expiration
 
     actual = initial.with_update(price=Decimal(25))
@@ -167,6 +183,7 @@ def test_with_update_price() -> None:
     assert actual.quantity == 15
     assert actual.order_type == mango.OrderType.POST_ONLY_SLIDE
     assert actual.reduce_only
+    assert actual.timestamp == initial_timestamp
     assert actual.expiration == initial_expiration
     assert actual.match_limit == 6
 
@@ -174,6 +191,7 @@ def test_with_update_price() -> None:
 def test_with_update_quantity() -> None:
     initial = __build_initial_order()
     initial_owner = initial.owner
+    initial_timestamp = initial.timestamp
     initial_expiration = initial.expiration
 
     actual = initial.with_update(quantity=Decimal(17))
@@ -185,6 +203,7 @@ def test_with_update_quantity() -> None:
     assert actual.quantity == 17  # Changed!
     assert actual.order_type == mango.OrderType.POST_ONLY_SLIDE
     assert actual.reduce_only
+    assert actual.timestamp == initial_timestamp
     assert actual.expiration == initial_expiration
     assert actual.match_limit == 6
 
@@ -192,6 +211,7 @@ def test_with_update_quantity() -> None:
 def test_with_update_order_type() -> None:
     initial = __build_initial_order()
     initial_owner = initial.owner
+    initial_timestamp = initial.timestamp
     initial_expiration = initial.expiration
 
     actual = initial.with_update(order_type=mango.OrderType.MARKET)
@@ -203,6 +223,7 @@ def test_with_update_order_type() -> None:
     assert actual.quantity == 15
     assert actual.order_type == mango.OrderType.MARKET  # Changed!
     assert actual.reduce_only
+    assert actual.timestamp == initial_timestamp
     assert actual.expiration == initial_expiration
     assert actual.match_limit == 6
 
@@ -210,6 +231,7 @@ def test_with_update_order_type() -> None:
 def test_with_update_reduce_only() -> None:
     initial = __build_initial_order()
     initial_owner = initial.owner
+    initial_timestamp = initial.timestamp
     initial_expiration = initial.expiration
 
     actual = initial.with_update(reduce_only=False)
@@ -221,6 +243,27 @@ def test_with_update_reduce_only() -> None:
     assert actual.quantity == 15
     assert actual.order_type == mango.OrderType.POST_ONLY_SLIDE
     assert not actual.reduce_only  # Changed!
+    assert actual.timestamp == initial_timestamp
+    assert actual.expiration == initial_expiration
+    assert actual.match_limit == 6
+
+
+def test_with_update_timestamp() -> None:
+    initial = __build_initial_order()
+    initial_owner = initial.owner
+    initial_expiration = initial.expiration
+
+    updated_timestamp = mango.local_now() - timedelta(seconds=10)
+    actual = initial.with_update(timestamp=updated_timestamp)
+    assert actual.id == 5
+    assert actual.client_id == 8
+    assert actual.owner == initial_owner
+    assert actual.side == mango.Side.SELL
+    assert actual.price == 88
+    assert actual.quantity == 15
+    assert actual.order_type == mango.OrderType.POST_ONLY_SLIDE
+    assert actual.reduce_only
+    assert actual.timestamp == updated_timestamp  # Changed!
     assert actual.expiration == initial_expiration
     assert actual.match_limit == 6
 
@@ -228,6 +271,7 @@ def test_with_update_reduce_only() -> None:
 def test_with_update_expiration() -> None:
     initial = __build_initial_order()
     initial_owner = initial.owner
+    initial_timestamp = initial.timestamp
 
     updated_expiration = mango.local_now() + timedelta(seconds=10)
     actual = initial.with_update(expiration=updated_expiration)
@@ -239,6 +283,7 @@ def test_with_update_expiration() -> None:
     assert actual.quantity == 15
     assert actual.order_type == mango.OrderType.POST_ONLY_SLIDE
     assert actual.reduce_only
+    assert actual.timestamp == initial_timestamp
     assert actual.expiration == updated_expiration  # Changed!
     assert actual.match_limit == 6
 
@@ -246,6 +291,7 @@ def test_with_update_expiration() -> None:
 def test_with_update_match_limit() -> None:
     initial = __build_initial_order()
     initial_owner = initial.owner
+    initial_timestamp = initial.timestamp
     initial_expiration = initial.expiration
 
     actual = initial.with_update(match_limit=14)
@@ -257,6 +303,7 @@ def test_with_update_match_limit() -> None:
     assert actual.quantity == 15
     assert actual.order_type == mango.OrderType.POST_ONLY_SLIDE
     assert actual.reduce_only
+    assert actual.timestamp == initial_timestamp
     assert actual.expiration == initial_expiration
     assert actual.match_limit == 14  # Changed!
 
@@ -264,7 +311,8 @@ def test_with_update_match_limit() -> None:
 def test_with_update_all() -> None:
     initial = __build_initial_order()
     updated_owner = fake_seeded_public_key("new owner")
-    updated_expiration = mango.local_now() + timedelta(seconds=15)
+    updated_timestamp = mango.local_now()
+    updated_expiration = updated_timestamp + timedelta(seconds=15)
     actual = initial.with_update(
         id=9,
         client_id=17,
@@ -274,6 +322,7 @@ def test_with_update_all() -> None:
         quantity=Decimal(26),
         order_type=mango.OrderType.POST_ONLY,
         reduce_only=False,
+        timestamp=updated_timestamp,
         expiration=updated_expiration,
         match_limit=11,
     )
@@ -285,6 +334,7 @@ def test_with_update_all() -> None:
     assert actual.quantity == 26
     assert actual.order_type == mango.OrderType.POST_ONLY
     assert not actual.reduce_only
+    assert actual.timestamp == updated_timestamp
     assert actual.expiration == updated_expiration
     assert actual.match_limit == 11
 
@@ -298,7 +348,7 @@ def test_order_expired() -> None:
         expiration=mango.utc_now() - timedelta(seconds=1),
     )
 
-    assert actual.expired
+    assert actual.is_expired_at(mango.utc_now())
 
 
 def test_order_not_expired() -> None:
@@ -310,7 +360,7 @@ def test_order_not_expired() -> None:
         expiration=mango.utc_now() + timedelta(seconds=5),
     )
 
-    assert not actual.expired
+    assert not actual.is_expired_at(mango.utc_now())
 
 
 def test_client_id_set_properly() -> None:

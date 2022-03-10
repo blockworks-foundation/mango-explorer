@@ -189,7 +189,7 @@ def cleanup(
         )
     )
     cancels: mango.CombinableInstructions = mango.CombinableInstructions.empty()
-    orders = market_operations.load_my_orders(include_expired=True)
+    orders = market_operations.load_my_orders(cutoff=None)
     for order in orders:
         cancels += market_instruction_builder.build_cancel_order_instructions(
             order, ok_if_missing=True
