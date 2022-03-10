@@ -165,7 +165,7 @@ This code will load the 'example' wallet, connect to the _devnet_ cluster, place
 
 This is a bit longer than the Place Order example but only because it performs most of the Place Order code as a setup to create the order so there's an order to cancel.
 
-The key point is that `cancel_order()` takes an `Order` as a parameter, and that `Order` needs either the `id` or `client_id` property to be set. The easiest way to get such an order is from the `OrderBook`, so the code loads the `OrderBook` and then gets the current account's orders from it. Then the code cancels it and waits for the transaction to confirm.
+The key point is that `cancel_order()` takes an `Order` as a parameter, and that `Order` needs either the `id` or `client_id` property to be set so the Mango program can find the equivalent order data on-chain. The sample code specified 1001 as the `client_id` when the order was instantiated so it's fine for use here.
 ```
 import decimal
 import mango
@@ -201,10 +201,8 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
     orderbook = market_operations.load_orderbook()
     print(orderbook)
 
-    my_orders = orderbook.all_orders_for_owner(account.address)
-    print("My orders on the orderbook:", my_orders)
-
-    cancellaton_signatures = market_operations.cancel_order(my_orders[0])
+    # Order has the client ID 1001 so we can use that Order object as a parameter here.
+    cancellaton_signatures = market_operations.cancel_order(order)
 
     print("Waiting for cancel order transaction to confirm...\n", cancellaton_signatures)
     mango.WebSocketTransactionMonitor.wait_for_all(
