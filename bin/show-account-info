@@ -15,23 +15,37 @@ parser = argparse.ArgumentParser(
 )
 mango.ContextBuilder.add_command_line_parameters(parser)
 parser.add_argument(
-    "--address", type=PublicKey, required=True, help="address of the account"
+    "--address",
+    type=PublicKey,
+    action="append",
+    default=[],
+    help="address of the account",
 )
 parser.add_argument(
     "--filename",
     type=str,
-    required=False,
+    action="append",
+    default=[],
     help="filename for saving the JSON-formatted AccountInfo data",
 )
 args: argparse.Namespace = mango.parse_args(parser)
 
+if len(args.address) == 0:
+    raise Exception("Must specify at least one address to fetch")
+
+if (len(args.filename) != 0) and (len(args.filename) != len(args.address)):
+    raise Exception(
+        f"If specifying filenames, number of filenames ({len(args.filename)} provided) must match the number of addresses ({len(args.address)} provided)."
+    )
+
 with mango.ContextBuilder.from_command_line_parameters(args) as context:
-    account_info = mango.AccountInfo.load(context, args.address)
-    if account_info is None:
-        mango.output(f"No account at '{args.address}'")
-    else:
-        if args.filename is not None:
-            account_info.save_json(args.filename)
+    account_infos = mango.AccountInfo.load_multiple(context, args.address)
+    for index, account_info in enumerate(account_infos):
+        if account_info is None:
+            mango.output(f"No account at '{args.address[index]}'")
         else:
-            mango.output(account_info)
-            mango.output("Account Data:", account_info.encoded_data())
+            if len(args.filename) != 0:
+                account_info.save_json(args.filename[index])
+            else:
+                mango.output(account_info)
+                mango.output("Account Data:", account_info.encoded_data())

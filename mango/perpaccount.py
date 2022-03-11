@@ -43,6 +43,7 @@ class PerpAccount:
         open_orders: PerpOpenOrders,
         lot_size_converter: LotSizeConverter,
         base_token_value: InstrumentValue,
+        base_position_raw: Decimal,
         quote_position_raw: Decimal,
     ) -> None:
         self.base_position: Decimal = base_position
@@ -57,6 +58,7 @@ class PerpAccount:
         self.open_orders: PerpOpenOrders = open_orders
         self.lot_size_converter: LotSizeConverter = lot_size_converter
         self.base_token_value: InstrumentValue = base_token_value
+        self.base_position_raw: Decimal = base_position_raw
         self.quote_position_raw: Decimal = quote_position_raw
 
     @staticmethod
@@ -85,10 +87,13 @@ class PerpAccount:
             base_position + taker_base
         ) * lot_size_converter.base_lot_size
         base_token_value: InstrumentValue = InstrumentValue(
-            base_token, base_token.shift_to_decimals(base_position_raw)
+            base_token, base_position_raw
         )
 
-        quote_position_raw: Decimal = quote_token.shift_to_decimals(quote_position)
+        # quote_position_raw: Decimal = quote_token.shift_to_decimals(quote_position)
+        quote_position_raw: Decimal = lot_size_converter.adjust_to_quote_decimals(
+            quote_position
+        )
 
         return PerpAccount(
             base_position,
@@ -103,6 +108,7 @@ class PerpAccount:
             open_orders,
             lot_size_converter,
             base_token_value,
+            base_position_raw,
             quote_position_raw,
         )
 
@@ -172,22 +178,22 @@ class PerpAccount:
 
         return value
 
-    def current_value(
-        self, perp_market_cache: PerpMarketCache, price: Decimal
+    def pnl(
+        self, perp_market_cache: PerpMarketCache, price: InstrumentValue
     ) -> Decimal:
-        base_position: Decimal = self.lot_size_converter.adjust_to_quote_decimals(
-            self.base_position
+        base_position: Decimal = self.base_position_raw
+        price_value: Decimal = self.lot_size_converter.adjust_to_quote_decimals(
+            price.value
         )
-        value: Decimal = base_position * self.lot_size_converter.base_lot_size * price
+        value: Decimal = base_position * price_value
 
-        quote_position: Decimal = self.lot_size_converter.quote.shift_to_decimals(
-            self.quote_position
-        )
-        quote_position += self.unsettled_funding(perp_market_cache)
+        quote_position: Decimal = self.quote_position
 
-        value += quote_position
+        result = value + quote_position
 
-        return self.lot_size_converter.quote.shift_to_decimals(value)
+        return self.lot_size_converter.quote.shift_to_decimals(
+            result
+        ) + self.unsettled_funding(perp_market_cache)
 
     def __str__(self) -> str:
         if self.empty:

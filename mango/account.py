@@ -884,13 +884,15 @@ class Account(AddressableAccount):
             # --
             perp_position: Decimal = Decimal(0)
             perp_notional_position: Decimal = Decimal(0)
-            perp_value: Decimal = Decimal(0)
             perp_health_base: Decimal = Decimal(0)
             perp_health_quote: Decimal = Decimal(0)
             unsettled_funding: Decimal = Decimal(0)
             perp_health_base_value: Decimal = Decimal(0)
             perp_asset: Decimal = Decimal(0)
             perp_liability: Decimal = Decimal(0)
+            redeemable_pnl: Decimal = Decimal(0)
+            perp_base_lot_size: Decimal = Decimal(0)
+            perp_quote_lot_size: Decimal = Decimal(0)
             if (
                 slot.perp_account is not None
                 and not slot.perp_account.empty
@@ -904,13 +906,15 @@ class Account(AddressableAccount):
                         f"Could not find perp market in Group at index {slot.index}."
                     )
 
+                perp_base_lot_size = perp_market.base_lot_size
+                perp_quote_lot_size = perp_market.quote_lot_size
+
                 perp_position = (
                     slot.perp_account.lot_size_converter.base_size_lots_to_number(
                         slot.perp_account.base_position
                     )
                 )
                 perp_notional_position = perp_position * price.value
-                perp_value = slot.perp_account.quote_position_raw
                 cached_perp_market: typing.Optional[
                     PerpMarketCache
                 ] = market_cache.perp_market
@@ -941,13 +945,6 @@ class Account(AddressableAccount):
                 perp_bids_base_net: Decimal = perp_position + bids_quantity
                 perp_asks_base_net: Decimal = perp_position - asks_quantity
 
-                perp_asset = slot.perp_account.asset_value(
-                    cached_perp_market, price.value
-                )
-                perp_liability = slot.perp_account.liability_value(
-                    cached_perp_market, price.value
-                )
-
                 quote_pos = slot.perp_account.quote_position / (
                     10**self.shared_quote_token.decimals
                 )
@@ -966,6 +963,15 @@ class Account(AddressableAccount):
                         + (asks_quantity * price.value)
                     )
                 perp_health_base_value = perp_health_base * price.value
+
+                perp_asset = slot.perp_account.asset_value(
+                    cached_perp_market, price.value
+                )
+                perp_liability = slot.perp_account.liability_value(
+                    cached_perp_market, price.value
+                )
+
+                redeemable_pnl = slot.perp_account.pnl(cached_perp_market, price)
 
             group_slot: typing.Optional[GroupSlot] = None
             if market_cache is not None:
@@ -1058,7 +1064,7 @@ class Account(AddressableAccount):
                 "PerpHealthQuote": perp_health_quote,
                 "PerpAsset": perp_asset,
                 "PerpLiability": perp_liability,
-                "PerpValue": perp_value,
+                "RedeemablePnL": redeemable_pnl,
                 "UnsettledFunding": unsettled_funding,
                 "SpotInitAssetWeight": spot_init_asset_weight,
                 "SpotMaintAssetWeight": spot_maint_asset_weight,
@@ -1068,6 +1074,10 @@ class Account(AddressableAccount):
                 "PerpMaintAssetWeight": perp_maint_asset_weight,
                 "PerpInitLiabilityWeight": perp_init_liab_weight,
                 "PerpMaintLiabilityWeight": perp_maint_liab_weight,
+                "BaseDecimals": slot.base_instrument.decimals,
+                "QuoteDecimals": group.shared_quote_token.decimals,
+                "PerpBaseLotSize": perp_base_lot_size,
+                "PerpQuoteLotSize": perp_quote_lot_size,
             }
             asset_data += [data]
         frame: pandas.DataFrame = pandas.DataFrame(asset_data)
@@ -1191,6 +1201,10 @@ class Account(AddressableAccount):
         if assets <= 0:
             return Decimal(0)
         return -liabilities / (assets + liabilities)
+
+    def redeemable_pnl(self, frame: pandas.DataFrame) -> InstrumentValue:
+        value: Decimal = frame["RedeemablePnL"].sum()
+        return InstrumentValue(self.shared_quote_token, value)
 
     def __str__(self) -> str:
         info = f"'{self.info}'" if self.info else "(un-named)"

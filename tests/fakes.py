@@ -139,6 +139,7 @@ def fake_perp_account() -> mango.PerpAccount:
         mango.NullLotSizeConverter(),
         fake_instrument_value(),
         Decimal(0),
+        Decimal(0),
     )
 
 
