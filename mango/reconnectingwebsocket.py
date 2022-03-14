@@ -19,6 +19,7 @@ import logging
 import rx
 import rx.subject
 import threading
+import time
 import traceback
 import typing
 import websocket
@@ -42,6 +43,7 @@ class ReconnectingWebsocket:
         self.url = url
         self.on_open_call = on_open_call
         self.reconnect_required: bool = True
+        self.pause_on_error: float = 0.0
         self.ping_interval: int = 0
         self.connecting: rx.subject.behaviorsubject.BehaviorSubject = (
             rx.subject.behaviorsubject.BehaviorSubject(local_now())
@@ -105,17 +107,27 @@ class ReconnectingWebsocket:
 
     def _run(self) -> None:
         while self.reconnect_required:
-            self._logger.info(f"WebSocket connecting to: {self.url}")
-            self.connecting.on_next(local_now())
-            self._ws = websocket.WebSocketApp(
-                self.url,
-                on_open=self._on_open,
-                on_message=self._on_message,
-                on_error=self._on_error,
-                on_ping=self._on_ping,
-                on_pong=self._on_pong,
-            )
-            self.connected.on_next(local_now())
-            self._ws.run_forever(ping_interval=self.ping_interval)
-            self.__open_event.clear()
-            self.disconnected.on_next(local_now())
+            try:
+                self._logger.info(f"WebSocket connecting to: {self.url}")
+                self.connecting.on_next(local_now())
+                self._ws = websocket.WebSocketApp(
+                    self.url,
+                    on_open=self._on_open,
+                    on_message=self._on_message,
+                    on_error=self._on_error,
+                    on_ping=self._on_ping,
+                    on_pong=self._on_pong,
+                )
+                self.connected.on_next(local_now())
+                self._ws.run_forever(ping_interval=self.ping_interval)
+                self.__open_event.clear()
+                self.disconnected.on_next(local_now())
+            except Exception:
+                self._logger.warning(
+                    f"Websocket received error: {traceback.format_exc()}"
+                )
+                if self.pause_on_error > 0:
+                    self._logger.warning(
+                        f"Pausing for {self.pause_on_error} seconds before trying to reconnect."
+                    )
+                    time.sleep(self.pause_on_error)
