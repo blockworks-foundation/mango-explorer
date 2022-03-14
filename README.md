@@ -214,6 +214,84 @@ with mango.ContextBuilder.build(cluster_name="devnet") as context:
 ```
 
 
+### 🏃 Refresh Orders
+
+Solana's transaction mechanism allows for atomic cancel-and-replace of orders - either the entire transaction succeeds (old orders are cancelled, new orders are placed), or the entire transaction fails (no orders are cancelled, no orders are placed).
+
+Neither Serum nor Mango supports 'editing' or changing an order - to change the price or quantity for an order you must cancel it and replace it with an order with updated values.
+
+This code will loop 3 times around:
+* in one transaction: cancelling all perp orders and placing bid and ask perp orders on SOL-PERP
+* wait for that transaction to confirm
+* pause for 5 seconds
+
+You can verify the transaction signatures in [Solana Explorer](https://explorer.solana.com/?cluster=devnet) to see there is a single transaction containing a `CancelAllPerpOrders` instruction followed by two `PlacePerpOrder2` instructions. Since they're all in the same transaction, they will all succeed or all fail - if any instruction fails, the previous instructions are not committed to the chain, as if they never happened.
+```
+import decimal
+import mango
+import time
+
+from solana.publickey import PublicKey
+
+# Use our hard-coded devnet wallet for DeekipCw5jz7UgQbtUbHQckTYGKXWaPQV4xY93DaiM6h.
+# For real-world use you'd load the bytes from the environment or a file. Later we use
+# its Mango Account at HhepjyhSzvVP7kivdgJH9bj32tZFncqKUwWidS1ja4xL.
+wallet = mango.Wallet(bytes([67,218,68,118,140,171,228,222,8,29,48,61,255,114,49,226,239,89,151,110,29,136,149,118,97,189,163,8,23,88,246,35,187,241,107,226,47,155,40,162,3,222,98,203,176,230,34,49,45,8,253,77,136,241,34,4,80,227,234,174,103,11,124,146]))
+
+with mango.ContextBuilder.build(cluster_name="devnet") as context:
+    group = mango.Group.load(context)
+    account = mango.Account.load(context, PublicKey("HhepjyhSzvVP7kivdgJH9bj32tZFncqKUwWidS1ja4xL"), group)
+    market_operations = mango.operations(context, wallet, account, "SOL-PERP", dry_run=False)
+    market_instructions: mango.PerpMarketInstructionBuilder = mango.instruction_builder(context, wallet, account, "SOL-PERP", dry_run=False)
+
+    signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
+
+    for counter in range(3):
+        print("\n\nOrders:")
+        orderbook = market_operations.load_orderbook()
+        print(orderbook)
+
+        instructions = signers
+        instructions += market_instructions.build_cancel_all_orders_instructions()
+        buy = mango.Order.from_values(side=mango.Side.BUY,
+                                      price=orderbook.top_bid.price,
+                                      quantity=decimal.Decimal(1),
+                                      order_type=mango.OrderType.POST_ONLY,
+                                      client_id=counter+10)
+        print(buy)
+        instructions += market_instructions.build_place_order_instructions(buy)
+        sell = mango.Order.from_values(side=mango.Side.SELL,
+                                       price=orderbook.top_ask.price,
+                                       quantity=decimal.Decimal(1),
+                                       order_type=mango.OrderType.POST_ONLY,
+                                       client_id=counter+20)
+        print(sell)
+        instructions += market_instructions.build_place_order_instructions(sell)
+
+        signatures = instructions.execute(context)
+
+        print("Waiting for refresh order transaction to confirm...\n", signatures)
+        mango.WebSocketTransactionMonitor.wait_for_all(
+                context.client.cluster_ws_url, signatures, commitment="processed"
+            )
+
+        print("Sleeping for 5 seconds...")
+        time.sleep(5)
+
+print("Cleaning up...")
+instructions = signers
+instructions += market_instructions.build_cancel_all_orders_instructions()
+
+cleanup_signatures = instructions.execute(context)
+
+print("Waiting for cleanup transaction to confirm...\n", cleanup_signatures)
+mango.WebSocketTransactionMonitor.wait_for_all(
+        context.client.cluster_ws_url, cleanup_signatures, commitment="processed"
+    )
+
+print("Example complete.")
+```
+
 ### 🏃 Show Account Data
 > [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=ShowAccountDataFrame.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/ShowAccountDataFrame.ipynb)
 
