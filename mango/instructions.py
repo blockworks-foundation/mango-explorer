@@ -108,6 +108,7 @@ class IGroupSlot(typing.Protocol):
 class IGroup(typing.Protocol):
     cache: PublicKey
     signer_key: PublicKey
+    fees_vault: PublicKey
     shared_quote: TokenBank
 
     @property
@@ -1710,5 +1711,83 @@ def build_mango_update_funding_instructions(
         ],
         program_id=context.mango_program_address,
         data=layouts.UPDATE_FUNDING.build({}),
+    )
+    return CombinableInstructions(signers=[], instructions=[instruction])
+
+
+def build_mango_settle_fees_instructions(
+    context: Context,
+    group: IGroup,
+    perp_market_details: PerpMarketDetails,
+    account: IAccount,
+    root_bank: RootBank,
+    node_bank: NodeBank,
+) -> CombinableInstructions:
+    # /// Take an account that has losses in the selected perp market to account for fees_accrued
+    # ///
+    # /// Accounts expected: 10
+    # /// 0. `[]` mango_group_ai - MangoGroup
+    # /// 1. `[]` mango_cache_ai - MangoCache
+    # /// 2. `[writable]` perp_market_ai - PerpMarket
+    # /// 3. `[writable]` mango_account_ai - MangoAccount
+    # /// 4. `[]` root_bank_ai - RootBank
+    # /// 5. `[writable]` node_bank_ai - NodeBank
+    # /// 6. `[writable]` bank_vault_ai - ?
+    # /// 7. `[writable]` fees_vault_ai - fee vault owned by mango DAO token governance
+    # /// 8. `[]` signer_ai - Group Signer Account
+    # /// 9. `[]` token_prog_ai - Token Program Account
+    instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+            AccountMeta(
+                is_signer=False, is_writable=True, pubkey=perp_market_details.address
+            ),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=node_bank.vault),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=group.fees_vault),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.signer_key),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=TOKEN_PROGRAM_ID),
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.SETTLE_FEES.build({}),
+    )
+    return CombinableInstructions(signers=[], instructions=[instruction])
+
+
+def build_mango_settle_pnl_instructions(
+    context: Context,
+    group: IGroup,
+    group_slot: IGroupSlot,
+    account_a: IAccount,
+    account_b: IAccount,
+    root_bank: RootBank,
+) -> CombinableInstructions:
+    # /// Take two MangoAccounts and settle profits and losses between them for a perp market
+    # ///
+    # /// Accounts expected (6):
+    #   const keys = [
+    #     { isSigner: false, isWritable: false, pubkey: mangoGroupPk },
+    #     { isSigner: false, isWritable: true, pubkey: mangoAccountAPk },
+    #     { isSigner: false, isWritable: true, pubkey: mangoAccountBPk },
+    #     { isSigner: false, isWritable: false, pubkey: mangoCachePk },
+    #     { isSigner: false, isWritable: false, pubkey: rootBankPk },
+    #     { isSigner: false, isWritable: true, pubkey: nodeBankPk },
+    #   ];
+    instruction = TransactionInstruction(
+        keys=[
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account_a.address),
+            AccountMeta(is_signer=False, is_writable=True, pubkey=account_b.address),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=group.cache),
+            AccountMeta(is_signer=False, is_writable=False, pubkey=root_bank.address),
+            AccountMeta(
+                is_signer=False, is_writable=True, pubkey=root_bank.node_banks[0]
+            ),
+        ],
+        program_id=context.mango_program_address,
+        data=layouts.SETTLE_PNL.build({"market_index": group_slot.index}),
     )
     return CombinableInstructions(signers=[], instructions=[instruction])

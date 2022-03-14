@@ -30,6 +30,8 @@ from .encoding import encode_key
 from .group import Group, GroupSlot, GroupSlotPerpMarket
 from .instructions import (
     build_mango_deposit_instructions,
+    build_mango_settle_fees_instructions,
+    build_mango_settle_pnl_instructions,
     build_mango_withdraw_instructions,
 )
 from .instrumentvalue import InstrumentValue
@@ -39,6 +41,7 @@ from .observables import Disposable
 from .openorders import OpenOrders
 from .orders import Side
 from .perpaccount import PerpAccount
+from .perpmarketdetails import PerpMarketDetails
 from .perpopenorders import PerpOpenOrders
 from .placedorder import PlacedOrder
 from .tokens import Instrument, Token
@@ -166,6 +169,15 @@ class AccountSlot:
     @property
     def raw_net_value(self) -> Decimal:
         return self.raw_deposit - self.raw_borrow
+
+    def pnl(
+        self,
+        perp_market_cache: PerpMarketCache,
+        price: InstrumentValue,
+    ) -> Decimal:
+        if self.perp_account is None:
+            return Decimal(0)
+        return self.perp_account.pnl(perp_market_cache, price)
 
     def __str__(self) -> str:
         perp_account: str = "None"
@@ -696,6 +708,201 @@ class Account(AddressableAccount):
 
         all_instructions = signers + create_ata + withdraw
         return all_instructions.execute(context)
+
+    def redeem_all_perp_pnl(
+        self,
+        context: Context,
+        wallet: Wallet,
+        group: Group,
+        cache: Cache,
+    ) -> typing.Sequence[str]:
+        all_accounts = Account.load_all(context, group)
+        self._logger.debug(f"Fetched {len(all_accounts)} Mango Accounts.")
+
+        instructions = CombinableInstructions.from_wallet(wallet)
+        for slot in self.slots:
+            if (slot.perp_account is not None) and (not slot.perp_account.empty):
+                self._logger.debug(
+                    f"Redeeming perp account for {slot.base_instrument.symbol}"
+                )
+                price = group.token_price_from_cache(cache, slot.base_instrument)
+                perp_market_cache = group.perp_market_cache_from_cache(
+                    cache, slot.base_instrument
+                )
+                if perp_market_cache is None:
+                    raise Exception(
+                        f"Could not load perp market cache for {slot.base_instrument.symbol} despite having a perp account for it."
+                    )
+
+                instructions += self.build_redeem_pnl_instructions_for_market(
+                    context, group, all_accounts, slot, perp_market_cache, price
+                )
+            else:
+                self._logger.debug(f"No perp account for {slot.base_instrument.symbol}")
+
+        self._logger.debug(
+            f"Have {len(instructions.instructions)} instructions to send for all perp markets."
+        )
+
+        return instructions.execute(context)
+
+    def redeem_pnl_for_perp_market(
+        self,
+        context: Context,
+        wallet: Wallet,
+        group: Group,
+        slot: AccountSlot,
+        perp_market_cache: PerpMarketCache,
+        price: InstrumentValue,
+    ) -> typing.Sequence[str]:
+        group_slot = group.slots[slot.index]
+        if group_slot.perp_market is None:
+            return []
+
+        if slot.perp_account is None:
+            return []
+
+        pnl = slot.perp_account.pnl(perp_market_cache, price)
+        if pnl == 0:
+            # No PnL to redeem
+            return []
+
+        self._logger.debug(
+            f"Trying to settle {pnl:,.8f} {group_slot.quote_token_bank.token.symbol}."
+        )
+
+        instructions = CombinableInstructions.from_wallet(wallet)
+
+        all_accounts = Account.load_all(context, group)
+        self._logger.debug(f"Fetched {len(all_accounts)} Mango Accounts.")
+
+        instructions += self.build_redeem_pnl_instructions_for_market(
+            context, group, all_accounts, slot, perp_market_cache, price
+        )
+
+        return instructions.execute(context)
+
+    def build_redeem_pnl_instructions_for_market(
+        self,
+        context: Context,
+        group: Group,
+        all_accounts: typing.Sequence["Account"],
+        slot: AccountSlot,
+        perp_market_cache: PerpMarketCache,
+        price: InstrumentValue,
+    ) -> CombinableInstructions:
+        group_slot = group.slots[slot.index]
+        if group_slot.perp_market is None:
+            self._logger.debug(f"No perp market for {slot.base_instrument.symbol}")
+            return CombinableInstructions.empty()
+
+        if slot.perp_account is None:
+            self._logger.debug(f"No perp account for {slot.base_instrument.symbol}")
+            return CombinableInstructions.empty()
+
+        pnl = slot.perp_account.pnl(perp_market_cache, price)
+        if pnl == 0:
+            # No PnL to redeem
+            return CombinableInstructions.empty()
+
+        self._logger.debug(
+            f"Trying to settle {pnl:,.8f} {group_slot.quote_token_bank.token.symbol} on {group_slot.perp_market_symbol}."
+        )
+
+        pnl_is_negative: bool = False
+        if pnl < 0:
+            pnl_is_negative = True
+
+        quote_root_bank = group.shared_quote.ensure_root_bank(context)
+
+        instructions = CombinableInstructions.empty()
+
+        # If negative, build settle fees instruction
+        if pnl_is_negative:
+            perp_market = PerpMarketDetails.load(
+                context, group_slot.perp_market.address, group
+            )
+            quote_node_bank = quote_root_bank.pick_node_bank(context)
+            self._logger.debug("Adding SettleFees instruction.")
+            instructions += build_mango_settle_fees_instructions(
+                context,
+                group,
+                perp_market,
+                self,
+                quote_root_bank,
+                quote_node_bank,
+            )
+
+        all_accounts_except_self = filter(
+            lambda acc: acc.address != self.address,
+            all_accounts,
+        )
+
+        # Filter out all accounts with zero or same-signed PnL
+        if pnl_is_negative:
+            filtered = list(
+                filter(
+                    lambda acc: acc.slots[slot.index].pnl(perp_market_cache, price) > 0,
+                    all_accounts_except_self,
+                )
+            )
+        else:
+            filtered = list(
+                filter(
+                    lambda acc: acc.slots[slot.index].pnl(perp_market_cache, price) < 0,
+                    all_accounts_except_self,
+                )
+            )
+        self._logger.debug(
+            f"Removed irrelevent accounts - now have {len(filtered)} Mango Accounts."
+        )
+
+        # Now we have a filtered list, sort it
+        sorted_accounts = sorted(
+            filtered,
+            key=lambda acc: acc.slots[slot.index].pnl(perp_market_cache, price),
+            reverse=pnl_is_negative,
+        )
+
+        # Add 5% to our collection so we're sure we're sending enough accounts even if
+        # the price has shifted. (This doesn't affect the redemption value.)
+        target_pnl = (pnl * Decimal("1.01")).copy_abs()
+
+        # Loop over top N accounts until we have redeemed enough or we run out of accounts.
+        collected = Decimal(0)
+        for other in sorted_accounts:
+            other_perp_account = other.slots[slot.index].perp_account
+            if other_perp_account is not None:
+                other_pnl = other_perp_account.pnl(perp_market_cache, price)
+
+                # Build instruction
+                instructions += build_mango_settle_pnl_instructions(
+                    context,
+                    group,
+                    group_slot,
+                    self,
+                    other,
+                    quote_root_bank,
+                )
+
+                collected += other_pnl
+                self._logger.debug(
+                    f"Collected {collected:,.8f} out of {target_pnl:,.8f} - added {other_pnl:,.8f} from {other.address}"
+                )
+
+                # Add 1% to our collection so we're sure we're sending enough accounts even if
+                # the price has shifted. (This doesn't affect the redemption value.)
+                if collected.copy_abs() > target_pnl:
+                    self._logger.debug(
+                        f"Done. Have collected {collected:,.8f} to redeem against."
+                    )
+                    break
+
+        self._logger.debug(
+            f"Have {len(instructions.instructions)} instructions to send for {group_slot.perp_market_symbol}."
+        )
+
+        return instructions
 
     def slot_by_instrument_or_none(
         self, instrument: Instrument

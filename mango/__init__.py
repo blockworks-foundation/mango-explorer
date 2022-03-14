@@ -106,6 +106,12 @@ from .instructions import (
     build_mango_set_referrer_memory_instructions as build_mango_set_referrer_memory_instructions,
 )
 from .instructions import (
+    build_mango_settle_fees_instructions as build_mango_settle_fees_instructions,
+)
+from .instructions import (
+    build_mango_settle_pnl_instructions as build_mango_settle_pnl_instructions,
+)
+from .instructions import (
     build_mango_update_funding_instructions as build_mango_update_funding_instructions,
 )
 from .instructions import (

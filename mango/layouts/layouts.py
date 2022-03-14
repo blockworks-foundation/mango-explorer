@@ -1584,6 +1584,32 @@ UPDATE_ROOT_BANK = construct.Struct(
     "variant" / construct.Const(21, construct.BytesInteger(4, swapped=True)),
 )
 
+# /// Take two MangoAccounts and settle profits and losses between them for a perp market
+# ///
+# /// Accounts expected (6):
+SETTLE_PNL = construct.Struct(
+    "variant" / construct.Const(22, construct.BytesInteger(4, swapped=True)),
+    "market_index" / DecimalAdapter(),
+)
+
+
+# /// Take an account that has losses in the selected perp market to account for fees_accrued
+# ///
+# /// Accounts expected: 10
+# /// 0. `[]` mango_group_ai - MangoGroup
+# /// 1. `[]` mango_cache_ai - MangoCache
+# /// 2. `[writable]` perp_market_ai - PerpMarket
+# /// 3. `[writable]` mango_account_ai - MangoAccount
+# /// 4. `[]` root_bank_ai - RootBank
+# /// 5. `[writable]` node_bank_ai - NodeBank
+# /// 6. `[writable]` bank_vault_ai - ?
+# /// 7. `[writable]` fees_vault_ai - fee vault owned by mango DAO token governance
+# /// 8. `[]` signer_ai - Group Signer Account
+# /// 9. `[]` token_prog_ai - Token Program Account
+SETTLE_FEES = construct.Struct(
+    "variant" / construct.Const(29, construct.BytesInteger(4, swapped=True))
+)
+
 
 # /// Redeem the mngo_accrued in a PerpAccount for MNGO in MangoAccount deposits
 # ///
@@ -1830,14 +1856,14 @@ InstructionParsersByVariant = {
     19: SETTLE_FUNDS,  # SETTLE_FUNDS,
     20: CANCEL_SPOT_ORDER,  # CANCEL_SPOT_ORDER,
     21: UPDATE_ROOT_BANK,  # UPDATE_ROOT_BANK,
-    22: UNSPECIFIED,  # SETTLE_PNL,
+    22: SETTLE_PNL,  # SETTLE_PNL,
     23: UNSPECIFIED,  # SETTLE_BORROW,
     24: UNSPECIFIED,  # FORCE_CANCEL_SPOT_ORDERS,
     25: UNSPECIFIED,  # FORCE_CANCEL_PERP_ORDERS,
     26: UNSPECIFIED,  # LIQUIDATE_TOKEN_AND_TOKEN,
     27: UNSPECIFIED,  # LIQUIDATE_TOKEN_AND_PERP,
     28: UNSPECIFIED,  # LIQUIDATE_PERP_MARKET,
-    29: UNSPECIFIED,  # SETTLE_FEES,
+    29: SETTLE_FEES,  # SETTLE_FEES,
     30: UNSPECIFIED,  # RESOLVE_PERP_BANKRUPTCY,
     31: UNSPECIFIED,  # RESOLVE_TOKEN_BANKRUPTCY,
     32: UNSPECIFIED,  # INIT_SPOT_OPEN_ORDERS,
