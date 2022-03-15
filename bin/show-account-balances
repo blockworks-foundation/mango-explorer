@@ -93,9 +93,9 @@ for account in mango_accounts:
         "Spot",
         "SpotValue",
         "SpotOpenValue",
+        "PerpPositionSize",
         "PerpNotionalSize",
-        "PerpAsset",
-        "PerpLiability",
+        "RedeemablePnL",
         "UnsettledFunding",
     ]
     for column_name in numeric_columns:
