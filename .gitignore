@@ -22,6 +22,10 @@ __pycache__
 # Don't check in any experimental commands
 bin/experimental*
 
+# Don't check in any notebooks
+/notebooks
+*.ipynb
+
 # Don't check in anything that might have credentials.
 configuration.json
 wallet.json
