@@ -374,7 +374,7 @@ TOKEN_ACCOUNT = construct.Struct(
     "mint" / PublicKeyAdapter(),
     "owner" / PublicKeyAdapter(),
     "amount" / DecimalAdapter(),
-    "padding" / construct.Padding(93),
+    construct.Padding(93),
 )
 
 
@@ -397,7 +397,7 @@ OPEN_ORDERS = construct.Struct(
     "orders" / construct.Array(128, DecimalAdapter(16)),
     "client_ids" / construct.Array(128, DecimalAdapter()),
     "referrer_rebate_accrued" / DecimalAdapter(),
-    "padding" / construct.Padding(7),
+    construct.Padding(7),
 )
 
 # Mints and airdrops tokens from a faucet.
@@ -463,7 +463,7 @@ METADATA = construct.Struct(
     "data_type" / DATA_TYPE,
     "version" / DecimalAdapter(1),
     "is_initialized" / DecimalAdapter(1),
-    "padding" / construct.Padding(5),
+    construct.Padding(5),
 )
 
 
@@ -484,7 +484,7 @@ TOKEN_INFO = construct.Struct(
     "mint" / PublicKeyAdapter(),
     "root_bank" / PublicKeyAdapter(),
     "decimals" / DecimalAdapter(1),
-    "padding" / construct.Padding(7),
+    construct.Padding(7),
 )
 
 
@@ -924,7 +924,7 @@ INNER_BOOK_NODE = construct.Struct(
     "prefix_len" / DecimalAdapter(4),
     "key" / DecimalAdapter(16),
     "children" / construct.Array(2, DecimalAdapter(4)),
-    "padding" / construct.Padding(_NODE_SIZE - 32),
+    construct.Padding(_NODE_SIZE - 32),
 )
 if INNER_BOOK_NODE.sizeof() != _NODE_SIZE:
     raise Exception(
@@ -1001,7 +1001,7 @@ FREE_BOOK_NODE = construct.Struct(
     "type_name" / construct.Computed(lambda _: "free"),
     "tag" / construct.Const(Decimal(3), DecimalAdapter(4)),
     "next" / DecimalAdapter(4),
-    "padding" / construct.Padding(_NODE_SIZE - 8),
+    construct.Padding(_NODE_SIZE - 8),
 )
 if FREE_BOOK_NODE.sizeof() != _NODE_SIZE:
     raise Exception(
@@ -1017,7 +1017,7 @@ LAST_FREE_BOOK_NODE = construct.Struct(
     "type_name" / construct.Computed(lambda _: "last_free"),
     "tag" / construct.Const(Decimal(4), DecimalAdapter(4)),
     "next" / DecimalAdapter(4),
-    "padding" / construct.Padding(_NODE_SIZE - 8),
+    construct.Padding(_NODE_SIZE - 8),
 )
 if LAST_FREE_BOOK_NODE.sizeof() != _NODE_SIZE:
     raise Exception(
