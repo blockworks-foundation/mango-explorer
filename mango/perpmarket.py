@@ -120,8 +120,27 @@ class FundingRate:
             to=to_timestamp,
         )
 
+    @property
+    def extrapolated_apr(self) -> Decimal:
+        # From Max (in Discord DM):
+        # hpr * 24 * 365 = apr
+        # ...
+        # hpr * 8760 = apr
+        return self.rate * Decimal(8760)
+
+    @property
+    def extrapolated_apy(self) -> Decimal:
+        # From Max (in Discord DM):
+        # (1 + hpr) ^ 8760 = apy + 1
+        return ((Decimal(1) + self.rate) ** Decimal(8760)) - Decimal(1)
+
     def __str__(self) -> str:
-        return f"« FundingRate {self.symbol} {self.rate:,.8%}, open interest: {self.open_interest:,.8f} from: {self.from_} to {self.to} »"
+        return f"""« FundingRate {self.symbol} {self.rate:,.8%}
+    Period: {self.from_} to {self.to}
+    Open Interest: {self.open_interest:,.8f}
+    Extrapolated APR: {self.extrapolated_apr:,.8%}
+    Extrapolated APY: {self.extrapolated_apy:,.8%}
+»"""
 
     def __repr__(self) -> str:
         return f"{self}"
