@@ -37,7 +37,7 @@ class MockClient(mango.BetterClient):
             "ws://localhost",
             -1,
             [],
-            mango.SlotHolder(),
+            mango.NullSlotHolder(),
             mango.InstructionReporter(),
         )
         compound = mango.CompoundRPCCaller("fake", [rpc])

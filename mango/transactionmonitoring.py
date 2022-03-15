@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from solana.rpc.commitment import Commitment, Finalized
 
-from .client import TransactionMonitor
+from .client import AbstractSlotHolder, NullSlotHolder, TransactionMonitor
 from .datetimes import local_now
 from .idgenerator import IdGenerator, MonotonicIdGenerator
 from .reconnectingwebsocket import ReconnectingWebsocket
@@ -169,8 +169,13 @@ class WebSocketTransactionMonitor(TransactionMonitor):
         ping_interval: int = 10,
         transaction_timeout: float = 90.0,
         collector: TransactionStatusCollector = NullTransactionStatusCollector(),
+        slot_holder: AbstractSlotHolder = NullSlotHolder(),
     ) -> None:
-        super().__init__(commitment=commitment, transaction_timeout=transaction_timeout)
+        super().__init__(
+            commitment=commitment,
+            transaction_timeout=transaction_timeout,
+            slot_holder=slot_holder,
+        )
         self.collector: TransactionStatusCollector = collector
 
         self.__id_generator: IdGenerator = MonotonicIdGenerator()

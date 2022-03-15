@@ -17,7 +17,7 @@ class FakeRPCCaller(mango.RPCCaller):
             "wss://localhost",
             -1,
             [0.1, 0.2],
-            mango.SlotHolder(),
+            mango.NullSlotHolder(),
             mango.InstructionReporter(),
         )
         self.called = False
@@ -35,7 +35,7 @@ class RaisingRPCCaller(mango.RPCCaller):
             "wss://localhost",
             -1,
             [0.1, 0.2],
-            mango.SlotHolder(),
+            mango.NullSlotHolder(),
             mango.InstructionReporter(),
         )
         self.called = False

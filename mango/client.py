@@ -309,13 +309,61 @@ UnspecifiedCommitment = Commitment("unspecified")
 UnspecifiedEncoding = "unspecified"
 
 
-# # 🥭 SlotHolder class
+# # 🥭 AbstractSlotHolder class
 #
 # A `SlotHolder` shares the latest slot across multiple `RPCCaller`s.
 #
-class SlotHolder:
+class AbstractSlotHolder(metaclass=abc.ABCMeta):
     def __init__(self) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+
+    @abc.abstractproperty
+    def latest_slot(self) -> int:
+        raise NotImplementedError(
+            "AbstractSlotHolder.latest_slot() is not implemented on the base type."
+        )
+
+    def require_data_from_fresh_slot(
+        self, latest_slot: typing.Optional[int] = None
+    ) -> None:
+        raise NotImplementedError(
+            "AbstractSlotHolder.require_data_from_fresh_slot() is not implemented on the base type."
+        )
+
+    def is_acceptable(self, slot_to_check: int) -> bool:
+        raise NotImplementedError(
+            "AbstractSlotHolder.is_acceptable() is not implemented on the base type."
+        )
+
+
+# # 🥭 NullSlotHolder class
+#
+# A `NullSlotHolder` takes no slot-checking action.
+#
+class NullSlotHolder(AbstractSlotHolder):
+    def __init__(self) -> None:
+        super().__init__()
+
+    @property
+    def latest_slot(self) -> int:
+        return 0
+
+    def require_data_from_fresh_slot(
+        self, latest_slot: typing.Optional[int] = None
+    ) -> None:
+        pass
+
+    def is_acceptable(self, slot_to_check: int) -> bool:
+        return True
+
+
+# # 🥭 CheckingSlotHolder class
+#
+# A `CheckingSlotHolder` allows checking if a given slot is newer or equal to the last slot seen.
+#
+class CheckingSlotHolder(AbstractSlotHolder):
+    def __init__(self) -> None:
+        super().__init__()
         self.__latest_slot: int = 0
 
     @property
@@ -349,12 +397,13 @@ class TransactionMonitor(metaclass=abc.ABCMeta):
         self,
         commitment: Commitment = Finalized,
         transaction_timeout: float = 90.0,
+        slot_holder: AbstractSlotHolder = NullSlotHolder(),
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.commitment: Commitment = commitment
         self.transaction_timeout: float = transaction_timeout
 
-        self.slot_holder: SlotHolder = SlotHolder()
+        self.slot_holder: AbstractSlotHolder = slot_holder
 
     @abc.abstractmethod
     def monitor(self, signature: str) -> None:
@@ -371,8 +420,13 @@ class NullTransactionMonitor(TransactionMonitor):
         self,
         commitment: Commitment = Finalized,
         transaction_timeout: float = 90.0,
+        slot_holder: AbstractSlotHolder = NullSlotHolder(),
     ) -> None:
-        super().__init__(commitment=commitment, transaction_timeout=transaction_timeout)
+        super().__init__(
+            commitment=commitment,
+            transaction_timeout=transaction_timeout,
+            slot_holder=slot_holder,
+        )
 
     def monitor(self, signature: str) -> None:
         pass
@@ -390,7 +444,7 @@ class RPCCaller(HTTPProvider):
         cluster_ws_url: str,
         http_request_timeout: float,
         stale_data_pauses_before_retry: typing.Sequence[float],
-        slot_holder: SlotHolder,
+        slot_holder: AbstractSlotHolder,
         instruction_reporter: InstructionReporter,
     ):
         super().__init__(cluster_rpc_url)
@@ -402,7 +456,7 @@ class RPCCaller(HTTPProvider):
         self.stale_data_pauses_before_retry: typing.Sequence[
             float
         ] = stale_data_pauses_before_retry
-        self.slot_holder: SlotHolder = slot_holder
+        self.slot_holder: AbstractSlotHolder = slot_holder
         self.instruction_reporter: InstructionReporter = instruction_reporter
 
     def require_data_from_fresh_slot(

@@ -37,7 +37,9 @@ from .client import FailedToFetchBlockhashException as FailedToFetchBlockhashExc
 from .client import NodeIsBehindException as NodeIsBehindException
 from .client import RateLimitException as RateLimitException
 from .client import RPCCaller as RPCCaller
-from .client import SlotHolder as SlotHolder
+from .client import AbstractSlotHolder as AbstractSlotHolder
+from .client import CheckingSlotHolder as CheckingSlotHolder
+from .client import NullSlotHolder as NullSlotHolder
 from .client import StaleSlotException as StaleSlotException
 from .client import (
     TooManyRequestsRateLimitException as TooManyRequestsRateLimitException,

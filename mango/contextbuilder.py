@@ -23,7 +23,10 @@ from solana.publickey import PublicKey
 from solana.rpc.commitment import Commitment, Finalized
 
 from .client import (
+    AbstractSlotHolder,
+    CheckingSlotHolder,
     ClusterUrlData,
+    NullSlotHolder,
     TransactionMonitor,
     NullTransactionMonitor,
 )
@@ -182,6 +185,7 @@ class ContextBuilder:
         parser.add_argument(
             "--stale-data-maximum-retries",
             type=int,
+            default=0,
             help="How many times to retry fetching data after being given stale data before giving up",
         )
         parser.add_argument(
@@ -261,13 +265,16 @@ class ContextBuilder:
         # Do this here so build() only ever has to handle the sequence of retry times. (It gets messy
         # passing around the sequnce *plus* the data to reconstruct it for build().)
         actual_stale_data_pauses_before_retry: typing.Sequence[float]
+        actual_slot_holder: AbstractSlotHolder
         if stale_data_maximum_retries == 0:
-            # Stale data checking is explicitly disabled
+            # Stale data checking is disabled
             actual_stale_data_pauses_before_retry = []
+            actual_slot_holder = NullSlotHolder()
         else:
             retries: int = stale_data_maximum_retries or 10
             pause: Decimal = stale_data_pause_before_retry or Decimal("0.1")
             actual_stale_data_pauses_before_retry = [float(pause)] * retries
+            actual_slot_holder = CheckingSlotHolder()
 
         context: Context = ContextBuilder.build(
             name,
@@ -290,6 +297,7 @@ class ContextBuilder:
             monitor_transactions,
             monitor_transactions_commitment,
             monitor_transactions_timeout,
+            actual_slot_holder,
         )
 
         logging.debug(f"{context}")
@@ -323,6 +331,7 @@ class ContextBuilder:
             not isinstance(context.client.transaction_monitor, NullTransactionMonitor),
             context.client.transaction_monitor.commitment,
             context.client.transaction_monitor.transaction_timeout,
+            context.client.transaction_monitor.slot_holder,
         )
 
     @staticmethod
@@ -346,6 +355,9 @@ class ContextBuilder:
             context.gma_chunk_pause,
             context.reflink,
             False,  # Don't try to watch transactions on a switched Context
+            None,
+            None,
+            NullSlotHolder(),
         )
 
     @staticmethod
@@ -370,6 +382,7 @@ class ContextBuilder:
         monitor_transactions: typing.Optional[bool] = None,
         monitor_transactions_commitment: typing.Optional[Commitment] = None,
         monitor_transactions_timeout: typing.Optional[float] = None,
+        slot_holder: typing.Optional[AbstractSlotHolder] = None,
     ) -> "Context":
         def __public_key_or_none(
             address: typing.Optional[str],
@@ -564,14 +577,18 @@ class ContextBuilder:
         actual_monitor_transactions_commitment: Commitment = (
             monitor_transactions_commitment or Finalized
         )
+        actual_slot_holder: AbstractSlotHolder = slot_holder or NullSlotHolder()
         actual_monitor_transactions_timeout = monitor_transactions_timeout or 90
-        actual_transaction_monitor: TransactionMonitor = NullTransactionMonitor()
+        actual_transaction_monitor: TransactionMonitor = NullTransactionMonitor(
+            slot_holder=actual_slot_holder
+        )
         if monitor_transactions:
             actual_transaction_monitor = WebSocketTransactionMonitor(
                 actual_cluster_urls[0].ws,
                 commitment=actual_monitor_transactions_commitment,
                 transaction_timeout=actual_monitor_transactions_timeout,
                 collector=DequeTransactionStatusCollector(),
+                slot_holder=actual_slot_holder,
             )
 
         context = Context(
