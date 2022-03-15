@@ -40,6 +40,12 @@ class MarketMaker:
         desired_orders_chain: Chain,
         order_reconciler: OrderReconciler,
         redeem_threshold: typing.Optional[Decimal],
+        prologue: typing.Callable[
+            [mango.Context, mango.ModelState], mango.CombinableInstructions
+        ] = lambda c, ma: mango.CombinableInstructions.empty(),
+        epilogue: typing.Callable[
+            [mango.Context, mango.ModelState], mango.CombinableInstructions
+        ] = lambda c, ma: mango.CombinableInstructions.empty(),
     ) -> None:
         self._logger: logging.Logger = logging.getLogger(self.__class__.__name__)
         self.wallet: mango.Wallet = wallet
@@ -50,6 +56,13 @@ class MarketMaker:
         self.desired_orders_chain: Chain = desired_orders_chain
         self.order_reconciler: OrderReconciler = order_reconciler
         self.redeem_threshold: typing.Optional[Decimal] = redeem_threshold
+
+        self.prologue: typing.Callable[
+            [mango.Context, mango.ModelState], mango.CombinableInstructions
+        ] = prologue
+        self.epilogue: typing.Callable[
+            [mango.Context, mango.ModelState], mango.CombinableInstructions
+        ] = epilogue
 
         self.pulse_complete: EventSource[datetime] = EventSource[datetime]()
         self.pulse_error: EventSource[Exception] = EventSource[Exception]()
@@ -161,8 +174,17 @@ Ignore:
 
             # Don't bother if we have no orders to change
             if len(cancellations.instructions) + len(place_orders.instructions) > 0:
+                prologue = self.prologue(context, model_state)
+                epilogue = self.prologue(context, model_state)
                 (
-                    payer + cancellations + place_orders + crank + settle + redeem
+                    payer
+                    + prologue
+                    + cancellations
+                    + place_orders
+                    + crank
+                    + settle
+                    + redeem
+                    + epilogue
                 ).execute(context)
 
             self.pulse_complete.on_next(mango.local_now())
