@@ -89,6 +89,11 @@ def __quantity_from_account_target(
             )
 
     rounded = token.round(to_withdraw, mango.RoundDirection.DOWN)
+    if rounded == 0:
+        raise Exception(
+            f"Cannot withdraw {to_withdraw:,.8f} {token.symbol} to reach account target {quantity:,.8f} {token.symbol} - {to_withdraw:,.8f} {token.symbol} rounds to zero when trying to withdraw."
+        )
+
     mango.output(
         f"Withdrawing {rounded:,.8f} {token.symbol} from Mango Account balance of {slot.net_value.value:,.8f} {token.symbol}"
     )
@@ -124,6 +129,11 @@ def __quantity_from_wallet_target(
         )
 
     rounded = token.round(to_withdraw, mango.RoundDirection.DOWN)
+    if rounded == 0:
+        raise Exception(
+            f"Cannot withdraw {to_withdraw:,.8f} {token.symbol} to reach wallet target {quantity:,.8f} {token.symbol} - {to_withdraw:,.8f} {token.symbol} rounds to zero when trying to withdraw."
+        )
+
     mango.output(
         f"Withdrawing {rounded:,.8f} {token.symbol} from Mango Account (borrowing {borrow:,.8f} {token.symbol}) to add to wallet balance of {total:,.8f} {token.symbol}"
     )

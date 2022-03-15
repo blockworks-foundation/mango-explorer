@@ -14,7 +14,10 @@ parser = argparse.ArgumentParser(description="Closes a Wrapped SOL account.")
 mango.ContextBuilder.add_command_line_parameters(parser)
 mango.Wallet.add_command_line_parameters(parser)
 parser.add_argument(
-    "--address", type=PublicKey, help="Public key of the Wrapped SOL account to close"
+    "--address",
+    type=PublicKey,
+    required=True,
+    help="Public key of the Wrapped SOL account to close",
 )
 parser.add_argument(
     "--wait",
