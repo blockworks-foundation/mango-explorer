@@ -23,9 +23,7 @@ def indent_collection_as_str(
     spacing: str = " " * spaces
     if len(collection) == 0:
         return f"{spacing}None"
-    return f"{spacing}" + f"\n{spacing}".join(f"{item}" for item in collection).replace(
-        "\n", "\n"
-    )
+    return f"{spacing}" + f"\n{spacing}".join(f"{item}" for item in collection)
 
 
 def indent_item_by(item: typing.Any, levels: int = 1) -> str:
