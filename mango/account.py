@@ -16,6 +16,7 @@
 import pandas
 import typing
 
+from dataclasses import dataclass
 from decimal import Decimal
 from solana.publickey import PublicKey
 from solana.rpc.types import MemcmpOpts
@@ -1441,6 +1442,90 @@ class Account(AddressableAccount):
     Basket [{slot_count} in basket]:
         {slots}
 »"""
+
+    def __repr__(self) -> str:
+        return f"{self}"
+
+
+@dataclass
+class Valuation:
+    account: Account
+    open_orders: typing.Dict[str, OpenOrders]
+    frame: pandas.DataFrame
+    total_value: InstrumentValue
+
+    @property
+    def init_health(self) -> InstrumentValue:
+        return self.account.init_health(self.frame)
+
+    @property
+    def maint_health(self) -> InstrumentValue:
+        return self.account.maint_health(self.frame)
+
+    @property
+    def init_health_ratio(self) -> Decimal:
+        return self.account.init_health_ratio(self.frame)
+
+    @property
+    def maint_health_ratio(self) -> Decimal:
+        return self.account.maint_health_ratio(self.frame)
+
+    @property
+    def is_liquidatable(self) -> bool:
+        return self.account.is_liquidatable(self.frame)
+
+    @property
+    def leverage(self) -> Decimal:
+        return self.account.leverage(self.frame)
+
+    @property
+    def redeemable_pnl(self) -> InstrumentValue:
+        return self.account.redeemable_pnl(self.frame)
+
+    @staticmethod
+    def create(
+        account: Account,
+        group: Group,
+        open_orders_data: typing.Dict[str, AccountInfo],
+        cache: Cache,
+    ) -> "Valuation":
+        oos = {}
+        for slot in account.slots:
+            if slot.spot_open_orders is not None:
+                oo = OpenOrders.parse(
+                    open_orders_data[str(slot.spot_open_orders)],
+                    Token.ensure(slot.base_instrument),
+                    group.shared_quote_token,
+                )
+                oos[str(oo.address)] = oo
+        frame = account.to_dataframe(group, oos, cache)
+        value = account.total_value(frame)
+        return Valuation(account, oos, frame, value)
+
+    def __lt__(self, other: "Valuation") -> bool:
+        return self.total_value.value < other.total_value.value
+
+    def __le__(self, other: "Valuation") -> bool:
+        return self.total_value.value <= other.total_value.value
+
+    def __gt__(self, other: "Valuation") -> bool:
+        return self.total_value.value > other.total_value.value
+
+    def __ge__(self, other: "Valuation") -> bool:
+        return self.total_value.value >= other.total_value.value
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Valuation):
+            return self.total_value.value == other.total_value.value
+        return False
+
+    def __ne__(self, other: object) -> bool:
+        if isinstance(other, Valuation):
+            return self.total_value.value != other.total_value.value
+        return True
+
+    def __str__(self) -> str:
+        return f"""« Valuation {str(self.account.address):<44} {self.total_value.value:>25,.8f} {self.total_value.token.symbol} »"""
 
     def __repr__(self) -> str:
         return f"{self}"

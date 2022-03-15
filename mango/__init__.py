@@ -9,6 +9,7 @@
 #
 from .account import Account as Account
 from .account import AccountSlot as AccountSlot
+from .account import Valuation as Valuation
 from .accountflags import AccountFlags as AccountFlags
 from .accountinfo import AccountInfo as AccountInfo
 from .accountinfoconverter import (
