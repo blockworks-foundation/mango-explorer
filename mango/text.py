@@ -24,7 +24,7 @@ def indent_collection_as_str(
     if len(collection) == 0:
         return f"{spacing}None"
     return f"{spacing}" + f"\n{spacing}".join(f"{item}" for item in collection).replace(
-        "\n", "\n    "
+        "\n", "\n"
     )
 
 
