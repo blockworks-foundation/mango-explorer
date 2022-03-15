@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+
+import argparse
+from dataclasses import dataclass
+import os
+import sys
+import typing
+
+from decimal import Decimal
+from solana.publickey import PublicKey
+from solana.rpc.types import TokenAccountOpts
+from spl.token.constants import TOKEN_PROGRAM_ID
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(
+    description="Shows all Wrapped SOL accounts for the wallet."
+)
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument(
+    "--owner", type=PublicKey, help="wallet address of the wallet owner"
+)
+args: argparse.Namespace = mango.parse_args(parser)
+
+
+@dataclass
+class TokenData:
+    address: PublicKey
+    owner: PublicKey
+    mint: PublicKey
+    amount: Decimal
+
+    def __str__(self) -> str:
+        return f"« Address {self.address}, Mint: {self.mint}, Amount: {self.amount} »"
+
+
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    owner_address: typing.Optional[PublicKey] = args.owner
+    if owner_address is None:
+        wallet: mango.Wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+        owner_address = wallet.address
+
+    opts = TokenAccountOpts(program_id=TOKEN_PROGRAM_ID)
+    token_accounts = context.client.get_token_accounts_by_owner(owner_address, opts)
+
+    all_accounts: typing.List[TokenData] = []
+    for token_account_response in token_accounts:
+        account_info = mango.AccountInfo._from_response_values(
+            token_account_response["account"],
+            PublicKey(token_account_response["pubkey"]),
+        )
+        layout = mango.layouts.TOKEN_ACCOUNT.parse(account_info.data)
+        all_accounts += [
+            TokenData(account_info.address, layout.owner, layout.mint, layout.amount)
+        ]
+
+    if len(all_accounts) == 0:
+        mango.output(f"Account {owner_address} has no token accounts.")
+    elif len(all_accounts) == 1:
+        mango.output(f"Account {owner_address} has one token account:")
+        mango.output(mango.indent_collection_as_str(all_accounts, levels=1))
+    else:
+        mango.output(f"Account {owner_address} has {len(all_accounts)} token accounts:")
+        mango.output(mango.indent_collection_as_str(all_accounts, levels=1))

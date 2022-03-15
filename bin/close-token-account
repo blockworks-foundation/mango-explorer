@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import sys
+import typing
+
+from solana.publickey import PublicKey
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Closes a Wrapped SOL account.")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument(
+    "--address", type=PublicKey, help="Public key of the SPL token account to close"
+)
+parser.add_argument(
+    "--wait",
+    action="store_true",
+    default=False,
+    help="wait until the transactions are confirmed",
+)
+
+args: argparse.Namespace = mango.parse_args(parser)
+
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+    token_account: typing.Optional[mango.TokenAccount] = mango.TokenAccount.load(
+        context, args.address
+    )
+    if token_account is None:
+        raise Exception(
+            f"Account {args.address} does not exist or is not an SPL token account."
+        )
+
+    if token_account.value.value != 0:
+        raise Exception(
+            f"Account {args.address} is not empty - it has a token balance of {token_account.value.value}"
+        )
+
+    mango.output(token_account)
+    payer: PublicKey = wallet.address
+    signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(
+        wallet
+    )
+
+    close_instruction = mango.build_spl_close_account_instructions(
+        context, wallet, args.address
+    )
+
+    mango.output(f"Closing account: {args.address}")
+
+    all_instructions = signers + close_instruction
+    signatures = all_instructions.execute(context)
+
+    if args.wait:
+        mango.output("Waiting on transaction signatures:")
+        mango.output(mango.indent_collection_as_str(signatures, 1))
+        results = mango.WebSocketTransactionMonitor.wait_for_all(
+            context.client.cluster_ws_url, signatures
+        )
+        mango.output("Transaction results:")
+        mango.output(mango.indent_collection_as_str(results, 1))
+    else:
+        mango.output("Transaction signatures:")
+        mango.output(mango.indent_collection_as_str(signatures, 1))
