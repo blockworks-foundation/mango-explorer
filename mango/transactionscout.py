@@ -246,10 +246,10 @@ class TransactionScout:
         instruction_names = ", ".join(
             [ins.instruction_type.name for ins in self.instructions]
         )
-        signatures = indent_item_by(indent_collection_as_str(self.signatures), 1)
-        accounts = indent_item_by(indent_collection_as_str(self.accounts), 1)
-        messages = indent_item_by(indent_collection_as_str(self.messages), 1)
-        instructions = indent_item_by(indent_collection_as_str(self.instructions), 1)
+        signatures = indent_item_by(indent_collection_as_str(self.signatures), 2)
+        accounts = indent_item_by(indent_collection_as_str(self.accounts), 2)
+        messages = indent_item_by(indent_collection_as_str(self.messages), 2)
+        instructions = indent_item_by(indent_collection_as_str(self.instructions), 2)
         changes = OwnedInstrumentValue.changes(
             self.pre_token_balances, self.post_token_balances
         )
