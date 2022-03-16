@@ -1454,6 +1454,17 @@ class Valuation:
     frame: pandas.DataFrame
     total_value: InstrumentValue
 
+    def __init__(
+        self,
+        account: Account,
+        open_orders: typing.Dict[str, OpenOrders],
+        frame: pandas.DataFrame,
+    ) -> None:
+        self.account = account
+        self.open_orders = open_orders
+        self.frame = frame
+        self.total_value = account.total_value(self.frame)
+
     @property
     def init_health(self) -> InstrumentValue:
         return self.account.init_health(self.frame)
@@ -1489,7 +1500,7 @@ class Valuation:
         open_orders_data: typing.Dict[str, AccountInfo],
         cache: Cache,
     ) -> "Valuation":
-        oos = {}
+        oos: typing.Dict[str, OpenOrders] = {}
         for slot in account.slots:
             if slot.spot_open_orders is not None:
                 oo = OpenOrders.parse(
@@ -1499,8 +1510,17 @@ class Valuation:
                 )
                 oos[str(oo.address)] = oo
         frame = account.to_dataframe(group, oos, cache)
-        value = account.total_value(frame)
-        return Valuation(account, oos, frame, value)
+        return Valuation(account, oos, frame)
+
+    @staticmethod
+    def load(context: Context, address: PublicKey) -> "Valuation":
+        group = Group.load(context)
+        cache = Cache.load(context, group.cache)
+        account = Account.load(context, address, group)
+        open_orders = account.load_all_spot_open_orders(context)
+        frame = account.to_dataframe(group, open_orders, cache)
+
+        return Valuation(account, open_orders, frame)
 
     def __lt__(self, other: "Valuation") -> bool:
         return self.total_value.value < other.total_value.value
