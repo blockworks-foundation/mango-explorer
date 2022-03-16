@@ -118,12 +118,12 @@ class AccountInfo:
                 typing.Dict[str, typing.Any]
             ] = context.client.get_multiple_accounts([*chunk])
             response_value_list = zip(result, chunk)
-            multiple += list(
-                map(
-                    lambda pair: AccountInfo._from_response_values(pair[0], pair[1]),
-                    response_value_list,
-                )
-            )
+            for index, pair in enumerate(response_value_list):
+                if pair[0] is None:
+                    raise Exception(
+                        f"Failed to fetch account {chunk[index]} at index {index}"
+                    )
+                multiple += [AccountInfo._from_response_values(pair[0], pair[1])]
             if (sleep_between_calls > 0.0) and (counter < (len(chunks) - 1)):
                 time.sleep(sleep_between_calls)
 
