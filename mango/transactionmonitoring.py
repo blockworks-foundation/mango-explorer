@@ -268,6 +268,8 @@ class WebSocketTransactionMonitor(TransactionMonitor):
         subscription.on_outcome(status)
         self.collector.add_transaction(status)
 
+        self.__subscriptions.remove(subscription)
+
         if self.__ws is None:
             return
 
