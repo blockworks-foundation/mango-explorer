@@ -1,10 +1,10 @@
 name: Publish to Docker
 
 on:
+  push:
+    branches: [ci]
   workflow_call:
     secrets:
-      GKE_SA_KEY:
-        required: true
       GKE_PROJECT:
         required: true
       GKE_CLUSTER:
@@ -13,18 +13,12 @@ on:
         required: true
       GKE_SA_KEY:
         required: true
-  workflow_dispatch:
-    secrets:
-      GKE_SA_KEY:
-        required: true
-      GKE_PROJECT:
-        required: true
-      GKE_CLUSTER:
-        required: true
-      GKE_ZONE:
-        required: true
-      GKE_SA_KEY:
-        required: true
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: ${{ secrets.GKE_CLUSTER }}
+  GKE_ZONE: ${{ secrets.GKE_ZONE }}
+  IMAGE: mango-explorer
 
 jobs:
   build:
@@ -75,5 +69,5 @@ jobs:
         run: |-
           ./kustomize edit set image gcr.io/PROJECT_ID/IMAGE:TAG=gcr.io/$PROJECT_ID/$IMAGE:$GITHUB_SHA
           ./kustomize build . | kubectl apply -f -
-          kubectl rollout status deployment/$DEPLOYMENT_NAME
           kubectl get services -o wide
+        # kubectl rollout status deployment/$DEPLOYMENT_NAME
