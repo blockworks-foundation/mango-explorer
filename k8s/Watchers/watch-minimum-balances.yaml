@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: mango
+  name: watch-minimum-balances
+  labels:
+    app: watch-minimum-balances
+    cluster: devnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: watch-minimum-balances
+  template:
+    metadata:
+      labels:
+        app: watch-minimum-balances
+    spec:
+      containers:
+        - name: watch-minimum-balances
+          image: opinionatedgeek/mango-explorer-v3:latest
+          imagePullPolicy: Always
+          terminationMessagePolicy: FallbackToLogsOnError
+          resources:
+            limits:
+              memory: 96Mi
+            requests:
+              memory: 64Mi
+          envFrom:
+            - configMapRef:
+                name: cluster
+            - configMapRef:
+                name: notification-targets
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CLUSTER_URL
+              value: https://stage.devnet.rpcpool.com
+          command:
+            - watch-minimum-balances
+            - "--name"
+            - "Devnet Minimum Balances Watcher ($(NODE_NAME))"
+            - "--named-address"
+            - "Oracle:GXdZLSvnreqyUd92tXFShpF8DPvpqDBRkukAtraZ3rCf"
+            - "--named-address"
+            - "SpotMarketMaker1:DeekJBiqzJkTtoCPSiep8MTd7VHMmpCKX5sA47w3uury"
+            - "--named-address"
+            - "SpotMarketMaker2:DeekL8y7tCacJ6Xt71kVtGawnDRXW4g4AzRDHtPkDohx"
+            - "--named-address"
+            - "PerpMarketMaker:DeekRPADRMqm4t8s53AkKLbdCpQeMbuu2SNysvTvmYNs"
+            - "--named-address"
+            - "SerumMarketMaker:DeekStXXJm3ogsbkw8WsoN1mT4c19t6qXLPEBLUn8KWR"
+            - "--named-address"
+            - "RandomTaker:DeekL3W31SyCkQezqztjvxkbJcst1xaEbtnqbN6g48Zt"
+            - "--named-address"
+            - "Crank:DeekVH69bVFXqwoxvGGBZoJ1ghWBNdwuUtTnQm7AHCaf"
+            - "--named-address"
+            - "MarketMakerDelegate:DeekoiXaCikm3tB3h7Wyorsk6q1bxeQVzaWEji8FXTMM"
+            - "--minimum-sol-balance"
+            - "0.5"
+            - --log-level
+            - DEBUG
+            # - --notify
+            # - $(ERRORS_TELEGRAM)
+            - --notify
+            - $(ERRORS_DISCORD)
+            # - --notify-events
+            # - $(ERRORS_TELEGRAM)
+            - --log-suppress-timestamp
+          livenessProbe:
+            exec:
+              command:
+                - file-age-check
+                - "60"
+                - /var/tmp/mango_healthcheck_ws_pong
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /var/tmp/mango_healthcheck_ws_pong
+            initialDelaySeconds: 10
+            failureThreshold: 12
+            periodSeconds: 5
+      restartPolicy: Always

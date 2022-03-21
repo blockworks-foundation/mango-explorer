@@ -7,8 +7,10 @@ metadata:
     type: live
 spec:
   limits:
-  - default:
-      memory: 128Mi
-    defaultRequest:
-      memory: 64Mi
-    type: Container
+    - default:
+        cpu: 0.5
+        memory: 128Mi
+      defaultRequest:
+        cpu: 0.25
+        memory: 64Mi
+      type: Container
