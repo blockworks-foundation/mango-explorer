@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: List
+items:
+  - apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: mango
+      annotations:
+        type: live
+  - apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: monitoring
+      annotations:
+        type: live
+      labels:
+        app: operations
