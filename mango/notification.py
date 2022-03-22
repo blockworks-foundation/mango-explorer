@@ -15,15 +15,12 @@
 
 
 import abc
-import csv
 import logging
-import os.path
 import requests
 import typing
 
 from urllib.parse import unquote
 
-from .liquidationevent import LiquidationEvent
 from .output import output
 
 
@@ -214,53 +211,6 @@ class MailjetNotificationTarget(NotificationTarget):
         return f"« MailjetNotificationTarget To: '{self.to_name}' '{self.to_address}' with subject '{self.subject}' »"
 
 
-# # 🥭 CsvFileNotificationTarget class
-#
-# Outputs a liquidation event to CSV. Nothing is written if the item is not a
-# `LiquidationEvent`.
-#
-# Headers for the CSV file should be:
-# ```
-# "Timestamp","Liquidator Name","Group","Succeeded","Signature","Wallet","Margin Account","Token Changes"
-# ```
-# Token changes are listed as pairs of value plus symbol, so each token change adds two
-# columns to the output. Token changes may arrive in different orders, so ordering of token
-# changes is not guaranteed to be consistent from transaction to transaction.
-#
-class CsvFileNotificationTarget(NotificationTarget):
-    def __init__(self, filename: str) -> None:
-        super().__init__()
-        self.filename = filename
-
-    def send_notification(self, item: typing.Any) -> None:
-        if isinstance(item, LiquidationEvent):
-            event: LiquidationEvent = item
-            if not os.path.isfile(self.filename) or os.path.getsize(self.filename) == 0:
-                with open(self.filename, "w") as empty_file:
-                    empty_file.write(
-                        '"Timestamp","Liquidator Name","Group","Succeeded","Signature","Wallet","Margin Account","Token Changes"\n'
-                    )
-
-            with open(self.filename, "a") as csvfile:
-                result = "Succeeded" if event.succeeded else "Failed"
-                row_data = [
-                    event.timestamp,
-                    event.liquidator_name,
-                    event.group_name,
-                    result,
-                    " ".join(event.signatures),
-                    event.wallet_address,
-                    event.account_address,
-                ]
-                for change in event.changes:
-                    row_data += [f"{change.value:.8f}", change.token.name]
-                file_writer = csv.writer(csvfile, quoting=csv.QUOTE_MINIMAL)
-                file_writer.writerow(row_data)
-
-    def __str__(self) -> str:
-        return f"« CsvFileNotificationTarget File: {self.filename} »"
-
-
 # # 🥭 FilteringNotificationTarget class
 #
 # This class takes a `NotificationTarget` and a filter function, and only calls the
@@ -351,8 +301,6 @@ def parse_notification_target(target: str) -> NotificationTarget:
         return DiscordNotificationTarget(destination)
     elif protocol == "mailjet":
         return MailjetNotificationTarget(destination)
-    elif protocol == "csvfile":
-        return CsvFileNotificationTarget(destination)
     elif protocol == "console":
         return ConsoleNotificationTarget(destination)
     else:
