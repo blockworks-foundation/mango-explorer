@@ -86,7 +86,7 @@ class InventoryAccountWatcher:
                 group_watcher.latest.slot_by_spot_market_address(market.address).index
             )
         elif PerpMarket.isa(market):
-            self.spot_account_index = group_watcher.latest.slot_by_spot_market_address(
+            self.spot_account_index = group_watcher.latest.slot_by_perp_market_address(
                 market.address
             ).index
         else:
