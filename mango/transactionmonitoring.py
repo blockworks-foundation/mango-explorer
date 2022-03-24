@@ -322,12 +322,13 @@ class WebSocketTransactionMonitor(TransactionMonitor):
         # pending signatures. Send them as new subscriptions to the fresh websocket, but
         # don't reset the timeout.
         if self.__ws is not None:
-            for subscription in self.__subscriptions:
-                self.__ws.send(
-                    subscription.build_subscription(
-                        self.__id_generator.generate_id(), self.commitment
+            if self.wait_until_open():
+                for subscription in self.__subscriptions:
+                    self.__ws.send(
+                        subscription.build_subscription(
+                            self.__id_generator.generate_id(), self.commitment
+                        )
                     )
-                )
 
     def __add_subscription_id(self, subscribe_request_id: int, id: int) -> None:
         for subscription in self.__subscriptions:
