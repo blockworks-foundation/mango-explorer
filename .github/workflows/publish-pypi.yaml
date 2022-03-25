@@ -1,11 +1,11 @@
 name: Publish to Pypi
 
 on:
+  push:
+    branches: [ci]
   workflow_call:
     secrets:
       PYPI_TOKEN:
-        required: true
-      python_version:
         required: true
   workflow_dispatch:
 
