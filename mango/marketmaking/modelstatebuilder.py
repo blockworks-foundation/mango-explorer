@@ -216,7 +216,9 @@ class SerumPollingModelStateBuilder(PollingModelStateBuilder):
             account_infos[6], account_infos[7]
         )
 
-        event_queue: mango.EventQueue = mango.SerumEventQueue.parse(account_infos[8])
+        event_queue: mango.EventQueue = mango.SerumEventQueue.parse(
+            account_infos[8], self.base_token, self.quote_token
+        )
 
         price: mango.Price = self.oracle.fetch_price(context)
 
@@ -353,7 +355,9 @@ class SpotPollingModelStateBuilder(PollingModelStateBuilder):
             account_infos[3], account_infos[4]
         )
 
-        event_queue: mango.EventQueue = mango.SerumEventQueue.parse(account_infos[5])
+        event_queue: mango.EventQueue = mango.SerumEventQueue.parse(
+            account_infos[5], self.market.base, self.market.quote
+        )
 
         price: mango.Price = self.oracle.fetch_price(context)
 
