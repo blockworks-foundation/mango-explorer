@@ -31,3 +31,4 @@ configuration.json
 wallet.json
 id.json
 private.py
+k8s/Secrets

@@ -27,7 +27,9 @@ resources:
   # - k8s/Secrets/marketmaker-spot-2.yaml
   # - k8s/Secrets/random-taker.yaml
   - k8s/Cranks/crank-btc-perp.yaml
+  - k8s/Cranks/crank-btc-usdc-serum.yaml
   - k8s/Cranks/crank-eth-usdc-serum.yaml
+  - k8s/Cranks/crank-sol-usdc-serum.yaml
   - k8s/Cranks/keeper.yaml
   - k8s/RandomTakers/random-taker-btc-perp.yaml
   - k8s/RandomTakers/random-taker-btc-usdc.yaml
