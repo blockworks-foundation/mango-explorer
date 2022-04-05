@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import os.path
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import mango  # nopep8
+
+parser = argparse.ArgumentParser(description="Initializes a Mango margin account")
+mango.ContextBuilder.add_command_line_parameters(parser)
+mango.Wallet.add_command_line_parameters(parser)
+parser.add_argument(
+    "wait",
+    action="store_true",
+    default=False,
+    help="wait until the transaction is confirmed",
+)
+args: argparse.Namespace = mango.parse_args(parser)
+
+wallet = mango.Wallet.from_command_line_parameters_or_raise(args)
+
+with mango.ContextBuilder.from_command_line_parameters(args) as context:
+    group = mango.Group.load(context, context.group_address)
+
+    signers: mango.CombinableInstructions = mango.CombinableInstructions.from_wallet(wallet)
+    init = mango.build_mango_create_account_instructions(context, wallet, group)
+    all_instructions = signers + init
+    transaction_ids = all_instructions.execute(context)
+
+    if args.wait:
+        mango.output("Waiting on transaction IDs:", transaction_ids)
+        context.client.wait_for_confirmation(transaction_ids)
+
+        accounts = mango.Account.load_all_for_owner(context, wallet.address, group)
+        if len(accounts) == 0:
+            raise Exception("Failed to create Account")
+        mango.output(accounts)
+    else:
+        mango.output("Transaction IDs:", transaction_ids)
