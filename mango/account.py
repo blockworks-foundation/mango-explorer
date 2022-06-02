@@ -191,8 +191,9 @@ class Account(AddressableAccount):
         in_margin_basket: typing.Sequence[bool] = list([bool(in_basket) for in_basket in layout.in_margin_basket])
         active_in_basket: typing.List[bool] = []
         slots: typing.List[AccountSlot] = []
-        placed_orders_all_markets: typing.List[typing.List[PlacedOrder]] = [[]
-                                                                            for _ in range(len(group.slot_indices) - 1)]
+        placed_orders_all_markets: typing.List[typing.List[PlacedOrder]] = [
+            [] for _ in range(len(group.slot_indices))
+        ]
         for index, order_market in enumerate(layout.order_market):
             if order_market != 0xFF:
                 side = Side.from_value(layout.order_side[index])
