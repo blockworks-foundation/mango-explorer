@@ -355,7 +355,7 @@ class Account(AddressableAccount):
         active_in_basket: typing.List[bool] = []
         slots: typing.List[AccountSlot] = []
         placed_orders_all_markets: typing.List[typing.List[PlacedOrder]] = [
-            [] for _ in range(len(group.slot_indices) - 1)
+            [] for _ in range(len(group.slot_indices))
         ]
         for index, order_market in enumerate(layout.order_market):
             if order_market != 0xFF:
