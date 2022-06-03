@@ -19,126 +19,105 @@
           "mintKey": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
           "decimals": 6,
           "rootKey": "AMzanZxMirPCgGcBoH9kw4Jzi9LFMomyUCXbpzDeL2T8",
-          "nodeKeys": [
-            "BGcwkj1WudQwUUjFk78hAjwd1uAm8trh1N4CJSa51euh"
-          ]
+          "nodeKeys": ["BGcwkj1WudQwUUjFk78hAjwd1uAm8trh1N4CJSa51euh"]
         },
         {
           "symbol": "MNGO",
           "mintKey": "MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac",
           "decimals": 6,
           "rootKey": "8HjXYFntHMDNJKCJpHFufDaFYXfuAk6c6odfFnWc4xWy",
-          "nodeKeys": [
-            "8XZx15vqdUbt3eVTXsxPfEMS3o2KXJ5sM7G2qXmmkETk"
-          ]
+          "nodeKeys": ["8XZx15vqdUbt3eVTXsxPfEMS3o2KXJ5sM7G2qXmmkETk"]
         },
         {
           "symbol": "BTC",
           "mintKey": "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E",
           "decimals": 6,
           "rootKey": "8VwAANqu3t4KQKpMq7wrS6yg5GTHwJBFsrK4Tk2cFN3q",
-          "nodeKeys": [
-            "7CfvGCV7qMf7im7mcqftZxQZGTweGappvL1maH7PMZ3Q"
-          ]
+          "nodeKeys": ["7CfvGCV7qMf7im7mcqftZxQZGTweGappvL1maH7PMZ3Q"]
         },
         {
           "symbol": "ETH",
           "mintKey": "2FPyTwcZLUg1MDrwsyoP4D6s1tM7hAkHYRjkNb5w6Pxk",
           "decimals": 6,
           "rootKey": "FDpHjPQnUkmYVpAEVBpzb3sQgjZM7fanJoRb1VVtjF6u",
-          "nodeKeys": [
-            "B6mYWs6PKda8DtJwvkvk2UV88NCChdmFGhcWSrgxY5vb"
-          ]
+          "nodeKeys": ["B6mYWs6PKda8DtJwvkvk2UV88NCChdmFGhcWSrgxY5vb"]
         },
         {
           "symbol": "SOL",
           "mintKey": "So11111111111111111111111111111111111111112",
           "decimals": 9,
           "rootKey": "7jH1uLmiB2zbHNe6juZZYjQCrvquakTwd3yMaQpeP8rR",
-          "nodeKeys": [
-            "2bqJYcA1A8gw4qJFjyE2G4akiUunpd9rP6QzfnxHqSqr"
-          ]
+          "nodeKeys": ["2bqJYcA1A8gw4qJFjyE2G4akiUunpd9rP6QzfnxHqSqr"]
         },
         {
           "symbol": "USDT",
           "mintKey": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
           "decimals": 6,
           "rootKey": "4GYDmgvMpBx2n2iSmaS1xhZnwebR2gJ5V7UYUBA1PkJi",
-          "nodeKeys": [
-            "FYFJ4YHDEJnX7yVPoejUTAcKstnovTZpLq5zWAM7c6Uz"
-          ]
+          "nodeKeys": ["FYFJ4YHDEJnX7yVPoejUTAcKstnovTZpLq5zWAM7c6Uz"]
         },
         {
           "symbol": "SRM",
           "mintKey": "SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt",
           "decimals": 6,
           "rootKey": "AjMbjA1JsHh574Eo1RRV2XXtB8St139oBXKPXPo2HLdU",
-          "nodeKeys": [
-            "qsGcM7VLiywm1wvvvjzWd7SynnyMcg8Pc7QxKUW4CUY"
-          ]
+          "nodeKeys": ["qsGcM7VLiywm1wvvvjzWd7SynnyMcg8Pc7QxKUW4CUY"]
         },
         {
           "symbol": "RAY",
           "mintKey": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
           "decimals": 6,
           "rootKey": "7TNHrBUDH3FL9uy9hxjmRcKNNaCBG9sYPuDJSJuj3LGs",
-          "nodeKeys": [
-            "GDNCSCaVzhD2L164GwUv8JqTdaHCuYGg21JjXQDtuofk"
-          ]
+          "nodeKeys": ["GDNCSCaVzhD2L164GwUv8JqTdaHCuYGg21JjXQDtuofk"]
         },
         {
           "symbol": "COPE",
           "mintKey": "8HGyAAB1yoM1ttS7pXjHMa3dukTFGQggnFFH3hJZgzQh",
           "decimals": 6,
           "rootKey": "6cMrtzhWNEEDkcSMx19orcred8h9HyRb31MtbCkKDdf6",
-          "nodeKeys": [
-            "2CpaAtjDt4s9Fps7dyJUaUMeUGBDPAUUui5rxYbVzPfA"
-          ]
+          "nodeKeys": ["2CpaAtjDt4s9Fps7dyJUaUMeUGBDPAUUui5rxYbVzPfA"]
         },
         {
           "symbol": "FTT",
           "mintKey": "AGFEad2et2ZJif9jaGpdMixQqvW5i81aBdvKe7PHNfz3",
           "decimals": 6,
           "rootKey": "9i35wTe5W9vVLUJnzuhnFZbLThYJr2NF38MhEGVHJY5T",
-          "nodeKeys": [
-            "8Q9JVDynPbyqXfnDXT31mncD7LAnoHAoSv2ywxZHjPFJ"
-          ]
+          "nodeKeys": ["8Q9JVDynPbyqXfnDXT31mncD7LAnoHAoSv2ywxZHjPFJ"]
         },
         {
           "symbol": "MSOL",
           "mintKey": "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
           "decimals": 9,
           "rootKey": "5AWnWCNKSzdpgyJSD3NWdarMazCGX2t8D4NU5xwSEVjC",
-          "nodeKeys": [
-            "H9jHd5YsHN4fg17aqng2WzJGTyinMDyQ2jin3iuiXPVD"
-          ]
+          "nodeKeys": ["H9jHd5YsHN4fg17aqng2WzJGTyinMDyQ2jin3iuiXPVD"]
         },
         {
           "symbol": "BNB",
           "mintKey": "9gP2kCy3wA1ctvYWQk75guqXuHfrEomqydHLtcTCqiLa",
           "decimals": 8,
           "rootKey": "HBvFxqx8pX8GGMExXvKssY8ZK6FjoB2YHWg8UhuVdDTx",
-          "nodeKeys": [
-            "2e9qKNKdAQw9pmwxoCiKYyeKiaDetBiashktGTPgzSa8"
-          ]
+          "nodeKeys": ["2e9qKNKdAQw9pmwxoCiKYyeKiaDetBiashktGTPgzSa8"]
         },
         {
           "symbol": "AVAX",
           "mintKey": "KgV1GvrHQmRBY8sHQQeUKwTm2r2h8t4C8qt12Cw1HVE",
           "decimals": 8,
           "rootKey": "5CAS4x9S9DRWMPz4YuY9PBiXRhhN9ZXjb7JtorvaSkCV",
-          "nodeKeys": [
-            "7FPdLxS1m9PhuFbCpQi1FJFNXmPFuwnbDXs16HxA1AEt"
-          ]
+          "nodeKeys": ["7FPdLxS1m9PhuFbCpQi1FJFNXmPFuwnbDXs16HxA1AEt"]
         },
         {
           "symbol": "LUNA",
           "mintKey": "F6v4wfAdJB8D8p77bMXZgYt8TDKsYxLYxH5AFhUkYx9W",
           "decimals": 6,
           "rootKey": "AUU8Zw5ezmZJBuWtMjfTTyP6eowkpNbH5pHh6uY5BHu7",
-          "nodeKeys": [
-            "BNpfdZZC8NP1PabGATRHH2ABh94U47zm1kjvneRSMSBE"
-          ]
+          "nodeKeys": ["BNpfdZZC8NP1PabGATRHH2ABh94U47zm1kjvneRSMSBE"]
+        },
+        {
+          "symbol": "GMT",
+          "mintKey": "7i5KKsX2weiTkry7jA4ZwSuXGhs5eJBEjY8vVxR4pfRx",
+          "decimals": 9,
+          "rootKey": "HdFSXT8HSooTByieyKhuujBsvHkXR9zA4ZFmiToQhqEg",
+          "nodeKeys": ["BsyDMxu87YHUJXYHundMGp5YmpD2J3xm62TdaQyryp8f"]
         }
       ],
       "oracles": [
@@ -197,6 +176,10 @@
         {
           "symbol": "LUNA",
           "publicKey": "5bmWuR1dgP4avtGYMNKLuxumZTVKGgoN2BCMXWDNL9nY"
+        },
+        {
+          "symbol": "GMT",
+          "publicKey": "DZYZkJcFJThN9nZy4nK3hrHra1LaWeiyoZ9SMdLFEFpY"
         }
       ],
       "perpMarkets": [
@@ -320,6 +303,17 @@
           "bidsKey": "AiBurBkETJHHujZxNHm6UPvBQ1LLLkNkckPoZLeuLnS1",
           "asksKey": "7Vcbxj2M8fqaNGfRDsau47uXumfCBhCTA97D6PNDPWfe",
           "eventsKey": "HDJ43o9Dxxu6yWRWPEce44gtCHauRGLXJwwtvD7GwEBx"
+        },
+        {
+          "name": "GMT-PERP",
+          "publicKey": "3hBYgfMHogR8X2JkpxvT8HMtUSbrE2PE61q64gZkWArr",
+          "baseSymbol": "GMT",
+          "baseDecimals": 9,
+          "quoteDecimals": "6",
+          "marketIndex": 14,
+          "bidsKey": "67jnTtxDdDqz6R18Do3AUUjBbZT3yysprGLhaucyKd93",
+          "asksKey": "DstVrGA3CBcq1r7op4yU7dX3sirzSgz1uicn63aYBMGz",
+          "eventsKey": "J2WYiw67VeGkPvmM3fi65H9KxDgCf79fNwspcD3ycubK"
         }
       ],
       "spotMarkets": [
@@ -465,6 +459,205 @@
           "bidsKey": "2qZyNiiupG9c3dZkmgPJ53XLMyb3uYnfmPrUfLBisEBn",
           "asksKey": "2oVNv7BTvvRUuHmbPvMjafBVQhoAFVdWPCuKiDAPNsbD",
           "eventsKey": "8fGeJPZGsW3kjnfGkGNU3dXWXkuDFEUK7RXeiMW2rmGm"
+        },
+        {
+          "name": "GMT/USDC",
+          "publicKey": "9KLmeRBpT4chsxkJatfDdzrtTBvBastYp9wMe712ASCg",
+          "baseSymbol": "GMT",
+          "baseDecimals": 9,
+          "quoteDecimals": 6,
+          "marketIndex": 14,
+          "bidsKey": "EzVutiMEE8gyeyaiQ4jUrSn4LXwrDmRkuNK4wcRctJxW",
+          "asksKey": "Eg2PKQ3BHWsRCMLZQaJrAXMCEWoEsNXPY8BLLk5AHsrM",
+          "eventsKey": "92AfWEUqA2RQjD46otvaXEA3CQ4qBFi2K8AmCBwwghHG"
+        }
+      ]
+    },
+    {
+      "cluster": "devnet",
+      "name": "devnet.3",
+      "publicKey": "5vQp48Wx55Ft1PUAx8qWbsioNaLeXWVkyCq2XpQSv34M",
+      "quoteSymbol": "USDC",
+      "mangoProgramId": "4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA",
+      "serumProgramId": "DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY",
+      "tokens": [
+        {
+          "symbol": "USDC",
+          "mintKey": "8FRFC6MoGGkMFQwngccyu69VnYbzykGeez7ignHVAFSN",
+          "decimals": 6,
+          "rootKey": "JBwwKNaqwyWVd5W22m5umAGUrqG4Lf7N6oWrtQEmBg6c",
+          "nodeKeys": ["2XNwQscYHLeRaHY3ZUPfhG8pAy47f3eXazZMZK19EKPn"]
+        },
+        {
+          "symbol": "MNGO",
+          "mintKey": "Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC",
+          "decimals": 6,
+          "rootKey": "HfV52Z5rjY4PYxTEHiks8m6jTwxyLM24RxW3A1AFtWpn",
+          "nodeKeys": ["EEUVfNXkLNCzsEmq4pS5aXpePA8i5yGfgFNaU5SbrQA8"]
+        },
+        {
+          "symbol": "BTC",
+          "mintKey": "3UNBZ6o52WTWwjac2kPUb4FyodhU1vFkRJheu1Sh2TvU",
+          "decimals": 6,
+          "rootKey": "9oZ7YDfbY3KfuVnspCvTBmKYDWbanyZH3DrM8chgk5UY",
+          "nodeKeys": ["6biZhkxGKBxm2gvUXEgYS75abyS8Ayy59yeLe3h3WWS6"]
+        },
+        {
+          "symbol": "ETH",
+          "mintKey": "Cu84KB3tDL6SbFgToHMLYVDJJXdJjenNzSKikeAvzmkA",
+          "decimals": 6,
+          "rootKey": "CbD1bumpdddi21TZJNsGaxkEpV1pjPVdvKYyDGcNpJzz",
+          "nodeKeys": ["GYVB1Ft1vWBqiDGUooyBgBdo1NiKhqbgJ9dPdRDGWq3a"]
+        },
+        {
+          "symbol": "SOL",
+          "mintKey": "So11111111111111111111111111111111111111112",
+          "decimals": 9,
+          "rootKey": "HCwTWCLZDeveaW7V41i5aJ2Fuq7D51iS6WDUS4occA5a",
+          "nodeKeys": ["2trzMWmfbhMFu1bCKZ1axDybMPPa7SXAR1Q4JYzybuPb"]
+        },
+        {
+          "symbol": "SRM",
+          "mintKey": "AvtB6w9xboLwA145E221vhof5TddhqsChYcx7Fy3xVMH",
+          "decimals": 6,
+          "rootKey": "36YZQGCXTthrAwkpEZgh1PQLh61As4gv2V6VzH2pjoeQ",
+          "nodeKeys": ["aRv6uLBdSwKpeisEsXYwr5VjgopaXbFSnJkfemdspXi"]
+        },
+        {
+          "symbol": "RAY",
+          "mintKey": "3YFQ7UYJ7sNGpXTKBxM3bYLVxKpzVudXAe4gLExh5b3n",
+          "decimals": 6,
+          "rootKey": "8cogBuTCmkVDduaS9Hb92DYSEj9rpXa6TuPrCyb8ao9U",
+          "nodeKeys": ["B4Vk7UbJo5sySP3zDsv5rP5kx7sUQsXqx5BxQjQdeJQ5"]
+        },
+        {
+          "symbol": "USDT",
+          "mintKey": "DAwBSXe6w9g37wdE2tCrFbho3QHKZi4PjuBytQCULap2",
+          "decimals": 6,
+          "rootKey": "DE9Wn6mUeTxaYo3qWdthHo4amrxSApNtmaAxcP8kyCs7",
+          "nodeKeys": ["FxJN7rzcSSoUhPBD2J3e1YzJC6PWpvrZK6MFNSKJ4NqG"]
+        }
+      ],
+      "oracles": [
+        {
+          "symbol": "MNGO",
+          "publicKey": "8k7F9Xb36oFJsjpCKpsXvg4cgBRoZtwNTc3EzG5Ttd2o"
+        },
+        {
+          "symbol": "BTC",
+          "publicKey": "bupSBQ8eyULSzYHfwfaejFxsUjfTX3PMLC5y72daKQu"
+        },
+        {
+          "symbol": "ETH",
+          "publicKey": "EdVCmQ9FSPcVe5YySXDPCRmc8aDQLKJ9xvYBMZPie1Vw"
+        },
+        {
+          "symbol": "SOL",
+          "publicKey": "J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix"
+        },
+        {
+          "symbol": "SRM",
+          "publicKey": "992moaMQKs32GKZ9dxi8keyM2bUmbrwBZpK4p2K6X5Vs"
+        },
+        {
+          "symbol": "RAY",
+          "publicKey": "4CLJtTJaVJUTHPkTyhq2EwNKiYQYyWxTwFw1rCyZVjPr"
+        },
+        {
+          "symbol": "USDT",
+          "publicKey": "38xoQ4oeJCBrcVvca2cGk7iV1dAfrmTR1kmhSCJQ8Jto"
+        }
+      ],
+      "perpMarkets": [
+        {
+          "name": "BTC-PERP",
+          "publicKey": "C2uMB62wCcv6ufPgjND2Pz4ZyYxzdDV6Fw3WaMHR6U37",
+          "baseSymbol": "BTC",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 1,
+          "bidsKey": "2EM63gvBjuN8CUMGJjPwdhco9ENsUrGdBEFq6ZCqMbpt",
+          "asksKey": "GsYcihKaF4LUZHhNz5KrWPfKxBvEuh4uDx16tY8KfhZU",
+          "eventsKey": "9D2jFJuwrHAyeoWKpvDrATLXTmaMLMu3evrSsYPT3HfB"
+        }
+      ],
+      "spotMarkets": [
+        {
+          "name": "MNGO/USDC",
+          "publicKey": "2T6koUWudFgY2gavW8EDyBCnNpRU3spyiKTLpDc79Ma9",
+          "baseSymbol": "MNGO",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 0,
+          "bidsKey": "98guKbHBvEQsdXtwPVXhqzVQddMDxvYKExHiDBQjjEgM",
+          "asksKey": "AQgDsKzVQT9enwebZCV1GgaffCsjUpsuj6xeUFxuza42",
+          "eventsKey": "2iGo6GWEPBUuuruWofGwvzZMMos4aPJKDLbMmTt9ZBXQ"
+        },
+        {
+          "name": "BTC/USDC",
+          "publicKey": "8H7c3jxFG8gi2YBhSqBxxE8ySYHkXW1M5jUokJYQWqhj",
+          "baseSymbol": "BTC",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 1,
+          "bidsKey": "FbpdjQWwN6yQkZGidbfY6BzbF8hZ2xW4eq57NXz76Bav",
+          "asksKey": "8soWw7yVDqbW64mdqzm6fciGTDBGrigDBZkrGe1YX5ae",
+          "eventsKey": "8S1RyX7j11VGmfeyPEV1HXG4V4kixd1TJuyUWgHe6Soc"
+        },
+        {
+          "name": "ETH/USDC",
+          "publicKey": "HpDBtFHwrwJ1CzDmvffd5LCdeuXt8iaN9zMFgJGdQ6Eq",
+          "baseSymbol": "ETH",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 2,
+          "bidsKey": "CFT975GqsYXN7GH8mkTJDGFXuWBV1ZyAx9wCbhdgPwfn",
+          "asksKey": "5eVxSdwkaRpUpeJTBkSRych5pYqJYnzQncwUbodiZBte",
+          "eventsKey": "HvcAE6cUbpWr2fKPTkHTjQjiCgFkQr4YP6m6bprn6EYT"
+        },
+        {
+          "name": "SOL/USDC",
+          "publicKey": "HCGGqktRV1UXFKHoqEkdf9HqXs6Rfp7xSdwLcvHUy8KD",
+          "baseSymbol": "SOL",
+          "baseDecimals": 9,
+          "quoteDecimals": 6,
+          "marketIndex": 3,
+          "bidsKey": "372WbS47X4FQGk49LuQG38QUmEAkds4dKExfqxKneX3M",
+          "asksKey": "7j3wRRvrm2RXwkrxsuoiCQGG66S6qboJQGjW3AKsckuK",
+          "eventsKey": "FuCL1VHY2zmhHs5xrTePJSyShiwcNPLdRcXDeovGvovN"
+        },
+        {
+          "name": "SRM/USDC",
+          "publicKey": "A6WkZRrymq9ANeqU5ZbFjrUzQ9yDKx1C9SnDk5Hd3fU4",
+          "baseSymbol": "SRM",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 4,
+          "bidsKey": "7FVZb6UQ9ouLVwSs77vKsPDR5e5rsM2UV7tuDe6ZAz9Z",
+          "asksKey": "3t7KeCcS7j3q2NYTMQgDecMYeYfPKqkdd6jU16K3SUBa",
+          "eventsKey": "D2AZ12UaFPnVMqNm1VfaJffRV9i6niwTc4Y3SmJyTsu8"
+        },
+        {
+          "name": "RAY/USDC",
+          "publicKey": "yVQ2x8HEjFf8P2JcknfhnzaHMZkPP8ugffFRMH168GC",
+          "baseSymbol": "RAY",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 5,
+          "bidsKey": "tEAhXz8iHoRUMCA4L494aj1v9BieEzf219g1ud2hAuB",
+          "asksKey": "8An5p9V1ZPBtowLWgtphDDaRyJFFQdVXhbE4cfh7PrsX",
+          "eventsKey": "EtZgfLD6rPDrge22Pt5g4pe2FFrro2eCfZ5qKYapZ1FP"
+        },
+        {
+          "name": "USDT/USDC",
+          "publicKey": "25GbwfhHRzttgjXemtnZZGdogkV8ef9rs9NCSXzZAJDY",
+          "baseSymbol": "USDT",
+          "baseDecimals": 6,
+          "quoteDecimals": 6,
+          "marketIndex": 6,
+          "bidsKey": "CQnw1aiR4qG4YxmZfK7dZBUZAUwhga4by3p5HCVMJjJ3",
+          "asksKey": "7Rg4E9Qa8qbkVXKesrBu43LEir2u9Yj83RgMVnZyk2Ty",
+          "eventsKey": "2Bso4AYM4isogoaAH2gfdKip7wdSWBWYDb8f3fhGodaC"
         }
       ]
     },
@@ -481,81 +674,63 @@
           "mintKey": "8FRFC6MoGGkMFQwngccyu69VnYbzykGeez7ignHVAFSN",
           "decimals": 6,
           "rootKey": "HUBX4iwWEUK5VrXXXcB7uhuKrfT4fpu2T9iZbg712JrN",
-          "nodeKeys": [
-            "J2Lmnc1e4frMnBEJARPoHtfpcohLfN67HdK1inXjTFSM"
-          ]
+          "nodeKeys": ["J2Lmnc1e4frMnBEJARPoHtfpcohLfN67HdK1inXjTFSM"]
         },
         {
           "symbol": "MNGO",
           "mintKey": "Bb9bsTQa1bGEtQ5KagGkvSHyuLqDWumFUcRqFusFNJWC",
           "decimals": 6,
           "rootKey": "CY4nMV9huW5KCYFxWChrmoLwGCsZiXoiREeo2PMrBm5o",
-          "nodeKeys": [
-            "6rkPNJTXF37X6Pf5ct5Y6E91PozpZpZNNU1AGATomKjD"
-          ]
+          "nodeKeys": ["6rkPNJTXF37X6Pf5ct5Y6E91PozpZpZNNU1AGATomKjD"]
         },
         {
           "symbol": "BTC",
           "mintKey": "3UNBZ6o52WTWwjac2kPUb4FyodhU1vFkRJheu1Sh2TvU",
           "decimals": 6,
           "rootKey": "BeEoyDq1v2DYJCoXDQAJKfmrsoRRvfmV856f2ijkXbtp",
-          "nodeKeys": [
-            "4X3nP921qyh6BKJSAohKGNCykSXahFFwg1LxtC993Fai"
-          ]
+          "nodeKeys": ["4X3nP921qyh6BKJSAohKGNCykSXahFFwg1LxtC993Fai"]
         },
         {
           "symbol": "ETH",
           "mintKey": "Cu84KB3tDL6SbFgToHMLYVDJJXdJjenNzSKikeAvzmkA",
           "decimals": 6,
           "rootKey": "AxwY5sgwSq5Uh8GD6A6ZtSzGd5fqvW2hwgGLLgZ4v2eW",
-          "nodeKeys": [
-            "3FPjawEtvrwvwtAetaURTbkkucu9BJofxWZUNPGHJtHg"
-          ]
+          "nodeKeys": ["3FPjawEtvrwvwtAetaURTbkkucu9BJofxWZUNPGHJtHg"]
         },
         {
           "symbol": "SOL",
           "mintKey": "So11111111111111111111111111111111111111112",
           "decimals": 9,
           "rootKey": "8GC81raaLjhTx3yedctxCJW46qdmmSRybH2s1eFYFFxT",
-          "nodeKeys": [
-            "7mYqCavd1K24fnL3oKTpX3YM66W5gfikmVHJWM3nrWKe"
-          ]
+          "nodeKeys": ["7mYqCavd1K24fnL3oKTpX3YM66W5gfikmVHJWM3nrWKe"]
         },
         {
           "symbol": "SRM",
           "mintKey": "AvtB6w9xboLwA145E221vhof5TddhqsChYcx7Fy3xVMH",
           "decimals": 6,
           "rootKey": "73W29LAZog2zSyE1uNYivBW8SMZQX3WBX4qfTMrMJxW2",
-          "nodeKeys": [
-            "9wkpWmkSUSn9fitLhVh12cLbiDa5Bbhf6ZBGmPtcdMqN"
-          ]
+          "nodeKeys": ["9wkpWmkSUSn9fitLhVh12cLbiDa5Bbhf6ZBGmPtcdMqN"]
         },
         {
           "symbol": "RAY",
           "mintKey": "3YFQ7UYJ7sNGpXTKBxM3bYLVxKpzVudXAe4gLExh5b3n",
           "decimals": 6,
           "rootKey": "49S76N83tSBBozugLtNYrMojFqDb3VvYq4wBB6bcAhfV",
-          "nodeKeys": [
-            "JBHBTED3ttzk5u3U24txdjBFadm4Dnohb7g2pwcxU4rx"
-          ]
+          "nodeKeys": ["JBHBTED3ttzk5u3U24txdjBFadm4Dnohb7g2pwcxU4rx"]
         },
         {
           "symbol": "USDT",
           "mintKey": "DAwBSXe6w9g37wdE2tCrFbho3QHKZi4PjuBytQCULap2",
           "decimals": 6,
           "rootKey": "7JTHE8C1kvB4h67RVvhdHjDqHXsWkSeoKcBsHV7wVhu",
-          "nodeKeys": [
-            "ERkKh9yUKzJ3kkHWhMNd3xGaync11TpzQiDFukEatHEQ"
-          ]
+          "nodeKeys": ["ERkKh9yUKzJ3kkHWhMNd3xGaync11TpzQiDFukEatHEQ"]
         },
         {
           "symbol": "FTT",
           "mintKey": "Fxh4bpZnRCnpg2vcH11ttmSTDSEeC5qWbPRZNZWnRnqY",
           "decimals": 6,
           "rootKey": "4m3kgpf8qQRvaoTJdqmdeiRL5u2NaifYyTAHccKMtQhT",
-          "nodeKeys": [
-            "2k89sUjCE2ZSm4MPhXM9JV1zFEV2SjgEzvvJN6EsMFWa"
-          ]
+          "nodeKeys": ["2k89sUjCE2ZSm4MPhXM9JV1zFEV2SjgEzvvJN6EsMFWa"]
         }
       ],
       "oracles": [
@@ -646,6 +821,7 @@
           "asksKey": "FXSvghvoaWFHRXzWUHi5tjK9YhgcPgMPpypFXBd4Aq3r",
           "eventsKey": "8WLv5fKLYkyZpFG74kRmp2RALHQFcNKmH7eJn8ebHC13"
         },
+
         {
           "name": "SOL-PERP",
           "publicKey": "58vac8i9QXStG1hpaa4ouwE1X7ngeDjY9oY7R15hcbKJ",
