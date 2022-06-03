@@ -28,6 +28,6 @@ def test_new_from_cluster() -> None:
     assert derived.client.cluster_url == "https://mango.devnet.rpcpool.com"
     assert derived.mango_program_address == PublicKey("4skJ85cdxQAFVKbcGgfun8iZPL7BadVYXG3kGEGkufqA")
     assert derived.serum_program_address == PublicKey("DESVgJVGajEgKGXhb6XmqDHGz3VjdgP7rEVESBgxmroY")
-    assert derived.group_name == "devnet.2"
-    assert derived.group_address == PublicKey("Ec2enZyoC4nGpEfu2sUNAa2nUGJHWxoUWYSEJ2hNTWTA")
+    assert derived.group_name == "devnet.3"
+    assert derived.group_address == PublicKey("5vQp48Wx55Ft1PUAx8qWbsioNaLeXWVkyCq2XpQSv34M")
     context_has_default_values(mango.ContextBuilder.default())
