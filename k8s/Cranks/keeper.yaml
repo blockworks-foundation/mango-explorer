@@ -43,7 +43,7 @@ spec:
             - --skip-interval
             - "5"
             - --log-level
-            - ERROR
+            - CRITICAL
           livenessProbe:
             exec:
               command:

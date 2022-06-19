@@ -91,7 +91,7 @@ spec:
             - --blockhash-cache-duration
             - "30"
             - --log-level
-            - ERROR
+            - CRITICAL
             - --log-suppress-timestamp
           # - --notify-errors
           # - $(ERRORS_TELEGRAM)
@@ -131,4 +131,4 @@ spec:
             - --market
             - spot:USDT/USDC
             - --log-level
-            - ERROR
+            - CRITICAL

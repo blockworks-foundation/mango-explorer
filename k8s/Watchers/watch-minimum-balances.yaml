@@ -61,7 +61,7 @@ spec:
             - "--minimum-sol-balance"
             - "0.5"
             - --log-level
-            - ERROR
+            - CRITICAL
             # - --notify
             # - $(ERRORS_TELEGRAM)
             - --notify
