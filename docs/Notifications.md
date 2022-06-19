@@ -96,30 +96,3 @@ colons are replaced with %3A).
 * `FROM-ADDRESS` is the address the email appears to come from. This must be validated with ailjet](https://mailjet.com).
 * `TO-ADDRESS` is the destination address - the email account to which the email is being sent.
 Mailjet provides a client library, but really we don't need or want more dependencies.
-
-
-# 📃 CSV Files
-
-The `CsvFileNotificationTarget` writes liquidation events to a CSV file.
-
-The `CsvFileNotificationTarget` is reserved for `LiquidationEvent`s - nothing is written if the item is not a `LiquidationEvent`.
-
-The format for configuring the CSV file notification target is:
-1. The word 'csvfile'
-2. A colon ':'
-3. The full or relative pathname to the desired CSV file (bearing in mind this filename may be in the context of the docker container, not the native filesystem).
-
-So:
-csvfile:<CSV-FILENAME>
-
-For example:
-```
-csvfile:/path/to/filename.csv
-```
-
-The following headers should be automatically added to new CSV files:
-```
-"Timestamp","Liquidator Name","Group","Succeeded","Signature","Wallet","Margin Account","Token Changes"
-```
-
-Token changes are listed as pairs of value plus symbol, so each token change adds two columns to the output. Token changes may arrive in different orders, so ordering of token changes is not guaranteed to be consistent from transaction to transaction.

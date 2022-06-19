@@ -20,16 +20,16 @@ import typing
 
 from decimal import Decimal
 from solana.blockhash import Blockhash
-from solana.rpc.commitment import Finalized
+from solana.rpc.commitment import Commitment, Finalized
 from solana.keypair import Keypair
 from solana.publickey import PublicKey
 from solana.transaction import Transaction, TransactionInstruction
 from solana.utils import shortvec_encoding as shortvec
 
-from mango.constants import SOL_DECIMAL_DIVISOR
-
+from .constants import SOL_DECIMAL_DIVISOR
 from .context import Context
 from .instructionreporter import InstructionReporter
+from .transactionmonitoring import TransactionOutcome, WebSocketTransactionMonitor
 from .wallet import Wallet
 
 _MAXIMUM_TRANSACTION_LENGTH = 1280 - 40 - 8
@@ -312,6 +312,61 @@ class CombinableInstructions:
                     )
                 else:
                     raise exception
+
+        return results
+
+    def execute_and_confirm(
+        self,
+        context: Context,
+        on_exception_continue: bool = False,
+        maximum_rpc_resends: Decimal = Decimal(0),
+        commitment: typing.Optional[Commitment] = None,
+        transmission_timeout: float = 90,
+    ) -> typing.Sequence[str]:
+        chunks: typing.Sequence[
+            typing.Sequence[TransactionInstruction]
+        ] = _split_instructions_into_chunks(context, self.signers, self.instructions)
+
+        if len(chunks) == 1 and len(chunks[0]) == 0:
+            self._logger.info("No instructions to run.")
+            return []
+
+        if len(chunks) > 1:
+            self._logger.info(f"Running instructions in {len(chunks)} transactions.")
+
+        commitment = commitment or context.client.commitment
+        results: typing.List[str] = []
+        for index, chunk in enumerate(chunks):
+            for send_count in range(int(maximum_rpc_resends) + 1):
+                transaction = Transaction()
+                transaction.instructions.extend(chunk)
+                try:
+                    signature = context.client.send_transaction(
+                        transaction, *self.signers
+                    )
+                    outcome = WebSocketTransactionMonitor.wait_for_all(
+                        context.client.cluster_ws_url,
+                        [signature],
+                        commitment=commitment,
+                        timeout=transmission_timeout,
+                    )
+                    logging.debug(f"Transaction outcome:\n    {outcome}")
+                    if outcome[0].outcome != TransactionOutcome.TIMEOUT:
+                        results += [signature]
+                        break
+                    elif send_count == int(maximum_rpc_resends):
+                        raise Exception(
+                            f"Transaction for signature {signature} could not be found ({maximum_rpc_resends} resends)."
+                        )
+                except Exception as exception:
+                    starts_at = sum(len(ch) for ch in chunks[0:index])
+                    if on_exception_continue:
+                        self._logger.error(
+                            f"""[{context.name}] Error executing chunk {index} (instructions {starts_at} to {starts_at + len(chunk)}) of CombinableInstruction.
+    {traceback.format_exc()}"""
+                        )
+                    else:
+                        raise exception
 
         return results
 

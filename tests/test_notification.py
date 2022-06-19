@@ -15,7 +15,7 @@ class MockNotificationTarget(mango.NotificationTarget):
 def test_notification_target_constructor() -> None:
     succeeded = False
     try:
-        mango.AccountLiquidator()  # type: ignore[abstract]
+        mango.NotificationTarget()  # type: ignore[abstract]
     except TypeError:
         # Can't instantiate the abstract base class.
         succeeded = True
@@ -48,13 +48,6 @@ def test_mailjet_notification_target_constructor() -> None:
     assert actual.from_address == "from@address"
     assert actual.to_name == "to name with colon:"
     assert actual.to_address == "to@address"
-
-
-def test_csvfile_notification_target_constructor() -> None:
-    filename = "test-filename"
-    actual = mango.CsvFileNotificationTarget(filename)
-    assert actual is not None
-    assert actual.filename == filename
 
 
 def test_filtering_notification_target_constructor() -> None:
@@ -93,6 +86,3 @@ def test_parse_notification_target() -> None:
         "mailjet:user:secret:subject:from%20name:from@address:to%20name%20with%20colon%3A:to@address"
     )
     assert mailjet_target is not None
-
-    csvfile_target = mango.parse_notification_target("csvfile:filename.csv")
-    assert csvfile_target is not None

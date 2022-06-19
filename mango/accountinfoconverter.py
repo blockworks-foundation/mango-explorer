@@ -111,7 +111,11 @@ def build_account_info_converter(
             account_info, __FakePerpMarketDetails()
         )
     elif account_type_upper == "SERUMEVENTQUEUE":
-        return lambda account_info: SerumEventQueue.parse(account_info)
+        return lambda account_info: SerumEventQueue.parse(
+            account_info,
+            Token("UNKNOWNBASE", "Unknown Base", Decimal(0), PublicKey(0)),
+            Token("UNKNOWNQUOTE", "Unknown Quote", Decimal(0), PublicKey(0)),
+        )
     elif account_type_upper == "SERUMEVENTS":
         serum_splitter: typing.Optional[UnseenSerumEventChangesTracker] = None
 
@@ -121,12 +125,18 @@ def build_account_info_converter(
             nonlocal serum_splitter
             if serum_splitter is None:
                 initial_serum_event_queue: SerumEventQueue = SerumEventQueue.parse(
-                    account_info
+                    account_info,
+                    Token("UNKNOWNBASE", "Unknown Base", Decimal(0), PublicKey(0)),
+                    Token("UNKNOWNQUOTE", "Unknown Quote", Decimal(0), PublicKey(0)),
                 )
                 serum_splitter = UnseenSerumEventChangesTracker(
                     initial_serum_event_queue
                 )
-            serum_event_queue: SerumEventQueue = SerumEventQueue.parse(account_info)
+            serum_event_queue: SerumEventQueue = SerumEventQueue.parse(
+                account_info,
+                Token("UNKNOWNBASE", "Unknown Base", Decimal(0), PublicKey(0)),
+                Token("UNKNOWNQUOTE", "Unknown Quote", Decimal(0), PublicKey(0)),
+            )
             return serum_splitter.unseen(serum_event_queue)
 
         return __split_serum_events

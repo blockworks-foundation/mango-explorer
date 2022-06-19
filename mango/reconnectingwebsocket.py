@@ -65,16 +65,16 @@ class ReconnectingWebsocket:
         self.__open_event: threading.Event = threading.Event()
 
     def close(self) -> None:
-        self._logger.info(f"Closing WebSocket for {self.url}")
+        self._logger.debug(f"Closing WebSocket for {self.url}")
         self.reconnect_required = False
         self._ws.close()
 
     def force_reconnect(self) -> None:
-        self._logger.info(f"Forcing a reconnect on WebSocket for {self.url}")
+        self._logger.debug(f"Forcing a reconnect on WebSocket for {self.url}")
         self._ws.close()
 
     def _on_open(self, ws: websocket.WebSocketApp) -> None:
-        self._logger.info(f"Opening WebSocket for {self.url}")
+        self._logger.debug(f"Opening WebSocket for {self.url}")
         self.__open_event.set()
         if self.on_open_call:
             self.on_open_call(ws)
@@ -108,7 +108,7 @@ class ReconnectingWebsocket:
     def _run(self) -> None:
         while self.reconnect_required:
             try:
-                self._logger.info(f"WebSocket connecting to: {self.url}")
+                self._logger.debug(f"WebSocket connecting to: {self.url}")
                 self.connecting.on_next(local_now())
                 self._ws = websocket.WebSocketApp(
                     self.url,

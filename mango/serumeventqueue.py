@@ -24,6 +24,7 @@ from .addressableaccount import AddressableAccount
 from .context import Context
 from .layouts import layouts
 from .observables import Disposable
+from .tokens import Token
 from .version import Version
 from .websocketsubscription import (
     WebSocketAccountSubscription,
@@ -77,6 +78,8 @@ class SerumEvent:
         self,
         version: Version,
         event_flags: SerumEventFlags,
+        base: Token,
+        quote: Token,
         open_order_slot: Decimal,
         fee_tier: Decimal,
         native_quantity_released: Decimal,
@@ -88,6 +91,8 @@ class SerumEvent:
     ) -> None:
         self.version: Version = version
         self.event_flags: SerumEventFlags = event_flags
+        self.base: Token = base
+        self.quote: Token = quote
         self.open_order_slot: Decimal = open_order_slot
         self.fee_tier: Decimal = fee_tier
         self.native_quantity_released: Decimal = native_quantity_released
@@ -102,12 +107,32 @@ class SerumEvent:
     def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
         return [self.public_key]
 
+    @property
+    def price(self) -> Decimal:
+        if self.event_flags.bid:
+            return (
+                self.native_quantity_paid + self.native_fee_or_rebate
+            ) / self.native_quantity_released
+        else:
+            return (
+                self.native_quantity_released + self.native_fee_or_rebate
+            ) / self.native_quantity_paid
+
+    @property
+    def quantity(self) -> Decimal:
+        if self.event_flags.bid:
+            return self.quote.shift_to_decimals(self.native_quantity_released)
+        else:
+            return self.quote.shift_to_decimals(self.native_quantity_paid)
+
     @staticmethod
-    def from_layout(layout: typing.Any) -> "SerumEvent":
+    def from_layout(layout: typing.Any, base: Token, quote: Token) -> "SerumEvent":
         event_flags: SerumEventFlags = SerumEventFlags.from_layout(layout.event_flags)
         return SerumEvent(
             Version.UNSPECIFIED,
             event_flags,
+            base,
+            quote,
             layout.open_order_slot,
             layout.fee_tier,
             layout.native_quantity_released,
@@ -119,16 +144,17 @@ class SerumEvent:
         )
 
     def __str__(self) -> str:
-        return f"""« SerumEvent {self.event_flags}
-    Original Index: {self.original_index}
-    Order ID: {self.order_id}
-    Client Order ID: {self.client_order_id}
-    Public Key: {self.public_key}
-    OpenOrder Slot: {self.open_order_slot}
-    Native Quantity Released: {self.native_quantity_released}
-    Native Quantity Paid: {self.native_quantity_paid}
-    Native Fee Or Rebate: {self.native_fee_or_rebate}
+        return f"""« SerumEvent {self.quantity:,.8f} {self.base.symbol} @ {self.price:,.8f} {self.quote.symbol}
+    {self.event_flags}
+    ID: {self.order_id} / {self.client_order_id}
+    Index: {self.original_index}
+    Owner: {self.public_key}
     Fee Tier: {self.fee_tier}
+    OpenOrder Slot: {self.open_order_slot}
+    Native
+        Quantity Released: {self.native_quantity_released}
+        Quantity Paid: {self.native_quantity_paid}
+        Fee Or Rebate: {self.native_fee_or_rebate}
 »"""
 
     def __repr__(self) -> str:
@@ -150,6 +176,8 @@ class SerumEventQueue(AddressableAccount):
         self,
         account_info: AccountInfo,
         version: Version,
+        base: Token,
+        quote: Token,
         account_flags: AccountFlags,
         head: Decimal,
         count: Decimal,
@@ -160,6 +188,9 @@ class SerumEventQueue(AddressableAccount):
         super().__init__(account_info)
         self.version: Version = version
 
+        self.base: Token = base
+        self.quote: Token = quote
+
         self.account_flags: AccountFlags = account_flags
         self.head: Decimal = head
         self.count: Decimal = count
@@ -169,20 +200,23 @@ class SerumEventQueue(AddressableAccount):
 
     @staticmethod
     def from_layout(
-        layout: typing.Any, account_info: AccountInfo, version: Version
+        layout: typing.Any,
+        account_info: AccountInfo,
+        version: Version,
+        base: Token,
+        quote: Token,
     ) -> "SerumEventQueue":
         account_flags: AccountFlags = AccountFlags.from_layout(layout.account_flags)
         head: Decimal = layout.head
         count: Decimal = layout.count
         seq_num: Decimal = layout.next_seq_num
-        events: typing.List[SerumEvent] = list(
-            map(
-                SerumEvent.from_layout,
-                [evt for evt in layout.events if evt is not None],
-            )
-        )
-        for index, event in enumerate(events):
-            event.original_index = Decimal(index)
+
+        events: typing.List[SerumEvent] = []
+        for index, evt in enumerate(layout.events):
+            if evt is not None:
+                event = SerumEvent.from_layout(evt, base, quote)
+                event.original_index = Decimal(index)
+                events += [event]
 
         # Events are stored in a ringbuffer, and the oldest is overwritten when a new event arrives.
         # Make it a bit simpler to use by splitting at the insertion point and swapping the two pieces
@@ -197,6 +231,8 @@ class SerumEventQueue(AddressableAccount):
         return SerumEventQueue(
             account_info,
             version,
+            base,
+            quote,
             account_flags,
             head,
             count,
@@ -206,17 +242,23 @@ class SerumEventQueue(AddressableAccount):
         )
 
     @staticmethod
-    def parse(account_info: AccountInfo) -> "SerumEventQueue":
+    def parse(
+        account_info: AccountInfo, base: Token, quote: Token
+    ) -> "SerumEventQueue":
         # Data length isn't fixed so can't check we get the right value the way we normally do.
         layout = layouts.SERUM_EVENT_QUEUE.parse(account_info.data)
-        return SerumEventQueue.from_layout(layout, account_info, Version.V1)
+        return SerumEventQueue.from_layout(
+            layout, account_info, Version.V1, base, quote
+        )
 
     @staticmethod
-    def load(context: Context, address: PublicKey) -> "SerumEventQueue":
+    def load(
+        context: Context, address: PublicKey, base: Token, quote: Token
+    ) -> "SerumEventQueue":
         account_info = AccountInfo.load(context, address)
         if account_info is None:
             raise Exception(f"SerumEventQueue account not found at address '{address}'")
-        return SerumEventQueue.parse(account_info)
+        return SerumEventQueue.parse(account_info, base, quote)
 
     @property
     def accounts_to_crank(self) -> typing.Sequence[PublicKey]:
@@ -257,7 +299,11 @@ class SerumEventQueue(AddressableAccount):
         callback: typing.Callable[["SerumEventQueue"], None],
     ) -> Disposable:
         subscription = WebSocketAccountSubscription(
-            context, self.address, SerumEventQueue.parse
+            context,
+            self.address,
+            lambda account_info: SerumEventQueue.parse(
+                account_info, self.base, self.quote
+            ),
         )
         websocketmanager.add(subscription)
         subscription.publisher.subscribe(on_next=callback)  # type: ignore[call-arg]

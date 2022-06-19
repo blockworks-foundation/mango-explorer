@@ -126,7 +126,7 @@ class SpotMarket(LoadedMarket):
 
     def unprocessed_events(self, context: Context) -> typing.Sequence[SerumEvent]:
         event_queue: SerumEventQueue = SerumEventQueue.load(
-            context, self.event_queue_address
+            context, self.event_queue_address, self.base, self.quote
         )
         return event_queue.unprocessed_events
 
@@ -162,14 +162,18 @@ class SpotMarket(LoadedMarket):
         disposer = Disposable()
         event_queue_address = self.event_queue_address
         initial: SerumEventQueue = SerumEventQueue.load(
-            context, self.event_queue_address
+            context, self.event_queue_address, self.base, self.quote
         )
 
         splitter: UnseenSerumEventChangesTracker = UnseenSerumEventChangesTracker(
             initial
         )
         event_queue_subscription = WebSocketAccountSubscription(
-            context, event_queue_address, SerumEventQueue.parse
+            context,
+            event_queue_address,
+            lambda account_info: SerumEventQueue.parse(
+                account_info, self.base, self.quote
+            ),
         )
         disposer.add_disposable(event_queue_subscription)
 

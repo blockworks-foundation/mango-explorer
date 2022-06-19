@@ -418,12 +418,14 @@ def build_serum_event_queue_watcher(
     serum_market: SerumMarket,
 ) -> Watcher[EventQueue]:
     initial: EventQueue = SerumEventQueue.load(
-        context, serum_market.event_queue_address
+        context, serum_market.event_queue_address, serum_market.base, serum_market.quote
     )
     subscription = WebSocketAccountSubscription[EventQueue](
         context,
         serum_market.event_queue_address,
-        lambda account_info: SerumEventQueue.parse(account_info),
+        lambda account_info: SerumEventQueue.parse(
+            account_info, serum_market.base, serum_market.quote
+        ),
     )
     manager.add(subscription)
     latest_observer = LatestItemObserverSubscriber[EventQueue](initial)
@@ -438,11 +440,15 @@ def build_spot_event_queue_watcher(
     health_check: HealthCheck,
     spot_market: SpotMarket,
 ) -> Watcher[EventQueue]:
-    initial: EventQueue = SerumEventQueue.load(context, spot_market.event_queue_address)
+    initial: EventQueue = SerumEventQueue.load(
+        context, spot_market.event_queue_address, spot_market.base, spot_market.quote
+    )
     subscription = WebSocketAccountSubscription[EventQueue](
         context,
         spot_market.event_queue_address,
-        lambda account_info: SerumEventQueue.parse(account_info),
+        lambda account_info: SerumEventQueue.parse(
+            account_info, spot_market.base, spot_market.quote
+        ),
     )
     manager.add(subscription)
     latest_observer = LatestItemObserverSubscriber[EventQueue](initial)
