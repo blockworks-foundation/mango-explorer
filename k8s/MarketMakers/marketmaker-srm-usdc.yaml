@@ -89,7 +89,7 @@ spec:
             - --blockhash-cache-duration
             - "30"
             - --log-level
-            - DEBUG
+            - ERROR
             - --log-suppress-timestamp
           # - --notify-errors
           # - $(ERRORS_TELEGRAM)
@@ -129,4 +129,4 @@ spec:
             - --market
             - spot:SRM/USDC
             - --log-level
-            - DEBUG
+            - ERROR

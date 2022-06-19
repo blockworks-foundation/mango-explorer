@@ -43,7 +43,7 @@ spec:
             - --skip-interval
             - "5"
             - --log-level
-            - DEBUG
+            - ERROR
           livenessProbe:
             exec:
               command:

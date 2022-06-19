@@ -89,7 +89,7 @@ spec:
             - --blockhash-cache-duration
             - "30"
             - --log-level
-            - DEBUG
+            - ERROR
             - --log-suppress-timestamp
           # - --notify-errors
           # - $(ERRORS_TELEGRAM)
@@ -126,7 +126,7 @@ spec:
             - ensure-account
             - --wait
             - --log-level
-            - DEBUG
+            - ERROR
         - name: ensure-openorders
           image: opinionatedgeek/mango-explorer-v3:latest
           imagePullPolicy: Always
@@ -141,4 +141,4 @@ spec:
             - --market
             - serum:BTC/USDC
             - --log-level
-            - DEBUG
+            - ERROR

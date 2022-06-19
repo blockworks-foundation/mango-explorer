@@ -97,7 +97,7 @@ spec:
             - --blockhash-cache-duration
             - "30"
             - --log-level
-            - DEBUG
+            - ERROR
             - --log-suppress-timestamp
           # - --notify-errors
           # - $(ERRORS_TELEGRAM)
@@ -137,4 +137,4 @@ spec:
             - --market
             - perp:SOL-PERP
             - --log-level
-            - DEBUG
+            - ERROR
