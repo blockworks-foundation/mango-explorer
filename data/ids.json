@@ -136,9 +136,14 @@
           "mintKey": "F6v4wfAdJB8D8p77bMXZgYt8TDKsYxLYxH5AFhUkYx9W",
           "decimals": 6,
           "rootKey": "AUU8Zw5ezmZJBuWtMjfTTyP6eowkpNbH5pHh6uY5BHu7",
-          "nodeKeys": [
-            "BNpfdZZC8NP1PabGATRHH2ABh94U47zm1kjvneRSMSBE"
-          ]
+          "nodeKeys": ["BNpfdZZC8NP1PabGATRHH2ABh94U47zm1kjvneRSMSBE"]
+        },
+        {
+          "symbol": "GMT",
+          "mintKey": "7i5KKsX2weiTkry7jA4ZwSuXGhs5eJBEjY8vVxR4pfRx",
+          "decimals": 9,
+          "rootKey": "HdFSXT8HSooTByieyKhuujBsvHkXR9zA4ZFmiToQhqEg",
+          "nodeKeys": ["BsyDMxu87YHUJXYHundMGp5YmpD2J3xm62TdaQyryp8f"]
         }
       ],
       "oracles": [
@@ -197,6 +202,10 @@
         {
           "symbol": "LUNA",
           "publicKey": "5bmWuR1dgP4avtGYMNKLuxumZTVKGgoN2BCMXWDNL9nY"
+        },
+        {
+          "symbol": "GMT",
+          "publicKey": "DZYZkJcFJThN9nZy4nK3hrHra1LaWeiyoZ9SMdLFEFpY"
         }
       ],
       "perpMarkets": [
@@ -320,6 +329,17 @@
           "bidsKey": "AiBurBkETJHHujZxNHm6UPvBQ1LLLkNkckPoZLeuLnS1",
           "asksKey": "7Vcbxj2M8fqaNGfRDsau47uXumfCBhCTA97D6PNDPWfe",
           "eventsKey": "HDJ43o9Dxxu6yWRWPEce44gtCHauRGLXJwwtvD7GwEBx"
+        },
+        {
+          "name": "GMT-PERP",
+          "publicKey": "3hBYgfMHogR8X2JkpxvT8HMtUSbrE2PE61q64gZkWArr",
+          "baseSymbol": "GMT",
+          "baseDecimals": 9,
+          "quoteDecimals": "6",
+          "marketIndex": 14,
+          "bidsKey": "67jnTtxDdDqz6R18Do3AUUjBbZT3yysprGLhaucyKd93",
+          "asksKey": "DstVrGA3CBcq1r7op4yU7dX3sirzSgz1uicn63aYBMGz",
+          "eventsKey": "J2WYiw67VeGkPvmM3fi65H9KxDgCf79fNwspcD3ycubK"
         }
       ],
       "spotMarkets": [
@@ -465,6 +485,17 @@
           "bidsKey": "2qZyNiiupG9c3dZkmgPJ53XLMyb3uYnfmPrUfLBisEBn",
           "asksKey": "2oVNv7BTvvRUuHmbPvMjafBVQhoAFVdWPCuKiDAPNsbD",
           "eventsKey": "8fGeJPZGsW3kjnfGkGNU3dXWXkuDFEUK7RXeiMW2rmGm"
+        },
+        {
+          "name": "GMT/USDC",
+          "publicKey": "9KLmeRBpT4chsxkJatfDdzrtTBvBastYp9wMe712ASCg",
+          "baseSymbol": "GMT",
+          "baseDecimals": 9,
+          "quoteDecimals": 6,
+          "marketIndex": 14,
+          "bidsKey": "EzVutiMEE8gyeyaiQ4jUrSn4LXwrDmRkuNK4wcRctJxW",
+          "asksKey": "Eg2PKQ3BHWsRCMLZQaJrAXMCEWoEsNXPY8BLLk5AHsrM",
+          "eventsKey": "92AfWEUqA2RQjD46otvaXEA3CQ4qBFi2K8AmCBwwghHG"
         }
       ]
     },
