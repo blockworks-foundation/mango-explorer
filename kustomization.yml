@@ -28,26 +28,26 @@ resources:
   # - k8s/Secrets/random-taker.yaml
   - k8s/Cranks/crank-btc-perp.yaml
   - k8s/Cranks/crank-btc-usdc-serum.yaml
-  - k8s/Cranks/crank-eth-usdc-serum.yaml
+  # - k8s/Cranks/crank-eth-usdc-serum.yaml
   - k8s/Cranks/crank-sol-usdc-serum.yaml
   - k8s/Cranks/keeper.yaml
   - k8s/RandomTakers/random-taker-btc-perp.yaml
   - k8s/RandomTakers/random-taker-btc-usdc.yaml
-  - k8s/MarketMakers/marketmaker-ada-perp.yaml
-  - k8s/MarketMakers/marketmaker-avax-perp.yaml
+  # - k8s/MarketMakers/marketmaker-ada-perp.yaml
+  # - k8s/MarketMakers/marketmaker-avax-perp.yaml
   - k8s/MarketMakers/marketmaker-btc-perp.yaml
   - k8s/MarketMakers/marketmaker-btc-usdc-serum.yaml
   - k8s/MarketMakers/marketmaker-btc-usdc.yaml
-  - k8s/MarketMakers/marketmaker-eth-perp.yaml
-  - k8s/MarketMakers/marketmaker-eth-usdc-serum.yaml
-  - k8s/MarketMakers/marketmaker-eth-usdc.yaml
-  - k8s/MarketMakers/marketmaker-ftt-perp.yaml
-  - k8s/MarketMakers/marketmaker-ftt-usdc.yaml
-  - k8s/MarketMakers/marketmaker-matic-perp.yaml
+  # - k8s/MarketMakers/marketmaker-eth-perp.yaml
+  # - k8s/MarketMakers/marketmaker-eth-usdc-serum.yaml
+  # - k8s/MarketMakers/marketmaker-eth-usdc.yaml
+  # - k8s/MarketMakers/marketmaker-ftt-perp.yaml
+  # - k8s/MarketMakers/marketmaker-ftt-usdc.yaml
+  # - k8s/MarketMakers/marketmaker-matic-perp.yaml
   - k8s/MarketMakers/marketmaker-mngo-perp.yaml
   - k8s/MarketMakers/marketmaker-mngo-usdc.yaml
-  - k8s/MarketMakers/marketmaker-ray-usdc.yaml
+  # - k8s/MarketMakers/marketmaker-ray-usdc.yaml
   - k8s/MarketMakers/marketmaker-sol-perp.yaml
   - k8s/MarketMakers/marketmaker-sol-usdc.yaml
-  - k8s/MarketMakers/marketmaker-srm-usdc.yaml
-  - k8s/MarketMakers/marketmaker-usdt-usdc.yaml
+  # - k8s/MarketMakers/marketmaker-srm-usdc.yaml
+  # - k8s/MarketMakers/marketmaker-usdt-usdc.yaml
