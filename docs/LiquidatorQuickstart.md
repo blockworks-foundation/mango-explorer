@@ -1,5 +1,7 @@
 # 🥭 Mango Explorer
 
+Before you read this, please be aware that this code is for mango v2, which is deprecated. In case you are looking for the reference liquidator for mango v3, [look here](https://github.com/blockworks-foundation/liquidator-v3).
+
 # 🏃‍ Liquidator Quickstart
 
 Let’s assume you have a server set up already, with [docker](https://www.docker.com/) installed. This Quickstart will guide you through setting up and running [mango-explorer](https://gitlab.com/OpinionatedGeek/mango-explorer) to run a liquidator on [Mango Markets](https://mango.markets/). (You’ll need to provide your own funds for the liquidator though!)
