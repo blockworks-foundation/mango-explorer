@@ -2,7 +2,7 @@ name: Publish to Pypi
 
 on:
   push:
-    branches: [ci]
+    branches: [main]
   workflow_call:
     secrets:
       PYPI_TOKEN:

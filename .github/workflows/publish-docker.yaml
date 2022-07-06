@@ -2,7 +2,7 @@ name: Publish to Docker
 
 on:
   push:
-    branches: [ci]
+    branches: [main]
   workflow_call:
     secrets:
       GKE_PROJECT:
