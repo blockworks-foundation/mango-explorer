@@ -32,8 +32,6 @@ pip install mango-explorer
 
 A simple [installation walkthrough](docs/Installation.md) is available, and of course other ways of installing it or adding it as a dependency are possible and will depend on the particular tools you are using.
 
-`mango-explorer` is also available as a docker container with the name [opinionatedgeek/mango-explorer-v3](https://hub.docker.com/repository/docker/opinionatedgeek/mango-explorer-v3/).
-
 
 ## 🌳 Branches
 
