@@ -1,6 +1,6 @@
 # 🥭 Mango Explorer
 
-Before you read this, please be aware that this code is for mango v2, which is deprecated. In case you are looking for the reference liquidator for mango v3, [look here](https://github.com/blockworks-foundation/liquidator-v3).
+⚠️ Before you read this, please be aware that this code is for mango v2, which is deprecated. In case you are looking for the reference liquidator for mango v3, [look here](https://github.com/blockworks-foundation/liquidator-v3). ⚠️
 
 # 🏃‍ Liquidator Quickstart
 
