@@ -1,0 +1,53 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - k8s/namespaces.yaml
+  - k8s/limits.yaml
+  - k8s/ConfigMaps/cluster.yaml
+  - k8s/ConfigMaps/notification-targets.yaml
+  # - k8s/Secrets/crank.yaml
+  # - k8s/Secrets/marketmaker-delegate.yaml
+  # - k8s/Secrets/marketmaker-perp.yaml
+  # - k8s/Secrets/marketmaker-serum.yaml
+  # - k8s/Secrets/marketmaker-spot-1.yaml
+  # - k8s/Secrets/marketmaker-spot-2.yaml
+  # - k8s/Secrets/random-taker.yaml
+  - k8s/Cranks/crank-btc-perp.yaml
+  - k8s/Cranks/crank-btc-usdc-serum.yaml
+  - k8s/Cranks/crank-eth-usdc-serum.yaml
+  - k8s/Cranks/crank-sol-usdc-serum.yaml
+  - k8s/Cranks/keeper.yaml
+  - k8s/RandomTakers/random-taker-btc-perp.yaml
+  - k8s/RandomTakers/random-taker-btc-usdc.yaml
+  - k8s/MarketMakers/marketmaker-ada-perp.yaml
+  - k8s/MarketMakers/marketmaker-avax-perp.yaml
+  - k8s/MarketMakers/marketmaker-btc-perp.yaml
+  - k8s/MarketMakers/marketmaker-btc-usdc-serum.yaml
+  - k8s/MarketMakers/marketmaker-btc-usdc.yaml
+  - k8s/MarketMakers/marketmaker-eth-perp.yaml
+  - k8s/MarketMakers/marketmaker-eth-usdc-serum.yaml
+  - k8s/MarketMakers/marketmaker-eth-usdc.yaml
+  - k8s/MarketMakers/marketmaker-ftt-perp.yaml
+  - k8s/MarketMakers/marketmaker-ftt-usdc.yaml
+  - k8s/MarketMakers/marketmaker-matic-perp.yaml
+  - k8s/MarketMakers/marketmaker-mngo-perp.yaml
+  - k8s/MarketMakers/marketmaker-mngo-usdc.yaml
+  - k8s/MarketMakers/marketmaker-ray-usdc.yaml
+  - k8s/MarketMakers/marketmaker-sol-perp.yaml
+  - k8s/MarketMakers/marketmaker-sol-usdc.yaml
+  - k8s/MarketMakers/marketmaker-srm-usdc.yaml
+  - k8s/MarketMakers/marketmaker-usdt-usdc.yaml

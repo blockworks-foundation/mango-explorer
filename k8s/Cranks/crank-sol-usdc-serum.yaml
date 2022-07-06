@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: mango
+  name: crank-sol-usdc-serum
+  labels:
+    app: crank-market-service
+    cluster: devnet
+    marketType: serum
+    market: "SOL_USDC"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crank-sol-usdc-serum
+  template:
+    metadata:
+      labels:
+        app: crank-sol-usdc-serum
+    spec:
+      containers:
+        - name: crank-sol-usdc-serum
+          image: opinionatedgeek/mango-explorer-v3:latest
+          imagePullPolicy: Always
+          terminationMessagePolicy: FallbackToLogsOnError
+          resources:
+            limits:
+              memory: 128Mi
+            requests:
+              memory: 16Mi
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          envFrom:
+            - secretRef:
+                name: crank
+            - configMapRef:
+                name: cluster
+          command:
+            - crank-market-service
+            - "serum:SOL/USDC"
+            - "5"
+            - "1"
+          livenessProbe:
+            exec:
+              command:
+                - file-age-check
+                - "60"
+                - /var/tmp/mango_healthcheck_crank_market_service
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /var/tmp/mango_healthcheck_crank_market_service
+            initialDelaySeconds: 30
+            failureThreshold: 12
+            periodSeconds: 5
+      restartPolicy: Always
+      initContainers:
+        - name: ensure-account
+          image: opinionatedgeek/mango-explorer-v3:latest
+          imagePullPolicy: Always
+          terminationMessagePolicy: FallbackToLogsOnError
+          envFrom:
+            - secretRef:
+                name: crank
+            - configMapRef:
+                name: cluster
+          command:
+            - ensure-account
+            - --wait
+        - name: ensure-base-token-account
+          image: opinionatedgeek/mango-explorer-v3:latest
+          imagePullPolicy: Always
+          terminationMessagePolicy: FallbackToLogsOnError
+          envFrom:
+            - secretRef:
+                name: crank
+            - configMapRef:
+                name: cluster
+          command:
+            - ensure-associated-token-account
+            - --symbol
+            - SOL
+        - name: ensure-quote-token-account
+          image: opinionatedgeek/mango-explorer-v3:latest
+          imagePullPolicy: Always
+          terminationMessagePolicy: FallbackToLogsOnError
+          envFrom:
+            - secretRef:
+                name: crank
+            - configMapRef:
+                name: cluster
+          command:
+            - ensure-associated-token-account
+            - --symbol
+            - USDC

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster
+  namespace: mango
+  labels:
+    cluster: devnet
+data:
+  CLUSTER_NAME: devnet
+  CLUSTER_URL: https://mango.devnet.rpcpool.com/
+  GROUP_NAME: devnet.2

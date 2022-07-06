@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: mango
+  name: random-taker-btc-usdc
+  labels:
+    app: random-taker
+    cluster: devnet
+    marketType: spot
+    market: "BTC_USDC"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: random-taker-btc-usdc
+  template:
+    metadata:
+      labels:
+        app: random-taker-btc-usdc
+    spec:
+      containers:
+        - name: random-taker-btc-usdc
+          image: opinionatedgeek/mango-explorer-v3:latest
+          imagePullPolicy: Always
+          terminationMessagePolicy: FallbackToLogsOnError
+          resources:
+            limits:
+              memory: 128Mi
+            requests:
+              memory: 16Mi
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          envFrom:
+            - secretRef:
+                name: random-taker
+            - configMapRef:
+                name: cluster
+          command:
+            - random-taker
+            - "BTC/USDC"
+            - "0.6"
+            - "500"
+          livenessProbe:
+            exec:
+              command:
+                - file-age-check
+                - "180"
+                - /var/tmp/mango_healthcheck_random_taker
+            initialDelaySeconds: 60
+            periodSeconds: 120
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /var/tmp/mango_healthcheck_random_taker
+            initialDelaySeconds: 120
+            failureThreshold: 12
+            periodSeconds: 5
+      restartPolicy: Always
+      initContainers:
+        - name: ensure-account
+          image: opinionatedgeek/mango-explorer-v3:latest
+          imagePullPolicy: Always
+          terminationMessagePolicy: FallbackToLogsOnError
+          envFrom:
+            - secretRef:
+                name: random-taker
+            - configMapRef:
+                name: cluster
+          command:
+            - ensure-account
+            - --wait

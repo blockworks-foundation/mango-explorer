@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: mango
+  name: keeper
+  labels:
+    app: keeper
+    cluster: devnet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keeper
+  template:
+    metadata:
+      labels:
+        app: keeper
+    spec:
+      containers:
+        - name: keeper
+          image: opinionatedgeek/mango-explorer-v3:latest
+          imagePullPolicy: Always
+          terminationMessagePolicy: FallbackToLogsOnError
+          resources:
+            limits:
+              memory: 128Mi
+            requests:
+              memory: 16Mi
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          envFrom:
+            - secretRef:
+                name: crank
+            - configMapRef:
+                name: cluster
+          command:
+            - keeper
+            - --pulse-interval
+            - "1"
+            - --skip-interval
+            - "5"
+            - --log-level
+            - CRITICAL
+          livenessProbe:
+            exec:
+              command:
+                - file-age-check
+                - "10"
+                - /var/tmp/mango_healthcheck_keeper
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+      restartPolicy: Always

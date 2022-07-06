@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: mango
+  name: marketmaker-ftt-perp
+  labels:
+    app: marketmaker
+    cluster: devnet
+    marketType: perp
+    market: FTT_USDC
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: marketmaker-ftt-perp
+  template:
+    metadata:
+      labels:
+        app: marketmaker-ftt-perp
+    spec:
+      containers:
+        - name: marketmaker-ftt-perp
+          image: opinionatedgeek/mango-explorer-v3:latest
+          imagePullPolicy: Always
+          terminationMessagePolicy: FallbackToLogsOnError
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              memory: 64Mi
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          envFrom:
+            - secretRef:
+                name: marketmaker-delegate
+            - configMapRef:
+                name: cluster
+            - configMapRef:
+                name: notification-targets
+          command:
+            - marketmaker
+            - --account-address
+            - DRUZRfLQtki4ZYvRXhi5yGmyqCf6iMfTzxtBpxo6rbHu
+            - --name
+            - "FTT-PERP Marketmaker ($(NODE_NAME))"
+            - --market
+            - perp:FTT-PERP
+            - --update-mode
+            - POLL
+            - --oracle-provider
+            - ftx
+            - --hedging-market
+            - "FTT/USDC"
+            - --hedging-target-balance
+            - "FTT:10"
+            - --chain
+            - ratios
+            - --ratios-spread
+            - "0.005"
+            - --ratios-spread
+            - "0.010"
+            - --ratios-spread
+            - "0.015"
+            - --ratios-position-size
+            - "0.05"
+            - --ratios-position-size
+            - "0.07"
+            - --ratios-position-size
+            - "0.09"
+            - --chain
+            - minimumcharge
+            - --minimumcharge-ratio
+            - "0.001"
+            - --chain
+            - biasquoteonposition
+            - --biasquoteonposition-bias
+            - "0.00005"
+            - --chain
+            - roundtolotsize
+            - --redeem-threshold
+            - "1"
+            - --existing-order-tolerance
+            - "0.0001"
+            - --minimumcharge-ratio
+            - "0.0001"
+            - --pulse-interval
+            - "10"
+            - --order-type
+            - POST_ONLY_SLIDE
+            - --expire-seconds
+            - "15"
+            - --match-limit
+            - "10"
+            - --blockhash-cache-duration
+            - "30"
+            - --log-level
+            - CRITICAL
+            - --log-suppress-timestamp
+          # - --notify-errors
+          # - $(ERRORS_TELEGRAM)
+          livenessProbe:
+            exec:
+              command:
+                - file-age-check
+                - "180"
+                - /var/tmp/mango_healthcheck_marketmaker_pulse
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - cat
+                - /var/tmp/mango_healthcheck_marketmaker_pulse
+            initialDelaySeconds: 30
+            failureThreshold: 12
+            periodSeconds: 5
+      restartPolicy: Always
+      initContainers:
+        - name: ensure-openorders
+          image: opinionatedgeek/mango-explorer-v3:latest
+          imagePullPolicy: Always
+          terminationMessagePolicy: FallbackToLogsOnError
+          envFrom:
+            - secretRef:
+                name: marketmaker-delegate
+            - configMapRef:
+                name: cluster
+          command:
+            - ensure-open-orders
+            - --account-address
+            - DRUZRfLQtki4ZYvRXhi5yGmyqCf6iMfTzxtBpxo6rbHu
+            - --market
+            - perp:FTT-PERP
+            - --log-level
+            - CRITICAL
