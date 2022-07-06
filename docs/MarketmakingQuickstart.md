@@ -84,50 +84,7 @@ You only need to run the `chown` command if you’re `root`. If you’re not `ro
 
 First, pull the docker container so you have the code locally, ready to run. You can do this with the command:
 ```
-# docker pull opinionatedgeek/mango-explorer-v3:latest
-```
-You should see output like the following appear as the files are downloaded:
-```
-Unable to find image 'opinionatedgeek/mango-explorer-v3:latest' locally
-latest: Pulling from opinionatedgeek/mango-explorer-v3
-345e3491a907: Pulling fs layer
-57671312ef6f: Pulling fs layer
-5e9250ddb7d0: Pull complete
-785c60630545: Pull complete
-314959dcc91c: Pull complete
-4f4fb700ef54: Pull complete
-2727b0936e12: Pull complete
-c649f146ecf2: Pull complete
-f1962b67837b: Pull complete
-ab08f5ffeed7: Pull complete
-968ce92ebc33: Pull complete
-ac62172ef90e: Pull complete
-ef82dda9ba1b: Pull complete
-c1d39d11b2b8: Pull complete
-fad5cd8318a4: Pull complete
-601d4d2fcb66: Pull complete
-686145366983: Pull complete
-74ac90c5fbf8: Pull complete
-29c418d8ea0c: Pull complete
-02e01d5beaab: Pull complete
-b35b963f1a3b: Pull complete
-143c3708a732: Pull complete
-650cfea2e368: Pull complete
-5e07fca35e32: Pull complete
-581a9e4184b8: Pull complete
-888aace6a4bd: Pull complete
-d7d19b016256: Pull complete
-ed305f1f1552: Pull complete
-380b2b59e451: Pull complete
-719bde4769fa: Pull complete
-b032295dfa95: Pull complete
-7eca3701e45c: Pull complete
-6ad8a619b3d7: Pull complete
-3ab9fd3c550e: Pull complete
-2734c002353b: Pull complete
-79735cbc3330: Pull complete
-Digest: sha256:dff5042e5d17cf13daf5bfec5126f75ed9622612adbfc4890a4f3f7cee409891
-Status: Downloaded newer image for opinionatedgeek/mango-explorer-v3:latest
+# docker pull gcr.io/mango-markets/mango-explorer:latest
 ```
 
 ## Alias
@@ -137,7 +94,7 @@ Next, we’ll set up an `alias` to make running the container easier. There are 
 ```
 # alias mango-explorer="docker run --rm -it --name=mango-explorer \
     -v $HOME/mango-explorer/id.json:/app/id.json \
-    opinionatedgeek/mango-explorer-v3:latest"
+    gcr.io/mango-markets/mango-explorer:latest"
 ```
 It’s probably a good idea to put this alias in your `.profile` or `.bashrc` (or use whatever mechanism your shell uses for such things).
 
