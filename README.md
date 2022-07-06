@@ -7,7 +7,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## 🥭 Introduction
 
-`mango-explorer` provides Python code to integrate with [Mango Markets](https://mango.markets).
+`mango-explorer` provides Python code to integrate with [Mango Markets](https://mango.markets). The canonical client is written in typescript and by far better maintaned, hence we recommend to use it instead. You can find it [here](https://github.com/blockworks-foundation/mango-client-v3).
 
 It includes some useful command-line programs, such as:
 * `deposit`
