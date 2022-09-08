@@ -50,12 +50,12 @@ Many more examples are provided in a separate [Github repo](https://github.com/b
 ### 🏃 Show OrderBook
 > [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/blockworks-foundation/mango-explorer-examples/HEAD?labpath=ShowOrderBook.ipynb) [Full runnable code in `mango-explorer-examples` repo](https://github.com/blockworks-foundation/mango-explorer-examples/blob/main/ShowOrderBook.ipynb)
 
-This code will connect to the _devnet_ cluster, fetch the orderbook for BTC-PERP, and print out a summary of it:
+This code will connect to the _devnet_ cluster, fetch the orderbook for SOL-PERP, and print out a summary of it:
 ```
 import mango
 
 with mango.ContextBuilder.build(cluster_name="devnet") as context:
-    market = mango.market(context, "BTC-PERP")
+    market = mango.market(context, "SOL-PERP")
     print(market.fetch_orderbook(context))
 ```
 
@@ -70,7 +70,7 @@ import mango
 import time
 
 with mango.ContextBuilder.build(cluster_name="devnet") as context:
-    market = mango.market(context, "BTC-PERP")
+    market = mango.market(context, "SOL-PERP")
     subscription = market.on_orderbook_change(context, lambda ob: print("\n", datetime.datetime.now(), "\n", ob))
 
     time.sleep(60)
@@ -89,7 +89,7 @@ This code will connect to the _devnet_ cluster and fetch all recent events. It w
 import mango
 
 with mango.ContextBuilder.build(cluster_name="devnet") as context:
-    market = mango.market(context, "BTC-PERP")
+    market = mango.market(context, "SOL-PERP")
     event_queue = mango.PerpEventQueue.load(context, market.event_queue_address, market.lot_size_converter)
     print(event_queue.fills)
 ```
@@ -105,7 +105,7 @@ import mango
 import time
 
 with mango.ContextBuilder.build(cluster_name="devnet") as context:
-    market = mango.market(context, "BTC-PERP")
+    market = mango.market(context, "SOL-PERP")
     subscription = market.on_fill(context, lambda ob: print("\n", datetime.datetime.now(), "\n", ob))
 
     time.sleep(60)

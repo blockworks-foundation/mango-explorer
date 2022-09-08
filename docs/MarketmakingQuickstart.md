@@ -97,6 +97,7 @@ Next, we’ll set up an `alias` to make running the container easier. There are 
     gcr.io/mango-markets/mango-explorer:latest"
 ```
 It’s probably a good idea to put this alias in your `.profile` or `.bashrc` (or use whatever mechanism your shell uses for such things).
+You may also wish to adjust the `-v` parameter above if you checked out the code in an alternative location.
 
 
 # 4. 👛 Create The Wallet
@@ -154,7 +155,7 @@ SOL tokens are needed for running operations on the Solana blockchain, similar t
 
 To do this, run the command:
 ```
-# mango-explorer airdrop --symbol SOL --quantity 1 --url devnet
+# mango-explorer airdrop --symbol SOL --quantity 1 --cluster-name devnet
 ```
 This will transfer 1 SOL to **6MEVCr816wapduGknarkNRwMFWvFQSNv5h7iQEGGx8uB**, the address shown above when creating the wallet.
 
